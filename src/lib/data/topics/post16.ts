@@ -2,6 +2,7 @@ import type { Topic } from "@/lib/types";
 
 const R = "2026-09-30";
 const V = "1.0";
+const V_UPDATED = "1.1";
 
 export const POST16_TOPICS: Topic[] = [
   {
@@ -20,7 +21,7 @@ export const POST16_TOPICS: Topic[] = [
       "Power rule: if y = xⁿ, then dy/dx = n xⁿ⁻¹. Differentiate term by term; constants differentiate to 0.",
       "Rewrite roots and fractions as powers first: √x = x^½ and 1/x² = x⁻².",
       "A tangent at x = a has gradient f′(a) and passes through (a, f(a)). Use y − y₁ = m(x − x₁).",
-      "Stationary points occur where dy/dx = 0. Use the second derivative: if d²y/dx² > 0 it is a minimum, if < 0 a maximum.",
+      "Stationary points occur where dy/dx = 0. Use the second derivative: if d²y/dx² > 0 it is a minimum, if < 0 a maximum. If d²y/dx² = 0 the test is inconclusive; check the gradient either side.",
     ],
     workedExample: {
       question: "Find the stationary points of y = x³ − 3x and their nature.",
@@ -92,8 +93,16 @@ export const POST16_TOPICS: Topic[] = [
           "A positive second derivative means the curve is concave up: a minimum.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7357",
+        section: "G1–G3 Differentiation",
+        url: "https://www.aqa.org.uk/subjects/mathematics/a-level/mathematics-7357/specification",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "alevel-bio-cell-division",
@@ -122,7 +131,7 @@ export const POST16_TOPICS: Topic[] = [
       {
         term: "Sister chromatids",
         definition:
-          "Two identical copies of a chromosome joined at a centromere.",
+          "Two identical copies of a DNA molecule (chromatids), made by replication and joined at a centromere to form one chromosome.",
       },
       {
         term: "Spindle fibres",
@@ -169,8 +178,16 @@ export const POST16_TOPICS: Topic[] = [
         explain: "Centromeres divide in anaphase and chromatids separate.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7402",
+        section: "3.2.2 All cells arise from other cells",
+        url: "https://www.aqa.org.uk/subjects/biology/a-level/biology-7402/specification",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "alevel-chem-equilibria",
@@ -259,6 +276,14 @@ export const POST16_TOPICS: Topic[] = [
         ],
         answer: 2,
         explain: "Only temperature changes Kc.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7405",
+        section: "3.1.6 Chemical equilibria; 3.1.10 Kp",
+        url: "https://www.aqa.org.uk/subjects/chemistry/a-level/chemistry-7405/specification",
       },
     ],
     reviewed: R,
@@ -352,6 +377,14 @@ export const POST16_TOPICS: Topic[] = [
         explain: "It predicts which condition will do better.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7182",
+        section: "4.2.3 Research methods",
+        url: "https://www.aqa.org.uk/subjects/psychology/a-level/psychology-7182/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -434,6 +467,14 @@ export const POST16_TOPICS: Topic[] = [
         ],
         answer: 1,
         explain: "Taxes raise costs for producers, reducing supply.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7136",
+        section: "4.1.3 Price determination in a competitive market",
+        url: "https://www.aqa.org.uk/subjects/economics/a-level/economics-7136/specification",
       },
     ],
     reviewed: R,
@@ -523,6 +564,13 @@ export const POST16_TOPICS: Topic[] = [
         answer: 2,
         explain:
           "Place covers distribution channels and where customers can buy.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "Pearson",
+        code: "BTEC Nationals Business",
+        section: "Unit 2 Developing a Marketing Campaign",
       },
     ],
     reviewed: R,
@@ -621,6 +669,13 @@ export const POST16_TOPICS: Topic[] = [
           "Supporting people to do what they can for themselves promotes independence.",
       },
     ],
+    specRefs: [
+      {
+        board: "Pearson",
+        code: "BTEC Tech Award HSC",
+        section: "Component 2 Health and Social Care Services and Values",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -636,7 +691,7 @@ export const POST16_TOPICS: Topic[] = [
       "Explain authentication including multi-factor authentication",
     ],
     explanation: [
-      "Common threats include malware (viruses, worms, ransomware), phishing, social engineering, weak passwords and unpatched software.",
+      "Common threats include malware (viruses, worms, ransomware), phishing and other social engineering. Vulnerabilities such as weak passwords and unpatched software make these attacks more likely to succeed.",
       "Phishing uses messages that pretend to be trustworthy to trick people into revealing information or clicking harmful links.",
       "Technical protections include firewalls, anti-malware, encryption, access controls, backups and keeping software updated.",
       "Human protections include staff training, clear policies and reporting procedures.",
@@ -711,15 +766,22 @@ export const POST16_TOPICS: Topic[] = [
         explain: "Ransomware locks data until a ransom is paid.",
       },
     ],
+    specRefs: [
+      {
+        board: "Pearson",
+        code: "BTEC Tech Award DIT",
+        section: "Component 3 Effective Digital Working Practices",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "tlevel-health-infection-control",
     courseId: "tlevel-health",
     title: "Infection prevention and control",
     summary:
-      "The chain of infection and standard precautions used in health settings.",
+      "The chain of infection and standard infection control precautions used in health settings.",
     objectives: [
       "Describe the chain of infection",
       "Explain standard infection control precautions",
@@ -727,7 +789,7 @@ export const POST16_TOPICS: Topic[] = [
     ],
     explanation: [
       "The chain of infection links an infectious agent, a reservoir, a portal of exit, a mode of transmission, a portal of entry and a susceptible host. Breaking any link can prevent spread.",
-      "Standard precautions include hand hygiene, appropriate personal protective equipment (PPE), safe management of the care environment, safe handling of linen and waste, and safe sharps management.",
+      "Standard infection control precautions (SICPs) include patient placement and assessment for infection risk, hand hygiene, respiratory and cough hygiene, personal protective equipment (PPE), safe management of the care environment and of care equipment, safe management of linen, safe management of blood and body fluids, safe disposal of waste (including sharps) and occupational safety, including preventing sharps injuries.",
       "Hand hygiene is one of the most effective ways to reduce the spread of infection. Follow your setting's policy on when to use soap and water or alcohol hand rub.",
       "Always follow your placement setting's policies and procedures, and ask your supervisor if you are unsure.",
     ],
@@ -746,7 +808,7 @@ export const POST16_TOPICS: Topic[] = [
         definition: "A person who can become infected.",
       },
       {
-        term: "Standard precautions",
+        term: "Standard infection control precautions (SICPs)",
         definition:
           "Basic infection control measures used with everyone in care settings.",
       },
@@ -758,7 +820,7 @@ export const POST16_TOPICS: Topic[] = [
       },
       {
         wrong: "Precautions are only for people known to be infectious.",
-        right: "Standard precautions apply to everyone, every time.",
+        right: "Standard infection control precautions apply to everyone, every time.",
       },
     ],
     retrieval: [
@@ -767,7 +829,7 @@ export const POST16_TOPICS: Topic[] = [
         a: "By breaking any link in the chain of infection.",
       },
       {
-        q: "Name three standard precautions.",
+        q: "Name three standard infection control precautions (SICPs).",
         a: "E.g. hand hygiene, PPE, waste management, sharps safety, cleaning.",
       },
       { q: "Does wearing gloves remove the need for hand hygiene?", a: "No." },
@@ -775,16 +837,16 @@ export const POST16_TOPICS: Topic[] = [
     quiz: [
       {
         id: "ic1",
-        q: "What should you do first if you identify an immediate risk to a person?",
+        q: "Which of these is a standard infection control precaution that applies to every patient?",
         options: [
-          "Wait until the next review",
-          "Follow the setting's urgent safeguarding procedure",
-          "Post a note online",
-          "Ask another service user",
+          "Hand hygiene",
+          "PPE only for patients known to be infectious",
+          "Reusing single-use gloves between patients",
+          "Skipping hand hygiene if gloves were worn",
         ],
-        answer: 1,
+        answer: 0,
         explain:
-          "Follow the organisation's urgent safeguarding and escalation procedures promptly.",
+          "Standard infection control precautions, including hand hygiene, are used for all patients, all the time, whether or not an infection is known.",
       },
       {
         id: "ic2",
@@ -799,8 +861,22 @@ export const POST16_TOPICS: Topic[] = [
         explain: "Hand hygiene stops hands transmitting microorganisms.",
       },
     ],
+    specRefs: [
+      {
+        board: "Pearson",
+        code: "T Level Health 610/7438/X",
+        section: "Content area 2 (2.5.1 PPE and hand hygiene)",
+        url: "https://qualifications.pearson.com/content/dam/pdf/TLevels/health/2026/specification-and-sample-assessment-materials/t-level-health-spec.pdf",
+      },
+      {
+        board: "NHS England",
+        code: "NIPCM",
+        section: "Chapter 1 Standard infection control precautions",
+        url: "https://www.england.nhs.uk/national-infection-prevention-and-control-manual-nipcm-for-england/chapter-1-standard-infection-control-precautions-sicps/",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "fs-maths-ratio",
@@ -862,14 +938,24 @@ export const POST16_TOPICS: Topic[] = [
       },
       {
         id: "ra2",
-        q: "Simplify 18:24.",
+        q: "Write 18:24 in its simplest form.",
         options: ["9:12", "3:4", "6:8", "2:3"],
         answer: 1,
-        explain: "Divide both by 6.",
+        explain:
+          "Divide both parts by the highest common factor, 6, to get 3:4.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "DfE",
+        code: "Functional Skills Maths",
+        section:
+          "Using numbers: ratio and direct proportion (L1), ratio, direct and inverse proportion (L2)",
+        url: "https://www.gov.uk/government/publications/functional-skills-subject-content-mathematics",
       },
     ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "core-maths-estimation",
@@ -905,7 +991,8 @@ export const POST16_TOPICS: Topic[] = [
       },
       {
         term: "Order of magnitude",
-        definition: "The power of ten a quantity is closest to.",
+        definition:
+          "The power of ten when a number is written in standard form, e.g. 3,800 = 3.8 × 10³ has order of magnitude 10³.",
       },
       {
         term: "Assumption",
@@ -945,8 +1032,15 @@ export const POST16_TOPICS: Topic[] = [
         explain: "Reasoning and assumptions earn the credit.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "1350",
+        section: "3.3 Estimation (Fermi estimation)",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "epq-planning",
@@ -1022,6 +1116,14 @@ export const POST16_TOPICS: Topic[] = [
         ],
         answer: 2,
         explain: "It is focused, researchable and allows a reasoned judgement.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "7993",
+        section: "AO1 Manage, AO2 Use resources",
+        url: "https://www.aqa.org.uk/subjects/projects/project-qualifications/epq-7993/specification",
       },
     ],
     reviewed: R,

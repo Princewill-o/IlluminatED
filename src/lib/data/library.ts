@@ -321,7 +321,7 @@ export const LIBRARY: LibraryResource[] = [
   },
   {
     name: "MolView",
-    url: "https://molview.org/",
+    url: "https://app.molview.com/",
     description: "Draw and view molecules in 3D.",
     category: "Chemistry",
     subjects: ["Chemistry"],
@@ -413,7 +413,7 @@ export const LIBRARY: LibraryResource[] = [
   // Geography & economics
   {
     name: "ArcGIS Living Atlas",
-    url: "https://livingatlas.arcgis.com/",
+    url: "https://livingatlas.arcgis.com/en/home/",
     description: "Maps and geographic data layers.",
     category: "Geography & economics",
     subjects: ["Geography"],

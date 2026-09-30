@@ -2,6 +2,7 @@ import type { Topic } from "@/lib/types";
 
 const R = "2026-09-30";
 const V = "1.0";
+const V_UPDATED = "1.1";
 
 export const GCSE_TOPICS_B: Topic[] = [
   {
@@ -20,7 +21,7 @@ export const GCSE_TOPICS_B: Topic[] = [
       "Relative charges: proton +1, neutron 0, electron −1. Relative masses: proton 1, neutron 1, electron very small (about 1/2000).",
       "Atomic number = number of protons (and electrons in a neutral atom). Mass number = protons + neutrons, so neutrons = mass number − atomic number.",
       "Isotopes are atoms of the same element with the same number of protons but different numbers of neutrons.",
-      "For the first 20 elements, electrons fill shells as 2, 8, 8, 2. Sodium (11 electrons) is 2,8,1.",
+      "For the first 20 elements, the first shell holds up to 2 electrons and the second and third shells hold up to 8 each, e.g. sodium (11 electrons) is 2,8,1 and calcium (20 electrons) is 2,8,8,2.",
     ],
     workedExample: {
       question:
@@ -96,8 +97,16 @@ export const GCSE_TOPICS_B: Topic[] = [
         explain: "The first shell holds 2, leaving 6 in the second shell.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8462",
+        section: "4.1.1 A simple model of the atom",
+        url: "https://www.aqa.org.uk/subjects/chemistry/gcse/chemistry-8462/specification",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "gcse-chem-bonding",
@@ -187,6 +196,14 @@ export const GCSE_TOPICS_B: Topic[] = [
         ],
         answer: 2,
         explain: "Diamond is a giant covalent structure.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8462",
+        section: "4.2.1 Chemical bonds (ionic, covalent)",
+        url: "https://www.aqa.org.uk/subjects/chemistry/gcse/chemistry-8462/specification",
       },
     ],
     reviewed: R,
@@ -281,6 +298,14 @@ export const GCSE_TOPICS_B: Topic[] = [
         explain: "Energy is measured in joules (J).",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8463",
+        section: "4.1.1 Energy stores and systems",
+        url: "https://www.aqa.org.uk/subjects/physics/gcse/physics-8463/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -364,6 +389,14 @@ export const GCSE_TOPICS_B: Topic[] = [
         answer: 2,
         explain:
           "Constant velocity means no acceleration, so the resultant force is zero.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8463",
+        section: "4.5 Forces; 4.5.6.2 Newton's laws",
+        url: "https://www.aqa.org.uk/subjects/physics/gcse/physics-8463/specification",
       },
     ],
     reviewed: R,
@@ -456,6 +489,14 @@ export const GCSE_TOPICS_B: Topic[] = [
           "Provenance covers who made the source, when and for what purpose.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8145",
+        section: "AO3 source analysis",
+        url: "https://www.aqa.org.uk/subjects/history/gcse/history-8145/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -514,7 +555,7 @@ export const GCSE_TOPICS_B: Topic[] = [
         a: "A denser oceanic plate subducts under another plate, causing earthquakes and explosive volcanoes.",
       },
       {
-        q: "Name the four Ps of hazard management.",
+        q: "Name the four ways of managing (reducing the risk of) tectonic hazards.",
         a: "Monitoring, prediction, protection, planning.",
       },
       {
@@ -544,8 +585,16 @@ export const GCSE_TOPICS_B: Topic[] = [
         explain: "Collapse happens immediately as the ground shakes.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8035",
+        section: "3.1.1.2 Tectonic hazards",
+        url: "https://www.aqa.org.uk/subjects/geography/gcse/geography-8035/specification",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "gcse-cs-binary",
@@ -562,7 +611,7 @@ export const GCSE_TOPICS_B: Topic[] = [
       "Computers use binary (base 2) because their circuits have two states: on and off. Each binary digit is a bit.",
       "In an 8-bit number the place values are 128, 64, 32, 16, 8, 4, 2, 1. For example, 01001101 = 64 + 8 + 4 + 1 = 77.",
       "Hexadecimal (base 16) uses 0–9 and A–F (A = 10 … F = 15). Each hex digit represents exactly 4 bits (a nibble), so 1111 0101 = F5.",
-      "Units: 8 bits = 1 byte. Many GCSE specifications use 1 kilobyte = 1000 bytes; some also mention 1024 (kibibyte). Check which your board expects.",
+      "Units: 8 bits = 1 byte and 4 bits = 1 nibble. OCR uses 1 kilobyte (KB) = 1000 bytes but also accepts 1024. AQA uses 1 kB = 1000 bytes and 1 kibibyte (KiB) = 1024 bytes. Pearson Edexcel uses binary multiples, e.g. 1 kibibyte (KiB) = 1024 bytes. Check which your board expects.",
     ],
     workedExample: {
       question: "Convert 1011 0110 to denary and hexadecimal.",
@@ -624,7 +673,25 @@ export const GCSE_TOPICS_B: Topic[] = [
         explain: "One byte is 8 bits.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8525",
+        section: "3.3 Fundamentals of data representation",
+        url: "https://www.aqa.org.uk/subjects/computer-science-and-it/gcse/computer-science-8525/specification",
+      },
+      {
+        board: "OCR",
+        code: "J277",
+        section: "1.2 Memory and storage",
+      },
+      {
+        board: "Pearson",
+        code: "1CP2",
+        section: "Topic 2 Data",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
 ];

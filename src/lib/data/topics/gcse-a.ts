@@ -2,6 +2,7 @@ import type { Topic } from "@/lib/types";
 
 const R = "2026-09-30";
 const V = "1.0";
+const V_UPDATED = "1.1";
 
 export const GCSE_TOPICS_A: Topic[] = [
   {
@@ -102,6 +103,14 @@ export const GCSE_TOPICS_A: Topic[] = [
         explain: "Change £3,000 ÷ original £12,000 × 100 = 25%.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8300",
+        section: "R9 percentages; N12, R16 compound interest",
+        url: "https://www.aqa.org.uk/subjects/mathematics/gcse/mathematics-8300/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -194,6 +203,14 @@ export const GCSE_TOPICS_A: Topic[] = [
         explain: "Multiply by 3: x + 5 = 12, so x = 7.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8300",
+        section: "A17 linear equations",
+        url: "https://www.aqa.org.uk/subjects/mathematics/gcse/mathematics-8300/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -218,7 +235,7 @@ export const GCSE_TOPICS_A: Topic[] = [
       question:
         "Analyse: 'The wind clawed at the windows, desperate to get in.'",
       steps: [
-        "Method: personification. The wind is given animal-like, human-like intent.",
+        "Method: personification. The wind is given a human feeling ('desperate'), and the verb 'clawed' adds animal-like imagery.",
         "Zoom in: 'clawed' suggests sharp, violent, animal movement.",
         "Effect: the weather feels threatening and alive; 'desperate' adds urgency and makes the house feel under attack.",
         "Purpose: builds tension and a sense of danger for the reader.",
@@ -307,8 +324,16 @@ export const GCSE_TOPICS_A: Topic[] = [
           "It explains the connotation and links it to the reader's response.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8700",
+        section: "AO2 — Paper 1 and Paper 2, Section A (Reading)",
+        url: "https://www.aqa.org.uk/subjects/english/gcse/english-language-8700/specification",
+      },
+    ],
     reviewed: R,
-    version: V,
+    version: V_UPDATED,
   },
   {
     id: "gcse-englit-essay-writing",
@@ -400,6 +425,14 @@ export const GCSE_TOPICS_A: Topic[] = [
         answer: 1,
         explain:
           "Context should explain the writer's choices and the text's ideas.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8702",
+        section: "AO1–AO4, Papers 1 and 2",
+        url: "https://www.aqa.org.uk/subjects/english/gcse/english-literature-8702/specification",
       },
     ],
     reviewed: R,
@@ -506,6 +539,14 @@ export const GCSE_TOPICS_A: Topic[] = [
         explain: "25 ÷ 0.05 = 500.",
       },
     ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8461",
+        section: "4.1.1 Cell structure",
+        url: "https://www.aqa.org.uk/subjects/biology/gcse/biology-8461/specification",
+      },
+    ],
     reviewed: R,
     version: V,
   },
@@ -590,6 +631,14 @@ export const GCSE_TOPICS_A: Topic[] = [
         ],
         answer: 1,
         explain: "Only a substrate that fits the active site's shape can bind.",
+      },
+    ],
+    specRefs: [
+      {
+        board: "AQA",
+        code: "8461",
+        section: "4.2.2.1 The human digestive system",
+        url: "https://www.aqa.org.uk/subjects/biology/gcse/biology-8461/specification",
       },
     ],
     reviewed: R,

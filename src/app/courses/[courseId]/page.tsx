@@ -77,6 +77,14 @@ export default async function CoursePage({
             </dd>
           </div>
         </dl>
+        {c.specCodes?.length ? (
+          <p className="text-muted-foreground mt-3 max-w-3xl text-sm">
+            Specification codes:{" "}
+            <span className="text-foreground font-medium">
+              {c.specCodes.map((s) => `${s.board} ${s.code}`).join(" · ")}
+            </span>
+          </p>
+        ) : null}
       </PageHeader>
 
       <Section rule={false} className="pb-0">

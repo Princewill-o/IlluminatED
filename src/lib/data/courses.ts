@@ -123,6 +123,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-maths-percentages", "gcse-maths-linear-equations"],
     register: { title: "Mathematics", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8300" },
+      { board: "Pearson Edexcel", code: "1MA1" },
+      { board: "OCR", code: "J560" },
+      { board: "Eduqas", code: "C300QS" },
+    ],
   }),
   gcse({
     id: "gcse-english-language",
@@ -154,6 +160,12 @@ export const COURSES: Course[] = [
       title: "English Language",
       qualificationTypes: "GCSE (9 to 1)",
     },
+    specCodes: [
+      { board: "AQA", code: "8700" },
+      { board: "Pearson Edexcel", code: "1EN0" },
+      { board: "OCR", code: "J351" },
+      { board: "Eduqas", code: "C700QS" },
+    ],
   }),
   gcse({
     id: "gcse-english-literature",
@@ -183,6 +195,12 @@ export const COURSES: Course[] = [
       title: "English Literature",
       qualificationTypes: "GCSE (9 to 1)",
     },
+    specCodes: [
+      { board: "AQA", code: "8702" },
+      { board: "Pearson Edexcel", code: "1ET0" },
+      { board: "OCR", code: "J352" },
+      { board: "Eduqas", code: "C720QS" },
+    ],
   }),
   gcse({
     id: "gcse-biology",
@@ -212,6 +230,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-bio-cells", "gcse-bio-enzymes"],
     register: { title: "Biology", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8461" },
+      { board: "Pearson Edexcel", code: "1BI0" },
+      { board: "OCR", code: "J247 (Gateway A)" },
+    ],
   }),
   gcse({
     id: "gcse-chemistry",
@@ -242,6 +265,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-chem-atomic-structure", "gcse-chem-bonding"],
     register: { title: "Chemistry", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8462" },
+      { board: "Pearson Edexcel", code: "1CH0" },
+      { board: "OCR", code: "J248" },
+    ],
   }),
   gcse({
     id: "gcse-physics",
@@ -272,6 +300,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-phys-energy", "gcse-phys-forces"],
     register: { title: "Physics", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8463" },
+      { board: "Pearson Edexcel", code: "1PH0" },
+      { board: "OCR", code: "J249" },
+    ],
   }),
   gcse({
     id: "gcse-combined-science",
@@ -304,6 +337,12 @@ export const COURSES: Course[] = [
       title: "Combined Science",
       qualificationTypes: "GCSE (9 to 1)",
     },
+    specCodes: [
+      { board: "AQA", code: "8464 (Trilogy)" },
+      { board: "AQA", code: "8465 (Synergy)" },
+      { board: "Pearson Edexcel", code: "1SC0" },
+      { board: "OCR", code: "J250" },
+    ],
   }),
   gcse({
     id: "gcse-history",
@@ -330,6 +369,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-history-sources"],
     register: { title: "History", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8145" },
+      { board: "Pearson Edexcel", code: "1HI0" },
+      { board: "OCR", code: "J410" },
+      { board: "Eduqas", code: "C100QS" },
+    ],
   }),
   gcse({
     id: "gcse-geography",
@@ -357,6 +402,15 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-geog-tectonics"],
     register: { title: "Geography", qualificationTypes: "GCSE (9 to 1)" },
+    specCodes: [
+      { board: "AQA", code: "8035" },
+      { board: "Pearson Edexcel", code: "1GA0" },
+      { board: "Pearson Edexcel", code: "1GB0" },
+      { board: "OCR", code: "J383" },
+      { board: "OCR", code: "J384" },
+      { board: "Eduqas", code: "C111QS" },
+      { board: "Eduqas", code: "C112QS" },
+    ],
   }),
   gcse({
     id: "gcse-computer-science",
@@ -388,6 +442,12 @@ export const COURSES: Course[] = [
       title: "Computer Science",
       qualificationTypes: "GCSE (9 to 1)",
     },
+    specCodes: [
+      { board: "AQA", code: "8525" },
+      { board: "Pearson Edexcel", code: "1CP2" },
+      { board: "OCR", code: "J277" },
+      { board: "Eduqas", code: "C500QS" },
+    ],
   }),
 
   // ——— A level ———
@@ -422,6 +482,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["alevel-maths-differentiation"],
     register: { title: "Mathematics", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7357" },
+      { board: "Pearson Edexcel", code: "9MA0" },
+      { board: "OCR", code: "H240" },
+    ],
   }),
   alevel({
     id: "alevel-further-maths",
@@ -454,6 +519,11 @@ export const COURSES: Course[] = [
       title: "Further Mathematics",
       qualificationTypes: "GCE A Level",
     },
+    specCodes: [
+      { board: "AQA", code: "7367" },
+      { board: "Pearson Edexcel", code: "9FM0" },
+      { board: "OCR", code: "H245" },
+    ],
   }),
   alevel({
     id: "alevel-biology",
@@ -485,6 +555,13 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["alevel-bio-cell-division"],
     register: { title: "Biology", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7402" },
+      { board: "Pearson Edexcel", code: "9BN0 (A)" },
+      { board: "Pearson Edexcel", code: "9BI0 (B)" },
+      { board: "OCR", code: "H420" },
+      { board: "Eduqas", code: "A400QS" },
+    ],
   }),
   alevel({
     id: "alevel-chemistry",
@@ -516,6 +593,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["alevel-chem-equilibria"],
     register: { title: "Chemistry", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7405" },
+      { board: "Pearson Edexcel", code: "9CH0" },
+      { board: "OCR", code: "H432" },
+      { board: "Eduqas", code: "A410QS" },
+    ],
   }),
   alevel({
     id: "alevel-physics",
@@ -549,6 +632,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: [],
     register: { title: "Physics", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7408" },
+      { board: "Pearson Edexcel", code: "9PH0" },
+      { board: "OCR", code: "H556" },
+      { board: "Eduqas", code: "A420QS" },
+    ],
   }),
   alevel({
     id: "alevel-psychology",
@@ -581,6 +670,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["alevel-psych-research-methods"],
     register: { title: "Psychology", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7182" },
+      { board: "Pearson Edexcel", code: "9PS0" },
+      { board: "OCR", code: "H567" },
+      { board: "Eduqas", code: "A290QS" },
+    ],
   }),
   alevel({
     id: "alevel-english-literature",
@@ -610,6 +705,13 @@ export const COURSES: Course[] = [
       title: "English Literature",
       qualificationTypes: "GCE A Level",
     },
+    specCodes: [
+      { board: "AQA", code: "7712 (A)" },
+      { board: "AQA", code: "7717 (B)" },
+      { board: "Pearson Edexcel", code: "9ET0" },
+      { board: "OCR", code: "H472" },
+      { board: "Eduqas", code: "A720QS" },
+    ],
   }),
   alevel({
     id: "alevel-history",
@@ -636,6 +738,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: [],
     register: { title: "History", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7042" },
+      { board: "Pearson Edexcel", code: "9HI0" },
+      { board: "OCR", code: "H505" },
+    ],
   }),
   alevel({
     id: "alevel-economics",
@@ -667,6 +774,13 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["alevel-econ-supply-demand"],
     register: { title: "Economics", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7136" },
+      { board: "Pearson Edexcel", code: "9EC0 (A)" },
+      { board: "Pearson Edexcel", code: "9EB0 (B)" },
+      { board: "OCR", code: "H460" },
+      { board: "Eduqas", code: "A520QS" },
+    ],
   }),
   alevel({
     id: "alevel-computer-science",
@@ -697,6 +811,11 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["gcse-cs-binary"],
     register: { title: "Computer Science", qualificationTypes: "GCE A Level" },
+    specCodes: [
+      { board: "AQA", code: "7517" },
+      { board: "OCR", code: "H446" },
+      { board: "Eduqas", code: "A500QS" },
+    ],
   }),
 
   // ——— BTEC ———
@@ -868,8 +987,8 @@ export const COURSES: Course[] = [
   // ——— T Levels ———
   tlevel({
     id: "tlevel-digital-production",
-    subject: "Digital Production, Design and Development",
-    title: "T Level in Digital Production, Design and Development",
+    subject: "Digital Software Development",
+    title: "T Level in Digital Software Development",
     group: "Digital and IT",
     boards: ["pearson"],
     boardFixed: true,
@@ -891,11 +1010,12 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["digital-cyber-threats"],
     register: { title: "Digital Production, Design and Development" },
+    statusNote: "Previously Digital Production, Design and Development.",
   }),
   tlevel({
     id: "tlevel-digital-support",
-    subject: "Digital Support Services",
-    title: "T Level in Digital Support Services",
+    subject: "Digital Support and Security",
+    title: "T Level in Digital Support and Security",
     group: "Digital and IT",
     boards: ["pearson"],
     boardFixed: true,
@@ -916,13 +1036,14 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["digital-cyber-threats"],
     register: { title: "Digital Support Services" },
+    statusNote: "Previously Digital Support Services.",
   }),
   tlevel({
     id: "tlevel-health",
     subject: "Health",
     title: "T Level in Health",
     group: "Health and science",
-    boards: ["ncfe"],
+    boards: ["pearson", "ncfe"],
     boardFixed: true,
     summary:
       "Healthcare knowledge with occupational specialisms such as supporting the adult nursing team.",
@@ -946,6 +1067,8 @@ export const COURSES: Course[] = [
       title: "Health",
       qualificationTypes: "Technical Qualification",
     },
+    statusNote:
+      "From September 2026 new students take the Pearson T Level in Health (610/7438/X). Students who started earlier stay on NCFE.",
   }),
   tlevel({
     id: "tlevel-healthcare-science",
@@ -970,13 +1093,14 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["tlevel-health-infection-control"],
     register: { title: "Healthcare Science" },
+    statusNote: "No new starts after September 2025.",
   }),
   tlevel({
     id: "tlevel-science",
     subject: "Science",
     title: "T Level in Science",
     group: "Health and science",
-    boards: ["ncfe"],
+    boards: ["pearson", "ncfe"],
     boardFixed: true,
     summary: "Laboratory and technical science roles.",
     assessment:
@@ -990,6 +1114,8 @@ export const COURSES: Course[] = [
     studySequence: ["Core science", "Lab practice", "Specialism", "Placement"],
     topicIds: [],
     register: { title: "T Level Technical Qualification in Science" },
+    statusNote:
+      "From September 2026 new students take the Pearson T Level in Science. Students who started earlier stay on NCFE.",
   }),
   tlevel({
     id: "tlevel-education-early-years",
@@ -1068,6 +1194,8 @@ export const COURSES: Course[] = [
     ],
     topicIds: [],
     register: { title: "Onsite Construction" },
+    statusNote:
+      "This T Level has been withdrawn by the Department for Education, so there are no new starts. Students already on the course should check with their college.",
   }),
   tlevel({
     id: "tlevel-accounting",
@@ -1227,7 +1355,7 @@ export const COURSES: Course[] = [
     subject: "Core Maths",
     title: "Core Maths (Level 3)",
     group: "Academic",
-    boards: ["aqa", "pearson", "ocr", "wjec", "cityguilds"],
+    boards: ["aqa", "ocr", "pearson"],
     level: "Level 3",
     summary:
       "Applied maths for students who passed GCSE maths but are not taking A level Maths.",
@@ -1255,6 +1383,8 @@ export const COURSES: Course[] = [
       },
     ],
     register: { title: "Mathematical Studies" },
+    statusNote:
+      "Approved Core Maths qualifications: AQA Mathematical Studies (1350), OCR Core Maths A (MEI) and B (MEI), and Pearson Edexcel Mathematics in Context.",
   }),
   other({
     id: "epq",
@@ -1283,6 +1413,7 @@ export const COURSES: Course[] = [
     ],
     topicIds: ["epq-planning"],
     register: { title: "Extended Project" },
+    specCodes: [{ board: "AQA", code: "7993" }],
   }),
   other({
     id: "applied-general",

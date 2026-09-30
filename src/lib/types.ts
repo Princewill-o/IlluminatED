@@ -60,6 +60,8 @@ export interface Course {
   register: RegisterQuery;
   lastChecked: string;
   statusNote?: string;
+  /** Specification codes by awarding organisation, e.g. AQA 8300. */
+  specCodes?: { board: string; code: string }[];
 }
 
 export interface QuizQuestion {
@@ -68,6 +70,13 @@ export interface QuizQuestion {
   options: string[];
   answer: number;
   explain: string;
+}
+
+export interface SpecRef {
+  board: string;
+  code: string;
+  section: string;
+  url?: string;
 }
 
 export interface Topic {
@@ -82,6 +91,8 @@ export interface Topic {
   misconceptions: { wrong: string; right: string }[];
   retrieval: { q: string; a: string }[];
   quiz: QuizQuestion[];
+  /** Where this topic sits in awarding-organisation specifications (checked against the boards' own documents). */
+  specRefs?: SpecRef[];
   reviewed: string;
   version: string;
 }

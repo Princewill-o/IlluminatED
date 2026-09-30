@@ -8,7 +8,7 @@ import { QuizPlayer } from "@/components/quiz-player";
 import { RecordVisit, TopicTools } from "@/components/widgets";
 import { COURSES, courseById } from "@/lib/data/courses";
 import { routeById } from "@/lib/data/routes";
-import { topicById } from "@/lib/data/topics";
+import { SPEC_REFS_CHECKED, specRefLabel, topicById } from "@/lib/data/topics";
 
 export function generateStaticParams() {
   return COURSES.flatMap((c) =>
@@ -116,6 +116,39 @@ export default async function TopicPage({
                 <li key={o}>{o}</li>
               ))}
             </ul>
+            {t.specRefs?.length ? (
+              <div className="bg-card mt-6 rounded-xl border p-4 text-sm">
+                <p className="font-medium" id="spec-refs">
+                  Matches the specification
+                </p>
+                <ul
+                  aria-labelledby="spec-refs"
+                  className="text-muted-foreground mt-2 space-y-1"
+                >
+                  {t.specRefs.map((ref) => (
+                    <li key={`${ref.board}-${ref.code}-${ref.section}`}>
+                      {ref.url ? (
+                        <a
+                          href={ref.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-foreground underline underline-offset-4"
+                        >
+                          {specRefLabel(ref)}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      ) : (
+                        specRefLabel(ref)
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-muted-foreground mt-3 text-xs">
+                  These notes are original IlluminatED material, not exam-board
+                  content. Specification references checked {SPEC_REFS_CHECKED}.
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <section aria-labelledby="explanation">

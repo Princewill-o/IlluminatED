@@ -11,7 +11,12 @@ import { Callout, fieldCls, labelCls } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import { COURSES } from "@/lib/data/courses";
 import { ROUTES } from "@/lib/data/routes";
-import { type BankQuestion, QUESTION_BANK, TOPICS } from "@/lib/data/topics";
+import {
+  type BankQuestion,
+  QUESTION_BANK,
+  specRefShort,
+  TOPICS,
+} from "@/lib/data/topics";
 import { STORAGE_KEYS, useStored } from "@/lib/storage";
 import type { RouteId } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -588,7 +593,9 @@ export function QuizPlayer({
         </Button>
       </div>
       <p className="text-muted-foreground text-xs">
-        {q.source} · v{q.version} · reviewed{" "}
+        {q.source}
+        {q.specRefs?.[0] ? ` · ${specRefShort(q.specRefs[0])}` : ""} · v
+        {q.version} · reviewed{" "}
         {new Date(q.reviewed).toLocaleDateString("en-GB")}
       </p>
     </div>
