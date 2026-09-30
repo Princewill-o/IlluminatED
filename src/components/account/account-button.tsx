@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { LogOut } from "lucide-react";
+
 import { socialConfigured } from "@/lib/social/config";
+import { browserSupabase } from "@/lib/supabase-browser";
 import { useSignedIn } from "@/lib/use-signed-in";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +28,35 @@ export function AccountButton({ className }: { className?: string }) {
   const base =
     "inline-flex h-9 items-center rounded-md px-3.5 text-sm font-semibold transition-colors";
   return signedIn ? (
-    <Link
-      href="/dashboard"
-      aria-current={pathname.startsWith("/dashboard") ? "page" : undefined}
-      className={cn(base, "hover:bg-muted border", className)}
+    <div
+      className={cn(
+        "flex items-center gap-2",
+        className?.includes("w-full") && "w-full",
+      )}
     >
-      Dashboard
-    </Link>
+      <Link
+        href="/dashboard"
+        aria-current={pathname.startsWith("/dashboard") ? "page" : undefined}
+        className={cn(base, "hover:bg-muted border", className)}
+      >
+        Dashboard
+      </Link>
+      <button
+        type="button"
+        onClick={async () => {
+          await browserSupabase()?.auth.signOut();
+          window.location.assign("/");
+        }}
+        className={cn(
+          base,
+          "bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5",
+          className,
+        )}
+      >
+        <LogOut className="size-4" aria-hidden />
+        Log out
+      </button>
+    </div>
   ) : (
     <Link
       href={`/sign-in?next=${encodeURIComponent(pathname === "/sign-in" || pathname === "/" ? "/dashboard" : pathname)}`}
