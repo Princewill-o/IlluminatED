@@ -6,6 +6,7 @@ import { Footer } from "@/components/blocks/footer";
 import { Navbar } from "@/components/blocks/navbar";
 import { HideOnSocial } from "@/components/hide-on-social";
 import { OfflineBanner } from "@/components/offline-banner";
+import { SplashScreen, splashBootScript } from "@/components/splash-screen";
 import { ThemeProvider } from "@/components/theme-provider";
 import "@/styles/globals.css";
 
@@ -90,6 +91,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en-GB" suppressHydrationWarning>
+      <head>
+        {splashBootScript && (
+          <script dangerouslySetInnerHTML={{ __html: splashBootScript }} />
+        )}
+      </head>
       <body className={`${dmSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
@@ -97,6 +103,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <SplashScreen />
           <a href="#main" className="skip-link">
             Skip to content
           </a>

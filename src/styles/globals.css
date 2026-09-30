@@ -360,3 +360,39 @@ body {
 body:has(.social) {
   background-color: #09080d;
 }
+
+/* ─── Opening screen (src/components/splash-screen.tsx) ─── */
+html.splash-done #splash {
+  display: none;
+}
+html.splash-active,
+html.splash-active body {
+  overflow: hidden;
+}
+/* If scripts never load, don't trap people behind the splash. */
+#splash {
+  animation: splash-fallback 0.4s ease 6.5s forwards;
+}
+@keyframes splash-fallback {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+/* On IlluminatEDSocial pages the splash uses the forum's black and purple. */
+body:has(.social) #splash {
+  background: #09080d;
+}
+body:has(.social) #splash .splash-dot {
+  background: rgb(255 255 255 / 12%);
+}
+body:has(.social) #splash .splash-dot.active {
+  background: #a67fff;
+}
+body:has(.social) #splash .splash-wordmark-light {
+  display: none;
+}
+body:has(.social) #splash .splash-wordmark-dark {
+  display: block;
+}
