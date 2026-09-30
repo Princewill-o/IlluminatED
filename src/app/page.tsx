@@ -1,5 +1,4 @@
 import { AppPreview } from "@/components/app-preview";
-import { Mascot } from "@/components/brand";
 import {
   CountdownDemo,
   CtaButtons,
@@ -7,6 +6,7 @@ import {
   GradeDemo,
   Reveal,
 } from "@/components/landing";
+import { Tiggy } from "@/components/tiggy";
 
 const QUALIFICATIONS = [
   "GCSE",
@@ -44,8 +44,14 @@ export default function Home() {
           </p>
         </Reveal>
         <Reveal delay={0.1}>
-          <div className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[2.5rem] bg-[#efe3cc] dark:bg-[#2a2317]">
-            <Mascot className="mx-auto mt-10 w-[86%]" />
+          <div className="relative mx-auto w-full max-w-[420px] rounded-[2.5rem] bg-[#efe3cc] px-8 pt-16 dark:bg-[#2a2317]">
+            <Tiggy
+              action="wave"
+              priority
+              say="Hi, I'm Tiggy! Let's get you ready for exam day."
+              sayClassName="left-[48%] -top-[2%]"
+              label="Tiggy the IlluminatED lion, waving hello"
+            />
           </div>
         </Reveal>
       </section>
@@ -61,14 +67,20 @@ export default function Home() {
       </section>
 
       <section className="container py-16 lg:py-24" aria-labelledby="try-title">
-        <Reveal className="max-w-2xl">
-          <h2 id="try-title" className="text-3xl tracking-tight md:text-4xl">
-            Try it
-          </h2>
-          <p className="text-muted-foreground mt-3 text-lg">
-            Two things from your dashboard. Pick your qualification, or drag the
-            slider.
-          </p>
+        <Reveal className="flex items-end justify-between gap-6">
+          <div className="max-w-2xl">
+            <h2 id="try-title" className="text-3xl tracking-tight md:text-4xl">
+              Try it
+            </h2>
+            <p className="text-muted-foreground mt-3 text-lg">
+              Two things from your dashboard. Pick your qualification, or drag
+              the slider.
+            </p>
+          </div>
+          <Tiggy
+            action="time"
+            className="hidden w-28 shrink-0 sm:block lg:w-32"
+          />
         </Reveal>
         <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <Reveal>
@@ -84,16 +96,23 @@ export default function Home() {
         className="container pb-16 lg:pb-24"
         aria-labelledby="features-title"
       >
-        <Reveal className="max-w-2xl">
-          <h2
-            id="features-title"
-            className="text-3xl tracking-tight md:text-4xl"
-          >
-            Everything in one account
-          </h2>
-          <p className="text-muted-foreground mt-3 text-lg">
-            Sign up once. It works for the revision site and the student forum.
-          </p>
+        <Reveal className="flex items-end justify-between gap-6">
+          <div className="max-w-2xl">
+            <h2
+              id="features-title"
+              className="text-3xl tracking-tight md:text-4xl"
+            >
+              Everything in one account
+            </h2>
+            <p className="text-muted-foreground mt-3 text-lg">
+              Sign up once. It works for the revision site and the student
+              forum.
+            </p>
+          </div>
+          <Tiggy
+            action="read"
+            className="hidden w-28 shrink-0 sm:block lg:w-32"
+          />
         </Reveal>
         <div className="mt-10">
           <FeatureGrid />
@@ -104,6 +123,7 @@ export default function Home() {
 
       <section className="container py-20 text-center lg:py-28">
         <Reveal>
+          <Tiggy action="graduate" className="mx-auto mb-8 w-36 md:w-44" />
           <h2 className="mx-auto max-w-2xl text-3xl tracking-tight text-balance md:text-5xl">
             Start training for exam day.
           </h2>

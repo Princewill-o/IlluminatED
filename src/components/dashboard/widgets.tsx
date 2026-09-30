@@ -9,6 +9,7 @@ import { motion } from "motion/react";
 
 import { Status, Submit } from "@/components/account/forms-common";
 import { fieldCls } from "@/components/kit";
+import { Tiggy } from "@/components/tiggy";
 import { setExamDate } from "@/lib/account/actions";
 import { cn } from "@/lib/utils";
 
@@ -174,8 +175,12 @@ export function ExamCountdown({
         </Link>
       </div>
 
-      <div className="bg-card flex flex-col justify-between rounded-3xl border p-6 sm:p-8">
-        <div>
+      <div className="bg-card relative flex flex-col justify-between overflow-hidden rounded-3xl border p-6 sm:p-8">
+        <Tiggy
+          action={weekPct >= 1 ? "celebrate" : "read"}
+          className="absolute -right-3 -bottom-2 w-24 opacity-95 sm:w-28"
+        />
+        <div className="pr-20">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Target className="text-primary size-4" aria-hidden />
             This week's target
@@ -185,7 +190,7 @@ export function ExamCountdown({
             stage.
           </p>
         </div>
-        <div className="my-6 flex items-center gap-6">
+        <div className="relative my-6 flex items-center gap-6 pr-16">
           <Ring value={weekPct} />
           <div>
             <p className="text-4xl font-semibold tabular-nums">
@@ -200,7 +205,7 @@ export function ExamCountdown({
         </div>
         <Link
           href="/quizzes?mode=mixed"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 relative mr-20 inline-flex h-11 items-center justify-center rounded-full px-5 text-sm font-semibold sm:mr-24"
         >
           {weekPct >= 1 ? "Target hit. Keep going" : "Start a mixed quiz"}
         </Link>

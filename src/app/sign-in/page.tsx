@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { SignInForm } from "@/components/account/sign-in-form";
+import { Tiggy } from "@/components/tiggy";
 import { safeNext } from "@/lib/account/paths";
 import { getAccount } from "@/lib/account/server";
 import { socialConfigured } from "@/lib/social/config";
@@ -61,6 +62,12 @@ export default async function SignInPage({
         </div>
       </div>
       <div className="lg:border-l lg:pl-20">
+        <Tiggy
+          action="wave"
+          say="I'll show you around once you're in."
+          sayClassName="left-[70%] top-[6%]"
+          className="mb-8 hidden w-32 sm:block"
+        />
         <h2 className="text-lg font-semibold">What an account adds</h2>
         <dl className="mt-5 divide-y border-y text-sm">
           {[

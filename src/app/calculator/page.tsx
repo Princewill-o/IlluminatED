@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { type CalcKind, GradeCalculator } from "@/components/grade-calculator";
 import { PageHeader, Section } from "@/components/kit";
+import { Tiggy } from "@/components/tiggy";
 import { getAccount } from "@/lib/account/server";
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default async function CalculatorPage() {
           { label: "Dashboard", href: "/dashboard" },
           { label: "Grade calculator" },
         ]}
+        aside={<Tiggy action="think" className="w-32 lg:w-36" />}
       />
       <Section rule={false} className="pb-20">
         <GradeCalculator initial={initial} />

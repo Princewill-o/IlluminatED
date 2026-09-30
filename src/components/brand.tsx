@@ -62,7 +62,7 @@ export function Mascot({
     <span className={cn("relative block aspect-[797/960]", className)}>
       <Image
         src="/brand/mascot-light.webp"
-        alt="Leo the IlluminatED lion mascot, smiling, wearing a white IlluminatED T-shirt"
+        alt="Tiggy the IlluminatED lion, smiling, wearing a white IlluminatED T-shirt"
         fill
         sizes={sizes}
         priority={priority}
@@ -70,7 +70,7 @@ export function Mascot({
       />
       <Image
         src="/brand/mascot-dark.webp"
-        alt="Leo the IlluminatED lion mascot, smiling, wearing a navy IlluminatED T-shirt"
+        alt="Tiggy the IlluminatED lion, smiling, wearing a navy IlluminatED T-shirt"
         fill
         sizes={sizes}
         priority={priority}

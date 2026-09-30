@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { Note, PageHeader, Section } from "@/components/kit";
+import { Tiggy } from "@/components/tiggy";
 import { PriceTable } from "@/components/tutoring/price-table";
 import { getAccount } from "@/lib/account/server";
 import { getPrices } from "@/lib/tutoring-server";
@@ -42,6 +43,7 @@ export default async function TutorsPage() {
         title="Get help from a tutor"
         intro="One-to-one help with homework, coursework and exam preparation from tutors who know your subject. You choose how fast you need them."
         crumbs={[{ label: "Home", href: "/" }, { label: "Tutoring" }]}
+        aside={<Tiggy action="search" className="w-32 lg:w-36" />}
       >
         <Link
           href={cta}

@@ -12,6 +12,7 @@ import {
 } from "@/components/dashboard/widgets";
 import { Empty, Section } from "@/components/kit";
 import { timeAgo } from "@/components/social/util";
+import { TiggyTour, TourButton } from "@/components/tiggy-tour";
 import {
   loadDashboard,
   STATUS_TEXT,
@@ -100,6 +101,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <TiggyTour userId={account.id} name={profile.username} />
       <header className="container pt-6 pb-8 lg:pt-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -121,6 +123,7 @@ export default async function DashboardPage() {
                 Tutor desk
               </Link>
             )}
+            <TourButton className="hover:bg-muted rounded-full border px-4 py-2 font-medium" />
             <Link
               href="/calculator"
               className="hover:bg-muted rounded-full border px-4 py-2 font-medium"

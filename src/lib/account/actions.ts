@@ -245,7 +245,9 @@ export async function saveDetails(
   revalidatePath("/dashboard");
   if (fd.get("mode") === "edit")
     return { ok: true, message: "Your details are saved." };
-  redirect(safeNext(fd.get("next")));
+  const dest = safeNext(fd.get("next"));
+  // First time on the dashboard: Tiggy says hello.
+  redirect(dest === "/dashboard" ? "/dashboard?welcome=1" : dest);
 }
 
 /** Sets (or clears) the learner's first exam date from the dashboard. */

@@ -10,25 +10,36 @@ export function PageHeader({
   intro,
   crumbs,
   children,
+  aside,
 }: {
   title: React.ReactNode;
   intro?: React.ReactNode;
   crumbs?: { label: string; href?: string }[];
   children?: React.ReactNode;
+  /** Optional illustration shown to the right on wider screens. */
+  aside?: React.ReactNode;
 }) {
   return (
     <header className="border-b">
-      <div className="container pt-10 pb-10 lg:pt-14 lg:pb-12">
-        {crumbs && <Crumbs items={crumbs} />}
-        <h1 className="max-w-3xl text-4xl tracking-tight text-balance md:text-5xl">
-          {title}
-        </h1>
-        {intro && (
-          <div className="text-muted-foreground mt-4 max-w-2xl text-lg leading-relaxed">
-            {intro}
-          </div>
+      <div
+        className={cn(
+          "container pt-10 pb-10 lg:pt-14 lg:pb-12",
+          aside && "grid items-end gap-8 md:grid-cols-[1fr_auto]",
         )}
-        {children && <div className="mt-6">{children}</div>}
+      >
+        <div>
+          {crumbs && <Crumbs items={crumbs} />}
+          <h1 className="max-w-3xl text-4xl tracking-tight text-balance md:text-5xl">
+            {title}
+          </h1>
+          {intro && (
+            <div className="text-muted-foreground mt-4 max-w-2xl text-lg leading-relaxed">
+              {intro}
+            </div>
+          )}
+          {children && <div className="mt-6">{children}</div>}
+        </div>
+        {aside && <div className="hidden md:block">{aside}</div>}
       </div>
     </header>
   );

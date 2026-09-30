@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { DetailsForm } from "@/components/account/details-form";
+import { Tiggy } from "@/components/tiggy";
 import { safeNext } from "@/lib/account/paths";
 import { getAccount } from "@/lib/account/server";
 import { slimCourses, slimTopics } from "@/lib/account/slim";
@@ -23,6 +24,12 @@ export default async function OnboardingPage({
 
   return (
     <div className="container max-w-3xl py-12 lg:py-16">
+      <Tiggy
+        action="wave"
+        say="I'm Tiggy. Tell me what you study!"
+        sayClassName="left-[80%] top-[10%]"
+        className="mb-6 w-24"
+      />
       <h1 className="text-4xl tracking-tight">
         {account.profile
           ? `Welcome back, ${account.profile.username}`
