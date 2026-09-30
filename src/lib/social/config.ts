@@ -1,8 +1,19 @@
-export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+/**
+ * IlluminatED's Supabase project. These are the public, browser-safe values
+ * (the publishable key is shipped to every visitor anyway); the data is
+ * protected by Row Level Security in the database. Environment variables
+ * override them, e.g. to point a local copy at a different project.
+ * Never put a service_role or secret key here.
+ */
+const DEFAULT_SUPABASE_URL = "https://wfcihsbgkbjfvphzuuyi.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_MOwypIaox9OuKENpjbBwyA_oTV659oN";
+
+export const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 export const SUPABASE_KEY =
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-  "";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  DEFAULT_SUPABASE_KEY;
 
 /** Social is live only when a Supabase project is configured. Otherwise pages show a labelled preview. */
 export const socialConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY);

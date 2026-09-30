@@ -32,7 +32,7 @@ Checks: `npm run lint`, `npm run typecheck`, `npm run format`.
 
 | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Switches on accounts, the dashboard, tutoring and IlluminatEDSocial (see below). |
 
-No secret keys are needed or used. Never put a Supabase `service_role` or secret key in this app.
+No secret keys are needed or used. The project's public Supabase URL and publishable key are built in as defaults (`src/lib/social/config.ts`), so the site works on Vercel with no environment variables; set the variables above only to point at a different Supabase project. Never put a Supabase `service_role` or secret key in this app.
 
 ## Pages
 
