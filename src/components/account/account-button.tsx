@@ -1,31 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { socialConfigured } from "@/lib/social/config";
-import { browserSupabase } from "@/lib/supabase-browser";
+import { useSignedIn } from "@/lib/use-signed-in";
 import { cn } from "@/lib/utils";
 
 /** "Sign in" or "Dashboard", depending on whether there's a session in this browser. */
 export function AccountButton({ className }: { className?: string }) {
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const signedIn = useSignedIn();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const sb = browserSupabase();
-    if (!sb) {
-      setSignedIn(false);
-      return;
-    }
-    sb.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
-    const { data } = sb.auth.onAuthStateChange((_e, session) =>
-      setSignedIn(Boolean(session)),
-    );
-    return () => data.subscription.unsubscribe();
-  }, []);
 
   if (!socialConfigured) return null;
   // Keep the space stable while we check, so the header doesn't jump.
@@ -49,7 +34,7 @@ export function AccountButton({ className }: { className?: string }) {
     </Link>
   ) : (
     <Link
-      href={`/sign-in?next=${encodeURIComponent(pathname === "/sign-in" ? "/dashboard" : pathname)}`}
+      href={`/sign-in?next=${encodeURIComponent(pathname === "/sign-in" || pathname === "/" ? "/dashboard" : pathname)}`}
       className={cn(
         base,
         "bg-primary text-primary-foreground hover:bg-primary/90",

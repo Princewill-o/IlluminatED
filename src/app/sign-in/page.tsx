@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; mode?: string }>;
 }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
@@ -53,7 +53,11 @@ export default async function SignInPage({
           </p>
         )}
         <div className="mt-8">
-          <SignInForm next={next} disabled={!socialConfigured} />
+          <SignInForm
+            next={next}
+            disabled={!socialConfigured}
+            initialMode={sp.mode === "sign-up" ? "sign-up" : "sign-in"}
+          />
         </div>
       </div>
       <div className="lg:border-l lg:pl-20">

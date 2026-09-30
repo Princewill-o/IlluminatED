@@ -8,32 +8,75 @@ import {
   socialConfigured,
 } from "@/lib/social/config";
 
-/** Keeps the Supabase session fresh across the site. Does nothing if accounts aren't configured. */
+/** Pages anyone can open. Everything else needs an account. */
+const PUBLIC_PATHS = [
+  "/",
+  "/sign-in",
+  "/auth/callback",
+  "/about",
+  "/faq",
+  "/accessibility",
+  "/your-data",
+  "/social/guidelines",
+  "/social/sign-in",
+  "/social/welcome",
+  "/social/auth/callback",
+];
+
+const isPublic = (path: string) =>
+  PUBLIC_PATHS.some((p) => path === p || path === `${p}/`);
+
+/**
+ * Keeps the Supabase session fresh, sends signed-out visitors to sign in,
+ * and sends signed-in people from the landing page to their dashboard.
+ */
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   if (!socialConfigured) return response;
-  // Visitors who have never signed in have no session to refresh.
-  if (!request.cookies.getAll().some((c) => c.name.startsWith("sb-")))
-    return response;
 
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+  const path = request.nextUrl.pathname;
+  const hasSessionCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith("sb-"));
+
+  let signedIn = false;
+  if (hasSessionCookie) {
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(toSet, headers) {
+          toSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          toSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+          Object.entries(headers ?? {}).forEach(([k, v]) =>
+            response.headers.set(k, v as string),
+          );
+        },
       },
-      setAll(toSet, headers) {
-        toSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        toSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-        Object.entries(headers ?? {}).forEach(([k, v]) =>
-          response.headers.set(k, v as string),
-        );
-      },
-    },
-  });
-  await supabase.auth.getUser();
+    });
+    const { data } = await supabase.auth.getUser();
+    signedIn = Boolean(data.user);
+  }
+
+  const redirectTo = (url: URL) => {
+    const r = NextResponse.redirect(url);
+    // Keep any refreshed session cookies.
+    response.cookies.getAll().forEach((c) => r.cookies.set(c));
+    return r;
+  };
+
+  if (signedIn && path === "/")
+    return redirectTo(new URL("/dashboard", request.url));
+
+  if (!signedIn && !isPublic(path)) {
+    const url = new URL("/sign-in", request.url);
+    url.searchParams.set("next", path + request.nextUrl.search);
+    return redirectTo(url);
+  }
   return response;
 }
 

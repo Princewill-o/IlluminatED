@@ -53,7 +53,19 @@ export interface DashboardData {
   otherTopics: TopicStat[];
   rounds: RoundRow[];
   totals: { answered: number; correct: number; roundsThisWeek: number };
+  /** Last 8 weeks (Monday to Sunday), oldest first. Quiz rounds only, not imports. */
+  weekly: { label: string; start: string; answered: number; correct: number }[];
+  thisWeekAnswered: number;
+  mastery: Record<TopicStatus, number>;
   loadError: boolean;
+}
+
+/** Monday 00:00 (local server time) of the week containing d. */
+function weekStart(d: Date) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
 }
 
 const statusFor = (seen: number, accuracy: number | null): TopicStatus =>
@@ -87,8 +99,9 @@ export async function loadDashboard(
       .from("quiz_rounds")
       .select("mode, correct, total, created_at")
       .eq("user_id", userId)
+      .gte("created_at", new Date(Date.now() - 70 * 864e5).toISOString())
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(1000),
   ]);
 
   const byTopic = new Map<
@@ -209,6 +222,34 @@ export async function loadDashboard(
   const weekAgo = now - 7 * 864e5;
 
   const all = [...byTopic.values()];
+
+  const thisMonday = weekStart(new Date());
+  const weekly = Array.from({ length: 8 }, (_, i) => {
+    const start = new Date(thisMonday);
+    start.setDate(start.getDate() - (7 - i) * 7);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    const inWeek = roundRows.filter((r) => {
+      const t = new Date(r.createdAt).getTime();
+      return r.mode !== "import" && t >= start.getTime() && t < end.getTime();
+    });
+    return {
+      label: start.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      }),
+      start: start.toISOString(),
+      answered: inWeek.reduce((a, r) => a + r.total, 0),
+      correct: inWeek.reduce((a, r) => a + r.correct, 0),
+    };
+  });
+  const mastery: Record<TopicStatus, number> = {
+    "not-started": 0,
+    "needs-work": 0,
+    "getting-there": 0,
+    secure: 0,
+  };
+  mine.forEach((t) => (mastery[t.status] += 1));
   return {
     subjects,
     recommendations,
@@ -221,6 +262,9 @@ export async function loadDashboard(
         (r) => new Date(r.createdAt).getTime() > weekAgo && r.mode !== "import",
       ).length,
     },
+    weekly,
+    thisWeekAnswered: weekly[weekly.length - 1].answered,
+    mastery,
     loadError: Boolean(progress.error || rounds.error),
   };
 }

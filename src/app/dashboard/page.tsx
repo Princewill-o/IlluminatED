@@ -4,6 +4,12 @@ import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
 import { ImportProgress } from "@/components/account/import-progress";
+import {
+  ExamCountdown,
+  MasteryChart,
+  SubjectChart,
+  WeeklyChart,
+} from "@/components/dashboard/widgets";
 import { Empty, Section } from "@/components/kit";
 import { timeAgo } from "@/components/social/util";
 import {
@@ -88,20 +94,14 @@ export default async function DashboardPage() {
     listMyRequests(account.id),
   ]);
 
-  const daysToExam = details.examDate
-    ? Math.ceil(
-        (new Date(details.examDate + "T09:00:00").getTime() - Date.now()) /
-          864e5,
-      )
-    : null;
   const activeRequests = requests.filter(
     (r) => r.status === "open" || r.status === "matched",
   );
 
   return (
     <>
-      <header className="border-b">
-        <div className="container flex flex-wrap items-end justify-between gap-6 pt-10 pb-8 lg:pt-14">
+      <header className="container pt-6 pb-8 lg:pt-10">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="text-muted-foreground text-sm">
               {stageLabel(details.stage)} · {yearLabel(details.yearGroup)} ·{" "}
@@ -112,64 +112,59 @@ export default async function DashboardPage() {
               Hi, {profile.username}
             </h1>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             {isTutor(account) && (
               <Link
                 href="/tutors/desk"
-                className="hover:bg-muted rounded-md border px-4 py-2 font-medium"
+                className="hover:bg-muted rounded-full border px-4 py-2 font-medium"
               >
                 Tutor desk
               </Link>
             )}
             <Link
+              href="/calculator"
+              className="hover:bg-muted rounded-full border px-4 py-2 font-medium"
+            >
+              Grade calculator
+            </Link>
+            <Link
               href="/dashboard/settings"
-              className="hover:bg-muted rounded-md border px-4 py-2 font-medium"
+              className="hover:bg-muted rounded-full border px-4 py-2 font-medium"
             >
               Edit details
             </Link>
             <Link
               href="/tutors/request"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 font-semibold"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-2 font-semibold"
             >
               Request a tutor
             </Link>
           </div>
         </div>
-        <div className="container">
-          <dl className="grid grid-cols-2 border-t sm:grid-cols-4 sm:divide-x">
-            {[
-              [
-                "Questions answered",
-                data.totals.answered.toLocaleString("en-GB"),
-              ],
-              [
-                "Correct first time",
-                data.totals.answered
-                  ? pct(data.totals.correct / data.totals.answered)
-                  : "–",
-              ],
-              ["Quiz rounds this week", String(data.totals.roundsThisWeek)],
-              [
-                "Until your exam",
-                daysToExam === null
-                  ? "Not set"
-                  : daysToExam < 0
-                    ? "Passed"
-                    : `${daysToExam} day${daysToExam === 1 ? "" : "s"}`,
-              ],
-            ].map(([label, value]) => (
-              <div key={label} className="py-5 sm:px-6 sm:first:pl-0">
-                <dt className="text-muted-foreground text-xs">{label}</dt>
-                <dd className="mt-1 text-2xl font-semibold tracking-tight tabular-nums">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+        <div className="mt-8">
+          <ExamCountdown
+            examDate={details.examDate}
+            examLabel={
+              details.examDate
+                ? new Date(`${details.examDate}T12:00:00Z`).toLocaleDateString(
+                    "en-GB",
+                    {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      timeZone: "Europe/London",
+                    },
+                  )
+                : null
+            }
+            qualification={stageLabel(details.stage)}
+            thisWeekAnswered={data.thisWeekAnswered}
+          />
         </div>
       </header>
 
-      <div className="container pt-8">
+      <div className="container">
         <ImportProgress
           userId={account.id}
           topicCourses={Object.fromEntries(
@@ -183,6 +178,71 @@ export default async function DashboardPage() {
           </p>
         )}
       </div>
+
+      <section aria-labelledby="progress-title" className="container pt-6 pb-4">
+        <h2 id="progress-title" className="sr-only">
+          Your progress
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="bg-card rounded-3xl border p-6">
+            <div className="flex items-baseline justify-between gap-4">
+              <h3 className="font-semibold">Practice each week</h3>
+              <span className="text-muted-foreground text-xs">
+                Last 8 weeks
+              </span>
+            </div>
+            <dl className="mt-3 flex gap-6 text-sm">
+              <div>
+                <dt className="text-muted-foreground text-xs">Answered</dt>
+                <dd className="text-xl font-semibold tabular-nums">
+                  {data.totals.answered.toLocaleString("en-GB")}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground text-xs">
+                  Correct first time
+                </dt>
+                <dd className="text-xl font-semibold tabular-nums">
+                  {data.totals.answered
+                    ? pct(data.totals.correct / data.totals.answered)
+                    : "–"}
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-5">
+              <WeeklyChart weeks={data.weekly} />
+            </div>
+          </div>
+          <div className="bg-card rounded-3xl border p-6">
+            <h3 className="font-semibold">Score by subject</h3>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Correct first time in practice questions
+            </p>
+            <div className="mt-5">
+              {data.subjects.length ? (
+                <SubjectChart
+                  rows={data.subjects.map((s) => ({
+                    name: s.course.subject,
+                    accuracy: s.accuracy,
+                    answered: s.topics.reduce((a, t) => a + t.seen, 0),
+                  }))}
+                />
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Add subjects in your details to see them here.
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="bg-card rounded-3xl border p-6">
+            <h3 className="font-semibold">Topic mastery</h3>
+            <p className="text-muted-foreground mt-1 mb-5 text-xs">
+              Across the topics in your subjects
+            </p>
+            <MasteryChart counts={data.mastery} />
+          </div>
+        </div>
+      </section>
 
       <Section
         id="next"

@@ -247,3 +247,27 @@ export async function saveDetails(
     return { ok: true, message: "Your details are saved." };
   redirect(safeNext(fd.get("next")));
 }
+
+/** Sets (or clears) the learner's first exam date from the dashboard. */
+export async function setExamDate(
+  _: FormState,
+  fd: FormData,
+): Promise<FormState> {
+  const sb = await getSupabase();
+  if (!sb) return { error: NOT_CONNECTED };
+  const viewer = await getViewer();
+  if (!viewer) return { error: "Please sign in again." };
+  const raw = String(fd.get("examDate") ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return { error: "Choose a date." };
+  const d = new Date(`${raw}T12:00:00`);
+  const now = Date.now();
+  if (d.getTime() < now - 864e5 || d.getTime() > now + 3 * 365 * 864e5)
+    return { error: "Choose a date in the next three years." };
+  const { error } = await sb
+    .from("learner_details")
+    .update({ exam_date: raw, updated_at: new Date().toISOString() })
+    .eq("user_id", viewer.id);
+  if (error) return { error: "We couldn't save the date. Please try again." };
+  revalidatePath("/dashboard");
+  return { ok: true, message: "Countdown started." };
+}

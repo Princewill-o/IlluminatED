@@ -64,6 +64,11 @@ export const NAV: NavGroup[] = [
         description: "Progress by topic and what to revise next",
       },
       {
+        title: "Grade calculator",
+        href: "/calculator",
+        description: "What you need on your remaining papers",
+      },
+      {
         title: "Get a tutor",
         href: "/tutors",
         description: "Homework, coursework guidance and exam prep",

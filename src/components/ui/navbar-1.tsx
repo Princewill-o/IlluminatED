@@ -190,7 +190,7 @@ export function Navbar1({
             {actions}
             {cta && (
               <motion.div
-                className="hidden sm:block"
+                className={cn(groups.length ? "hidden sm:block" : "block")}
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
@@ -201,7 +201,10 @@ export function Navbar1({
             {/* Phone and tablet menu button */}
             <motion.button
               type="button"
-              className="hover:bg-muted flex size-9 items-center justify-center rounded-full lg:hidden"
+              className={cn(
+                "hover:bg-muted flex size-9 items-center justify-center rounded-full lg:hidden",
+                !groups.length && "hidden",
+              )}
               onClick={toggleMenu}
               whileTap={{ scale: 0.9 }}
               aria-expanded={isOpen}
