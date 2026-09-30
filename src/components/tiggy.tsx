@@ -30,19 +30,19 @@ import { cn } from "@/lib/utils";
  */
 export const TIGGY_ACTIONS = {
   wave: {
-    art: false,
+    art: true,
     alt: "Tiggy the lion waving hello",
     icon: Hand,
     motion: { rotate: [0, -4, 4, -3, 0] },
   },
   read: {
-    art: false,
+    art: true,
     alt: "Tiggy the lion reading",
     icon: BookOpen,
     motion: { y: [0, -3, 0] },
   },
   graduate: {
-    art: false,
+    art: true,
     alt: "Tiggy the lion in a graduation cap",
     icon: GraduationCap,
     motion: { y: [0, -6, 0] },
