@@ -54,6 +54,95 @@ export async function sendSignInLink(
   };
 }
 
+/** After signing in, send people to onboarding until their account is set up. */
+async function afterSignIn(userId: string, next: string): Promise<never> {
+  const sb = (await getSupabase())!;
+  const [{ data: profile }, { data: details }] = await Promise.all([
+    sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
+    sb
+      .from("learner_details")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  redirect(
+    profile && details ? next : `/onboarding?next=${encodeURIComponent(next)}`,
+  );
+}
+
+const validEmail = (e: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && e.length <= 200;
+
+export async function signInWithPassword(
+  _: FormState,
+  fd: FormData,
+): Promise<FormState> {
+  const sb = await getSupabase();
+  if (!sb) return { error: NOT_CONNECTED };
+  const email = String(fd.get("email") ?? "").trim();
+  const password = String(fd.get("password") ?? "");
+  if (!validEmail(email)) return { error: "Enter a valid email address." };
+  if (!password) return { error: "Enter your password." };
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error || !data.user) {
+    const m = error?.message?.toLowerCase() ?? "";
+    return {
+      error: m.includes("email not confirmed")
+        ? "Please confirm your email first. Check your inbox for the link we sent."
+        : error?.status === 429
+          ? "Too many attempts. Wait a few minutes and try again."
+          : "That email and password don't match. Check them, or create an account.",
+    };
+  }
+  return afterSignIn(data.user.id, safeNext(fd.get("next")));
+}
+
+export async function signUpWithPassword(
+  _: FormState,
+  fd: FormData,
+): Promise<FormState> {
+  const sb = await getSupabase();
+  if (!sb) return { error: NOT_CONNECTED };
+  const email = String(fd.get("email") ?? "").trim();
+  const password = String(fd.get("password") ?? "");
+  if (!validEmail(email)) return { error: "Enter a valid email address." };
+  if (password.length < 8)
+    return { error: "Use a password with at least 8 characters." };
+  if (password.length > 72)
+    return { error: "Use a password with 72 characters or fewer." };
+  const next = safeNext(fd.get("next"));
+  const h = await headers();
+  const origin =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+    },
+  });
+  if (error) {
+    const m = error.message.toLowerCase();
+    return {
+      error: m.includes("already registered")
+        ? "There's already an account with that email. Sign in instead."
+        : m.includes("password")
+          ? "Choose a stronger password: at least 8 characters, not a common one."
+          : error.status === 429
+            ? "Too many attempts. Wait a few minutes and try again."
+            : "We couldn't create your account. Please try again.",
+    };
+  }
+  // If email confirmation is switched on, there's no session until they click the link.
+  if (!data.session || !data.user)
+    return {
+      ok: true,
+      message: `Nearly there. We've sent a confirmation link to ${email}. Open it to finish creating your account.`,
+    };
+  return afterSignIn(data.user.id, next);
+}
+
 export async function signOut() {
   const sb = await getSupabase();
   await sb?.auth.signOut();
