@@ -19,6 +19,7 @@ import {
   bannedMembers,
   blockedTerms,
   contactMessages,
+  tiggyFlags,
   topicLabel,
   urgentReports,
 } from "@/lib/social/moderation";
@@ -76,12 +77,13 @@ export default async function ModerationPage({
   const topic = CONTACT_TOPICS.find((t) => t.value === sp.topic)?.value;
   const status = sp.show === "handled" ? "handled" : "new";
 
-  const [items, urgent, inbox, terms, banned] = await Promise.all([
+  const [items, urgent, inbox, terms, banned, flags] = await Promise.all([
     moderationQueue(),
     urgentReports(),
     contactMessages({ topic, status }),
     blockedTerms(),
     bannedMembers(),
+    tiggyFlags(),
   ]);
   const inboxHref = (t?: string, s?: string) => {
     const q = new URLSearchParams();
@@ -106,6 +108,9 @@ export default async function ModerationPage({
       >
         <a href="#urgent" className={linkBtn}>
           Urgent ({urgent.length})
+        </a>
+        <a href="#tiggy" className={linkBtn}>
+          Ask Tiggy flags ({flags.length})
         </a>
         <a href="#queue" className={linkBtn}>
           Reported and hidden ({items.length})
@@ -204,6 +209,54 @@ export default async function ModerationPage({
                     </form>
                   )}
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Ask Tiggy safeguarding flags */}
+      <section aria-labelledby="tiggy" className="mt-16">
+        <Heading id="tiggy" count={flags.length}>
+          Ask Tiggy flags
+        </Heading>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          From the last 30 days. A learner's message to Ask Tiggy matched a
+          safeguarding keyword check, and Tiggy showed them crisis help. We
+          don't store what they wrote, only the category. Consider whether to
+          follow up through the safeguarding procedure.
+        </p>
+        {flags.length === 0 ? (
+          <p className="text-muted-foreground mt-6 text-sm">No flags.</p>
+        ) : (
+          <ul className="mt-6 divide-y border-y text-sm">
+            {flags.map((f) => (
+              <li
+                key={f.id}
+                className="flex flex-wrap items-center justify-between gap-2 py-3"
+              >
+                <span className="flex flex-wrap items-center gap-2">
+                  <span className="bg-destructive text-destructive-foreground rounded px-2 py-0.5 text-xs font-semibold">
+                    {f.category}
+                  </span>
+                  {f.username ? (
+                    <Link
+                      href={`/social/u/${f.username}`}
+                      className="font-medium hover:underline"
+                    >
+                      {f.username}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {f.userId
+                        ? "Member without a profile"
+                        : "Deleted account"}
+                    </span>
+                  )}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {timeAgo(f.createdAt)}
+                </span>
               </li>
             ))}
           </ul>

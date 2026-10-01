@@ -44,6 +44,11 @@ export const NAV: NavGroup[] = [
     label: "Practise",
     items: [
       {
+        title: "Ask Tiggy",
+        href: "/tiggy",
+        description: "Your AI study helper for explanations and hints",
+      },
+      {
         title: "Quiz centre",
         href: "/quizzes",
         description: "Quick, topic, mixed and timed practice",
@@ -102,6 +107,11 @@ export const NAV: NavGroup[] = [
         title: "Reading lookup",
         href: "/reading",
         description: "Background reading and books",
+      },
+      {
+        title: "Careers and apprenticeships",
+        href: "/careers",
+        description: "Explore apprenticeships, T Levels and university routes",
       },
     ],
   },

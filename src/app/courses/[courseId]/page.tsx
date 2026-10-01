@@ -11,9 +11,11 @@ import {
   Section,
 } from "@/components/kit";
 import { QualificationSearch } from "@/components/qualification-search";
+import { SetTexts } from "@/components/set-texts";
 import { RecordVisit } from "@/components/widgets";
 import { COURSES, courseById } from "@/lib/data/courses";
 import { BOARDS, routeById } from "@/lib/data/routes";
+import { SET_TEXT_COURSES } from "@/lib/data/set-texts";
 import { topicsForCourse } from "@/lib/data/topics";
 
 export function generateStaticParams() {
@@ -139,6 +141,12 @@ export default async function CoursePage({
           </p>
         )}
       </Section>
+
+      {SET_TEXT_COURSES.has(c.id) && (
+        <Section rule={false} className="pt-0">
+          <SetTexts />
+        </Section>
+      )}
 
       <Section id="about" title="About the course">
         <div className="grid gap-12 lg:grid-cols-3">

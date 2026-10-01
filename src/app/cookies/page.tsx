@@ -53,6 +53,13 @@ const ROWS: {
     lasts: "Until you clear it",
   },
   {
+    name: "tiggy-chat:…",
+    where: "Session storage",
+    what: "Keeps your current Ask Tiggy conversation if you refresh the page. It isn't sent to us or saved on our servers.",
+    kind: "Functional",
+    lasts: "Until you close the tab or start a new chat",
+  },
+  {
     name: "illuminated:progress-imported",
     where: "Local storage",
     what: "Remembers which accounts this device's quiz history has already been added to, so it isn't counted twice.",
@@ -118,7 +125,9 @@ export default function CookiesPage() {
         only saved because you did something (like choosing dark mode or
         answering a quiz) and is only used to give you that feature. None of it
         is used to track you, and it never leaves your device except the sign-in
-        cookie, which only goes to us.
+        cookie, which only goes to us. If you upgrade to Premium, Stripe's
+        payment page sets its own strictly necessary cookies for fraud
+        prevention while you pay, on Stripe's own website.
       </p>
       <p>
         We don't use any <strong>analytics</strong> or{" "}

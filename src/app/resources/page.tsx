@@ -3,7 +3,79 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { ResourceFinder } from "@/components/directories";
-import { PageHeader, Section } from "@/components/kit";
+import { GovUkSearch } from "@/components/govuk-search";
+import { ExternalLink, PageHeader, Section } from "@/components/kit";
+import { OGL_URL } from "@/lib/apprenticeships";
+
+const OGL = { label: "Open Government Licence v3.0", href: OGL_URL };
+
+const DATA_SOURCES: {
+  name: string;
+  href: string;
+  use: string;
+  licence: { label: string; href?: string };
+}[] = [
+  {
+    name: "Ofqual Register",
+    href: "https://register.ofqual.gov.uk/",
+    use: "Qualification and specification search",
+    licence: OGL,
+  },
+  {
+    name: "DfE Explore Education Statistics",
+    href: "https://explore-education-statistics.service.gov.uk/",
+    use: "Education data",
+    licence: OGL,
+  },
+  {
+    name: "GOV.UK",
+    href: "https://www.gov.uk/",
+    use: "Official guidance search, and sources for Ask Tiggy",
+    licence: OGL,
+  },
+  {
+    name: "Skills England",
+    href: "https://skillsengland.education.gov.uk/apprenticeships/",
+    use: "Careers and apprenticeships explorer",
+    licence: OGL,
+  },
+  {
+    name: "Open Library",
+    href: "https://openlibrary.org/developers/api",
+    use: "Book search on the reading page",
+    licence: {
+      label: "Catalogue data CC0 (public domain)",
+      href: "https://openlibrary.org/developers/licensing",
+    },
+  },
+  {
+    name: "Wikipedia",
+    href: "https://en.wikipedia.org/",
+    use: "Topic summaries on the reading page",
+    licence: {
+      label: "CC BY-SA 4.0",
+      href: "https://creativecommons.org/licenses/by-sa/4.0/",
+    },
+  },
+  {
+    name: "Project Gutenberg (via Gutendex)",
+    href: "https://www.gutenberg.org/",
+    use: "Free English Literature set texts",
+    licence: {
+      label: "Public domain texts",
+      href: "https://www.gutenberg.org/policy/license.html",
+    },
+  },
+  {
+    name: "Hugging Face",
+    href: "https://huggingface.co/",
+    use: "Runs the AI model behind Ask Tiggy",
+    licence: {
+      label: "Service terms (answers are AI-generated, not licensed data)",
+      href: "https://huggingface.co/terms-of-service",
+    },
+  },
+];
 
 export const metadata: Metadata = {
   title: "Past papers and official resources",
@@ -34,6 +106,47 @@ export default function ResourcesPage() {
       />
       <Section rule={false}>
         <ResourceFinder />
+      </Section>
+      <Section
+        id="guidance"
+        title="Official guidance from GOV.UK"
+        intro="Search guidance from the Department for Education, Ofqual, Student Finance and Skills England, such as results day, resits and access arrangements."
+      >
+        <GovUkSearch />
+      </Section>
+      <Section
+        id="sources"
+        title="Data sources"
+        intro="Where the live information on IlluminatED comes from, and the licence it's published under."
+      >
+        <ul className="border-t">
+          {DATA_SOURCES.map((d) => (
+            <li
+              key={d.name}
+              className="grid gap-1 border-b py-4 sm:grid-cols-[1fr_1fr_1fr] sm:gap-6"
+            >
+              <span>
+                <ExternalLink href={d.href}>{d.name}</ExternalLink>
+              </span>
+              <span className="text-muted-foreground text-sm">{d.use}</span>
+              <span className="text-sm">
+                {d.licence.href ? (
+                  <ExternalLink href={d.licence.href} className="text-sm">
+                    {d.licence.label}
+                  </ExternalLink>
+                ) : (
+                  <span className="text-muted-foreground">
+                    {d.licence.label}
+                  </span>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="text-muted-foreground mt-6 max-w-3xl text-sm leading-relaxed">
+          Exam boards don&apos;t offer APIs for past papers or questions, so we
+          link to their official past paper pages rather than copying them.
+        </p>
       </Section>
     </>
   );

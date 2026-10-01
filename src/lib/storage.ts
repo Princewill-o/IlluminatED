@@ -26,7 +26,7 @@ export const STORAGE_LABELS: Record<string, string> = {
   [STORAGE_KEYS.imported]:
     "Which accounts this device's quiz history has already been added to",
   [STORAGE_KEYS.cache]:
-    "Short-lived copies of search results (qualifications, statistics, books)",
+    "Short-lived copies of search results (qualifications, statistics, books, guidance, apprenticeships)",
 };
 
 const EVENT = "illuminated-storage";

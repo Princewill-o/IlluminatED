@@ -20,3 +20,12 @@ export function getStripe(): Stripe | null {
   client ??= new Stripe(SECRET_KEY);
   return client;
 }
+
+/**
+ * Premium (Ask Tiggy) monthly subscriptions. Off unless STRIPE_SECRET_KEY and
+ * STRIPE_PREMIUM_PRICE_ID (a recurring monthly Price in GBP) are both set.
+ */
+export const PREMIUM_PRICE_ID =
+  process.env.STRIPE_PREMIUM_PRICE_ID?.trim() || "";
+
+export const premiumEnabled = Boolean(SECRET_KEY && PREMIUM_PRICE_ID);

@@ -56,6 +56,11 @@ export default function PrivacyPage() {
             If you're under 18 and ask for a paid tutor, we ask a parent or
             guardian to agree first.
           </li>
+          <li>
+            When you use Ask Tiggy, your messages go to an AI model provider to
+            get an answer. We don't keep them: we only count how many you've
+            sent today.
+          </li>
         </ul>
       }
     >
@@ -106,6 +111,23 @@ export default function PrivacyPage() {
           under 18, we also store{" "}
           <strong>a parent or guardian's email address</strong> so we can ask
           for their agreement.
+        </li>
+        <li>
+          <strong>Ask Tiggy</strong>: we <strong>don't store</strong> what you
+          type to Tiggy or its replies on our servers. We keep only{" "}
+          <strong>how many messages you've sent today</strong> (for the daily
+          limit). If a message suggests you or someone else may be at risk, we
+          also record a <strong>safeguarding flag</strong>: just a category
+          (such as "self-harm" or "abuse") and the time, linked to your account,
+          never the message itself. Your current conversation is kept only in
+          your browser tab (see our <Link href="/cookies">cookies page</Link>).
+        </li>
+        <li>
+          <strong>Premium</strong>: if you subscribe, we store your plan, its
+          status and renewal date, and the reference numbers Stripe gives your
+          customer record and subscription. Stripe holds your payment details;
+          we never see your card number. If you're under 18, we also record that
+          you confirmed a parent or guardian agreed.
         </li>
         <li>
           <strong>Messages to us</strong> through the contact form: your email,
@@ -171,6 +193,24 @@ export default function PrivacyPage() {
             </td>
           </tr>
           <tr>
+            <td>
+              Answer your questions with Ask Tiggy, count your daily messages
+              and run Premium subscriptions
+            </td>
+            <td>
+              <strong>Contract</strong>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              Record Ask Tiggy safeguarding flags so moderators can check if
+              someone may need help
+            </td>
+            <td>
+              <strong>Legitimate interests</strong> and safeguarding (see below)
+            </td>
+          </tr>
+          <tr>
             <td>Reply to messages you send us</td>
             <td>
               <strong>Legitimate interests</strong>
@@ -199,7 +239,9 @@ export default function PrivacyPage() {
       </p>
       <p>
         We don't make any decisions about you by computer alone that have legal
-        or similarly serious effects.
+        or similarly serious effects. Ask Tiggy's safeguarding check only shows
+        you where to get help and lets a moderator know; a person decides
+        whether anything else needs to happen.
       </p>
 
       <h2 id="children">Children and young people</h2>
@@ -244,7 +286,12 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Parents and guardians</strong> are asked to agree before an
-          under-18 gets paid tutoring.
+          under-18 gets paid tutoring, and should pay for or agree to Premium.
+        </li>
+        <li>
+          <strong>Ask Tiggy is clearly an AI.</strong> It never asks for
+          personal details, and messages with email addresses, phone numbers or
+          postcodes aren't sent to it.
         </li>
       </ul>
 
@@ -278,8 +325,23 @@ export default function PrivacyPage() {
           </tr>
           <tr>
             <td>Stripe (only if card payments are switched on)</td>
-            <td>Taking payments for tutoring. We never see your card number</td>
+            <td>
+              Taking payments for tutoring and Premium subscriptions, and the
+              page where you manage your subscription. We never see your card
+              number
+            </td>
             <td>UK, EU and US, with approved safeguards</td>
+          </tr>
+          <tr>
+            <td>Hugging Face (only when Ask Tiggy is switched on)</td>
+            <td>
+              Sending your Ask Tiggy messages to an AI model provider it works
+              with, to generate Tiggy's replies. Along with the conversation we
+              send your stage, year group, age range and subjects, so answers
+              fit your course, but never your email, username or account ID. We
+              don't store the messages ourselves
+            </td>
+            <td>US and EU, with approved safeguards</td>
           </tr>
           <tr>
             <td>Resend (only if we switch on email notifications)</td>
@@ -297,12 +359,16 @@ export default function PrivacyPage() {
       <p>
         Some pages look things up from free public services: the{" "}
         <strong>Ofqual Register</strong> (qualifications),{" "}
-        <strong>DfE Explore Education Statistics</strong> and{" "}
-        <strong>Open Library</strong> (books). We send them only the words you
-        search for, through our own server, so they don't receive your IP
-        address or anything that identifies you. If our server can't reach them,
-        your browser may ask them directly, and they'll see your IP address as
-        with any website.
+        <strong>DfE Explore Education Statistics</strong>,{" "}
+        <strong>Open Library</strong> (books), <strong>GOV.UK</strong> (official
+        guidance), <strong>Skills England</strong> (apprenticeships) and{" "}
+        <strong>Gutendex</strong> (free set texts from Project Gutenberg). We
+        send them only the words you search for, through our own server, so they
+        don't receive your IP address or anything that identifies you. When Ask
+        Tiggy looks up official guidance on GOV.UK, our server sends a fixed
+        topic name (such as "student finance"), never your message. If our
+        server can't reach them, your browser may ask them directly, and they'll
+        see your IP address as with any website.
       </p>
       <p>
         Topic summaries on the reading page come straight from{" "}
@@ -362,6 +428,31 @@ export default function PrivacyPage() {
             <td>
               Until you delete your account. If you paid, the payment records
               are kept for 6 years, because tax law requires it
+            </td>
+          </tr>
+          <tr>
+            <td>Ask Tiggy messages</td>
+            <td>
+              Not stored by us. Your browser tab keeps the current conversation
+              until you close it or start a new chat
+            </td>
+          </tr>
+          <tr>
+            <td>Ask Tiggy daily message counts</td>
+            <td>About a week, and deleted with your account</td>
+          </tr>
+          <tr>
+            <td>Ask Tiggy safeguarding flags</td>
+            <td>
+              12 months, then deleted automatically. If your account is deleted,
+              the flag is no longer linked to you
+            </td>
+          </tr>
+          <tr>
+            <td>Premium subscription status</td>
+            <td>
+              Until you delete your account. Stripe keeps payment records for 6
+              years, because tax law requires it
             </td>
           </tr>
           <tr>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
 import { ImportProgress } from "@/components/account/import-progress";
@@ -168,6 +168,27 @@ export default async function DashboardPage() {
       </header>
 
       <div className="container">
+        <Link
+          href="/tiggy"
+          className="group bg-card hover:border-primary/60 mb-6 flex items-center gap-4 rounded-2xl border p-4 sm:p-5"
+        >
+          <span className="bg-primary/10 text-primary grid size-10 shrink-0 place-items-center rounded-full">
+            <Sparkles className="size-5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="group-hover:text-primary block font-semibold">
+              Ask Tiggy
+            </span>
+            <span className="text-muted-foreground block text-sm">
+              Stuck on something? Get a step-by-step explanation or a hint from
+              your AI study helper.
+            </span>
+          </span>
+          <ArrowRight
+            className="text-muted-foreground size-4 shrink-0"
+            aria-hidden
+          />
+        </Link>
         <ImportProgress
           userId={account.id}
           topicCourses={Object.fromEntries(

@@ -145,3 +145,43 @@ export async function bannedMembers(): Promise<
     joined: String(r.created_at),
   }));
 }
+
+export interface TiggyFlag {
+  id: number;
+  createdAt: string;
+  category: string;
+  userId: string | null;
+  username: string | null;
+}
+
+/** Ask Tiggy safeguarding flags from the last 30 days, newest first. Category only: the message itself is never stored. Moderators only (RLS). */
+export async function tiggyFlags(): Promise<TiggyFlag[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const since = new Date(Date.now() - 30 * 864e5).toISOString();
+  const { data, error } = await sb
+    .from("tiggy_flags")
+    .select("id, created_at, category, user_id")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error || !data) return [];
+  const ids = [
+    ...new Set(data.map((r) => r.user_id as string | null).filter(Boolean)),
+  ] as string[];
+  const names = new Map<string, string>();
+  if (ids.length) {
+    const { data: profiles } = await sb
+      .from("profiles")
+      .select("id, username")
+      .in("id", ids);
+    for (const p of profiles ?? []) names.set(String(p.id), String(p.username));
+  }
+  return data.map((r) => ({
+    id: Number(r.id),
+    createdAt: String(r.created_at),
+    category: String(r.category),
+    userId: (r.user_id as string) ?? null,
+    username: r.user_id ? (names.get(String(r.user_id)) ?? null) : null,
+  }));
+}
