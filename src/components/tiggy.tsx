@@ -118,14 +118,25 @@ export function Tiggy({
         }}
       >
         {a.art ? (
-          <Image
-            src={`/brand/tiggy/${action}.webp`}
-            alt={text}
-            fill
-            sizes={sizes}
-            priority={priority}
-            className="object-contain"
-          />
+          <>
+            {/* White T-shirt in light mode, navy T-shirt in dark mode. */}
+            <Image
+              src={`/brand/tiggy/${action}.webp`}
+              alt={text}
+              fill
+              sizes={sizes}
+              priority={priority}
+              className="object-contain dark:hidden"
+            />
+            <Image
+              src={`/brand/tiggy/${action}-dark.webp`}
+              alt={text}
+              fill
+              sizes={sizes}
+              priority={priority}
+              className="hidden object-contain dark:block"
+            />
+          </>
         ) : (
           <>
             <Image
