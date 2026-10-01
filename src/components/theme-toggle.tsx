@@ -16,9 +16,11 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <Button
-      variant="outline"
       size="icon"
-      className={cn("relative size-9", className)}
+      className={cn(
+        "bg-primary text-primary-foreground hover:bg-primary/90 relative size-9 border-0 shadow-sm",
+        className,
+      )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={
         mounted
