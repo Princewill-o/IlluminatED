@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Pager, ThreadList } from "@/components/social/thread-list";
+import { getBlockList, withoutBlocked } from "@/lib/social/blocks";
 import { CATEGORIES, socialConfigured } from "@/lib/social/config";
 import {
   categoryCounts,
@@ -17,11 +18,14 @@ export default async function SocialHome({
   const sp = await searchParams;
   const q = (sp.q ?? "").slice(0, 80);
   const page = Math.max(1, Number(sp.page) || 1);
-  const [{ threads, total, error }, counts, unis] = await Promise.all([
-    listThreads({ q, page }),
-    categoryCounts(),
-    listUniversities(),
-  ]);
+  const [{ threads: all, total, error }, counts, unis, blocks] =
+    await Promise.all([
+      listThreads({ q, page }),
+      categoryCounts(),
+      listUniversities(),
+      getBlockList(),
+    ]);
+  const threads = withoutBlocked(all, blocks);
 
   return (
     <div className="container py-10 lg:py-14">

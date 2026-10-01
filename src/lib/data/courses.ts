@@ -514,7 +514,7 @@ export const COURSES: Course[] = [
       "Differential equations",
       "Option modules",
     ],
-    topicIds: [],
+    topicIds: ["alevel-fmaths-complex-numbers"],
     register: {
       title: "Further Mathematics",
       qualificationTypes: "GCE A Level",
@@ -630,7 +630,7 @@ export const COURSES: Course[] = [
       "Fields",
       "Thermal and nuclear",
     ],
-    topicIds: [],
+    topicIds: ["alevel-physics-suvat"],
     register: { title: "Physics", qualificationTypes: "GCE A Level" },
     specCodes: [
       { board: "AQA", code: "7408" },
@@ -700,7 +700,7 @@ export const COURSES: Course[] = [
       "Coursework drafting",
       "Timed essays",
     ],
-    topicIds: [],
+    topicIds: ["alevel-englit-unseen-poetry"],
     register: {
       title: "English Literature",
       qualificationTypes: "GCE A Level",
@@ -736,7 +736,7 @@ export const COURSES: Course[] = [
       "Coursework",
       "Timed essays",
     ],
-    topicIds: [],
+    topicIds: ["alevel-history-interpretations"],
     register: { title: "History", qualificationTypes: "GCE A Level" },
     specCodes: [
       { board: "AQA", code: "7042" },
@@ -839,7 +839,7 @@ export const COURSES: Course[] = [
       "Practical write-ups",
       "External unit preparation",
     ],
-    topicIds: [],
+    topicIds: ["btec-appsci-cells-microscopy"],
     register: { title: "BTEC Applied Science" },
   }),
   btec({
@@ -934,7 +934,7 @@ export const COURSES: Course[] = [
       "Programme design",
       "Coaching evidence",
     ],
-    topicIds: [],
+    topicIds: ["btec-sport-skeletal-muscular"],
     register: { title: "BTEC Sport" },
   }),
   btec({
@@ -957,7 +957,7 @@ export const COURSES: Course[] = [
       "Design process",
       "Practical evidence",
     ],
-    topicIds: [],
+    topicIds: ["btec-eng-dc-circuits"],
     register: { title: "BTEC Engineering" },
   }),
   btec({
@@ -980,7 +980,7 @@ export const COURSES: Course[] = [
       "Build a portfolio",
       "Respond to briefs",
     ],
-    topicIds: [],
+    topicIds: ["btec-media-representation"],
     register: { title: "BTEC Creative Media" },
   }),
 
@@ -1112,7 +1112,7 @@ export const COURSES: Course[] = [
       "Industry placement",
     ],
     studySequence: ["Core science", "Lab practice", "Specialism", "Placement"],
-    topicIds: [],
+    topicIds: ["tlevel-science-lab-safety"],
     register: { title: "T Level Technical Qualification in Science" },
     statusNote:
       "From September 2026 new students take the Pearson T Level in Science. Students who started earlier stay on NCFE.",
@@ -1142,7 +1142,7 @@ export const COURSES: Course[] = [
       "Specialism",
       "Placement",
     ],
-    topicIds: [],
+    topicIds: ["tlevel-eey-child-development"],
     register: { title: "Education and Early Years" },
   }),
   tlevel({
@@ -1167,7 +1167,7 @@ export const COURSES: Course[] = [
       "Specialism",
       "Placement",
     ],
-    topicIds: [],
+    topicIds: ["tlevel-construction-building-regs"],
     register: { title: "Design, Surveying and Planning" },
   }),
   tlevel({
@@ -1192,7 +1192,7 @@ export const COURSES: Course[] = [
       "Specialism",
       "Placement",
     ],
-    topicIds: [],
+    topicIds: ["tlevel-onsite-cdm-2015"],
     register: { title: "Onsite Construction" },
     statusNote:
       "This T Level has been withdrawn by the Department for Education, so there are no new starts. Students already on the course should check with their college.",
@@ -1214,7 +1214,7 @@ export const COURSES: Course[] = [
       "Industry placement",
     ],
     studySequence: ["Core knowledge", "Bookkeeping", "Specialism", "Placement"],
-    topicIds: [],
+    topicIds: ["tlevel-accounting-double-entry"],
     register: {
       title: "Accounting",
       qualificationTypes: "Technical Qualification",
@@ -1241,7 +1241,7 @@ export const COURSES: Course[] = [
       "Specialism",
       "Placement",
     ],
-    topicIds: [],
+    topicIds: ["tlevel-legal-civil-courts"],
     register: { title: "Legal Services" },
   }),
 
@@ -1268,7 +1268,7 @@ export const COURSES: Course[] = [
       "Plan assignment evidence",
       "Prepare for exam units",
     ],
-    topicIds: [],
+    topicIds: ["ctech-it-networks"],
     officialLinks: [
       {
         label: "OCR Cambridge Technicals",
@@ -1433,7 +1433,7 @@ export const COURSES: Course[] = [
       "Internal assessment",
     ],
     studySequence: ["Unit list", "Evidence plan", "Exam preparation"],
-    topicIds: [],
+    topicIds: ["applied-general-break-even"],
     register: { title: "Applied General" },
     statusNote:
       "Availability and funding of these qualifications is changing in England. Check the Ofqual register status and ask your college before relying on a course.",

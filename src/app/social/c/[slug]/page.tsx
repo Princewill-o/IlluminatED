@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { Pager, ThreadList } from "@/components/social/thread-list";
+import { getBlockList, withoutBlocked } from "@/lib/social/blocks";
 import {
   type CategorySlug,
   categoryBySlug,
@@ -33,11 +34,15 @@ export default async function CategoryPage({
   if (!c) notFound();
   const university = slug === "universities" ? (sp.u ?? "").slice(0, 80) : "";
   const page = Math.max(1, Number(sp.page) || 1);
-  const { threads, total, error } = await listThreads({
-    category: c.slug as CategorySlug,
-    university: university || undefined,
-    page,
-  });
+  const [{ threads: all, total, error }, blocks] = await Promise.all([
+    listThreads({
+      category: c.slug as CategorySlug,
+      university: university || undefined,
+      page,
+    }),
+    getBlockList(),
+  ]);
+  const threads = withoutBlocked(all, blocks);
   const newHref = `/social/new?category=${c.slug}${university ? `&university=${encodeURIComponent(university)}` : ""}`;
 
   return (

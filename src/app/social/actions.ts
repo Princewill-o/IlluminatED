@@ -189,5 +189,5 @@ export async function deleteAccount(
   if (error)
     return { error: "We couldn't delete your account. Please try again." };
   await sb.auth.signOut();
-  redirect("/social?deleted=1");
+  redirect("/?deleted=1");
 }

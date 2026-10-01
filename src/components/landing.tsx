@@ -121,7 +121,7 @@ export function CountdownDemo() {
             >
               {left ? String(left[k]).padStart(k === "days" ? 1 : 2, "0") : "–"}
             </motion.p>
-            <p className="text-muted-foreground mt-1 text-[11px] tracking-wide uppercase">
+            <p className="text-muted-foreground mt-1 text-xs tracking-wide uppercase">
               {k}
             </p>
           </div>

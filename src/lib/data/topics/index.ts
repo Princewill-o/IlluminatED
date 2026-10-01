@@ -1,6 +1,7 @@
 import { GCSE_TOPICS_A } from "./gcse-a";
 import { GCSE_TOPICS_B } from "./gcse-b";
 import { POST16_TOPICS } from "./post16";
+import { POST16_TOPICS_B } from "./post16-b";
 
 import { COURSES, courseById } from "@/lib/data/courses";
 import type {
@@ -15,6 +16,7 @@ export const TOPICS: Topic[] = [
   ...GCSE_TOPICS_A,
   ...GCSE_TOPICS_B,
   ...POST16_TOPICS,
+  ...POST16_TOPICS_B,
 ];
 
 export const topicById = (id: string) => TOPICS.find((t) => t.id === id);

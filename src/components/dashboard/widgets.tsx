@@ -127,7 +127,7 @@ export function ExamCountdown({
                     ? String(parts[k]).padStart(k === "days" ? 1 : 2, "0")
                     : "–"}
                 </p>
-                <p className="mt-1 text-[11px] tracking-wide uppercase opacity-70">
+                <p className="mt-1 text-xs tracking-wide uppercase opacity-70">
                   {k}
                 </p>
               </div>
@@ -153,7 +153,7 @@ export function ExamCountdown({
                 />
                 <span
                   className={cn(
-                    "mt-2 block text-[11px] leading-tight sm:text-xs",
+                    "mt-2 block text-xs leading-tight",
                     i === phaseIndex ? "font-semibold" : "opacity-60",
                   )}
                 >
@@ -384,7 +384,7 @@ export function WeeklyChart({
           <span
             key={w.label}
             className={cn(
-              "text-muted-foreground flex-1 text-center text-[10px] sm:text-xs",
+              "text-muted-foreground flex-1 text-center text-xs",
               i % 2 === 1 && "max-sm:invisible",
             )}
           >

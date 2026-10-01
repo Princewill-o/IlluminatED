@@ -393,7 +393,7 @@ function BoundaryBar({
         {bounds.map((b) => (
           <span
             key={b.grade}
-            className="text-muted-foreground absolute -translate-x-1/2 text-[10px]"
+            className="text-muted-foreground absolute -translate-x-1/2 text-xs"
             style={{ left: `${b.pct}%` }}
           >
             {b.grade}

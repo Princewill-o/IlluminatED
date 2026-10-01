@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { DetailsForm } from "@/components/account/details-form";
+import { EmailForm } from "@/components/account/email-form";
 import { PageHeader, Section } from "@/components/kit";
 import { DeleteAccountForm } from "@/components/social/forms";
 import { signOut } from "@/lib/account/actions";
@@ -52,7 +53,26 @@ export default async function SettingsPage() {
                 </span>
               </dd>
             </div>
+            <div className="grid gap-1 py-4 sm:grid-cols-[10rem_1fr]">
+              <dt className="text-muted-foreground">Password</dt>
+              <dd>
+                <Link
+                  href="/account/password"
+                  className="text-primary font-medium underline underline-offset-4"
+                >
+                  Change password
+                </Link>
+              </dd>
+            </div>
           </dl>
+          <div className="mt-8">
+            <h3 className="font-semibold">Change your email</h3>
+            <p className="text-muted-foreground mt-1 mb-4 text-sm">
+              Use an address you can get into. It's where sign-in and reset
+              links go.
+            </p>
+            <EmailForm />
+          </div>
           <form action={signOut} className="mt-6">
             <button
               type="submit"

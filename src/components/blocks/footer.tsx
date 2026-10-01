@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Logo } from "@/components/brand";
 import { NAV } from "@/lib/nav";
+import { LEGAL_LINKS } from "@/lib/site";
 import { useSignedIn } from "@/lib/use-signed-in";
 
 const PUBLIC_LINKS = [
@@ -12,6 +13,7 @@ const PUBLIC_LINKS = [
   { href: "/your-data", title: "Your data" },
   { href: "/accessibility", title: "Accessibility" },
   { href: "/social/guidelines", title: "Community guidelines" },
+  ...LEGAL_LINKS,
 ];
 
 export function Footer() {
@@ -66,6 +68,22 @@ export function Footer() {
           </nav>
         )}
       </div>
+      {signedIn && (
+        <nav aria-label="Legal" className="container pb-8">
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+            {LEGAL_LINKS.map((l) => (
+              <li key={l.href}>
+                <Link
+                  href={l.href}
+                  className="text-muted-foreground hover:text-foreground text-sm"
+                >
+                  {l.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
       <div className="border-t">
         <p className="text-muted-foreground container py-6 text-xs leading-relaxed">
           © {new Date().getFullYear()} IlluminatED. Independent, and not

@@ -1,4 +1,7 @@
+import { Suspense } from "react";
+
 import { AppPreview } from "@/components/app-preview";
+import { DeletedNotice } from "@/components/deleted-notice";
 import {
   CountdownDemo,
   CtaButtons,
@@ -23,6 +26,10 @@ const QUALIFICATIONS = [
 export default function Home() {
   return (
     <>
+      {/* After deleting an account (/?deleted=1). Read on the client so this page stays static. */}
+      <Suspense fallback={null}>
+        <DeletedNotice />
+      </Suspense>
       <section className="container grid items-center gap-12 pt-8 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:pt-12 lg:pb-24">
         <Reveal>
           <p className="text-primary text-sm font-semibold">

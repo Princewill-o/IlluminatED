@@ -16,7 +16,7 @@ export default function YourDataPage() {
     <>
       <PageHeader
         title="Your data"
-        intro="Without an account, anything you save stays in this browser. If you sign in, some of it is saved to your account too. Here's what's stored, and how to clear it."
+        intro="What's saved to your account, what stays in this browser, and how to clear or delete it. Our privacy policy has the full details."
         crumbs={[{ label: "Home", href: "/" }, { label: "Your data" }]}
       />
       <Section rule={false}>
@@ -24,12 +24,13 @@ export default function YourDataPage() {
           <YourDataPanel />
           <div className="text-muted-foreground space-y-5 text-sm leading-relaxed">
             <p>
-              <strong className="text-foreground">Without an account</strong> we
-              never ask for your name, email, school or grades, and your phone
-              and laptop keep separate progress.
+              <strong className="text-foreground">In this browser</strong> we
+              save things like your revision planner, flashcard marks and
+              recently viewed pages. They stay on this device, and the panel
+              here lets you clear them.
             </p>
             <p>
-              <strong className="text-foreground">With an account</strong> we
+              <strong className="text-foreground">In your account</strong> we
               store your email (to sign you in, never shown to anyone), your
               username, age range, year group, subjects, the topics you want
               help with, quiz results, tutor requests and messages, and any
@@ -52,7 +53,26 @@ export default function YourDataPage() {
               <strong className="text-foreground">Searches.</strong> When you
               search qualifications, statistics or books, the words you type go
               to that service to get results. Nothing that identifies you is
-              sent with them.
+              sent with them. Wikipedia summaries are the exception: your
+              browser fetches them directly, so Wikipedia sees your IP address.
+            </p>
+            <p>
+              Read our{" "}
+              <Link
+                href="/privacy"
+                className="text-primary underline underline-offset-4"
+              >
+                privacy policy
+              </Link>{" "}
+              for who we share data with, how long we keep it and your rights,
+              and our{" "}
+              <Link
+                href="/cookies"
+                className="text-primary underline underline-offset-4"
+              >
+                cookies page
+              </Link>{" "}
+              for everything saved in your browser.
             </p>
           </div>
         </div>

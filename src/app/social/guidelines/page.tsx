@@ -83,7 +83,7 @@ export default function GuidelinesPage() {
         </ul>
       </section>
 
-      <section aria-labelledby="help" id="help" className="mt-12 scroll-mt-8">
+      <section aria-labelledby="help-h" id="help" className="mt-12 scroll-mt-8">
         <h2 id="help-h" className="text-2xl tracking-tight">
           Need to talk to someone?
         </h2>

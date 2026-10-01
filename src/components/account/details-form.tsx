@@ -193,28 +193,58 @@ export function DetailsForm({
             </p>
           </div>
         )}
-        <fieldset>
-          <legend className={labelCls}>How old are you?</legend>
-          <div className="grid gap-2 sm:grid-cols-3">
-            {AGE_BANDS.map((a) => (
-              <label key={a.id} className={radioCard}>
-                <input
-                  type="radio"
-                  name="ageBand"
-                  value={a.id}
-                  checked={ageBand === a.id}
-                  onChange={() => setAgeBand(a.id)}
-                  className="accent-[var(--primary)]"
-                />
-                {a.label}
-              </label>
-            ))}
+        {initial?.ageBand ? (
+          // Locked after the first save: the database won't accept a change either.
+          <div
+            role="group"
+            aria-labelledby="ageBand-label"
+            aria-describedby="ageBand-help"
+          >
+            <p id="ageBand-label" className={labelCls}>
+              Your age range
+            </p>
+            <p className="bg-muted/60 inline-flex h-11 items-center rounded-md border px-3.5 text-sm font-medium">
+              {AGE_BANDS.find((a) => a.id === initial.ageBand)?.label ??
+                initial.ageBand}
+            </p>
+            <p
+              id="ageBand-help"
+              className="text-muted-foreground mt-1.5 text-xs"
+            >
+              You can't change this yourself.{" "}
+              <a
+                href="/contact"
+                className="text-primary underline underline-offset-4"
+              >
+                Ask us via the contact page if this is wrong.
+              </a>
+            </p>
           </div>
-          <p className="text-muted-foreground mt-1.5 text-xs">
-            If you're under 18, we'll ask for a parent or guardian's email
-            before a tutor can take your request.
-          </p>
-        </fieldset>
+        ) : (
+          <fieldset>
+            <legend className={labelCls}>How old are you?</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {AGE_BANDS.map((a) => (
+                <label key={a.id} className={radioCard}>
+                  <input
+                    type="radio"
+                    name="ageBand"
+                    value={a.id}
+                    checked={ageBand === a.id}
+                    onChange={() => setAgeBand(a.id)}
+                    className="accent-[var(--primary)]"
+                  />
+                  {a.label}
+                </label>
+              ))}
+            </div>
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              If you're under 18, we'll ask for a parent or guardian's email
+              before a tutor can take your request. You can't change this after
+              you save it, so make sure it's right.
+            </p>
+          </fieldset>
+        )}
         <fieldset>
           <legend className={labelCls}>What are you studying?</legend>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -412,6 +442,9 @@ export function DetailsForm({
         </div>
         {needsProfile && (
           <div className="space-y-3 border-t pt-6">
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              You must be 13 or over to use IlluminatED.
+            </p>
             <label className="flex gap-3 text-sm leading-relaxed">
               <input
                 type="checkbox"
@@ -436,6 +469,37 @@ export function DetailsForm({
                   community guidelines
                 </a>{" "}
                 and will follow them.
+              </span>
+            </label>
+            <label className="flex gap-3 text-sm leading-relaxed">
+              <input
+                type="checkbox"
+                name="terms"
+                required
+                className="mt-0.5 size-4 accent-[var(--primary)]"
+              />
+              <span>
+                I agree to the{" "}
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-primary underline underline-offset-4"
+                >
+                  Terms
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener"
+                  className="text-primary underline underline-offset-4"
+                >
+                  Privacy policy
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+                .
               </span>
             </label>
           </div>

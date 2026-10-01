@@ -145,15 +145,16 @@ const FAQ: { group: string; items: { q: string; a: React.ReactNode }[] }[] = [
     items: [
       {
         q: "Do I need an account?",
-        a: "No. Topic pages, quizzes, flashcards and the planner all work without one. An account adds a dashboard of your progress by topic, lets you request a tutor, and lets you post on IlluminatEDSocial.",
+        a: "Yes, but it's free. A free account unlocks the topic pages, quizzes, flashcards, planner and your dashboard of progress by topic. It also lets you request a tutor and post on IlluminatEDSocial. You need to be 13 or over.",
       },
       {
         q: "Will my progress sync to my phone?",
         a: (
           <>
-            Yes, if you <Link href="/sign-in">sign in</Link>. Quiz scores are
-            saved to your account. Without an account, progress stays in each
-            browser separately. You can clear it on the{" "}
+            Yes. Quiz scores are saved to your account, so they follow you when
+            you <Link href="/sign-in">sign in</Link> on another device. A few
+            things, like your revision planner, are saved in each browser
+            separately. You can clear them on the{" "}
             <Link href="/your-data">Your data</Link> page.
           </>
         ),

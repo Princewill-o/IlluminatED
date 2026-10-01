@@ -3,11 +3,16 @@ import { notFound, redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { MarkRefundedButton, PayButton } from "../../_components/buttons";
+import { loadGuardianConsent, loadPayments } from "../../_lib/flow";
+
 import { Crumbs } from "@/components/kit";
 import { timeAgo } from "@/components/social/util";
 import { ActionButton } from "@/components/tutoring/action-button";
 import { MessageForm } from "@/components/tutoring/message-form";
 import { getAccount, isTutor } from "@/lib/account/server";
+import { emailEnabled } from "@/lib/email";
+import { paymentsEnabled } from "@/lib/stripe";
 import {
   STATUS_LABELS,
   formatPrice,
@@ -35,7 +40,7 @@ export default async function RequestPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ new?: string }>;
+  searchParams: Promise<{ new?: string; paid?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -47,6 +52,11 @@ export default async function RequestPage({
   const data = await getRequest(n);
   if (!data) notFound();
   const { request: r, messages, guardianEmail } = data;
+  const [payments, consent] = await Promise.all([
+    loadPayments([r.id]),
+    r.needsGuardian ? loadGuardianConsent(r.id) : Promise.resolve(null),
+  ]);
+  const payment = payments.get(r.id) ?? { paidAt: null, refundedAt: null };
 
   const isStudent = r.studentId === account.id;
   const isAssigned = r.tutorId === account.id;
@@ -57,6 +67,22 @@ export default async function RequestPage({
   const waitingGuardian =
     r.needsGuardian && !r.guardianOk && r.status === "open";
   const back = `/tutors/requests/${r.id}`;
+  const live = r.status === "open" || r.status === "matched";
+  const canPay =
+    paymentsEnabled &&
+    isStudent &&
+    live &&
+    !payment.paidAt &&
+    !waitingGuardian &&
+    r.pricePence >= 30;
+  const consentEmailed = Boolean(consent?.linkExpiresAt);
+  const priceText = payment.refundedAt
+    ? `${formatPrice(r.pricePence)} · refunded`
+    : payment.paidAt
+      ? `${formatPrice(r.pricePence)} · paid`
+      : paymentsEnabled
+        ? `${formatPrice(r.pricePence)} · not paid yet`
+        : `${formatPrice(r.pricePence)} · payment is arranged after a tutor is matched`;
 
   return (
     <div className="container py-10 lg:py-14">
@@ -76,8 +102,29 @@ export default async function RequestPage({
           >
             Request sent.{" "}
             {waitingGuardian
-              ? "We'll contact your parent or guardian, then a tutor can take it on."
-              : `A tutor should take it on by ${when(r.matchBy)}.`}
+              ? consentEmailed
+                ? "We've emailed your parent or guardian. Once they give consent, a tutor can take it on."
+                : "We'll contact your parent or guardian, then a tutor can take it on."
+              : canPay
+                ? "Pay below so a tutor can take it on."
+                : `A tutor should take it on by ${when(r.matchBy)}.`}
+          </p>
+        )}
+        {sp.paid && isStudent && (
+          <p
+            role="status"
+            className={cn(
+              "mb-8 border-l-2 py-1 pl-4 text-sm",
+              sp.paid === "1" ? "border-l-success" : "border-l-destructive",
+            )}
+          >
+            {sp.paid === "1"
+              ? payment.paidAt
+                ? "Payment received. Thank you."
+                : "Thank you. We're confirming your payment, which can take a minute. Refresh to check."
+              : sp.paid === "0"
+                ? "Payment cancelled. You haven't been charged."
+                : "We couldn't start the payment. Please try again."}
           </p>
         )}
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -108,7 +155,7 @@ export default async function RequestPage({
               "Speed",
               `${speedLabel(r.speed)} · tutor replies within ${hoursLabel(r.replyHours)}`,
             ],
-            ["Price", `${formatPrice(r.pricePence)} (not charged online)`],
+            ["Price", priceText],
             [
               r.status === "open" ? "Tutor by" : "Tutor",
               r.status === "open"
@@ -121,8 +168,12 @@ export default async function RequestPage({
               !r.needsGuardian
                 ? "Not needed (18 or over)"
                 : r.guardianOk
-                  ? "Confirmed"
-                  : "Waiting for our team to contact them",
+                  ? "Consent given"
+                  : r.status !== "open"
+                    ? "No consent given"
+                    : consentEmailed
+                      ? "We've emailed them for consent"
+                      : "Waiting for our team to contact them",
             ],
           ].map(([k, v]) => (
             <div
@@ -148,6 +199,17 @@ export default async function RequestPage({
               <span className="font-medium">Guardian email:</span>{" "}
               {guardianEmail}
             </p>
+            {consent && (
+              <p className="text-muted-foreground mt-1">
+                {consent.consentedAt
+                  ? `Consented by email ${when(consent.consentedAt)}.`
+                  : consent.linkExpiresAt
+                    ? `Consent link emailed; it expires ${when(consent.linkExpiresAt)}.`
+                    : emailEnabled
+                      ? "No consent link was sent. Contact them yourself."
+                      : "Email isn't switched on, so contact them yourself."}
+              </p>
+            )}
             {waitingGuardian && (
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <ActionButton
@@ -166,13 +228,40 @@ export default async function RequestPage({
           </div>
         )}
 
+        {moderator && payment.paidAt && (
+          <div className="bg-muted/50 mt-4 flex flex-wrap items-center gap-3 rounded-md border p-4 text-sm">
+            <span>
+              Paid {when(payment.paidAt)}
+              {payment.refundedAt
+                ? ` · refunded ${when(payment.refundedAt)}`
+                : ""}
+            </span>
+            {!payment.refundedAt && (
+              <>
+                <MarkRefundedButton id={r.id} back={back} />
+                <span className="text-muted-foreground text-xs">
+                  Make the refund in the Stripe dashboard first. This only
+                  records it.
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
         <div className="mt-8 flex flex-wrap gap-3">
+          {canPay && (
+            <PayButton id={r.id} label={`Pay ${formatPrice(r.pricePence)}`} />
+          )}
           {!isStudent &&
             isTutor(account) &&
             r.status === "open" &&
             (waitingGuardian ? (
               <p className="text-muted-foreground text-sm">
                 You can take this on once a parent or guardian is confirmed.
+              </p>
+            ) : paymentsEnabled && (!payment.paidAt || payment.refundedAt) ? (
+              <p className="text-muted-foreground text-sm">
+                You can take this on once the learner has paid.
               </p>
             ) : (
               <ActionButton id={r.id} action="claim" back={back} primary>

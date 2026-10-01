@@ -46,6 +46,9 @@ export function Navbar1({
   const pathname = usePathname();
   const barRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
+  const wasOpen = useRef(false);
 
   const toggleMenu = () => setIsOpen((o) => !o);
 
@@ -74,6 +77,39 @@ export function Navbar1({
       window.removeEventListener("mousedown", onClick);
     };
   }, []);
+
+  // Keep keyboard focus inside the open phone menu: Tab and Shift+Tab wrap around.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab" || !menuRef.current) return;
+      const focusable = Array.from(
+        menuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null || el === closeRef.current);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      const inside = menuRef.current.contains(active);
+      if (e.shiftKey && (active === first || !inside)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (active === last || !inside)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
+  // When the menu closes, put focus back on the button that opened it.
+  useEffect(() => {
+    if (wasOpen.current && !isOpen) openerRef.current?.focus();
+    wasOpen.current = isOpen;
+  }, [isOpen]);
 
   // Stop the page scrolling behind the open phone menu.
   useEffect(() => {
@@ -206,6 +242,7 @@ export function Navbar1({
                 !groups.length && "hidden",
               )}
               onClick={toggleMenu}
+              ref={openerRef}
               whileTap={{ scale: 0.9 }}
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
@@ -222,6 +259,7 @@ export function Navbar1({
         {isOpen && (
           <motion.div
             id="mobile-menu"
+            ref={menuRef}
             role="dialog"
             aria-modal="true"
             aria-label="Menu"

@@ -1,6 +1,10 @@
 import { Apple, Check, Play } from "lucide-react";
 
-/** A phone frame drawn in CSS. Children are the screen. */
+/**
+ * A phone frame drawn in CSS. Children are the screen. The screen is a
+ * picture, so it's hidden from screen readers; the section describes it in
+ * words instead (see APP_PREVIEW_DESCRIPTION).
+ */
 function Phone({
   label,
   dark,
@@ -12,7 +16,10 @@ function Phone({
 }) {
   return (
     <figure className="w-[248px] shrink-0 snap-center">
-      <div className="rounded-[46px] bg-[#16181d] p-[9px] shadow-[0_30px_60px_-20px_rgb(15_23_42/0.45)] ring-1 ring-black/10">
+      <div
+        aria-hidden
+        className="rounded-[46px] bg-[#16181d] p-[9px] shadow-[0_30px_60px_-20px_rgb(15_23_42/0.45)] ring-1 ring-black/10"
+      >
         <div
           className={`relative h-[500px] overflow-hidden rounded-[38px] ${dark ? "bg-[#09080d] text-[#f1eef8]" : "bg-[#faf8f4] text-[#101828]"}`}
         >
@@ -211,13 +218,10 @@ function StoreButton({
   big: string;
 }) {
   return (
-    <div
-      className="text-foreground inline-flex h-14 items-center gap-3 rounded-xl border px-4"
-      aria-label={`${big}, coming soon`}
-    >
+    <div className="text-foreground inline-flex h-14 items-center gap-3 rounded-xl border px-4">
       {icon}
       <span className="leading-tight">
-        <span className="text-muted-foreground block text-[11px]">{small}</span>
+        <span className="text-muted-foreground block text-xs">{small}</span>
         <span className="block text-base font-semibold">{big}</span>
       </span>
       <span className="bg-muted text-muted-foreground ml-2 rounded-full px-2.5 py-1 text-xs font-medium">
@@ -260,7 +264,23 @@ export function AppPreview() {
             Not out yet. Until then, the website works on any phone.
           </p>
         </div>
-        <div className="-mx-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 md:mx-0 md:justify-center md:overflow-visible md:px-0 xl:justify-end">
+        <p id="app-preview-description" className="sr-only">
+          Three example phone screens. Your dashboard: your course and year, how
+          many questions you've answered, how many you got right, days left
+          until your exams, the topics to revise next with a quiz button for
+          each, and a progress bar for each topic. Quick quizzes: one question
+          at a time, with the right answer highlighted and a short explanation
+          of why it's right. IlluminatEDSocial: the student forum, with
+          categories like Universities, Sixth form and Applying, a list of
+          threads with their number of replies, and a button to start your own
+          thread.
+        </p>
+        <div
+          role="group"
+          aria-label="Example app screens"
+          aria-describedby="app-preview-description"
+          className="-mx-4 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 md:mx-0 md:justify-center md:overflow-visible md:px-0 xl:justify-end"
+        >
           <Phone label="Your dashboard">
             <DashboardScreen />
           </Phone>

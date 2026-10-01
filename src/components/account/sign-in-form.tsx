@@ -8,13 +8,14 @@ import { Status, Submit } from "./forms-common";
 
 import { fieldCls, labelCls } from "@/components/kit";
 import {
+  sendPasswordReset,
   sendSignInLink,
   signInWithPassword,
   signUpWithPassword,
 } from "@/lib/account/actions";
 import { cn } from "@/lib/utils";
 
-type Mode = "sign-in" | "sign-up" | "link";
+type Mode = "sign-in" | "sign-up" | "link" | "reset";
 
 function CheckEmail({ message, next }: { message?: string; next: string }) {
   return (
@@ -140,6 +141,25 @@ function LinkForm({ next }: { next: string }) {
   );
 }
 
+function ResetForm({ next }: { next: string }) {
+  const [state, action] = useActionState(sendPasswordReset, null);
+  if (state?.ok) return <CheckEmail message={state.message} next={next} />;
+  return (
+    <form action={action} className="space-y-5">
+      <div>
+        <h2 className="font-semibold">Reset your password</h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Enter the email you signed up with. We'll send you a link to choose a
+          new password.
+        </p>
+      </div>
+      <EmailField />
+      <Submit pendingLabel="Sending…">Email me a reset link</Submit>
+      <Status state={state} />
+    </form>
+  );
+}
+
 export function SignInForm({
   next,
   disabled,
@@ -152,7 +172,7 @@ export function SignInForm({
   const [mode, setMode] = useState<Mode>(initialMode);
   return (
     <fieldset disabled={disabled} className="min-w-0">
-      {mode !== "link" && (
+      {(mode === "sign-in" || mode === "sign-up") && (
         <div
           role="tablist"
           aria-label="Sign in or create an account"
@@ -185,30 +205,43 @@ export function SignInForm({
 
       {mode === "link" ? (
         <LinkForm next={next} />
+      ) : mode === "reset" ? (
+        <ResetForm next={next} />
       ) : (
         <PasswordForm key={mode} mode={mode} next={next} />
       )}
 
       <p className="text-muted-foreground mt-6 border-t pt-5 text-sm">
-        {mode === "link" ? (
+        {mode === "link" || mode === "reset" ? (
           <button
             type="button"
             onClick={() => setMode("sign-in")}
             className="text-primary underline underline-offset-4"
           >
-            Use a password instead
+            {mode === "reset" ? "Back to sign in" : "Use a password instead"}
           </button>
         ) : (
-          <>
-            Forgot your password, or prefer no password?{" "}
-            <button
-              type="button"
-              onClick={() => setMode("link")}
-              className="text-primary underline underline-offset-4"
-            >
-              Email me a sign-in link
-            </button>
-          </>
+          <span className="flex flex-col gap-2">
+            <span>
+              <button
+                type="button"
+                onClick={() => setMode("reset")}
+                className="text-primary underline underline-offset-4"
+              >
+                Forgot your password?
+              </button>
+            </span>
+            <span>
+              Prefer no password?{" "}
+              <button
+                type="button"
+                onClick={() => setMode("link")}
+                className="text-primary underline underline-offset-4"
+              >
+                Email me a sign-in link
+              </button>
+            </span>
+          </span>
         )}
       </p>
     </fieldset>

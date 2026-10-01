@@ -3,10 +3,13 @@ import { redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { loadPayments } from "../_lib/flow";
+
 import { Empty, PageHeader, Section } from "@/components/kit";
 import { timeAgo } from "@/components/social/util";
 import { ActionButton } from "@/components/tutoring/action-button";
 import { getAccount, isTutor } from "@/lib/account/server";
+import { paymentsEnabled } from "@/lib/stripe";
 import {
   STATUS_LABELS,
   formatPrice,
@@ -77,13 +80,12 @@ export default async function DeskPage() {
       <div className="container max-w-2xl py-16">
         <h1 className="text-3xl tracking-tight">Tutor desk</h1>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          This page is for IlluminatED tutors. If you'd like to tutor with us,
-          get in touch through the{" "}
+          This page is for IlluminatED tutors. If you'd like to tutor with us,{" "}
           <Link
-            href="/about#corrections"
+            href="/tutors/apply"
             className="text-primary underline underline-offset-4"
           >
-            contact form
+            apply to become a tutor
           </Link>
           .
         </p>
@@ -94,6 +96,13 @@ export default async function DeskPage() {
   const claimable = open.filter((r) => r.studentId !== account.id);
   const active = mine.filter((r) => r.status === "matched");
   const done = mine.filter((r) => r.status === "completed");
+  const payments = paymentsEnabled
+    ? await loadPayments(claimable.map((r) => r.id))
+    : new Map<number, { paidAt: string | null; refundedAt: string | null }>();
+  const unpaid = (id: number) => {
+    const p = payments.get(id);
+    return paymentsEnabled && (!p?.paidAt || Boolean(p.refundedAt));
+  };
 
   return (
     <>
@@ -104,12 +113,21 @@ export default async function DeskPage() {
           { label: "Dashboard", href: "/dashboard" },
           { label: "Tutor desk" },
         ]}
-      />
+      >
+        {moderator && (
+          <Link
+            href="/tutors/applications"
+            className="hover:bg-muted inline-flex h-10 items-center rounded-md border px-4 text-sm font-medium"
+          >
+            Tutor applications
+          </Link>
+        )}
+      </PageHeader>
       {moderator && (
         <Section
           id="guardians"
           title="Waiting for a parent or guardian"
-          intro="Contact each parent or guardian, then confirm. Tutors can't take these requests until you do."
+          intro="We email each parent or guardian a consent link. If they don't respond, contact them yourself and confirm here. Tutors can't see these requests until consent is given."
           rule={false}
         >
           {guardians.length ? (
@@ -161,6 +179,10 @@ export default async function DeskPage() {
                 {r.needsGuardian && !r.guardianOk ? (
                   <span className="text-muted-foreground text-sm">
                     Waiting for guardian
+                  </span>
+                ) : unpaid(r.id) ? (
+                  <span className="text-muted-foreground text-sm">
+                    Waiting for payment
                   </span>
                 ) : (
                   <ActionButton

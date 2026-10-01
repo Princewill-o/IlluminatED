@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { deleteOwn, moderate } from "@/app/social/actions";
 import { ReplyForm, ReportButton } from "@/components/social/forms";
 import { timeAgo } from "@/components/social/util";
+import { getBlockList } from "@/lib/social/blocks";
 import { categoryBySlug, socialConfigured } from "@/lib/social/config";
 import { type Author, getThread } from "@/lib/social/data";
 import { getViewer } from "@/lib/social/server";
@@ -128,14 +129,23 @@ export default async function ThreadPage({
 }) {
   const id = Number((await params).id);
   if (!Number.isInteger(id)) notFound();
-  const [t, viewer] = await Promise.all([getThread(id), getViewer()]);
+  const [t, viewer, blocks] = await Promise.all([
+    getThread(id),
+    getViewer(),
+    getBlockList(),
+  ]);
   if (!t) notFound();
   const cat = categoryBySlug(t.category);
   const isMod = viewer?.profile?.role === "moderator";
   const member = Boolean(viewer?.profile && !viewer.profile.banned);
-  const visibleReplies = t.replies.filter(
+  const isBlocked = (authorId: string | null) =>
+    Boolean(authorId && blocks.ids.has(authorId));
+  const threadBlocked = isBlocked(t.authorId);
+  const allowedReplies = t.replies.filter(
     (r) => !r.hidden || isMod || r.authorId === viewer?.id,
   );
+  const visibleReplies = allowedReplies.filter((r) => !isBlocked(r.authorId));
+  const blockedReplyCount = allowedReplies.length - visibleReplies.length;
 
   return (
     <div className="container max-w-3xl py-10 lg:py-14">
@@ -187,7 +197,14 @@ export default async function ThreadPage({
         <div className="mt-4">
           <Byline author={t.author} at={t.createdAt} />
         </div>
-        <Body text={t.body} />
+        {threadBlocked ? (
+          <p className="text-muted-foreground mt-3 text-sm">
+            You've blocked this member, so their post is hidden. You can unblock
+            them from their profile.
+          </p>
+        ) : (
+          <Body text={t.body} />
+        )}
         <div className="mt-4 flex flex-wrap items-start gap-4">
           {socialConfigured && (
             <ReportButton kind="thread" id={t.id} canReport={member} />
@@ -211,6 +228,14 @@ export default async function ThreadPage({
         <h2 id="replies" className="border-b pb-3 text-lg font-semibold">
           {t.replyCount} {t.replyCount === 1 ? "reply" : "replies"}
         </h2>
+        {blockedReplyCount > 0 && (
+          <p className="text-muted-foreground border-b py-3 text-sm">
+            {blockedReplyCount}{" "}
+            {blockedReplyCount === 1 ? "reply is" : "replies are"} hidden
+            because you've blocked{" "}
+            {blockedReplyCount === 1 ? "its author" : "their authors"}.
+          </p>
+        )}
         <ol>
           {visibleReplies.map((r) => (
             <li key={r.id} id={`r${r.id}`} className="border-b py-6">

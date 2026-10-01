@@ -95,13 +95,20 @@ export default async function SignInPage({
           ))}
         </dl>
         <p className="text-muted-foreground mt-5 text-sm leading-relaxed">
-          You don't need an account to use the revision pages, quizzes or
-          flashcards. Read how we handle{" "}
+          A free account unlocks the revision pages, quizzes, flashcards and
+          your dashboard. You need to be 13 or over. Read how we handle{" "}
           <Link
-            href="/your-data"
+            href="/privacy"
             className="text-primary underline underline-offset-4"
           >
             your data
+          </Link>{" "}
+          and our{" "}
+          <Link
+            href="/terms"
+            className="text-primary underline underline-offset-4"
+          >
+            terms
           </Link>
           .
         </p>

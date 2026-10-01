@@ -17,14 +17,31 @@ const PUBLIC_PATHS = [
   "/faq",
   "/accessibility",
   "/your-data",
+  "/privacy",
+  "/terms",
+  "/cookies",
+  "/contact",
+  "/safeguarding",
+  "/guardian/confirm",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image",
+  "/opengraph-image.png",
+  "/twitter-image",
+  "/twitter-image.png",
   "/social/guidelines",
   "/social/sign-in",
   "/social/welcome",
   "/social/auth/callback",
 ];
 
+/** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
+const METADATA_IMAGE =
+  /(^|\/)(opengraph-image|twitter-image)(-[\w-]+)?(\.\w+)?$/;
+
 const isPublic = (path: string) =>
-  PUBLIC_PATHS.some((p) => path === p || path === `${p}/`);
+  PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
+  METADATA_IMAGE.test(path);
 
 /**
  * Keeps the Supabase session fresh, sends signed-out visitors to sign in,

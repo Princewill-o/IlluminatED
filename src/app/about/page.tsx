@@ -34,7 +34,7 @@ const HOW = [
   },
   {
     t: "Accounts",
-    d: "There aren't any yet. What you save, like quiz progress or your revision plan, stays in the browser you used. See Your data for details.",
+    d: "A free account unlocks the revision pages, quizzes, flashcards and your dashboard, and works on IlluminatEDSocial too. It's for ages 13 and over. See our privacy policy for what we store.",
   },
 ];
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About IlluminatED"
-        intro="A free study site for secondary and post-16 learners in the UK. Free to use without signing up, and no adverts."
+        intro="A free study site for secondary and post-16 learners in the UK. Create a free account to get started. No adverts."
         crumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
       />
       <Section rule={false}>
@@ -67,6 +67,10 @@ export default function AboutPage() {
           ,{" "}
           <Link className="underline underline-offset-4" href="/your-data">
             Your data
+          </Link>
+          ,{" "}
+          <Link className="underline underline-offset-4" href="/privacy">
+            privacy policy
           </Link>{" "}
           and our{" "}
           <Link className="underline underline-offset-4" href="/accessibility">

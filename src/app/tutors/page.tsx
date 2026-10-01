@@ -6,6 +6,8 @@ import { Note, PageHeader, Section } from "@/components/kit";
 import { Tiggy } from "@/components/tiggy";
 import { PriceTable } from "@/components/tutoring/price-table";
 import { getAccount } from "@/lib/account/server";
+import { paymentsEnabled } from "@/lib/stripe";
+import { SPEEDS, formatPrice, hoursLabel } from "@/lib/tutoring";
 import { getPrices } from "@/lib/tutoring-server";
 
 export const metadata: Metadata = {
@@ -15,28 +17,39 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 
-const STEPS = [
+const steps = (payments: boolean) => [
   [
     "Tell us what you need",
-    "Pick the subject, the kind of help and how quickly you need it. Describe the question or task.",
+    "Pick the subject, the kind of help and how quickly you need it, and describe the question or task. You see the price before you send it.",
+  ],
+  [
+    "Consent and payment",
+    payments
+      ? "If you're under 18, we email your parent or guardian for consent first. Then you pay securely by card through Stripe."
+      : "If you're under 18, we email your parent or guardian for consent first. Payment is arranged after a tutor is matched.",
   ],
   [
     "A tutor takes it on",
-    "A tutor who teaches that subject accepts your request within the time for your tier.",
+    "Your request goes to our checked tutors. One who teaches the subject takes it on, and we email you when they do.",
   ],
   [
     "Work through it together",
-    "Message your tutor on IlluminatED, or arrange a live one-to-one session.",
-  ],
-  [
-    "Mark it done",
-    "Close the request when you're happy. You can ask for more help any time.",
+    "Message your tutor on IlluminatED, or arrange a live one-to-one session. Mark the request done when you're happy.",
   ],
 ];
 
 export default async function TutorsPage() {
   const [{ prices }, account] = await Promise.all([getPrices(), getAccount()]);
   const cta = account ? "/tutors/request" : "/sign-in?next=/tutors/request";
+  const tiers = SPEEDS.map((sp) => ({
+    ...sp,
+    price: prices.find((p) => p.speed === sp.id),
+    from: prices
+      .filter((p) => p.speed === sp.id)
+      .reduce<
+        number | null
+      >((m, p) => (m === null || p.pricePence < m ? p.pricePence : m), null),
+  }));
   return (
     <>
       <PageHeader
@@ -60,15 +73,26 @@ export default async function TutorsPage() {
       >
         <PriceTable prices={prices} />
         <Note className="mt-8">
-          Sending a request doesn't charge you anything. Online payment isn't
-          switched on yet, so we'll confirm how to pay before your tutor starts.
-          If nobody takes your request in time, you won't pay.
+          {paymentsEnabled ? (
+            <>
+              Secure card payment via Stripe. You pay once your request is ready
+              for tutors (after parent or guardian consent if you're under 18),
+              and tutors can only take paid requests. If no tutor takes your
+              request in time, we'll refund you in full.
+            </>
+          ) : (
+            <>
+              Sending a request doesn't charge you anything. Payment is arranged
+              after a tutor is matched, and we'll confirm how to pay before your
+              tutor starts. If nobody takes your request in time, you won't pay.
+            </>
+          )}
         </Note>
       </Section>
 
       <Section id="how" title="How it works">
         <ol className="grid gap-x-10 gap-y-8 md:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map(([t, d], i) => (
+          {steps(paymentsEnabled).map(([t, d], i) => (
             <li key={t} className="border-t pt-4">
               <span className="text-muted-foreground text-sm tabular-nums">
                 {String(i + 1).padStart(2, "0")}
@@ -80,6 +104,34 @@ export default async function TutorsPage() {
             </li>
           ))}
         </ol>
+        <h3 className="mt-12 font-semibold">How quickly tutors respond</h3>
+        <dl className="mt-4 grid gap-x-10 gap-y-6 md:grid-cols-3">
+          {tiers.map((t) => (
+            <div key={t.id} className="border-t pt-4">
+              <dt className="font-semibold">
+                {t.label}
+                {t.from !== null && (
+                  <span className="text-muted-foreground font-normal">
+                    {" "}
+                    · from {formatPrice(t.from)}
+                  </span>
+                )}
+              </dt>
+              <dd className="text-muted-foreground mt-1.5 text-sm leading-relaxed">
+                {t.price
+                  ? `A tutor takes it on within ${hoursLabel(t.price.matchHours)}, then replies within ${hoursLabel(t.price.replyHours)}. `
+                  : ""}
+                {t.summary}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="text-muted-foreground mt-6 max-w-3xl text-sm leading-relaxed">
+          The time to find a tutor counts from when you send your request. If a
+          parent or guardian needs to give consent
+          {paymentsEnabled ? ", or you haven't paid yet," : ""} tutors can't
+          take it on until that's done, so it helps to do it straight away.
+        </p>
       </Section>
 
       <Section id="rules" title="Keeping it fair and safe">
@@ -100,7 +152,9 @@ export default async function TutorsPage() {
             </dt>
             <dd className="text-muted-foreground mt-2 text-sm leading-relaxed">
               If you're under 18 we ask for a parent or guardian's email with
-              your request, and we contact them before any tutor can take it on.
+              your request. We email them a link to give consent, and tutors
+              can't see or take on the request until they do. If they say no,
+              the request is cancelled.
             </dd>
           </div>
           <div>
@@ -114,8 +168,15 @@ export default async function TutorsPage() {
           <div>
             <dt className="font-semibold">Checked tutors</dt>
             <dd className="text-muted-foreground mt-2 text-sm leading-relaxed">
-              Tutors are added by our team after identity and reference checks,
-              including an enhanced DBS check for anyone working with under-18s.
+              Tutors apply and are approved by our team after identity and
+              reference checks, including an enhanced DBS check for anyone
+              working with under-18s.{" "}
+              <Link
+                href="/tutors/apply"
+                className="text-primary underline underline-offset-4"
+              >
+                Apply to tutor
+              </Link>
             </dd>
           </div>
         </dl>

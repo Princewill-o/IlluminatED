@@ -47,7 +47,7 @@ const description =
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://illuminated-omega.vercel.app",
   ),
   title: {
     default: "IlluminatED: revision for UK learners",
@@ -68,14 +68,9 @@ export const metadata: Metadata = {
     title: "IlluminatED: revision for UK learners",
     description,
     siteName: "IlluminatED",
-    images: [
-      {
-        url: "/brand/mascot-light.webp",
-        width: 797,
-        height: 960,
-        alt: "The IlluminatED lion mascot",
-      },
-    ],
+    locale: "en_GB",
+    type: "website",
+    // The image comes from src/app/opengraph-image.png (and twitter-image.png).
   },
 };
 
@@ -99,7 +94,7 @@ export default function RootLayout({
       <body className={`${dmSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="light"
+          defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >

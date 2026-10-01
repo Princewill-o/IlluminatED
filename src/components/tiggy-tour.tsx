@@ -267,7 +267,7 @@ export function TiggyTour({ userId, name }: { userId: string; name: string }) {
                           key={i}
                           className="flex gap-3 text-sm leading-relaxed"
                         >
-                          <span className="bg-primary text-primary-foreground mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
+                          <span className="bg-primary text-primary-foreground mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-xs font-semibold">
                             {i + 1}
                           </span>
                           <span className="[&_b]:font-semibold">{p.text}</span>
