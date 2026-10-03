@@ -39,7 +39,8 @@ export default function PrivacyPage() {
           </li>
           <li>
             We collect as little as we can. We never ask for your real name,
-            school, date of birth or where you live.
+            date of birth or where you live. You can optionally save your school
+            privately in your account; it is never shown on Social.
           </li>
           <li>
             No adverts, no tracking for adverts, and we never sell your data.
@@ -93,6 +94,11 @@ export default function PrivacyPage() {
           subjects and exam boards, the topics you want help with, an optional
           note about what you find hard, and an optional exam date.
         </li>
+        <li>
+          <strong>Optional school or sixth form</strong>: if you choose to save
+          it, other members cannot see it. It is not part of your public
+          Social profile and you can remove it at any time.
+        </li>
       </ul>
       <h3>When you use the site</h3>
       <ul>
@@ -109,7 +115,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Forum activity</strong>: threads and replies you post, reports
-          you make, and members you've blocked.
+          you make, members you've blocked, and private friend requests and
+          connections, and whether you choose to allow requests (off by default).
+          Requests are visible only to the two people involved.
         </li>
         <li>
           <strong>Tutoring</strong>: your tutor requests (subject, topic, the
@@ -149,7 +157,7 @@ export default function PrivacyPage() {
       </ul>
       <h3>What we don't collect</h3>
       <p>
-        We don't ask for your real name, school, date of birth, address, phone
+        We don't ask for your real name, date of birth, address, phone
         number or photo. We don't use your location. We don't collect health
         information or other sensitive details, so please don't post them on the
         forum.

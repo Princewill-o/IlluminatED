@@ -27,6 +27,7 @@ export function SocialLogo() {
 const LINKS = [
   { href: "/social", label: "Forum" },
   { href: "/social/universities", label: "Universities" },
+  { href: "/social/friends", label: "Friends" },
   { href: "/social/guidelines", label: "Guidelines" },
 ];
 

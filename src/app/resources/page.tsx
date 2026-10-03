@@ -6,6 +6,8 @@ import { ResourceFinder } from "@/components/directories";
 import { GovUkSearch } from "@/components/govuk-search";
 import { ExternalLink, PageHeader, Section } from "@/components/kit";
 import { OGL_URL } from "@/lib/apprenticeships";
+import { COURSES } from "@/lib/data/courses";
+import { TOPICS } from "@/lib/data/topics";
 
 const OGL = { label: "Open Government Licence v3.0", href: OGL_URL };
 
@@ -121,6 +123,29 @@ export default function ResourcesPage() {
           </Link>
         </p>
         <ResourceFinder />
+      </Section>
+      <Section
+        id="downloads"
+        title="IlluminatED downloads"
+        intro="Branded study aids you can print or save. Practice papers are original IlluminatED material, not official exam papers."
+      >
+        <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 p-5 text-slate-950">
+          <h3 className="font-bold">Downloaded a paper? Try exam mode.</h3>
+          <p className="mt-1 text-sm text-slate-700">Set your own duration and use a distraction-free dark timer while you work. You will be asked before pausing or finishing.</p>
+          <Link href="/exam-mode" className="mt-3 inline-flex rounded-full bg-blue-700 px-4 py-2 text-sm font-semibold text-white">Start exam mode</Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {COURSES.map((course) => (
+            <div key={course.id} className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-200 dark:bg-white dark:text-slate-900">
+              <h3 className="font-semibold">{course.title}</h3>
+              <p className="mt-1 text-sm text-slate-600">{course.years} · {course.level}</p>
+              <div className="mt-4 flex flex-wrap gap-2 text-sm">
+                <a className="rounded-full border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 hover:bg-slate-50" href={`/api/downloads?course=${encodeURIComponent(course.id)}&type=checklist`}>Download topic checklist</a>
+                {TOPICS.some((topic) => course.topicIds.includes(topic.id) && topic.quiz.length > 0) && <a className="rounded-full border border-slate-300 bg-white px-3 py-2 font-medium text-slate-900 hover:bg-slate-50" href={`/api/downloads?course=${encodeURIComponent(course.id)}&type=practice`}>Download practice paper</a>}
+              </div>
+            </div>
+          ))}
+        </div>
       </Section>
       <Section
         id="guidance"

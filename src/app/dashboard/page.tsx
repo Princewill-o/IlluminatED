@@ -15,6 +15,7 @@ import { Empty, Section } from "@/components/kit";
 import { NextSteps } from "@/components/next-steps";
 import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
 import { timeAgo } from "@/components/social/util";
+import { StudyTimer } from "@/components/study-timers";
 import { TiggyTour, TourButton } from "@/components/tiggy-tour";
 import {
   loadDashboard,
@@ -174,6 +175,22 @@ export default async function DashboardPage() {
       </header>
 
       <ReadinessPanel data={data} details={details} />
+
+      <section className="container grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" aria-label="Study tools and community">
+        <StudyTimer mode="pomodoro" />
+        <div className="relative overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-violet-100 p-7 text-slate-950">
+          <div aria-hidden className="absolute -right-8 -top-8 size-36 rounded-full bg-yellow-300/60" />
+          <div aria-hidden className="absolute bottom-6 right-8 size-16 rotate-12 rounded-2xl bg-blue-300/60" />
+          <p className="relative text-xs font-bold uppercase tracking-widest text-blue-700">One account, more ways to grow</p>
+          <h2 className="relative mt-3 text-2xl font-bold">Meet IlluminatED Social</h2>
+          <p className="relative mt-3 max-w-sm text-sm leading-6 text-slate-700">Ask students about sixth form, university and apprenticeships, swap advice, and explore what comes next.</p>
+          <div className="relative mt-6 flex flex-wrap gap-2">
+            <Link href="/social" className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-bold text-white">Explore Social</Link>
+            <Link href="/exam-mode" className="rounded-full border border-blue-700 px-5 py-2.5 text-sm font-bold text-blue-800">Open exam mode</Link>
+          </div>
+          <p className="relative mt-6 text-xs font-semibold text-violet-800">Study games are coming soon 🎮</p>
+        </div>
+      </section>
 
       <Section id="next-steps" title="Plan what comes next" rule={false}>
         <NextSteps

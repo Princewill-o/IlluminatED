@@ -14,6 +14,7 @@ export const STORAGE_KEYS = {
   alevelYear: "alevel-year",
   cache: "api-cache",
   imported: "progress-imported",
+  answerStreak: "answer-streak",
 } as const;
 
 export const STORAGE_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ export const STORAGE_LABELS: Record<string, string> = {
   [STORAGE_KEYS.alevelYear]: "A level year choice",
   [STORAGE_KEYS.imported]:
     "Which accounts this device's quiz history has already been added to",
+  [STORAGE_KEYS.answerStreak]: "Current and best consecutive correct-answer streak",
   [STORAGE_KEYS.cache]:
     "Short-lived copies of search results (qualifications, statistics, books, guidance, apprenticeships)",
 };

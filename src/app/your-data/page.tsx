@@ -41,8 +41,8 @@ export default function YourDataPage() {
               store your email (to sign you in, never shown to anyone), your
               username, age range, year group, subjects, the topics you want
               help with, quiz results, syllabus revision ticks, career choices,
-              saved opportunities, tutor requests and messages, and any forum
-              posts. We don't ask for your real name or school. You can change
+              saved opportunities, tutor requests and messages, friend requests and any forum
+              posts. You can optionally save your school privately; it is never shown on Social. We don't ask for your real name. You can change
               your details or{" "}
               <Link
                 href="/dashboard/settings#delete"

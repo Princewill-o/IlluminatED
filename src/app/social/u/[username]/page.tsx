@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { toggleBlock } from "@/app/social/block-actions";
+import { changeConnection } from "@/app/social/friends/actions";
 import { ThreadList } from "@/components/social/thread-list";
 import { getBlockState } from "@/lib/social/blocks";
 import { socialConfigured } from "@/lib/social/config";
 import { getProfile } from "@/lib/social/data";
+import { getSupabase } from "@/lib/social/server";
 
 export async function generateMetadata({
   params,
@@ -35,6 +37,12 @@ export default async function ProfilePage({
     block?.viewerId && block.viewerId !== block.targetId,
   );
   const blocked = Boolean(block?.blocked);
+  const sb = canBlock && !blocked ? await getSupabase() : null;
+  const { data: connection, error: connectionError } = sb && block ? await sb.from("social_connections")
+    .select("requester, recipient, status")
+    .or(`and(requester.eq.${block.viewerId},recipient.eq.${block.targetId}),and(requester.eq.${block.targetId},recipient.eq.${block.viewerId})`)
+    .maybeSingle() : { data: null, error: null };
+  const { data: canRequest } = sb && block && !connection ? await sb.rpc("can_request_friend", { target: block.targetId }) : { data: false };
   return (
     <div className="container max-w-3xl py-10 lg:py-14">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -52,6 +60,15 @@ export default async function ProfilePage({
           </p>
         </div>
         {canBlock && block && (
+          <div className="flex flex-wrap gap-2">
+          {!blocked && !connectionError && (connection || canRequest) && <form action={changeConnection}>
+            <input type="hidden" name="target" value={block.targetId} />
+            <input type="hidden" name="username" value={p.username} />
+            <input type="hidden" name="action" value={!connection ? "request" : connection.status === "pending" && connection.recipient === block.viewerId ? "accept" : "remove"} />
+            <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+              {!connection ? "Add friend" : connection.status === "accepted" ? "Remove friend" : connection.recipient === block.viewerId ? "Accept request" : "Cancel request"}
+            </button>
+          </form>}
           <form action={toggleBlock}>
             <input type="hidden" name="target" value={block.targetId} />
             <input type="hidden" name="username" value={p.username} />
@@ -71,6 +88,7 @@ export default async function ProfilePage({
               {blocked ? "Unblock" : "Block"}
             </button>
           </form>
+          </div>
         )}
       </div>
       {canBlock && (

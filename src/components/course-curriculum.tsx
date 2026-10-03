@@ -78,7 +78,13 @@ export function CourseCurriculumPanel({ data }: { data: CourseCurriculum }) {
                     className="text-primary underline underline-offset-4"
                     href={`/api/education/catalogue?course=${data.course.id}&spec=${encodeURIComponent(spec)}&format=text`}
                   >
-                    Download checklist
+                    Download text checklist
+                  </a>
+                  <a
+                    className="text-primary underline underline-offset-4"
+                    href={`/api/downloads?course=${encodeURIComponent(data.course.id)}&board=${encodeURIComponent(`${syllabus.board}:${syllabus.code}`)}&type=checklist`}
+                  >
+                    Download branded PDF checklist
                   </a>
                 </div>
                 <p className="mt-4 text-sm" aria-live="polite">

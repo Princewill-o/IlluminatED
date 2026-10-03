@@ -35,7 +35,12 @@ export default function RevisionPage() {
         <div className="grid gap-x-10 md:grid-cols-2">
           {withTopics.map((c) => (
             <div key={c.id} className="break-inside-avoid border-t py-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 text-slate-900 shadow-sm dark:border-slate-200 dark:bg-white dark:text-slate-900">
               <h3 className="font-semibold">{c.title}</h3>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                <a className="rounded-full border border-slate-300 px-3 py-1.5 font-medium text-slate-900 hover:bg-slate-50" href={`/api/downloads?course=${encodeURIComponent(c.id)}&type=checklist`}>PDF checklist</a>
+                {TOPICS.some((topic) => c.topicIds.includes(topic.id) && topic.quiz.length > 0) && <a className="rounded-full border border-slate-300 px-3 py-1.5 font-medium text-slate-900 hover:bg-slate-50" href={`/api/downloads?course=${encodeURIComponent(c.id)}&type=practice`}>PDF practice paper</a>}
+              </div>
               <ul className="mt-1">
                 {TOPICS.filter((t) => t.courseId === c.id).map((t) => (
                   <li
@@ -44,7 +49,7 @@ export default function RevisionPage() {
                   >
                     <Link
                       href={`/courses/${c.id}/${t.id}`}
-                      className="decoration-foreground/20 hover:decoration-foreground py-1.5 underline underline-offset-4"
+                      className="py-1.5 text-slate-900 underline decoration-slate-300 underline-offset-4 hover:decoration-slate-900"
                     >
                       {t.title}
                     </Link>
@@ -53,9 +58,16 @@ export default function RevisionPage() {
                       courseId={c.id}
                       label="Download"
                     />
+                    <a
+                      className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-900 hover:bg-slate-50"
+                      href={`/api/downloads?course=${encodeURIComponent(c.id)}&topic=${encodeURIComponent(t.id)}&type=notes`}
+                    >
+                      PDF notes
+                    </a>
                   </li>
                 ))}
               </ul>
+              </div>
             </div>
           ))}
         </div>

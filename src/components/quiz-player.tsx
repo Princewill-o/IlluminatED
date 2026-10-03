@@ -77,6 +77,10 @@ export function QuizPlayer({
     userId ? `quiz:${userId}` : STORAGE_KEYS.quiz,
     initialProgress,
   );
+  const [streak, setStreak] = useStored<{ current: number; best: number }>(
+    userId ? `${STORAGE_KEYS.answerStreak}:${userId}` : STORAGE_KEYS.answerStreak,
+    { current: 0, best: 0 },
+  );
   const [personalised, setPersonalised] = useState(studySubjects.length > 0);
   const [mode, setMode] = useState<Mode>(
     fixedTopicId || initialTopic ? "topic" : (initialMode ?? "quick"),
@@ -216,10 +220,14 @@ export function QuizPlayer({
       const correct = i === current.answer;
       if (!retried) {
         record(current, correct);
+        setStreak((previous) => {
+          const currentCount = correct ? previous.current + 1 : 0;
+          return { current: currentCount, best: Math.max(previous.best, currentCount) };
+        });
         if (!correct) setFirstWrong(true);
       }
     },
-    [current, answered, retried, record],
+    [current, answered, retried, record, setStreak],
   );
 
   const next = useCallback(
@@ -306,6 +314,9 @@ export function QuizPlayer({
   if (!round) {
     return (
       <div className="bg-card space-y-5 rounded-xl border p-5 md:p-6">
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950" role="status">
+          🔥 {streak.current} correct in a row · Best {streak.best}
+        </p>
         {studySubjects.length > 0 && (
           <label className="flex items-start gap-3 text-sm">
             <input
@@ -490,6 +501,9 @@ export function QuizPlayer({
         role="region"
         aria-label="Round summary"
       >
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950" role="status">
+          🔥 {streak.current} correct in a row · Best {streak.best}
+        </p>
         <div className="flex flex-wrap items-center gap-4">
           <span className="bg-accent text-accent-foreground grid size-14 place-items-center rounded-lg">
             <Trophy aria-hidden />

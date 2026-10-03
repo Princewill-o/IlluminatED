@@ -55,6 +55,25 @@ export default async function SocialHome({
         </Link>
       </div>
 
+      <section aria-label="Everything in one account" className="mt-9 overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-r from-blue-50 via-white to-violet-100 p-6 text-slate-950 sm:p-8">
+        <p className="text-xs font-bold uppercase tracking-widest text-blue-700">Everything in one account</p>
+        <h2 className="mt-2 text-2xl font-bold">Learn, ask, and find your next step.</h2>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: "💬", title: "Ask the community", body: "Share questions and read student experiences in moderated threads." },
+            { icon: "📚", title: "Revise together", body: "Use the same account for quizzes, study resources and your dashboard." },
+            { icon: "🧭", title: "Plan ahead", body: "Explore sixth form, university and apprenticeship conversations." },
+            { icon: "🎮", title: "Games coming soon", body: "More playful ways to practise are on the way." },
+          ].map((feature) => <article key={feature.title} className="rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+            <span className="text-3xl" aria-hidden>{feature.icon}</span>
+            <h3 className="mt-3 font-bold">{feature.title}</h3>
+            <p className="mt-2 text-sm leading-5 text-slate-600">{feature.body}</p>
+          </article>)}
+        </div>
+        <p className="mt-5 text-xs text-slate-600">Profiles use usernames. Your email, school and study details stay private.</p>
+        <Link href="/social/friends" className="mt-4 inline-block text-sm font-semibold text-blue-700 underline underline-offset-4">Your friends and requests</Link>
+      </section>
+
       <div className="mt-12 grid gap-12 lg:grid-cols-[minmax(0,1fr)_300px]">
         <section aria-labelledby="latest">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">

@@ -176,3 +176,13 @@ Run `npm run sync:education`, `npm run sync:opportunities`, and `npm run test:ed
 ### Supabase education storage
 
 Apply the reviewed `supabase/migrations/20261003082046_education_catalogue_and_progress.sql` to the existing project, then run `npm run publish:education` with server-only `SUPABASE_URL` and `SUPABASE_SECRET_KEY`. This stores the public catalogue and opportunity snapshots, while signed-in syllabus ticks, next-step choices and saved opportunities use owner-only RLS. The bundled catalogue remains a fallback. Topic study pages are available for each listed syllabus heading and broad course area. See `docs/education-integrations.md` for privacy, refresh schedules, setup and the remaining coverage gaps.
+
+### Social friends and private school
+
+Apply `supabase/migrations/20261003190000_private_school.sql` and then
+`supabase/migrations/20261003191000_social_friends.sql` to the existing
+Supabase project. Until applied, the site hides the affected controls or shows
+an unavailable state. School names are optional and private from other members;
+friend requests are off by default and require the recipient to opt in.
+Private messaging is not launched. Review `docs/social-privacy-review.md`
+before considering direct messages or any end-to-end encryption claim.
