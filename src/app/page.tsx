@@ -102,29 +102,36 @@ export default function Home() {
       </section>
 
       <section
-        className="container pb-16 lg:pb-24"
+        className="relative overflow-hidden border-y-2 border-[#17223b] bg-[#fff9ed] py-16 text-[#17223b] dark:bg-[#17223b] dark:text-white lg:py-24"
         aria-labelledby="features-title"
       >
-        <Reveal className="flex items-end justify-between gap-6">
-          <div className="max-w-2xl">
+        <div aria-hidden className="pointer-events-none absolute -left-10 top-10 size-36 rounded-full border-[20px] border-[#ffd86f]/60" />
+        <div aria-hidden className="pointer-events-none absolute -right-12 bottom-16 size-44 rotate-12 rounded-[3rem] border-[18px] border-[#b5e8ef]/70" />
+        <div className="container relative">
+        <Reveal className="flex items-center justify-between gap-6">
+          <div className="max-w-3xl">
+            <p className="mb-4 inline-flex -rotate-2 rounded-full border-2 border-[#17223b] bg-[#ffdb70] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#17223b] shadow-[3px_3px_0_#17223b]">One login. Loads to explore.</p>
             <h2
               id="features-title"
-              className="text-3xl tracking-tight md:text-4xl"
+              className="text-4xl font-black tracking-tight text-balance md:text-5xl"
             >
               Everything in one account
             </h2>
-            <p className="text-muted-foreground mt-3 text-lg">
-              Sign up once. It works for the revision site and the student
-              forum.
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-[#526078] dark:text-slate-200">
+              Your study space, exam tools and student community all live together. Take a peek at what you can do.
             </p>
           </div>
           <Tiggy
             action="read"
-            className="hidden w-28 shrink-0 sm:block lg:w-32"
+            say="Let's make this year yours!"
+            sayClassName="right-[80%] top-[10%]"
+            className="hidden w-36 shrink-0 md:block lg:w-44"
           />
         </Reveal>
         <div className="mt-10">
           <FeatureGrid />
+        </div>
+        <p className="mt-10 text-center text-sm font-semibold text-[#526078] dark:text-slate-200">These are illustrative screen previews. Your dashboard and results are personal to you. <span className="ml-1 text-[#7048bb] dark:text-[#decaff]">🎮 Study games are coming soon.</span></p>
         </div>
       </section>
 

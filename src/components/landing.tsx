@@ -214,56 +214,110 @@ export function GradeDemo() {
 const FEATURES = [
   {
     icon: BarChart3,
-    title: "A dashboard that knows your subjects",
-    text: "Charts of your scores by subject and topic, and a list of exactly what to revise next.",
+    title: "Your progress, at a glance",
+    text: "See your subjects, spot the tricky topics, and know what to revise next.",
+    href: "/dashboard",
+    action: "See your dashboard",
+    tint: "bg-[#e8f2ff]",
+    accent: "bg-[#3968e8]",
+    kind: "dashboard",
   },
   {
     icon: CalendarClock,
-    title: "Train towards exam day",
-    text: "A live countdown from the date you enter, with a plan that changes as the exams get closer.",
+    title: "Get exam-day ready",
+    text: "Set your exam date, follow a plan, and practise with a proper timer.",
+    href: "/exam-mode",
+    action: "Try exam mode",
+    tint: "bg-[#fff0d9]",
+    accent: "bg-[#f39d27]",
+    kind: "countdown",
   },
   {
     icon: Calculator,
-    title: "Grade calculators",
-    text: "Work out your grade and what you need on the papers you haven't sat yet, for GCSE, A level, BTEC and more.",
+    title: "Make your marks count",
+    text: "Check your grade and see what you need on the papers still to come.",
+    href: "/calculator",
+    action: "Explore calculators",
+    tint: "bg-[#e9f8e9]",
+    accent: "bg-[#37a977]",
+    kind: "calculator",
   },
   {
     icon: Sparkles,
-    title: "Quizzes and flashcards",
-    text: "Short practice rounds with an explanation for every answer, saved to your account.",
+    title: "Make practice stick",
+    text: "Answer quick quizzes, flip flashcards, and build a correct-answer streak.",
+    href: "/quizzes",
+    action: "Start a quiz",
+    tint: "bg-[#f2eaff]",
+    accent: "bg-[#8b62d9]",
+    kind: "quiz",
   },
   {
     icon: GraduationCap,
-    title: "Tutors when you're stuck",
-    text: "One-to-one help with homework, coursework guidance and exam prep. You choose how fast.",
+    title: "Get unstuck together",
+    text: "Ask for a tutor when a topic needs more than another practice round.",
+    href: "/tutors",
+    action: "Find help",
+    tint: "bg-[#ffe9e6]",
+    accent: "bg-[#ee7666]",
+    kind: "tutors",
   },
   {
     icon: MessagesSquare,
     title: "IlluminatEDSocial",
-    text: "Ask students who've been there about sixth form, universities and apprenticeships.",
+    text: "Ask students about sixth form, university, apprenticeships and life after exams.",
+    href: "/social",
+    action: "Explore Social",
+    tint: "bg-[#e4f8fa]",
+    accent: "bg-[#36a8bb]",
+    kind: "social",
   },
-];
+] as const;
+
+function FeatureSnapshot({ kind }: { kind: (typeof FEATURES)[number]["kind"] }) {
+  return (
+    <div className="relative h-44 overflow-hidden rounded-[1.4rem] border-2 border-[#17223b] bg-white p-3 text-[#17223b] shadow-[5px_6px_0_#17223b] sm:h-48" aria-hidden>
+      <div className="mb-3 flex items-center gap-1.5 border-b border-slate-200 pb-2">
+        <span className="size-2 rounded-full bg-[#ff7778]" /><span className="size-2 rounded-full bg-[#ffca55]" /><span className="size-2 rounded-full bg-[#69c997]" />
+        <span className="ml-auto text-[9px] font-bold tracking-wide text-slate-400">illuminatED</span>
+      </div>
+      {kind === "dashboard" && <div className="space-y-2 text-[10px]">
+        <p className="font-bold">Hi, Maya! Your study plan 👋</p>
+        <div className="grid grid-cols-3 gap-1.5 text-center"><span className="rounded-lg bg-blue-100 p-2"><b className="block text-sm">128</b>answered</span><span className="rounded-lg bg-yellow-100 p-2"><b className="block text-sm">74%</b>correct</span><span className="rounded-lg bg-green-100 p-2"><b className="block text-sm">42</b>days left</span></div>
+        <p className="font-bold">Revise next</p><div className="flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1.5"><span>Linear equations</span><span className="rounded bg-blue-600 px-2 py-0.5 text-white">Quiz</span></div>
+      </div>}
+      {kind === "countdown" && <div className="text-center"><p className="text-[10px] font-bold uppercase tracking-wider text-orange-700">Exam mode</p><p className="mt-2 text-4xl font-black tabular-nums">01:30:00</p><p className="mt-1 text-[10px] text-slate-500">Your paper. Your time. Your focus.</p><div className="mx-auto mt-3 w-28 rounded-full bg-[#17223b] px-3 py-1 text-[10px] font-bold text-white">Start timer ▶</div></div>}
+      {kind === "calculator" && <div className="space-y-2 text-[10px]"><p className="font-bold">What grade am I on track for?</p><div className="flex items-center justify-between rounded-lg bg-green-50 p-2"><span>Paper 1 · 58/80</span><span className="font-bold">72%</span></div><div className="flex items-center justify-between rounded-lg bg-green-50 p-2"><span>Paper 2 · target</span><span className="font-bold">65/80</span></div><p className="rounded-lg bg-[#17223b] p-2 font-bold text-white">Your next goal: 7 more marks ↗</p></div>}
+      {kind === "quiz" && <div className="space-y-1.5 text-[10px]"><div className="flex justify-between text-slate-500"><span>Quick practice</span><span>3 of 5</span></div><p className="font-bold">What is 15% of £80?</p><div className="rounded-lg border px-2 py-1">£10</div><div className="rounded-lg border-2 border-violet-500 bg-violet-50 px-2 py-1 font-bold">£12 ✓</div><p className="text-violet-800">🔥 4 right in a row</p></div>}
+      {kind === "tutors" && <div className="space-y-2 text-[10px]"><p className="font-bold">What do you need help with?</p><div className="rounded-lg bg-rose-50 p-2">📐 Maths · Linear equations</div><div className="rounded-lg bg-rose-50 p-2">💬 Homework help · This week</div><p className="rounded-lg bg-[#17223b] p-2 text-center font-bold text-white">Request a tutor →</p></div>}
+      {kind === "social" && <div className="space-y-2 text-[10px]"><p className="font-bold">IlluminatED<span className="text-cyan-700">Social</span> 💬</p><div className="rounded-lg bg-cyan-50 p-2"><b>Sixth form</b><p>What should I ask at an open day?</p></div><div className="rounded-lg bg-cyan-50 p-2"><b>Apprenticeships</b><p>How did you find your first role?</p></div></div>}
+    </div>
+  );
+}
 
 export function FeatureGrid() {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       {FEATURES.map((f, i) => (
         <motion.li
           key={f.title}
           {...reveal}
           transition={{ ...reveal.transition, delay: (i % 3) * 0.08 }}
-          whileHover={{ y: -4 }}
-          className="bg-card rounded-3xl border p-6 transition-shadow hover:shadow-[0_18px_40px_-28px_rgb(15_23_42/0.5)]"
+          whileHover={{ y: -6, rotate: i % 2 ? 0.5 : -0.5 }}
+          className={cn("relative overflow-hidden rounded-[2rem] border-2 border-[#17223b] p-5 text-[#17223b] shadow-[7px_8px_0_#17223b] transition-shadow sm:p-6", f.tint)}
         >
-          <span className="bg-primary/10 text-primary grid size-11 place-items-center rounded-2xl">
-            <f.icon className="size-5" aria-hidden />
+          <span aria-hidden className="absolute -right-5 -top-5 size-20 rounded-full border-4 border-[#17223b]/10" />
+          <span className={cn("relative grid size-12 place-items-center rounded-2xl border-2 border-[#17223b] text-white shadow-[3px_3px_0_#17223b]", f.accent)}>
+            <f.icon className="size-6" aria-hidden />
           </span>
-          <h3 className="mt-5 text-lg font-semibold tracking-tight">
+          <div className="mt-5 -rotate-1"><FeatureSnapshot kind={f.kind} /></div>
+          <h3 className="mt-6 text-xl font-black tracking-tight">
             {f.title}
           </h3>
-          <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          <p className="mt-2 min-h-12 text-sm leading-relaxed text-[#40506d]">
             {f.text}
           </p>
+          <Link href={f.href} className="mt-5 inline-flex items-center gap-2 rounded-full border-2 border-[#17223b] bg-white px-4 py-2 text-sm font-bold shadow-[3px_3px_0_#17223b] transition-transform hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#17223b]">{f.action}<span aria-hidden>↗</span></Link>
         </motion.li>
       ))}
     </ul>
