@@ -13,6 +13,7 @@ import {
 } from "@/components/dashboard/widgets";
 import { Empty, Section } from "@/components/kit";
 import { NextSteps } from "@/components/next-steps";
+import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
 import { timeAgo } from "@/components/social/util";
 import { TiggyTour, TourButton } from "@/components/tiggy-tour";
 import {
@@ -104,6 +105,9 @@ export default async function DashboardPage() {
   return (
     <>
       <TiggyTour userId={account.id} name={profile.username} />
+      <div className="container pt-6 lg:pt-10">
+        <Q4CampaignArtwork compact />
+      </div>
       <header className="container pt-6 pb-8 lg:pt-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>

@@ -24,6 +24,7 @@ export const LEGAL_LINKS = [
 ] as const;
 
 export const CONTACT_TOPICS = [
+  { value: "billing", label: "Billing, subscription or refund" },
   { value: "general", label: "General question" },
   { value: "account", label: "My account" },
   { value: "correction", label: "A mistake in the content" },

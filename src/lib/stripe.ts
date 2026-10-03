@@ -28,4 +28,5 @@ export function getStripe(): Stripe | null {
 export const PREMIUM_PRICE_ID =
   process.env.STRIPE_PREMIUM_PRICE_ID?.trim() || "";
 
-export const premiumEnabled = Boolean(SECRET_KEY && PREMIUM_PRICE_ID);
+export const stripeLive = /^(sk|rk)_live_/.test(SECRET_KEY);
+export const premiumEnabled = Boolean(SECRET_KEY && PREMIUM_PRICE_ID && process.env.BILLING_CALLBACK_SECRET && process.env.STRIPE_WEBHOOK_SECRET && (!stripeLive || process.env.HF_TOKEN));

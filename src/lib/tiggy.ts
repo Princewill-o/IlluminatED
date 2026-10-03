@@ -64,8 +64,7 @@ export const STARTER_PROMPTS: { label: string; text: string; send: boolean }[] =
     },
   ];
 
-export const PREMIUM_PRICE_LABEL =
-  process.env.NEXT_PUBLIC_PREMIUM_PRICE_LABEL?.trim() || "£4.99/month";
+export { PREMIUM_MONTHLY_LABEL as PREMIUM_PRICE_LABEL } from "@/lib/campaign";
 
 export interface TiggyStatus {
   plan: TiggyPlan;

@@ -4,15 +4,10 @@ import { type SupabaseClient, createClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 
 import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/social/config";
-import { PREMIUM_PRICE_ID, getStripe } from "@/lib/stripe";
+import { PREMIUM_PRICE_ID, getStripe, stripeLive } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** Statuses that keep Premium switched on. past_due covers Stripe's payment retries. */
-const PREMIUM_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 type Db = SupabaseClient;
 
@@ -26,7 +21,7 @@ async function syncSubscription(
   sb: Db,
   callbackSecret: string,
   subscriptionId: string,
-  fallbackUserId?: string | null,
+  paidAt?: number | null,
 ): Promise<boolean> {
   let sub: Stripe.Subscription;
   try {
@@ -34,9 +29,6 @@ async function syncSubscription(
   } catch {
     return false;
   }
-  const userId = sub.metadata?.user_id || fallbackUserId || "";
-  if (!UUID.test(userId)) return true; // Not one of ours (e.g. created by hand in Stripe).
-
   const items = sub.items?.data ?? [];
   const isPremiumPrice = items.some((i) => i.price?.id === PREMIUM_PRICE_ID);
   if (!isPremiumPrice) return true; // Some other product: leave the plan alone.
@@ -47,19 +39,22 @@ async function syncSubscription(
     .sort((a, b) => b - a)[0];
   const customer =
     typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
-
-  const { error } = await sb.rpc("set_subscription", {
-    user_id: userId,
-    plan: PREMIUM_STATUSES.has(sub.status) ? "premium" : "free",
-    status: sub.status,
-    customer: customer ?? null,
-    sub_id: sub.id,
-    period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
-    secret: callbackSecret,
+  if (sub.livemode !== stripeLive || !customer) return true;
+  const owner = await sb.rpc("billing_owner", { p_customer: customer, p_live: sub.livemode, p_secret: callbackSecret });
+  if (owner.error) return false;
+  if (!owner.data) return true; // Unmapped customers never grant account access.
+  const { error } = await sb.rpc("sync_billing_account", {
+    p_user: owner.data, p_live: sub.livemode, p_customer: customer,
+    p_subscription: sub.id, p_status: sub.status,
+    p_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+    p_trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
+    p_cancel: sub.cancel_at_period_end,
+    p_paid_at: paidAt ? new Date(paidAt * 1000).toISOString() : null,
+    p_secret: callbackSecret,
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error("set_subscription failed:", error.message);
+    console.error("Billing subscription sync failed");
     return false;
   }
   return true;
@@ -75,7 +70,7 @@ async function syncSubscription(
 export async function POST(req: NextRequest) {
   const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
-  const callbackSecret = process.env.PAYMENT_CALLBACK_SECRET?.trim();
+  const callbackSecret = process.env.BILLING_CALLBACK_SECRET?.trim();
   if (
     !stripe ||
     !webhookSecret ||
@@ -106,6 +101,18 @@ export async function POST(req: NextRequest) {
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  if (event.livemode !== stripeLive)
+    return NextResponse.json({ error: "Wrong payment environment." }, { status: 400 });
+
+  if (event.type === "invoice.paid" || event.type === "invoice.payment_failed") {
+    const invoice = event.data.object;
+    const ref = invoice.parent?.subscription_details?.subscription;
+    const subId = typeof ref === "string" ? ref : ref?.id;
+    if (!subId) return NextResponse.json({ received: true });
+    const paidAt = event.type === "invoice.paid" && invoice.amount_paid > 0 ? invoice.status_transitions.paid_at : null;
+    const ok = await syncSubscription(stripe, sb, callbackSecret, subId, paidAt);
+    return NextResponse.json(ok ? { received: true } : { error: "Not recorded." }, { status: ok ? 200 : 500 });
+  }
 
   // Premium subscriptions.
   if (
@@ -144,7 +151,6 @@ export async function POST(req: NextRequest) {
       sb,
       callbackSecret,
       subId,
-      session.client_reference_id,
     );
     return ok
       ? NextResponse.json({ received: true })
@@ -159,10 +165,14 @@ export async function POST(req: NextRequest) {
   if (!Number.isInteger(requestId) || requestId <= 0)
     return NextResponse.json({ received: true, ignored: "no request_id" });
 
+  // Sandbox checkout must never mark a real tutoring request paid.
+  if (!event.livemode) return NextResponse.json({ received: true });
+  const paymentSecret = process.env.PAYMENT_CALLBACK_SECRET;
+  if (!paymentSecret) return NextResponse.json({ error: "Tutoring payments not configured." }, { status: 503 });
   const { error } = await sb.rpc("mark_request_paid", {
     request_id: requestId,
     session_id: session.id,
-    secret: callbackSecret,
+    secret: paymentSecret,
   });
   if (error) {
     // eslint-disable-next-line no-console

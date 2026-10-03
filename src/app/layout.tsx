@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 
 import { Footer } from "@/components/blocks/footer";
 import { Navbar } from "@/components/blocks/navbar";
+import { FeatureTracker } from "@/components/feature-tracker";
 import { HideOnSocial } from "@/components/hide-on-social";
 import { OfflineBanner } from "@/components/offline-banner";
 import { SplashScreen, splashBootScript } from "@/components/splash-screen";
@@ -103,6 +104,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <Navbar />
+          <FeatureTracker />
           <main id="main" tabIndex={-1} className="min-h-[60vh] outline-none">
             {children}
           </main>

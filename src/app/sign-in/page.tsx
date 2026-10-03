@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { SignInForm } from "@/components/account/sign-in-form";
+import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
 import { Tiggy } from "@/components/tiggy";
 import { safeNext } from "@/lib/account/paths";
 import { getAccount } from "@/lib/account/server";
@@ -33,7 +34,9 @@ export default async function SignInPage({
     );
 
   return (
-    <div className="container grid gap-12 py-12 lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-20 lg:py-20">
+    <div className="container py-12 lg:py-20">
+      <Q4CampaignArtwork />
+      <div className="grid gap-12 lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-20">
       <div>
         <h1 className="text-4xl tracking-tight">
           Sign in or create an account
@@ -61,6 +64,7 @@ export default async function SignInPage({
           />
         </div>
       </div>
+    </div>
       <div className="lg:border-l lg:pl-20">
         <Tiggy
           action="wave"

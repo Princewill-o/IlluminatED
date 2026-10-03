@@ -9,6 +9,7 @@ import {
   GradeDemo,
   Reveal,
 } from "@/components/landing";
+import { Q4Campaign } from "@/components/q4-campaign";
 import { Tiggy } from "@/components/tiggy";
 
 const QUALIFICATIONS = [
@@ -30,6 +31,7 @@ export default function Home() {
       <Suspense fallback={null}>
         <DeletedNotice />
       </Suspense>
+      <Q4Campaign />
       <section className="container grid items-center gap-12 pt-8 pb-16 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16 lg:pt-12 lg:pb-24">
         <Reveal>
           <p className="text-primary text-sm font-semibold">

@@ -1,5 +1,7 @@
 "use client";
 
+import * as React from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,7 +15,17 @@ import { cn } from "@/lib/utils";
 /** "Sign in" or "Dashboard", depending on whether there's a session in this browser. */
 export function AccountButton({ className }: { className?: string }) {
   const signedIn = useSignedIn();
+  const [admin, setAdmin] = React.useState(false);
   const pathname = usePathname();
+
+  React.useEffect(() => {
+    if (!signedIn) return setAdmin(false);
+    let active = true;
+    void browserSupabase()?.rpc("platform_admin_status").then(({ data }) => {
+      if (active) setAdmin(data === true);
+    });
+    return () => { active = false; };
+  }, [signedIn]);
 
   if (!socialConfigured) return null;
   // Keep the space stable while we check, so the header doesn't jump.
@@ -41,6 +53,7 @@ export function AccountButton({ className }: { className?: string }) {
       >
         Dashboard
       </Link>
+      {admin && <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined} className={cn(base, "hover:bg-muted border")}>Admin</Link>}
       <button
         type="button"
         onClick={async () => {

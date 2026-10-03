@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import { AccountButton } from "@/components/account/account-button";
 import { Logo } from "@/components/brand";
+import { PlanBadge } from "@/components/plan-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Navbar1 } from "@/components/ui/navbar-1";
 import { NAV } from "@/lib/nav";
@@ -19,7 +20,7 @@ export const Navbar = () => {
 
   return (
     <Navbar1
-      logo={<Logo wordmarkClassName="max-[380px]:hidden" />}
+      logo={<span className="inline-flex items-center"><Logo wordmarkClassName="max-[380px]:hidden" /><PlanBadge /></span>}
       groups={signedIn ? NAV : []}
       actions={<ThemeToggle className="rounded-full" />}
       cta={
