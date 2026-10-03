@@ -14,9 +14,14 @@ export function useSignedIn(): boolean | null {
       setSignedIn(false);
       return;
     }
-    sb.auth.getSession().then(({ data }) => setSignedIn(Boolean(data.session)));
     const { data } = sb.auth.onAuthStateChange((_e, session) =>
       setSignedIn(Boolean(session)),
+    );
+    sb.auth.getSession().then(({ data: sessionData }) =>
+      setSignedIn(Boolean(sessionData.session)),
+    );
+    sb.auth.getUser().then(({ data: userData }) =>
+      setSignedIn(Boolean(userData.user)),
     );
     return () => data.subscription.unsubscribe();
   }, []);
