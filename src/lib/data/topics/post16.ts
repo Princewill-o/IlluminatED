@@ -381,7 +381,7 @@ export const POST16_TOPICS: Topic[] = [
       {
         board: "AQA",
         code: "7182",
-        section: "4.2.3 Research methods",
+        section: "3.2.3 Research methods",
         url: "https://www.aqa.org.uk/subjects/psychology/a-level/psychology-7182/specification",
       },
     ],
@@ -473,7 +473,7 @@ export const POST16_TOPICS: Topic[] = [
       {
         board: "AQA",
         code: "7136",
-        section: "4.1.3 Price determination in a competitive market",
+        section: "3.1.3 Price determination in a competitive market",
         url: "https://www.aqa.org.uk/subjects/economics/a-level/economics-7136/specification",
       },
     ],

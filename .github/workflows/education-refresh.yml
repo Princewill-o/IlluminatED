@@ -1,0 +1,53 @@
+name: Refresh education sources
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "20 5 * * 1"
+    - cron: "15 * * * *"
+permissions:
+  contents: read
+concurrency:
+  group: education-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      APPRENTICESHIPS_API_KEY: ${{ secrets.APPRENTICESHIPS_API_KEY }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Weekly curriculum metadata refresh
+        if: github.event.schedule != '15 * * * *'
+        run: npm run sync:education
+      - name: Refresh and validate opportunities
+        run: |
+          npm run sync:opportunities
+          npm run test:education
+          npm run typecheck
+      - name: Publish validated snapshots to Supabase
+        if: env.SUPABASE_URL != '' && env.SUPABASE_SECRET_KEY != ''
+        run: |
+          if [ "${{ github.event.schedule }}" = "15 * * * *" ]; then
+            npm run publish:education -- --opportunities-only
+          else
+            npm run publish:education
+          fi
+      - name: Save weekly validated source snapshots
+        if: github.event.schedule != '15 * * * *'
+        run: |
+          git add src/lib/data/education
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Refresh curriculum metadata and opportunity snapshots"
+            git push
+          fi

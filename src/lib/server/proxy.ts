@@ -5,12 +5,16 @@ import { NextResponse } from "next/server";
  * crafted path can't turn a route handler into an open proxy.
  */
 const ALLOWED_HOSTS = new Set([
+  "www.reed.co.uk",
   "register-api.ofqual.gov.uk",
   "api.education.gov.uk",
   "openlibrary.org",
   "www.gov.uk",
   "skillsengland.education.gov.uk",
   "gutendex.com",
+  "www.buckingham.ac.uk",
+  "api.apprenticeships.education.gov.uk",
+  "open-api.thenational.academy",
 ]);
 
 export class UpstreamError extends Error {
@@ -35,6 +39,7 @@ export async function fetchUpstream(
     timeoutMs?: number;
     headers?: Record<string, string>;
     signal?: AbortSignal;
+    redirect?: RequestRedirect;
   } = {},
 ): Promise<Response> {
   const host = new URL(url).host;
@@ -42,6 +47,7 @@ export async function fetchUpstream(
     throw new UpstreamError(500, `Host not allowed: ${host}`);
   const timeout = AbortSignal.timeout(opts.timeoutMs ?? 10000);
   return fetch(url, {
+    redirect: opts.redirect ?? "follow",
     headers: { accept: "application/json", ...(opts.headers ?? {}) },
     ...(opts.noStore
       ? { cache: "no-store" as const }

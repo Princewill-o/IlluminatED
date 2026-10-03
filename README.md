@@ -164,3 +164,15 @@ The database rules were tested against Postgres and against a live Supabase proj
 - The Ofqual register covers England (with some Northern Ireland data). It does not cover Wales-only or Scottish qualifications.
 - EES statistics are aggregates for England and are not used to rank or predict individuals.
 - External links were checked on 30 September 2026. Boards reorganise their websites, so check links periodically.
+
+## Curriculum catalogue and next steps
+
+Course pages now include saved AQA syllabus outlines, downloadable revision checklists, and board/tier-specific Oak lesson discovery. `/learn/[slug]` links to the publisher's video, quiz and worksheet resources; an optional server-side Oak API connection enables text multiple-choice quizzes within IlluminatED.
+
+`/next-steps` asks whether the learner wants university, an apprenticeship, both, or is unsure; includes a Year 12 work-experience plan; and shows updating university events with saved opportunities. Official apprenticeship adverts use an optional API subscription. Preferences, checklists and saved opportunities are device-local, and can be cleared on `/your-data`.
+
+Run `npm run sync:education`, `npm run sync:opportunities`, and `npm run test:education`. Source refreshes, server-only keys, licensing and incomplete coverage are documented in [the integration guide](docs/education-integrations.md) and [the coverage audit](docs/education-audit.md). The weekly GitHub refresh workflow is prepared but only starts once pushed and enabled.
+
+### Supabase education storage
+
+Apply the reviewed `supabase/migrations/20261003082046_education_catalogue_and_progress.sql` to the existing project, then run `npm run publish:education` with server-only `SUPABASE_URL` and `SUPABASE_SECRET_KEY`. This stores the public catalogue and opportunity snapshots, while signed-in syllabus ticks, next-step choices and saved opportunities use owner-only RLS. The bundled catalogue remains a fallback. Topic study pages are available for each listed syllabus heading and broad course area. See `docs/education-integrations.md` for privacy, refresh schedules, setup and the remaining coverage gaps.

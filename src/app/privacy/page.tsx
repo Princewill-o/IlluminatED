@@ -101,6 +101,13 @@ export default function PrivacyPage() {
           many you got right, and your quiz rounds.
         </li>
         <li>
+          <strong>Study and career choices</strong>: signed-in syllabus
+          checklist ticks, university or apprenticeship preferences, your
+          selected year and saved opportunities. Guest choices remain in your
+          browser. You can download or clear account choices on the Your data
+          page.
+        </li>
+        <li>
           <strong>Forum activity</strong>: threads and replies you post, reports
           you make, and members you've blocked.
         </li>

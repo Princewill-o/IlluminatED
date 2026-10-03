@@ -1,0 +1,60 @@
+{
+  "items": [
+    {
+      "id": "buckingham:659573-1791626400-1791642600@www.buckingham.ac.uk",
+      "title": "Buckingham Open Day",
+      "provider": "University of Buckingham",
+      "kind": "university-event",
+      "url": "https://www.buckingham.ac.uk/event/buckingham-open-day-4/",
+      "location": "The University of Buckingham – Buckingham Campus, Hunter Street, Buckingham, MK18 1EG, United Kingdom",
+      "date": "2026-10-10",
+      "closes": null,
+      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
+      "checkedAt": "2026-10-02T23:23:31.415Z"
+    },
+    {
+      "id": "buckingham:660558-1793797200-1793800800@www.buckingham.ac.uk",
+      "title": "Psychology Taster",
+      "provider": "University of Buckingham",
+      "kind": "university-event",
+      "url": "https://www.buckingham.ac.uk/event/psychology-taster-5/",
+      "location": "Online",
+      "date": "2026-11-04",
+      "closes": null,
+      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
+      "checkedAt": "2026-10-02T23:23:31.415Z"
+    },
+    {
+      "id": "buckingham:648662-1794049200-1794052800@www.buckingham.ac.uk",
+      "title": "Computing Taster",
+      "provider": "University of Buckingham",
+      "kind": "university-event",
+      "url": "https://www.buckingham.ac.uk/event/computing-taster-4/",
+      "location": "Online",
+      "date": "2026-11-07",
+      "closes": null,
+      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
+      "checkedAt": "2026-10-02T23:23:31.415Z"
+    },
+    {
+      "id": "buckingham:660672-1802109600-1802113200@www.buckingham.ac.uk",
+      "title": "Apprenticeships Explained:​ A guide for young people & their parents/carers​",
+      "provider": "University of Buckingham",
+      "kind": "university-event",
+      "url": "https://www.buckingham.ac.uk/event/apprenticeships-explained-a-guide/",
+      "location": "Online",
+      "date": "2027-02-08",
+      "closes": null,
+      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
+      "checkedAt": "2026-10-02T23:23:31.415Z"
+    }
+  ],
+  "sources": [
+    {
+      "name": "University of Buckingham events",
+      "url": "https://www.buckingham.ac.uk/events/",
+      "status": "live",
+      "checkedAt": "2026-10-02T23:23:31.415Z"
+    }
+  ]
+}

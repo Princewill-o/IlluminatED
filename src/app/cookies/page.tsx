@@ -53,6 +53,13 @@ const ROWS: {
     lasts: "Until you clear it",
   },
   {
+    name: "illuminated:education:…",
+    where: "Local storage",
+    what: "A local copy of study and career choices and a queue of offline changes. Signed-in choices sync to your private Supabase account; guest choices stay on this device.",
+    kind: "Functional",
+    lasts: "Until you clear it",
+  },
+  {
     name: "tiggy-chat:…",
     where: "Session storage",
     what: "Keeps your current Ask Tiggy conversation if you refresh the page. It isn't sent to us or saved on our servers.",

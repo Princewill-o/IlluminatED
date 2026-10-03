@@ -327,7 +327,14 @@ export function YourDataPanel() {
               key={k}
               className="flex items-center justify-between gap-3 border-b py-3"
             >
-              <span className="text-sm">{STORAGE_LABELS[k] ?? k}</span>
+              <span className="text-sm">
+                {STORAGE_LABELS[k] ??
+                  (k.startsWith("next-steps:")
+                    ? "University/apprenticeship preference"
+                    : k.startsWith("saved-opportunities:")
+                      ? "Saved opportunities"
+                      : k)}
+              </span>
               <Button variant="ghost" size="sm" onClick={() => removeStore(k)}>
                 <Trash2 aria-hidden /> Clear
               </Button>

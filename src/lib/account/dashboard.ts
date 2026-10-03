@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { LearnerDetails } from "./details";
+import { practiceReadiness } from "./readiness";
 
 import { courseById } from "@/lib/data/courses";
 import { BOARDS } from "@/lib/data/routes";
@@ -57,6 +58,10 @@ export interface DashboardData {
   weekly: { label: string; start: string; answered: number; correct: number }[];
   thisWeekAnswered: number;
   mastery: Record<TopicStatus, number>;
+  readiness: {
+    courseId: string;
+    result: ReturnType<typeof practiceReadiness>;
+  }[];
   loadError: boolean;
 }
 
@@ -148,7 +153,7 @@ export async function loadDashboard(
     .map((s) => {
       const course = courseById(s.courseId);
       if (!course) return null;
-      const topics = TOPICS.filter((t) => t.courseId === course.id)
+      const topics = TOPICS.filter((t) => course.topicIds.includes(t.id))
         .map(statFor)
         .filter(Boolean) as TopicStat[];
       const seen = topics.reduce((a, t) => a + t.seen, 0);
@@ -265,6 +270,10 @@ export async function loadDashboard(
     weekly,
     thisWeekAnswered: weekly[weekly.length - 1].answered,
     mastery,
+    readiness: details.subjects.map((s) => ({
+      courseId: s.courseId,
+      result: practiceReadiness(s, progress.data ?? []),
+    })),
     loadError: Boolean(progress.error || rounds.error),
   };
 }

@@ -20,7 +20,18 @@ export async function getAccount(): Promise<Account | null> {
     .select("*")
     .eq("user_id", viewer.id)
     .maybeSingle();
-  return { ...viewer, details: data ? rowToDetails(data) : null };
+  const { data: career } = await sb
+    .from("education_learner_state")
+    .select("value")
+    .eq("user_id", viewer.id)
+    .eq("namespace", "career")
+    .maybeSingle();
+  return {
+    ...viewer,
+    details: data
+      ? { ...rowToDetails(data), careerRoute: career?.value?.route }
+      : null,
+  };
 }
 
 /** For pages that need a fully set-up account. Sends people to sign in or onboarding first. */

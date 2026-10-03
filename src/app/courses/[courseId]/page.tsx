@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { CourseCurriculumPanel } from "@/components/course-curriculum";
 import {
   ExternalLink,
   LinkList,
@@ -17,6 +18,9 @@ import { COURSES, courseById } from "@/lib/data/courses";
 import { BOARDS, routeById } from "@/lib/data/routes";
 import { SET_TEXT_COURSES } from "@/lib/data/set-texts";
 import { topicsForCourse } from "@/lib/data/topics";
+import { getCourseCurriculum } from "@/lib/server/education-store";
+
+export const revalidate = 3600;
 
 export function generateStaticParams() {
   return COURSES.map((c) => ({ courseId: c.id }));
@@ -96,6 +100,14 @@ export default async function CoursePage({
             : `Several boards offer ${c.subject}. Your school or college chooses the board, specification and (where there is one) the tier, so use your own specification as the final word.`}
           {c.statusNote && <> {c.statusNote}</>}
         </Note>
+      </Section>
+
+      <Section
+        id="curriculum"
+        title="Syllabus, videos and learning resources"
+        rule={false}
+      >
+        <CourseCurriculumPanel data={(await getCourseCurriculum(c.id))!} />
       </Section>
 
       <Section

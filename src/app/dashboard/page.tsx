@@ -4,6 +4,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
 import { ImportProgress } from "@/components/account/import-progress";
+import { ReadinessPanel } from "@/components/account/readiness-panel";
 import {
   ExamCountdown,
   MasteryChart,
@@ -11,6 +12,7 @@ import {
   WeeklyChart,
 } from "@/components/dashboard/widgets";
 import { Empty, Section } from "@/components/kit";
+import { NextSteps } from "@/components/next-steps";
 import { timeAgo } from "@/components/social/util";
 import { TiggyTour, TourButton } from "@/components/tiggy-tour";
 import {
@@ -167,6 +169,16 @@ export default async function DashboardPage() {
         </div>
       </header>
 
+      <ReadinessPanel data={data} details={details} />
+
+      <Section id="next-steps" title="Plan what comes next" rule={false}>
+        <NextSteps
+          userId={account.id}
+          initialYear={details.yearGroup}
+          compact
+        />
+      </Section>
+
       <div className="container">
         <Link
           href="/tiggy"
@@ -308,8 +320,9 @@ export default async function DashboardPage() {
             ))}
           </ol>
         ) : data.subjects.some((s) => s.topics.length) ? (
-          <Empty title="You're on top of everything">
-            Every topic in your subjects is secure. Try a{" "}
+          <Empty title="Strong scores in the available topics">
+            Your practised topics have strong scores. Check the full
+            specification for untested areas, and try a{" "}
             <Link
               href="/quizzes?mode=mixed"
               className="text-primary underline underline-offset-4"

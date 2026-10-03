@@ -109,6 +109,16 @@ export const NAV: NavGroup[] = [
         description: "Background reading and books",
       },
       {
+        title: "Jobs and university",
+        href: "/jobs",
+        description: "Apprenticeships, job roles and university matches",
+      },
+      {
+        title: "Your next steps",
+        href: "/next-steps",
+        description: "University, apprenticeships, work experience and events",
+      },
+      {
         title: "Careers and apprenticeships",
         href: "/careers",
         description: "Explore apprenticeships, T Levels and university routes",

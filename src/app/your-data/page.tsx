@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Metadata } from "next";
 
+import { EducationDataPanel } from "@/components/education-data-panel";
 import { PageHeader, Section } from "@/components/kit";
 import { YourDataPanel } from "@/components/widgets";
 
@@ -21,21 +22,28 @@ export default function YourDataPage() {
       />
       <Section rule={false}>
         <div className="grid gap-14 lg:grid-cols-[1fr_340px]">
-          <YourDataPanel />
+          <div>
+            <EducationDataPanel />
+            <YourDataPanel />
+          </div>
           <div className="text-muted-foreground space-y-5 text-sm leading-relaxed">
             <p>
               <strong className="text-foreground">In this browser</strong> we
               save things like your revision planner, flashcard marks and
-              recently viewed pages. They stay on this device, and the panel
-              here lets you clear them.
+              recently viewed pages and a local copy of syllabus checklists,
+              next-step preferences and saved opportunities. Guest choices stay
+              on this device. Signed-in choices sync to your account; offline
+              edits retry when connected. The browser panel clears local copies
+              only.
             </p>
             <p>
               <strong className="text-foreground">In your account</strong> we
               store your email (to sign you in, never shown to anyone), your
               username, age range, year group, subjects, the topics you want
-              help with, quiz results, tutor requests and messages, and any
-              forum posts. We don't ask for your real name or school. You can
-              change your details or{" "}
+              help with, quiz results, syllabus revision ticks, career choices,
+              saved opportunities, tutor requests and messages, and any forum
+              posts. We don't ask for your real name or school. You can change
+              your details or{" "}
               <Link
                 href="/dashboard/settings#delete"
                 className="text-primary underline underline-offset-4"

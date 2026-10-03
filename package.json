@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "eslint src",
     "format": "prettier -w .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sync:education": "node scripts/sync-education.mjs",
+    "sync:opportunities": "node scripts/sync-opportunities.mjs",
+    "test:education": "node --test tests/education.test.mjs",
+    "publish:education": "node --env-file-if-exists=.env.local scripts/publish-education.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -16,6 +16,15 @@ const DATA_SOURCES: {
   licence: { label: string; href?: string };
 }[] = [
   {
+    name: "Oak National Academy",
+    href: "https://www.thenational.academy/",
+    use: "Course topic and lesson catalogue; authorised API quizzes when connected",
+    licence: {
+      label: "OGL v3.0 where stated; third-party restrictions apply",
+      href: "https://open-api.thenational.academy/docs/about-oaks-api/terms",
+    },
+  },
+  {
     name: "Ofqual Register",
     href: "https://register.ofqual.gov.uk/",
     use: "Qualification and specification search",
@@ -105,6 +114,12 @@ export default function ResourcesPage() {
         crumbs={[{ label: "Home", href: "/" }, { label: "Resources" }]}
       />
       <Section rule={false}>
+        <p className="mb-6 text-sm">
+          <Link href="/courses" className="text-primary underline">
+            Find stored syllabus checklists, videos and topic resources by
+            course
+          </Link>
+        </p>
         <ResourceFinder />
       </Section>
       <Section

@@ -1,0 +1,11 @@
+{
+  "attemptedAt": "2026-10-02T23:25:26.694Z",
+  "oakProgrammes": 70,
+  "syllabuses": 21,
+  "failures": [
+    {
+      "url": "https://www.aqa.org.uk/subjects/projects/level-three/projects-7993/specification/subject-content",
+      "error": "No syllabus headings; manual mapping needed"
+    }
+  ]
+}

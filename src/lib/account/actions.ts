@@ -9,6 +9,7 @@ import { safeNext } from "./paths";
 
 import { COURSES } from "@/lib/data/courses";
 import { TOPICS } from "@/lib/data/topics";
+import { CAREER_ROUTES } from "@/lib/education/state";
 import { getSupabase, getViewer } from "@/lib/social/server";
 
 export type FormState = {
@@ -290,6 +291,12 @@ export async function saveDetails(
   if (!YEAR_GROUPS.some((y) => y.id === yearGroup))
     return { step: 0, error: "Choose your year group." };
 
+  const careerRoute = String(fd.get("careerRoute") ?? "unsure");
+  if (!CAREER_ROUTES.some((r) => r === careerRoute))
+    return {
+      step: 0,
+      error: "Choose your next step, or select still deciding.",
+    };
   const subjects: StudySubject[] = [];
   for (const raw of fd.getAll("subject")) {
     const courseId = String(raw);
@@ -342,6 +349,16 @@ export async function saveDetails(
       };
   }
 
+  const { error: careerError } = await sb.rpc("set_education_state_item", {
+    p_namespace: "career",
+    p_item: "route",
+    p_value: careerRoute,
+  });
+  if (careerError)
+    return {
+      step: 0,
+      error: "We couldn't save your next-step preference. Please try again.",
+    };
   const row = {
     stage,
     year_group: yearGroup,

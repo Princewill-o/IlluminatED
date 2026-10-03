@@ -245,6 +245,26 @@ export function DetailsForm({
             </p>
           </fieldset>
         )}
+        <div>
+          <label htmlFor="careerRoute" className={labelCls}>
+            What would you like to do after this course?
+          </label>
+          <select
+            id="careerRoute"
+            name="careerRoute"
+            defaultValue={initial?.careerRoute ?? "unsure"}
+            className={fieldCls}
+          >
+            <option value="unsure">I'm still deciding</option>
+            <option value="university">Go to university</option>
+            <option value="apprenticeship">Do an apprenticeship</option>
+            <option value="both">Explore both</option>
+          </select>
+          <p className="text-muted-foreground mt-2 text-sm">
+            We'll tailor your next steps and work experience suggestions. You
+            can change this later.
+          </p>
+        </div>
         <fieldset>
           <legend className={labelCls}>What are you studying?</legend>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">

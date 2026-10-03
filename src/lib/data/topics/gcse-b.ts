@@ -384,7 +384,7 @@ export const GCSE_TOPICS_B: Topic[] = [
       },
       {
         id: "fo3",
-        q: "A car moves at a constant 30 m/s. The resultant force is…",
+        q: "A car moves in a straight line at a constant 30 m/s. The resultant force is…",
         options: ["Forwards", "Backwards", "Zero", "Equal to its weight"],
         answer: 2,
         explain:

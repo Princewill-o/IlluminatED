@@ -1478,7 +1478,7 @@ export const POST16_TOPICS_B: Topic[] = [
       },
       {
         id: "cdm2",
-        q: "Who appoints the principal contractor?",
+        q: "On a project involving more than one contractor, who appoints the principal contractor?",
         options: ["HSE", "The principal designer", "The client", "The workers"],
         answer: 2,
         explain:

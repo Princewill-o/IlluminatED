@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Metadata } from "next";
 
 import { CareersExplorer } from "@/components/careers-explorer";
@@ -36,9 +38,21 @@ export default function CareersPage() {
     <>
       <PageHeader
         title="Careers and apprenticeships"
-        intro="Search every apprenticeship in England by job, level and route. Each one shows the role, the duties, and what you'd learn."
+        intro="Search apprenticeship training standards in England by job, level and route. Each one shows the role, the duties, and what you'd learn."
         crumbs={[{ label: "Home", href: "/" }, { label: "Careers" }]}
       />
+      <Section
+        rule={false}
+        title="University, an apprenticeship, or work experience?"
+      >
+        <p className="text-muted-foreground mb-4">
+          Choose your route and explore Year 12 placements, university tasters
+          and updating opportunity sources.
+        </p>
+        <Link href="/next-steps" className="text-primary font-medium underline">
+          Plan your next steps →
+        </Link>
+      </Section>
       <Section rule={false} title="Your options after GCSEs and A levels">
         <ul className="grid gap-8 md:grid-cols-3">
           {ROUTES.map((r) => (

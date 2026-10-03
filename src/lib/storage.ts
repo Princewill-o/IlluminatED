@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-/** Everything IlluminatED saves lives under this prefix, in this browser only. */
+/** Browser copies live under this prefix; signed-in education choices also sync to Supabase. */
 export const PREFIX = "illuminated:";
 
 export const STORAGE_KEYS = {
@@ -17,6 +17,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const STORAGE_LABELS: Record<string, string> = {
+  "syllabus-checks": "Syllabus revision checklists",
   [STORAGE_KEYS.recent]: "Recently viewed courses and topics",
   [STORAGE_KEYS.quiz]: "Quiz answers (right/wrong counts per question)",
   [STORAGE_KEYS.flashcards]: "Flashcard 'know it / review it' marks",

@@ -9,6 +9,8 @@ import { Check, Clock, RotateCcw, SkipForward, Trophy, X } from "lucide-react";
 import { SaveRound } from "@/components/account/save-round";
 import { Callout, fieldCls, labelCls } from "@/components/kit";
 import { Button } from "@/components/ui/button";
+import type { StudySubject } from "@/lib/account/details";
+import { matchesSubject } from "@/lib/account/readiness";
 import { COURSES } from "@/lib/data/courses";
 import { ROUTES } from "@/lib/data/routes";
 import {
@@ -58,18 +60,29 @@ export function QuizPlayer({
   initialCourse,
   initialMode,
   initialTopic,
+  studySubjects = [],
+  userId,
+  initialProgress = {},
 }: {
+  studySubjects?: StudySubject[];
+  userId?: string;
+  initialProgress?: Progress;
   fixedTopicId?: string;
   initialTopic?: string;
   initialRoute?: RouteId | "all";
   initialCourse?: string;
   initialMode?: Mode;
 }) {
-  const [progress, setProgress] = useStored<Progress>(STORAGE_KEYS.quiz, {});
+  const [progress, setProgress] = useStored<Progress>(
+    userId ? `quiz:${userId}` : STORAGE_KEYS.quiz,
+    initialProgress,
+  );
+  const [personalised, setPersonalised] = useState(studySubjects.length > 0);
   const [mode, setMode] = useState<Mode>(
     fixedTopicId || initialTopic ? "topic" : (initialMode ?? "quick"),
   );
   const [route, setRoute] = useState<RouteId | "all">(initialRoute ?? "all");
+  const [referenceBoard, setReferenceBoard] = useState("all");
   const [course, setCourse] = useState<string>(initialCourse ?? "all");
   const [topic, setTopic] = useState<string>(
     fixedTopicId ?? initialTopic ?? "",
@@ -104,28 +117,61 @@ export function QuizPlayer({
     [course, route],
   );
 
+  const referenceBoards = useMemo(
+    () =>
+      [
+        ...new Set(
+          QUESTION_BANK.filter(
+            (q) =>
+              (route === "all" || q.route === route) &&
+              (course === "all" ||
+                COURSES.find((c) => c.id === course)?.topicIds.includes(
+                  q.topicId,
+                )),
+          ).flatMap((q) => q.specRefs?.map((r) => r.board) ?? []),
+        ),
+      ].sort(),
+    [route, course],
+  );
+
   const pool = useMemo(() => {
-    if (fixedTopicId)
-      return QUESTION_BANK.filter((q) => q.topicId === fixedTopicId);
+    const bank = QUESTION_BANK.filter(
+      (q) =>
+        (!personalised || studySubjects.some((s) => matchesSubject(q, s))) &&
+        (referenceBoard === "all" ||
+          q.specRefs?.some((r) => r.board === referenceBoard)),
+    );
+    if (fixedTopicId) return bank.filter((q) => q.topicId === fixedTopicId);
     if (mode === "topic")
-      return topic ? QUESTION_BANK.filter((q) => q.topicId === topic) : [];
+      return topic ? bank.filter((q) => q.topicId === topic) : [];
     const courseTopics =
       course === "all"
         ? null
         : (COURSES.find((c) => c.id === course)?.topicIds ?? []);
-    return QUESTION_BANK.filter(
+    return bank.filter(
       (q) =>
         (route === "all" || q.route === route) &&
         (!courseTopics || courseTopics.includes(q.topicId)),
     );
-  }, [fixedTopicId, mode, topic, route, course]);
+  }, [
+    fixedTopicId,
+    mode,
+    topic,
+    route,
+    course,
+    referenceBoard,
+    personalised,
+    studySubjects,
+  ]);
 
   const start = () => {
     let qs: BankQuestion[];
     if (mode === "topic") qs = shuffle(pool);
     else if (mode === "mixed") {
       const weight = (q: BankQuestion) => {
-        const p = progress[q.key];
+        const local = progress[q.key];
+        const saved = initialProgress[q.key];
+        const p = saved && (!local || saved.last > local.last) ? saved : local;
         if (!p) return 2; // unseen
         return p.correct < p.seen ? 3 : 1; // missed before
       };
@@ -260,6 +306,23 @@ export function QuizPlayer({
   if (!round) {
     return (
       <div className="bg-card space-y-5 rounded-xl border p-5 md:p-6">
+        {studySubjects.length > 0 && (
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              checked={personalised}
+              onChange={(e) => setPersonalised(e.target.checked)}
+              className="mt-1"
+            />
+            <span>
+              Use my subjects and exam boards
+              <p className="text-muted-foreground">
+                Only questions with a matching board reference are included when
+                your board is known. Untick to explore other practice.
+              </p>
+            </span>
+          </label>
+        )}
         {!fixedTopicId && (
           <>
             <fieldset>
@@ -302,6 +365,7 @@ export function QuizPlayer({
                   onChange={(e) => {
                     setRoute(e.target.value as RouteId | "all");
                     setCourse("all");
+                    setReferenceBoard("all");
                     setTopic("");
                   }}
                 >
@@ -323,6 +387,7 @@ export function QuizPlayer({
                   value={course}
                   onChange={(e) => {
                     setCourse(e.target.value);
+                    setReferenceBoard("all");
                     setTopic("");
                   }}
                 >
@@ -358,6 +423,28 @@ export function QuizPlayer({
                   ))}
                 </select>
               </div>
+            </div>
+            <div className="max-w-sm">
+              <label htmlFor="qz-reference-board" className={labelCls}>
+                Specification reference source
+              </label>
+              <select
+                id="qz-reference-board"
+                className={fieldCls}
+                value={referenceBoard}
+                onChange={(e) => setReferenceBoard(e.target.value)}
+              >
+                <option value="all">All reference sources</option>
+                {referenceBoards.map((board) => (
+                  <option key={board} value={board}>
+                    {board}
+                  </option>
+                ))}
+              </select>
+              <p className="text-muted-foreground mt-2 text-xs">
+                Filters the references attached to our guides. It does not
+                certify complete board or tier coverage.
+              </p>
             </div>
           </>
         )}
@@ -457,7 +544,8 @@ export function QuizPlayer({
           </Button>
         </div>
         <p className="text-muted-foreground text-xs">
-          Your answers are saved only in this browser. Clear them any time on
+          A copy of your answers stays on this device. The save status above
+          shows whether this round reached your account. Manage stored data on
           the Your data page.
         </p>
       </div>
