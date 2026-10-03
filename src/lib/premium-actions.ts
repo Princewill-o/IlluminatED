@@ -6,7 +6,14 @@ import { PREMIUM_MONTHLY_PENCE, TRIAL_DAYS } from "@/lib/campaign";
 import { getSupabase } from "@/lib/social/server";
 import { PREMIUM_PRICE_ID, getStripe, premiumEnabled, stripeLive } from "@/lib/stripe";
 
-function origin() { return new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").origin; }
+function origin() {
+  // Checkout redirects must never send production customers to localhost.
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) return new URL(configured).origin;
+  if (process.env.VERCEL_ENV === "production") return "https://www.illumed.co.uk";
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
 
 export async function startPremiumCheckout(fd: FormData) {
   const sb = await getSupabase();
@@ -48,7 +55,6 @@ export async function startPremiumCheckout(fd: FormData) {
       metadata: { user_id: account.id, guardian_permission: under18 ? "confirmed" : "not_needed", recurring_consent: "accepted", campaign: trial ? "q4_2026" : "standard" },
       custom_text: { submit: { message: trial ? "£0 for 30 days, then £5.99/month automatically. Cancel before your trial ends to avoid a charge." : "£5.99/month automatically until cancelled." } },
       success_url: `${origin()}/billing?checkout=complete`, cancel_url: `${origin()}/premium?cancelled=1`,
-      expires_at: Math.floor(new Date(attempt.createdAt).getTime() / 1000) + 31 * 60,
     }, { idempotencyKey: `illuminated-checkout-${attempt.id}` });
     url = session.url;
   } catch { /* No raw Stripe response or customer details in public errors. */ }

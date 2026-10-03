@@ -43,7 +43,7 @@ async function syncSubscription(
   const owner = await sb.rpc("billing_owner", { p_customer: customer, p_live: sub.livemode, p_secret: callbackSecret });
   if (owner.error) return false;
   if (!owner.data) return true; // Unmapped customers never grant account access.
-  const { error } = await sb.rpc("sync_billing_account", {
+  const { data: recorded, error } = await sb.rpc("sync_billing_account", {
     p_user: owner.data, p_live: sub.livemode, p_customer: customer,
     p_subscription: sub.id, p_status: sub.status,
     p_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
@@ -52,7 +52,7 @@ async function syncSubscription(
     p_paid_at: paidAt ? new Date(paidAt * 1000).toISOString() : null,
     p_secret: callbackSecret,
   });
-  if (error) {
+  if (error || recorded !== true) {
     // eslint-disable-next-line no-console
     console.error("Billing subscription sync failed");
     return false;
