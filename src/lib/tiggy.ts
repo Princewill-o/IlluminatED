@@ -5,7 +5,7 @@ export type TiggyPlan = "free" | "premium";
 export const TIGGY_PLANS: Record<
   TiggyPlan,
   {
-    /** Must match private.tiggy_limit in 0006_tiggy.sql. */
+    /** Free is a one-time allowance; Premium resets daily. Matches the latest Tiggy migration. */
     perDay: number;
     /** How many earlier messages (including the new one) are sent to the model. */
     history: number;

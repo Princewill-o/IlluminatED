@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const features = [
   ["Courses, quizzes, flashcards and resources", "Included", "Included"],
   ["Study planner, exam practice progress and careers", "Included", "Included"],
-  ["Ask Tiggy daily messages", "15", "200"],
+  ["Ask Tiggy messages", "15 free credits, once per account", "Up to 200 a day"],
   ["Tiggy answers", "Hints and shorter explanations", "Longer, detailed explanations"],
   ["Full worked solutions on request", "Hints first", "Included"],
   ["AI model", "Standard", "Stronger model"],

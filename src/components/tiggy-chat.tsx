@@ -231,7 +231,7 @@ export function TiggyChat({
               <span className="text-foreground font-medium tabular-nums">
                 {Math.max(0, status.remaining)} of {status.limit}
               </span>{" "}
-              {planName} messages left today
+              {status.plan === "free" ? "free Tiggy credits left" : `${planName} messages left today`}
             </p>
             <span
               className="bg-border relative mt-1.5 block h-1.5 w-full max-w-60 overflow-hidden rounded-full"
@@ -333,13 +333,16 @@ export function TiggyChat({
         {limitHit && !busy && (
           <div className="bg-card mt-5 rounded-2xl border p-5" role="status">
             <p className="font-semibold">
-              You've used all {status.limit} of today's {planName} messages
+              {status.plan === "free"
+                ? "Your free Tiggy credits have run out"
+                : `You've used all ${status.limit} of today's Premium messages`}
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              They reset at midnight.{" "}
-              {status.plan === "free" && premiumEnabled
-                ? "Premium gives you up to 200 messages a day, full worked solutions and Tiggy's stronger model."
-                : "Meanwhile, try a quiz or flashcards on the topic."}
+              {status.plan === "free"
+                ? premiumEnabled
+                  ? "Upgrade to Premium for up to 200 messages a day, full worked solutions and Tiggy's stronger model."
+                  : "Premium checkout is being prepared. Meanwhile, try a quiz or flashcards."
+                : "They reset at midnight. Meanwhile, try a quiz or flashcards on the topic."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
               {status.plan === "free" && premiumEnabled && (

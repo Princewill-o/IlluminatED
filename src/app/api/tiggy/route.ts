@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
   const blocked = blockedReason(question);
   if (blocked) return fail(422, "blocked", blocked);
 
-  // 3. Use one of today's messages. The database decides the limit from the plan.
+  // 3. Atomically use one credit. Free credits never reset; Premium resets daily.
   const { data: remaining, error: consumeError } =
     await sb.rpc("tiggy_consume");
   if (consumeError) {
@@ -165,8 +165,10 @@ export async function POST(req: NextRequest) {
         "limit_reached",
         plan === "premium"
           ? "You've used all your Premium messages for today. They reset at midnight."
-          : "You've used all your free messages for today. They reset at midnight, or upgrade to Premium for more.",
+          : "Your free Tiggy credits have run out. Upgrade to Premium to keep chatting.",
       );
+    if (consumeError.message.includes("email_not_verified"))
+      return fail(403, "email_not_verified", "Please verify your email address before using Tiggy. Check your inbox for the confirmation link.");
     if (consumeError.message.includes("not_allowed"))
       return fail(403, "not_allowed", "Your account can't use Ask Tiggy.");
     return fail(
