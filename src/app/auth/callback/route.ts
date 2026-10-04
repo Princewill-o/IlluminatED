@@ -21,11 +21,15 @@ export async function GET(request: Request) {
     sb.from("profiles").select("id").eq("id", data.user.id).maybeSingle(),
     sb
       .from("learner_details")
-      .select("user_id")
+      .select("user_id,tutorial_completed_at")
       .eq("user_id", data.user.id)
       .maybeSingle(),
   ]);
   const dest =
-    profile && details ? next : `/onboarding?next=${encodeURIComponent(next)}`;
+    profile && details
+      ? details.tutorial_completed_at
+        ? next
+        : `/getting-started?next=${encodeURIComponent(next)}`
+      : `/onboarding?next=${encodeURIComponent(next)}`;
   return NextResponse.redirect(new URL(dest, url.origin));
 }

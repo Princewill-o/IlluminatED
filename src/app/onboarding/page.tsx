@@ -20,7 +20,8 @@ export default async function OnboardingPage({
   const next = safeNext(sp.next);
   const account = await getAccount();
   if (!account) redirect(`/sign-in?next=${encodeURIComponent(next)}`);
-  if (account.profile && account.details) redirect(next);
+  if (account.profile && account.details)
+    redirect(account.tutorialCompleted ? next : `/getting-started?next=${encodeURIComponent(next)}`);
 
   return (
     <div className="container max-w-3xl py-12 lg:py-16">
@@ -36,8 +37,9 @@ export default async function OnboardingPage({
           : "Welcome to IlluminatED"}
       </h1>
       <p className="text-muted-foreground mt-3 max-w-xl leading-relaxed">
-        Tell us what you study so your dashboard shows the right topics. It
-        takes about a minute, and you can change it any time.
+        Tell us what you study and where you want to go next. We’ll use your
+        answers to put the right subjects, practice and opportunities on your
+        dashboard. Then Tiggy will show you around. You can change your choices later.
       </p>
       <div className="mt-8">
         <DetailsForm

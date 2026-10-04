@@ -8,6 +8,7 @@ import { getSupabase, getViewer, type Viewer } from "@/lib/social/server";
 
 export interface Account extends Viewer {
   details: LearnerDetails | null;
+  tutorialCompleted: boolean;
 }
 
 /** The signed-in person with their study details, or null. */
@@ -28,6 +29,7 @@ export async function getAccount(): Promise<Account | null> {
     .maybeSingle();
   return {
     ...viewer,
+    tutorialCompleted: Boolean(data?.tutorial_completed_at),
     details: data
       ? { ...rowToDetails(data), careerRoute: career?.value?.route }
       : null,
@@ -40,6 +42,8 @@ export async function requireAccount(next: string) {
   if (!account) redirect(`/sign-in?next=${encodeURIComponent(next)}`);
   if (!account.profile || !account.details)
     redirect(`/onboarding?next=${encodeURIComponent(next)}`);
+  if (!account.tutorialCompleted)
+    redirect(`/getting-started?next=${encodeURIComponent(next)}`);
   return account as Account & {
     profile: NonNullable<Account["profile"]>;
     details: LearnerDetails;

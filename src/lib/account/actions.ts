@@ -70,12 +70,16 @@ async function afterSignIn(userId: string, next: string): Promise<never> {
     sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
     sb
       .from("learner_details")
-      .select("user_id")
+      .select("user_id,tutorial_completed_at")
       .eq("user_id", userId)
       .maybeSingle(),
   ]);
   redirect(
-    profile && details ? next : `/onboarding?next=${encodeURIComponent(next)}`,
+    profile && details
+      ? details.tutorial_completed_at
+        ? next
+        : `/getting-started?next=${encodeURIComponent(next)}`
+      : `/onboarding?next=${encodeURIComponent(next)}`,
   );
 }
 
@@ -381,8 +385,30 @@ export async function saveDetails(
   if (fd.get("mode") === "edit")
     return { ok: true, message: "Your details are saved." };
   const dest = safeNext(fd.get("next"));
-  // First time on the dashboard: Tiggy says hello.
-  redirect(dest === "/dashboard" ? "/dashboard?welcome=1" : dest);
+  redirect(`/getting-started?next=${encodeURIComponent(dest)}`);
+}
+
+/** Mark the guided first-use tour complete for the signed-in learner. */
+export async function completeFirstRunTutorial(fd: FormData) {
+  const sb = await getSupabase();
+  const viewer = await getViewer();
+  if (!sb || !viewer) redirect("/sign-in?next=/getting-started");
+  if (!viewer.profile) redirect("/onboarding");
+  const { data: details, error: readError } = await sb
+    .from("learner_details")
+    .select("user_id")
+    .eq("user_id", viewer.id)
+    .maybeSingle();
+  if (readError || !details) redirect("/onboarding");
+  const { error } = await sb
+    .from("learner_details")
+    .update({ tutorial_completed_at: new Date().toISOString() })
+    .eq("user_id", viewer.id)
+    .is("tutorial_completed_at", null);
+  if (error) redirect("/getting-started?error=save");
+  const next = safeNext(fd.get("next"));
+  revalidatePath("/dashboard");
+  redirect(`/personalising?next=${encodeURIComponent(next)}`);
 }
 
 /** Sets (or clears) the learner's first exam date from the dashboard. */

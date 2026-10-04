@@ -26,7 +26,7 @@ export interface SlimTopic {
   courseId: string;
 }
 
-const STEPS = ["About you", "Your subjects", "What you need help with"];
+const STEPS = ["Your goals", "Your subjects", "Your focus areas"];
 
 const radioCard =
   "has-[:checked]:border-primary has-[:checked]:bg-primary/5 hover:bg-muted/60 flex cursor-pointer items-center gap-3 rounded-md border px-3.5 py-3 text-sm transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring";
@@ -163,6 +163,11 @@ export function DetailsForm({
               </li>
             ))}
           </ol>
+          <p className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-950">
+            {step === 0 && "We’re learning your year group and goals so your next steps fit you."}
+            {step === 1 && "Your subjects and exam boards help us show the right topics and official papers."}
+            {step === 2 && "The topics you pick will appear first in your personal revision plan."}
+          </p>
         </div>
       )}
 
@@ -546,7 +551,7 @@ export function DetailsForm({
           </button>
         ) : (
           <Submit>
-            {stepped ? "Finish and go to dashboard" : "Save changes"}
+            {stepped ? "Save my choices and start the tour" : "Save changes"}
           </Submit>
         )}
         {stepError ? (

@@ -39,13 +39,6 @@ const ROWS: {
     lasts: "Until you close the tab",
   },
   {
-    name: "illuminated:tour-seen:…",
-    where: "Local storage",
-    what: "Remembers you've seen the guided tour, so it doesn't show again.",
-    kind: "Functional",
-    lasts: "Until you clear it",
-  },
-  {
     name: "illuminated:quiz-progress, flashcards, planner, exam-date, alevel-year, recent",
     where: "Local storage",
     what: "Things you save while you study: quiz answers, flashcard marks, your revision plan, exam countdown, A level year and recently viewed pages.",

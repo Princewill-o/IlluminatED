@@ -57,8 +57,9 @@ export async function middleware(request: NextRequest) {
     .some((c) => c.name.startsWith("sb-"));
 
   let signedIn = false;
+  let supabase: ReturnType<typeof createServerClient> | null = null;
   if (hasSessionCookie) {
-    const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+    supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -88,6 +89,21 @@ export async function middleware(request: NextRequest) {
 
   if (signedIn && path === "/")
     return redirectTo(new URL("/dashboard", request.url));
+
+  // New learners finish their guided setup before opening any study page.
+  // Legal/help pages and the setup flow remain available throughout.
+  const setupPath = path === "/onboarding" || path === "/getting-started" ||
+    path === "/personalising" || path === "/account/password";
+  if (signedIn && supabase && !isPublic(path) && !setupPath) {
+    const { data: details, error } = await supabase
+      .from("learner_details")
+      .select("tutorial_completed_at")
+      .maybeSingle();
+    if (!error && !details)
+      return redirectTo(new URL(`/onboarding?next=${encodeURIComponent(path + request.nextUrl.search)}`, request.url));
+    if (!error && details && !details.tutorial_completed_at)
+      return redirectTo(new URL(`/getting-started?next=${encodeURIComponent(path + request.nextUrl.search)}`, request.url));
+  }
 
   if (!signedIn && !isPublic(path)) {
     const url = new URL("/sign-in", request.url);

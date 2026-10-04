@@ -114,13 +114,11 @@ const SLIDES: Slide[] = [
   },
 ];
 
-const seenKey = (userId: string) => `illuminated:tour-seen:${userId}`;
-
 /**
- * Tiggy's three-slide welcome. Opens by itself the first time someone reaches
- * their dashboard in this browser, and again from the "Tour with Tiggy" button.
+ * A short dashboard refresher opened by the "Tour with Tiggy" button.
+ * New learners complete the full guided tour before they reach this page.
  */
-export function TiggyTour({ userId, name }: { userId: string; name: string }) {
+export function TiggyTour({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);
@@ -128,11 +126,6 @@ export function TiggyTour({ userId, name }: { userId: string; name: string }) {
   const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(seenKey(userId))) setOpen(true);
-    } catch {
-      /* storage blocked: skip the automatic tour */
-    }
     const reopen = () => {
       openerRef.current = document.activeElement as HTMLElement;
       setIndex(0);
@@ -140,17 +133,12 @@ export function TiggyTour({ userId, name }: { userId: string; name: string }) {
     };
     window.addEventListener("tiggy-tour", reopen);
     return () => window.removeEventListener("tiggy-tour", reopen);
-  }, [userId]);
+  }, []);
 
   const close = useCallback(() => {
     setOpen(false);
-    try {
-      localStorage.setItem(seenKey(userId), "1");
-    } catch {
-      /* ignore */
-    }
     openerRef.current?.focus();
-  }, [userId]);
+  }, []);
 
   const go = useCallback(
     (to: number) => {

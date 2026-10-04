@@ -92,7 +92,8 @@ export default function PrivacyPage() {
           <strong>Learner details</strong>: your stage (for example GCSE or A
           level), year group, age range (13 to 15, 16 to 17, or 18+), your
           subjects and exam boards, the topics you want help with, an optional
-          note about what you find hard, and an optional exam date.
+          note about what you find hard, an optional exam date, and whether
+          you have finished the first-use tour.
         </li>
         <li>
           <strong>Optional school or sixth form</strong>: if you choose to save

@@ -105,7 +105,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <TiggyTour userId={account.id} name={profile.username} />
+      <TiggyTour name={profile.username} />
       <div className="container pt-6 lg:pt-10">
         <Q4CampaignArtwork compact />
       </div>
