@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
+import { hasPreviewAccess, PREVIEW_COOKIE, previewGateEnabled, previewPage } from "@/lib/preview-gate";
 import {
   SUPABASE_KEY,
   SUPABASE_URL,
@@ -48,10 +49,20 @@ const isPublic = (path: string) =>
  * and sends signed-in people from the landing page to their dashboard.
  */
 export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  if (previewGateEnabled && path !== "/api/preview-access" && path !== "/api/stripe/webhook") {
+    const allowed = await hasPreviewAccess(request.cookies.get(PREVIEW_COOKIE)?.value);
+    if (!allowed) {
+      if (path.startsWith("/api/"))
+        return NextResponse.json({ error: "Private preview: access code required." }, { status: 401, headers: { "Cache-Control": "no-store" } });
+      const next = path + request.nextUrl.search;
+      return new Response(previewPage(next), { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex, nofollow" } });
+    }
+  }
+  // API routes own their account checks; middleware only applies the preview gate.
+  if (path.startsWith("/api/")) return NextResponse.next();
   let response = NextResponse.next({ request });
   if (!socialConfigured) return response;
-
-  const path = request.nextUrl.pathname;
   const hasSessionCookie = request.cookies
     .getAll()
     .some((c) => c.name.startsWith("sb-"));
@@ -115,7 +126,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Everything except static files, images and API proxies.
-    "/((?!_next/static|_next/image|api/|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$).*)",
+    // Gate pages and APIs, while allowing assets needed to display the access screen.
+    "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };
