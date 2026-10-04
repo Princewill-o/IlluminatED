@@ -16,7 +16,7 @@ import {
   siteOrigin,
 } from "@/lib/email";
 import { getSupabase } from "@/lib/social/server";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, paymentsEnabled } from "@/lib/stripe";
 import { HELP_TYPES, SPEEDS, helpLabel } from "@/lib/tutoring";
 
 type Supabase = NonNullable<Awaited<ReturnType<typeof getSupabase>>>;
@@ -280,7 +280,7 @@ export async function startCheckout(fd: FormData) {
   if (!Number.isInteger(id)) redirect("/dashboard");
   const back = `/tutors/requests/${id}`;
   const stripe = getStripe();
-  if (!stripe) redirect(back);
+  if (!stripe || !paymentsEnabled) redirect(back);
 
   const { data: r } = await sb
     .from("tutor_requests")
