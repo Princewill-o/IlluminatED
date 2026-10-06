@@ -9,7 +9,7 @@ The official `stripe@openai-curated` plugin was installed. `https://mcp.stripe.c
 ## Payment design
 
 1. Use hosted Checkout Sessions for monthly Premium, backed by a recurring GBP Price of 599 pence. Existing one-off tutoring checkout stays separate.
-2. Q4 Lock In grants one 30-day trial to a new Premium subscriber. The server determines eligibility and campaign timing, not form parameters. Collect a payment method now; charge £0 during the trial and £5.99/month afterwards unless cancelled. New trial checkout starts are accepted before 16 October 2026, 00:00 Europe/London. Each started checkout is valid for 30 minutes.
+2. Q4 Winter Arc grants one 30-day trial to a new Premium subscriber. The server determines eligibility and campaign timing, not form parameters. Collect a payment method now; charge £0 during the trial and £5.99/month afterwards unless cancelled. New trial checkout starts are accepted before 16 October 2026, 00:00 Europe/London. Each started checkout is valid for 30 minutes.
 3. Use an account-bound Stripe Customer and stable checkout attempt/idempotency identifiers. Check existing subscriptions before creating another. Persist trial use independently of current paid status.
 4. Verify webhook signatures against the raw body. Re-read the subscription from Stripe and check its expected price. Subscription events update access; paid invoices separately identify paying users. Zero-value trial invoices must not count as revenue or paying subscribers.
 5. Stripe Billing generates subscription invoices automatically. The hosted Customer Portal handles cards, cancellation and invoice history. No custom card fields or stored card data. A return from Checkout alone never grants Premium.
