@@ -3,17 +3,9 @@ import { redirect } from "next/navigation";
 
 import { getAccount } from "@/lib/account/server";
 import { PREMIUM_MONTHLY_PENCE, TRIAL_DAYS } from "@/lib/campaign";
+import { siteOrigin as origin } from "@/lib/site";
 import { getSupabase } from "@/lib/social/server";
 import { PREMIUM_PRICE_ID, getStripe, premiumEnabled, stripeLive } from "@/lib/stripe";
-
-function origin() {
-  // Checkout redirects must never send production customers to localhost.
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configured) return new URL(configured).origin;
-  if (process.env.VERCEL_ENV === "production") return "https://www.illumed.co.uk";
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return "http://localhost:3000";
-}
 
 export async function startPremiumCheckout(fd: FormData) {
   const sb = await getSupabase();
@@ -54,7 +46,7 @@ export async function startPremiumCheckout(fd: FormData) {
       subscription_data: { billing_mode: { type: "flexible" }, metadata: { user_id: account.id }, ...(trial ? { trial_period_days: TRIAL_DAYS, trial_settings: { end_behavior: { missing_payment_method: "cancel" as const } } } : {}) },
       metadata: { user_id: account.id, guardian_permission: under18 ? "confirmed" : "not_needed", recurring_consent: "accepted", campaign: trial ? "q4_2026" : "standard" },
       custom_text: { submit: { message: trial ? "£0 for 30 days, then £5.99/month automatically. Cancel before your trial ends to avoid a charge." : "£5.99/month automatically until cancelled." } },
-      success_url: `${origin()}/billing?checkout=complete`, cancel_url: `${origin()}/premium?cancelled=1`,
+      success_url: `${origin()}/premium/success?session_id={CHECKOUT_SESSION_ID}`, cancel_url: `${origin()}/premium?cancelled=1`,
     }, { idempotencyKey: `illuminated-checkout-${attempt.id}` });
     url = session.url;
   } catch { /* No raw Stripe response or customer details in public errors. */ }

@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AGE_BANDS, STAGES, type StudySubject, YEAR_GROUPS } from "./details";
@@ -10,6 +9,7 @@ import { safeNext } from "./paths";
 import { COURSES } from "@/lib/data/courses";
 import { TOPICS } from "@/lib/data/topics";
 import { CAREER_ROUTES } from "@/lib/education/state";
+import { siteOrigin as canonicalOrigin } from "@/lib/site";
 import { getSupabase, getViewer } from "@/lib/social/server";
 
 export type FormState = {
@@ -24,10 +24,7 @@ const NOT_CONNECTED =
 
 /** The site's own address, for links in emails. */
 async function siteOrigin(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_SITE_URL)
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, "");
-  const h = await headers();
-  return `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  return canonicalOrigin();
 }
 
 /** Where password reset emails send people once the link has signed them in. */

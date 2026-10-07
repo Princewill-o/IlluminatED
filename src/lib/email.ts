@@ -1,6 +1,6 @@
 import "server-only";
 
-import { headers } from "next/headers";
+import { siteOrigin as canonicalOrigin } from "@/lib/site";
 
 /**
  * Transactional email through Resend's REST API. Off unless RESEND_API_KEY
@@ -105,10 +105,7 @@ export async function notifyModerators(
 
 /** The site's own address, for links in emails. */
 export async function siteOrigin(): Promise<string> {
-  if (process.env.NEXT_PUBLIC_SITE_URL)
-    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, "");
-  const h = await headers();
-  return `${h.get("x-forwarded-proto") ?? "https"}://${h.get("host")}`;
+  return canonicalOrigin();
 }
 
 /** The shared secret the server passes to database functions that browsers mustn't call. */

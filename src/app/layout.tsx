@@ -9,6 +9,7 @@ import { HideOnSocial } from "@/components/hide-on-social";
 import { OfflineBanner } from "@/components/offline-banner";
 import { SplashScreen, splashBootScript } from "@/components/splash-screen";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SITE_URL } from "@/lib/site";
 import "@/styles/globals.css";
 
 const dmSans = localFont({
@@ -47,9 +48,7 @@ const description =
   "Free revision for GCSE, A level, BTEC, T Level and Level 2/3 learners: courses, quizzes, flashcards, planners and official resources.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://illuminated-omega.vercel.app",
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "IlluminatED: revision for UK learners",
     template: "%s | IlluminatED",

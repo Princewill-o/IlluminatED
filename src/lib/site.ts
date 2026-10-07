@@ -34,3 +34,25 @@ export const CONTACT_TOPICS = [
 ] as const;
 
 export type ContactTopic = (typeof CONTACT_TOPICS)[number]["value"];
+
+/** Canonical public address. Deployment aliases never appear in customer links. */
+export const SITE_URL = "https://illumed.co.uk";
+
+export function siteOrigin(): string {
+  // Keep sandbox development usable without redirecting local accounts to production.
+  if (
+    process.env.NODE_ENV === "development" &&
+    !/^(sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY ?? "")
+  ) {
+    try {
+      const local = new URL(
+        process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      );
+      if (["localhost", "127.0.0.1", "[::1]"].includes(local.hostname))
+        return local.origin;
+    } catch {
+      /* Use the canonical address for invalid configuration. */
+    }
+  }
+  return SITE_URL;
+}

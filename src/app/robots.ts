@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://illuminated-omega.vercel.app"
-).replace(/\/+$/, "");
+import { SITE_URL as SITE } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -15,6 +13,8 @@ export default function robots(): MetadataRoute.Robots {
         "/social/u",
         "/account",
         "/onboarding",
+        "/billing",
+        "/premium/success",
       ],
     },
     sitemap: `${SITE}/sitemap.xml`,

@@ -1,8 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://illuminated-omega.vercel.app"
-).replace(/\/+$/, "");
+import { SITE_URL as SITE } from "@/lib/site";
 
 /** Only the pages anyone can open. Everything else needs an account. */
 const PUBLIC_PAGES = [
