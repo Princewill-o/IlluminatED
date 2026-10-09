@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
-import { hasPreviewAccess, PREVIEW_COOKIE, previewGateEnabled, previewPage } from "@/lib/preview-gate";
 import {
   SUPABASE_KEY,
   SUPABASE_URL,
@@ -50,16 +49,7 @@ const isPublic = (path: string) =>
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (previewGateEnabled && path !== "/api/preview-access" && path !== "/api/stripe/webhook") {
-    const allowed = await hasPreviewAccess(request.cookies.get(PREVIEW_COOKIE)?.value);
-    if (!allowed) {
-      if (path.startsWith("/api/"))
-        return NextResponse.json({ error: "Private preview: access code required." }, { status: 401, headers: { "Cache-Control": "no-store" } });
-      const next = path + request.nextUrl.search;
-      return new Response(previewPage(next), { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store", "X-Robots-Tag": "noindex, nofollow" } });
-    }
-  }
-  // API routes own their account checks; middleware only applies the preview gate.
+  // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();
   let response = NextResponse.next({ request });
   if (!socialConfigured) return response;
@@ -126,7 +116,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Gate pages and APIs, while allowing assets needed to display the access screen.
+    // Refresh sessions and protect account pages while allowing public assets.
     "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };
