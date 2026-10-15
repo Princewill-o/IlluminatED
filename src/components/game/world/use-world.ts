@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+import { type VerifiedIdentity, verifyPass } from "./verify-pass";
+
 import type { Avatar } from "@/game/core/cosmetics";
 import { SERVER_CAPACITY, channelFor, chatText } from "@/game/core/world";
 import { browserSupabase } from "@/lib/supabase-browser";
+
 
 /**
  * Realtime multiplayer for one map on one server, over Supabase Realtime:
@@ -15,6 +18,8 @@ import { browserSupabase } from "@/lib/supabase-browser";
  * - broadcast "c": emotes and preset phrases (no free text, by design)
  * Private channels: the database only lets signed-in, non-banned members join
  * (see the games_world migration). The connection heals itself after Wi-Fi drops.
+ * Names, employer badges and logos come from a server-signed world pass that
+ * every client verifies, so nobody can pose as someone else or as verified staff.
  */
 export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "full" | "error";
 
@@ -24,6 +29,12 @@ export interface Me {
   avatar: Avatar;
   /** Verified employer badge (company name), if any. */
   org: string | null;
+  /** Company id whose parody logo they wear on their back. */
+  badge: string | null;
+  /** Server-signed identity (see lib/game/world-pass.ts). */
+  pass: string | null;
+  /** Key for checking other players' passes. Null only when the server has no secret (local dev). */
+  publicKey: string | null;
 }
 
 export interface RemotePlayer {
@@ -31,6 +42,7 @@ export interface RemotePlayer {
   username: string;
   avatar: Avatar;
   org: string | null;
+  badge: string | null;
   x: number;
   y: number;
   tx: number;
@@ -42,9 +54,11 @@ export interface RemotePlayer {
 }
 
 interface Meta {
+  /** Signed world pass. */
+  p: string | null;
+  /** Name, only trusted when the server has no signing key (local dev). */
   u: string;
   a: Avatar;
-  o: string | null;
   x: number;
   y: number;
   d: 1 | -1;
@@ -82,14 +96,33 @@ export function useWorld({
     map.clear();
     const topic = channelFor(mapId, serverId);
 
-    const meta = (): Meta => ({ u: me.username, a: me.avatar, o: me.org, x: Math.round(pos.current.x), y: Math.round(pos.current.y), d: pos.current.d });
+    const meta = (): Meta => ({ p: me.pass, u: me.username, a: me.avatar, x: Math.round(pos.current.x), y: Math.round(pos.current.y), d: pos.current.d });
 
     const channel = sb.channel(topic, {
       config: { private: true, presence: { key: me.id }, broadcast: { self: false, ack: true } },
     });
     channelRef.current = channel;
 
-    channel.on("presence", { event: "sync" }, () => {
+    // Checked identities by pass. Players only appear once their pass checks out.
+    const checked = new Map<string, VerifiedIdentity | null | "pending">();
+    const identify = (id: string, m: Meta): VerifiedIdentity | null => {
+      if (!me.publicKey) return { id, username: String(m.u ?? "player").slice(0, 40), org: null, badge: null };
+      if (typeof m.p !== "string") return null;
+      const got = checked.get(m.p);
+      if (got === undefined) {
+        checked.set(m.p, "pending");
+        const pass = m.p;
+        void verifyPass(pass, me.publicKey).then((who) => {
+          checked.set(pass, who);
+          if (!disposed) sync();
+        });
+        return null;
+      }
+      if (got === "pending" || !got || got.id !== id) return null;
+      return got;
+    };
+
+    const sync = () => {
       const state = channel.presenceState<Meta>();
       const ids = Object.keys(state);
       // Too many people already here: politely refuse (the server list offers another).
@@ -106,14 +139,17 @@ export function useWorld({
         if (id === me.id) continue;
         const m = state[id]?.[0];
         if (!m) continue;
+        const who = identify(id, m);
+        if (!who) continue;
         seen.add(id);
         const p = map.get(id);
         if (!p) {
           map.set(id, {
             id,
-            username: m.u,
+            username: who.username,
             avatar: m.a,
-            org: m.o ?? null,
+            org: who.org,
+            badge: who.badge,
             x: m.x,
             y: m.y,
             tx: m.x,
@@ -125,8 +161,9 @@ export function useWorld({
           });
         } else {
           p.avatar = m.a;
-          p.username = m.u;
-          p.org = m.o ?? null;
+          p.username = who.username;
+          p.org = who.org;
+          p.badge = who.badge;
           // Only snap from presence if we haven't heard live movement lately.
           if (Date.now() - p.heardAt > 4000) {
             p.tx = m.x;
@@ -136,7 +173,8 @@ export function useWorld({
       }
       for (const id of [...map.keys()]) if (!seen.has(id)) map.delete(id);
       bump();
-    });
+    };
+    channel.on("presence", { event: "sync" }, sync);
 
     channel.on("broadcast", { event: "m" }, ({ payload }) => {
       const p = map.get(payload.i);

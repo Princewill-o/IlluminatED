@@ -6,6 +6,7 @@ import { Bus, DoorOpen, MessageCircle, Sparkles } from "lucide-react";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
+import { TopDownFigure, poseFigure } from "./topdown-avatar";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
@@ -13,8 +14,8 @@ import { play, soundOn } from "../sound";
 import { EMOTES, PHRASES, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
-const SPRITE_H = 56;
-const SPRITE_W = 40;
+const SPRITE_H = 64;
+const SPRITE_W = 64;
 
 /** Static scenery: painted once per map into a canvas under the players. */
 const Scenery = memo(function Scenery({ map, night }: { map: WorldMap; night: boolean }) {
@@ -46,6 +47,7 @@ function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
 
 function Sprite({
   avatar,
+  badge,
   username,
   org,
   me = false,
@@ -54,6 +56,7 @@ function Sprite({
   bubbleRef,
 }: {
   avatar: Me["avatar"];
+  badge: string | null;
   username: string;
   org: string | null;
   me?: boolean;
@@ -63,12 +66,14 @@ function Sprite({
 }) {
   return (
     <div ref={innerRef} className="absolute top-0 left-0 will-change-transform" style={{ width: SPRITE_W, height: SPRITE_H }}>
-      <div ref={bubbleRef} className="absolute -top-9 left-1/2 hidden -translate-x-1/2 rounded-2xl bg-[#f4f0ff] px-3 py-1 text-xs font-bold whitespace-nowrap text-[#0b0910] shadow-[0_3px_0_0_rgba(0,0,0,0.5)]" />
-      <div className="absolute bottom-1 left-1/2 h-3 w-12 -translate-x-1/2 rounded-[50%] bg-black/40" />
-      <div className={cn("sprite-body origin-bottom", hidden && "opacity-30")}>
-        <AvatarFigure avatar={avatar} size={SPRITE_H} showPet={false} title={username} />
+      <div
+        ref={bubbleRef}
+        className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded-2xl bg-[#f4f0ff] px-3 py-1 text-xs font-bold whitespace-nowrap text-[#0b0910] shadow-[0_3px_0_0_rgba(0,0,0,0.45)]"
+      />
+      <div className="td-root">
+        <TopDownFigure avatar={avatar} badge={badge} size={SPRITE_W} ghost={hidden} />
       </div>
-      <div className="absolute top-full left-1/2 mt-0.5 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
+      <div className="absolute top-full left-1/2 -mt-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", me ? "bg-[#c6f36b] text-[#0b0910]" : "bg-black/70 text-white")}>
           {me ? "You" : `@${username}`}
         </span>
@@ -239,6 +244,7 @@ export function WorldView({
     const cam = { x: NaN, y: NaN };
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let lastStep = 0;
+    const anim = new Map<string, { ang: number; phase: number; walk: number }>();
     let nextChirp = performance.now() + 3000;
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
@@ -293,17 +299,26 @@ export function WorldView({
         nextChirp = now + 4000 + Math.random() * 7000;
         play("chirp", sound);
       }
-      const place = (el: HTMLDivElement | null | undefined, x: number, y: number, d: number, walking: boolean) => {
+      // Each figure turns smoothly towards where it's heading, and its walk cycle
+      // advances with the distance covered, so fists swing in time with the feet.
+      const place = (el: HTMLDivElement | null | undefined, key: string, x: number, y: number, vx: number, vy: number, walking: boolean) => {
         if (!el) return;
-        el.style.transform = `translate3d(${x - SPRITE_W / 2}px, ${y - SPRITE_H + 10}px, 0)`;
+        el.style.transform = `translate3d(${x - SPRITE_W / 2}px, ${y - SPRITE_H / 2 - 4}px, 0)`;
         el.style.zIndex = String(Math.round(y));
-        const body = el.querySelector<HTMLElement>(".sprite-body");
-        if (body) {
-          body.style.transform = `scaleX(${d})`;
-          body.classList.toggle("sprite-walk", walking);
+        const a = anim.get(key) ?? { ang: Math.PI, phase: 0, walk: 0 };
+        const speed = Math.hypot(vx, vy);
+        if (speed > 0.05) {
+          const want = Math.atan2(vx, -vy);
+          let diff = want - a.ang;
+          diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+          a.ang += reduced ? diff : diff * (1 - Math.exp(-dt * 14));
         }
+        a.walk += ((walking ? 1 : 0) - a.walk) * (1 - Math.exp(-dt * 10));
+        if (walking) a.phase += dt * 11;
+        anim.set(key, a);
+        poseFigure(el, a.ang, reduced ? 0 : a.phase, reduced ? 0 : a.walk, reduced ? 0 : now);
       };
-      place(meEl.current, p.x, p.y, p.d, moved);
+      place(meEl.current, "me", p.x, p.y, moved ? dx : 0, moved ? dy : 0, moved);
       const t = Date.now();
       if (meBubble.current) meBubble.current.classList.toggle("hidden", !myChat.current || myChat.current.until < t);
 
@@ -314,7 +329,7 @@ export function WorldView({
         rp.x += (rp.tx - rp.x) * ease;
         rp.y += (rp.ty - rp.y) * ease;
         const walking = Math.hypot(rp.x - ox, rp.y - oy) > 0.3;
-        place(els.current.get(rp.id), rp.x, rp.y, rp.dir, walking);
+        place(els.current.get(rp.id), rp.id, rp.x, rp.y, rp.x - ox, rp.y - oy, walking);
         const b = bubbles.current.get(rp.id);
         if (b) {
           const show = rp.chat && rp.chat.until > t;
@@ -387,6 +402,7 @@ export function WorldView({
           >
             <Sprite
               avatar={rp.avatar}
+              badge={rp.badge}
               username={rp.username}
               org={rp.org}
               hidden={hidden.has(rp.id)}
@@ -404,6 +420,7 @@ export function WorldView({
         <Sprite
           me
           avatar={me.avatar}
+          badge={me.badge}
           username={me.username}
           org={me.org}
           innerRef={(el) => {
