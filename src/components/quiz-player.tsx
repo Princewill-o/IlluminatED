@@ -315,7 +315,7 @@ export function QuizPlayer({
     return (
       <div className="bg-card space-y-5 rounded-xl border p-5 md:p-6">
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950" role="status">
-          🔥 {streak.current} correct in a row · Best {streak.best}
+          {streak.current} correct in a row · Best {streak.best}
         </p>
         {studySubjects.length > 0 && (
           <label className="flex items-start gap-3 text-sm">
@@ -502,7 +502,7 @@ export function QuizPlayer({
         aria-label="Round summary"
       >
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950" role="status">
-          🔥 {streak.current} correct in a row · Best {streak.best}
+          {streak.current} correct in a row · Best {streak.best}
         </p>
         <div className="flex flex-wrap items-center gap-4">
           <span className="bg-accent text-accent-foreground grid size-14 place-items-center rounded-lg">

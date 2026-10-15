@@ -29,7 +29,7 @@ export async function generateMetadata({
     description: text,
     robots: { index: false },
     openGraph: {
-      title: "⚔️ You've been challenged on IlluminatED",
+      title: "You've been challenged on IlluminatED",
       description: text,
     },
   };
@@ -51,7 +51,7 @@ export default async function ChallengePage({
     <div id="challenge" className="mx-auto max-w-4xl px-4 pt-8 pb-10">
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="bg-[#ff7a6b] px-6 py-3 text-center text-sm font-black tracking-[0.3em] text-[#0b0910] uppercase">
-          ⚔️ You&apos;ve been challenged
+          You&apos;ve been challenged
         </div>
         <div className="grid items-center gap-6 p-6 md:grid-cols-[auto_1fr] md:p-10">
           <div className="flex items-end justify-center gap-2">

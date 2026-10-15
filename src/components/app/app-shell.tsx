@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Send } from "lucide-react";
+import { Coins, Flame, Send } from "lucide-react";
 
 import { AppearanceSwitch } from "@/components/app/appearance-switch";
 import { AvatarFigure } from "@/components/game/avatar";
@@ -87,11 +87,11 @@ function AvatarBubble({ avatar, size = 34, active = false }: { avatar: Avatar; s
 function Stats({ player, compact = false }: { player: ShellPlayer; compact?: boolean }) {
   return (
     <span className={cn("flex items-center font-black tabular-nums", compact ? "gap-2.5 text-[13px]" : "gap-3 text-sm")}>
-      <span title={`${player.streak}-day streak`} aria-label={`${player.streak}-day streak`} className="text-ink-coral">
-        🔥 {player.streak}
+      <span title={`${player.streak}-day streak`} aria-label={`${player.streak}-day streak`} className="flex items-center gap-1 text-ink-coral">
+        <Flame className="size-4" aria-hidden /> {player.streak}
       </span>
-      <span title={`${player.clout} Clout`} aria-label={`${player.clout} Clout`} className="text-ink-sun">
-        💰 {fmt(player.clout)}
+      <span title={`${player.clout} Clout`} aria-label={`${player.clout} Clout`} className="flex items-center gap-1 text-ink-sun">
+        <Coins className="size-4" aria-hidden /> {fmt(player.clout)}
       </span>
     </span>
   );

@@ -167,7 +167,7 @@ export function ThreadView({
     <div className="flex h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom)-90px)] flex-col md:h-[calc(100dvh-170px)]">
       {mode === "e2ee" && (
         <p className="text-muted-foreground px-1 pb-2 text-xs">
-          🔒 End-to-end encrypted{code && <> · security code <span className="font-mono">{code}</span></>}
+          End-to-end encrypted{code && <> · security code <span className="font-mono">{code}</span></>}
           {keyError && <span className="ml-1 text-ink-sun">{keyError}</span>}
         </p>
       )}
@@ -181,7 +181,7 @@ export function ThreadView({
                 m.mine ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-secondary",
               )}
             >
-              {m.unreadable ? <em className="text-white/60">🔒 Encrypted on another device</em> : <span className="whitespace-pre-wrap">{m.text}</span>}
+              {m.unreadable ? <em className="text-white/60">Encrypted on another device</em> : <span className="whitespace-pre-wrap">{m.text}</span>}
               <span className="mt-0.5 flex items-center justify-end gap-2 text-[10px] opacity-60">
                 {new Date(m.at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                 {!m.mine && (

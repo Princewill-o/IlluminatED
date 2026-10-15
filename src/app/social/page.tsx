@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { BookOpen, Compass, Gamepad2, MessagesSquare } from "lucide-react";
+
 import { Pager, ThreadList } from "@/components/social/thread-list";
 import { getBlockList, withoutBlocked } from "@/lib/social/blocks";
 import { CATEGORIES, socialConfigured } from "@/lib/social/config";
@@ -60,12 +62,12 @@ export default async function SocialHome({
         <h2 className="mt-2 text-2xl font-bold">Learn, ask, and find your next step.</h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { icon: "💬", title: "Ask the community", body: "Share questions and read student experiences in moderated threads." },
-            { icon: "📚", title: "Revise together", body: "Use the same account for quizzes, study resources and your dashboard." },
-            { icon: "🧭", title: "Plan ahead", body: "Explore sixth form, university and apprenticeship conversations." },
-            { icon: "🎮", title: "Revise by playing", body: "Promotion Panic and IlluminatED City: real questions, made fun." },
+            { icon: MessagesSquare, title: "Ask the community", body: "Share questions and read student experiences in moderated threads." },
+            { icon: BookOpen, title: "Revise together", body: "Use the same account for quizzes, study resources and your dashboard." },
+            { icon: Compass, title: "Plan ahead", body: "Explore sixth form, university and apprenticeship conversations." },
+            { icon: Gamepad2, title: "Revise by playing", body: "Promotion Panic and IlluminatED City: real questions, made fun." },
           ].map((feature) => <article key={feature.title} className="rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
-            <span className="text-3xl" aria-hidden>{feature.icon}</span>
+            <feature.icon className="size-7 text-primary" aria-hidden />
             <h3 className="mt-3 font-bold">{feature.title}</h3>
             <p className="mt-2 text-sm leading-5 text-slate-600">{feature.body}</p>
           </article>)}

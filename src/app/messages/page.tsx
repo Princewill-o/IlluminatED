@@ -48,7 +48,7 @@ export default async function MessagesPage() {
                     @{them} {account.id === t.learnerId && <span className="text-xs text-ink-sky">✓ {t.org.name}</span>}
                   </span>
                   <span className="text-muted-foreground block truncate text-xs">
-                    {t.mode === "e2ee" ? "🔒 End-to-end encrypted" : "🛡️ Safeguarded chat"}
+                    {t.mode === "e2ee" ? "End-to-end encrypted" : "Safeguarded chat"}
                     {t.guardian === "pending" && " · waiting for parent/carer approval"}
                     {t.guardian === "declined" && " · declined"}
                     {t.closed && " · closed"}

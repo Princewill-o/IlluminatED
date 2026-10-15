@@ -13,7 +13,7 @@ export interface Company {
   sector: string;
   /** What you're revising, in plain words, shown on the building. */
   revises: string;
-  boss: { name: string; title: string; emoji: string; look: Partial<Avatar> };
+  boss: { name: string; title: string; look: Partial<Avatar> };
   /** Existing course ids from src/lib/data/courses.ts. */
   courseIds: string[];
   generators: GeneratorKind[];
@@ -49,7 +49,7 @@ export const COMPANIES: Company[] = [
     tagline: "We know what you'll search before you do.",
     sector: "Tech",
     revises: "Computer Science",
-    boss: { name: "Gigi Byte", title: "Chief Vibes Officer", emoji: "🥽", look: { skin: "skin-2", hair: "hair-bob", hairColor: "haircol-purple", face: "face-vr", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-hightops", mouth: "mouth-grin", held: "held-phone" } },
+    boss: { name: "Gigi Byte", title: "Chief Vibes Officer", look: { skin: "skin-2", hair: "hair-bob", hairColor: "haircol-purple", face: "face-vr", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-hightops", mouth: "mouth-grin", held: "held-phone" } },
     courseIds: [
       "gcse-computer-science",
       "alevel-computer-science",
@@ -80,8 +80,7 @@ export const COMPANIES: Company[] = [
     revises: "IT and Digital Support",
     boss: {
       name: "Kevin From IT",
-      title: "Head of Turning It Off and On",
-      emoji: "🖥️", look: { skin: "skin-1", hair: "hair-bald", face: "face-round", top: "top-polo", bottom: "bottom-cargo", shoes: "shoes-sliders", held: "held-coffee", eyes: "eyes-sleepy", brows: "brows-bold", mouth: "mouth-small" } },
+      title: "Head of Turning It Off and On", look: { skin: "skin-1", hair: "hair-bald", face: "face-round", top: "top-polo", bottom: "bottom-cargo", shoes: "shoes-sliders", held: "held-coffee", eyes: "eyes-sleepy", brows: "brows-bold", mouth: "mouth-small" } },
     courseIds: ["btec-it", "tlevel-digital-support", "gcse-computer-science"],
     generators: ["data-units", "binary", "denary"],
     accent: "#5fd3a5",
@@ -108,8 +107,7 @@ export const COMPANIES: Company[] = [
     revises: "Maths and money",
     boss: {
       name: "Sir Woofington III",
-      title: "Chief Treat Officer",
-      emoji: "🐶", look: { head: "head-dog", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-crown", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
+      title: "Chief Treat Officer", look: { head: "head-dog", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-crown", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
     courseIds: [
       "gcse-maths",
       "alevel-maths",
@@ -140,7 +138,7 @@ export const COMPANIES: Company[] = [
     tagline: "Every little moo helps.",
     sector: "Retail",
     revises: "Business and Economics",
-    boss: { name: "Daisy", title: "Regional Manager (Dairy)", emoji: "🐮", look: { head: "head-cow", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
+    boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-cow", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
     courseIds: ["btec-business", "alevel-economics", "tlevel-accounting"],
     generators: ["best-buy", "profit", "percent", "ratio"],
     accent: "#ff8fd1",
@@ -165,7 +163,7 @@ export const COMPANIES: Company[] = [
     tagline: "Now with 40% fewer 'oops'.",
     sector: "Health",
     revises: "Biology and Health",
-    boss: { name: "Dr Ow", title: "Head of Ouchology", emoji: "🩺", look: { skin: "skin-5", hair: "hair-short", hairColor: "haircol-silver", top: "top-labcoat", bottom: "bottom-smart", shoes: "shoes-smart", extras: "extras-plaster", eyes: "eyes-focused", brows: "brows-raised", mouth: "mouth-smirk" } },
+    boss: { name: "Dr Ow", title: "Head of Ouchology", look: { skin: "skin-5", hair: "hair-short", hairColor: "haircol-silver", top: "top-labcoat", bottom: "bottom-smart", shoes: "shoes-smart", extras: "extras-plaster", eyes: "eyes-focused", brows: "brows-raised", mouth: "mouth-smirk" } },
     courseIds: [
       "gcse-biology",
       "alevel-biology",
@@ -197,7 +195,7 @@ export const COMPANIES: Company[] = [
     tagline: "Self-driving, self-parking, self-esteem issues.",
     sector: "Engineering",
     revises: "Physics and Engineering",
-    boss: { name: "Volt Ramirez", title: "Chief Zoom Officer", emoji: "⚡", look: { skin: "skin-4", hair: "hair-mohawk", hairColor: "haircol-green", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-cargo", shoes: "shoes-boots", mouth: "mouth-laugh", eyes: "eyes-sparkle" } },
+    boss: { name: "Volt Ramirez", title: "Chief Zoom Officer", look: { skin: "skin-4", hair: "hair-mohawk", hairColor: "haircol-green", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-cargo", shoes: "shoes-boots", mouth: "mouth-laugh", eyes: "eyes-sparkle" } },
     courseIds: ["gcse-physics", "alevel-physics", "btec-engineering"],
     generators: ["speed", "ohm", "power", "weight", "density"],
     accent: "#c6f36b",
@@ -222,7 +220,7 @@ export const COMPANIES: Company[] = [
     tagline: "Sausage rolls and chemical bonds since forever.",
     sector: "Food science",
     revises: "Chemistry and Applied Science",
-    boss: { name: "Pastry Pete", title: "Head of Flaky Things", emoji: "🥐", look: { skin: "skin-1", hair: "hair-curly", hairColor: "haircol-ginger", hat: "hat-chef", top: "top-apron", bottom: "bottom-tartan", shoes: "shoes-boots", held: "held-croissant", extras: "extras-freckles", mouth: "mouth-grin" } },
+    boss: { name: "Pastry Pete", title: "Head of Flaky Things", look: { skin: "skin-1", hair: "hair-curly", hairColor: "haircol-ginger", hat: "hat-chef", top: "top-apron", bottom: "bottom-tartan", shoes: "shoes-boots", held: "held-croissant", extras: "extras-freckles", mouth: "mouth-grin" } },
     courseIds: [
       "gcse-chemistry",
       "alevel-chemistry",
@@ -254,8 +252,7 @@ export const COMPANIES: Company[] = [
     revises: "Law, English, History and Psychology",
     boss: {
       name: "Judge Mental",
-      title: "Senior Partner of Opinions",
-      emoji: "⚖️", look: { skin: "skin-3", hair: "hair-afro", hairColor: "haircol-silver", top: "top-tux", bottom: "bottom-smart", shoes: "shoes-smart", face: "face-monocle", brows: "brows-fierce", mouth: "mouth-smirk", eyes: "eyes-focused" } },
+      title: "Senior Partner of Opinions", look: { skin: "skin-3", hair: "hair-afro", hairColor: "haircol-silver", top: "top-tux", bottom: "bottom-smart", shoes: "shoes-smart", face: "face-monocle", brows: "brows-fierce", mouth: "mouth-smirk", eyes: "eyes-focused" } },
     courseIds: [
       "tlevel-legal-services",
       "gcse-english-language",
@@ -288,7 +285,7 @@ export const COMPANIES: Company[] = [
     tagline: "Are you still revising?",
     sector: "Media",
     revises: "Creative Media and English",
-    boss: { name: "Binge McWatch", title: "Head of Next Episode", emoji: "🍿", look: { skin: "skin-7", hair: "hair-long", hairColor: "haircol-pink", face: "face-shades", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-sliders", mouth: "mouth-cheeky", held: "held-phone" } },
+    boss: { name: "Binge McWatch", title: "Head of Next Episode", look: { skin: "skin-7", hair: "hair-long", hairColor: "haircol-pink", face: "face-shades", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-sliders", mouth: "mouth-cheeky", held: "held-phone" } },
     courseIds: [
       "btec-creative-media",
       "gcse-english-language",
@@ -317,7 +314,7 @@ export const COMPANIES: Company[] = [
     tagline: "Measure twice, cut once, panic thrice.",
     sector: "Construction",
     revises: "Construction and Maths",
-    boss: { name: "Big Sue", title: "Foreman of Fabulousness", emoji: "🏗️", look: { skin: "skin-6", hair: "hair-braids", hairColor: "haircol-black", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-jeans", shoes: "shoes-boots", brows: "brows-bold", mouth: "mouth-grin", eyes: "eyes-focused" } },
+    boss: { name: "Big Sue", title: "Foreman of Fabulousness", look: { skin: "skin-6", hair: "hair-braids", hairColor: "haircol-black", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-jeans", shoes: "shoes-boots", brows: "brows-bold", mouth: "mouth-grin", eyes: "eyes-focused" } },
     courseIds: [
       "tlevel-construction-design",
       "tlevel-onsite-construction",
@@ -349,8 +346,7 @@ export const COMPANIES: Company[] = [
     revises: "Sport and Physical Education",
     boss: {
       name: "Coach Sweats",
-      title: "Head of Cardio and Chaos",
-      emoji: "🏅", look: { skin: "skin-8", hair: "hair-buzz", hat: "hat-cap", top: "top-tracksuit", bottom: "bottom-joggers", shoes: "shoes-trainers", extras: "extras-paint", mouth: "mouth-laugh", brows: "brows-raised" } },
+      title: "Head of Cardio and Chaos", look: { skin: "skin-8", hair: "hair-buzz", hat: "hat-cap", top: "top-tracksuit", bottom: "bottom-joggers", shoes: "shoes-trainers", extras: "extras-paint", mouth: "mouth-laugh", brows: "brows-raised" } },
     courseIds: ["btec-sport", "gcse-biology"],
     generators: ["pace", "speed", "percent"],
     accent: "#c6f36b",
@@ -375,7 +371,7 @@ export const COMPANIES: Company[] = [
     tagline: "Small people. Big feelings. Glitter everywhere.",
     sector: "Education",
     revises: "Early Years and Education",
-    boss: { name: "Miss Crayola", title: "Head of Snack Time", emoji: "🖍️", look: { skin: "skin-2", hair: "hair-buns", hairColor: "haircol-blue", hat: "hat-party", top: "top-stripes", bottom: "bottom-skirt", shoes: "shoes-skates", extras: "extras-star", eyes: "eyes-sparkle", mouth: "mouth-laugh" } },
+    boss: { name: "Miss Crayola", title: "Head of Snack Time", look: { skin: "skin-2", hair: "hair-buns", hairColor: "haircol-blue", hat: "hat-party", top: "top-stripes", bottom: "bottom-skirt", shoes: "shoes-skates", extras: "extras-star", eyes: "eyes-sparkle", mouth: "mouth-laugh" } },
     courseIds: [
       "tlevel-education-early-years",
       "btec-health-social-care",
@@ -406,8 +402,7 @@ export const COMPANIES: Company[] = [
     revises: "Geography and History",
     boss: {
       name: "Captain Compass",
-      title: "Director of Getting Lost",
-      emoji: "🧭", look: { skin: "skin-4", hair: "hair-quiff", hairColor: "haircol-brown", hat: "hat-explorer", top: "top-denim", bottom: "bottom-cargo", shoes: "shoes-boots", held: "held-compass", eyes: "eyes-wink", mouth: "mouth-grin" } },
+      title: "Director of Getting Lost", look: { skin: "skin-4", hair: "hair-quiff", hairColor: "haircol-brown", hat: "hat-explorer", top: "top-denim", bottom: "bottom-cargo", shoes: "shoes-boots", held: "held-compass", eyes: "eyes-wink", mouth: "mouth-grin" } },
     courseIds: ["gcse-geography", "gcse-history", "alevel-history"],
     generators: ["scale", "speed", "percent-change"],
     accent: "#6bc6ff",

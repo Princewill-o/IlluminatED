@@ -150,8 +150,8 @@ export function WorldApp({
 
         <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="Maps">
           {[
-            { id: "city", name: "🏙️ IlluminatED City" },
-            { id: "campus", name: "🏢 Careers Campus" },
+            { id: "city", name: "IlluminatED City" },
+            { id: "campus", name: "Careers Campus" },
           ].map((m) => (
             <button
               key={m.id}
@@ -250,7 +250,7 @@ export function WorldApp({
       />
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
-          🚪 {room}
+          {room}
           {officeSlug && (
             <Link href={`/messages?org=${officeSlug}`} className="pointer-events-auto ml-2 underline">
               Open my meetings

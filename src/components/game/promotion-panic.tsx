@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
 
+import { Coffee, Lightbulb, SkipForward } from "lucide-react";
+
 import { AvatarFigure, type Mood } from "./avatar";
 import { Building } from "./building";
 import { CompanyLogo } from "./company-logo";
@@ -42,6 +44,8 @@ import {
   applyPowerUp,
 } from "@/game/core/shift";
 import { cn } from "@/lib/utils";
+
+const POWER_ICON = { coffee: Coffee, blame: SkipForward, tiggy: Lightbulb } as const;
 
 export interface ChallengeInfo {
   code: string;
@@ -102,7 +106,7 @@ export function PromotionPanic(props: Props) {
       setMissed([]);
       setSave({ status: "idle" });
       setLine(
-        `📧 ${company.boss.name}: "Welcome aboard, intern. Twelve tasks. Three strikes and you're out. Impress me."`,
+        `${company.boss.name}: "Welcome aboard, intern. Twelve tasks. Three strikes and you're out. Impress me."`,
       );
       setStartedAt(Date.now());
       questionStart.current = performance.now();
@@ -192,11 +196,11 @@ export function PromotionPanic(props: Props) {
         setLine(feedbackLine(quipRng.current, company, after.last!));
       if (p === "tiggy")
         setLine(
-          '🦁 Tiggy: "Psst. I\'ve hidden two that are definitely wrong."',
+          'Tiggy: "Psst. I\'ve hidden two that are definitely wrong."',
         );
       if (p === "coffee")
         setLine(
-          "☕ Coffee break! +10 seconds. You feel unstoppable (and slightly jittery).",
+          "Coffee break! +10 seconds. You feel unstoppable (and slightly jittery).",
         );
       play("click", sound);
     },
@@ -477,7 +481,7 @@ export function PromotionPanic(props: Props) {
         <div>
           {banner && state.phase === "question" && (
             <p className="arcade-pop mb-2 inline-block rounded-full bg-[#ff7a6b] px-3 py-1 text-xs font-black tracking-wider text-[#0b0910] uppercase">
-              🔥 {state.streak} in a row · {banner}
+              {state.streak} in a row · {banner}
             </p>
           )}
           {/* Timer */}
@@ -582,9 +586,9 @@ export function PromotionPanic(props: Props) {
                   {r.correct
                     ? `✓ Correct! +${fmt(r.points)}${state.streak >= 3 ? ` (streak ×${state.streak >= 9 ? 4 : state.streak >= 6 ? 3 : 2})` : ""}`
                     : r.skipped
-                      ? "🙈 Skipped. No strike."
+                      ? "Skipped. No strike."
                       : r.timedOut
-                        ? `⏰ Out of time. Strike ${state.strikes}!`
+                        ? `Out of time. Strike ${state.strikes}!`
                         : `✕ Not quite. Strike ${state.strikes}!`}
                 </p>
                 {!r.correct && !r.skipped && (
@@ -628,7 +632,7 @@ export function PromotionPanic(props: Props) {
                 title={POWER_UPS[p].help}
                 className="arcade-btn flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2 text-sm font-bold disabled:opacity-35 disabled:shadow-none"
               >
-                <span aria-hidden>{POWER_UPS[p].emoji}</span>
+                {(() => { const I = POWER_ICON[p]; return <I className="size-4" aria-hidden />; })()}
                 {POWER_UPS[p].name}
                 <span className="sr-only">
                   : {POWER_UPS[p].help}
@@ -735,7 +739,7 @@ function Intro({
           </p>
           <div className="mt-6 rounded-2xl border border-border bg-secondary p-4">
             <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
-              📧 New email · from {company.boss.name}, {company.boss.title}
+              New email · from {company.boss.name}, {company.boss.title}
             </p>
             <p className="mt-2 leading-7">
               Welcome, intern. Today you&apos;ll handle{" "}
@@ -747,7 +751,7 @@ function Intro({
           </div>
           {challenge && (
             <p className="mt-4 rounded-2xl border-2 border-[#ff7a6b] bg-[#ff7a6b]/10 p-4 font-bold">
-              ⚔️ Challenge:{" "}
+              Challenge:{" "}
               {challenge.username ? `@${challenge.username}` : "A player"}{" "}
               reached {RANKS[challenge.rank].title} with{" "}
               <span className="text-ink-lime">{fmt(challenge.score)}</span>.
@@ -757,7 +761,7 @@ function Intro({
           <ul className="mt-5 grid gap-2 text-sm text-foreground/80 sm:grid-cols-3">
             {(Object.keys(POWER_UPS) as PowerUp[]).map((p) => (
               <li key={p} className="rounded-xl bg-foreground/[0.05] px-3 py-2">
-                <span aria-hidden>{POWER_UPS[p].emoji}</span>{" "}
+                {(() => { const I = POWER_ICON[p]; return <I className="mr-1 inline size-4 align-[-3px]" aria-hidden />; })()}
                 <strong>{POWER_UPS[p].name}</strong>
                 <br />
                 <span className="text-xs text-muted-foreground">
@@ -780,11 +784,11 @@ function Intro({
               aria-pressed={sound}
               className="rounded-full border border-border px-4 py-2 text-sm font-bold"
             >
-              {sound ? "🔊 Sound on" : "🔇 Sound off"}
+              {sound ? "Sound on" : "Sound off"}
             </button>
             {dailyBonus && (
               <span className="rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0b0910]">
-                ☀️ Daily Grind: double Clout on your first shift today
+                Daily Grind: double Clout on your first shift today
               </span>
             )}
           </div>
@@ -858,7 +862,7 @@ function Results({
     const r = await createChallenge(res.runId);
     if (!r.ok) return setShare({ status: "error", text: r.error });
     const url = `${window.location.origin}/games/challenge/${r.code}`;
-    const text = `I made ${title} at ${company.name} in Promotion Panic with ${fmt(state.score)} points. Bet you can't beat it 😤`;
+    const text = `I made ${title} at ${company.name} in Promotion Panic with ${fmt(state.score)} points. Bet you can't beat it`;
     try {
       if (navigator.share) {
         await navigator.share({
@@ -895,9 +899,9 @@ function Results({
             </p>
             <h1 className="arcade-display mt-3 text-4xl md:text-5xl">
               {state.fired
-                ? "You're FIRED! 🔥"
+                ? "You're FIRED!"
                 : state.rank >= CEO_RANK
-                  ? `${title}! 👑`
+                  ? `${title}!`
                   : `Shift done: ${title}`}
             </h1>
             <p className="mt-4 leading-7 text-foreground/80">
@@ -917,9 +921,9 @@ function Results({
                 )}
               >
                 {state.score > challenge.score
-                  ? `🏆 You beat ${challenge.username ? `@${challenge.username}` : "the challenge"} by ${fmt(state.score - challenge.score)}!`
+                  ? `You beat ${challenge.username ? `@${challenge.username}` : "the challenge"} by ${fmt(state.score - challenge.score)}!`
                   : state.score === challenge.score
-                    ? "🤝 A perfect tie. Rematch?"
+                    ? "A perfect tie. Rematch?"
                     : `So close. ${challenge.username ? `@${challenge.username} wins` : "They win"} by ${fmt(challenge.score - state.score)}.`}
               </p>
             )}
@@ -966,14 +970,14 @@ function Results({
               </span>
               {res.dailyBonus && (
                 <span className="rounded-full bg-[#c6f36b] px-3 py-1 text-[#0b0910]">
-                  ☀️ Daily Grind ×2
+                  Daily Grind ×2
                 </span>
               )}
               <span className="rounded-full bg-foreground/[0.08] px-3 py-1">
                 Level {res.level}
               </span>
               <span className="rounded-full bg-foreground/[0.08] px-3 py-1">
-                🔥 {res.streak}-day streak
+                {res.streak}-day streak
               </span>
               {res.newBest && previousBest > 0 && (
                 <span className="rounded-full bg-[#ff7a6b] px-3 py-1 text-[#0b0910]">
@@ -989,7 +993,7 @@ function Results({
           )}
           {res && res.unlocked.length > 0 && (
             <p className="arcade-pop mt-3 rounded-xl bg-[#c6f36b] p-3 font-black text-[#0b0910]">
-              🎁 Unlocked:{" "}
+              Unlocked:{" "}
               {res.unlocked
                 .map((id) => cosmeticById(id)?.name ?? id)
                 .join(", ")}
@@ -1024,7 +1028,7 @@ function Results({
             disabled={!res || share.status === "busy"}
             className="arcade-btn rounded-full bg-brand px-6 py-3 font-black text-white disabled:opacity-40"
           >
-            ⚔️ Challenge a friend
+            Challenge a friend
           </button>
           <Link
             href="/games"
@@ -1051,7 +1055,7 @@ function Results({
           aria-labelledby="notes"
         >
           <h2 id="notes" className="text-xl font-black">
-            📝 Your revision notes from this shift
+            Your revision notes from this shift
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             The ones that got away. Read these, then go again.

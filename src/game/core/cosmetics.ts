@@ -216,7 +216,7 @@ export const RARITY: Record<Rarity, { label: string; mark: string; color: string
   common: { label: "Common", mark: "●", color: "#b3abc4" },
   rare: { label: "Rare", mark: "◆", color: "#6bc6ff" },
   epic: { label: "Epic", mark: "★", color: "#c49bff" },
-  legendary: { label: "Legendary", mark: "👑", color: "#ffd166" },
+  legendary: { label: "Legendary", mark: "♛", color: "#ffd166" },
 };
 
 export const cosmeticById = (id: string) => COSMETICS.find((x) => x.id === id);

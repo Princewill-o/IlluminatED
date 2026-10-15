@@ -52,7 +52,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
         return (
           <div key={m.id} className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl bg-brand p-3 text-sm text-white">
             <span className="flex-1 font-bold">
-              📅 {when(m.startsAt)} · {m.room}
+              {when(m.startsAt)} · {m.room}
             </span>
             <Link
               href={`/games/world?map=office-${m.orgSlug}`}
@@ -72,7 +72,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
 
       {t.mode === "moderated" && (
         <p className="mb-2 rounded-2xl bg-foreground/[0.05] p-3 text-xs leading-5">
-          🛡️ <strong>Safeguarded chat.</strong>{" "}
+          <strong>Safeguarded chat.</strong>{" "}
           {t.guardian === "pending"
             ? "We've emailed a parent or carer to approve this conversation. You can chat once they say yes."
             : t.guardian === "declined"

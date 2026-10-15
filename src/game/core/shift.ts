@@ -84,19 +84,17 @@ export type PowerUp = "coffee" | "blame" | "tiggy";
 
 export const POWER_UPS: Record<
   PowerUp,
-  { name: string; emoji: string; help: string }
+  { name: string; help: string }
 > = {
   coffee: {
     name: "Coffee Break",
-    emoji: "☕",
     help: "+10 seconds on the clock",
   },
   blame: {
     name: "Blame the Intern",
-    emoji: "🙈",
     help: "Skip this task. No strike, streak kept",
   },
-  tiggy: { name: "Ask Tiggy", emoji: "🦁", help: "Removes two wrong answers" },
+  tiggy: { name: "Ask Tiggy", help: "Removes two wrong answers" },
 };
 
 export interface AnswerResult {

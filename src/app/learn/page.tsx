@@ -1,19 +1,6 @@
 import Link from "next/link";
 
-import {
-  BookOpenCheck,
-  Briefcase,
-  Calculator,
-  CalendarDays,
-  Compass,
-  GraduationCap,
-  Layers,
-  Library,
-  type LucideIcon,
-  MessageCircleQuestion,
-  Timer,
-  Trophy,
-} from "lucide-react";
+import { BookOpenCheck, Briefcase, Calculator, CalendarDays, Compass, Gamepad2, GraduationCap, Layers, Library, MessageCircleQuestion, Timer, Trophy, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 import { requireAccount } from "@/lib/account/server";
@@ -81,8 +68,8 @@ export default async function LearnPage() {
         href="/games"
         className="mt-6 flex items-center gap-4 rounded-3xl bg-brand p-5 text-white transition active:scale-[0.98]"
       >
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#0b0910] text-3xl" aria-hidden>
-          🎮
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#0b0910] text-[#c6f36b]" aria-hidden>
+          <Gamepad2 className="size-7" />
         </span>
         <span>
           <span className="block text-lg font-extrabold">Revise by playing</span>

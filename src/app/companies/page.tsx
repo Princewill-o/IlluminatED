@@ -15,7 +15,7 @@ export default async function CompaniesPage() {
         Verified employers on IlluminatED. Read their advice, visit their office on Careers Campus and book office hours.
       </p>
       <Link href="/games/world?map=campus" className="mt-5 inline-block rounded-full bg-[#c6f36b] px-5 py-3 font-black text-[#0b0910]">
-        🏢 Walk around Careers Campus
+        Walk around Careers Campus
       </Link>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
         {orgs.length === 0 && (

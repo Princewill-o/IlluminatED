@@ -6,9 +6,9 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/games/world", label: "🌆 Worlds" },
-  { href: "/games", label: "🎮 Promotion Panic" },
-  { href: "/games/locker", label: "👕 Locker" },
+  { href: "/games/world", label: "Worlds" },
+  { href: "/games", label: "Promotion Panic" },
+  { href: "/games/locker", label: "Locker" },
 ];
 
 /** Sub-tabs inside the Play tab of the app. Stats live in the app's top bar and side rail. */

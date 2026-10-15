@@ -49,10 +49,10 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
         </div>
         <div className="flex gap-2">
           <Link href={`/games/world?map=office-${m.org.slug}`} className="rounded-full bg-[#c6f36b] px-4 py-2.5 text-sm font-black text-[#0b0910]">
-            🚶 Walk into your office
+            Walk into your office
           </Link>
           <Link href="/messages" className="rounded-full bg-brand px-4 py-2.5 text-sm font-black text-white">
-            💬 Messages
+            Messages
           </Link>
         </div>
       </div>

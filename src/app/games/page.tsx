@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Map as MapIcon } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
@@ -39,8 +40,8 @@ export default async function GamesHome() {
         href="/games/world"
         className="mb-4 flex items-center gap-4 overflow-hidden rounded-3xl border-2 border-[#c6f36b] bg-card p-4 transition active:scale-[0.99] md:p-5"
       >
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#c6f36b] text-3xl" aria-hidden>
-          🌆
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#c6f36b] text-[#0b0910]" aria-hidden>
+          <MapIcon className="size-7" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-lg font-black">Enter the world</span>
@@ -74,7 +75,7 @@ export default async function GamesHome() {
             </Link>
             {player.dailyBonusReady && (
               <span className="rounded-full bg-[#0b0910] px-4 py-2 text-sm font-black text-[#ffd166]">
-                ☀️ Daily Grind ready: double Clout
+                Daily Grind ready: double Clout
               </span>
             )}
           </div>
@@ -128,7 +129,7 @@ export default async function GamesHome() {
             href="/games/locker"
             className="mt-4 block rounded-full border border-border py-2 text-center text-sm font-bold hover:bg-hover"
           >
-            👕 Open your Locker
+            Open your Locker
           </Link>
         </div>
       </section>
@@ -175,7 +176,7 @@ export default async function GamesHome() {
                     )}
                     {(prog?.bestRank ?? 0) >= CEO_RANK && (
                       <span className="absolute top-4 right-4 rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0b0910]">
-                        👑 CEO
+                        CEO
                       </span>
                     )}
                   </div>
@@ -204,7 +205,7 @@ export default async function GamesHome() {
                         </>
                       ) : (
                         <span className="text-muted-foreground">
-                          Not hired yet. Boss: {c.boss.name} {c.boss.emoji}
+                          Not hired yet. Boss: {c.boss.name}
                         </span>
                       )}
                     </p>
@@ -225,25 +226,23 @@ export default async function GamesHome() {
       >
         {[
           [
-            "⚔️",
             "Live Arena",
             "Class vs class quiz battles on the big screen. Join with a PIN.",
           ],
           [
-            "🧑‍🔧",
             "Experience Sims",
             "Actually do the job: fix laptops at Macrosoft, run a ward round at St Plaster's.",
           ],
-        ].map(([emoji, title, text]) => (
+        ].map(([title, text]) => (
           <div
             key={title}
             className="rounded-3xl border-2 border-dashed border-border p-6"
           >
             <p className="text-xs font-black tracking-[0.25em] text-ink-sun uppercase">
-              🚧 Under construction
+              Under construction
             </p>
             <h2 className="arcade-display mt-3 text-2xl">
-              <span aria-hidden>{emoji}</span> {title}
+              {title}
             </h2>
             <p className="mt-2 text-muted-foreground">{text}</p>
           </div>

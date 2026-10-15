@@ -514,24 +514,24 @@ export const channelFor = (mapId: string, serverId: string) =>
 // ─────────────────────────────────────────────────────────
 
 export const EMOTES = [
-  { id: "wave", label: "👋" },
-  { id: "laugh", label: "😂" },
-  { id: "fire", label: "🔥" },
-  { id: "clap", label: "👏" },
-  { id: "think", label: "🤔" },
-  { id: "party", label: "🎉" },
+  { id: "wave", label: "Hey!" },
+  { id: "laugh", label: "Haha" },
+  { id: "fire", label: "Let's go" },
+  { id: "clap", label: "Nice one" },
+  { id: "think", label: "Hmm…" },
+  { id: "party", label: "Woo!" },
 ] as const;
 
 export const PHRASES = [
-  { id: "hi", text: "Hi! 👋" },
+  { id: "hi", text: "Hi!" },
   { id: "gg", text: "GG!" },
   { id: "race", text: "Race you to CEO!" },
-  { id: "beat", text: "Beat my score 😤" },
+  { id: "beat", text: "Beat my score" },
   { id: "gl", text: "Good luck!" },
   { id: "join", text: "Come to my shift?" },
   { id: "advice", text: "Could I get some advice?" },
   { id: "thanks", text: "Thank you!" },
-  { id: "revise", text: "Revision time 📚" },
+  { id: "revise", text: "Revision time" },
   { id: "brb", text: "BRB" },
 ] as const;
 

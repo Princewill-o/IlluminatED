@@ -2,6 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 
+import { Eye } from "lucide-react";
+
 import { AvatarFigure } from "./avatar";
 import { play, soundOn } from "./sound";
 
@@ -113,10 +115,10 @@ export function Locker({
             onClick={randomise}
             className="absolute top-3 right-3 rounded-full bg-foreground px-3 py-1.5 text-xs font-black text-background transition active:scale-95"
           >
-            🎲 Surprise me
+            Surprise me
           </button>
         </div>
-        <p className="mt-4 text-center text-2xl font-black text-ink-sun">💰 {fmt(clout)} Clout</p>
+        <p className="mt-4 text-center text-2xl font-black text-ink-sun">{fmt(clout)} Clout</p>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -134,7 +136,7 @@ export function Locker({
         </div>
         {previewing.length > 0 && (
           <p className="mt-3 text-sm font-bold text-ink-sun">
-            👀 Previewing {previewing.map((i) => i.name).join(", ")}. Buy it to keep it, or Undo.
+            Previewing {previewing.map((i) => i.name).join(", ")}. Buy it to keep it, or Undo.
           </p>
         )}
         {message && (
@@ -246,7 +248,7 @@ export function Locker({
                       </button>
                     ) : item.unlock ? (
                       <span className="block rounded-full bg-foreground/[0.05] px-2 py-1.5 text-center text-[11px] leading-tight font-bold text-muted-foreground">
-                        🔒 {unlockLabel(item.unlock, (id) => companyById(id)?.name ?? id)}
+                        {unlockLabel(item.unlock, (id) => companyById(id)?.name ?? id)}
                       </span>
                     ) : (
                       <div className="flex gap-1.5">
@@ -255,8 +257,9 @@ export function Locker({
                           onClick={() => wear(item)}
                           className="rounded-full border border-border px-2.5 py-1.5 text-xs font-bold"
                           aria-label={`Preview ${item.name}`}
+                          title="Preview"
                         >
-                          👀
+                          <Eye className="size-3.5" aria-hidden />
                         </button>
                         <button
                           type="button"
@@ -264,7 +267,7 @@ export function Locker({
                           disabled={pending || clout < item.price || !canSave}
                           className="flex-1 rounded-full bg-[#ffd166] py-1.5 text-xs font-black text-[#0b0910] transition active:scale-95 disabled:opacity-40"
                         >
-                          💰 {fmt(item.price)}
+                          {fmt(item.price)}
                         </button>
                       </div>
                     )}

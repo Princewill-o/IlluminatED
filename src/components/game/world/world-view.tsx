@@ -2,13 +2,15 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
+import { Bus, DoorOpen, MessageCircle, Sparkles } from "lucide-react";
+
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
 
-import { EMOTES, PHRASES, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { EMOTES, PHRASES, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
 const SPRITE_H = 56;
@@ -26,7 +28,7 @@ const Scenery = memo(function Scenery({ map, night }: { map: WorldMap; night: bo
 
 function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
   const r = portal.rect;
-  const icon = portal.to.kind === "map" ? "🚌" : portal.to.kind === "desk" ? "💬" : portal.to.kind === "link" ? "✨" : "🚪";
+  const Icon = portal.to.kind === "map" ? Bus : portal.to.kind === "desk" ? MessageCircle : portal.to.kind === "link" ? Sparkles : DoorOpen;
   return (
     <div
       className={cn(
@@ -35,7 +37,9 @@ function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
       )}
       style={{ left: r.x + 2, top: r.y + 2, width: r.w - 4, height: r.h - 4 }}
     >
-      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#0b0910]/80 px-1.5 text-[10px] leading-4">{icon}</span>
+      <span className="absolute -top-3 left-1/2 grid size-5 -translate-x-1/2 place-items-center rounded-full bg-[#0b0910]/80 text-white">
+        <Icon className="size-3" aria-hidden />
+      </span>
     </div>
   );
 }
@@ -335,10 +339,12 @@ export function WorldView({
     return () => cancelAnimationFrame(raf);
   }, [map, players, reportMove, stopped, onRoom]);
 
-  const sayIt = (text: string) => {
+  const sayIt = (id: string) => {
+    const text = chatText(id);
+    if (!text) return;
     myChat.current = { text, until: Date.now() + 4500 };
     if (meBubble.current) meBubble.current.textContent = text;
-    say(text);
+    say(id);
     setSheet(false);
   };
 
@@ -423,13 +429,13 @@ export function WorldView({
           </button>
         </div>
         <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black backdrop-blur" aria-live="polite">
-          👥 {others.length + 1} here
+          {others.length + 1} here
         </div>
       </div>
 
       {(world.status === "offline" || world.status === "reconnecting") && (
         <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto w-fit rounded-full bg-[#ffd166] px-4 py-2 text-sm font-black text-[#0b0910]" role="status">
-          {world.status === "offline" ? "📶 You're offline. Keep walking, we'll sync when you're back." : "🔄 Reconnecting…"}
+          {world.status === "offline" ? "You're offline. Keep walking, we'll sync when you're back." : "Reconnecting…"}
         </div>
       )}
       {world.status === "full" && (
@@ -465,21 +471,21 @@ export function WorldView({
         <div className="pointer-events-auto relative">
           {sheet && (
             <div className="absolute right-0 bottom-16 w-64 rounded-3xl border border-white/10 bg-[#15111f] p-3 shadow-2xl">
-              <div className="grid grid-cols-6 gap-1">
+              <div className="grid grid-cols-3 gap-1">
                 {EMOTES.map((e) => (
-                  <button key={e.id} type="button" onClick={() => sayIt(e.label)} className="rounded-xl py-2 text-xl hover:bg-white/10" aria-label={e.id}>
+                  <button key={e.id} type="button" onClick={() => sayIt(e.id)} className="rounded-xl bg-[#1f1830] py-2 text-xs font-black hover:bg-[#2a2040]">
                     {e.label}
                   </button>
                 ))}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PHRASES.map((p) => (
-                  <button key={p.id} type="button" onClick={() => sayIt(p.text)} className="rounded-full bg-[#1f1830] px-3 py-1.5 text-xs font-bold hover:bg-[#2a2040]">
+                  <button key={p.id} type="button" onClick={() => sayIt(p.id)} className="rounded-full bg-[#1f1830] px-3 py-1.5 text-xs font-bold hover:bg-[#2a2040]">
                     {p.text}
                   </button>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] text-[#8d85a0]">Safe chat: emotes and set phrases only.</p>
+              <p className="mt-2 text-[10px] text-[#8d85a0]">Safe chat: set reactions and phrases only.</p>
             </div>
           )}
           <button
@@ -489,7 +495,7 @@ export function WorldView({
             aria-label="Emotes and phrases"
             className="grid size-14 place-items-center rounded-full bg-[#7c4dff] text-2xl shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:scale-95"
           >
-            😀
+            <MessageCircle className="size-6 text-white" aria-hidden />
           </button>
         </div>
       </div>
@@ -503,7 +509,7 @@ export function WorldView({
             <div className="mt-4 grid gap-2">
               {picked.org && (
                 <a href={`/messages/new?to=${encodeURIComponent(picked.id)}`} className="rounded-full bg-[#c6f36b] py-2.5 font-black text-[#0b0910]">
-                  💬 Ask for advice
+                  Ask for advice
                 </a>
               )}
               <button

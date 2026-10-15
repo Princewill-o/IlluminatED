@@ -57,7 +57,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
           </p>
           {org.about && <p className="mt-4 leading-7 whitespace-pre-line">{org.about}</p>}
           <Link href={`/games/world?map=office-${org.slug}`} className="mt-5 inline-block rounded-full bg-[#c6f36b] px-5 py-3 font-black text-[#0b0910]">
-            🚶 Visit their office
+            Visit their office
           </Link>
         </div>
       </section>

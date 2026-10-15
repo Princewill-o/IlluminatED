@@ -196,7 +196,7 @@ export default async function DashboardPage() {
             </span>
           </span>
           <span className="justify-self-start rounded-full bg-[#c6f36b] px-6 py-3 font-black text-[#0b0910] group-hover:bg-[#d4f88a] sm:justify-self-end">
-            {player.dailyBonusReady ? "Play · ☀️ double Clout today" : "Play now"} →
+            {player.dailyBonusReady ? "Play · double Clout today" : "Play now"} →
           </span>
         </Link>
       </section>
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
             <Link href="/social" className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-bold text-white">Explore Social</Link>
             <Link href="/exam-mode" className="rounded-full border border-blue-700 px-5 py-2.5 text-sm font-bold text-blue-800">Open exam mode</Link>
           </div>
-          <Link href="/games" className="relative mt-6 block text-xs font-semibold text-violet-800 underline">Study games are here: play Promotion Panic 🎮</Link>
+          <Link href="/games" className="relative mt-6 block text-xs font-semibold text-violet-800 underline">Study games are here: play Promotion Panic</Link>
         </div>
       </section>
 

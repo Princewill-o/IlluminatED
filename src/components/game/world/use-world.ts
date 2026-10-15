@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import type { Avatar } from "@/game/core/cosmetics";
-import { SERVER_CAPACITY, channelFor } from "@/game/core/world";
+import { SERVER_CAPACITY, channelFor, chatText } from "@/game/core/world";
 import { browserSupabase } from "@/lib/supabase-browser";
 
 /**
@@ -150,8 +150,10 @@ export function useWorld({
 
     channel.on("broadcast", { event: "c" }, ({ payload }) => {
       const p = map.get(payload.i);
-      if (!p || typeof payload.t !== "string") return;
-      p.chat = { text: payload.t, until: Date.now() + 4500 };
+      // Only approved emotes and phrases are shown: the payload is an id, never free text.
+      const text = typeof payload.t === "string" ? chatText(payload.t) : null;
+      if (!p || !text) return;
+      p.chat = { text, until: Date.now() + 4500 };
       bump();
     });
 
@@ -235,6 +237,7 @@ export function useWorld({
   }, [me.id]);
 
   const say = useCallback((text: string) => {
+    if (!chatText(text)) return;
     const ch = channelRef.current;
     if (!ch || ch.state !== "joined") return;
     void ch.send({ type: "broadcast", event: "c", payload: { i: me.id, t: text } });

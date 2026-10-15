@@ -44,7 +44,7 @@ export const NAV: NavGroup[] = [
     label: "Practise",
     items: [
       {
-        title: "IlluminatED City 🎮",
+        title: "IlluminatED City",
         href: "/games",
         description: "Play Promotion Panic: intern to CEO by revising",
       },

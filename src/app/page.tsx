@@ -131,7 +131,7 @@ export default function Home() {
         <div className="mt-10">
           <FeatureGrid />
         </div>
-        <p className="mt-10 text-center text-sm font-semibold text-[#526078] dark:text-slate-200">These are illustrative screen previews. Your dashboard and results are personal to you. <span className="ml-1 text-[#7048bb] dark:text-[#decaff]">🎮 Study games are coming soon.</span></p>
+        <p className="mt-10 text-center text-sm font-semibold text-[#526078] dark:text-slate-200">These are illustrative screen previews. Your dashboard and results are personal to you. <span className="ml-1 text-[#7048bb] dark:text-[#decaff]">Study games are coming soon.</span></p>
         </div>
       </section>
 
