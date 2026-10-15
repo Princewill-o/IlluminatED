@@ -49,7 +49,7 @@ export default async function ChallengePage({
 
   return (
     <div id="challenge" className="mx-auto max-w-4xl px-4 pt-8 pb-10">
-      <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#15111f]">
+      <section className="overflow-hidden rounded-3xl border border-border bg-card">
         <div className="bg-[#ff7a6b] px-6 py-3 text-center text-sm font-black tracking-[0.3em] text-[#0b0910] uppercase">
           ⚔️ You&apos;ve been challenged
         </div>
@@ -66,22 +66,22 @@ export default async function ChallengePage({
           <div>
             <h1 className="arcade-display text-4xl md:text-5xl">
               {who} made{" "}
-              <span className="text-[#ffd166]">{RANKS[c.rank].title}</span> at{" "}
+              <span className="text-ink-sun">{RANKS[c.rank].title}</span> at{" "}
               {company.name}
             </h1>
             <p className="mt-4 text-lg">
               Score to beat:{" "}
-              <strong className="arcade-display text-3xl text-[#c6f36b]">
+              <strong className="arcade-display text-3xl text-ink-lime">
                 {fmt(c.score)}
               </strong>
             </p>
-            <p className="mt-2 text-sm text-[#b3abc4]">
+            <p className="mt-2 text-sm text-muted-foreground">
               Same 12 tasks, same order.{" "}
               {c.attempts > 0
                 ? `${c.attempts} ${c.attempts === 1 ? "person has" : "people have"} tried, ${c.beaten} beat it.`
                 : "Nobody has tried yet. Be first."}
             </p>
-            <p className="mt-4 text-[#d8d4e0] italic">
+            <p className="mt-4 text-foreground/80 italic">
               {company.name}: “{company.tagline}” · revising {company.revises}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
@@ -93,20 +93,20 @@ export default async function ChallengePage({
               </Link>
               <Link
                 href="/"
-                className="rounded-full border border-white/15 px-6 py-4 font-bold"
+                className="rounded-full border border-border px-6 py-4 font-bold"
               >
                 What&apos;s IlluminatED?
               </Link>
             </div>
             {!viewer && (
-              <p className="mt-3 text-xs text-[#b3abc4]">
+              <p className="mt-3 text-xs text-muted-foreground">
                 IlluminatED is free revision for GCSE, A level, BTEC and T Level
                 learners. Promotion Panic is how we make it fun.
               </p>
             )}
           </div>
         </div>
-        <div className="border-t border-white/10 bg-[#1f1830] px-6 pt-4">
+        <div className="border-t border-border bg-secondary px-6 pt-4">
           <Building
             shape={company.building}
             accent={company.accent}

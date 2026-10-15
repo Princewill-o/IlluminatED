@@ -106,17 +106,17 @@ export function Locker({
   return (
     <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
       <div className="lg:sticky lg:top-6 lg:self-start">
-        <div className="relative rounded-3xl bg-[#7c4dff] px-6 pt-6 pb-2">
+        <div className="relative rounded-3xl bg-brand px-6 pt-6 pb-2">
           <AvatarFigure avatar={avatar} size={280} className="arcade-bob mx-auto h-[210px] w-auto lg:h-[280px]" />
           <button
             type="button"
             onClick={randomise}
-            className="absolute top-3 right-3 rounded-full bg-[#0b0910] px-3 py-1.5 text-xs font-black text-white transition active:scale-95"
+            className="absolute top-3 right-3 rounded-full bg-foreground px-3 py-1.5 text-xs font-black text-background transition active:scale-95"
           >
             🎲 Surprise me
           </button>
         </div>
-        <p className="mt-4 text-center text-2xl font-black text-[#ffd166]">💰 {fmt(clout)} Clout</p>
+        <p className="mt-4 text-center text-2xl font-black text-ink-sun">💰 {fmt(clout)} Clout</p>
         <div className="mt-3 flex gap-2">
           <button
             type="button"
@@ -127,29 +127,29 @@ export function Locker({
             {dirty ? "Save outfit" : "Outfit saved ✓"}
           </button>
           {dirty && (
-            <button type="button" onClick={() => setAvatar(saved)} className="rounded-full border border-white/15 px-4 font-bold">
+            <button type="button" onClick={() => setAvatar(saved)} className="rounded-full border border-border px-4 font-bold">
               Undo
             </button>
           )}
         </div>
         {previewing.length > 0 && (
-          <p className="mt-3 text-sm font-bold text-[#ffd166]">
+          <p className="mt-3 text-sm font-bold text-ink-sun">
             👀 Previewing {previewing.map((i) => i.name).join(", ")}. Buy it to keep it, or Undo.
           </p>
         )}
         {message && (
-          <p role="status" className={cn("mt-3 text-sm font-bold", message.tone === "ok" ? "text-[#5fd3a5]" : "text-[#ff7a6b]")}>
+          <p role="status" className={cn("mt-3 text-sm font-bold", message.tone === "ok" ? "text-ink-mint" : "text-ink-coral")}>
             {message.text}
           </p>
         )}
-        {!canSave && <p className="mt-3 text-sm text-[#ffd166]">Saving isn&apos;t switched on yet. You can still try things on.</p>}
-        <div className="mt-5 hidden rounded-2xl bg-[#15111f] p-4 lg:block">
-          <p className="text-xs font-bold tracking-widest text-[#b3abc4] uppercase">Sets</p>
+        {!canSave && <p className="mt-3 text-sm text-ink-sun">Saving isn&apos;t switched on yet. You can still try things on.</p>}
+        <div className="mt-5 hidden rounded-2xl bg-card p-4 lg:block">
+          <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Sets</p>
           <ul className="mt-2 space-y-1.5 text-sm">
             {[...sets].map(([id, s]) => (
               <li key={id} className="flex justify-between">
                 <span>{SETS[id]}</span>
-                <span className={cn("font-bold", s.mine === s.total ? "text-[#c6f36b]" : "text-[#b3abc4]")}>
+                <span className={cn("font-bold", s.mine === s.total ? "text-ink-lime" : "text-muted-foreground")}>
                   {s.mine === s.total ? "✓ Complete" : `${s.mine}/${s.total}`}
                 </span>
               </li>
@@ -171,7 +171,7 @@ export function Locker({
               }}
               className={cn(
                 "shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition active:scale-95",
-                group === g.group ? "bg-[#f4f0ff] text-[#0b0910]" : "bg-[#1f1830] hover:bg-[#2a2040]",
+                group === g.group ? "bg-foreground text-background" : "bg-secondary hover:bg-accent",
               )}
             >
               {g.group}
@@ -188,7 +188,7 @@ export function Locker({
                 onClick={() => setSlot(s.slot)}
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-xs font-bold",
-                  slot === s.slot ? "border-[#a67fff] bg-[#a67fff]/15 text-white" : "border-white/10 text-[#b3abc4]",
+                  slot === s.slot ? "border-primary bg-primary/15 text-foreground" : "border-border text-muted-foreground",
                 )}
               >
                 {s.label}
@@ -205,10 +205,10 @@ export function Locker({
             const r = RARITY[item.rarity];
             return (
               <li key={item.id}>
-                <div className={cn("flex h-full flex-col rounded-2xl border-2 bg-[#15111f] p-2.5", wearing ? "border-[#c6f36b]" : "border-white/10")}>
+                <div className={cn("flex h-full flex-col rounded-2xl border-2 bg-card p-2.5", wearing ? "border-[#c6f36b]" : "border-border")}>
                   <div
                     className={cn(
-                      "relative grid place-items-center overflow-hidden rounded-xl bg-[#1f1830] pt-2",
+                      "relative grid place-items-center overflow-hidden rounded-xl bg-secondary pt-2",
                       !mine && item.unlock && "opacity-60 grayscale",
                     )}
                   >
@@ -232,7 +232,7 @@ export function Locker({
                     )}
                   </div>
                   <p className="mt-2 text-sm leading-tight font-bold">{item.name}</p>
-                  {item.set && <p className="mt-0.5 text-[11px] text-[#b3abc4]">{setName(item.set)}</p>}
+                  {item.set && <p className="mt-0.5 text-[11px] text-muted-foreground">{setName(item.set)}</p>}
                   <div className="mt-auto pt-2">
                     {wearing ? (
                       <span className="block rounded-full bg-[#c6f36b] py-1.5 text-center text-xs font-black text-[#0b0910]">Wearing ✓</span>
@@ -240,12 +240,12 @@ export function Locker({
                       <button
                         type="button"
                         onClick={() => wear(item)}
-                        className="w-full rounded-full bg-[#7c4dff] py-1.5 text-xs font-black text-white transition active:scale-95"
+                        className="w-full rounded-full bg-brand py-1.5 text-xs font-black text-white transition active:scale-95"
                       >
                         Try on
                       </button>
                     ) : item.unlock ? (
-                      <span className="block rounded-full bg-white/5 px-2 py-1.5 text-center text-[11px] leading-tight font-bold text-[#b3abc4]">
+                      <span className="block rounded-full bg-foreground/[0.05] px-2 py-1.5 text-center text-[11px] leading-tight font-bold text-muted-foreground">
                         🔒 {unlockLabel(item.unlock, (id) => companyById(id)?.name ?? id)}
                       </span>
                     ) : (
@@ -253,7 +253,7 @@ export function Locker({
                         <button
                           type="button"
                           onClick={() => wear(item)}
-                          className="rounded-full border border-white/15 px-2.5 py-1.5 text-xs font-bold"
+                          className="rounded-full border border-border px-2.5 py-1.5 text-xs font-bold"
                           aria-label={`Preview ${item.name}`}
                         >
                           👀

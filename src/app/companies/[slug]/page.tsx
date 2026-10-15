@@ -42,7 +42,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       <section className="overflow-hidden rounded-3xl border">
         <div className="h-3" style={{ background: org.accent }} />
         <div className="bg-card p-5 md:p-6">
-          <p className="text-xs font-black tracking-[0.25em] text-[#6bc6ff] uppercase">✓ Verified employer</p>
+          <p className="text-xs font-black tracking-[0.25em] text-ink-sky uppercase">✓ Verified employer</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{org.name}</h1>
           <p className="text-muted-foreground text-sm">
             {sectorLabel(org.sector)}
@@ -64,7 +64,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
 
       <section className="mt-6">
         <h2 className="text-lg font-extrabold">Ask the team</h2>
-        <ul className="bg-card mt-3 divide-y divide-white/5 rounded-3xl border">
+        <ul className="bg-card mt-3 divide-y divide-border rounded-3xl border">
           {team.map((t) => (
             <li key={t.userId} className="flex items-center gap-3 px-4 py-3">
               <span className="min-w-0 flex-1">
@@ -72,7 +72,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
                 {t.title && <span className="text-muted-foreground block text-sm">{t.title}</span>}
               </span>
               {!isStaff && t.userId !== account.id && (
-                <Link href={`/messages/new?to=${t.userId}`} className="rounded-full bg-[#7c4dff] px-4 py-2 text-sm font-black text-white">
+                <Link href={`/messages/new?to=${t.userId}`} className="rounded-full bg-brand px-4 py-2 text-sm font-black text-white">
                   Message
                 </Link>
               )}
@@ -97,7 +97,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             ))}
           </ul>
         )}
-        <ul className="bg-card mt-3 divide-y divide-white/5 rounded-3xl border">
+        <ul className="bg-card mt-3 divide-y divide-border rounded-3xl border">
           {open.length === 0 && <li className="text-muted-foreground px-4 py-3 text-sm">No open slots right now. Check back soon.</li>}
           {open.map((s) => (
             <li key={s.id} className="flex items-center gap-3 px-4 py-3 text-sm">

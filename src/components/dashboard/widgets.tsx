@@ -98,7 +98,7 @@ export function ExamCountdown({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-      <div className="bg-primary text-primary-foreground relative overflow-hidden rounded-3xl p-6 sm:p-8">
+      <div className="bg-brand text-white relative overflow-hidden rounded-3xl p-6 sm:p-8">
         <p className="flex items-center gap-2 text-sm font-medium opacity-80">
           <CalendarClock className="size-4" aria-hidden />
           {qualification} exams · {examLabel}
@@ -147,7 +147,7 @@ export function ExamCountdown({
                     i < phaseIndex
                       ? "bg-white/70"
                       : i === phaseIndex
-                        ? "bg-white"
+                        ? "bg-white!"
                         : "bg-white/20",
                   )}
                 />

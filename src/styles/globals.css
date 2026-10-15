@@ -140,6 +140,17 @@
   --color-warm: var(--warm);
   --color-warm-text: var(--warm-text);
   --color-glow: var(--glow);
+  --color-brand: var(--brand, #7c4dff);
+  --color-ink-lime: var(--ink-lime, #3f7a00);
+  --color-ink-sun: var(--ink-sun, #9a5b00);
+  --color-ink-coral: var(--ink-coral, #c8372a);
+  --color-ink-lilac: var(--ink-lilac, #6d3fe0);
+  --color-ink-sky: var(--ink-sky, #0b6fae);
+  --color-ink-mint: var(--ink-mint, #0f7a52);
+  --color-raised: var(--surface-raised, #ffffff);
+  --color-chrome: var(--chrome, rgb(255 255 255 / 88%));
+  --color-hover: var(--hover, rgb(0 0 0 / 5%));
+  --color-selected: var(--selected, rgb(0 0 0 / 8%));
 
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
@@ -328,37 +339,121 @@ body {
   position: relative;
 }
 
-/* ─── IlluminatEDSocial: purple on black, flat, same in both themes ─── */
+/* ─── IlluminatEDSocial: purple accents; follows light/dark ─── */
 .social {
-  color-scheme: dark;
-  --background: #09080d;
-  --foreground: #f1eef8;
-  --card: #131019;
-  --card-foreground: #f1eef8;
-  --popover: #16121e;
-  --popover-foreground: #f1eef8;
-  --primary: #a67fff;
-  --primary-foreground: #0b0910;
-  --secondary: #1d1729;
-  --secondary-foreground: #ece5ff;
-  --muted: #17131f;
-  --muted-foreground: #a8a0b8;
-  --accent: #241b36;
-  --accent-foreground: #e4d9ff;
-  --destructive: #ff8f85;
-  --destructive-foreground: #09080d;
-  --success: #5fd3a5;
-  --success-soft: #0f2e22;
-  --danger-soft: #36161a;
-  --warm: #a67fff;
-  --border: rgb(255 255 255 / 10%);
-  --input: rgb(255 255 255 / 16%);
-  --ring: #a67fff;
+  color-scheme: light;
+  --background: #f5f3fa;
+  --foreground: #17121f;
+  --card: #ffffff;
+  --card-foreground: #17121f;
+  --popover: #ffffff;
+  --popover-foreground: #17121f;
+  --primary: #6d3fe0;
+  --primary-foreground: #ffffff;
+  --secondary: #ece7f8;
+  --secondary-foreground: #2c1d57;
+  --muted: #efecf5;
+  --muted-foreground: #645c76;
+  --accent: #e7defe;
+  --accent-foreground: #3b2380;
+  --destructive: #c8372a;
+  --destructive-foreground: #ffffff;
+  --success: #0f7a52;
+  --success-soft: #def5ea;
+  --danger-soft: #fde8e6;
+  --warm: #b26b00;
+  --warm-text: #8a5200;
+  --glow: #ece7f8;
+  --border: rgb(23 18 31 / 9%);
+  --input: rgb(23 18 31 / 16%);
+  --ring: #7c4dff;
+  --chart-1: #6d3fe0;
+  --chart-2: #d98a00;
+  --chart-3: #0f9a6a;
+  --chart-4: #1f8fd6;
+  --chart-5: #e0533f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17121f;
+  --sidebar-primary: #6d3fe0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ece7f8;
+  --sidebar-accent-foreground: #17121f;
+  --sidebar-border: rgb(23 18 31 / 9%);
+  --sidebar-ring: #7c4dff;
+  /* Accent inks: readable text versions of the bright game colours. */
+  --brand: #7c4dff;
+  --ink-lime: #3f7a00;
+  --ink-sun: #9a5b00;
+  --ink-coral: #c8372a;
+  --ink-lilac: #6d3fe0;
+  --ink-sky: #0b6fae;
+  --ink-mint: #0f7a52;
+  --surface-raised: #ffffff;
+  --chrome: rgb(255 255 255 / 88%);
+  --btn-edge: rgb(44 29 87 / 22%);
+  --hover: rgb(23 18 31 / 5%);
+  --selected: rgb(109 63 224 / 10%);
   background-color: var(--background);
   color: var(--foreground);
 }
-body:has(.social) {
-  background-color: #09080d;
+.dark .social {
+  color-scheme: dark;
+  --background: #0b0910;
+  --foreground: #f4f0ff;
+  --card: #15111f;
+  --card-foreground: #f4f0ff;
+  --popover: #18131f;
+  --popover-foreground: #f4f0ff;
+  --primary: #a67fff;
+  --primary-foreground: #0b0910;
+  --secondary: #1f1830;
+  --secondary-foreground: #ece5ff;
+  --muted: #17131f;
+  --muted-foreground: #aaa2bd;
+  --accent: #261c3a;
+  --accent-foreground: #e4d9ff;
+  --destructive: #ff8f85;
+  --destructive-foreground: #0b0910;
+  --success: #5fd3a5;
+  --success-soft: #0f2e22;
+  --danger-soft: #36161a;
+  --warm: #ffd166;
+  --warm-text: #ffd166;
+  --glow: #1f1830;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: #c6f36b;
+  --chart-1: #a67fff;
+  --chart-2: #ffd166;
+  --chart-3: #5fd3a5;
+  --chart-4: #6bc6ff;
+  --chart-5: #ff7a6b;
+  --sidebar: #0b0910;
+  --sidebar-foreground: #f4f0ff;
+  --sidebar-primary: #a67fff;
+  --sidebar-primary-foreground: #0b0910;
+  --sidebar-accent: #1f1830;
+  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #c6f36b;
+  --brand: #7c4dff;
+  --ink-lime: #c6f36b;
+  --ink-sun: #ffd166;
+  --ink-coral: #ff8a7a;
+  --ink-lilac: #b99aff;
+  --ink-sky: #6bc6ff;
+  --ink-mint: #5fd3a5;
+  --surface-raised: #1b1527;
+  --chrome: rgb(11 9 16 / 90%);
+  --btn-edge: rgb(0 0 0 / 55%);
+  --hover: rgb(255 255 255 / 6%);
+  --selected: rgb(255 255 255 / 8%);
+}
+html:not(.dark) body:has(.social) {
+  background-color: #f5f3fa;
+}
+html.dark body:has(.social) {
+  background-color: #0b0910;
 }
 
 /* ─── Opening screen (src/components/splash-screen.tsx) ─── */
@@ -381,58 +476,144 @@ html.splash-active body {
   }
 }
 /* On IlluminatEDSocial pages the splash uses the forum's black and purple. */
-body:has(.social) #splash {
-  background: #09080d;
+html.dark body:has(.social) #splash {
+  background: #0b0910;
 }
-body:has(.social) #splash .splash-dot {
+html.dark body:has(.social) #splash .splash-dot {
   background: rgb(255 255 255 / 12%);
 }
-body:has(.social) #splash .splash-dot.active {
+html.dark body:has(.social) #splash .splash-dot.active {
   background: #a67fff;
 }
-body:has(.social) #splash .splash-wordmark-light {
+html.dark body:has(.social) #splash .splash-wordmark-light {
   display: none;
 }
-body:has(.social) #splash .splash-wordmark-dark {
+html.dark body:has(.social) #splash .splash-wordmark-dark {
   display: block;
 }
 
-/* ─── IlluminatED City (games): purple on black, flat, no gradients ─── */
+/* ─── IlluminatED City (games): bright, flat, no gradients; follows light/dark ─── */
 .arcade {
-  color-scheme: dark;
-  --background: #09080d;
-  --foreground: #f4f0ff;
-  --card: #15111f;
-  --card-foreground: #f4f0ff;
-  --popover: #16121e;
-  --popover-foreground: #f4f0ff;
-  --primary: #a67fff;
-  --primary-foreground: #0b0910;
-  --secondary: #1f1830;
-  --secondary-foreground: #ece5ff;
-  --muted: #17131f;
-  --muted-foreground: #b3abc4;
-  --accent: #2a2040;
-  --accent-foreground: #e4d9ff;
-  --destructive: #ff7a6b;
-  --success: #5fd3a5;
-  --border: rgb(255 255 255 / 12%);
-  --input: rgb(255 255 255 / 18%);
-  --ring: #c6f36b;
+  color-scheme: light;
+  --background: #f5f3fa;
+  --foreground: #17121f;
+  --card: #ffffff;
+  --card-foreground: #17121f;
+  --popover: #ffffff;
+  --popover-foreground: #17121f;
+  --primary: #6d3fe0;
+  --primary-foreground: #ffffff;
+  --secondary: #ece7f8;
+  --secondary-foreground: #2c1d57;
+  --muted: #efecf5;
+  --muted-foreground: #645c76;
+  --accent: #e7defe;
+  --accent-foreground: #3b2380;
+  --destructive: #c8372a;
+  --destructive-foreground: #ffffff;
+  --success: #0f7a52;
+  --success-soft: #def5ea;
+  --danger-soft: #fde8e6;
+  --warm: #b26b00;
+  --warm-text: #8a5200;
+  --glow: #ece7f8;
+  --border: rgb(23 18 31 / 9%);
+  --input: rgb(23 18 31 / 16%);
+  --ring: #7c4dff;
+  --chart-1: #6d3fe0;
+  --chart-2: #d98a00;
+  --chart-3: #0f9a6a;
+  --chart-4: #1f8fd6;
+  --chart-5: #e0533f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17121f;
+  --sidebar-primary: #6d3fe0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ece7f8;
+  --sidebar-accent-foreground: #17121f;
+  --sidebar-border: rgb(23 18 31 / 9%);
+  --sidebar-ring: #7c4dff;
+  /* Accent inks: readable text versions of the bright game colours. */
+  --brand: #7c4dff;
+  --ink-lime: #3f7a00;
+  --ink-sun: #9a5b00;
+  --ink-coral: #c8372a;
+  --ink-lilac: #6d3fe0;
+  --ink-sky: #0b6fae;
+  --ink-mint: #0f7a52;
+  --surface-raised: #ffffff;
+  --chrome: rgb(255 255 255 / 88%);
+  --btn-edge: rgb(44 29 87 / 22%);
+  --hover: rgb(23 18 31 / 5%);
+  --selected: rgb(109 63 224 / 10%);
+  background-color: var(--background);
+  color: var(--foreground);
   --arcade-purple: #7c4dff;
   --arcade-lilac: #a67fff;
   --arcade-lime: #c6f36b;
   --arcade-sun: #ffd166;
   --arcade-coral: #ff7a6b;
   --arcade-mint: #5fd3a5;
-  background-color: var(--background);
-  color: var(--foreground);
 }
-body:has(.arcade) {
-  background-color: #09080d;
+.dark .arcade {
+  color-scheme: dark;
+  --background: #0b0910;
+  --foreground: #f4f0ff;
+  --card: #15111f;
+  --card-foreground: #f4f0ff;
+  --popover: #18131f;
+  --popover-foreground: #f4f0ff;
+  --primary: #a67fff;
+  --primary-foreground: #0b0910;
+  --secondary: #1f1830;
+  --secondary-foreground: #ece5ff;
+  --muted: #17131f;
+  --muted-foreground: #aaa2bd;
+  --accent: #261c3a;
+  --accent-foreground: #e4d9ff;
+  --destructive: #ff8f85;
+  --destructive-foreground: #0b0910;
+  --success: #5fd3a5;
+  --success-soft: #0f2e22;
+  --danger-soft: #36161a;
+  --warm: #ffd166;
+  --warm-text: #ffd166;
+  --glow: #1f1830;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: #c6f36b;
+  --chart-1: #a67fff;
+  --chart-2: #ffd166;
+  --chart-3: #5fd3a5;
+  --chart-4: #6bc6ff;
+  --chart-5: #ff7a6b;
+  --sidebar: #0b0910;
+  --sidebar-foreground: #f4f0ff;
+  --sidebar-primary: #a67fff;
+  --sidebar-primary-foreground: #0b0910;
+  --sidebar-accent: #1f1830;
+  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #c6f36b;
+  --brand: #7c4dff;
+  --ink-lime: #c6f36b;
+  --ink-sun: #ffd166;
+  --ink-coral: #ff8a7a;
+  --ink-lilac: #b99aff;
+  --ink-sky: #6bc6ff;
+  --ink-mint: #5fd3a5;
+  --surface-raised: #1b1527;
+  --chrome: rgb(11 9 16 / 90%);
+  --btn-edge: rgb(0 0 0 / 55%);
+  --hover: rgb(255 255 255 / 6%);
+  --selected: rgb(255 255 255 / 8%);
 }
-body:has(.arcade) #splash {
-  background: #09080d;
+html:not(.dark) body:has(.arcade) {
+  background-color: #f5f3fa;
+}
+html.dark body:has(.arcade),
+html.dark body:has(.arcade) #splash {
+  background-color: #0b0910;
 }
 .arcade-display {
   font-weight: 800;
@@ -441,12 +622,12 @@ body:has(.arcade) #splash {
 }
 /* Chunky "press me" buttons: flat colour with a solid offset edge, no gradients. */
 .arcade-btn {
-  box-shadow: 0 5px 0 0 rgb(0 0 0 / 55%);
+  box-shadow: 0 5px 0 0 var(--btn-edge, rgb(0 0 0 / 55%));
   transition: transform 80ms ease, box-shadow 80ms ease;
 }
 .arcade-btn:active:not(:disabled) {
   transform: translateY(4px);
-  box-shadow: 0 1px 0 0 rgb(0 0 0 / 55%);
+  box-shadow: 0 1px 0 0 var(--btn-edge, rgb(0 0 0 / 55%));
 }
 @keyframes arcade-pop {
   0% { transform: scale(0.6); opacity: 0; }
@@ -477,25 +658,82 @@ body:has(.arcade) #splash {
   .arcade-confetti { display: none; }
 }
 
-/* ─── The app (signed in): purple on black, flat, same as the iOS app ─── */
+/* ─── The app (signed in): purple accents, flat; light and dark follow the toggle ─── */
 .app-theme {
+  color-scheme: light;
+  --background: #f5f3fa;
+  --foreground: #17121f;
+  --card: #ffffff;
+  --card-foreground: #17121f;
+  --popover: #ffffff;
+  --popover-foreground: #17121f;
+  --primary: #6d3fe0;
+  --primary-foreground: #ffffff;
+  --secondary: #ece7f8;
+  --secondary-foreground: #2c1d57;
+  --muted: #efecf5;
+  --muted-foreground: #645c76;
+  --accent: #e7defe;
+  --accent-foreground: #3b2380;
+  --destructive: #c8372a;
+  --destructive-foreground: #ffffff;
+  --success: #0f7a52;
+  --success-soft: #def5ea;
+  --danger-soft: #fde8e6;
+  --warm: #b26b00;
+  --warm-text: #8a5200;
+  --glow: #ece7f8;
+  --border: rgb(23 18 31 / 9%);
+  --input: rgb(23 18 31 / 16%);
+  --ring: #7c4dff;
+  --chart-1: #6d3fe0;
+  --chart-2: #d98a00;
+  --chart-3: #0f9a6a;
+  --chart-4: #1f8fd6;
+  --chart-5: #e0533f;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #17121f;
+  --sidebar-primary: #6d3fe0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ece7f8;
+  --sidebar-accent-foreground: #17121f;
+  --sidebar-border: rgb(23 18 31 / 9%);
+  --sidebar-ring: #7c4dff;
+  /* Accent inks: readable text versions of the bright game colours. */
+  --brand: #7c4dff;
+  --ink-lime: #3f7a00;
+  --ink-sun: #9a5b00;
+  --ink-coral: #c8372a;
+  --ink-lilac: #6d3fe0;
+  --ink-sky: #0b6fae;
+  --ink-mint: #0f7a52;
+  --surface-raised: #ffffff;
+  --chrome: rgb(255 255 255 / 88%);
+  --btn-edge: rgb(44 29 87 / 22%);
+  --hover: rgb(23 18 31 / 5%);
+  --selected: rgb(109 63 224 / 10%);
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-tap-highlight-color: transparent;
+}
+.dark .app-theme {
   color-scheme: dark;
-  --background: #09080d;
+  --background: #0b0910;
   --foreground: #f4f0ff;
   --card: #15111f;
   --card-foreground: #f4f0ff;
-  --popover: #16121e;
+  --popover: #18131f;
   --popover-foreground: #f4f0ff;
   --primary: #a67fff;
   --primary-foreground: #0b0910;
   --secondary: #1f1830;
   --secondary-foreground: #ece5ff;
   --muted: #17131f;
-  --muted-foreground: #b3abc4;
-  --accent: #241b36;
+  --muted-foreground: #aaa2bd;
+  --accent: #261c3a;
   --accent-foreground: #e4d9ff;
   --destructive: #ff8f85;
-  --destructive-foreground: #09080d;
+  --destructive-foreground: #0b0910;
   --success: #5fd3a5;
   --success-soft: #0f2e22;
   --danger-soft: #36161a;
@@ -510,7 +748,7 @@ body:has(.arcade) #splash {
   --chart-3: #5fd3a5;
   --chart-4: #6bc6ff;
   --chart-5: #ff7a6b;
-  --sidebar: #09080d;
+  --sidebar: #0b0910;
   --sidebar-foreground: #f4f0ff;
   --sidebar-primary: #a67fff;
   --sidebar-primary-foreground: #0b0910;
@@ -518,11 +756,27 @@ body:has(.arcade) #splash {
   --sidebar-accent-foreground: #f4f0ff;
   --sidebar-border: rgb(255 255 255 / 10%);
   --sidebar-ring: #c6f36b;
-  -webkit-tap-highlight-color: transparent;
+  --brand: #7c4dff;
+  --ink-lime: #c6f36b;
+  --ink-sun: #ffd166;
+  --ink-coral: #ff8a7a;
+  --ink-lilac: #b99aff;
+  --ink-sky: #6bc6ff;
+  --ink-mint: #5fd3a5;
+  --surface-raised: #1b1527;
+  --chrome: rgb(11 9 16 / 90%);
+  --btn-edge: rgb(0 0 0 / 55%);
+  --hover: rgb(255 255 255 / 6%);
+  --selected: rgb(255 255 255 / 8%);
 }
 body:has(.app-theme) {
-  background-color: #09080d;
   overscroll-behavior-y: none;
+}
+html:not(.dark) body:has(.app-theme) {
+  background-color: #f5f3fa;
+}
+html.dark body:has(.app-theme) {
+  background-color: #0b0910;
 }
 /* Inside the app, the game and forum sections drop their own "back to the site" links. */
 .app-theme .site-only {
@@ -535,35 +789,42 @@ body:has(.app-theme) {
  * rules are unlayered, so they win over utilities without !important.) New
  * screens should use the tokens (bg-card, text-foreground, …) directly.
  */
-.app-theme :is(.bg-white, .bg-slate-50, .bg-blue-50, .bg-sky-50, .bg-amber-50, .bg-emerald-50, .bg-rose-50) {
+.app-theme :is(.bg-white, .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-slate-50, .bg-blue-50, .bg-sky-50, .bg-amber-50, .bg-emerald-50, .bg-rose-50) {
   background-color: var(--card);
 }
-.app-theme :is(.text-slate-900, .text-slate-950, .text-blue-950, .text-amber-950) {
+.app-theme :is(.text-slate-900, .text-slate-950, .text-blue-950, .text-amber-950, .text-blue-900) {
   color: var(--foreground);
 }
 .app-theme :is(.text-slate-500, .text-slate-600, .text-slate-700, .text-blue-100) {
   color: var(--muted-foreground);
 }
-.app-theme :is(.border-slate-200, .border-slate-300, .border-blue-100, .border-blue-200) {
+.app-theme :is(.border-white, .border-slate-200, .border-slate-300, .border-blue-100, .border-blue-200, .border-sky-200) {
   border-color: var(--border);
 }
 .app-theme :is(.bg-blue-500, .bg-blue-600, .bg-blue-700) {
-  background-color: #7c4dff;
+  background-color: var(--brand);
   color: #fff;
 }
 .app-theme :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-violet-800) {
-  color: #c49bff;
+  color: var(--ink-lilac);
 }
 .app-theme :is(.border-blue-600, .border-blue-700) {
-  border-color: #a67fff;
+  border-color: var(--primary);
 }
 .app-theme :is(.hover\:bg-slate-50, .hover\:bg-blue-500):hover {
-  background-color: rgb(255 255 255 / 6%);
+  background-color: var(--hover);
 }
 /* Flat colours only in the app. */
+/* Flat colours only in the app: soft gradient panels become a soft flat panel, and
+   strong ones (which carry white text) become flat brand purple. */
 .app-theme :not(.arcade *)[class*="bg-gradient-to-"] {
   background-image: none;
   background-color: var(--secondary);
+  border-color: var(--border);
+}
+.app-theme :not(.arcade *)[class*="bg-gradient-to-"]:is([class*="from-blue-7"], [class*="from-indigo"], [class*="from-[#073aaf]"]) {
+  background-color: var(--brand);
+  border-color: transparent;
 }
 
 /* World sprites: a little bounce while walking. */
@@ -574,4 +835,11 @@ body:has(.app-theme) {
 .sprite-walk { animation: sprite-walk 0.32s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .sprite-walk { animation: none; }
+}
+
+/* The Winter Arc banner inside the app: brand purple instead of the website's blue. */
+.app-theme .bg-\[\#0b51ce\] {
+  background-color: var(--brand);
+  border-color: transparent;
+  box-shadow: 0 8px 0 #3b1fa3;
 }

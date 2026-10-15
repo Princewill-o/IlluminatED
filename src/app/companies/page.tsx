@@ -34,7 +34,7 @@ export default async function CompaniesPage() {
                 {o.name.slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0">
-                <span className="block truncate font-extrabold">{o.name} <span className="text-[#6bc6ff]">✓</span></span>
+                <span className="block truncate font-extrabold">{o.name} <span className="text-ink-sky">✓</span></span>
                 <span className="text-muted-foreground block text-sm">{sectorLabel(o.sector)}</span>
               </span>
             </Link>

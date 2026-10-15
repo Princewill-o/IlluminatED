@@ -168,7 +168,7 @@ export function ThreadView({
       {mode === "e2ee" && (
         <p className="text-muted-foreground px-1 pb-2 text-xs">
           🔒 End-to-end encrypted{code && <> · security code <span className="font-mono">{code}</span></>}
-          {keyError && <span className="ml-1 text-[#ffd166]">{keyError}</span>}
+          {keyError && <span className="ml-1 text-ink-sun">{keyError}</span>}
         </p>
       )}
       <div className="bg-card flex-1 space-y-2 overflow-y-auto rounded-3xl border p-3">
@@ -178,7 +178,7 @@ export function ThreadView({
             <div
               className={cn(
                 "group max-w-[80%] rounded-3xl px-4 py-2.5 text-[15px] leading-6",
-                m.mine ? "rounded-br-md bg-[#7c4dff] text-white" : "rounded-bl-md bg-[#1f1830]",
+                m.mine ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-secondary",
               )}
             >
               {m.unreadable ? <em className="text-white/60">🔒 Encrypted on another device</em> : <span className="whitespace-pre-wrap">{m.text}</span>}
@@ -195,7 +195,7 @@ export function ThreadView({
         ))}
         <div ref={endRef} />
       </div>
-      {error && <p className="mt-2 text-sm font-semibold text-[#ffd166]" role="alert">{error}</p>}
+      {error && <p className="mt-2 text-sm font-semibold text-ink-sun" role="alert">{error}</p>}
       <form onSubmit={send} className="mt-2 flex gap-2">
         <label htmlFor="msg" className="sr-only">
           Message
@@ -229,7 +229,7 @@ export function ThreadView({
             )}
             <div className="mt-3 grid gap-2">
               {REASONS.map(([id, label]) => (
-                <button key={id} type="button" onClick={() => void report(id)} className="rounded-2xl bg-white/5 px-4 py-3 text-left text-sm font-bold hover:bg-white/10">
+                <button key={id} type="button" onClick={() => void report(id)} className="rounded-2xl bg-foreground/[0.05] px-4 py-3 text-left text-sm font-bold hover:bg-hover">
                   {label}
                 </button>
               ))}

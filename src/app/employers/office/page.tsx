@@ -51,7 +51,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
           <Link href={`/games/world?map=office-${m.org.slug}`} className="rounded-full bg-[#c6f36b] px-4 py-2.5 text-sm font-black text-[#0b0910]">
             🚶 Walk into your office
           </Link>
-          <Link href="/messages" className="rounded-full bg-[#7c4dff] px-4 py-2.5 text-sm font-black text-white">
+          <Link href="/messages" className="rounded-full bg-brand px-4 py-2.5 text-sm font-black text-white">
             💬 Messages
           </Link>
         </div>
@@ -77,7 +77,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
           you first (and under-18s need a parent or carer&apos;s approval).
         </p>
         <SlotForm />
-        <ul className="mt-5 divide-y divide-white/5">
+        <ul className="mt-5 divide-y divide-border">
           {mine.length === 0 && <li className="text-muted-foreground py-2 text-sm">No upcoming office hours yet.</li>}
           {mine.map((s) => (
             <li key={s.id} className="flex items-center gap-3 py-2.5 text-sm">
@@ -98,7 +98,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
         <AdviceForm />
         <ul className="mt-5 space-y-3">
           {advice.map((a) => (
-            <li key={a.id} className="rounded-2xl bg-white/5 p-4">
+            <li key={a.id} className="rounded-2xl bg-foreground/[0.05] p-4">
               <p className="font-bold">{a.title}</p>
               <p className="text-muted-foreground mt-1 text-sm whitespace-pre-line">{a.body}</p>
               <div className="mt-2 flex items-center justify-between text-xs">
@@ -123,12 +123,12 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
           </Link>
           .
         </p>
-        <ul className="divide-y divide-white/5">
+        <ul className="divide-y divide-border">
           {team.map((t) => (
             <li key={t.userId} className="flex items-center gap-3 py-2.5 text-sm">
               <span className="flex-1">
                 <strong>@{t.username}</strong> {t.title && <span className="text-muted-foreground">· {t.title}</span>}
-                {t.role === "owner" && <span className="ml-2 rounded-full bg-white/10 px-2 py-0.5 text-xs">Owner</span>}
+                {t.role === "owner" && <span className="ml-2 rounded-full bg-foreground/[0.08] px-2 py-0.5 text-xs">Owner</span>}
               </span>
               {m.role === "owner" && t.userId !== viewer.id && (
                 <form action={removeMember}>

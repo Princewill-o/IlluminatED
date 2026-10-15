@@ -10,7 +10,7 @@ const ACCENTS = ["#6bc6ff", "#ffd166", "#ff8fd1", "#5fd3a5", "#c6f36b", "#ffb26b
 function Status({ s }: { s: EmployerState }) {
   if (!s) return null;
   return (
-    <p role="status" className={`mt-3 text-sm font-semibold ${s.error ? "text-destructive" : "text-[#5fd3a5]"}`}>
+    <p role="status" className={`mt-3 text-sm font-semibold ${s.error ? "text-destructive" : "text-ink-mint"}`}>
       {s.error ?? s.ok}
     </p>
   );

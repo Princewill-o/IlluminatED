@@ -63,7 +63,7 @@ export default async function SocialHome({
             { icon: "💬", title: "Ask the community", body: "Share questions and read student experiences in moderated threads." },
             { icon: "📚", title: "Revise together", body: "Use the same account for quizzes, study resources and your dashboard." },
             { icon: "🧭", title: "Plan ahead", body: "Explore sixth form, university and apprenticeship conversations." },
-            { icon: "🎮", title: "Games coming soon", body: "More playful ways to practise are on the way." },
+            { icon: "🎮", title: "Revise by playing", body: "Promotion Panic and IlluminatED City: real questions, made fun." },
           ].map((feature) => <article key={feature.title} className="rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
             <span className="text-3xl" aria-hidden>{feature.icon}</span>
             <h3 className="mt-3 font-bold">{feature.title}</h3>

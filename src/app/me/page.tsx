@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 
+import { AppearanceSwitch } from "@/components/app/appearance-switch";
 import { SignOutButton } from "@/components/app/sign-out-button";
 import { AvatarFigure } from "@/components/game/avatar";
 import { levelProgress, levelTitle } from "@/game/core/progression";
@@ -36,12 +37,12 @@ function Group({ title, rows }: { title: string; rows: Row[] }) {
   return (
     <section className="mt-6">
       <h2 className="text-muted-foreground px-1 text-xs font-bold tracking-widest uppercase">{title}</h2>
-      <ul className="bg-card mt-2 divide-y divide-white/5 overflow-hidden rounded-3xl border">
+      <ul className="bg-card mt-2 divide-y divide-border overflow-hidden rounded-3xl border">
         {rows.map((r) => {
           const Icon = r.icon;
           return (
             <li key={r.href}>
-              <Link href={r.href} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-white/5 active:bg-white/10">
+              <Link href={r.href} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-hover active:bg-foreground/[0.08]">
                 <Icon className="text-primary size-5 shrink-0" aria-hidden />
                 <span className="font-semibold">{r.label}</span>
                 {r.note && <span className="text-muted-foreground ml-auto text-sm">{r.note}</span>}
@@ -63,7 +64,7 @@ export default async function MePage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 pt-5 pb-8 md:pt-10">
-      <section className="overflow-hidden rounded-3xl bg-[#7c4dff] text-white">
+      <section className="overflow-hidden rounded-3xl bg-brand text-white">
         <div className="flex items-end gap-4 px-5 pt-5">
           <AvatarFigure avatar={player.avatar} size={150} showPet={false} className="-mb-1 shrink-0" />
           <div className="min-w-0 pb-5">
@@ -86,17 +87,17 @@ export default async function MePage() {
             </div>
           </div>
         </div>
-        <dl className="grid grid-cols-3 bg-[#0b0910] text-center">
+        <dl className="grid grid-cols-3 bg-card text-center text-foreground">
           {[
-            ["Clout", player.clout.toLocaleString("en-GB"), "#ffd166"],
-            ["Day streak", String(player.streak), "#ff7a6b"],
-            ["Shifts", String(player.shiftsPlayed), "#c6f36b"],
+            ["Clout", player.clout.toLocaleString("en-GB"), "var(--ink-sun)"],
+            ["Day streak", String(player.streak), "var(--ink-coral)"],
+            ["Shifts", String(player.shiftsPlayed), "var(--ink-lime)"],
           ].map(([k, v, c]) => (
             <div key={k} className="py-3">
               <dd className="text-xl font-black" style={{ color: c }}>
                 {v}
               </dd>
-              <dt className="text-xs text-[#b3abc4]">{k}</dt>
+              <dt className="text-xs text-muted-foreground">{k}</dt>
             </div>
           ))}
         </dl>
@@ -137,6 +138,10 @@ export default async function MePage() {
           ...(admin ? [{ href: "/admin", label: "Admin", icon: Shield }] : []),
         ]}
       />
+      <section className="mt-6">
+        <h2 className="text-muted-foreground px-1 text-xs font-bold tracking-widest uppercase">Appearance</h2>
+        <AppearanceSwitch className="mt-2" />
+      </section>
       <Group
         title="Help"
         rows={[

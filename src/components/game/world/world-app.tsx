@@ -141,9 +141,9 @@ export function WorldApp({
     const best = pickServer(region, counts);
     return (
       <div className="mx-auto max-w-3xl px-4 pt-5 pb-10 md:pt-10">
-        <p className="text-xs font-black tracking-[0.3em] text-[#a67fff] uppercase">Worlds</p>
+        <p className="text-xs font-black tracking-[0.3em] text-ink-lilac uppercase">Worlds</p>
         <h1 className="arcade-display mt-2 text-4xl md:text-5xl">Join a server</h1>
-        <p className="mt-2 text-[#b3abc4]">
+        <p className="mt-2 text-muted-foreground">
           Walk around {map.name} with other learners, step into companies and meet verified employers. Servers are grouped by
           region so you meet people near you, and they all run in London for a fast connection across the UK.
         </p>
@@ -160,7 +160,7 @@ export function WorldApp({
               onClick={() => setMapId(m.id)}
               className={cn(
                 "rounded-full px-4 py-2 text-sm font-extrabold",
-                mapId === m.id ? "bg-[#f4f0ff] text-[#0b0910]" : "bg-[#1f1830]",
+                mapId === m.id ? "bg-foreground text-background" : "bg-secondary",
               )}
             >
               {m.name}
@@ -175,7 +175,7 @@ export function WorldApp({
           id="region"
           value={region}
           onChange={(e) => chooseRegion(e.target.value as RegionId)}
-          className="mt-2 w-full rounded-2xl border border-white/15 bg-[#15111f] px-4 py-3 font-bold sm:w-80"
+          className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 font-bold sm:w-80"
         >
           {REGIONS.map((r) => (
             <option key={r.id} value={r.id}>
@@ -193,7 +193,7 @@ export function WorldApp({
         </button>
 
         <h2 className="mt-8 text-lg font-extrabold">All servers</h2>
-        {!lobby.ready && <p className="mt-2 text-sm text-[#b3abc4]">Checking who&apos;s online…</p>}
+        {!lobby.ready && <p className="mt-2 text-sm text-muted-foreground">Checking who&apos;s online…</p>}
         <ul className="mt-3 grid gap-2 sm:grid-cols-2">
           {SERVERS.filter((s) => s.region === region)
             .concat(SERVERS.filter((s) => s.region !== region))
@@ -207,13 +207,13 @@ export function WorldApp({
                     disabled={full}
                     onClick={() => setServer(s.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-2xl border bg-[#15111f] px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-40",
-                      s.region === region ? "border-[#a67fff]/50" : "border-white/10",
+                      "flex w-full items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-40",
+                      s.region === region ? "border-primary/50" : "border-border",
                     )}
                   >
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-bold">{s.name}</span>
-                      <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-foreground/[0.08]">
                         <span className="block h-full bg-[#5fd3a5]" style={{ width: `${(n / SERVER_CAPACITY) * 100}%` }} />
                       </span>
                     </span>
@@ -249,7 +249,7 @@ export function WorldApp({
         )}
       />
       {room && (
-        <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-[#7c4dff] px-4 py-2 text-sm font-black" role="status">
+        <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
           🚪 {room}
           {officeSlug && (
             <Link href={`/messages?org=${officeSlug}`} className="pointer-events-auto ml-2 underline">
@@ -261,21 +261,21 @@ export function WorldApp({
       {desk && officeSlug && (
         <div className="absolute inset-0 grid place-items-end bg-black/60 md:place-items-center" onClick={() => setDesk(false)}>
           <div
-            className="w-full max-w-md rounded-t-3xl border border-white/10 bg-[#15111f] p-5 md:rounded-3xl"
+            className="w-full max-w-md rounded-t-3xl border border-border bg-card p-5 md:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Advice Desk"
           >
-            <p className="text-xs font-black tracking-[0.25em] text-[#a67fff] uppercase">Advice Desk</p>
+            <p className="text-xs font-black tracking-[0.25em] text-ink-lilac uppercase">Advice Desk</p>
             <h2 className="mt-1 text-2xl font-black">{map.name}</h2>
-            <p className="mt-1 text-sm text-[#b3abc4]">Verified people from this company who give advice to learners.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Verified people from this company who give advice to learners.</p>
             <ul className="mt-4 space-y-2">
-              {officeStaff.length === 0 && <li className="text-sm text-[#b3abc4]">No advisers listed yet.</li>}
+              {officeStaff.length === 0 && <li className="text-sm text-muted-foreground">No advisers listed yet.</li>}
               {officeStaff.map((s) => (
-                <li key={s.userId} className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2.5">
+                <li key={s.userId} className="flex items-center gap-3 rounded-2xl bg-foreground/[0.05] px-3 py-2.5">
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-bold">@{s.username}</span>
-                    {s.title && <span className="block truncate text-xs text-[#b3abc4]">{s.title}</span>}
+                    {s.title && <span className="block truncate text-xs text-muted-foreground">{s.title}</span>}
                   </span>
                   {s.userId !== me.id && (
                     <Link href={`/messages/new?to=${s.userId}`} className="rounded-full bg-[#c6f36b] px-3 py-1.5 text-xs font-black text-[#0b0910]">
@@ -286,10 +286,10 @@ export function WorldApp({
               ))}
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link href={`/companies/${officeSlug}`} className="rounded-full bg-[#7c4dff] py-2.5 text-center text-sm font-black">
+              <Link href={`/companies/${officeSlug}`} className="rounded-full bg-brand py-2.5 text-center text-sm font-black">
                 Company profile
               </Link>
-              <Link href={`/companies/${officeSlug}#office-hours`} className="rounded-full bg-[#1f1830] py-2.5 text-center text-sm font-black">
+              <Link href={`/companies/${officeSlug}#office-hours`} className="rounded-full bg-secondary py-2.5 text-center text-sm font-black">
                 Book office hours
               </Link>
             </div>

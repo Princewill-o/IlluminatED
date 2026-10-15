@@ -182,15 +182,15 @@ export default async function DashboardPage() {
       <section className="container pb-8" aria-label="IlluminatED City games">
         <Link
           href="/games"
-          className="group grid items-center gap-5 overflow-hidden rounded-3xl bg-[#09080d] p-6 text-[#f4f0ff] sm:grid-cols-[auto_1fr_auto] md:p-8"
+          className="group grid items-center gap-5 overflow-hidden rounded-3xl bg-card p-6 text-foreground ring-1 ring-border sm:grid-cols-[auto_1fr_auto] md:p-8"
         >
-          <span className="hidden rounded-2xl bg-[#7c4dff] px-3 pt-3 sm:block">
+          <span className="hidden rounded-2xl bg-brand px-3 pt-3 sm:block">
             <AvatarFigure avatar={player.avatar} size={110} showPet={false} />
           </span>
           <span>
-            <span className="block text-xs font-black uppercase tracking-[0.25em] text-[#a67fff]">New · IlluminatED City</span>
+            <span className="block text-xs font-black uppercase tracking-[0.25em] text-ink-lilac">New · IlluminatED City</span>
             <span className="mt-2 block text-2xl font-extrabold md:text-3xl">Promotion Panic: intern to CEO in one shift</span>
-            <span className="mt-2 block text-sm leading-6 text-[#b3abc4]">
+            <span className="mt-2 block text-sm leading-6 text-muted-foreground">
               Revise your subjects at Barklays, Goggle, Tescow and more. Earn Clout, unlock outfits, challenge your mates.
               {player.ready && player.shiftsPlayed > 0 ? ` You're level ${player.level} with ${player.clout.toLocaleString("en-GB")} Clout.` : ""}
             </span>

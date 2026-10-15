@@ -34,7 +34,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
         </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate font-extrabold">@{them}</p>
-          <p className="truncate text-xs text-[#6bc6ff]">
+          <p className="truncate text-xs text-ink-sky">
             {iAmLearner ? `✓ Verified · ${t.org.name}` : `Learner · asking ${t.org.name}`}
           </p>
         </div>
@@ -50,7 +50,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
       {meetings.map((m) => {
         const live = new Date(m.startsAt).getTime() - 10 * 60_000 < now && new Date(m.endsAt).getTime() > now;
         return (
-          <div key={m.id} className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl bg-[#7c4dff] p-3 text-sm text-white">
+          <div key={m.id} className="mb-2 flex flex-wrap items-center gap-2 rounded-2xl bg-brand p-3 text-sm text-white">
             <span className="flex-1 font-bold">
               📅 {when(m.startsAt)} · {m.room}
             </span>
@@ -71,7 +71,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
       })}
 
       {t.mode === "moderated" && (
-        <p className="mb-2 rounded-2xl bg-white/5 p-3 text-xs leading-5">
+        <p className="mb-2 rounded-2xl bg-foreground/[0.05] p-3 text-xs leading-5">
           🛡️ <strong>Safeguarded chat.</strong>{" "}
           {t.guardian === "pending"
             ? "We've emailed a parent or carer to approve this conversation. You can chat once they say yes."
@@ -80,7 +80,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
               : "A parent or carer approved this conversation. Messages are checked for safety and our moderators can see them. Never share contact details or agree to meet somewhere else."}
         </p>
       )}
-      {t.closed && <p className="mb-2 rounded-2xl bg-white/5 p-3 text-xs">This conversation was ended. {iAmLearner && "Message them again from their company page to reopen it."}</p>}
+      {t.closed && <p className="mb-2 rounded-2xl bg-foreground/[0.05] p-3 text-xs">This conversation was ended. {iAmLearner && "Message them again from their company page to reopen it."}</p>}
 
       <ThreadView threadId={t.id} meId={account.id} themId={themId} mode={t.mode} usable={usable} />
     </div>

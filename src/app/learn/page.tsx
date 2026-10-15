@@ -69,7 +69,7 @@ export default async function LearnPage() {
           <li className="snap-start">
             <Link
               href="/courses"
-              className="flex h-28 w-40 flex-col items-center justify-center rounded-3xl border border-dashed border-white/20 p-4 text-center text-sm font-bold text-[#b3abc4]"
+              className="flex h-28 w-40 flex-col items-center justify-center rounded-3xl border border-dashed border-border p-4 text-center text-sm font-bold text-muted-foreground"
             >
               + Browse all courses
             </Link>
@@ -79,7 +79,7 @@ export default async function LearnPage() {
 
       <Link
         href="/games"
-        className="mt-6 flex items-center gap-4 rounded-3xl bg-[#7c4dff] p-5 text-white transition active:scale-[0.98]"
+        className="mt-6 flex items-center gap-4 rounded-3xl bg-brand p-5 text-white transition active:scale-[0.98]"
       >
         <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#0b0910] text-3xl" aria-hidden>
           🎮

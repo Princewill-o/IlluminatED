@@ -22,7 +22,7 @@ export default async function NewMessagePage({ searchParams }: { searchParams: P
       {staff ? (
         <>
           <div className="bg-card mt-4 rounded-3xl border p-4">
-            <p className="text-xs font-black tracking-[0.2em] text-[#6bc6ff] uppercase">✓ Verified · {staff.org.name}</p>
+            <p className="text-xs font-black tracking-[0.2em] text-ink-sky uppercase">✓ Verified · {staff.org.name}</p>
             <p className="mt-1 font-bold">{staff.title ?? "Team member"}</p>
             <Link href={`/companies/${staff.org.slug}`} className="text-primary mt-1 inline-block text-sm font-bold">
               Company page →

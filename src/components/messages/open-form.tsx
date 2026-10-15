@@ -10,13 +10,13 @@ export function OpenForm({ to, adult }: { to: string; adult: boolean }) {
     <form action={action} className="space-y-4">
       <input type="hidden" name="to" value={to} />
       {adult ? (
-        <p className="rounded-2xl bg-white/5 p-4 text-sm leading-6">
+        <p className="rounded-2xl bg-foreground/[0.05] p-4 text-sm leading-6">
           🔒 Your conversation will be <strong>end-to-end encrypted</strong>. Only you and they can read it, not even IlluminatED.
           You can still report a message (that one message is shared with our safety team).
         </p>
       ) : (
         <>
-          <p className="rounded-2xl bg-white/5 p-4 text-sm leading-6">
+          <p className="rounded-2xl bg-foreground/[0.05] p-4 text-sm leading-6">
             🛡️ Because you&apos;re under 18, a <strong>parent or carer must approve</strong> this conversation first. We&apos;ll email
             them. Messages are checked for safety, our moderators can see them, and nobody can share phone numbers, emails or
             social media.

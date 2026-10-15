@@ -360,11 +360,11 @@ export function PromotionPanic(props: Props) {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-4 pb-16">
       {/* Status bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#15111f] px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3">
         <div className="flex items-center gap-3">
           <CompanyLogo id={company.id} size={40} className="shrink-0" />
           <div>
-            <p className="text-xs font-bold tracking-widest text-[#b3abc4] uppercase">
+            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
               {company.name}
             </p>
             <p className="text-sm font-bold">
@@ -383,7 +383,7 @@ export function PromotionPanic(props: Props) {
                 "grid size-8 place-items-center rounded-lg border-2 text-sm font-black",
                 i < state.strikes
                   ? "border-[#ff7a6b] bg-[#ff7a6b] text-[#0b0910]"
-                  : "border-white/15 text-white/30",
+                  : "border-border text-foreground/30",
               )}
             >
               ✕
@@ -391,26 +391,26 @@ export function PromotionPanic(props: Props) {
           ))}
         </div>
         <div className="text-right">
-          <p className="text-xs font-bold tracking-widest text-[#b3abc4] uppercase">
+          <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
             Score
           </p>
-          <p className="arcade-display text-2xl text-[#c6f36b] tabular-nums">
+          <p className="arcade-display text-2xl text-ink-lime tabular-nums">
             {fmt(state.score)}
           </p>
         </div>
       </div>
 
       {/* Promotion ladder */}
-      <div className="mt-3 rounded-2xl border border-white/10 bg-[#15111f] p-3">
+      <div className="mt-3 rounded-2xl border border-border bg-card p-3">
         <div className="flex items-baseline justify-between gap-2 text-sm">
           <p>
-            <span className="text-[#b3abc4]">You are: </span>
-            <strong className="text-[#ffd166]">
+            <span className="text-muted-foreground">You are: </span>
+            <strong className="text-ink-sun">
               {RANKS[state.rank].title}
             </strong>
           </p>
           {nextRank && (
-            <p className="text-xs text-[#b3abc4]">
+            <p className="text-xs text-muted-foreground">
               Next: {nextRank.title} at {fmt(nextRank.min)}
             </p>
           )}
@@ -425,7 +425,7 @@ export function PromotionPanic(props: Props) {
             return (
               <div
                 key={rank.title}
-                className="h-3 overflow-hidden rounded-full bg-white/10"
+                className="h-3 overflow-hidden rounded-full bg-foreground/[0.08]"
               >
                 <div
                   className="h-full bg-[#ffd166] transition-[width] duration-500"
@@ -454,7 +454,7 @@ export function PromotionPanic(props: Props) {
             />
           </div>
           <div
-            className="relative flex flex-1 items-start gap-2 self-stretch rounded-2xl rounded-bl-none border border-white/10 bg-[#1f1830] p-3 text-sm leading-5 md:w-full md:flex-none md:self-auto md:rounded-tl-none md:rounded-bl-2xl"
+            className="relative flex flex-1 items-start gap-2 self-stretch rounded-2xl rounded-bl-none border border-border bg-secondary p-3 text-sm leading-5 md:w-full md:flex-none md:self-auto md:rounded-tl-none md:rounded-bl-2xl"
             aria-live="polite"
           >
             <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-full" style={{ background: company.accent }}>
@@ -468,7 +468,7 @@ export function PromotionPanic(props: Props) {
               />
             </span>
             <span>
-              <span className="block text-xs font-bold text-[#b3abc4]">{company.boss.name}</span>
+              <span className="block text-xs font-bold text-muted-foreground">{company.boss.name}</span>
               {line}
             </span>
           </div>
@@ -483,7 +483,7 @@ export function PromotionPanic(props: Props) {
           {/* Timer */}
           <div className="flex items-center gap-3">
             <div
-              className="h-4 flex-1 overflow-hidden rounded-full bg-white/10"
+              className="h-4 flex-1 overflow-hidden rounded-full bg-foreground/[0.08]"
               role="progressbar"
               aria-label="Time left"
               aria-valuemin={0}
@@ -501,15 +501,15 @@ export function PromotionPanic(props: Props) {
             <span
               className={cn(
                 "w-10 text-right font-black tabular-nums",
-                left <= 5 && "text-[#ff7a6b]",
+                left <= 5 && "text-ink-coral",
               )}
             >
               {feedback ? "–" : Math.ceil(left)}s
             </span>
           </div>
 
-          <div className="mt-3 rounded-3xl border border-white/10 bg-[#15111f] p-5">
-            <p className="text-xs font-bold tracking-widest text-[#a67fff] uppercase">
+          <div className="mt-3 rounded-3xl border border-border bg-card p-5">
+            <p className="text-xs font-bold tracking-widest text-ink-lilac uppercase">
               {q.topic}
             </p>
             <h2 className="mt-2 text-xl leading-snug font-bold md:text-2xl">
@@ -535,9 +535,9 @@ export function PromotionPanic(props: Props) {
                       "arcade-btn flex min-h-14 items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left font-bold",
                       !feedback &&
                         !hidden &&
-                        "border-transparent bg-[#7c4dff] text-white hover:bg-[#8d63ff]",
+                        "border-transparent bg-brand text-white hover:bg-[#8d63ff]",
                       hidden &&
-                        "border-dashed border-white/15 bg-transparent text-white/25 line-through shadow-none",
+                        "border-dashed border-border bg-transparent text-foreground/30 line-through shadow-none",
                       feedback &&
                         isAnswer &&
                         "border-[#5fd3a5] bg-[#5fd3a5] text-[#0b0910]",
@@ -548,7 +548,7 @@ export function PromotionPanic(props: Props) {
                       feedback &&
                         !isAnswer &&
                         !chosen &&
-                        "border-white/10 bg-[#1f1830] text-white/50 shadow-none",
+                        "border-border bg-secondary text-foreground/50 shadow-none",
                     )}
                   >
                     <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-black/25 text-sm">
@@ -566,17 +566,17 @@ export function PromotionPanic(props: Props) {
 
             {feedback && (
               <div
-                className="arcade-pop mt-5 rounded-2xl border border-white/10 bg-[#1f1830] p-4"
+                className="arcade-pop mt-5 rounded-2xl border border-border bg-secondary p-4"
                 role="status"
               >
                 <p
                   className={cn(
                     "text-lg font-black",
                     r.correct
-                      ? "text-[#5fd3a5]"
+                      ? "text-ink-mint"
                       : r.skipped
-                        ? "text-[#ffd166]"
-                        : "text-[#ff7a6b]",
+                        ? "text-ink-sun"
+                        : "text-ink-coral",
                   )}
                 >
                   {r.correct
@@ -590,14 +590,14 @@ export function PromotionPanic(props: Props) {
                 {!r.correct && !r.skipped && (
                   <p className="mt-1 text-sm">
                     The answer was{" "}
-                    <strong className="text-[#5fd3a5]">
+                    <strong className="text-ink-mint">
                       {q.options[q.answer]}
                     </strong>
                     .
                   </p>
                 )}
                 {!r.skipped && (
-                  <p className="mt-2 text-sm leading-6 text-[#d8d4e0]">
+                  <p className="mt-2 text-sm leading-6 text-foreground/80">
                     {q.explain}
                   </p>
                 )}
@@ -626,7 +626,7 @@ export function PromotionPanic(props: Props) {
                 disabled={!state.powerUps[p] || state.phase !== "question"}
                 onClick={() => power(p)}
                 title={POWER_UPS[p].help}
-                className="arcade-btn flex items-center gap-2 rounded-full border border-white/15 bg-[#1f1830] px-4 py-2 text-sm font-bold disabled:opacity-35 disabled:shadow-none"
+                className="arcade-btn flex items-center gap-2 rounded-full border border-border bg-secondary px-4 py-2 text-sm font-bold disabled:opacity-35 disabled:shadow-none"
               >
                 <span aria-hidden>{POWER_UPS[p].emoji}</span>
                 {POWER_UPS[p].name}
@@ -637,7 +637,7 @@ export function PromotionPanic(props: Props) {
               </button>
             ))}
           </div>
-          <p className="mt-3 text-xs text-[#b3abc4]">
+          <p className="mt-3 text-xs text-muted-foreground">
             Tip: press 1–4 to answer and Enter to continue.
           </p>
         </div>
@@ -684,14 +684,14 @@ function PromotionSplash({
           }}
         />
       ))}
-      <div className="arcade-pop max-w-md rounded-3xl border-4 border-[#ffd166] bg-[#15111f] p-8 text-center">
-        <p className="text-sm font-black tracking-[0.3em] text-[#ffd166] uppercase">
+      <div className="arcade-pop max-w-md rounded-3xl border-4 border-[#ffd166] bg-card p-8 text-center">
+        <p className="text-sm font-black tracking-[0.3em] text-ink-sun uppercase">
           Promoted!
         </p>
-        <p className="arcade-display mt-3 text-4xl text-white">{p.title}</p>
-        <p className="mt-4 text-[#d8d4e0]">New perk: {p.perk}</p>
+        <p className="arcade-display mt-3 text-4xl text-foreground">{p.title}</p>
+        <p className="mt-4 text-foreground/80">New perk: {p.perk}</p>
         {rank === CEO_RANK && (
-          <p className="mt-3 font-bold text-[#c6f36b]">
+          <p className="mt-3 font-bold text-ink-lime">
             You made CEO! Something special waits in your Locker…
           </p>
         )}
@@ -721,27 +721,27 @@ function Intro({
 }) {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-16">
-      <div className="grid items-center gap-6 rounded-3xl border border-white/10 bg-[#15111f] p-6 md:grid-cols-[1fr_auto] md:p-10">
+      <div className="grid items-center gap-6 rounded-3xl border border-border bg-card p-6 md:grid-cols-[1fr_auto] md:p-10">
         <div>
-          <p className="text-xs font-black tracking-[0.25em] text-[#a67fff] uppercase">
+          <p className="text-xs font-black tracking-[0.25em] text-ink-lilac uppercase">
             Promotion Panic · {company.sector}
           </p>
           <h1 className="arcade-display mt-3 flex items-center gap-4 text-4xl md:text-6xl">
             <CompanyLogo id={company.id} size={56} className="shrink-0" />
             {company.name}
           </h1>
-          <p className="mt-3 text-lg text-[#d8d4e0] italic">
+          <p className="mt-3 text-lg text-foreground/80 italic">
             “{company.tagline}”
           </p>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-[#1f1830] p-4">
-            <p className="text-xs font-bold tracking-widest text-[#b3abc4] uppercase">
+          <div className="mt-6 rounded-2xl border border-border bg-secondary p-4">
+            <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
               📧 New email · from {company.boss.name}, {company.boss.title}
             </p>
             <p className="mt-2 leading-7">
               Welcome, intern. Today you&apos;ll handle{" "}
               <strong>12 tasks</strong> on <strong>{company.revises}</strong>.
               Answer fast to climb from Intern to{" "}
-              <strong className="text-[#ffd166]">CEO</strong>. Three strikes and
+              <strong className="text-ink-sun">CEO</strong>. Three strikes and
               security walks you out. No pressure. (Lots of pressure.)
             </p>
           </div>
@@ -750,17 +750,17 @@ function Intro({
               ⚔️ Challenge:{" "}
               {challenge.username ? `@${challenge.username}` : "A player"}{" "}
               reached {RANKS[challenge.rank].title} with{" "}
-              <span className="text-[#c6f36b]">{fmt(challenge.score)}</span>.
+              <span className="text-ink-lime">{fmt(challenge.score)}</span>.
               Same tasks, same order. Beat it.
             </p>
           )}
-          <ul className="mt-5 grid gap-2 text-sm text-[#d8d4e0] sm:grid-cols-3">
+          <ul className="mt-5 grid gap-2 text-sm text-foreground/80 sm:grid-cols-3">
             {(Object.keys(POWER_UPS) as PowerUp[]).map((p) => (
-              <li key={p} className="rounded-xl bg-white/5 px-3 py-2">
+              <li key={p} className="rounded-xl bg-foreground/[0.05] px-3 py-2">
                 <span aria-hidden>{POWER_UPS[p].emoji}</span>{" "}
                 <strong>{POWER_UPS[p].name}</strong>
                 <br />
-                <span className="text-xs text-[#b3abc4]">
+                <span className="text-xs text-muted-foreground">
                   {POWER_UPS[p].help}
                 </span>
               </li>
@@ -778,7 +778,7 @@ function Intro({
               type="button"
               onClick={() => onSound(!sound)}
               aria-pressed={sound}
-              className="rounded-full border border-white/15 px-4 py-2 text-sm font-bold"
+              className="rounded-full border border-border px-4 py-2 text-sm font-bold"
             >
               {sound ? "🔊 Sound on" : "🔇 Sound off"}
             </button>
@@ -789,7 +789,7 @@ function Intro({
             )}
           </div>
           {previousBest > 0 && (
-            <p className="mt-4 text-sm text-[#b3abc4]">
+            <p className="mt-4 text-sm text-muted-foreground">
               Your best here: {fmt(previousBest)}
             </p>
           )}
@@ -802,11 +802,11 @@ function Intro({
           />
           <figure className="relative text-center">
             <AvatarFigure avatar={look(company.boss.look)} mood="cool" size={190} showPet={false} title={`${company.boss.name}, your boss`} />
-            <figcaption className="mt-1 text-xs font-bold text-[#b3abc4]">Your boss</figcaption>
+            <figcaption className="mt-1 text-xs font-bold text-muted-foreground">Your boss</figcaption>
           </figure>
           <figure className="relative text-center">
             <AvatarFigure avatar={avatar} size={190} className="arcade-bob" />
-            <figcaption className="mt-1 text-xs font-bold text-[#b3abc4]">You</figcaption>
+            <figcaption className="mt-1 text-xs font-bold text-muted-foreground">You</figcaption>
           </figure>
         </div>
       </div>
@@ -881,7 +881,7 @@ function Results({
 
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-16">
-      <div className="rounded-3xl border border-white/10 bg-[#15111f] p-6 md:p-10">
+      <div className="rounded-3xl border border-border bg-card p-6 md:p-10">
         <div className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
           <AvatarFigure
             avatar={avatar}
@@ -890,7 +890,7 @@ function Results({
             className="mx-auto"
           />
           <div>
-            <p className="text-xs font-black tracking-[0.25em] text-[#a67fff] uppercase">
+            <p className="text-xs font-black tracking-[0.25em] text-ink-lilac uppercase">
               Performance review · {company.name}
             </p>
             <h1 className="arcade-display mt-3 text-4xl md:text-5xl">
@@ -900,7 +900,7 @@ function Results({
                   ? `${title}! 👑`
                   : `Shift done: ${title}`}
             </h1>
-            <p className="mt-4 leading-7 text-[#d8d4e0]">
+            <p className="mt-4 leading-7 text-foreground/80">
               {reviewLine(company, {
                 fired: state.fired,
                 rank: state.rank,
@@ -936,8 +936,8 @@ function Results({
               `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`,
             ],
           ].map(([k, v]) => (
-            <div key={k} className="rounded-2xl bg-white/5 p-4">
-              <dt className="text-xs font-bold tracking-widest text-[#b3abc4] uppercase">
+            <div key={k} className="rounded-2xl bg-foreground/[0.05] p-4">
+              <dt className="text-xs font-bold tracking-widest text-muted-foreground uppercase">
                 {k}
               </dt>
               <dd className="arcade-display mt-2 text-2xl">{v}</dd>
@@ -946,12 +946,12 @@ function Results({
         </dl>
 
         <div
-          className="mt-4 rounded-2xl border border-white/10 bg-[#1f1830] p-4"
+          className="mt-4 rounded-2xl border border-border bg-secondary p-4"
           aria-live="polite"
         >
           {save.status === "saving" && <p>Saving your shift…</p>}
           {save.status === "error" && (
-            <p className="text-[#ffd166]">
+            <p className="text-ink-sun">
               {save.error} You&apos;d have earned about +{estimate.xp} XP and +
               {estimate.clout} Clout.
             </p>
@@ -969,10 +969,10 @@ function Results({
                   ☀️ Daily Grind ×2
                 </span>
               )}
-              <span className="rounded-full bg-white/10 px-3 py-1">
+              <span className="rounded-full bg-foreground/[0.08] px-3 py-1">
                 Level {res.level}
               </span>
-              <span className="rounded-full bg-white/10 px-3 py-1">
+              <span className="rounded-full bg-foreground/[0.08] px-3 py-1">
                 🔥 {res.streak}-day streak
               </span>
               {res.newBest && previousBest > 0 && (
@@ -981,7 +981,7 @@ function Results({
                 </span>
               )}
               {res.capped && (
-                <span className="text-sm font-normal text-[#b3abc4]">
+                <span className="text-sm font-normal text-muted-foreground">
                   You&apos;ve hit today&apos;s reward limit. Scores still count!
                 </span>
               )}
@@ -1022,13 +1022,13 @@ function Results({
             type="button"
             onClick={challengeFriend}
             disabled={!res || share.status === "busy"}
-            className="arcade-btn rounded-full bg-[#7c4dff] px-6 py-3 font-black text-white disabled:opacity-40"
+            className="arcade-btn rounded-full bg-brand px-6 py-3 font-black text-white disabled:opacity-40"
           >
             ⚔️ Challenge a friend
           </button>
           <Link
             href="/games"
-            className="arcade-btn rounded-full border border-white/15 bg-[#1f1830] px-6 py-3 font-black"
+            className="arcade-btn rounded-full border border-border bg-secondary px-6 py-3 font-black"
           >
             Back to the city
           </Link>
@@ -1037,7 +1037,7 @@ function Results({
           <p
             className={cn(
               "mt-3 text-sm break-all",
-              share.status === "error" ? "text-[#ff7a6b]" : "text-[#5fd3a5]",
+              share.status === "error" ? "text-ink-coral" : "text-ink-mint",
             )}
           >
             {share.text}
@@ -1047,23 +1047,23 @@ function Results({
 
       {missed.length > 0 && (
         <section
-          className="mt-6 rounded-3xl border border-white/10 bg-[#15111f] p-6"
+          className="mt-6 rounded-3xl border border-border bg-card p-6"
           aria-labelledby="notes"
         >
           <h2 id="notes" className="text-xl font-black">
             📝 Your revision notes from this shift
           </h2>
-          <p className="mt-1 text-sm text-[#b3abc4]">
+          <p className="mt-1 text-sm text-muted-foreground">
             The ones that got away. Read these, then go again.
           </p>
           <ul className="mt-4 space-y-3">
             {missed.map((m, i) => (
-              <li key={i} className="rounded-2xl bg-white/5 p-4">
+              <li key={i} className="rounded-2xl bg-foreground/[0.05] p-4">
                 <p className="font-bold">{m.prompt}</p>
                 <p className="mt-1 text-sm">
-                  ✓ <strong className="text-[#5fd3a5]">{m.answer}</strong>
+                  ✓ <strong className="text-ink-mint">{m.answer}</strong>
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[#d8d4e0]">
+                <p className="mt-1 text-sm leading-6 text-foreground/80">
                   {m.explain}
                 </p>
               </li>

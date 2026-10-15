@@ -33,19 +33,19 @@ export default async function MessagesPage() {
           Find a company to ask
         </Link>
       )}
-      <ul className="bg-card mt-5 divide-y divide-white/5 overflow-hidden rounded-3xl border">
+      <ul className="bg-card mt-5 divide-y divide-border overflow-hidden rounded-3xl border">
         {threads.length === 0 && <li className="text-muted-foreground px-4 py-6 text-center text-sm">No conversations yet.</li>}
         {threads.map((t) => {
           const them = account.id === t.learnerId ? t.staff : t.learner;
           return (
             <li key={t.id}>
-              <Link href={`/messages/${t.id}`} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-white/5">
+              <Link href={`/messages/${t.id}`} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-hover">
                 <span className="grid size-11 shrink-0 place-items-center rounded-full text-base font-black text-[#0b0910]" style={{ background: t.org.accent }}>
                   {them.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-bold">
-                    @{them} {account.id === t.learnerId && <span className="text-xs text-[#6bc6ff]">✓ {t.org.name}</span>}
+                    @{them} {account.id === t.learnerId && <span className="text-xs text-ink-sky">✓ {t.org.name}</span>}
                   </span>
                   <span className="text-muted-foreground block truncate text-xs">
                     {t.mode === "e2ee" ? "🔒 End-to-end encrypted" : "🛡️ Safeguarded chat"}

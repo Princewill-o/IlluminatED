@@ -9,11 +9,19 @@ export function SocialLogo() {
     <span className="flex items-center gap-1.5" aria-label="IlluminatEDSocial">
       <span className="relative block h-[17px] w-[110px]">
         <Image
+          src="/brand/wordmark-navy.webp"
+          alt=""
+          fill
+          sizes="110px"
+          className="object-contain object-left dark:hidden"
+          priority
+        />
+        <Image
           src="/brand/wordmark-white.webp"
           alt=""
           fill
           sizes="110px"
-          className="object-contain object-left"
+          className="hidden object-contain object-left dark:block"
           priority
         />
       </span>
