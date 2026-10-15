@@ -465,6 +465,7 @@ export function PromotionPanic(props: Props) {
               <AvatarFigure
                 avatar={look(company.boss.look)}
                 mood={bossMood}
+                logo={company.id}
                 headOnly
                 size={48}
                 title={company.boss.name}
@@ -805,11 +806,11 @@ function Intro({
             className="absolute inset-x-0 bottom-0 mx-auto w-full max-w-[320px] opacity-25"
           />
           <figure className="relative text-center">
-            <AvatarFigure avatar={look(company.boss.look)} mood="cool" size={190} showPet={false} title={`${company.boss.name}, your boss`} />
+            <AvatarFigure avatar={look(company.boss.look)} mood="cool" size={190} showPet={false} logo={company.id} title={`${company.boss.name}, your boss`} />
             <figcaption className="mt-1 text-xs font-bold text-muted-foreground">Your boss</figcaption>
           </figure>
           <figure className="relative text-center">
-            <AvatarFigure avatar={avatar} size={190} className="arcade-bob" />
+            <AvatarFigure avatar={avatar} size={190} clip="wave" />
             <figcaption className="mt-1 text-xs font-bold text-muted-foreground">You</figcaption>
           </figure>
         </div>
@@ -890,6 +891,7 @@ function Results({
           <AvatarFigure
             avatar={avatar}
             mood={state.fired ? "sad" : state.rank >= 4 ? "cool" : "happy"}
+            clip={state.fired ? "idle" : "wave"}
             size={190}
             className="mx-auto"
           />

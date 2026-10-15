@@ -84,7 +84,7 @@ export default async function GamesHome() {
           <AvatarFigure
             avatar={player.avatar}
             size={190}
-            className="arcade-bob mx-auto"
+            className="mx-auto"
           />
           <p className="mt-3 text-center font-black">
             @{account.profile.username}

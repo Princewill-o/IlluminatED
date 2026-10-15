@@ -12,6 +12,9 @@ import { type Avatar, DEFAULT_AVATAR, cosmeticById } from "@/game/core/cosmetics
  */
 export type Mood = "happy" | "sad" | "wow" | "cool" | "cross";
 
+// Characters are now Blender-rendered sprites; see ./character.tsx.
+export { AvatarFigure } from "./character";
+
 const INK = "#1b1622";
 const O = { stroke: INK, strokeWidth: 3, strokeLinejoin: "round" as const };
 const HEAD_SPACE = "translate(100 90) scale(0.93) translate(-100 -100)";
@@ -34,7 +37,8 @@ export function shade(hex: string, amount: number) {
   return `#${((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)}`;
 }
 
-export function AvatarFigure({
+/** The original flat SVG character (kept as a reference and fallback). */
+export function AvatarFigureSvg({
   avatar = DEFAULT_AVATAR,
   mood = "happy",
   size = 200,

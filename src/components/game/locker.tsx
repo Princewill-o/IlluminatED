@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { Eye } from "lucide-react";
+import { Eye, Footprints, Hand, RotateCw } from "lucide-react";
 
 import { AvatarFigure } from "./avatar";
+import type { Clip, Facing } from "./character";
 import { play, soundOn } from "./sound";
 
 import { buyItem, saveAvatar } from "@/app/games/actions";
@@ -40,6 +41,9 @@ export function Locker({
   canSave: boolean;
 }) {
   const [avatar, setAvatar] = useState(initialAvatar);
+  const [facing, setFacing] = useState<Facing>("S");
+  const [clip, setClip] = useState<Clip>("idle");
+  const turn = () => setFacing((f) => ({ S: "W", W: "N", N: "E", E: "S" } as const)[f]);
   const [saved, setSaved] = useState(initialAvatar);
   const [owned, setOwned] = useState(() => new Set(initialOwned));
   const [clout, setClout] = useState(initialClout);
@@ -109,7 +113,35 @@ export function Locker({
     <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="relative rounded-3xl bg-brand px-6 pt-6 pb-2">
-          <AvatarFigure avatar={avatar} size={280} className="arcade-bob mx-auto h-[210px] w-auto lg:h-[280px]" />
+          <AvatarFigure avatar={avatar} size={250} facing={facing} clip={clip} className="mx-auto" />
+          <div className="absolute bottom-3 left-3 flex gap-1.5">
+            <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0b0910] active:scale-95">
+              <RotateCw className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setClip((c) => (c === "walk" ? "idle" : "walk"))}
+              aria-pressed={clip === "walk"}
+              aria-label="Walk"
+              title="Walk"
+              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "walk" ? "bg-[#c6f36b] text-[#0b0910]" : "bg-white/90 text-[#0b0910]")}
+            >
+              <Footprints className="size-4" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setFacing("S");
+                setClip((c) => (c === "wave" ? "idle" : "wave"));
+              }}
+              aria-pressed={clip === "wave"}
+              aria-label="Wave"
+              title="Wave"
+              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "wave" ? "bg-[#c6f36b] text-[#0b0910]" : "bg-white/90 text-[#0b0910]")}
+            >
+              <Hand className="size-4" aria-hidden />
+            </button>
+          </div>
           <button
             type="button"
             onClick={randomise}
@@ -225,6 +257,7 @@ export function Locker({
                     ) : (
                       <AvatarFigure
                         avatar={preview}
+                        still
                         size={headView ? 112 : 130}
                         headOnly={headView}
                         showPet={item.slot === "pet"}

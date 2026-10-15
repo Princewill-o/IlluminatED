@@ -59,7 +59,7 @@ export default async function ChallengePage({
               avatar={c.avatar}
               mood="cool"
               size={200}
-              className="arcade-bob"
+              clip="wave"
               title={`${who}'s avatar`}
             />
           </div>

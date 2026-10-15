@@ -6,7 +6,7 @@ import { Bus, DoorOpen, MessageCircle, Sparkles } from "lucide-react";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
-import { TopDownFigure, poseFigure } from "./topdown-avatar";
+import { WorldFigure, poseWorldFigure } from "../character";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
@@ -68,10 +68,11 @@ function Sprite({
     <div ref={innerRef} className="absolute top-0 left-0 will-change-transform" style={{ width: SPRITE_W, height: SPRITE_H }}>
       <div
         ref={bubbleRef}
-        className="absolute -top-8 left-1/2 hidden -translate-x-1/2 rounded-2xl bg-[#f4f0ff] px-3 py-1 text-xs font-bold whitespace-nowrap text-[#0b0910] shadow-[0_3px_0_0_rgba(0,0,0,0.45)]"
+        className="absolute -top-[46px] left-1/2 z-10 hidden -translate-x-1/2 rounded-2xl bg-[#f4f0ff] px-3 py-1 text-xs font-bold whitespace-nowrap text-[#0b0910] shadow-[0_3px_0_0_rgba(0,0,0,0.45)]"
       />
-      <div className="td-root">
-        <TopDownFigure avatar={avatar} badge={badge} size={SPRITE_W} ghost={hidden} />
+      <div className="td-root absolute inset-x-0 bottom-2 h-0">
+        <span aria-hidden className="absolute -bottom-1 left-1/2 h-3 w-10 -translate-x-1/2 rounded-[50%] bg-black/25" />
+        <WorldFigure avatar={avatar} badge={badge} ghost={hidden} />
       </div>
       <div className="absolute top-full left-1/2 -mt-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", me ? "bg-[#c6f36b] text-[#0b0910]" : "bg-black/70 text-white")}>
@@ -316,7 +317,7 @@ export function WorldView({
         a.walk += ((walking ? 1 : 0) - a.walk) * (1 - Math.exp(-dt * 10));
         if (walking) a.phase += dt * 11;
         anim.set(key, a);
-        poseFigure(el, a.ang, reduced ? 0 : a.phase, reduced ? 0 : a.walk, reduced ? 0 : now);
+        poseWorldFigure(el, a.ang, reduced ? 0 : a.phase, reduced ? 0 : a.walk, reduced ? 0 : now);
       };
       place(meEl.current, "me", p.x, p.y, moved ? dx : 0, moved ? dy : 0, moved);
       const t = Date.now();

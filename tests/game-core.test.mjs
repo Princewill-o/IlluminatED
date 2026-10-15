@@ -277,3 +277,19 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
   assert.equal(W.guessRegion("Europe/London"), "lse");
   assert.equal(W.guessRegion("America/New_York"), "intl");
 });
+
+test("Characters: every wearable 3D item has a sprite sheet, and anchors cover every frame", () => {
+  const { COSMETICS } = projectData("src/game/core/cosmetics.ts");
+  const meta = JSON.parse(fs.readFileSync("public/characters/meta.json", "utf8"));
+  assert.equal(meta.frames.length, 42);
+  assert.equal(meta.anchors.length, meta.frames.length);
+  for (const a of meta.anchors) for (const k of ["face", "head", "chest"]) assert.ok(a[k].every((v) => v >= 0 && v <= 176), `${k} anchor in frame`);
+  // Faces, glasses and colours are drawn or tinted at runtime; everything else is a rendered sheet.
+  const runtime = new Set(["skin", "eyes", "brows", "mouth", "extras", "face", "hairColor"]);
+  const none = new Set(["head-human", "hat-none", "held-none", "pet-none", "hair-bald"]);
+  for (const c of COSMETICS) {
+    if (runtime.has(c.slot) || none.has(c.id)) continue;
+    assert.ok(fs.existsSync(`public/characters/${c.id}.webp`), `sheet for ${c.id}`);
+  }
+  for (const base of ["body", "head", "cape-back"]) assert.ok(fs.existsSync(`public/characters/${base}.webp`));
+});
