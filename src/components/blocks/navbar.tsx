@@ -15,7 +15,7 @@ import { useSignedIn } from "@/lib/use-signed-in";
 export const Navbar = () => {
   const pathname = usePathname();
   const signedIn = useSignedIn();
-  // IlluminatEDSocial has its own header.
+  // IlluminatEDSocial has its own header. (Signed-in pages use the app shell instead of this navbar.)
   if (pathname.startsWith("/social")) return null;
 
   return (

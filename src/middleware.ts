@@ -33,15 +33,21 @@ const PUBLIC_PATHS = [
   "/social/sign-in",
   "/social/welcome",
   "/social/auth/callback",
+  "/employers",
+  "/guardian/messages",
 ];
 
 /** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
 const METADATA_IMAGE =
   /(^|\/)(opengraph-image|twitter-image)(-[\w-]+)?(\.\w+)?$/;
 
+/** Shared game challenge cards, so a friend can see the challenge before signing up. */
+const GAME_CHALLENGE = /^\/games\/challenge\/[A-Za-z0-9]{6}\/?$/;
+
 const isPublic = (path: string) =>
   PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
-  METADATA_IMAGE.test(path);
+  METADATA_IMAGE.test(path) ||
+  GAME_CHALLENGE.test(path);
 
 /**
  * Keeps the Supabase session fresh, sends signed-out visitors to sign in,
@@ -94,7 +100,9 @@ export async function middleware(request: NextRequest) {
   // New learners finish their guided setup before opening any study page.
   // Legal/help pages and the setup flow remain available throughout.
   const setupPath = path === "/onboarding" || path === "/getting-started" ||
-    path === "/personalising" || path === "/account/password";
+    path === "/personalising" || path === "/account/password" ||
+    // Employers verify their work email before they have learner details.
+    path === "/employers/join";
   if (signedIn && supabase && !isPublic(path) && !setupPath) {
     const { data: details, error } = await supabase
       .from("learner_details")

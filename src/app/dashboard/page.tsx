@@ -11,6 +11,7 @@ import {
   SubjectChart,
   WeeklyChart,
 } from "@/components/dashboard/widgets";
+import { AvatarFigure } from "@/components/game/avatar";
 import { Empty, Section } from "@/components/kit";
 import { NextSteps } from "@/components/next-steps";
 import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
@@ -26,6 +27,7 @@ import {
 import { stageLabel, yearLabel } from "@/lib/account/details";
 import { isTutor, requireAccount } from "@/lib/account/server";
 import { TOPICS } from "@/lib/data/topics";
+import { loadPlayer } from "@/lib/game/server";
 import { STATUS_LABELS, helpLabel, speedLabel } from "@/lib/tutoring";
 import { listMyRequests } from "@/lib/tutoring-server";
 import { cn } from "@/lib/utils";
@@ -94,9 +96,10 @@ function TopicRow({ s }: { s: TopicStat }) {
 export default async function DashboardPage() {
   const account = await requireAccount("/dashboard");
   const { details, profile } = account;
-  const [data, requests] = await Promise.all([
+  const [data, requests, player] = await Promise.all([
     loadDashboard(account.id, details),
     listMyRequests(account.id),
+    loadPlayer(account.id),
   ]);
 
   const activeRequests = requests.filter(
@@ -176,6 +179,28 @@ export default async function DashboardPage() {
 
       <ReadinessPanel data={data} details={details} />
 
+      <section className="container pb-8" aria-label="IlluminatED City games">
+        <Link
+          href="/games"
+          className="group grid items-center gap-5 overflow-hidden rounded-3xl bg-[#09080d] p-6 text-[#f4f0ff] sm:grid-cols-[auto_1fr_auto] md:p-8"
+        >
+          <span className="hidden rounded-2xl bg-[#7c4dff] px-3 pt-3 sm:block">
+            <AvatarFigure avatar={player.avatar} size={110} showPet={false} />
+          </span>
+          <span>
+            <span className="block text-xs font-black uppercase tracking-[0.25em] text-[#a67fff]">New · IlluminatED City</span>
+            <span className="mt-2 block text-2xl font-extrabold md:text-3xl">Promotion Panic: intern to CEO in one shift</span>
+            <span className="mt-2 block text-sm leading-6 text-[#b3abc4]">
+              Revise your subjects at Barklays, Goggle, Tescow and more. Earn Clout, unlock outfits, challenge your mates.
+              {player.ready && player.shiftsPlayed > 0 ? ` You're level ${player.level} with ${player.clout.toLocaleString("en-GB")} Clout.` : ""}
+            </span>
+          </span>
+          <span className="justify-self-start rounded-full bg-[#c6f36b] px-6 py-3 font-black text-[#0b0910] group-hover:bg-[#d4f88a] sm:justify-self-end">
+            {player.dailyBonusReady ? "Play · ☀️ double Clout today" : "Play now"} →
+          </span>
+        </Link>
+      </section>
+
       <section className="container grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" aria-label="Study tools and community">
         <StudyTimer mode="pomodoro" />
         <div className="relative overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-violet-100 p-7 text-slate-950">
@@ -188,7 +213,7 @@ export default async function DashboardPage() {
             <Link href="/social" className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-bold text-white">Explore Social</Link>
             <Link href="/exam-mode" className="rounded-full border border-blue-700 px-5 py-2.5 text-sm font-bold text-blue-800">Open exam mode</Link>
           </div>
-          <p className="relative mt-6 text-xs font-semibold text-violet-800">Study games are coming soon 🎮</p>
+          <Link href="/games" className="relative mt-6 block text-xs font-semibold text-violet-800 underline">Study games are here: play Promotion Panic 🎮</Link>
         </div>
       </section>
 

@@ -18,7 +18,7 @@ export default async function FriendsPage() {
   const ids = [...new Set((rows ?? []).map((row) => row.requester === viewer.id ? row.recipient : row.requester))];
   const { data: profiles } = sb && ids.length ? await sb.from("profiles").select("id,username").in("id", ids) : { data: [] };
   const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.username]));
-  return <main className="container max-w-3xl py-10 lg:py-14">
+  return <div className="container max-w-3xl py-10 lg:py-14">
     <h1 className="text-4xl tracking-tight">Your Social friends</h1>
     <p className="text-muted-foreground mt-3">Friend requests are private to the people involved. You can remove a connection or block someone at any time.</p>
     {error && <p role="status" className="mt-8 rounded-xl border p-6 text-sm">Friends are being set up. Please try again later.</p>}
@@ -37,5 +37,5 @@ export default async function FriendsPage() {
         </form>
       </li>;
     })}</ul>
-  </main>;
+  </div>;
 }

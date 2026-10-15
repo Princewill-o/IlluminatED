@@ -73,7 +73,7 @@ export default async function PremiumSuccess({
         : "Welcome to IlluminatED Premium!";
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16">
+    <div className="mx-auto max-w-3xl px-4 py-16">
       <section className="overflow-hidden rounded-3xl border border-blue-200 bg-white text-slate-900 shadow-xl">
         <div className="bg-gradient-to-br from-blue-700 to-indigo-900 px-8 py-10 text-white">
           <span className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold">
@@ -155,6 +155,6 @@ export default async function PremiumSuccess({
           </p>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

@@ -8,5 +8,5 @@ export const dynamic = "force-dynamic";
 
 export default async function ExamModePage() {
   await requireAccount("/exam-mode");
-  return <main className="container py-8"><StudyTimer mode="exam" /></main>;
+  return <div className="container py-8"><StudyTimer mode="exam" /></div>;
 }

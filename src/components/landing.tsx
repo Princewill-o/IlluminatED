@@ -361,10 +361,10 @@ export function CtaButtons({ center }: { center?: boolean }) {
         </Link>
       </motion.div>
       <Link
-        href="/sign-in"
-        className="hover:bg-muted inline-flex h-12 items-center rounded-full border px-6 text-base font-semibold"
+        href="/sign-in?next=/dashboard"
+        className="hover:bg-muted inline-flex h-12 items-center gap-2 rounded-full border px-6 text-base font-semibold"
       >
-        Sign in
+        Open the web app <span aria-hidden>→</span>
       </Link>
     </div>
   );

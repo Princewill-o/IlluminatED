@@ -100,7 +100,7 @@ export default async function CoursePage({
             : `Several boards offer ${c.subject}. Your school or college chooses the board, specification and (where there is one) the tier, so use your own specification as the final word.`}
           {c.statusNote && <> {c.statusNote}</>}
         </Note>
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-200 dark:bg-white dark:text-slate-900">
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
           <h2 className="text-lg font-semibold">Download your study pack</h2>
           <p className="mt-1 text-sm text-slate-600">Printable IlluminatED PDFs with our logo. Choose your exact board specification for final exam coverage.</p>
           <div className="mt-4 flex flex-wrap gap-2 text-sm">

@@ -136,7 +136,7 @@ export default function ResourcesPage() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {COURSES.map((course) => (
-            <div key={course.id} className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-200 dark:bg-white dark:text-slate-900">
+            <div key={course.id} className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm">
               <h3 className="font-semibold">{course.title}</h3>
               <p className="mt-1 text-sm text-slate-600">{course.years} · {course.level}</p>
               <div className="mt-4 flex flex-wrap gap-2 text-sm">

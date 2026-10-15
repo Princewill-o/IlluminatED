@@ -396,3 +396,182 @@ body:has(.social) #splash .splash-wordmark-light {
 body:has(.social) #splash .splash-wordmark-dark {
   display: block;
 }
+
+/* ─── IlluminatED City (games): purple on black, flat, no gradients ─── */
+.arcade {
+  color-scheme: dark;
+  --background: #09080d;
+  --foreground: #f4f0ff;
+  --card: #15111f;
+  --card-foreground: #f4f0ff;
+  --popover: #16121e;
+  --popover-foreground: #f4f0ff;
+  --primary: #a67fff;
+  --primary-foreground: #0b0910;
+  --secondary: #1f1830;
+  --secondary-foreground: #ece5ff;
+  --muted: #17131f;
+  --muted-foreground: #b3abc4;
+  --accent: #2a2040;
+  --accent-foreground: #e4d9ff;
+  --destructive: #ff7a6b;
+  --success: #5fd3a5;
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 18%);
+  --ring: #c6f36b;
+  --arcade-purple: #7c4dff;
+  --arcade-lilac: #a67fff;
+  --arcade-lime: #c6f36b;
+  --arcade-sun: #ffd166;
+  --arcade-coral: #ff7a6b;
+  --arcade-mint: #5fd3a5;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+body:has(.arcade) {
+  background-color: #09080d;
+}
+body:has(.arcade) #splash {
+  background: #09080d;
+}
+.arcade-display {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+/* Chunky "press me" buttons: flat colour with a solid offset edge, no gradients. */
+.arcade-btn {
+  box-shadow: 0 5px 0 0 rgb(0 0 0 / 55%);
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.arcade-btn:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 0 rgb(0 0 0 / 55%);
+}
+@keyframes arcade-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes arcade-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px) rotate(-1deg); }
+  40% { transform: translateX(7px) rotate(1deg); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(4px); }
+}
+@keyframes arcade-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes arcade-confetti {
+  0% { transform: translateY(-20px) rotate(0); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; }
+}
+.arcade-pop { animation: arcade-pop 380ms cubic-bezier(.2,.9,.3,1.3) both; }
+.arcade-shake { animation: arcade-shake 420ms ease both; }
+.arcade-bob { animation: arcade-bob 2.4s ease-in-out infinite; }
+.arcade-confetti { animation: arcade-confetti 2.6s linear forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .arcade-pop, .arcade-shake, .arcade-bob, .arcade-confetti { animation: none; }
+  .arcade-confetti { display: none; }
+}
+
+/* ─── The app (signed in): purple on black, flat, same as the iOS app ─── */
+.app-theme {
+  color-scheme: dark;
+  --background: #09080d;
+  --foreground: #f4f0ff;
+  --card: #15111f;
+  --card-foreground: #f4f0ff;
+  --popover: #16121e;
+  --popover-foreground: #f4f0ff;
+  --primary: #a67fff;
+  --primary-foreground: #0b0910;
+  --secondary: #1f1830;
+  --secondary-foreground: #ece5ff;
+  --muted: #17131f;
+  --muted-foreground: #b3abc4;
+  --accent: #241b36;
+  --accent-foreground: #e4d9ff;
+  --destructive: #ff8f85;
+  --destructive-foreground: #09080d;
+  --success: #5fd3a5;
+  --success-soft: #0f2e22;
+  --danger-soft: #36161a;
+  --warm: #ffd166;
+  --warm-text: #ffd166;
+  --glow: #1f1830;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: #c6f36b;
+  --chart-1: #a67fff;
+  --chart-2: #ffd166;
+  --chart-3: #5fd3a5;
+  --chart-4: #6bc6ff;
+  --chart-5: #ff7a6b;
+  --sidebar: #09080d;
+  --sidebar-foreground: #f4f0ff;
+  --sidebar-primary: #a67fff;
+  --sidebar-primary-foreground: #0b0910;
+  --sidebar-accent: #1f1830;
+  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #c6f36b;
+  -webkit-tap-highlight-color: transparent;
+}
+body:has(.app-theme) {
+  background-color: #09080d;
+  overscroll-behavior-y: none;
+}
+/* Inside the app, the game and forum sections drop their own "back to the site" links. */
+.app-theme .site-only {
+  display: none !important;
+}
+
+/*
+ * Theme bridge: a few older screens hard-code light Tailwind colours. Inside the
+ * app these map onto the purple/black tokens so every screen matches. (These
+ * rules are unlayered, so they win over utilities without !important.) New
+ * screens should use the tokens (bg-card, text-foreground, …) directly.
+ */
+.app-theme :is(.bg-white, .bg-slate-50, .bg-blue-50, .bg-sky-50, .bg-amber-50, .bg-emerald-50, .bg-rose-50) {
+  background-color: var(--card);
+}
+.app-theme :is(.text-slate-900, .text-slate-950, .text-blue-950, .text-amber-950) {
+  color: var(--foreground);
+}
+.app-theme :is(.text-slate-500, .text-slate-600, .text-slate-700, .text-blue-100) {
+  color: var(--muted-foreground);
+}
+.app-theme :is(.border-slate-200, .border-slate-300, .border-blue-100, .border-blue-200) {
+  border-color: var(--border);
+}
+.app-theme :is(.bg-blue-500, .bg-blue-600, .bg-blue-700) {
+  background-color: #7c4dff;
+  color: #fff;
+}
+.app-theme :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-violet-800) {
+  color: #c49bff;
+}
+.app-theme :is(.border-blue-600, .border-blue-700) {
+  border-color: #a67fff;
+}
+.app-theme :is(.hover\:bg-slate-50, .hover\:bg-blue-500):hover {
+  background-color: rgb(255 255 255 / 6%);
+}
+/* Flat colours only in the app. */
+.app-theme :not(.arcade *)[class*="bg-gradient-to-"] {
+  background-image: none;
+  background-color: var(--secondary);
+}
+
+/* World sprites: a little bounce while walking. */
+@keyframes sprite-walk {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -4px; }
+}
+.sprite-walk { animation: sprite-walk 0.32s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .sprite-walk { animation: none; }
+}

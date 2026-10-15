@@ -55,7 +55,7 @@ export function SocialHeader({ viewer }: { viewer: Viewer | null }) {
         <div className="ml-auto flex items-center gap-3 text-sm">
           <Link
             href="/"
-            className="text-muted-foreground hover:text-foreground hidden sm:inline"
+            className="site-only text-muted-foreground hover:text-foreground hidden sm:inline"
           >
             Back to IlluminatED
           </Link>
@@ -74,7 +74,7 @@ export function SocialHeader({ viewer }: { viewer: Viewer | null }) {
               </Link>
               <Link
                 href="/dashboard"
-                className="text-muted-foreground hover:text-foreground hidden sm:inline"
+                className="site-only text-muted-foreground hover:text-foreground hidden sm:inline"
               >
                 Dashboard
               </Link>
@@ -111,7 +111,7 @@ export function SocialHeader({ viewer }: { viewer: Viewer | null }) {
         ))}
         <Link
           href="/"
-          className="text-muted-foreground hover:text-foreground ml-auto sm:hidden"
+          className="site-only text-muted-foreground hover:text-foreground ml-auto sm:hidden"
         >
           IlluminatED
         </Link>

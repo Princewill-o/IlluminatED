@@ -2,6 +2,7 @@ import localFont from "next/font/local";
 
 import type { Metadata, Viewport } from "next";
 
+import { SiteChrome } from "@/components/app/site-chrome";
 import { Footer } from "@/components/blocks/footer";
 import { Navbar } from "@/components/blocks/navbar";
 import { FeatureTracker } from "@/components/feature-tracker";
@@ -54,6 +55,11 @@ export const metadata: Metadata = {
   },
   description,
   applicationName: "IlluminatED",
+  appleWebApp: {
+    capable: true,
+    title: "IlluminatED",
+    statusBarStyle: "black-translucent",
+  },
   robots: { index: true, follow: true },
   manifest: "/favicon/site.webmanifest",
   icons: {
@@ -74,6 +80,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  // Let the app run edge to edge on phones (the app shell pads for the notch and home bar).
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
     { media: "(prefers-color-scheme: dark)", color: "#0a1326" },
@@ -95,14 +103,17 @@ export default function RootLayout({
           <a href="#main" className="skip-link">
             Skip to content
           </a>
-          <Navbar />
           <FeatureTracker />
-          <main id="main" tabIndex={-1} className="min-h-[60vh] outline-none">
+          <SiteChrome
+            navbar={<Navbar />}
+            footer={
+              <HideOnSocial>
+                <Footer />
+              </HideOnSocial>
+            }
+          >
             {children}
-          </main>
-          <HideOnSocial>
-            <Footer />
-          </HideOnSocial>
+          </SiteChrome>
           <OfflineBanner />
         </ThemeProvider>
       </body>
