@@ -298,7 +298,9 @@ test("London: every HQ and station has a door, Tube exits are walkable, homes wo
   const W = projectData("src/game/core/world.ts");
   const L = W.CITY;
   assert.equal(L.name, "London");
-  assert.equal(L.portals.filter((p) => p.to.kind === "game").length, 13, "13 company HQs");
+  assert.equal(L.portals.filter((p) => p.id.startsWith("hq-")).length, 13, "13 company HQs");
+  const work = L.portals.filter((p) => p.to.kind === "work").map((p) => p.to.workplace).sort();
+  assert.equal(work.join(), "barklays,goggle,lawz,macrosoft,netflics,pizzazz,st-plasters,tescow", "every workplace has a door in London");
   const stations = W.tubeStations();
   assert.ok(stations.length >= 8);
   for (const s of stations) {
@@ -312,4 +314,50 @@ test("London: every HQ and station has a door, Tube exits are walkable, homes wo
     assert.ok(!W.blocked(h, h.spawn.x, h.spawn.y), "home spawn is free");
     assert.ok(h.portals.some((p) => p.to.kind === "map" && p.to.mapId === "city"), "front door back to London");
   }
+});
+
+test("Careers: every role's shifts and interviews are well-formed and answerable", () => {
+  const C = projectData("src/game/core/careers.ts");
+  const kinds = new Set();
+  for (const w of C.WORKPLACES) {
+    assert.equal(w.roles.length, 3, `${w.id} has a ladder`);
+    assert.ok(w.roles[0].pay < w.roles[1].pay && w.roles[1].pay < w.roles[2].pay, `${w.id} pays more as you rise`);
+    for (const role of w.roles) {
+      for (let seed = 1; seed <= 120; seed++) {
+        const tasks = [...C.buildShift(role, seed), ...C.buildInterview(role, seed)];
+        for (const t of tasks) {
+          kinds.add(t.kind);
+          assert.ok(C.SKILLS[t.skill], `${t.kind} has a real skill`);
+          assert.ok(t.prompt && t.explain, `${t.kind} teaches`);
+          if (t.numeric) {
+            assert.ok(Number.isFinite(t.answer), `${t.kind} numeric answer`);
+            assert.ok(C.checkAnswer(t, String(t.answer)), `${t.kind} accepts its own answer`);
+            assert.ok(!C.checkAnswer(t, String(t.answer + 1)), `${t.kind} rejects a wrong answer`);
+          } else {
+            assert.ok(t.options.length >= 2, `${t.kind} options`);
+            assert.equal(new Set(t.options).size, t.options.length, `${t.kind} options are distinct (seed ${seed})`);
+            assert.ok(t.answer >= 0 && t.answer < t.options.length, `${t.kind} answer index`);
+          }
+        }
+      }
+    }
+  }
+  assert.ok(kinds.size >= 18, `variety of task types (${kinds.size})`);
+  const crew = C.roleOf("pizzazz", "crew");
+  assert.equal(C.shiftPay(crew, 5), Math.round(crew.pay * 1.2), "full marks bonus");
+  assert.equal(C.shiftPay(crew, 0), Math.round(crew.pay * 0.25), "show-up pay");
+  assert.ok(C.canPromote(1, 5, 0.7) && !C.canPromote(1, 4, 0.9) && !C.canPromote(3, 99, 1));
+  const cv = C.cvLines([{ workplace: "goggle", role: "junior-dev", shifts: 6, correct: 26, total: 30, startedOn: "16 Oct 2026" }], { debugging: { correct: 9, total: 10 } });
+  assert.match(cv.experience[0], /Junior Developer, Goggle \(simulated work experience/);
+  assert.match(cv.skills[0], /Debugging and testing \(9\/10/);
+});
+
+test("Careers and homes: database seeds match the game code", () => {
+  const C = projectData("src/game/core/careers.ts");
+  const H = projectData("src/game/core/homes.ts");
+  const sql = fs.readFileSync("supabase/migrations/20261016100000_careers_and_homes.sql", "utf8");
+  for (const w of C.WORKPLACES) for (const r of w.roles) assert.ok(sql.includes(`('${w.id}', '${r.id}', ${r.rank}, ${r.pay})`), `${w.id}/${r.id} seeded`);
+  for (const h of H.HOMES) assert.ok(sql.includes(`('${h.id}', ${h.price})`), `${h.id} seeded`);
+  for (const f of H.FURNITURE) assert.ok(sql.includes(`('${f.id}', ${f.price}, ${f.w}, ${f.h}, ${f.starter ? "true" : "false"})`), `${f.id} seeded`);
+  assert.equal(H.validLayout(H.STARTER_LAYOUT), null, "starter layout is valid");
 });

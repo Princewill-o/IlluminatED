@@ -119,6 +119,8 @@ export function screenTitle(path: string) {
   const tab = activeTab(path);
   if (path === "/dashboard") return null;
   if (path.startsWith("/games/locker")) return "Locker";
+  if (path.startsWith("/games/careers")) return "Careers";
+  if (path.startsWith("/games/home")) return "Your home";
   if (path.startsWith("/games/promotion-panic")) return "Promotion Panic";
   if (path.startsWith("/games/world")) return "Worlds";
   if (path.startsWith("/messages")) return "Messages";

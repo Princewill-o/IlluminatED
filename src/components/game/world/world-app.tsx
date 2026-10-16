@@ -10,6 +10,9 @@ import { TubeMap, type TubeTrip } from "./tube-map";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
 
+import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
+import { workplaceById } from "@/game/core/careers";
+import type { Placed } from "@/game/core/homes";
 import { homeStyle } from "@/game/core/london";
 import {
   CITY,
@@ -36,9 +39,10 @@ const REGION_KEY = "world-region";
 
 const STATIONS = tubeStations();
 
+let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
-  if (id === "home") return homeMap(homeStyle(meId));
+  if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
   if (id === "campus") return campusMap(offices);
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
@@ -59,6 +63,8 @@ export function WorldApp({
   staff,
   initialMap,
   initialServer,
+  job,
+  home,
 }: {
   me: Me;
   offices: OfficeOrg[];
@@ -66,7 +72,12 @@ export function WorldApp({
   staff: Record<string, OfficeStaff[]>;
   initialMap: string;
   initialServer: string | null;
+  /** Your current job (for workplace doors and your uniform). */
+  job: ActiveJob | null;
+  /** Your home's colourway and furniture layout. */
+  home: { style: number; layout: Placed[] };
 }) {
+  HOME = home;
   const router = useRouter();
   const [mapId, setMapId] = useState(() => (loadMap(initialMap, offices, me.id) ? initialMap : "city"));
   const [tube, setTube] = useState<string | null>(null);
@@ -76,6 +87,7 @@ export function WorldApp({
   const [region, setRegion] = useState<RegionId>("lse");
   const [arrive, setArrive] = useState<{ x: number; y: number } | undefined>();
   const [desk, setDesk] = useState(false);
+  const [work, setWork] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -121,6 +133,7 @@ export function WorldApp({
       else if (to.kind === "link") router.push(to.href);
       else if (to.kind === "desk") setDesk(true);
       else if (to.kind === "tube") setTube(to.station);
+      else if (to.kind === "work") setWork(to.workplace);
       else {
         const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
@@ -298,6 +311,12 @@ export function WorldApp({
           <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#1b1622]">Please mind the gap</p>
         </div>
       )}
+      {atHome && (
+        <Link href="/games/home" className="absolute right-3 bottom-3 z-[100001] rounded-full bg-[#c6f36b] px-4 py-2 text-sm font-black text-[#0b0910] shadow-lg">
+          Decorate
+        </Link>
+      )}
+      {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">

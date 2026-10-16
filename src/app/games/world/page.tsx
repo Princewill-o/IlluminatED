@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 
 import { WorldApp } from "@/components/game/world/world-app";
+import { uniformFor } from "@/game/core/careers";
+import { homeById } from "@/game/core/homes";
 import { requireAccount } from "@/lib/account/server";
 import { listOrgs, myMembership, staffFor } from "@/lib/employers/server";
+import { loadCareer, loadHome } from "@/lib/game/careers-server";
 import { loadPlayer } from "@/lib/game/server";
 import { worldPass } from "@/lib/game/world-pass";
 
@@ -11,7 +14,9 @@ export const metadata: Metadata = { title: "Worlds" };
 export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string }> }) {
   const { map, server } = await searchParams;
   const account = await requireAccount("/games/world");
-  const [player, orgs, membership] = await Promise.all([loadPlayer(account.id), listOrgs(), myMembership(account.id)]);
+  const [player, orgs, membership, career, home] = await Promise.all([loadPlayer(account.id), listOrgs(), myMembership(account.id), loadCareer(account.id), loadHome(account.id)]);
+  const a = career.active;
+  const job = a ? { workplace: a.workplace, role: a.role, rank: a.rank, shifts: a.shifts, rankShifts: a.rankShifts, rankCorrect: a.rankCorrect, rankTotal: a.rankTotal } : null;
   const staff = await staffFor(orgs.map((o) => o.id));
   const bySlug = Object.fromEntries(orgs.map((o) => [o.slug, (staff[o.id] ?? []).map(({ userId, username, title }) => ({ userId, username, title }))]));
 
@@ -25,11 +30,13 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   return (
     <WorldApp
-      me={{ id: account.id, username: account.profile.username, avatar: player.avatar, org, badge, pass, publicKey }}
+      me={{ id: account.id, username: account.profile.username, avatar: uniformFor(job, player.avatar), org, badge, pass, publicKey }}
       offices={orgs.map(({ slug, name, sector, accent }) => ({ slug, name, sector, accent }))}
       staff={bySlug}
       initialMap={map ?? "city"}
       initialServer={server ?? null}
+      job={job}
+      home={{ style: homeById(home.current)?.style ?? 0, layout: home.layout }}
     />
   );
 }

@@ -1,4 +1,6 @@
+import { WORKPLACES } from "./careers";
 import { COMPANIES } from "./companies";
+import { type Placed, STARTER_LAYOUT, furnitureById } from "./homes";
 import { buildHome, buildLondon } from "./london";
 
 /**
@@ -29,7 +31,8 @@ export type PortalTarget =
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
   | { kind: "link"; href: string }
-  | { kind: "tube"; station: string };
+  | { kind: "tube"; station: string }
+  | { kind: "work"; workplace: string };
 
 export interface Portal {
   id: string;
@@ -63,6 +66,8 @@ export interface WorldMap {
   kind: "city" | "campus" | "office" | "home";
   /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
   art?: "london" | `home-${number}`;
+  /** Furniture placement (homes only). */
+  layout?: Placed[];
   name: string;
   cols: number;
   rows: number;
@@ -407,13 +412,22 @@ export function londonMap(): WorldMap {
   for (const th of L.things) {
     if (th.kind === "building" && th.companyId) {
       const c = COMPANIES.find((k) => k.id === th.companyId)!;
-      portals.push({ id: `hq-${c.id}`, rect: px(th.x + 1, th.y + th.h, 1, 1), label: `${c.name}: Promotion Panic`, to: { kind: "game", companyId: c.id } });
+      const w = WORKPLACES.find((k) => k.companyId === c.id);
+      portals.push({
+        id: `hq-${c.id}`,
+        rect: px(th.x + 1, th.y + th.h, 1, 1),
+        label: w ? `${c.name}: jobs and Promotion Panic` : `${c.name}: Promotion Panic`,
+        to: w ? { kind: "work", workplace: w.id } : { kind: "game", companyId: c.id },
+      });
     }
     if (th.kind === "building" && th.id === "my-house")
       portals.push({ id: "my-house", rect: px(th.x + 1, th.y + th.h, 2, 1), label: "Your house", to: { kind: "map", mapId: "home", label: "Your house" } });
     if (th.kind === "station")
       portals.push({ id: `tube-${th.id}`, rect: px(th.x, th.y + th.h, th.w, 1), label: `${th.name} station`, to: { kind: "tube", station: th.id } });
   }
+  // Pizzazz Pizza: the first shop on the West End parade.
+  const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
+  if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   const rows = L.tiles.map((r) => r.split(""));
   // Doors are always walkable.
   for (const p of portals)
@@ -444,9 +458,18 @@ export function tubeStations() {
 }
 
 /** Your home: a private room (single player). style picks the colourway. */
-export function homeMap(style: number): WorldMap {
+export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): WorldMap {
   const h = buildHome();
-  const link = (id: string, x: number, y: number, w: number, label: string, href: string): Portal => ({ id, rect: px(x, y, w, 1), label, to: { kind: "link", href } });
+  // The room shell, then your furniture wherever you put it.
+  const t = h.tiles.map((r) => r.split("").map((c) => (c === "X" ? "." : c)));
+  const links: Portal[] = [];
+  for (const p of layout) {
+    const f = furnitureById(p.item);
+    if (!f) continue;
+    if (f.id !== "rug" && f.id !== "petbed" && f.id !== "beanbag")
+      for (let y = p.y; y < p.y + f.h; y++) for (let x = p.x; x < p.x + f.w; x++) if (t[y]?.[x] !== undefined) t[y][x] = "X";
+    if (f.link) links.push({ id: `f-${p.key}`, rect: px(p.x, p.y + f.h, f.w, 1), label: f.link.label, to: { kind: "link", href: f.link.href } });
+  }
   return {
     id: "home",
     kind: "home",
@@ -456,15 +479,10 @@ export function homeMap(style: number): WorldMap {
     rows: h.rows,
     width: h.cols * TILE,
     height: h.rows * TILE,
-    tiles: h.tiles,
+    tiles: t.map((r) => r.join("")),
     structures: [],
-    portals: [
-      { id: "front-door", rect: px(9, 13, 2, 1), label: "Back out to Brixton", to: { kind: "map", mapId: "city", label: "London" } },
-      link("desk", 14, 4, 4, "Revision desk", "/learn"),
-      link("wardrobe", 6, 3, 3, "Wardrobe: change your look", "/games/locker"),
-      link("shelf", 10, 3, 3, "Bookshelf: revision notes", "/revision"),
-      link("tv", 14, 8, 4, "TV: play Promotion Panic", "/games"),
-    ],
+    portals: [{ id: "front-door", rect: px(9, 13, 2, 1), label: "Back out to London", to: { kind: "map", mapId: "city", label: "London" } }, ...links],
+    layout,
     rooms: [],
     spawn: { x: 10 * TILE, y: 11.5 * TILE },
     accent: "#7c4dff",

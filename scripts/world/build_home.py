@@ -14,6 +14,8 @@ ARGS = sys.argv[sys.argv.index("--") + 1:]
 SCENE = json.load(open(ARGS[0]))
 OUT = ARGS[1]
 STYLE = int(ARGS[2])
+# "furniture": render only the things (the shop catalogue), no room shell.
+ONLY_THINGS = len(ARGS) > 3 and ARGS[3] == "furniture"
 os.makedirs(OUT, exist_ok=True)
 COLS, ROWS = SCENE["cols"], SCENE["rows"]
 ELEV = math.radians(42)
@@ -85,31 +87,34 @@ def add(p, name, sort_y=None):
 
 INK = "#2a2730"; WHITE = "#f4f0ea"; GLASS = "#9fd2ef"
 
-# Floor (planks) and rug.
-fl = Part()
-for y in range(2, ROWS - 1):
-    for x in range(1, COLS - 1):
-        fl.box(x, y, -0.2, x + 1, y + 1, 0.0, FLOOR[(x // 2 + y) % 2])
-add(fl, "floor")
-rug = Part(); rug.box(6.1, 6.1, 0.0, 11.9, 10.9, 0.03, RUG); rug.box(6.4, 6.4, 0.03, 11.6, 10.6, 0.04, "#f4f0ea" if STYLE != 2 else "#ffd166"); rug.box(6.6, 6.6, 0.04, 11.4, 10.4, 0.05, RUG)
-add(rug, "rug")
+def room():
+  fl = Part()
+  for y in range(2, ROWS - 1):
+      for x in range(1, COLS - 1):
+          fl.box(x, y, -0.2, x + 1, y + 1, 0.0, FLOOR[(x // 2 + y) % 2])
+  add(fl, "floor")
+  rug = Part(); rug.box(6.1, 6.1, 0.0, 11.9, 10.9, 0.03, RUG); rug.box(6.4, 6.4, 0.03, 11.6, 10.6, 0.04, "#f4f0ea" if STYLE != 2 else "#ffd166"); rug.box(6.6, 6.6, 0.04, 11.4, 10.4, 0.05, RUG)
+  add(rug, "rug")
 
-# Back wall with skirting, a big window and pictures; low side and front walls (cut away).
-bw = Part()
-bw.box(0, 0, 0, COLS, 2, 4.2, WALLS[0])
-bw.box(0, 1.95, 0, COLS, 2.02, 0.3, WHITE)
-for x0 in (3.0, 14.5):
-    bw.box(x0, 1.96, 1.4, x0 + 2.5, 2.02, 3.4, WHITE)
-    bw.box(x0 + 0.12, 1.98, 1.52, x0 + 2.38, 2.04, 3.28, GLASS)
-    bw.box(x0 + 1.22, 2.0, 1.52, x0 + 1.28, 2.06, 3.28, WHITE)
-bw.box(9.3, 1.97, 2.0, 11.0, 2.03, 3.2, "#ffd166"); bw.box(9.45, 2.0, 2.15, 10.85, 2.05, 3.05, "#7c4dff")   # poster
-bw.box(0, 0, 4.2, COLS, 2, 4.35, WALLS[1])
-add(bw, "back-wall", 2 * 32)
-sw = Part()
-sw.box(0, 0, 0, 1, ROWS, 0.7, WALLS[1]); sw.box(COLS - 1, 0, 0, COLS, ROWS, 0.7, WALLS[1])
-sw.box(0, ROWS - 1, 0, 9, ROWS, 0.7, WALLS[1]); sw.box(11, ROWS - 1, 0, COLS, ROWS, 0.7, WALLS[1])
-sw.box(9, ROWS - 1, 0, 11, ROWS, 0.04, "#5a3f2b")   # threshold
-add(sw, "low-walls")
+  # Back wall with skirting, a big window and pictures; low side and front walls (cut away).
+  bw = Part()
+  bw.box(0, 0, 0, COLS, 2, 4.2, WALLS[0])
+  bw.box(0, 1.95, 0, COLS, 2.02, 0.3, WHITE)
+  for x0 in (3.0, 14.5):
+      bw.box(x0, 1.96, 1.4, x0 + 2.5, 2.02, 3.4, WHITE)
+      bw.box(x0 + 0.12, 1.98, 1.52, x0 + 2.38, 2.04, 3.28, GLASS)
+      bw.box(x0 + 1.22, 2.0, 1.52, x0 + 1.28, 2.06, 3.28, WHITE)
+  bw.box(9.3, 1.97, 2.0, 11.0, 2.03, 3.2, "#ffd166"); bw.box(9.45, 2.0, 2.15, 10.85, 2.05, 3.05, "#7c4dff")   # poster
+  bw.box(0, 0, 4.2, COLS, 2, 4.35, WALLS[1])
+  add(bw, "back-wall", 2 * 32)
+  sw = Part()
+  sw.box(0, 0, 0, 1, ROWS, 0.7, WALLS[1]); sw.box(COLS - 1, 0, 0, COLS, ROWS, 0.7, WALLS[1])
+  sw.box(0, ROWS - 1, 0, 9, ROWS, 0.7, WALLS[1]); sw.box(11, ROWS - 1, 0, COLS, ROWS, 0.7, WALLS[1])
+  sw.box(9, ROWS - 1, 0, 11, ROWS, 0.04, "#5a3f2b")   # threshold
+  add(sw, "low-walls")
+if not ONLY_THINGS:
+    room()
+
 
 def thing(t):
     n, x0, y0, w, d = t["name"], t["x"], t["y"], t["w"], t["h"]
@@ -167,7 +172,66 @@ def thing(t):
             p.ball(x0 + 0.5 + dx, y0 + 0.5 + dy, 1.3 + r * 0.6, r, r, r * 1.1, "#5aa04a")
     elif n == "lamp":
         p.cyl(x0 + 0.5, y0 + 0.5, 0, 2.6, 0.05, INK); p.cyl(x0 + 0.5, y0 + 0.5, 2.6, 3.2, 0.4, "#ffe6a8", r2=0.22)
-    add(p, t["id"], (y1) * 32)
+    elif n == "armchair":
+        p.box(x0 + 0.15, y0 + 0.3, 0, x1 - 0.15, y1 - 0.1, 0.8, "#c46a4a")
+        p.box(x0 + 0.15, y0 + 0.2, 0.8, x1 - 0.15, y0 + 0.6, 2.0, "#c46a4a")
+        p.box(x0 + 0.05, y0 + 0.2, 0, x0 + 0.4, y1 - 0.1, 1.3, "#a8553a"); p.box(x1 - 0.4, y0 + 0.2, 0, x1 - 0.05, y1 - 0.1, 1.3, "#a8553a")
+        p.ball(x0 + 1, y0 + 1.1, 0.95, 0.5, 0.4, 0.15, WHITE)
+    elif n == "beanbag":
+        p.ball(x0 + 1, y0 + 1, 0.55, 0.9, 0.85, 0.6, RUG, seg=20); p.ball(x0 + 1, y0 + 0.75, 1.0, 0.6, 0.35, 0.45, RUG, seg=16)
+    elif n == "rug":
+        p.cyl(x0 + 1.5, y0 + 1.5, 0, 0.03, 1.45, "#ffd166", seg=32); p.cyl(x0 + 1.5, y0 + 1.5, 0.03, 0.05, 1.05, RUG, seg=32); p.cyl(x0 + 1.5, y0 + 1.5, 0.05, 0.06, 0.55, WHITE, seg=32)
+    elif n == "fridge":
+        p.box(x0 + 0.15, y0 + 0.05, 0, x1 - 0.15, y1, 3.4, "#e9edf2")
+        p.box(x0 + 0.15, y1, 2.1, x1 - 0.15, y1 + 0.02, 2.14, "#9aa3ad")
+        p.box(x0 + 0.35, y1, 2.4, x0 + 0.45, y1 + 0.1, 3.1, "#9aa3ad"); p.box(x0 + 0.35, y1, 0.9, x0 + 0.45, y1 + 0.1, 1.8, "#9aa3ad")
+        p.box(x0 + 1.0, y1, 2.5, x0 + 1.3, y1 + 0.03, 2.8, "#ff7a6b")
+    elif n == "fishtank":
+        p.box(x0 + 0.1, y0 + 0.1, 0, x1 - 0.1, y1 - 0.05, 1.0, "#4a3f5a")
+        p.box(x0 + 0.15, y0 + 0.15, 1.0, x1 - 0.15, y1 - 0.1, 2.2, "#6bc6ff")
+        p.box(x0 + 0.15, y0 + 0.15, 2.2, x1 - 0.15, y1 - 0.1, 2.35, INK)
+        for fx, fz, c in ((x0 + 0.9, 1.6, "#ffb26b"), (x0 + 1.9, 1.35, "#ffd166"), (x0 + 2.2, 1.85, "#ff7a6b")):
+            p.ball(fx, y1 - 0.12, fz, 0.18, 0.05, 0.1, c, seg=10)
+        p.ball(x0 + 0.5, y1 - 0.15, 1.15, 0.2, 0.05, 0.2, "#5aa04a", seg=10)
+    elif n == "gaming":
+        p.box(x0 + 0.1, y0 + 0.1, 1.2, x1 - 0.1, y0 + 1.2, 1.32, INK)
+        for lx in (x0 + 0.2, x1 - 0.3):
+            p.box(lx, y0 + 0.2, 0, lx + 0.1, y0 + 1.1, 1.2, INK)
+        p.box(x0 + 0.5, y0 + 0.2, 1.32, x1 - 0.5, y0 + 0.3, 2.4, INK); p.box(x0 + 0.55, y0 + 0.3, 1.4, x1 - 0.55, y0 + 0.32, 2.3, "#7c4dff")
+        p.box(x0 + 0.6, y0 + 0.31, 1.6, x1 - 0.6, y0 + 0.33, 1.7, "#c6f36b")
+        p.box(x0 + 0.8, y0 + 0.6, 1.32, x1 - 0.8, y0 + 0.9, 1.38, "#ff7a6b")
+        p.box(x0 + 0.9, y1 - 0.7, 0, x1 - 0.9, y1 - 0.1, 0.9, "#c8322d"); p.box(x0 + 0.9, y1 - 0.25, 0.9, x1 - 0.9, y1 - 0.1, 2.0, "#c8322d")
+    elif n == "telescope":
+        for a in (0, 2.1, 4.2):
+            p.box(x0 + 0.5 + 0.3 * math.cos(a) - 0.03, y0 + 0.5 + 0.3 * math.sin(a) - 0.03, 0, x0 + 0.5 + 0.3 * math.cos(a) + 0.03, y0 + 0.5 + 0.3 * math.sin(a) + 0.03, 1.4, INK)
+        p.ball(x0 + 0.5, y0 + 0.5, 1.6, 0.18, 0.18, 0.5, WHITE, seg=12); p.ball(x0 + 0.5, y0 + 0.3, 2.1, 0.12, 0.12, 0.15, INK, seg=10)
+    elif n == "trophies":
+        p.box(x0 + 0.1, y0 + 0.05, 0, x1 - 0.1, y1, 3.0, "#6b4429")
+        p.box(x0 + 0.2, y1 - 0.02, 0.2, x1 - 0.2, y1, 2.8, "#cfe9f5")
+        for k, z in enumerate((0.3, 1.2, 2.1)):
+            p.box(x0 + 0.2, y0 + 0.2, z - 0.05, x1 - 0.2, y1 - 0.05, z, "#8a5a36")
+            for b in range(3):
+                bx = x0 + 0.6 + b * 0.9
+                c = ("#ffd166", "#d9d9e3", "#d08b4a")[(b + k) % 3]
+                p.cyl(bx, y0 + 0.6, z, z + 0.15, 0.12, c); p.cyl(bx, y0 + 0.6, z + 0.15, z + 0.55, 0.22, c, r2=0.1)
+    elif n == "piano":
+        p.box(x0 + 0.1, y0 + 0.1, 0, x1 - 0.1, y0 + 0.9, 2.6, INK)
+        p.box(x0 + 0.1, y0 + 0.9, 1.1, x1 - 0.1, y0 + 1.4, 1.3, INK)
+        p.box(x0 + 0.15, y0 + 0.9, 1.3, x1 - 0.15, y0 + 1.35, 1.36, WHITE)
+        for k in range(14):
+            if k % 7 in (2, 6): continue
+            kx = x0 + 0.3 + k * 0.17
+            p.box(kx, y0 + 0.9, 1.36, kx + 0.08, y0 + 1.1, 1.42, INK)
+        for lx in (x0 + 0.2, x1 - 0.3):
+            p.box(lx, y0 + 1.2, 0, lx + 0.1, y0 + 1.3, 1.1, INK)
+        p.box(x0 + 0.9, y1 - 0.5, 0, x1 - 0.9, y1 - 0.1, 0.8, "#4a3f5a")
+    elif n == "arcade":
+        p.box(x0 + 0.2, y0 + 0.05, 0, x1 - 0.2, y1, 3.6, "#7c4dff")
+        p.box(x0 + 0.3, y1, 2.0, x1 - 0.3, y1 + 0.03, 3.0, INK); p.box(x0 + 0.38, y1 + 0.03, 2.1, x1 - 0.38, y1 + 0.05, 2.9, "#c6f36b")
+        p.box(x0 + 0.2, y1, 1.5, x1 - 0.2, y1 + 0.5, 1.7, "#4a3f5a")
+        p.ball(x0 + 0.7, y1 + 0.25, 1.8, 0.08, 0.08, 0.12, "#ff7a6b", seg=8); p.ball(x0 + 1.2, y1 + 0.25, 1.75, 0.07, 0.07, 0.05, "#ffd166", seg=8)
+        p.box(x0 + 0.2, y1 - 0.2, 3.3, x1 - 0.2, y1 + 0.05, 3.6, "#ffd166")
+    add(p, t["id"], 1 if n == "rug" else (y1) * 32)
 
 for t in SCENE["things"]:
     thing(t)

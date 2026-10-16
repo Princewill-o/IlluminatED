@@ -4,10 +4,12 @@ import { memo, useEffect, useRef } from "react";
 
 import { CompanyLogo } from "../company-logo";
 import { TubeBadge } from "./tube-map";
+import FURNITURE_ART from "../../../../public/world/furniture.json";
 import HOME_ART from "../../../../public/world/home.json";
 import LONDON_ART from "../../../../public/world/london.json";
 import MOVERS from "../../../../public/world/movers.json";
 
+import { CATALOGUE_LAYOUT, STARTER_LAYOUT } from "@/game/core/homes";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
 import { TILE, type WorldMap } from "@/game/core/world";
@@ -30,6 +32,8 @@ interface Prop {
   x: number;
   y: number;
   z: number;
+  /** Which atlas set (default: the map's own). */
+  set?: "furniture";
 }
 interface Art {
   base: string;
@@ -38,6 +42,36 @@ interface Art {
   width: number;
   height: number;
   props: Prop[];
+  furnitureAtlas?: string;
+}
+
+/** Sprite templates per furniture item, with the tile each was rendered at. */
+function templates(homeProps: Prop[]) {
+  const t = new Map<string, { prop: Prop; x: number; y: number }>();
+  for (const p of STARTER_LAYOUT) {
+    const prop = homeProps.find((k) => k.id === p.key);
+    if (prop && !t.has(p.item)) t.set(p.item, { prop, x: p.x, y: p.y });
+  }
+  for (const p of CATALOGUE_LAYOUT) {
+    const prop = (FURNITURE_ART.props as Prop[]).find((k) => k.id === p.item);
+    if (prop) t.set(p.item, { prop: { ...prop, set: "furniture" }, x: p.x, y: p.y });
+  }
+  return t;
+}
+
+/** The room's own props (walls) plus each placed item, moved from where it was rendered. */
+export function homeProps(all: Prop[], layout: { key: string; item: string; x: number; y: number }[]): Prop[] {
+  const t = templates(all);
+  const starterKeys = new Set(STARTER_LAYOUT.map((p) => p.key));
+  const shell = all.filter((p) => !starterKeys.has(p.id));
+  const placed = layout.flatMap((p) => {
+    const tp = t.get(p.item);
+    if (!tp) return [];
+    const dx = (p.x - tp.x) * TILE;
+    const dy = (p.y - tp.y) * TILE;
+    return [{ ...tp.prop, id: p.key, x: tp.prop.x + dx, y: tp.prop.y + dy, z: tp.prop.z === 1 ? 1 : tp.prop.z + dy }];
+  });
+  return [...shell, ...placed];
 }
 
 /** Camera tilt used for the renders: a point z tiles up appears z*COT tiles higher. */
@@ -59,10 +93,11 @@ function artFor(map: WorldMap): Art | null {
     return {
       base: `/world/home-${style}-base.webp`,
       atlas: (i) => `/world/home-${style}-props-${i}.webp`,
+      furnitureAtlas: `/world/furniture-${style}-props-0.webp`,
       offset: h.offset,
       width: h.width,
       height: h.height,
-      props: h.props,
+      props: homeProps(h.props, map.layout ?? STARTER_LAYOUT),
     };
   }
   return null;
@@ -93,7 +128,7 @@ export const ArtScenery = memo(function ArtScenery({ map }: { map: WorldMap }) {
             top: p.y,
             width: p.w,
             height: p.h,
-            backgroundImage: `url(${art.atlas(p.a)})`,
+            backgroundImage: `url(${p.set === "furniture" && art.furnitureAtlas ? art.furnitureAtlas : art.atlas(p.a)})`,
             backgroundPosition: `-${p.sx}px -${p.sy}px`,
             zIndex: p.z,
           }}

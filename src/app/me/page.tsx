@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import {
+  Briefcase,
+  Home,
   Building2,
   ChevronRight,
   MessageCircle,
@@ -115,6 +117,8 @@ export default async function MePage() {
         rows={[
           { href: "/dashboard/settings", label: "Subjects and exam date", icon: SlidersHorizontal },
           { href: "/messages", label: "Messages", icon: MessageCircle },
+          { href: "/games/careers#cv", label: "My job, skills and CV", icon: Briefcase },
+          { href: "/games/home", label: "My home", icon: Home },
           { href: "/companies", label: "Companies and careers advice", icon: Building2 },
           { href: "/tutors", label: "My tutoring", icon: GraduationCap },
           ...(isTutor(account) ? [{ href: "/tutors/desk", label: "Tutor desk", icon: Users }] : []),
