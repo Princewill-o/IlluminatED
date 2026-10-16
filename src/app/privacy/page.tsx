@@ -311,6 +311,47 @@ export default function PrivacyPage() {
         </li>
       </ul>
 
+      <h2 id="schools">Classes, homework and schools</h2>
+      <p>
+        Teachers can create a class and share a six-character code. Joining a
+        class is your choice, and here is exactly what happens:
+      </p>
+      <ul>
+        <li>
+          <strong>Your teacher sees your username and homework scores only.</strong>{" "}
+          Never your email, real name, age, location or anything you do
+          elsewhere in IlluminatED. Use a username that isn't your real name.
+        </li>
+        <li>
+          <strong>Marking happens on our server.</strong> Answer keys are never
+          sent to your device, and we only store which option you picked, your
+          score and when you handed it in.
+        </li>
+        <li>
+          <strong>You can leave whenever you like.</strong> Leaving deletes
+          every homework answer you gave in that class straight away. A teacher
+          can also remove you, which does the same.
+        </li>
+        <li>
+          <strong>Deleting a class deletes everything in it.</strong> Deleting
+          your account deletes all your classes, homework and answers.
+        </li>
+        <li>
+          <strong>We keep homework for one academic year.</strong> We delete
+          answers and homework once they are more than 13 months old.
+        </li>
+        <li>
+          <strong>Chat in the game is preset phrases and reactions only.</strong>{" "}
+          There's no free text or voice between players, so personal details
+          can't be shared by accident.
+        </li>
+        <li>
+          Class and homework data is stored with Supabase in London (UK) and
+          encrypted in transit and at rest. Schools that want a data processing agreement can
+          ask us through the contact page.
+        </li>
+      </ul>
+
       <h2 id="share">Who we share it with</h2>
       <p>
         We use a few trusted companies (called "processors") to run the site.

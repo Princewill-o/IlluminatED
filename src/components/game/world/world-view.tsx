@@ -12,6 +12,7 @@ import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-wor
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
 
+import { doActivity } from "@/components/game/world/use-needs";
 import { EMOTES, PHRASES, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -365,6 +366,7 @@ export function WorldView({
   const sayIt = (id: string) => {
     const text = chatText(id);
     if (!text) return;
+    doActivity("wave");
     myChat.current = { text, until: Date.now() + 4500 };
     if (meBubble.current) meBubble.current.textContent = text;
     say(id);
@@ -444,7 +446,7 @@ export function WorldView({
 
       {/* HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
-        <div className="pointer-events-auto rounded-2xl bg-black/70 px-3 py-2 text-xs backdrop-blur">
+        <div className="pointer-events-auto rounded-2xl bg-black/70 px-3 py-2 text-xs text-white backdrop-blur">
           <p className="font-black">{map.name}</p>
           <button type="button" onClick={onChangeServer} className="mt-0.5 flex items-center gap-1.5 text-[#d8d4e0]" aria-label="Change server">
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
@@ -453,7 +455,7 @@ export function WorldView({
             {!map.id.startsWith("office-") && <span className="text-[#8d85a0]">· {serverById(serverId)?.name}</span>}
           </button>
         </div>
-        <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black backdrop-blur" aria-live="polite">
+        <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur" aria-live="polite">
           {others.length + 1} here
         </div>
       </div>

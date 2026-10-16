@@ -9,6 +9,7 @@ import { Lock, Play, Trophy, X } from "lucide-react";
 
 import { buyArcadeGame, finishArcadeRound } from "@/app/games/arcade/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { doActivity } from "@/components/game/world/use-needs";
 import { ARCADE, type ArcadeGame, ROUND_MS, buildRound, scoreOf } from "@/game/core/arcade";
 import { newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
@@ -103,6 +104,7 @@ function Round({ game, onClose }: { game: ArcadeGame; onClose: () => void }) {
       setResult(r.ok ? { reward: r.reward, best: r.best } : { reward: 0, best: 0, error: r.error });
       if (r.ok) {
         notifyPlayerChanged();
+        doActivity("arcade");
         router.refresh();
       }
     });

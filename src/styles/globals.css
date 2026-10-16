@@ -815,3 +815,18 @@ html.dark body:has(.app-theme) {
 @media (prefers-reduced-motion: reduce) {
   .eye-wheel { animation: none; }
 }
+
+/* Scenery sliding past the bus window. */
+@keyframes bus-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.bus-scroll {
+  animation: bus-scroll 6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bus-scroll {
+    animation: none;
+  }
+}

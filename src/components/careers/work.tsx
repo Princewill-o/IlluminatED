@@ -13,6 +13,7 @@ import { finishWorkShift, sitInterview } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { AvatarFigure } from "@/components/game/avatar";
 import { CompanyLogo } from "@/components/game/company-logo";
+import { doActivity } from "@/components/game/world/use-needs";
 import { INTERVIEW_PASS, PROMOTION, SKILLS, type Role, type Workplace, buildInterview, buildShift, roleOf, workplaceById } from "@/game/core/careers";
 import type { Avatar } from "@/game/core/cosmetics";
 import { newSeed } from "@/game/core/rng";
@@ -136,6 +137,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
       else {
         setSummary(r.data);
         notifyPlayerChanged();
+        doActivity("shift");
         router.refresh();
       }
     });

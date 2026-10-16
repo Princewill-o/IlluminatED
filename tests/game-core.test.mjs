@@ -232,8 +232,13 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
   for (const map of maps) {
     assert.ok(!W.blocked(map, map.spawn.x, map.spawn.y), `${map.id}: spawn is free`);
     for (const p of map.portals) {
-      const cx = p.rect.x + p.rect.w / 2;
-      const cy = p.rect.y + p.rect.h / 2;
+      let cx = p.rect.x + p.rect.w / 2;
+      let cy = p.rect.y + p.rect.h / 2;
+      // Bus stops are walked up to: any free spot around the stop will do.
+      if (p.to.kind === "bus")
+        for (let y = p.rect.y + 8; y < p.rect.y + p.rect.h; y += 16)
+          for (let x = p.rect.x + 8; x < p.rect.x + p.rect.w; x += 16)
+            if (W.blocked(map, cx, cy) && !W.blocked(map, x, y) && W.portalAt(map, x, y)?.id === p.id) [cx, cy] = [x, y];
       assert.ok(!W.blocked(map, cx, cy), `${map.id}: portal ${p.id} is standable`);
       assert.equal(W.portalAt(map, cx, cy)?.id, p.id, `${map.id}: portal ${p.id} triggers`);
       // Breadth-first search over a 16px grid: is there a free path from spawn to the door?
@@ -360,4 +365,29 @@ test("Careers and homes: database seeds match the game code", () => {
   for (const h of H.HOMES) assert.ok(sql.includes(`('${h.id}', ${h.price})`), `${h.id} seeded`);
   for (const f of H.FURNITURE) assert.ok(sql.includes(`('${f.id}', ${f.price}, ${f.w}, ${f.h}, ${f.starter ? "true" : "false"})`), `${f.id} seeded`);
   assert.equal(H.validLayout(H.STARTER_LAYOUT), null, "starter layout is valid");
+});
+
+test("Needs drift down, activities refill them, and bus stops are boardable", () => {
+  const N = projectData("src/game/core/needs.ts");
+  const t0 = 1_700_000_000_000;
+  const a = N.fresh(t0);
+  const later = N.decay(a, t0 + 3_600_000);
+  assert.ok(later.energy < a.energy && later.focus < a.focus, "needs fall over time");
+  assert.equal(N.decay(a, t0 + 1000 * 3_600_000).energy, N.decay(a, t0 + 12 * 3_600_000).energy, "decay caps at 12 hours");
+  const slept = N.apply({ ...a, energy: 10 }, "sleep", t0);
+  assert.equal(slept.energy, 55);
+  assert.equal(N.apply({ ...a, focus: 95 }, "bus", t0).focus, 100, "capped at 100");
+  assert.equal(N.moodWord({ ...a, energy: 5 }), "Sleepy");
+  const W = projectData("src/game/core/world.ts");
+  const stops = W.busStops();
+  assert.ok(stops.length >= 4, "several bus routes");
+  const L = W.CITY;
+  const busDoors = L.portals.filter((p) => p.to.kind === "bus");
+  assert.ok(busDoors.length >= 10, "bus stops have doors");
+  for (const s of stops) {
+    const spot = W.safeSpot(L, s.exitPx.x, s.exitPx.y);
+    assert.ok(Math.hypot(spot.x - s.exitPx.x, spot.y - s.exitPx.y) < 64, `${s.id} drop-off is next to the stop`);
+  }
+  const home = W.homeMap(0);
+  assert.ok(home.portals.some((p) => p.to.kind === "act" && p.to.activity === "sleep"), "you can sleep at home");
 });

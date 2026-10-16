@@ -32,7 +32,9 @@ export type PortalTarget =
   | { kind: "desk" }
   | { kind: "link"; href: string }
   | { kind: "tube"; station: string }
-  | { kind: "work"; workplace: string };
+  | { kind: "work"; workplace: string }
+  | { kind: "bus"; stop: string }
+  | { kind: "act"; activity: "sleep" | "eat" | "study" };
 
 export interface Portal {
   id: string;
@@ -422,6 +424,10 @@ export function londonMap(): WorldMap {
     }
     if (th.kind === "building" && th.id === "my-house")
       portals.push({ id: "my-house", rect: px(th.x + 1, th.y + th.h, 2, 1), label: "Your house", to: { kind: "map", mapId: "home", label: "Your house" } });
+    if (th.kind === "busstop") {
+      const stop = busStopFor(th.x);
+      portals.push({ id: th.id, rect: px(th.x - 1, th.y - 1, 3, 3), label: `Bus stop: ${stop.name}`, to: { kind: "bus", stop: stop.id } });
+    }
     if (th.kind === "station")
       portals.push({ id: `tube-${th.id}`, rect: px(th.x, th.y + th.h, th.w, 1), label: `${th.name} station`, to: { kind: "tube", station: th.id } });
   }
@@ -429,8 +435,8 @@ export function londonMap(): WorldMap {
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   const rows = L.tiles.map((r) => r.split(""));
-  // Doors are always walkable.
-  for (const p of portals)
+  // Doors are always walkable (bus stops are walked up to, not into).
+  for (const p of portals.filter((q) => q.to.kind !== "bus"))
     for (let y = p.rect.y / TILE; y < (p.rect.y + p.rect.h) / TILE; y++)
       for (let x = p.rect.x / TILE; x < (p.rect.x + p.rect.w) / TILE; x++) if (SOLID.has(rows[y]?.[x] ?? "")) rows[y][x] = "-";
   const cols = L.tiles[0].length;
@@ -452,6 +458,27 @@ export function londonMap(): WorldMap {
   };
 }
 
+/** London's bus routes: every stop belongs to the area it's in. */
+const BUS_AREAS = [
+  { id: "westminster", name: "Westminster", until: 15 },
+  { id: "west-end", name: "West End", until: 35 },
+  { id: "st-pauls", name: "St Paul's", until: 55 },
+  { id: "the-city", name: "The City", until: 75 },
+  { id: "tower-bridge", name: "Tower Bridge", until: 999 },
+] as const;
+const busStopFor = (x: number) => BUS_AREAS.find((a) => x < a.until)!;
+
+/** Bus destinations in London (where you get off) plus routes out of town. */
+export function busStops() {
+  const L = buildLondon();
+  const stops = L.things.filter((t) => t.kind === "busstop");
+  const city = BUS_AREAS.flatMap((a) => {
+    const s = stops.find((t) => busStopFor(t.x).id === a.id);
+    return s ? [{ id: a.id, name: a.name, route: ["88", "12", "RV1", "15", "N9"][BUS_AREAS.indexOf(a)], exitPx: { x: s.x * TILE + TILE / 2, y: (s.y + 1) * TILE + TILE / 2 } }] : [];
+  });
+  return city;
+}
+
 /** Where each Underground station lets you out (pixels). */
 export function tubeStations() {
   return buildLondon().stations.map((s) => ({ ...s, exitPx: { x: s.exit.x * TILE, y: s.exit.y * TILE } }));
@@ -469,6 +496,7 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): World
     if (f.id !== "rug" && f.id !== "petbed" && f.id !== "beanbag")
       for (let y = p.y; y < p.y + f.h; y++) for (let x = p.x; x < p.x + f.w; x++) if (t[y]?.[x] !== undefined) t[y][x] = "X";
     if (f.link) links.push({ id: `f-${p.key}`, rect: px(p.x, p.y + f.h, f.w, 1), label: f.link.label, to: { kind: "link", href: f.link.href } });
+    else if (f.act) links.push({ id: `f-${p.key}`, rect: px(p.x, p.y + f.h, f.w, 1), label: f.act.label, to: { kind: "act", activity: f.act.activity } });
   }
   return {
     id: "home",

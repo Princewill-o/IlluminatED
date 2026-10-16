@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  ClipboardList,
   Gamepad2,
   House,
   type LucideIcon,
@@ -52,7 +53,7 @@ export function isAppPath(path: string) {
 }
 
 export interface AppTab {
-  id: "home" | "learn" | "play" | "social" | "me";
+  id: "home" | "learn" | "play" | "homework" | "me";
   label: string;
   href: string;
   icon: LucideIcon;
@@ -89,6 +90,7 @@ export const APP_TABS: AppTab[] = [
     ],
   },
   { id: "play", label: "Play", href: "/games", icon: Gamepad2, match: ["/games"] },
+  { id: "homework", label: "Homework", href: "/homework", icon: ClipboardList, match: ["/homework"] },
   {
     id: "me",
     label: "Me",

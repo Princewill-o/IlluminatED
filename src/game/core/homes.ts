@@ -28,25 +28,27 @@ export interface Furniture {
   h: number;
   /** Opens a page when you walk up to it. */
   link?: { href: string; label: string };
+  /** Something you can do here (refills your needs). */
+  act?: { activity: "sleep" | "eat" | "study"; label: string };
   /** Included free with every home. */
   starter?: boolean;
 }
 
 export const FURNITURE: Furniture[] = [
-  { id: "bed", name: "Double bed", price: 0, w: 4, h: 4, starter: true },
+  { id: "bed", name: "Double bed", price: 0, w: 4, h: 4, starter: true, act: { activity: "sleep", label: "Bed: have a nap" } },
   { id: "wardrobe", name: "Wardrobe", price: 0, w: 3, h: 1, starter: true, link: { href: "/games/locker", label: "Wardrobe: change your look" } },
   { id: "shelf", name: "Bookshelf", price: 0, w: 3, h: 1, starter: true, link: { href: "/revision", label: "Bookshelf: revision notes" } },
   { id: "desk", name: "Revision desk", price: 0, w: 4, h: 2, starter: true, link: { href: "/learn", label: "Revision desk" } },
   { id: "tv", name: "TV", price: 0, w: 4, h: 1, starter: true, link: { href: "/games", label: "TV: play Promotion Panic" } },
   { id: "sofa", name: "Sofa", price: 0, w: 4, h: 2, starter: true },
-  { id: "table", name: "Coffee table", price: 0, w: 3, h: 2, starter: true },
+  { id: "table", name: "Coffee table", price: 0, w: 3, h: 2, starter: true, act: { activity: "eat", label: "Coffee table: have a snack" } },
   { id: "petbed", name: "Pet bed", price: 0, w: 2, h: 2, starter: true },
   { id: "plant", name: "Pot plant", price: 0, w: 1, h: 1, starter: true },
   { id: "lamp", name: "Floor lamp", price: 0, w: 1, h: 1, starter: true },
   { id: "armchair", name: "Armchair", price: 300, w: 2, h: 2 },
   { id: "beanbag", name: "Beanbag", price: 250, w: 2, h: 2 },
   { id: "rug", name: "Round rug", price: 200, w: 3, h: 3 },
-  { id: "fridge", name: "Fridge", price: 500, w: 2, h: 1 },
+  { id: "fridge", name: "Fridge", price: 500, w: 2, h: 1, act: { activity: "eat", label: "Fridge: make some food" } },
   { id: "fishtank", name: "Fish tank", price: 800, w: 3, h: 1 },
   { id: "gaming", name: "Gaming setup", price: 900, w: 3, h: 2, link: { href: "/games/world", label: "Gaming setup: Worlds" } },
   { id: "telescope", name: "Telescope", price: 1200, w: 1, h: 1 },

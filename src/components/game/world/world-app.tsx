@@ -6,7 +6,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { play, soundOn } from "../sound";
+import { BusStop, type BusTrip } from "./bus-stop";
+import { LifeHud, type Quest } from "./life-hud";
 import { TubeMap, type TubeTrip } from "./tube-map";
+import { doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
 
@@ -24,6 +27,7 @@ import {
   SERVER_CAPACITY,
   type WorldMap,
   campusMap,
+  busStops,
   homeMap,
   tubeStations,
   guessRegion,
@@ -38,6 +42,7 @@ import { cn } from "@/lib/utils";
 const REGION_KEY = "world-region";
 
 const STATIONS = tubeStations();
+const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
@@ -65,6 +70,8 @@ export function WorldApp({
   initialServer,
   job,
   home,
+  clout,
+  quests,
 }: {
   me: Me;
   offices: OfficeOrg[];
@@ -76,6 +83,8 @@ export function WorldApp({
   job: ActiveJob | null;
   /** Your home's colourway and furniture layout. */
   home: { style: number; layout: Placed[] };
+  clout: number;
+  quests: Quest[];
 }) {
   HOME = home;
   const router = useRouter();
@@ -88,6 +97,7 @@ export function WorldApp({
   const [arrive, setArrive] = useState<{ x: number; y: number } | undefined>();
   const [desk, setDesk] = useState(false);
   const [work, setWork] = useState<string | null>(null);
+  const [bus, setBus] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -130,7 +140,14 @@ export function WorldApp({
     (portal: Portal) => {
       const to = portal.to;
       if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
-      else if (to.kind === "link") router.push(to.href);
+      else if (to.kind === "link") {
+        if (to.href === "/learn") doActivity("study");
+        router.push(to.href);
+      } else if (to.kind === "bus") setBus(to.stop);
+      else if (to.kind === "act") {
+        play("door", soundOn());
+        doActivity(to.activity);
+      }
       else if (to.kind === "desk") setDesk(true);
       else if (to.kind === "tube") setTube(to.station);
       else if (to.kind === "work") setWork(to.workplace);
@@ -186,6 +203,36 @@ export function WorldApp({
           setMindGap(false);
         }, 650);
       }, 700);
+    },
+    [offices, me.id],
+  );
+
+  // Riding the bus: to another stop in London, home, or the Careers Campus.
+  const busRide = useCallback(
+    (t: BusTrip, revised: boolean) => {
+      setBus(null);
+      if (revised) doActivity("bus");
+      let dest = "city";
+      let spot: { x: number; y: number } | undefined;
+      if (t.kind === "stop") {
+        const st = BUS_STOPS.find((s) => s.id === t.id);
+        if (!st) return;
+        spot = safeSpot(CITY, st.exitPx.x, st.exitPx.y);
+      } else {
+        dest = t.mapId;
+        const next = loadMap(dest, offices, me.id);
+        if (!next) return;
+        spot = next.spawn;
+      }
+      play("train", soundOn());
+      setFading(true);
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      fadeTimer.current = setTimeout(() => {
+        setArrive(spot);
+        setMapId(dest);
+        setTrip((n) => n + 1);
+        fadeTimer.current = setTimeout(() => setFading(false), 500);
+      }, 500);
     },
     [offices, me.id],
   );
@@ -317,6 +364,8 @@ export function WorldApp({
         </Link>
       )}
       {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
+      {bus && <BusStop here={bus} stops={BUS_STOPS} onGo={busRide} onClose={() => setBus(null)} />}
+      <LifeHud avatar={me.avatar} name={me.username} clout={clout} quests={quests} />
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
