@@ -870,3 +870,19 @@ html.dark body:has(.app-theme) {
     animation: none;
   }
 }
+
+/* Bus journeys: parallax street, bobbing bus, spinning wheels. */
+@keyframes journey-scroll { to { transform: translateX(-50%); } }
+.journey-far { animation: journey-scroll 28s linear infinite; }
+.journey-mid { animation: journey-scroll 9s linear infinite; }
+.journey-near { animation: journey-scroll 2.2s linear infinite; }
+.journey-lamps { animation: journey-scroll 4s linear infinite; }
+@keyframes bus-bob { 0%, 100% { translate: -50% 0; } 50% { translate: -50% -2px; } }
+.journey-bus { transform: none; animation: bus-bob 0.5s ease-in-out infinite; }
+@keyframes wheel-spin { to { transform: rotate(360deg); } }
+.journey-wheel { border-top-color: #f6f2e8; animation: wheel-spin 0.5s linear infinite; }
+@keyframes carriage-sway { 0%, 100% { transform: translateX(0) rotate(0); } 30% { transform: translateX(-3px) rotate(-0.3deg); } 70% { transform: translateX(3px) rotate(0.3deg); } }
+.carriage-sway { animation: carriage-sway 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .journey-far, .journey-mid, .journey-near, .journey-lamps, .journey-bus, .journey-wheel, .carriage-sway { animation: none; }
+}

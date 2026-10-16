@@ -4,9 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Bus, Home, Briefcase, X } from "lucide-react";
 
+import { BusJourneyScene, BusRide } from "./transport";
+
 import { ARCADE } from "@/game/core/arcade";
 import { createRng, newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
+
 
 export type BusTrip = { kind: "stop"; id: string; name: string } | { kind: "map"; mapId: string; label: string };
 
@@ -21,6 +24,7 @@ export function BusStop({ here, stops, onGo, onClose, homework = [] }: { here: s
   const current = stops.find((s) => s.id === here);
   const [revise, setRevise] = useState(true);
   const [riding, setRiding] = useState<BusTrip | null>(null);
+  const [cruising, setCruising] = useState<(BusTrip & { route: string }) | null>(null);
   const mins = (i: number) => ((new Date().getMinutes() + i * 4) % 9) + 1;
   const trips: (BusTrip & { route: string })[] = [
     ...stops.filter((s) => s.id !== here).map((s) => ({ kind: "stop" as const, id: s.id, name: s.name, route: s.route })),
@@ -28,6 +32,10 @@ export function BusStop({ here, stops, onGo, onClose, homework = [] }: { here: s
     { kind: "map", mapId: "campus", label: "Careers Campus", route: "C1" },
   ];
 
+  if (cruising) {
+    const c = cruising;
+    return <BusRide route={c.route} to={c.kind === "stop" ? c.name : c.label} onArrive={() => onGo(c, false)} />;
+  }
   if (riding) return <Commute trip={riding} homework={homework} onArrive={(ok) => onGo(riding, ok)} />;
 
   return (
@@ -73,7 +81,7 @@ export function BusStop({ here, stops, onGo, onClose, homework = [] }: { here: s
             <li key={t.kind === "stop" ? t.id : t.mapId}>
               <button
                 type="button"
-                onClick={() => (revise ? setRiding(t) : onGo(t, false))}
+                onClick={() => (revise ? setRiding(t) : setCruising(t))}
                 className="flex w-full items-center gap-3 rounded-2xl border-2 border-white bg-white/70 px-3 py-2.5 text-left font-bold hover:border-[#1f4fbf]"
               >
                 <span className="grid h-7 min-w-10 place-items-center rounded-md bg-[#c8322d] px-1.5 text-xs font-black text-white">{t.route}</span>
@@ -116,17 +124,11 @@ function Commute({ trip, onArrive, homework }: { trip: BusTrip; onArrive: (revis
   return (
     <div className="absolute inset-0 z-[100000] grid place-items-center bg-[#13203a]/85 p-4">
       <div role="dialog" aria-label="On the bus" className="w-full max-w-md overflow-hidden rounded-3xl bg-[#f7f1e6] text-[#13203a]">
-        <div className="relative h-24 overflow-hidden bg-[#9fd2ef]">
-          <div className="bus-scroll absolute inset-y-0 left-0 flex w-[200%] items-end gap-6 pb-2 opacity-70">
-            {Array.from({ length: 16 }, (_, k) => (
-              <span key={k} className="rounded-t-md bg-[#13203a]/40" style={{ width: 30 + ((k * 17) % 40), height: 30 + ((k * 23) % 50) }} />
-            ))}
-          </div>
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[#c8322d] px-4 py-2 text-sm font-black text-white">
+        <div className="relative">
+          <BusJourneyScene route={trip.kind === "stop" ? (trip as BusTrip & { route?: string }).route ?? "BL1" : "BL1"} to={name} className="h-44" />
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[#c8322d] px-4 py-1.5 text-sm font-black text-white">
             <span>Next stop: {name}</span>
-            <span>
-              {i + 1 > 3 ? 3 : i + 1}/3
-            </span>
+            <span>{i + 1 > 3 ? 3 : i + 1}/3</span>
           </div>
         </div>
         <div className="p-5">

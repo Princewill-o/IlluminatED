@@ -152,11 +152,101 @@ export function TrainJourney({ to, onArrive }: { to: string; onArrive: () => voi
       {[22, 50, 78].map((l) => (
         <div key={l} className="absolute top-0 bottom-[8%] w-2 rounded bg-[#ffd166]" style={{ left: `${l}%` }} />
       ))}
+      {/* Passengers on the seats, swaying with the train. */}
+      <div className="carriage-sway absolute inset-x-[6%] top-[38%] flex h-[20%] items-end justify-around">
+        {Array.from({ length: 7 }, (_, k) => (
+          <div key={k} className="flex flex-col items-center" style={{ opacity: k === 3 ? 0 : 1 }}>
+            <span className="size-7 rounded-full border-2 border-[#13203a]" style={{ background: ["#f1c7a2", "#8d5a3b", "#c58c62", "#5a3a28", "#e8b48c", "#a46a45", "#f3d2b3"][k] }} />
+            <span className="mt-0.5 h-10 w-12 rounded-t-2xl border-2 border-[#13203a]" style={{ background: ["#2b5fd9", "#d4536a", "#15987f", "#e98a1f", "#7a5ce6", "#13203a", "#6cc04a"][k] }} />
+          </div>
+        ))}
+      </div>
+      {/* Line diagram: where you are on the journey. */}
+      <div className="absolute inset-x-[10%] bottom-[22%] h-2 rounded-full bg-[#13203a]/20">
+        <div className={cn("h-full rounded-full bg-[#c8322d] transition-[width] duration-[1800ms] ease-in-out", stage === 0 ? "w-[30%]" : "w-full")} />
+        <span className="absolute -top-1.5 left-0 size-5 rounded-full border-4 border-[#13203a] bg-white" />
+        <span className="absolute -top-1.5 right-0 size-5 rounded-full border-4 border-[#13203a] bg-white" />
+      </div>
       <div className="absolute top-[3%] left-1/2 w-[min(90%,520px)] -translate-x-1/2 rounded-lg bg-black px-4 py-2 text-center font-mono text-sm font-black tracking-wide text-[#ffb020]">
         {stage === 0 ? `This train is for ${to}` : `Next station: ${to}. Please mind the gap.`}
       </div>
       <div className="absolute bottom-[10%] left-1/2 -translate-x-1/2 rounded-2xl bg-white/90 px-4 py-2 text-sm font-black text-[#13203a]">
         {stage === 0 ? "Departing..." : "Arriving..."}
+      </div>
+    </div>
+  );
+}
+
+/** Side-on London street scene with our double-decker driving through it (parallax layers). */
+export function BusJourneyScene({ route, to, className = "h-40" }: { route: string; to: string; className?: string }) {
+  const far = ["#b9c6dd", "#a9b8d3"];
+  return (
+    <div aria-hidden className={cn("relative overflow-hidden bg-gradient-to-b from-[#9fd2ef] to-[#d8eef8]", className)}>
+      {/* Far skyline: landmarks */}
+      <div className="journey-far absolute inset-x-0 bottom-10 flex h-24 w-[200%] items-end gap-10 pl-6">
+        {[0, 1].map((k) => (
+          <div key={k} className="flex w-1/2 items-end gap-10">
+            <span className="block h-20 w-5 rounded-t-sm" style={{ background: far[0] }} />
+            <span className="block h-14 w-16 rounded-t-[40px]" style={{ background: far[1] }} />
+            <span className="block h-24 w-6 [clip-path:polygon(50%_0,100%_100%,0_100%)]" style={{ background: far[0] }} />
+            <span className="block size-16 rounded-full border-[5px]" style={{ borderColor: far[1] }} />
+            <span className="block h-12 w-24" style={{ background: far[0] }} />
+            <span className="block h-[72px] w-8 rounded-t-full" style={{ background: far[1] }} />
+          </div>
+        ))}
+      </div>
+      {/* Mid: terraces and shops */}
+      <div className="journey-mid absolute inset-x-0 bottom-8 flex h-16 w-[200%] items-end">
+        {Array.from({ length: 24 }, (_, k) => (
+          <span key={k} className="relative block shrink-0" style={{ width: 60 + ((k * 13) % 30), height: 34 + ((k * 17) % 30), background: ["#e3a66a", "#c76b4f", "#f2d9a6", "#a7b8c8"][k % 4] }}>
+            <span className="absolute top-2 left-2 h-2 w-3 bg-[#13203a]/40" />
+            <span className="absolute top-2 right-2 h-2 w-3 bg-[#13203a]/40" />
+          </span>
+        ))}
+      </div>
+      {/* Road and lamp posts */}
+      <div className="absolute inset-x-0 bottom-0 h-8 bg-[#55596a]" />
+      <div className="journey-near absolute inset-x-0 bottom-3 h-1 w-[200%] [background:repeating-linear-gradient(90deg,#f6f2e8_0_26px,transparent_26px_64px)]" />
+      <div className="journey-lamps absolute inset-x-0 bottom-8 flex h-24 w-[200%] items-end justify-around">
+        {Array.from({ length: 8 }, (_, k) => (
+          <span key={k} className="relative block h-20 w-1.5 bg-[#2a2733]">
+            <span className="absolute -top-1 -left-1.5 block size-3.5 rounded-full bg-[#ffd166]" />
+          </span>
+        ))}
+      </div>
+      {/* The bus */}
+      <div className="journey-bus absolute bottom-2 left-1/2 h-[96px] w-[172px] -translate-x-1/2">
+        <div className="absolute inset-x-0 top-0 bottom-3 rounded-t-[14px] rounded-b-md border-2 border-[#15151c] bg-[#d4241f]">
+          <div className="absolute inset-x-2 top-2.5 h-6 rounded-sm bg-[#1f2633]">
+            {[10, 40, 70, 100, 130].map((x, k) => (
+              <span key={x} className="absolute bottom-0 size-3 rounded-t-full" style={{ left: x, background: ["#f1c7a2", "#8d5a3b", "#c58c62", "#5a3a28", "#e8b48c"][k] }} />
+            ))}
+          </div>
+          <div className="absolute inset-x-2 top-11 right-10 h-6 rounded-sm bg-[#1f2633]" />
+          <div className="absolute top-11 right-2 h-11 w-6 rounded-sm bg-[#1f2633]" />
+          <div className="absolute top-0.5 right-1 rounded-sm bg-[#15151c] px-1 font-mono text-[9px] leading-tight font-black text-[#ffb020]">{route}</div>
+        </div>
+        <span className="journey-wheel absolute bottom-0 left-6 size-7 rounded-full border-[5px] border-[#15151c] bg-[#8b8f9c]" />
+        <span className="journey-wheel absolute right-7 bottom-0 size-7 rounded-full border-[5px] border-[#15151c] bg-[#8b8f9c]" />
+      </div>
+      <div className="absolute top-2 left-2 rounded-md bg-[#15151c] px-2 py-0.5 font-mono text-xs font-black text-[#ffb020]">
+        {route} to {to}
+      </div>
+    </div>
+  );
+}
+
+/** Riding without revising: a few seconds of the journey, then you're there. */
+export function BusRide({ route, to, onArrive }: { route: string; to: string; onArrive: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onArrive, 3600);
+    return () => clearTimeout(t);
+  }, [onArrive]);
+  return (
+    <div className="absolute inset-0 z-[100002] grid place-items-center bg-[#13203a]/85 p-4" role="status" aria-live="polite">
+      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-[#f7f1e6]">
+        <BusJourneyScene route={route} to={to} className="h-56" />
+        <p className="p-4 text-center font-black text-[#13203a]">Next stop: {to}</p>
       </div>
     </div>
   );

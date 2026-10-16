@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudRain, Sun } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudRain, MapPin, Sun } from "lucide-react";
 
 import { useNeeds } from "./use-needs";
 
@@ -26,7 +26,7 @@ export interface Quest {
 const card = "pointer-events-auto rounded-2xl border-2 border-white bg-[#f7f1e6]/95 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] backdrop-blur";
 
 /** The Sims-style overlay: today's tasks, the clock and weather, money, and your needs. */
-export function LifeHud({ avatar, name, clout, quests }: { avatar: Avatar; name: string; clout: number; quests: Quest[] }) {
+export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Avatar; name: string; clout: number; quests: Quest[]; onLocate?: (q: Quest) => boolean }) {
   const { needs, last } = useNeeds();
   const [now, setNow] = useState<Date | null>(null);
   const [open, setOpen] = useState(true);
@@ -71,6 +71,11 @@ export function LifeHud({ avatar, name, clout, quests }: { avatar: Avatar; name:
                     </Link>
                   ) : (
                     <span className="flex items-start gap-2">{body}</span>
+                  )}
+                  {onLocate && !q.done && (
+                    <button type="button" onClick={() => onLocate(q)} className="mt-0.5 ml-6 flex items-center gap-1 text-[10px] font-black text-[#2b5fd9]">
+                      <MapPin className="size-3" aria-hidden /> Show me where
+                    </button>
                   )}
                 </li>
               );

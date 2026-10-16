@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { play, soundOn } from "../sound";
 import { BusStop, type BusTrip } from "./bus-stop";
+import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { GamesHall } from "./games-hall";
 import { LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
@@ -113,6 +114,9 @@ export function WorldApp({
   const [fading, setFading] = useState(false);
   const [sceneName, setSceneName] = useState("London");
   const [tutorial, setTutorial] = useState(false);
+  const [waypoint, setWaypoint] = useState<Place | null>(null);
+  const [mapOpen, setMapOpen] = useState(false);
+  const arrived = useCallback(() => setWaypoint(null), []);
   useEffect(() => {
     try {
       if (!localStorage.getItem(TUTORIAL_KEY)) setTutorial(true);
@@ -456,7 +460,18 @@ export function WorldApp({
       )}
       {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} />}
-      <LifeHud avatar={me.avatar} name={me.username} clout={wallet} quests={quests} />
+      <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
+        quests={quests}
+        onLocate={(q) => {
+          const kind = placeForTask(q.tag, q.title);
+          if (!kind) return false;
+          if (mapId !== "city") return false;
+          setWaypoint(nearest(kind));
+          return true;
+        }}
+      />
+      {mapId === "city" && <MiniMap waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
+      {mapOpen && <CityMap waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
