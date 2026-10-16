@@ -24,9 +24,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed">
-            Revision, progress tracking and tutors for learners in the UK. Apps
-            for iPhone and Android are coming soon.
-          </p>
+            The revision game for students, schools, colleges and sixth forms in the UK. </p>
         </div>
         {signedIn ? (
           <nav

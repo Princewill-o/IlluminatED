@@ -346,25 +346,14 @@ export function Reveal({
 
 export function CtaButtons({ center }: { center?: boolean }) {
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-3",
-        center && "justify-center",
-      )}
-    >
+    <div className={cn("flex flex-wrap items-center gap-3", center && "justify-center")}>
       <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-        <Link
-          href="/sign-in?mode=sign-up"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-12 items-center rounded-full px-6 text-base font-semibold"
-        >
-          Create your free account
+        <Link href="/book" className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-12 items-center rounded-full px-6 text-base font-semibold">
+          Book a demo
         </Link>
       </motion.div>
-      <Link
-        href="/sign-in?next=/dashboard"
-        className="hover:bg-muted inline-flex h-12 items-center gap-2 rounded-full border px-6 text-base font-semibold"
-      >
-        Open the web app <span aria-hidden>→</span>
+      <Link href="/sign-in" className="hover:bg-muted inline-flex h-12 items-center gap-2 rounded-full border px-6 text-base font-semibold">
+        Log in <span aria-hidden>→</span>
       </Link>
     </div>
   );

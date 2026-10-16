@@ -28,16 +28,15 @@ export const Navbar = () => {
           <div className="flex items-center gap-2">
             <Link
               href="/sign-in"
-              className="hover:bg-muted hidden h-9 items-center rounded-full px-4 text-sm font-semibold sm:inline-flex"
+              className="hover:bg-muted inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold"
             >
-              Sign in
+              Log in
             </Link>
             <Link
-              href="/sign-in?mode=sign-up"
+              href="/book"
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold"
             >
-              <span className="sm:hidden">Join free</span>
-              <span className="hidden sm:inline">Create free account</span>
+              Book a demo
             </Link>
           </div>
         ) : (

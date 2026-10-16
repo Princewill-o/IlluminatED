@@ -34,7 +34,7 @@ const HOW = [
   },
   {
     t: "Accounts",
-    d: "A free account unlocks the revision pages, quizzes, flashcards and your dashboard, and works on IlluminatEDSocial too. It's for ages 13 and over. See our privacy policy for what we store.",
+    d: "Accounts are set up after a short demo call, for individual students (a monthly subscription) or for a whole school, college or sixth form (bundle pricing). It's for ages 13 and over. See our privacy policy for what we store.",
   },
 ];
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About IlluminatED"
-        intro="A free study site for secondary and post-16 learners in the UK. Create a free account to get started. No adverts."
+        intro="A revision game for students, schools, colleges and sixth forms in the UK. Book a demo to get started. No adverts."
         crumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
       />
       <Section rule={false}>

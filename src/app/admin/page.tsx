@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { inviteEmail, setDemoStatus } from "./actions";
+
 import { PageHeader, Section, Note } from "@/components/kit";
 import { getSupabase , getViewer } from "@/lib/social/server";
 
@@ -31,12 +33,55 @@ export default async function AdminPage() {
   const { data, error } = await sb.rpc("platform_admin_overview", { p_page: 0, p_search: "" });
   if (error) return <><PageHeader title="Platform admin" intro="The admin overview is temporarily unavailable."/><Section rule={false}><Note>Refresh this page. If the problem continues, use billing support to report it.</Note></Section></>;
   const o = data as Overview;
+  const [{ data: demos }, { data: invites }] = await Promise.all([
+    sb.from("demo_requests").select("*").order("created_at", { ascending: false }).limit(50),
+    sb.from("access_invites").select("email, note, created_at").order("created_at", { ascending: false }).limit(50),
+  ]);
   const totals = [
     ["All users", o.totals.users], ["Premium access", o.totals.premium], ["Paying now", o.totals.paying], ["Trials", o.totals.trial], ["Payment issues", o.totals.paymentIssues], ["New in 30 days", o.totals.new30],
   ];
   return <>
     <PageHeader title="Platform admin" intro={`Private overview for ${viewer.email ?? "the owner"}.`}/>
     <Section rule={false}>
+      <div className="mb-10 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+        <div>
+          <h2 className="text-xl font-bold">Demo requests</h2>
+          <ul className="mt-3 space-y-3">
+            {(demos ?? []).map((d: Record<string, string | number | null>) => (
+              <li key={String(d.id)} className="rounded-2xl border p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">{d.name} · <a className="underline" href={`mailto:${d.email}`}>{d.email}</a></p>
+                  <form action={setDemoStatus} className="flex items-center gap-2">
+                    <input type="hidden" name="id" value={String(d.id)} />
+                    <select name="status" defaultValue={String(d.status)} className="rounded-lg border bg-background px-2 py-1">
+                      {["new", "booked", "invited", "closed"].map((s) => <option key={s}>{s}</option>)}
+                    </select>
+                    <button className="rounded-lg border px-2 py-1">Save</button>
+                  </form>
+                </div>
+                <p className="mt-1 text-muted-foreground">{d.role} · {d.organisation_type}{d.organisation ? ` · ${d.organisation}` : ""}{d.learners ? ` · ${d.learners} learners` : ""} · {date(String(d.created_at))}</p>
+                {d.times && <p className="mt-1">Times: {d.times}</p>}
+                {d.message && <p className="mt-1">{d.message}</p>}
+              </li>
+            ))}
+            {(demos ?? []).length === 0 && <Note>No demo requests yet.</Note>}
+          </ul>
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">Give access</h2>
+          <p className="mt-1 text-sm text-muted-foreground">New accounts can only finish setting up if their email is here. Existing users keep access.</p>
+          <form action={inviteEmail} className="mt-3 space-y-2">
+            <input name="email" type="email" required placeholder="student@school.org.uk" className="w-full rounded-xl border bg-background px-3 py-2" />
+            <input name="note" placeholder="Note (e.g. Kingston College, 12C)" className="w-full rounded-xl border bg-background px-3 py-2" />
+            <button className="rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground">Invite</button>
+          </form>
+          <ul className="mt-4 space-y-1 text-sm">
+            {(invites ?? []).map((i: Record<string, string | null>) => (
+              <li key={String(i.email)} className="flex justify-between border-b py-2"><span>{i.email}</span><span className="text-muted-foreground">{i.note}</span></li>
+            ))}
+          </ul>
+        </div>
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{totals.map(([label,value]) => <div key={label} className="rounded-2xl border p-5"><p className="text-muted-foreground text-sm">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div>)}</div>
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <div><h2 className="text-xl font-bold">Recent accounts</h2><div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-3">Account</th><th className="p-3">Plan</th><th className="p-3">Progress</th></tr></thead><tbody>{o.users.map(u => <tr key={u.id} className="border-b"><td className="p-3"><p>{u.email ?? u.username ?? "—"}</p><p className="text-muted-foreground text-xs">Joined {date(u.created_at)}</p></td><td className="p-3">{u.plan}<p className="text-muted-foreground text-xs">{u.billing_status}</p></td><td className="p-3">{u.answers} answers{u.accuracy === null ? "" : ` · ${u.accuracy}%`}</td></tr>)}</tbody></table></div></div>

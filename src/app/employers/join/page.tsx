@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Verify your company" };
 
 export default async function EmployerJoinPage() {
   const viewer = await getViewer();
-  if (!viewer) redirect("/sign-in?mode=sign-up&next=/employers/join");
+  if (!viewer) redirect("/sign-in?next=/employers/join");
   if (await myMembership(viewer.id)) redirect("/employers/office");
   return (
     <div className="container max-w-xl py-10 md:py-16">

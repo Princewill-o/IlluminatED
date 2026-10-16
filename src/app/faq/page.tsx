@@ -145,7 +145,7 @@ const FAQ: { group: string; items: { q: string; a: React.ReactNode }[] }[] = [
     items: [
       {
         q: "Do I need an account?",
-        a: "Yes, but it's free. A free account unlocks the topic pages, quizzes, flashcards, planner and your dashboard of progress by topic. It also lets you request a tutor and post on IlluminatEDSocial. You need to be 13 or over.",
+        a: "Yes. Accounts are set up after a short demo call: individual students pay a monthly subscription, and schools, colleges and sixth forms get cheaper bundle pricing. Book a demo at illumed.co.uk/book. You need to be 13 or over.",
       },
       {
         q: "Will my progress sync to my phone?",

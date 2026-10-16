@@ -89,7 +89,7 @@ export default async function ChallengePage({
                 href={playHref}
                 className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]"
               >
-                {viewer ? "Accept the challenge →" : "Join free and accept →"}
+                {viewer ? "Accept the challenge →" : "Log in to accept →"}
               </Link>
               <Link
                 href="/"

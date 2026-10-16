@@ -36,6 +36,7 @@ const PUBLIC_PATHS = [
   "/employers",
   "/guardian/messages",
   "/creators",
+  "/book",
 ];
 
 /** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
@@ -57,6 +58,9 @@ const isPublic = (path: string) =>
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  // Accounts are set up after a demo call: send would-be sign-ups to book one.
+  if ((path === "/sign-in" || path === "/sign-in/") && ["sign-up", "signup", "register"].includes(request.nextUrl.searchParams.get("mode") ?? ""))
+    return NextResponse.redirect(new URL("/book", request.url));
   // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();
   let response = NextResponse.next({ request });

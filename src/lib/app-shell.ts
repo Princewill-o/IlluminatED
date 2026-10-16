@@ -42,6 +42,7 @@ const WEBSITE_PATHS = new Set([
   "/employers/join",
   "/guardian/messages",
   "/creators",
+  "/book",
 ]);
 
 export function isAppPath(path: string) {
