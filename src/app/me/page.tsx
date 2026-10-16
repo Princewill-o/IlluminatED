@@ -38,13 +38,15 @@ function Group({ title, rows }: { title: string; rows: Row[] }) {
   return (
     <section className="mt-6">
       <h2 className="text-muted-foreground px-1 text-xs font-bold tracking-widest uppercase">{title}</h2>
-      <ul className="bg-card mt-2 divide-y divide-border overflow-hidden rounded-3xl border">
+      <ul className="bg-card mt-2 divide-y divide-border overflow-hidden rounded-3xl border-2 border-white shadow-[0_4px_0_rgba(19,32,58,0.08)]">
         {rows.map((r) => {
           const Icon = r.icon;
           return (
             <li key={r.href}>
               <Link href={r.href} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-hover active:bg-foreground/[0.08]">
-                <Icon className="text-primary size-5 shrink-0" aria-hidden />
+                <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#dde8fd] text-[#2b5fd9]">
+                  <Icon className="size-5" aria-hidden />
+                </span>
                 <span className="font-semibold">{r.label}</span>
                 {r.note && <span className="text-muted-foreground ml-auto text-sm">{r.note}</span>}
                 <ChevronRight className={`text-muted-foreground size-4 shrink-0 ${r.note ? "" : "ml-auto"}`} aria-hidden />
@@ -65,7 +67,7 @@ export default async function MePage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 pt-5 pb-8 md:pt-10">
-      <section className="overflow-hidden rounded-3xl bg-brand text-white">
+      <section className="relative overflow-hidden rounded-[2rem] bg-[#2b5fd9] text-white shadow-[0_6px_0_rgba(19,32,58,0.18)] [background-image:radial-gradient(circle_at_85%_10%,rgba(242,217,166,0.35),transparent_45%)]">
         <div className="flex items-end gap-4 px-5 pt-5">
           <AvatarFigure avatar={player.avatar} size={150} showPet={false} className="-mb-1 shrink-0" />
           <div className="min-w-0 pb-5">

@@ -461,9 +461,62 @@ def station(t):
     p.box(x1 - 0.15, y1 + 0.32, 2.62, x1 + 0.85, y1 + 0.38, 2.8, "#c6f36b")
     add(p, t["id"], (t["y"] + t["h"]) * 32)
 
+# ── Highlands and other regions: mountains, pines, rocks, campsite ─────────
+NATURE = "nature-kit/"
+def mountain(t):
+    """Stepped voxel mountain: grass on the lower slopes, rock above, snow on top."""
+    x0, y0, w, d, peak = t["x"], t["y"], t["w"], t["h"], t["peak"]
+    cx, cy = x0 + w / 2, y0 + d / 2
+    p = Part()
+    seed = x0 * 31 + y0 * 17
+    for y in range(y0, y0 + d):
+        for x in range(x0, x0 + w):
+            dd = math.hypot((x + 0.5 - cx) / (w / 2), (y + 0.5 - cy) / (d / 2))
+            if dd > 1:
+                continue
+            n = math.sin(x * 0.9 + seed) * 0.35 + math.cos(y * 1.3 + seed) * 0.35
+            h = max(0.4, peak * (1 - dd ** 1.25) + n)
+            h = round(h * 2) / 2
+            f = h / peak
+            colour = "#f4f6fa" if f > 0.72 else ("#9a98a2" if f > 0.42 else ("#8c8a93" if f > 0.3 else ("#7fb35e" if (x + y) % 3 else "#74a956")))
+            p.box(x, y, 0, x + 1, y + 1, h, colour)
+            if 0.42 < f <= 0.72 and (x * 7 + y) % 11 == 0:
+                p.box(x + 0.2, y + 0.2, h, x + 0.8, y + 0.8, h + 0.35, "#86848d")
+    extra = []
+    for k in range(3):
+        a = (seed + k * 2.1)
+        rx = cx + math.cos(a) * w * 0.42
+        ry = cy + abs(math.sin(a)) * d * 0.4
+        extra.append(place(NATURE + f"tree_pineTall{'ABCD'[k % 4]}.glb", rx - 0.7, ry - 0.7, 1.4, 1.4, f"{t['id']}-p{k}"))
+    add(p, t["id"], (y0 + d) * 32, extra)
+
+def nature(t):
+    x, y, k = t["x"], t["y"], t["kind"]
+    seed = x * 7 + y * 3
+    p = Part()
+    extra = []
+    if k == "pine":
+        m = ["tree_pineTallA.glb", "tree_pineRoundB.glb", "tree_pineDefaultA.glb", "tree_pineTallC.glb", "tree_pineRoundD.glb"][seed % 5]
+        extra.append(place(NATURE + m, x - 0.25, y - 0.25, 1.5, 1.5, t["id"] + "-k"))
+    elif k == "rock":
+        extra.append(place(NATURE + f"rock_large{'ABCDEF'[seed % 6]}.glb", x + 0.05, y + 0.05, 0.9, 0.9, t["id"] + "-k"))
+    elif k == "flower":
+        m = ["flower_redA.glb", "flower_yellowB.glb", "flower_purpleA.glb", "flower_yellowA.glb"][seed % 4]
+        extra.append(place(NATURE + m, x + 0.25, y + 0.25, 0.5, 0.5, t["id"] + "-k"))
+    elif k == "tent":
+        extra.append(place(NATURE + "tent_detailedOpen.glb", x + 0.1, y + 0.1, 1.8, 1.8, t["id"] + "-k"))
+    elif k == "campfire":
+        extra.append(place(NATURE + "campfire_stones.glb", x + 0.1, y + 0.1, 0.8, 0.8, t["id"] + "-k"))
+    p.box(x + 0.45, y + 0.45, 0.0, x + 0.55, y + 0.55, 0.01, GRASS)
+    add(p, t["id"], (y + (2 if k == "tent" else 1)) * 32 - 6, extra)
+
 for t in SCENE["things"]:
     k = t["kind"]
-    if k == "building":
+    if k == "mountain":
+        mountain(t)
+    elif k in ("pine", "rock", "flower", "tent", "campfire"):
+        nature(t)
+    elif k == "building":
         building(t)
     elif k == "landmark":
         landmark(t)

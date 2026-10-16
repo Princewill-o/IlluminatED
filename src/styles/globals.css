@@ -780,7 +780,7 @@ html.dark body:has(.app-theme) {
 /* Flat colours only in the app. */
 /* Flat colours only in the app: soft gradient panels become a soft flat panel, and
    strong ones (which carry white text) become flat brand purple. */
-.app-theme :not(.arcade *)[class*="bg-gradient-to-"] {
+.app-theme :not(.arcade *)[class*="bg-gradient-to-"]:not([class*="from-[#13203a]"]):not([class*="from-[#9fd2ef]"]) {
   background-image: none;
   background-color: var(--secondary);
   border-color: var(--border);

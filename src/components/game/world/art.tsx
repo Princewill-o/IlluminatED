@@ -5,6 +5,7 @@ import { memo, useEffect, useRef } from "react";
 import { CompanyLogo } from "../company-logo";
 import { TubeBadge } from "./tube-map";
 import FURNITURE_ART from "../../../../public/world/furniture.json";
+import HIGHLANDS_ART from "../../../../public/world/highlands.json";
 import HOME_ART from "../../../../public/world/home.json";
 import LONDON_ART from "../../../../public/world/london.json";
 import MOVERS from "../../../../public/world/movers.json";
@@ -88,6 +89,15 @@ function artFor(map: WorldMap): Art | null {
       width: LONDON_ART.width,
       height: LONDON_ART.height,
       props: LONDON_ART.props as Prop[],
+    };
+  if (map.art === "highlands")
+    return {
+      base: "/world/highlands-base.webp",
+      atlas: (i) => `/world/highlands-props-${i}.webp`,
+      offset: HIGHLANDS_ART.offset,
+      width: HIGHLANDS_ART.width,
+      height: HIGHLANDS_ART.height,
+      props: HIGHLANDS_ART.props as Prop[],
     };
   if (map.art?.startsWith("home-")) {
     const style = Number(map.art.slice(5));

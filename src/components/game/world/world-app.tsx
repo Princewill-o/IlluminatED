@@ -35,6 +35,7 @@ import {
   SERVER_CAPACITY,
   type WorldMap,
   campusMap,
+  highlandsMap,
   busStops,
   homeMap,
   tubeStations,
@@ -50,6 +51,7 @@ import { cn } from "@/lib/utils";
 const REGION_KEY = "world-region";
 
 const STATIONS = tubeStations();
+const HIGHLANDS = highlandsMap();
 const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
@@ -57,6 +59,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
   if (id === "campus") return campusMap(offices);
+  if (id === "highlands") return HIGHLANDS;
   if (id.startsWith("station-")) return stationMap(id.slice("station-".length));
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
@@ -117,6 +120,7 @@ export function WorldApp({
   const [waypoint, setWaypoint] = useState<Place | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
   const arrived = useCallback(() => setWaypoint(null), []);
+  useEffect(() => setWaypoint(null), [mapId]);
   useEffect(() => {
     try {
       if (!localStorage.getItem(TUTORIAL_KEY)) setTutorial(true);
@@ -249,6 +253,21 @@ export function WorldApp({
         const next = loadMap(dest, offices, me.id);
         if (!next) return;
         spot = next.spawn;
+        if (dest === "highlands") {
+          // The long way north: ride the train, then step out at Glen Lorne.
+          setBike(null);
+          setJourney({
+            to: "Glen Lorne",
+            go: () => {
+              setJourney(null);
+              setArrive(spot);
+              setMapId(dest);
+              setTrip((n) => n + 1);
+            },
+          });
+          play("train", soundOn());
+          return;
+        }
       }
       play("train", soundOn());
       setMindGap(true);
@@ -407,8 +426,8 @@ export function WorldApp({
         onPortal={onPortal}
         onRoom={setRoom}
         onChangeServer={() => setServer(null)}
-        speed={bike && mapId === "city" ? bike.brand.speed : 1}
-        bike={bike && mapId === "city" ? bike.brand.colour : null}
+        speed={bike && (mapId === "city" || mapId === "highlands") ? bike.brand.speed : 1}
+        bike={bike && (mapId === "city" || mapId === "highlands") ? bike.brand.colour : null}
       />
       {bike && mapId === "city" && (
         <button
@@ -470,8 +489,8 @@ export function WorldApp({
           return true;
         }}
       />
-      {mapId === "city" && <MiniMap waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
-      {mapOpen && <CityMap waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
+      {map.art && (mapId === "city" || mapId === "highlands") && <MiniMap map={map} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
+      {mapOpen && <CityMap map={map} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">

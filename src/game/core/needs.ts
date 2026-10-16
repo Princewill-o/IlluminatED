@@ -30,6 +30,7 @@ export function decay(n: Needs, now: number): Needs {
 /** What each activity does to your needs. */
 export const ACTIVITIES = {
   sleep: { label: "Had a nap", change: { energy: +45, mood: +5 } },
+  hike: { label: "Took in the view", change: { mood: +15, energy: -8, focus: +5 } },
   eat: { label: "Ate something", change: { hunger: +40, mood: +5 } },
   study: { label: "Studied", change: { focus: +20, energy: -5 } },
   bus: { label: "Revised on the bus", change: { focus: +15 } },

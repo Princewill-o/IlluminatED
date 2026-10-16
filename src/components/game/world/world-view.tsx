@@ -198,7 +198,7 @@ export function WorldView({
   /** Camera position in world px, shared with the click handler. */
   const camRef = useRef({ x: 0, y: 0 });
   /** Pre-rendered 3D maps are viewed closer up, so people are small next to buildings and cars. */
-  const zoom = map.art === "london" ? 1.7 : map.art ? 1.35 : 1;
+  const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const speedRef = useRef(speed);
   speedRef.current = speed;
   const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false });
@@ -311,9 +311,9 @@ export function WorldView({
       p.x = next.x;
       p.y = next.y;
       // Traffic: step into a car or bus and you get bumped back onto the pavement.
+      PLAYER.x = p.x;
+      PLAYER.y = p.y;
       if (map.art === "london") {
-        PLAYER.x = p.x;
-        PLAYER.y = p.y;
         for (const b of TRAFFIC_BOXES) {
           if (!b) continue;
           const ox = b.hw + 10 - Math.abs(p.x - b.x);

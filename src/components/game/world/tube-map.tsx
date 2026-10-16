@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, Briefcase, Building2, TrainFront, X } from "lucide-react";
+import { Home, Briefcase, Building2, Mountain, TrainFront, X } from "lucide-react";
 
 import { LINES } from "@/game/core/london";
 import type { OfficeOrg } from "@/game/core/world";
@@ -46,7 +46,7 @@ export function TubeMap({
           <TubeBadge size={36} />
           <div className="min-w-0 flex-1">
             <p className="text-xs font-black tracking-[0.25em] text-[#1f4fbf] uppercase">Underground</p>
-            <h2 className="truncate text-2xl font-black">{current ? current.name : "Station"}</h2>
+            <h2 className="truncate text-2xl font-black">{current ? current.name : here === "highlands" ? "Glen Lorne" : "Station"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-black/10">
             <X className="size-4" />
@@ -82,6 +82,15 @@ export function TubeMap({
 
         <p className="mt-5 text-xs font-black tracking-widest text-[#5a6272] uppercase">Further afield</p>
         <div className="mt-2 grid gap-1.5">
+          {here !== "highlands" && (
+            <button
+              type="button"
+              onClick={() => onGo({ kind: "map", mapId: "highlands", label: "The Highlands" })}
+              className="flex items-center gap-3 rounded-2xl bg-[#15987f] px-3 py-3 text-left font-black text-white active:scale-[0.98]"
+            >
+              <Mountain className="size-5" aria-hidden /> The Highlands <span className="ml-auto text-xs font-bold">Sleeper to Glen Lorne</span>
+            </button>
+          )}
           <button type="button" onClick={() => onGo({ kind: "map", mapId: "home", label: "Your house" })} className="flex items-center gap-3 rounded-2xl bg-[#ffb26b] px-3 py-3 text-left font-black active:scale-[0.98]">
             <Home className="size-5" aria-hidden /> Your house <span className="ml-auto text-xs font-bold">Homeward line</span>
           </button>

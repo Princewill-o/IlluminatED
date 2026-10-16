@@ -408,3 +408,16 @@ test("Needs drift down, activities refill them, and bus stops are boardable", ()
   const home = W.homeMap(0);
   assert.ok(home.portals.some((p) => p.to.kind === "act" && p.to.activity === "sleep"), "you can sleep at home");
 });
+
+test("Highlands: spawn is walkable, the station, cafe, lodge and viewpoints all have reachable doors", () => {
+  const W = projectData("src/game/core/world.ts");
+  const H = W.highlandsMap();
+  assert.ok(!W.blocked(H, H.spawn.x, H.spawn.y), "spawn is clear");
+  for (const id of ["glen-station", "cafe", "lodge"]) assert.ok(H.portals.some((p) => p.id === id), `${id} exists`);
+  for (const p of H.portals) {
+    const cx = p.rect.x + p.rect.w / 2;
+    const cy = p.rect.y + p.rect.h / 2;
+    assert.ok(!W.blocked(H, W.safeSpot(H, cx, cy).x, W.safeSpot(H, cx, cy).y), `${p.id} reachable`);
+  }
+  assert.ok(H.cols * H.rows > 90 * 75, "bigger than a London district");
+});

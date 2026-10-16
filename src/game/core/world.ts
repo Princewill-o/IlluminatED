@@ -2,6 +2,7 @@ import { WORKPLACES } from "./careers";
 import { COMPANIES } from "./companies";
 import { type Placed, STARTER_LAYOUT, furnitureById } from "./homes";
 import { buildHome, buildLondon } from "./london";
+import { buildHighlands } from "./regions";
 
 /**
  * The walkable multiplayer worlds: clean top-down pixel art in the spirit of
@@ -34,7 +35,7 @@ export type PortalTarget =
   | { kind: "tube"; station: string }
   | { kind: "work"; workplace: string }
   | { kind: "bus"; stop: string }
-  | { kind: "act"; activity: "sleep" | "eat" | "study" }
+  | { kind: "act"; activity: "sleep" | "eat" | "study" | "hike" }
   | { kind: "bike"; dock: string }
   | { kind: "games" };
 
@@ -69,7 +70,7 @@ export interface WorldMap {
   id: string;
   kind: "city" | "campus" | "office" | "home" | "station";
   /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
-  art?: "london" | `home-${number}`;
+  art?: "london" | "highlands" | `home-${number}`;
   /** Furniture placement (homes only). */
   layout?: Placed[];
   name: string;
@@ -564,6 +565,41 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): World
     rooms: [],
     spawn: { x: 10 * TILE, y: 11.5 * TILE },
     accent: "#2b5fd9",
+  };
+}
+
+/** The Highlands: an open valley of mountains, a loch and a village, by train from London. */
+export function highlandsMap(): WorldMap {
+  const r = buildHighlands();
+  const rows = r.tiles.map((row) => row.split(""));
+  const portals: Portal[] = [];
+  const st = r.things.find((t) => t.kind === "station");
+  if (st) portals.push({ id: "glen-station", rect: px(st.x, st.y + st.h, st.w, 1), label: "Glen Lorne station: trains to London", to: { kind: "tube", station: "highlands" } });
+  for (const t of r.things) {
+    if (t.kind !== "building" || !t.label) continue;
+    const rect = px(t.x + 2, t.y + t.h, 2, 1);
+    if (t.label === "Highland Cafe") portals.push({ id: "cafe", rect, label: "Highland Cafe: grab a bite", to: { kind: "act", activity: "eat" } });
+    if (t.label === "Mountain Lodge") portals.push({ id: "lodge", rect, label: "Mountain Lodge: Games Hall", to: { kind: "games" } });
+  }
+  for (const v of r.viewpoints) portals.push({ id: `view-${v.id}`, rect: px(v.x - 1, v.y - 1, 3, 3), label: `${v.name}: take in the view`, to: { kind: "act", activity: "hike" } });
+  for (const p of portals)
+    for (let y = p.rect.y / TILE; y < (p.rect.y + p.rect.h) / TILE; y++)
+      for (let x = p.rect.x / TILE; x < (p.rect.x + p.rect.w) / TILE; x++) if (SOLID.has(rows[y]?.[x] ?? "")) rows[y][x] = "_";
+  return {
+    id: "highlands",
+    kind: "city",
+    art: "highlands",
+    name: "The Highlands",
+    cols: r.cols,
+    rows: r.rows,
+    width: r.cols * TILE,
+    height: r.rows * TILE,
+    tiles: rows.map((row) => row.join("")),
+    structures: [],
+    portals,
+    rooms: [],
+    spawn: r.spawn,
+    accent: "#15987f",
   };
 }
 
