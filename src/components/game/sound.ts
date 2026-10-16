@@ -1,7 +1,7 @@
 "use client";
 
 /** Tiny synthesised sound effects (no audio files to download). */
-type Cue = "right" | "wrong" | "promote" | "tick" | "fired" | "click" | "chirp" | "step" | "door";
+type Cue = "right" | "wrong" | "promote" | "tick" | "fired" | "click" | "chirp" | "step" | "door" | "train";
 
 let ctx: AudioContext | null = null;
 const KEY = "arcade-sound";
@@ -87,6 +87,12 @@ export function play(cue: Cue, enabled: boolean) {
       case "door":
         tone(392, 0, 0.12, "sine", 0.04);
         tone(523, 0.1, 0.18, "sine", 0.04);
+        break;
+      case "train":
+        // Two-tone chime, then the rumble of the train pulling away.
+        tone(659, 0, 0.22, "sine", 0.05);
+        tone(523, 0.24, 0.3, "sine", 0.05);
+        for (let i = 0; i < 8; i++) tone(70 + i * 9, 0.55 + i * 0.07, 0.12, "sawtooth", 0.012);
         break;
     }
   } catch {

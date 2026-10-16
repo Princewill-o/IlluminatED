@@ -6,9 +6,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { play, soundOn } from "../sound";
+import { TubeMap, type TubeTrip } from "./tube-map";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
 
+import { homeStyle } from "@/game/core/london";
 import {
   CITY,
   type OfficeOrg,
@@ -19,6 +21,8 @@ import {
   SERVER_CAPACITY,
   type WorldMap,
   campusMap,
+  homeMap,
+  tubeStations,
   guessRegion,
   isRegion,
   officeMap,
@@ -30,8 +34,11 @@ import { cn } from "@/lib/utils";
 
 const REGION_KEY = "world-region";
 
-function loadMap(id: string, offices: OfficeOrg[]): WorldMap | null {
+const STATIONS = tubeStations();
+
+function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
+  if (id === "home") return homeMap(homeStyle(meId));
   if (id === "campus") return campusMap(offices);
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
@@ -61,7 +68,10 @@ export function WorldApp({
   initialServer: string | null;
 }) {
   const router = useRouter();
-  const [mapId, setMapId] = useState(() => (loadMap(initialMap, offices) ? initialMap : "city"));
+  const [mapId, setMapId] = useState(() => (loadMap(initialMap, offices, me.id) ? initialMap : "city"));
+  const [tube, setTube] = useState<string | null>(null);
+  const [trip, setTrip] = useState(0);
+  const [mindGap, setMindGap] = useState(false);
   const [server, setServer] = useState<string | null>(initialServer && serverById(initialServer) ? initialServer : null);
   const [region, setRegion] = useState<RegionId>("lse");
   const [arrive, setArrive] = useState<{ x: number; y: number } | undefined>();
@@ -72,9 +82,10 @@ export function WorldApp({
   useEffect(() => () => {
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
   }, []);
-  const map = useMemo(() => loadMap(mapId, offices) ?? CITY, [mapId, offices]);
+  const map = useMemo(() => loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id]);
   const inOffice = mapId.startsWith("office-");
-  const lobby = useLobby(server ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
+  const atHome = mapId === "home";
+  const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
 
   useEffect(() => {
     try {
@@ -109,13 +120,14 @@ export function WorldApp({
       if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
       else if (to.kind === "link") router.push(to.href);
       else if (to.kind === "desk") setDesk(true);
+      else if (to.kind === "tube") setTube(to.station);
       else {
-        const next = loadMap(to.mapId, offices);
+        const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
         // Arrive outside the door that leads back to where you came from.
         const back = next.portals.find((p) => p.to.kind === "map" && p.to.mapId === mapId);
         const spot = back
-          ? safeSpot(next, back.rect.x + back.rect.w / 2, back.rect.y + (back.rect.y > next.height / 2 ? -50 : back.rect.h + 50))
+          ? safeSpot(next, back.rect.x + back.rect.w / 2, back.rect.y + (back.rect.y + back.rect.h >= next.height - 4 ? -24 : back.rect.y > next.height / 2 ? -50 : back.rect.h + 50))
           : next.spawn;
         // Fade to black, swap the map underneath, then fade back in.
         play("door", soundOn());
@@ -129,7 +141,40 @@ export function WorldApp({
         }, 280);
       }
     },
-    [router, offices, mapId],
+    [router, offices, mapId, me.id],
+  );
+
+  // Riding the Underground: to another London station, or further afield.
+  const ride = useCallback(
+    (t: TubeTrip) => {
+      setTube(null);
+      let dest = "city";
+      let spot: { x: number; y: number } | undefined;
+      if (t.kind === "station") {
+        const st = STATIONS.find((s) => s.id === t.id);
+        if (!st) return;
+        spot = safeSpot(CITY, st.exitPx.x, st.exitPx.y);
+      } else {
+        dest = t.mapId;
+        const next = loadMap(dest, offices, me.id);
+        if (!next) return;
+        spot = next.spawn;
+      }
+      play("train", soundOn());
+      setMindGap(true);
+      setFading(true);
+      if (fadeTimer.current) clearTimeout(fadeTimer.current);
+      fadeTimer.current = setTimeout(() => {
+        setArrive(spot);
+        setMapId(dest);
+        setTrip((n) => n + 1);
+        fadeTimer.current = setTimeout(() => {
+          setFading(false);
+          setMindGap(false);
+        }, 650);
+      }, 700);
+    },
+    [offices, me.id],
   );
 
   const countFor = (m: string, s: string) => lobby.counts[`${m}:${s}`] ?? 0;
@@ -232,9 +277,9 @@ export function WorldApp({
   return (
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
       <WorldView
-        key={`${mapId}:${server}`}
+        key={`${mapId}:${server}:${trip}`}
         map={map}
-        serverId={inOffice ? "main" : server}
+        serverId={atHome ? "solo" : inOffice ? "main" : server}
         me={me}
         arriveAt={arrive}
         onPortal={onPortal}
@@ -248,6 +293,12 @@ export function WorldApp({
           fading ? "opacity-100" : "opacity-0",
         )}
       />
+      {mindGap && (
+        <div className="pointer-events-none absolute inset-0 z-[100001] grid place-items-center" aria-live="polite">
+          <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#1b1622]">Please mind the gap</p>
+        </div>
+      )}
+      {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
           {room}

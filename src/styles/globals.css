@@ -843,3 +843,12 @@ html.dark body:has(.app-theme) {
   border-color: transparent;
   box-shadow: 0 8px 0 #3b1fa3;
 }
+
+/* The London Eye turning (8 frames that loop). */
+@keyframes eye-turn {
+  to { background-position-x: calc(-1 * var(--eye-w)); }
+}
+.eye-wheel { animation: eye-turn 2.4s steps(8) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .eye-wheel { animation: none; }
+}

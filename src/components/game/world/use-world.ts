@@ -21,7 +21,7 @@ import { browserSupabase } from "@/lib/supabase-browser";
  * Names, employer badges and logos come from a server-signed world pass that
  * every client verifies, so nobody can pose as someone else or as verified staff.
  */
-export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "full" | "error";
+export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "full" | "error" | "solo";
 
 export interface Me {
   id: string;
@@ -86,6 +86,11 @@ export function useWorld({
   const bump = useCallback(() => setRoster((n) => n + 1), []);
 
   useEffect(() => {
+    // Private places (your home) are single player: no channel at all.
+    if (serverId === "solo") {
+      setStatus("solo");
+      return;
+    }
     const sb = browserSupabase();
     if (!sb) {
       setStatus("error");

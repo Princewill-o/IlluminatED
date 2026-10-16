@@ -293,3 +293,23 @@ test("Characters: every wearable 3D item has a sprite sheet, and anchors cover e
   }
   for (const base of ["body", "head", "cape-back"]) assert.ok(fs.existsSync(`public/characters/${base}.webp`));
 });
+
+test("London: every HQ and station has a door, Tube exits are walkable, homes work", () => {
+  const W = projectData("src/game/core/world.ts");
+  const L = W.CITY;
+  assert.equal(L.name, "London");
+  assert.equal(L.portals.filter((p) => p.to.kind === "game").length, 13, "13 company HQs");
+  const stations = W.tubeStations();
+  assert.ok(stations.length >= 8);
+  for (const s of stations) {
+    assert.ok(L.portals.some((p) => p.to.kind === "tube" && p.to.station === s.id), `${s.id} has a door`);
+    const spot = W.safeSpot(L, s.exitPx.x, s.exitPx.y);
+    assert.ok(Math.hypot(spot.x - s.exitPx.x, spot.y - s.exitPx.y) < 48, `${s.id} exit is next to the station`);
+  }
+  assert.ok(L.portals.some((p) => p.id === "my-house"));
+  for (const style of [0, 1, 2]) {
+    const h = W.homeMap(style);
+    assert.ok(!W.blocked(h, h.spawn.x, h.spawn.y), "home spawn is free");
+    assert.ok(h.portals.some((p) => p.to.kind === "map" && p.to.mapId === "city"), "front door back to London");
+  }
+});

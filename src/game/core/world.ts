@@ -1,4 +1,5 @@
 import { COMPANIES } from "./companies";
+import { buildHome, buildLondon } from "./london";
 
 /**
  * The walkable multiplayer worlds: clean top-down pixel art in the spirit of
@@ -27,7 +28,8 @@ export type PortalTarget =
   | { kind: "game"; companyId: string }
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
-  | { kind: "link"; href: string };
+  | { kind: "link"; href: string }
+  | { kind: "tube"; station: string };
 
 export interface Portal {
   id: string;
@@ -58,7 +60,9 @@ export interface Room {
 
 export interface WorldMap {
   id: string;
-  kind: "city" | "campus" | "office";
+  kind: "city" | "campus" | "office" | "home";
+  /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
+  art?: "london" | `home-${number}`;
   name: string;
   cols: number;
   rows: number;
@@ -84,7 +88,7 @@ export interface WorldMap {
  * - pavement, = road, : road with lane marking, T tree, B bench, L lamp,
  * w water, X building.
  */
-export const SOLID = new Set(["#", "W", "G", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X"]);
+export const SOLID = new Set(["#", "W", "G", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X", "|"]);
 
 class Grid {
   t: string[][];
@@ -277,7 +281,7 @@ export function campusMap(orgs: OfficeOrg[]): WorldMap {
   g.set(2, 16, "L");
   g.set(cols - 3, 16, "L");
   portals.push(
-    { id: "to-city", rect: px(0, 17, 2, 2), label: "Bus to IlluminatED City", to: { kind: "map", mapId: "city", label: "IlluminatED City" } },
+    { id: "to-city", rect: px(0, 17, 2, 2), label: "Back to London", to: { kind: "map", mapId: "city", label: "London" } },
     { id: "employers", rect: px(cols - 2, 17, 2, 2), label: "Employers: get your own office", to: { kind: "link", href: "/employers" } },
   );
   return finish(
@@ -396,7 +400,80 @@ export function officeMap(org: OfficeOrg): WorldMap {
   );
 }
 
-export const CITY = cityMap();
+/** London: the main world (3D art from Blender, layout from ./london.ts). */
+export function londonMap(): WorldMap {
+  const L = buildLondon();
+  const portals: Portal[] = [];
+  for (const th of L.things) {
+    if (th.kind === "building" && th.companyId) {
+      const c = COMPANIES.find((k) => k.id === th.companyId)!;
+      portals.push({ id: `hq-${c.id}`, rect: px(th.x + 1, th.y + th.h, 1, 1), label: `${c.name}: Promotion Panic`, to: { kind: "game", companyId: c.id } });
+    }
+    if (th.kind === "building" && th.id === "my-house")
+      portals.push({ id: "my-house", rect: px(th.x + 1, th.y + th.h, 2, 1), label: "Your house", to: { kind: "map", mapId: "home", label: "Your house" } });
+    if (th.kind === "station")
+      portals.push({ id: `tube-${th.id}`, rect: px(th.x, th.y + th.h, th.w, 1), label: `${th.name} station`, to: { kind: "tube", station: th.id } });
+  }
+  const rows = L.tiles.map((r) => r.split(""));
+  // Doors are always walkable.
+  for (const p of portals)
+    for (let y = p.rect.y / TILE; y < (p.rect.y + p.rect.h) / TILE; y++)
+      for (let x = p.rect.x / TILE; x < (p.rect.x + p.rect.w) / TILE; x++) if (SOLID.has(rows[y]?.[x] ?? "")) rows[y][x] = "-";
+  const cols = L.tiles[0].length;
+  return {
+    id: "city",
+    kind: "city",
+    art: "london",
+    name: "London",
+    cols,
+    rows: L.tiles.length,
+    width: cols * TILE,
+    height: L.tiles.length * TILE,
+    tiles: rows.map((r) => r.join("")),
+    structures: [],
+    portals,
+    rooms: [],
+    spawn: L.spawn,
+    accent: "#7c4dff",
+  };
+}
+
+/** Where each Underground station lets you out (pixels). */
+export function tubeStations() {
+  return buildLondon().stations.map((s) => ({ ...s, exitPx: { x: s.exit.x * TILE, y: s.exit.y * TILE } }));
+}
+
+/** Your home: a private room (single player). style picks the colourway. */
+export function homeMap(style: number): WorldMap {
+  const h = buildHome();
+  const link = (id: string, x: number, y: number, w: number, label: string, href: string): Portal => ({ id, rect: px(x, y, w, 1), label, to: { kind: "link", href } });
+  return {
+    id: "home",
+    kind: "home",
+    art: `home-${style}`,
+    name: "Your house",
+    cols: h.cols,
+    rows: h.rows,
+    width: h.cols * TILE,
+    height: h.rows * TILE,
+    tiles: h.tiles,
+    structures: [],
+    portals: [
+      { id: "front-door", rect: px(9, 13, 2, 1), label: "Back out to Brixton", to: { kind: "map", mapId: "city", label: "London" } },
+      link("desk", 14, 4, 4, "Revision desk", "/learn"),
+      link("wardrobe", 6, 3, 3, "Wardrobe: change your look", "/games/locker"),
+      link("shelf", 10, 3, 3, "Bookshelf: revision notes", "/revision"),
+      link("tv", 14, 8, 4, "TV: play Promotion Panic", "/games"),
+    ],
+    rooms: [],
+    spawn: { x: 10 * TILE, y: 11.5 * TILE },
+    accent: "#7c4dff",
+  };
+}
+
+/** The old 2D IlluminatED City is kept for reference; London replaced it. */
+export const CLASSIC_CITY = cityMap();
+export const CITY = londonMap();
 
 // ─────────────────────────────────────────────────────────
 // Movement and collisions

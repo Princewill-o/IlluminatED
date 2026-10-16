@@ -48,7 +48,7 @@ export interface Fx {
 }
 
 export function createFx(map: WorldMap): Fx {
-  const outdoor = map.kind !== "office";
+  const outdoor = map.kind === "city" || map.kind === "campus";
   return {
     map,
     outdoor,

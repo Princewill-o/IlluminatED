@@ -7,6 +7,7 @@ import { Bus, DoorOpen, MessageCircle, Sparkles } from "lucide-react";
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
+import { ArtScenery, fadeArtProps } from "./art";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
@@ -136,6 +137,7 @@ const STATUS: Record<Connection, { text: string; dot: string }> = {
   offline: { text: "Offline: check your Wi-Fi", dot: "#ff7a6b" },
   full: { text: "Server full", dot: "#ff7a6b" },
   error: { text: "Can't connect", dot: "#ff7a6b" },
+  solo: { text: "Just you", dot: "#a67fff" },
 };
 
 export function WorldView({
@@ -245,6 +247,7 @@ export function WorldView({
     const cam = { x: NaN, y: NaN };
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let lastStep = 0;
+    let lastFade = 0;
     const anim = new Map<string, { ang: number; phase: number; walk: number }>();
     let nextChirp = performance.now() + 3000;
     const frame = (now: number) => {
@@ -320,6 +323,10 @@ export function WorldView({
         poseWorldFigure(el, a.ang, reduced ? 0 : a.phase, reduced ? 0 : a.walk, reduced ? 0 : now);
       };
       place(meEl.current, "me", p.x, p.y, moved ? dx : 0, moved ? dy : 0, moved);
+      if (map.art && layer.current && now - lastFade > 120) {
+        lastFade = now;
+        fadeArtProps(layer.current, p.x, p.y);
+      }
       const t = Date.now();
       if (meBubble.current) meBubble.current.classList.toggle("hidden", !myChat.current || myChat.current.until < t);
 
@@ -386,7 +393,7 @@ export function WorldView({
         className="absolute top-0 left-0 will-change-transform"
         style={{ width: map.width, height: map.height }}
       >
-        <Scenery map={map} night={phase === "night" && map.kind !== "office"} />
+        {map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office"} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
         ))}
