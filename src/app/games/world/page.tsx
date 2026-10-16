@@ -52,6 +52,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       job={job}
       clout={player.clout}
       quests={quests}
+      homework={homework.filter((h) => !h.mine).flatMap((h) => h.questions.map((q) => q.key))}
       home={{ style: homeById(home.current)?.style ?? 0, layout: home.layout }}
     />
   );

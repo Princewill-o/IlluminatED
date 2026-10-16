@@ -228,6 +228,10 @@ const M = MOVERS as Record<string, { frames: number; w: number; h: number; ax: n
 type VehicleKind = "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | "police" | "ambulance" | "delivery" | "hatchback-sports";
 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
+/** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
+export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number } | undefined)[] = [];
+export const PLAYER = { x: -9999, y: -9999 };
+
 /** Blinds on the buses: the Superloop and the BL1. */
 export const BUS_ROUTE_CODES = ["SL6", "BL1", "SL8"];
 const ROUTE_SPEED = [2.6, 2.8, 2.5];
@@ -350,6 +354,15 @@ function LondonLife() {
         }
         el.style.transform = `translate3d(${Math.round(x - m.ax)}px, ${Math.round(y - m.ay)}px, 0)`;
         el.style.zIndex = String(Math.round(y));
+        // Footprint on the road (for bumping into people), and see-through when you're beside it.
+        if (v.kind !== "boat") {
+          const long = (v.kind === "bus" ? 2.8 : v.kind === "van" || v.kind === "ambulance" || v.kind === "delivery" ? 2.0 : 1.7) * TILE;
+          const wide = 0.95 * TILE;
+          const horiz = dir === "E" || dir === "W";
+          TRAFFIC_BOXES[i] = { x, y, hw: (horiz ? long : wide) / 2, hh: (horiz ? wide : long) / 2, dx: Math.sign(p.dx), dy: Math.sign(p.dy) };
+          const near = Math.abs(PLAYER.x - x) < (horiz ? long : wide) / 2 + 30 && PLAYER.y < y + 20 && PLAYER.y > y - 110;
+          el.style.opacity = near ? "0.45" : "1";
+        }
       });
       NPCS.forEach((n, i) => {
         const el = people.current[i];
@@ -419,8 +432,16 @@ function LondonLife() {
           ref={(el) => {
             els.current[i] = el;
           }}
-          className="pointer-events-none absolute top-0 left-0"
+          className="pointer-events-none absolute top-0 left-0 transition-opacity duration-200"
         >
+          {v.kind !== "boat" && (
+            // Drivers and passengers, seen through the glass when the vehicle goes see-through.
+            <span className="absolute inset-x-[30%] top-[38%] flex justify-center gap-1">
+              {Array.from({ length: v.kind === "bus" ? 4 : 1 }, (_, k) => (
+                <span key={k} className="size-2 rounded-full border border-[#15151c]" style={{ background: ["#f1c7a2", "#8d5a3b", "#c58c62", "#5a3a28"][(i + k) % 4] }} />
+              ))}
+            </span>
+          )}
           {v.kind === "bus" && (
             <span className="absolute top-1 left-1/2 -translate-x-1/2 rounded bg-[#15151c] px-1 font-mono text-[9px] leading-tight font-black text-[#ffb020]">
               {BUS_ROUTE_CODES[v.route]}

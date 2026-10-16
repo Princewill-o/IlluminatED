@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Bus, Home, Briefcase, X } from "lucide-react";
 
@@ -17,7 +17,7 @@ interface Stop {
 }
 
 /** A London bus stop: live departures board, pick where to go, and revise on the way. */
-export function BusStop({ here, stops, onGo, onClose }: { here: string; stops: Stop[]; onGo: (t: BusTrip, revised: boolean) => void; onClose: () => void }) {
+export function BusStop({ here, stops, onGo, onClose, homework = [] }: { here: string; stops: Stop[]; onGo: (t: BusTrip, revised: boolean) => void; onClose: () => void; homework?: string[] }) {
   const current = stops.find((s) => s.id === here);
   const [revise, setRevise] = useState(true);
   const [riding, setRiding] = useState<BusTrip | null>(null);
@@ -28,7 +28,7 @@ export function BusStop({ here, stops, onGo, onClose }: { here: string; stops: S
     { kind: "map", mapId: "campus", label: "Careers Campus", route: "C1" },
   ];
 
-  if (riding) return <Commute trip={riding} onArrive={(ok) => onGo(riding, ok)} />;
+  if (riding) return <Commute trip={riding} homework={homework} onArrive={(ok) => onGo(riding, ok)} />;
 
   return (
     <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
@@ -64,7 +64,7 @@ export function BusStop({ here, stops, onGo, onClose }: { here: string; stops: S
 
         <label className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3 text-sm font-bold">
           <input type="checkbox" checked={revise} onChange={(e) => setRevise(e.target.checked)} className="size-5 accent-[#1f4fbf]" />
-          <span className="flex-1">Revise on the way: 3 quick flashcards for +15 Focus</span>
+          <span className="flex-1">{homework.length ? "Revise your homework topics on the way: 3 questions for +15 Focus" : "Revise on the way: 3 quick flashcards for +15 Focus"}</span>
         </label>
 
         <p className="mt-4 text-xs font-black tracking-widest text-[#5a6272] uppercase">Where to?</p>
@@ -89,12 +89,24 @@ export function BusStop({ here, stops, onGo, onClose }: { here: string; stops: S
 }
 
 /** On the bus: three quick flashcards while you ride. */
-function Commute({ trip, onArrive }: { trip: BusTrip; onArrive: (revised: boolean) => void }) {
-  const cards = useMemo(() => {
+function Commute({ trip, onArrive, homework }: { trip: BusTrip; onArrive: (revised: boolean) => void; homework: string[] }) {
+  const quick = useMemo(() => {
     const rng = createRng(newSeed());
     const pool = ARCADE.filter((g) => g.id !== "binary-blitz");
     return Array.from({ length: 3 }, (_, i) => pool[(i + Math.floor(rng() * pool.length)) % pool.length].make(rng));
   }, []);
+  // With homework due, the bus revises the same topics (different questions, so no spoilers).
+  const [fromHomework, setFromHomework] = useState<{ prompt: string; options: string[]; answer: number }[] | null>(null);
+  useEffect(() => {
+    if (!homework.length) return;
+    void import("@/lib/data/topics").then(({ QUESTION_BANK }) => {
+      const set = new Set(homework);
+      const topics = new Set(QUESTION_BANK.filter((q) => set.has(q.key)).map((q) => q.topicId));
+      const pool = QUESTION_BANK.filter((q) => topics.has(q.topicId) && !set.has(q.key)).sort(() => Math.random() - 0.5).slice(0, 3);
+      if (pool.length === 3) setFromHomework(pool.map((q) => ({ prompt: q.q, options: q.options, answer: q.answer })));
+    });
+  }, [homework]);
+  const cards = fromHomework ?? quick;
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [right, setRight] = useState(0);
@@ -120,7 +132,8 @@ function Commute({ trip, onArrive }: { trip: BusTrip; onArrive: (revised: boolea
         <div className="p-5">
           {i < cards.length ? (
             <>
-              <p className="text-center text-2xl font-black">{q.prompt}</p>
+              {fromHomework && <p className="mb-2 text-center text-xs font-black tracking-widest text-[#1f4fbf] uppercase">Practice for your homework</p>}
+              <p className={cn("text-center font-black", fromHomework ? "text-lg" : "text-2xl")}>{q.prompt}</p>
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {q.options.map((o, k) => (
                   <button

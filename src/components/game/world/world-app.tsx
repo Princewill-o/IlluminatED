@@ -9,6 +9,7 @@ import { play, soundOn } from "../sound";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { GamesHall } from "./games-hall";
 import { LifeHud, type Quest } from "./life-hud";
+import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import { BikeDock, TrainJourney } from "./transport";
 import { TubeMap, type TubeTrip } from "./tube-map";
 import { doActivity } from "./use-needs";
@@ -79,7 +80,10 @@ export function WorldApp({
   home,
   clout,
   quests,
+  homework = [],
 }: {
+  /** Question keys from homework you haven't handed in: the bus revises those topics. */
+  homework?: string[];
   me: Me;
   offices: OfficeOrg[];
   /** Verified staff for each office slug (for the Advice Desk). */
@@ -107,6 +111,15 @@ export function WorldApp({
   const [bus, setBus] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
+  const [sceneName, setSceneName] = useState("London");
+  const [tutorial, setTutorial] = useState(false);
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(TUTORIAL_KEY)) setTutorial(true);
+    } catch {
+      setTutorial(true);
+    }
+  }, []);
   const [dock, setDock] = useState(false);
   const [games, setGames] = useState(false);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
@@ -128,13 +141,19 @@ export function WorldApp({
   const atHome = mapId === "home";
   const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
 
+  // Where you are decides your server: we read your device's time zone (no GPS, nothing stored
+  // on our side) and drop you straight into the nearest region's least-empty open server.
   useEffect(() => {
+    const here = guessRegion(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    let r = here;
     try {
       const saved = localStorage.getItem(REGION_KEY);
-      setRegion(saved && isRegion(saved) ? saved : guessRegion(Intl.DateTimeFormat().resolvedOptions().timeZone));
+      if (saved && isRegion(saved)) r = saved;
     } catch {
-      setRegion(guessRegion(Intl.DateTimeFormat().resolvedOptions().timeZone));
+      // Private browsing: use the time zone.
     }
+    setRegion(r);
+    setServer((s) => s ?? pickServer(r, {}).id);
   }, []);
 
   // Keep the address bar shareable: /games/world?map=campus&server=lse-1
@@ -184,14 +203,15 @@ export function WorldApp({
           : next.spawn;
         // Fade to black, swap the map underneath, then fade back in.
         play("door", soundOn());
+        setSceneName(to.label);
         setFading(true);
         setDesk(false);
         if (fadeTimer.current) clearTimeout(fadeTimer.current);
         fadeTimer.current = setTimeout(() => {
           setArrive(spot);
           setMapId(to.mapId);
-          fadeTimer.current = setTimeout(() => setFading(false), 120);
-        }, 280);
+          fadeTimer.current = setTimeout(() => setFading(false), 550);
+        }, 430);
       }
     },
     [router, offices, mapId, me.id],
@@ -228,6 +248,7 @@ export function WorldApp({
       }
       play("train", soundOn());
       setMindGap(true);
+      setSceneName(t.kind === "map" ? t.label : "London");
       setFading(true);
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
       fadeTimer.current = setTimeout(() => {
@@ -261,6 +282,7 @@ export function WorldApp({
         spot = next.spawn;
       }
       play("train", soundOn());
+      setSceneName(t.kind === "stop" ? t.name : t.label);
       setFading(true);
       if (fadeTimer.current) clearTimeout(fadeTimer.current);
       fadeTimer.current = setTimeout(() => {
@@ -413,13 +435,15 @@ export function WorldApp({
       )}
       {games && server && <GamesHall serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
       {journey && <TrainJourney to={journey.to} onArrive={journey.go} />}
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute inset-0 bg-[#0d1726] transition-opacity duration-300 motion-reduce:transition-none",
-          fading ? "opacity-100" : "opacity-0",
-        )}
-      />
+<SceneWipe show={fading} label={sceneName} />
+      <button
+        type="button"
+        onClick={() => setTutorial(true)}
+        className="absolute right-3 bottom-16 z-[100001] rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
+      >
+        How to play
+      </button>
+      {tutorial && <Tutorial onClose={() => setTutorial(false)} />}
       {mindGap && (
         <div className="pointer-events-none absolute inset-0 z-[100001] grid place-items-center" aria-live="polite">
           <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#13203a]">Please mind the gap</p>
@@ -431,7 +455,7 @@ export function WorldApp({
         </Link>
       )}
       {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
-      {bus && <BusStop here={bus} stops={BUS_STOPS} onGo={busRide} onClose={() => setBus(null)} />}
+      {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} />}
       <LifeHud avatar={me.avatar} name={me.username} clout={wallet} quests={quests} />
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (

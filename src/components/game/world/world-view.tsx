@@ -7,7 +7,7 @@ import { Bike, Bus, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } fr
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
-import { ArtScenery, fadeArtProps } from "./art";
+import { ArtScenery, PLAYER, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
@@ -283,6 +283,7 @@ export function WorldView({
     let lastFade = 0;
     const anim = new Map<string, { ang: number; phase: number; walk: number }>();
     let nextChirp = performance.now() + 3000;
+    let bumpUntil = 0;
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
@@ -309,6 +310,31 @@ export function WorldView({
       if (p.walking && !moved) stopped();
       p.x = next.x;
       p.y = next.y;
+      // Traffic: step into a car or bus and you get bumped back onto the pavement.
+      if (map.art === "london") {
+        PLAYER.x = p.x;
+        PLAYER.y = p.y;
+        for (const b of TRAFFIC_BOXES) {
+          if (!b) continue;
+          const ox = b.hw + 10 - Math.abs(p.x - b.x);
+          const oy = b.hh + 6 - Math.abs(p.y - b.y);
+          if (ox <= 0 || oy <= 0) continue;
+          // Push out the short way, plus a shove in the direction the vehicle is going.
+          const push = ox < oy ? { x: Math.sign(p.x - b.x || 1) * ox, y: 0 } : { x: 0, y: Math.sign(p.y - b.y || 1) * oy };
+          const tryX = p.x + push.x + b.dx * 18;
+          const tryY = p.y + push.y + b.dy * 18;
+          const spot = safeSpot(map, tryX, tryY);
+          p.x = spot.x;
+          p.y = spot.y;
+          target.current = null;
+          if (now > bumpUntil) {
+            bumpUntil = now + 1500;
+            myChat.current = { text: "Oof! Watch the road.", until: Date.now() + 1800 };
+            meEl.current?.animate([{ translate: "0 0" }, { translate: "0 -14px" }, { translate: "0 0" }, { translate: "0 -5px" }, { translate: "0 0" }], { duration: 450, easing: "ease-out", composite: "add" });
+            play("door", soundOn());
+          }
+        }
+      }
       p.walking = moved;
       reportMove(p.x, p.y, p.d, moved);
 
