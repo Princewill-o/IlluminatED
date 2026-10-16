@@ -104,6 +104,14 @@ export default function AboutPage() {
           </div>
         </div>
       </Section>
+      <Section id="credits" title="Art credits">
+        <p className="text-muted-foreground max-w-2xl leading-relaxed">
+          The city, buildings, vehicles, trees and characters in IlluminatED&apos;s game world are built from{" "}
+          <ExternalLink href="https://kenney.nl">Kenney</ExternalLink>&apos;s free CC0 3D kits (City Kit Commercial,
+          City Kit Suburban, City Kit Roads, Car Kit, Nature Kit and Mini Characters), rendered and styled by us in
+          Blender. Thank you, Kenney.
+        </p>
+      </Section>
     </>
   );
 }

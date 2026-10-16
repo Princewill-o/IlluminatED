@@ -31,7 +31,9 @@ const Scenery = memo(function Scenery({ map, night }: { map: WorldMap; night: bo
 
 function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
   const r = portal.rect;
-  const Icon = portal.to.kind === "map" ? Bus : portal.to.kind === "desk" ? MessageCircle : portal.to.kind === "link" ? Sparkles : DoorOpen;
+  // Bus stops are obvious already: only light up when you're at one.
+  if (portal.to.kind === "bus" && !near) return null;
+  const Icon = portal.to.kind === "map" || portal.to.kind === "bus" ? Bus : portal.to.kind === "desk" ? MessageCircle : portal.to.kind === "link" ? Sparkles : DoorOpen;
   return (
     <div
       className={cn(

@@ -6,6 +6,7 @@ import META_JSON from "../../../public/characters/meta.json";
 
 import { type Avatar, DEFAULT_AVATAR, cosmeticById } from "@/game/core/cosmetics";
 import { logoFor } from "@/game/core/logos";
+import { BOTTOM_LOOK, HAIR_LOOK, SHOES_LOOK, TOP_LOOK } from "@/game/core/looks";
 
 /**
  * IlluminatED characters, rendered from Blender.
@@ -24,18 +25,22 @@ export type Clip = "idle" | "walk" | "wave";
 
 const FRAME = 176;
 const COLS = 7;
-/** Head radius in sheet pixels (0.5 units at 64 px per unit). */
-const U = 32;
+/** Head radius in sheet pixels, for drawing faces. */
+const U = (META_JSON as { u?: number }).u ?? 32;
 const INK = "#13203a";
 const BASE = "/characters";
 
 interface Meta {
+  layers: string[];
+  /** Head radius in sheet px (for the 2D face). */
+  u?: number;
   frames: [string, string, number][];
   anchors: { face: [number, number]; head: [number, number]; chest: [number, number] }[];
 }
 
 // The anchors live next to the sheets; imported statically so the first paint has them.
 const META = META_JSON as unknown as Meta;
+const META_LAYERS = new Set(META.layers);
 
 const CLIP_START = new Map<string, { start: number; count: number }>();
 META.frames.forEach(([d, c], i) => {
@@ -100,23 +105,43 @@ export interface Layer {
   tint?: string;
 }
 
+const has = (name: string) => META_LAYERS.has(name);
+const pick = (...names: string[]) => names.find(has) ?? names[names.length - 1];
+
+/** Item colour, unless it's been dyed. */
+function dyed(item: string | undefined, dye: string | undefined) {
+  const d = dye && !dye.endsWith("-auto") ? cosmeticById(dye)?.color : undefined;
+  return d ?? cosmeticById(item ?? "")?.color ?? "#8d93a0";
+}
+
+/**
+ * The layers for an outfit, back to front. Bodies, heads, hair and clothes are
+ * Kenney mini-character pieces (see game/core/looks.ts); hats, held items, pets
+ * and animal heads are our own sheets on the same rig.
+ */
 export function layersFor(a: Avatar, showPet = true): { back: Layer[]; front: Layer[]; overHead: Layer[]; pet: Layer | null } {
   const skin = cosmeticById(a.skin)?.color ?? "#d09460";
   const hair = cosmeticById(a.hairColor)?.color ?? INK;
   const animal = ANIMAL_HEADS.has(a.head ?? "");
+  const topV = TOP_LOOK[a.top ?? ""] ?? "male-a";
+  const botV = BOTTOM_LOOK[a.bottom ?? ""] ?? "male-a";
+  const shoeV = SHOES_LOOK[a.shoes ?? ""] ?? "male-a";
+  const hairLook = HAIR_LOOK[a.hair ?? ""] ?? HAIR_LOOK["hair-short"];
   const back: Layer[] = [];
   if (a.top === "top-cape") back.push({ name: "cape-back" });
-  back.push({ name: "body", tint: skin });
-  if (a.bottom) back.push({ name: a.bottom });
-  if (a.shoes) back.push({ name: a.shoes });
-  if (a.top) back.push({ name: a.top });
-  const front: Layer[] = [animal ? { name: a.head! } : { name: "head", tint: skin }];
+  if (has(`kb-${botV}-skinL`)) back.push({ name: `kb-${botV}-skinL`, tint: skin });
+  back.push({ name: pick(`kb-${botV}-bottom`, "kb-male-a-bottom"), tint: dyed(a.bottom, a.bottomColor) });
+  back.push({ name: pick(`kb-${shoeV}-shoes`, "kb-male-a-shoes"), tint: dyed(a.shoes, a.shoesColor) });
+  if (has(`kb-${topV}-skinU`)) back.push({ name: `kb-${topV}-skinU`, tint: skin });
+  back.push({ name: pick(`kb-${topV}-top`, "kb-male-a-top"), tint: dyed(a.top, a.topColor) });
+  if (has(`kb-${topV}-detail`)) back.push({ name: `kb-${topV}-detail` });
+  const front: Layer[] = [animal ? { name: a.head! } : { name: `kh-${hairLook.head}-skin`, tint: skin }];
   const overHead: Layer[] = [];
-  if (!animal && a.hair && !NONE.has(a.hair)) overHead.push({ name: a.hair, tint: hair });
+  if (!animal && hairLook.hair) overHead.push({ name: hairLook.hair, tint: hair });
   if (a.hat && !NONE.has(a.hat)) overHead.push({ name: a.hat });
   if (a.held && !NONE.has(a.held)) overHead.push({ name: a.held });
   const pet = showPet && a.pet && !NONE.has(a.pet) ? { name: a.pet } : null;
-  return { back, front: [...front], overHead, pet };
+  return { back, front, overHead, pet };
 }
 
 // ── 2D face ────────────────────────────────────────────────────────────────

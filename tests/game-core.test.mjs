@@ -182,7 +182,12 @@ test("Ranks and rewards match the database function", () => {
 
 test("Locker catalogue matches the migration and the default avatar is free", () => {
   assert.equal(new Set(COSMETICS.map((c) => c.id)).size, COSMETICS.length);
+  const DYES_SQL = fs.readFileSync("supabase/migrations/20261016160000_characters_v3_dyes.sql", "utf8");
   for (const c of COSMETICS) {
+    if (c.slot.endsWith("Color") && c.slot !== "hairColor") {
+      assert.ok(DYES_SQL.includes(`'${c.id.split("-").slice(1).join("-")}', '${c.name}'`), `dye row for ${c.id}`);
+      continue;
+    }
     const q = (v) => (v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`);
     const row = `(${q(c.id)}, ${q(c.slot)}, ${q(c.name)}, ${c.price}, ${q(c.unlock)}, `;
     const tail = `, ${q(c.rarity)}, ${q(c.set)})`;
@@ -208,7 +213,7 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
 test("Every boss is a valid character from the catalogue", () => {
   const { SLOTS, RARITY, SETS } = projectData("src/game/core/cosmetics.ts");
   const slots = new Set(SLOTS.map((s) => s.slot));
-  assert.equal(slots.size, 15);
+  assert.equal(slots.size, 18);
   for (const c of COMPANIES) {
     for (const [slot, id] of Object.entries(c.boss.look)) {
       assert.ok(slots.has(slot), `${c.boss.name}: slot ${slot}`);
@@ -283,20 +288,29 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
   assert.equal(W.guessRegion("America/New_York"), "intl");
 });
 
-test("Characters: every wearable 3D item has a sprite sheet, and anchors cover every frame", () => {
+test("Characters: every Locker look has its Kenney pieces and sheets, and anchors cover every frame", () => {
   const { COSMETICS } = projectData("src/game/core/cosmetics.ts");
+  const L = projectData("src/game/core/looks.ts");
   const meta = JSON.parse(fs.readFileSync("public/characters/meta.json", "utf8"));
   assert.equal(meta.frames.length, 42);
   assert.equal(meta.anchors.length, meta.frames.length);
+  assert.ok(meta.u > 10, "head size for faces");
   for (const a of meta.anchors) for (const k of ["face", "head", "chest"]) assert.ok(a[k].every((v) => v >= 0 && v <= 176), `${k} anchor in frame`);
-  // Faces, glasses and colours are drawn or tinted at runtime; everything else is a rendered sheet.
-  const runtime = new Set(["skin", "eyes", "brows", "mouth", "extras", "face", "hairColor"]);
-  const none = new Set(["head-human", "hat-none", "held-none", "pet-none", "hair-bald"]);
+  const sheet = (n) => fs.existsSync(`public/characters/${n}.webp`) && meta.layers.includes(n);
   for (const c of COSMETICS) {
-    if (runtime.has(c.slot) || none.has(c.id)) continue;
-    assert.ok(fs.existsSync(`public/characters/${c.id}.webp`), `sheet for ${c.id}`);
+    if (c.slot === "hair") {
+      const look = L.HAIR_LOOK[c.id];
+      assert.ok(look, `look for ${c.id}`);
+      assert.ok(sheet(`kh-${look.head}-skin`), `head for ${c.id}`);
+      if (look.hair) assert.ok(sheet(look.hair), `hair sheet for ${c.id}`);
+    }
+    if (c.slot === "top") assert.ok(sheet(`kb-${L.TOP_LOOK[c.id]}-top`), `top for ${c.id}`);
+    if (c.slot === "bottom") assert.ok(sheet(`kb-${L.BOTTOM_LOOK[c.id]}-bottom`), `bottom for ${c.id}`);
+    if (c.slot === "shoes") assert.ok(sheet(`kb-${L.SHOES_LOOK[c.id]}-shoes`), `shoes for ${c.id}`);
+    if (["hat", "held", "pet"].includes(c.slot) && !c.id.endsWith("-none")) assert.ok(sheet(c.id), `sheet for ${c.id}`);
+    if (c.slot === "head" && c.id !== "head-human") assert.ok(sheet(c.id), `sheet for ${c.id}`);
   }
-  for (const base of ["body", "head", "cape-back"]) assert.ok(fs.existsSync(`public/characters/${base}.webp`));
+  assert.ok(sheet("cape-back"));
 });
 
 test("London: every HQ and station has a door, Tube exits are walkable, homes work", () => {

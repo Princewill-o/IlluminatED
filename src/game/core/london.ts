@@ -184,7 +184,9 @@ export function buildLondon(): Built {
   };
   const street = (x: number, y: number) => {
     const kinds = ["lamp", "lamp", "phonebox", "postbox", "busstop"] as const;
-    const k = kinds[(x * 3 + y) % kinds.length];
+    let k: (typeof kinds)[number] = kinds[(x * 3 + y) % kinds.length];
+    // Bus stops every other block, not on every corner.
+    if (k === "busstop" && Math.floor(x / 10) % 2 === 1) k = "lamp";
     if (!free(x, y)) return;
     set(x, y, k === "lamp" ? "L" : "X");
     things.push({ kind: k, id: id(k), x, y });

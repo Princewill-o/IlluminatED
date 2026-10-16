@@ -51,8 +51,68 @@ def mat(h):
     if not m:
         m = bpy.data.materials.new(h)
         m.diffuse_color = (*lin(h), 1)
+        m.use_nodes = True
+        b = m.node_tree.nodes["Principled BSDF"]
+        b.inputs["Base Color"].default_value = (*lin(h), 1)
+        b.inputs["Roughness"].default_value = 0.85
         MATS[h] = m
     return m
+
+# ── Kenney CC0 kits (assets/kenney): real low-poly buildings, trees and street kit ──
+KEN = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../assets/kenney"))
+LIB = {}
+def kenney(path):
+    """Imports a Kenney model once; returns (mesh data, bbox min, bbox max) with transforms baked."""
+    if path in LIB:
+        return LIB[path]
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(KEN, path))
+    new = [o for o in bpy.data.objects if o not in before]
+    meshes = [o for o in new if o.type == "MESH"]
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in meshes:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    bpy.ops.object.parent_clear(type="CLEAR_KEEP_TRANSFORM")
+    if len(meshes) > 1:
+        bpy.ops.object.join()
+    m = bpy.context.view_layer.objects.active
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    for o in new:
+        if o != m and o.name in bpy.data.objects:
+            bpy.data.objects.remove(o)
+    vs = [v.co for v in m.data.vertices]
+    mn = Vector((min(v.x for v in vs), min(v.y for v in vs), min(v.z for v in vs)))
+    mx = Vector((max(v.x for v in vs), max(v.y for v in vs), max(v.z for v in vs)))
+    data = m.data
+    bpy.data.objects.remove(m)
+    LIB[path] = (data, mn, mx)
+    return LIB[path]
+
+def place(path, x, y, w, d, name, scale=None, rot=0.0, z=0.0):
+    """Puts a Kenney model in a tile rectangle (x right, y south), fitted and centred, front to the camera."""
+    me, mn, mx = kenney(path)
+    sx, sy = mx.x - mn.x, mx.y - mn.y
+    if rot:
+        sx, sy = sy, sx
+    s = scale or min(w / sx, d / sy)
+    o = bpy.data.objects.new(name, me)
+    sc.collection.objects.link(o)
+    o.scale = (s, s, s)
+    o.rotation_euler = (0, 0, rot)
+    bpy.context.view_layer.update()
+    cx0 = (mn.x + mx.x) / 2
+    cy0 = (mn.y + mx.y) / 2
+    c = Vector((cx0, cy0, 0))
+    c.rotate(o.rotation_euler)
+    o.location = (x + w / 2 - c.x * s, -(y + d / 2) - c.y * s, z - mn.z * s)
+    return o
+
+COMMERCIAL = "city-kit-commercial/"
+SUBURBAN = "city-kit-suburban/"
+MIDRISE = [f"building-{c}.glb" for c in "abcdefghijklmn"]
+TOWERS = [f"building-skyscraper-{c}.glb" for c in "abcde"]
+HOUSES = [f"building-type-{c}.glb" for c in "abcdefghijklmnopqrstu"]
 
 # ── Geometry builder: everything for one "thing" goes into one bmesh ────────
 class Part:
@@ -126,17 +186,18 @@ class Part:
         return o
 
 OBJECTS = []   # (object, sortY in world px or None for ground)
-def add(part, name, sort_y=None):
-    o = part.finish(name)
-    OBJECTS.append((o, sort_y))
-    return o
+def add(part, name, sort_y=None, extra=()):
+    o = part.finish(name) if part is not None else None
+    objs = ([o] if o else []) + list(extra)
+    OBJECTS.append((objs, sort_y))
+    return objs[0]
 
 # ── Palette (London, cel-shaded) ─────────────────────────────────────────────
 STONE = "#e4dccb"; STONE_D = "#c9bfaa"; GLASS = "#3e4658"; GLASS_L = "#5a6478"
 BRICK = "#b05a43"; BRICK_D = "#8c4433"; LBRICK = "#cdb58a"; SLATE = "#5d6070"
 WHITE = "#f4f0ea"; INKY = "#2a2730"; RED = "#c8322d"; GOLD = "#e8b84a"
 GRASS = "#93c97a"; GRASS_D = "#7fb868"; PAVE = "#d8d3ca"; KERB = "#bdb7ad"
-ROAD = "#6f6b78"; PATH = "#e3cfa3"; WATER = "#5fb4c7"; EMB = "#cfc6b6"; LEAF = "#6fb35a"; LEAF_D = "#5a9d48"
+ROAD = "#5f6270"; PAVE_2 = "#cfcac0"; GRASS_2 = "#8bc272"; PATH = "#e3cfa3"; WATER = "#5fb4c7"; EMB = "#cfc6b6"; LEAF = "#6fb35a"; LEAF_D = "#5a9d48"
 
 # ── Ground ───────────────────────────────────────────────────────────────────
 tiles = SCENE["tiles"]
@@ -152,6 +213,10 @@ for y in range(ROWS):
         if ch == "w":
             continue
         colour, h = GROUND.get(ch, (GRASS, 0.06))
+        if colour == PAVE and (x + y) % 2:
+            colour = PAVE_2
+        elif colour == GRASS and (x * 7 + y * 3) % 5 == 0:
+            colour = GRASS_2
         # Bridges float over the water; everything else sits on the bank.
         over_water = any(tile(x + dx, y) == "w" for dx in (-2, -1, 1, 2)) and ch in "=|_"
         p = ground.setdefault(colour, Part())
@@ -211,67 +276,43 @@ def windows_grid(p, x0, x1, y_front, z0, z1, floor_h, cols, glass=GLASS, frame=S
                 p.box(wx0 - 0.04, y_front - 0.02, zt - 0.02, wx1 + 0.04, y_front + 0.03, zt + 0.02, frame)
 
 def building(t):
-    x0, y0, w, d, H = t["x"] + 0.06, t["y"] + 0.06, t["w"] - 0.12, t["h"] - 0.12, t["height"]
-    x1, y1 = x0 + w, y0 + d
+    """Kenney buildings fitted into the footprint: towers in the City, mid-rise
+    offices and shops in the West End, suburban houses in the residential streets."""
+    x0, y0, w, d = t["x"] + 0.08, t["y"] + 0.08, t["w"] - 0.16, t["h"] - 0.16
     style = t["style"]
+    seed = t["x"] * 7 + t["y"] * 13
     p = Part()
+    # A paved forecourt so nothing floats on the grass.
+    p.box(x0 - 0.05, y0 - 0.05, 0.0, x0 + w + 0.05, y0 + d + 0.05, 0.13, PAVE)
+    objs = []
     if style in ("office", "stone", "company", "glass"):
-        H = {"office": 6.0, "stone": 5.2, "company": 6.0, "glass": 8.0}[style] + (t["x"] % 3) * 0.6
-        body = t.get("accent") if style == "company" else (STONE if style != "glass" else "#a8c4d8")
-        frame = STONE if style == "company" else STONE_D
-        p.box(x0, y0, 0, x1, y1, H, STONE if style != "glass" else "#9cb9cf")
-        # Ground floor: a tall glazed base.
-        p.box(x0 + 0.1, y1, 0.1, x1 - 0.1, y1 + 0.05, 1.3, "#2f3644")
-        for k in range(int(w) + 1):
-            p.box(x0 + 0.1 + k * (w - 0.2) / max(1, int(w)) - 0.04, y1, 0.1, x0 + 0.1 + k * (w - 0.2) / max(1, int(w)) + 0.04, y1 + 0.08, 1.3, frame)
-        windows_grid(p, x0 + 0.1, x1 - 0.1, y1, 1.5, H - 0.6, 1.0, max(2, int(w * 1.4)), GLASS if style != "glass" else "#5b86a8", frame)
-        # Cornice, parapet and rooftop plant.
-        p.box(x0 - 0.06, y0 - 0.06, H - 0.25, x1 + 0.06, y1 + 0.06, H - 0.1, frame)
-        p.box(x0, y0, H - 0.1, x1, y1, H + 0.2, STONE_D)
-        p.box(x0 + 0.12, y0 + 0.12, H + 0.2, x1 - 0.12, y1 - 0.12, H + 0.22, "#b4ada0")             # roof membrane
-        p.box(x0 + w * 0.15, y0 + d * 0.2, H + 0.2, x0 + w * 0.5, y0 + d * 0.5, H + 0.8, "#9a97a3")   # plant room
-        for k_ in range(3):
-            p.box(x0 + w * 0.6, y0 + d * (0.2 + k_ * 0.2), H + 0.22, x1 - 0.25, y0 + d * (0.2 + k_ * 0.2) + 0.12, H + 0.36, "#7d8fa3")  # skylights
-        p.cyl(x0 + w * 0.3, y0 + d * 0.75, H + 0.2, H + 0.9, 0.22, "#8c8a94", seg=12)                # water tank
+        lib = TOWERS if style in ("glass", "company") else MIDRISE
+        cols = max(1, round(w / 3.2)); rows = max(1, round(d / 3.6))
+        cw, chh = w / cols, d / rows
+        for r in range(rows):
+            for c in range(cols):
+                m = lib[(seed + r * 3 + c) % len(lib)]
+                objs.append(place(COMMERCIAL + m, x0 + c * cw, y0 + r * chh, cw, chh, f"{t['id']}-k{r}{c}"))
         if style == "company":
-            # Company colour band and a sign plinth on the roof (logo drawn in-game).
-            p.box(x0 - 0.02, y1 - 0.02, 1.3, x1 + 0.02, y1 + 0.09, 1.55, body)
-            p.box(x0 + w / 2 - 0.7, y1 - 0.4, H + 0.2, x0 + w / 2 + 0.7, y1 - 0.2, H + 1.6, body)
-    elif style == "brick":
-        H = 4.6
-        p.box(x0, y0, 0, x1, y1, H, BRICK)
-        p.box(x0 + 0.1, y1, 0.1, x1 - 0.1, y1 + 0.06, 1.2, RED)          # red shopfront
-        p.box(x0 + 0.25, y1 + 0.05, 0.25, x1 - 0.25, y1 + 0.09, 1.0, "#3a3f4d")
-        for z in (1.3, 2.6, 3.8):
-            p.box(x0 - 0.03, y1 - 0.02, z, x1 + 0.03, y1 + 0.06, z + 0.12, STONE)   # stone bands
-        windows_grid(p, x0 + 0.1, x1 - 0.1, y1, 1.4, H - 0.6, 1.4, max(2, int(w)), GLASS, STONE, arched=True)
-        p.box(x0 - 0.1, y0 - 0.1, H, x1 + 0.1, y1 + 0.1, H + 0.2, STONE)
-        p.prism(x0, y0, x1, y1, H + 0.2, H + 1.1, SLATE)
-    elif style == "shop":
-        H = 4.0
-        p.box(x0, y0, 0, x1, y1, H, LBRICK if t["x"] % 2 else BRICK)
-        awn = ["#2d6a4f", RED, "#2d1b69", "#1f5f8b"][t["x"] % 4]
-        p.box(x0 + 0.05, y1, 0.1, x1 - 0.05, y1 + 0.06, 1.3, awn)
-        p.box(x0 + 0.25, y1 + 0.05, 0.2, x1 - 0.25, y1 + 0.09, 1.05, "#3a3f4d")
-        p.box(x0 + 0.05, y1 + 0.05, 1.3, x1 - 0.05, y1 + 0.55, 1.42, awn)          # awning
-        windows_grid(p, x0 + 0.1, x1 - 0.1, y1, 1.6, H - 0.4, 1.3, max(2, int(w)), GLASS, WHITE, sash=True)
-        p.box(x0 - 0.06, y0 - 0.06, H, x1 + 0.06, y1 + 0.06, H + 0.18, STONE)
-    else:  # terrace house
-        H = 2.7
-        col = t["colour"]
-        p.box(x0, y0, 0, x1, y1, H, LBRICK if col == "#e8d6b9" else col)
-        p.box(x0 - 0.02, y1 - 0.02, 0.0, x1 + 0.02, y1 + 0.05, 0.5, STONE)
-        door = ["#c8322d", "#2d1b69", "#1f5f8b", "#2d6a4f", "#e8b84a"][(t["x"] // 3) % 5]
-        p.box(x0 + w * 0.15, y1, 0.12, x0 + w * 0.15 + 0.5, y1 + 0.06, 1.35, door)
-        p.box(x0 + w * 0.12, y1 - 0.02, 1.35, x0 + w * 0.15 + 0.62, y1 + 0.09, 1.45, WHITE)
-        windows_grid(p, x0 + w * 0.42, x1 - 0.1, y1, 0.4, H - 0.2, 1.3, 1, GLASS, WHITE, sash=True)
-        windows_grid(p, x0 + 0.1, x0 + w * 0.42, y1, 1.6, H - 0.2, 1.4, 1, GLASS, WHITE, sash=True)
-        p.prism(x0 - 0.05, y0 - 0.05, x1 + 0.05, y1 + 0.05, H, H + 1.2, t["roof"] if t["roof"] else SLATE)
-        p.box(x0 + 0.3, y0 + d * 0.4, H + 0.4, x0 + 0.65, y0 + d * 0.6, H + 1.5, BRICK_D)   # chimney
-        p.cyl(x0 + 0.4, y0 + d * 0.5, H + 1.5, H + 1.7, 0.06, "#c46a4a")
+            # Company colour plinth on the roof line for the logo (drawn in-game).
+            body = t.get("accent") or RED
+            p.box(x0 + 0.1, y0 + d - 0.12, 0.12, x0 + w - 0.1, y0 + d + 0.02, 0.9, body)
+    elif style in ("brick", "shop"):
+        cols = max(1, round(w / 2.2))
+        cw = w / cols
+        for c in range(cols):
+            m = MIDRISE[(seed + c * 5) % len(MIDRISE)]
+            objs.append(place(COMMERCIAL + m, x0 + c * cw, y0, cw, d, f"{t['id']}-k{c}"))
+        if style == "shop":
+            awn = ["#2d6a4f", RED, "#1b3a6b", "#1f5f8b"][t["x"] % 4]
+            p.box(x0 + 0.1, y0 + d - 0.02, 1.05, x0 + w - 0.1, y0 + d + 0.55, 1.18, awn)       # awning over the pavement
+    else:  # houses
+        m = HOUSES[seed % len(HOUSES)]
+        objs.append(place(SUBURBAN + m, x0, y0 + 0.2, w, d - 0.2, f"{t['id']}-k"))
+        p.box(x0 + w * 0.25, y0 + d - 0.05, 0.13, x0 + w * 0.75, y0 + d + 0.3, 0.15, "#e3cfa3")  # front path
         if t.get("label") == "Your house":
-            p.box(x0 + 0.2, y1 + 0.3, 0.12, x1 - 0.2, y1 + 0.9, 0.14, "#7c4dff")   # welcome mat
-    add(p, t["id"], (t["y"] + t["h"]) * 32)
+            p.box(x0 + w * 0.3, y0 + d + 0.35, 0.13, x0 + w * 0.7, y0 + d + 0.8, 0.16, "#2b5fd9")   # welcome mat
+    add(p, t["id"], (t["y"] + t["h"]) * 32, objs)
 
 # ── Landmarks ────────────────────────────────────────────────────────────────
 def landmark(t):
@@ -380,15 +421,13 @@ def landmark(t):
 def small(t):
     x, y, k = t["x"] + 0.5, t["y"] + 0.5, t["kind"]
     p = Part()
+    extra = []
     if k == "tree":
-        p.cyl(x, y, 0.06, 1.5, 0.1, "#7a5a3c", seg=8)
-        p.ball(x, y - 0.05, 2.1, 0.8, 0.75, 0.75, LEAF, seg=16)
-        p.ball(x - 0.35, y + 0.1, 1.75, 0.5, 0.48, 0.48, LEAF_D, seg=12)
-        p.ball(x + 0.38, y + 0.05, 1.85, 0.5, 0.48, 0.5, LEAF, seg=12)
+        kind = ["tree-large.glb", "tree-small.glb", "tree-large.glb"][(t["x"] * 3 + t["y"]) % 3]
+        extra.append(place(SUBURBAN + kind, x - 0.9, y - 0.9, 1.8, 1.8, t["id"] + "-k"))
+        p.cyl(x, y, 0.0, 0.08, 0.45, "#7fb868", seg=12)
     elif k == "lamp":
-        p.cyl(x, y, 0.1, 2.6, 0.05, INKY, seg=8)
-        p.box(x - 0.15, y - 0.15, 2.6, x + 0.15, y + 0.15, 2.95, "#f6e3a2")
-        p.cyl(x, y, 2.95, 3.15, 0.2, INKY, seg=4, r2=0.02)
+        extra.append(place("city-kit-roads/light-square.glb", x - 0.5, y - 0.5, 1.0, 1.0, t["id"] + "-k", scale=5.0))
     elif k == "bench":
         p.box(x - 0.45, y - 0.1, 0.35, x + 0.45, y + 0.2, 0.42, "#8a5a36"); p.box(x - 0.45, y - 0.15, 0.42, x + 0.45, y - 0.1, 0.75, "#8a5a36")
         for dx in (-0.4, 0.4):
@@ -405,7 +444,7 @@ def small(t):
         p.box(x - 0.6, y - 0.25, 0.1, x - 0.55, y + 0.25, 1.9, INKY); p.box(x + 0.55, y - 0.25, 0.1, x + 0.6, y + 0.25, 1.9, INKY)
         p.box(x - 0.55, y - 0.25, 0.4, x + 0.55, y - 0.2, 1.8, "#cfe6ef")
         p.cyl(x + 0.75, y + 0.2, 0.1, 2.4, 0.04, INKY); p.cyl(x + 0.75, y + 0.2, 2.4, 2.45, 0.25, RED)
-    add(p, t["id"], t["y"] * 32 + 26)
+    add(p, t["id"], t["y"] * 32 + 26, extra)
 
 def station(t):
     x0, y0, w, d = t["x"] + 0.05, t["y"] + 0.05, t["w"] - 0.1, t["h"] - 0.1
@@ -438,11 +477,12 @@ def srgb_to_lin(v):
     return v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4
 
 meta_objects = []
-for i, (o, sort_y) in enumerate(OBJECTS):
+for i, (objs, sort_y) in enumerate(OBJECTS):
     k = i + 1
     r, g, b = (k % 16) * 17, ((k // 16) % 16) * 17, ((k // 256) % 16) * 17
-    o.color = (srgb_to_lin(r / 255), srgb_to_lin(g / 255), srgb_to_lin(b / 255), 1)
-    meta_objects.append({"name": o.name, "id": k, "sortY": sort_y})
+    for o in objs:
+        o.color = (srgb_to_lin(r / 255), srgb_to_lin(g / 255), srgb_to_lin(b / 255), 1)
+    meta_objects.append({"name": objs[0].name, "id": k, "sortY": sort_y})
 
 # ── Camera and tiled rendering ───────────────────────────────────────────────
 cam_data = bpy.data.cameras.new("cam")
@@ -484,6 +524,16 @@ def render(path_kind):
     bpy.data.images.remove(img)
     return a
 
+# Lighting for the colour pass: a warm sun from the south-west (shadows fall behind
+# buildings, away from the streets you walk) and a soft sky fill, like Kenney's previews.
+sun_d = bpy.data.lights.new("sun", "SUN"); sun_d.energy = 3.2; sun_d.angle = math.radians(8); sun_d.color = (1.0, 0.96, 0.9)
+sun = bpy.data.objects.new("sun", sun_d); sc.collection.objects.link(sun)
+sun.rotation_euler = (math.radians(38), math.radians(-18), math.radians(-28))
+world = bpy.data.worlds.new("sky"); sc.world = world; world.use_nodes = True
+world.node_tree.nodes["Background"].inputs[0].default_value = (0.78, 0.84, 0.95, 1)
+world.node_tree.nodes["Background"].inputs[1].default_value = 0.55
+sc.eevee.taa_render_samples = 32
+
 k = 0
 for j in range(ny):
     for i in range(nx):
@@ -499,16 +549,16 @@ for j in range(ny):
             k += 1
             continue
         place(i * TILE_PX / PPU, TOP - j * TILE_PX / PPU, wpx, hpx)
-        sh.light = "FLAT"; sh.color_type = "MATERIAL"
+        sc.render.engine = "BLENDER_EEVEE_NEXT"
         colour = render("colour")
-        sh.light = "STUDIO"; sh.color_type = "SINGLE"; sh.single_color = (1, 1, 1)
-        light = render("light")[..., 0]
+        sc.render.engine = "BLENDER_WORKBENCH"
+        light = np.ones(colour.shape[:2], np.float32)
         sh.light = "FLAT"; sh.color_type = "OBJECT"
         ids = render("id")[..., :3]
         np.savez_compressed(out, colour=colour.astype(np.float16), light=light.astype(np.float16), id=(ids * 255).round().astype(np.uint8))
         print("TILE", j, i, flush=True)
         k += 1
 
-json.dump({"cols": COLS, "rows": ROWS, "ppu": PPU, "elev": math.degrees(ELEV), "top": TOP, "bottom": BOTTOM,
+json.dump({"lit": True, "cols": COLS, "rows": ROWS, "ppu": PPU, "elev": math.degrees(ELEV), "top": TOP, "bottom": BOTTOM,
            "width": total_w, "height": total_h, "tiles": tiles_meta, "objects": meta_objects},
           open(os.path.join(OUT, "meta.json"), "w"))

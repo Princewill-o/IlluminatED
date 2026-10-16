@@ -27,6 +27,19 @@ import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => n.toLocaleString("en-GB");
 const HEAD_SLOTS = new Set<Slot>(["head", "eyes", "brows", "mouth", "extras", "hair", "hairColor", "hat", "face"]);
+/** Colour slots show as swatches; each style slot has its colour right underneath. */
+const COLOUR_SLOTS = new Set<Slot>(["skin", "hairColor", "topColor", "bottomColor", "shoesColor"]);
+const PAIRED: Partial<Record<Slot, Slot>> = { hair: "hairColor", top: "topColor", bottom: "bottomColor", shoes: "shoesColor" };
+
+/** Ready-made looks to start from (all free items). */
+const PRESETS: { name: string; look: Partial<Avatar> }[] = [
+  { name: "Ama", look: { skin: "skin-5", hair: "hair-buns", hairColor: "haircol-black", top: "top-stripes", topColor: "topcol-yellow", bottom: "bottom-joggers", bottomColor: "botcol-purple", shoes: "shoes-hightops" } },
+  { name: "Leo", look: { skin: "skin-2", hair: "hair-spiky", hairColor: "haircol-brown", top: "top-tee", topColor: "topcol-green", bottom: "bottom-jeans", shoes: "shoes-trainers" } },
+  { name: "Priya", look: { skin: "skin-4", hair: "hair-long", hairColor: "haircol-black", top: "top-hoodie", topColor: "topcol-teal", bottom: "bottom-skirt", bottomColor: "botcol-navy", shoes: "shoes-trainers", shoesColor: "shoecol-white" } },
+  { name: "Kai", look: { skin: "skin-6", hair: "hair-buzz", hairColor: "haircol-black", top: "top-stripes", topColor: "topcol-red", bottom: "bottom-shorts", bottomColor: "botcol-beige", shoes: "shoes-hightops", shoesColor: "shoecol-red" } },
+  { name: "Mia", look: { skin: "skin-1", hair: "hair-ponytail", hairColor: "haircol-blonde", top: "top-tee", topColor: "topcol-pink", bottom: "bottom-jeans", bottomColor: "botcol-sky", shoes: "shoes-trainers" } },
+  { name: "Tunde", look: { skin: "skin-8", hair: "hair-short", hairColor: "haircol-black", top: "top-hoodie", topColor: "topcol-orange", bottom: "bottom-joggers", bottomColor: "botcol-black", shoes: "shoes-trainers", shoesColor: "shoecol-white" } },
+];
 const setName = (id: string) => SETS[id] ?? (companyById(id) ? `${companyById(id)!.name} uniform` : id);
 
 export function Locker({
@@ -112,8 +125,9 @@ export function Locker({
   return (
     <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
       <div className="lg:sticky lg:top-6 lg:self-start">
-        <div className="relative rounded-3xl bg-brand px-6 pt-6 pb-2">
-          <AvatarFigure avatar={avatar} size={250} facing={facing} clip={clip} className="mx-auto" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#8fb4ff] to-[#dde8fd] px-6 pt-8 pb-3 dark:from-[#1b2c48] dark:to-[#14223a]">
+          <span aria-hidden className="absolute inset-x-10 bottom-6 h-6 rounded-[50%] bg-black/15" />
+          <AvatarFigure avatar={avatar} size={290} facing={facing} clip={clip} className="relative mx-auto" />
           <div className="absolute bottom-3 left-3 flex gap-1.5">
             <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0d1726] active:scale-95">
               <RotateCw className="size-4" aria-hidden />
@@ -231,6 +245,41 @@ export function Locker({
           </div>
         )}
 
+        {group === "Body" && (
+          <div className="mt-4">
+            <p className="text-xs font-black tracking-widest text-muted-foreground uppercase">Start from a look</p>
+            <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {PRESETS.map((p) => {
+                const look = { ...avatar, ...p.look } as Avatar;
+                return (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => {
+                      setAvatar(look);
+                      play("click", soundOn());
+                    }}
+                    className="shrink-0 rounded-2xl border-2 border-border bg-card px-2 pt-2 pb-1 text-xs font-bold hover:border-primary"
+                  >
+                    <AvatarFigure avatar={look} still size={92} showPet={false} title={p.name} />
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {(COLOUR_SLOTS.has(slot) || PAIRED[slot]) && (
+          <Swatches
+            label={COLOUR_SLOTS.has(slot) ? (SLOTS.find((x) => x.slot === slot)?.label ?? "Colour") : "Colour"}
+            items={COSMETICS.filter((c) => c.slot === (COLOUR_SLOTS.has(slot) ? slot : PAIRED[slot]))}
+            value={avatar[COLOUR_SLOTS.has(slot) ? slot : PAIRED[slot]!]}
+            onPick={wear}
+          />
+        )}
+
+        {!COLOUR_SLOTS.has(slot) && (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" role="tabpanel">
           {items.map((item) => {
             const mine = has(item);
@@ -310,6 +359,37 @@ export function Locker({
             );
           })}
         </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Swatches({ label, items, value, onPick }: { label: string; items: Cosmetic[]; value: string; onPick: (c: Cosmetic) => void }) {
+  return (
+    <div className="mt-4 rounded-2xl bg-card p-4">
+      <p className="text-xs font-black tracking-widest text-muted-foreground uppercase">{label}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.map((c) => {
+          const on = value === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onPick(c)}
+              aria-label={c.name}
+              aria-pressed={on}
+              title={c.name}
+              className={cn(
+                "grid size-10 place-items-center rounded-full border-[3px] transition active:scale-90",
+                on ? "border-foreground ring-2 ring-[#f2d9a6] ring-offset-2 ring-offset-card" : "border-white/70 shadow",
+              )}
+              style={{ background: c.color ?? "conic-gradient(#c8322d, #ffd166, #4f9a46, #2b5fd9, #7a5ce6, #c8322d)" }}
+            >
+              {!c.color && <span className="sr-only">{c.name}</span>}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

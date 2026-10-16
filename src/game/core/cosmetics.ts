@@ -1,3 +1,5 @@
+import { DYES } from "./looks";
+
 /**
  * The Locker: every way a character can look. 15 categories, 4 rarities, sets.
  * Prices, rarities and unlock rules here must match the cosmetic_items rows in
@@ -18,6 +20,9 @@ export type Slot =
   | "top"
   | "bottom"
   | "shoes"
+  | "topColor"
+  | "bottomColor"
+  | "shoesColor"
   | "hat"
   | "face"
   | "held"
@@ -159,6 +164,12 @@ export const COSMETICS: Cosmetic[] = [
   E("shoes-skates", "shoes", "Roller skates", 900, { color: "#ff8fd1", set: "party" }),
   L("shoes-rocket", "shoes", "Rocket boots", 3000, { color: "#b3abc4", set: "space" }),
 
+  // ── Dyes: free colours for any top, bottoms or shoes ("auto" keeps the item's own colour)
+  ...(["topColor", "bottomColor", "shoesColor"] as const).flatMap((slot) => {
+    const prefix = { topColor: "topcol", bottomColor: "botcol", shoesColor: "shoecol" }[slot];
+    return [C(`${prefix}-auto`, slot, "Original"), ...DYES.map(([id, name, color]) => C(`${prefix}-${id}`, slot, name, 0, { color }))];
+  }),
+
   // ── Accessories ────────────────────────────────────────
   C("hat-none", "hat", "No hat"),
   C("hat-cap", "hat", "Cap", 0, { color: "#8fb4ff" }),
@@ -237,6 +248,9 @@ export const DEFAULT_AVATAR: Avatar = {
   top: "top-tee",
   bottom: "bottom-jeans",
   shoes: "shoes-trainers",
+  topColor: "topcol-auto",
+  bottomColor: "botcol-auto",
+  shoesColor: "shoecol-auto",
   hat: "hat-none",
   face: "face-none",
   held: "held-none",
@@ -271,8 +285,11 @@ export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[
     group: "Clothes",
     slots: [
       { slot: "top", label: "Tops" },
+      { slot: "topColor", label: "Top colour" },
       { slot: "bottom", label: "Bottoms" },
+      { slot: "bottomColor", label: "Bottoms colour" },
       { slot: "shoes", label: "Shoes" },
+      { slot: "shoesColor", label: "Shoe colour" },
     ],
   },
   {

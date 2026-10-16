@@ -47,7 +47,7 @@ for t in meta["tiles"]:
     raw = d["id"].astype(np.int32)
     alpha = c[..., 3] > 0.5
     oid = np.where(alpha, (raw[..., 0] // 17) + (raw[..., 1] // 17) * 16 + (raw[..., 2] // 17) * 256, 0)
-    band = np.where(L > 0.62, 1.0, np.where(L > 0.38, 0.86, 0.72))[..., None]
+    band = np.ones_like(L)[..., None] if meta.get("lit") else np.where(L > 0.62, 1.0, np.where(L > 0.38, 0.86, 0.72))[..., None]
     rgb = np.clip(c[..., :3] * band + (1 - band) * 0.5 * SHADOW, 0, 1)
     # Ink: object edges (dark) and changes of colour (softer, so roads and lawns read cleanly).
     key = (c[..., :3] * 255).round().astype(np.int32)
@@ -62,7 +62,8 @@ for t in meta["tiles"]:
             diff = (nb != oid) & (nb != -1) & alpha
             both_ground = GROUND_LUT[np.clip(oid, 0, 4096)] & GROUND_LUT[np.clip(nb, 0, 4096)]
             edge |= diff & ~both_ground
-            soft |= diff & both_ground
+            if not meta.get("lit"):
+                soft |= diff & both_ground   # lit renders already show kerbs and edges with light
             if dy * dy + dx * dx <= 2:
                 nk = shift(key, dy, dx, -1)
                 soft |= (nk != key) & (nk != -1) & alpha & ~GROUND_LUT[np.clip(oid, 0, 4096)]

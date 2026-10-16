@@ -128,7 +128,9 @@ export async function saveAvatar(
   if (!parsed.success) return { ok: false, error: FRIENDLY.invalid_avatar };
   const sb = await getSupabase();
   if (!sb) return { ok: false, error: friendly() };
-  const { error } = await sb.rpc("game_set_avatar", { p_avatar: parsed.data });
+  // "Original" dyes are the default: leave them out so outfits save the same way everywhere.
+  const toSave = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => !String(v).endsWith("-auto")));
+  const { error } = await sb.rpc("game_set_avatar", { p_avatar: toSave });
   if (error) return { ok: false, error: friendly(error.message) };
   revalidatePath("/games", "layout");
   return { ok: true };

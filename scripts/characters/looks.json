@@ -1,0 +1,23 @@
+{
+  "scale": 2.4,
+  "shoeHeight": 0.09,
+  "detailMax": 30,
+  "armReach": 0.95,
+  "variants": [
+    "female-a",
+    "female-b",
+    "female-c",
+    "female-d",
+    "female-e",
+    "female-f",
+    "male-a",
+    "male-b",
+    "male-c",
+    "male-d",
+    "male-e",
+    "male-f"
+  ],
+  "bald": [
+    "male-b"
+  ]
+}
