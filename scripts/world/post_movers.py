@@ -19,7 +19,7 @@ def shift(a, dy, dx, fill):
     return out
 
 
-def frame(colour, light, ids, line=3):
+def frame(colour, light, ids, line=3, tex=False):
     c = colour[..., :3].astype(np.float32)
     alpha = colour[..., 3] > 0.5
     L = light.astype(np.float32)
@@ -35,7 +35,7 @@ def frame(colour, light, ids, line=3):
             if dy * dy + dx * dx > line * line or (dy == 0 and dx == 0):
                 continue
             edge |= alpha & (shift(k, dy, dx, -1) != k)
-            if dy * dy + dx * dx <= 2:
+            if not tex and dy * dy + dx * dx <= 2:
                 edge |= alpha & (shift(ck, dy, dx, -1) != ck)
     rgb = np.where(edge[..., None], INK, rgb)
     out = np.concatenate([rgb, alpha[..., None].astype(np.float32)], -1)
@@ -47,7 +47,7 @@ def frame(colour, light, ids, line=3):
 meta = json.load(open(os.path.join(RAW, "meta.json")))
 for name, m in meta.items():
     d = np.load(os.path.join(RAW, f"{name}.npz"))
-    frames = [frame(d["colour"][i], d["light"][i], d["id"][i]) for i in range(m["frames"])]
+    frames = [frame(d["colour"][i], d["light"][i], d["id"][i], tex=m.get("tex", False)) for i in range(m["frames"])]
     w, h = frames[0].size
     strip = Image.new("RGBA", (w * len(frames), h))
     for i, f in enumerate(frames):

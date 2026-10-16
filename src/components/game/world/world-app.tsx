@@ -7,18 +7,24 @@ import { useRouter } from "next/navigation";
 
 import { play, soundOn } from "../sound";
 import { BusStop, type BusTrip } from "./bus-stop";
+import { GamesHall } from "./games-hall";
 import { LifeHud, type Quest } from "./life-hud";
+import { BikeDock, TrainJourney } from "./transport";
 import { TubeMap, type TubeTrip } from "./tube-map";
 import { doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
 
 import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
+import type { BikeBrand } from "@/game/core/bikes";
 import { workplaceById } from "@/game/core/careers";
 import type { Placed } from "@/game/core/homes";
 import { homeStyle } from "@/game/core/london";
 import {
   CITY,
+  STATION_PLATFORM_Y,
+  TILE,
+  stationMap,
   type OfficeOrg,
   type Portal,
   REGIONS,
@@ -49,6 +55,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
   if (id === "campus") return campusMap(offices);
+  if (id.startsWith("station-")) return stationMap(id.slice("station-".length));
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
     return org ? officeMap(org) : null;
@@ -100,6 +107,18 @@ export function WorldApp({
   const [bus, setBus] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
+  const [dock, setDock] = useState(false);
+  const [games, setGames] = useState(false);
+  const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
+  const [wallet, setWallet] = useState(clout);
+  const [journey, setJourney] = useState<{ to: string; go: () => void } | null>(null);
+  useEffect(() => setWallet(clout), [clout]);
+  // Hired bikes go back to the dock by themselves when the time runs out.
+  useEffect(() => {
+    if (!bike) return;
+    const t = setTimeout(() => setBike(null), Math.max(0, bike.until - Date.now()));
+    return () => clearTimeout(t);
+  }, [bike]);
   const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => {
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
@@ -151,7 +170,11 @@ export function WorldApp({
       else if (to.kind === "desk") setDesk(true);
       else if (to.kind === "tube") setTube(to.station);
       else if (to.kind === "work") setWork(to.workplace);
+      else if (to.kind === "bike") setDock(true);
+      else if (to.kind === "games") setGames(true);
       else {
+        // No bikes indoors: leave it at the dock outside.
+        if (to.mapId !== "city") setBike(null);
         const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
         // Arrive outside the door that leads back to where you came from.
@@ -182,8 +205,21 @@ export function WorldApp({
       let spot: { x: number; y: number } | undefined;
       if (t.kind === "station") {
         const st = STATIONS.find((s) => s.id === t.id);
-        if (!st) return;
-        spot = safeSpot(CITY, st.exitPx.x, st.exitPx.y);
+        const inside = stationMap(t.id);
+        if (!st || !inside) return;
+        // Ride inside the carriage, then step off onto the other station's platform.
+        setBike(null);
+        setJourney({
+          to: st.name,
+          go: () => {
+            setJourney(null);
+            setArrive(safeSpot(inside, inside.width / 2, (STATION_PLATFORM_Y + 0.5) * TILE));
+            setMapId(`station-${t.id}`);
+            setTrip((n) => n + 1);
+          },
+        });
+        play("train", soundOn());
+        return;
       } else {
         dest = t.mapId;
         const next = loadMap(dest, offices, me.id);
@@ -345,7 +381,38 @@ export function WorldApp({
         onPortal={onPortal}
         onRoom={setRoom}
         onChangeServer={() => setServer(null)}
+        speed={bike && mapId === "city" ? bike.brand.speed : 1}
+        bike={bike && mapId === "city" ? bike.brand.colour : null}
       />
+      {bike && mapId === "city" && (
+        <button
+          type="button"
+          onClick={() => setBike(null)}
+          className="absolute bottom-3 left-1/2 z-[100001] -translate-x-1/2 rounded-full px-4 py-2 text-sm font-black text-white shadow-lg"
+          style={{ background: bike.brand.colour }}
+        >
+          Riding {bike.brand.name} · Get off
+        </button>
+      )}
+      {dock && (
+        <BikeDock
+          clout={wallet}
+          riding={bike?.brand ?? null}
+          onRide={(b, left) => {
+            setWallet(left);
+            setBike({ brand: b, until: Date.now() + b.minutes * 60_000 });
+            setDock(false);
+            router.refresh();
+          }}
+          onDock={() => {
+            setBike(null);
+            setDock(false);
+          }}
+          onClose={() => setDock(false)}
+        />
+      )}
+      {games && server && <GamesHall serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
+      {journey && <TrainJourney to={journey.to} onArrive={journey.go} />}
       <div
         aria-hidden
         className={cn(
@@ -365,7 +432,7 @@ export function WorldApp({
       )}
       {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} onGo={busRide} onClose={() => setBus(null)} />}
-      <LifeHud avatar={me.avatar} name={me.username} clout={clout} quests={quests} />
+      <LifeHud avatar={me.avatar} name={me.username} clout={wallet} quests={quests} />
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">

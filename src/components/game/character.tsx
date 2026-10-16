@@ -514,7 +514,7 @@ export function AvatarFigure({
 type PaintedCanvas = HTMLCanvasElement & { __painter?: Painter; __last?: string; __h?: number };
 
 /** World sprite height in CSS px. */
-export const WORLD_FIGURE_H = 84;
+export const WORLD_FIGURE_H = 40;
 
 export function WorldFigure({ avatar, badge, ghost = false }: { avatar: Avatar; badge: string | null; ghost?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);

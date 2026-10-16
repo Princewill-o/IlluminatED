@@ -323,7 +323,10 @@ test("London: every HQ and station has a door, Tube exits are walkable, homes wo
   const stations = W.tubeStations();
   assert.ok(stations.length >= 8);
   for (const s of stations) {
-    assert.ok(L.portals.some((p) => p.to.kind === "tube" && p.to.station === s.id), `${s.id} has a door`);
+    assert.ok(L.portals.some((p) => p.to.kind === "map" && p.to.mapId === `station-${s.id}`), `${s.id} has a door`);
+    const inside = W.stationMap(s.id);
+    assert.ok(inside.portals.some((p) => p.to.kind === "tube" && p.to.station === s.id), `${s.id} has a platform`);
+    assert.ok(inside.portals.some((p) => p.to.kind === "map" && p.to.mapId === "city"), `${s.id} has a way out`);
     const spot = W.safeSpot(L, s.exitPx.x, s.exitPx.y);
     assert.ok(Math.hypot(spot.x - s.exitPx.x, spot.y - s.exitPx.y) < 48, `${s.id} exit is next to the station`);
   }

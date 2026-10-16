@@ -17,7 +17,7 @@ import { buildHome, buildLondon } from "./london";
  */
 export const TILE = 32;
 export const PLAYER_RADIUS = 11;
-export const WALK_SPEED = 190; // px per second
+export const WALK_SPEED = 96; // px per second (a gentle stroll: take a bus, bike or train for distance)
 
 export interface Rect {
   x: number;
@@ -34,7 +34,9 @@ export type PortalTarget =
   | { kind: "tube"; station: string }
   | { kind: "work"; workplace: string }
   | { kind: "bus"; stop: string }
-  | { kind: "act"; activity: "sleep" | "eat" | "study" };
+  | { kind: "act"; activity: "sleep" | "eat" | "study" }
+  | { kind: "bike"; dock: string }
+  | { kind: "games" };
 
 export interface Portal {
   id: string;
@@ -65,7 +67,7 @@ export interface Room {
 
 export interface WorldMap {
   id: string;
-  kind: "city" | "campus" | "office" | "home";
+  kind: "city" | "campus" | "office" | "home" | "station";
   /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
   art?: "london" | `home-${number}`;
   /** Furniture placement (homes only). */
@@ -428,8 +430,13 @@ export function londonMap(): WorldMap {
       const stop = busStopFor(th.x);
       portals.push({ id: th.id, rect: px(th.x - 1, th.y - 1, 3, 3), label: `Bus stop: ${stop.name}`, to: { kind: "bus", stop: stop.id } });
     }
-    if (th.kind === "station")
-      portals.push({ id: `tube-${th.id}`, rect: px(th.x, th.y + th.h, th.w, 1), label: `${th.name} station`, to: { kind: "tube", station: th.id } });
+    if (th.kind === "station") {
+      portals.push({ id: `tube-${th.id}`, rect: px(th.x, th.y + th.h, th.w, 1), label: `${th.name} station`, to: { kind: "map", mapId: `station-${th.id}`, label: th.name } });
+      // A hire-bike dock beside every station.
+      portals.push({ id: `bike-${th.id}`, rect: px(th.x + th.w + 1, th.y + th.h, 1, 1), label: "Hire a bike", to: { kind: "bike", dock: th.id } });
+    }
+    if (th.kind === "landmark" && th.name === "battersea")
+      portals.push({ id: "games-hall", rect: px(th.x + 4, th.y + th.h, 2, 1), label: "Games Hall: play live with others", to: { kind: "games" } });
   }
   // Pizzazz Pizza: the first shop on the West End parade.
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
@@ -474,7 +481,7 @@ export function busStops() {
   const stops = L.things.filter((t) => t.kind === "busstop");
   const city = BUS_AREAS.flatMap((a) => {
     const s = stops.find((t) => busStopFor(t.x).id === a.id);
-    return s ? [{ id: a.id, name: a.name, route: ["88", "12", "RV1", "15", "N9"][BUS_AREAS.indexOf(a)], exitPx: { x: s.x * TILE + TILE / 2, y: (s.y + 1) * TILE + TILE / 2 } }] : [];
+    return s ? [{ id: a.id, name: a.name, route: ["SL6", "BL1", "SL8", "SL1", "SL4"][BUS_AREAS.indexOf(a)], exitPx: { x: s.x * TILE + TILE / 2, y: (s.y + 1) * TILE + TILE / 2 } }] : [];
   });
   return city;
 }
@@ -482,6 +489,49 @@ export function busStops() {
 /** Where each Underground station lets you out (pixels). */
 export function tubeStations() {
   return buildLondon().stations.map((s) => ({ ...s, exitPx: { x: s.exit.x * TILE, y: s.exit.y * TILE } }));
+}
+
+/** Inside an Underground station: way out, ticket hall, barriers, platform and track. */
+export const STATION_PLATFORM_Y = 12;
+export function stationMap(stationId: string): WorldMap | null {
+  const st = buildLondon().stations.find((s) => s.id === stationId);
+  if (!st) return null;
+  const cols = 30;
+  const rows = 19;
+  const g = new Grid(cols, rows, ".");
+  g.border("#");
+  for (let x = 1; x < cols - 1; x++) g.set(x, 0, "W");
+  // Ticket hall: machines, a help point, benches.
+  g.fill(2, 2, 3, 1, "v");
+  g.fill(25, 2, 3, 1, "v");
+  g.fill(3, 5, 1, 1, "p");
+  g.fill(26, 5, 1, 1, "p");
+  // Ticket barriers with gates in the middle.
+  g.fill(1, 7, cols - 2, 1, "r");
+  g.fill(12, 7, 6, 1, "e");
+  // Platform (tiles) and benches.
+  g.fill(1, 8, cols - 2, 7, ",");
+  g.fill(4, 10, 4, 1, "s");
+  g.fill(22, 10, 4, 1, "s");
+  // The track: solid, drawn over by the station art.
+  g.fill(1, 15, cols - 2, 3, "X");
+  return finish(
+    {
+      id: `station-${st.id}`,
+      kind: "station",
+      name: `${st.name} station`,
+      structures: [],
+      portals: [
+        { id: "way-out", rect: px(13, 1, 4, 1), label: "Way out to the street", to: { kind: "map", mapId: "city", label: "London" } },
+        { id: "board", rect: px(3, 14, 24, 1), label: "Board the train", to: { kind: "tube", station: st.id } },
+      ],
+      rooms: [],
+      spawn: centre(15, 3),
+      accent: "#2b5fd9",
+      sign: { x: 15, y: 4, text: st.name },
+    },
+    g,
+  );
 }
 
 /** Your home: a private room (single player). style picks the colourway. */
@@ -547,10 +597,10 @@ export function blocked(map: WorldMap, x: number, y: number, r = PLAYER_RADIUS) 
 }
 
 /** Moves by direction (dx, dy) for `seconds`, sliding along walls instead of stopping dead. */
-export function step(map: WorldMap, pos: { x: number; y: number }, dx: number, dy: number, seconds: number) {
+export function step(map: WorldMap, pos: { x: number; y: number }, dx: number, dy: number, seconds: number, speed = 1) {
   const len = Math.hypot(dx, dy);
   if (len < 0.01) return pos;
-  const dist = WALK_SPEED * Math.min(seconds, 0.1) * Math.min(1, len);
+  const dist = WALK_SPEED * speed * Math.min(seconds, 0.1) * Math.min(1, len);
   const nx = pos.x + (dx / len) * dist;
   const ny = pos.y + (dy / len) * dist;
   if (!blocked(map, nx, ny)) return { x: nx, y: ny };

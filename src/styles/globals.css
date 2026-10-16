@@ -816,6 +816,24 @@ html.dark body:has(.app-theme) {
   .eye-wheel { animation: none; }
 }
 
+/* Underground: a train pulls in, waits, and leaves; tunnel lights rush past the window. */
+@keyframes train-call {
+  0% { transform: translateX(-110%); }
+  25%, 65% { transform: translateX(4%); animation-timing-function: ease-in; }
+  100% { transform: translateX(130%); }
+}
+.station-train { width: 896px; animation: train-call 16s ease-out infinite; }
+@keyframes tunnel-rush { to { background-position-x: -400px; } }
+.tunnel-lights {
+  background-image: repeating-linear-gradient(90deg, transparent 0 150px, rgba(255, 209, 102, 0.85) 150px 165px, transparent 165px 200px),
+    linear-gradient(transparent 45%, #3a3644 45% 55%, transparent 55%);
+  animation: tunnel-rush 0.35s linear infinite;
+}
+.tunnel-slow { animation-duration: 1.4s; }
+@media (prefers-reduced-motion: reduce) {
+  .station-train, .tunnel-lights { animation: none; }
+}
+
 /* Scenery sliding past the bus window. */
 @keyframes bus-scroll {
   to {

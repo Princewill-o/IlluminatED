@@ -8,7 +8,9 @@ import FURNITURE_ART from "../../../../public/world/furniture.json";
 import HOME_ART from "../../../../public/world/home.json";
 import LONDON_ART from "../../../../public/world/london.json";
 import MOVERS from "../../../../public/world/movers.json";
+import { WorldFigure, poseWorldFigure } from "../character";
 
+import { look } from "@/game/core/cosmetics";
 import { CATALOGUE_LAYOUT, STARTER_LAYOUT } from "@/game/core/homes";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
@@ -223,22 +225,75 @@ type Mover = keyof typeof MOVERS;
 const M = MOVERS as Record<string, { frames: number; w: number; h: number; ax: number; ay: number }>;
 
 /** The London Eye turning, buses and cabs doing their rounds, boats on the Thames. */
+type VehicleKind = "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | "police" | "ambulance" | "delivery" | "hatchback-sports";
+
+// Everyone on a route keeps the same speed so nobody drives through anybody.
+/** Blinds on the buses: the Superloop and the BL1. */
+export const BUS_ROUTE_CODES = ["SL6", "BL1", "SL8"];
+const ROUTE_SPEED = [2.6, 2.8, 2.5];
+const TRAFFIC: { kind: VehicleKind; route: number; at: number }[] = [
+  { kind: "bus", route: 0, at: 0.0 },
+  { kind: "sedan", route: 0, at: 0.12 },
+  { kind: "cab", route: 0, at: 0.24 },
+  { kind: "van", route: 0, at: 0.38 },
+  { kind: "bus", route: 0, at: 0.5 },
+  { kind: "suv", route: 0, at: 0.63 },
+  { kind: "delivery", route: 0, at: 0.76 },
+  { kind: "cab", route: 0, at: 0.88 },
+  { kind: "bus", route: 1, at: 0.0 },
+  { kind: "police", route: 1, at: 0.25 },
+  { kind: "cab", route: 1, at: 0.5 },
+  { kind: "hatchback-sports", route: 1, at: 0.75 },
+  { kind: "bus", route: 2, at: 0.05 },
+  { kind: "cab", route: 2, at: 0.17 },
+  { kind: "ambulance", route: 2, at: 0.3 },
+  { kind: "sedan", route: 2, at: 0.43 },
+  { kind: "bus", route: 2, at: 0.55 },
+  { kind: "suv", route: 2, at: 0.68 },
+  { kind: "van", route: 2, at: 0.8 },
+  { kind: "cab", route: 2, at: 0.92 },
+  { kind: "boat", route: -1, at: 0.0 },
+  { kind: "boat", route: -1, at: 0.55 },
+];
+
+// Londoners on the pavements: a few looks, walking the block loops.
+const pick = <T,>(xs: readonly T[], i: number) => xs[i % xs.length];
+const SKINS = ["skin-1", "skin-2", "skin-3", "skin-4", "skin-5", "skin-6", "skin-7", "skin-8"];
+const HAIRS = ["hair-short", "hair-bob", "hair-afro", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff"];
+const HAIRCOLS = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn", "haircol-ginger", "haircol-silver"];
+const TOPS = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
+const BOTTOMS = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
+export const NPC_LINES = [
+  "Morning! Mind the gap.",
+  "Is this the stop for the SL6?",
+  "Lovely day for a revision walk.",
+  "The Lyme bikes are by the stations.",
+  "I've got a test on Thursday...",
+  "Have you tried the Games Hall?",
+  "Trains are every two minutes.",
+  "Fancy a cuppa after this?",
+];
+const NPCS = Array.from({ length: 14 }, (_, i) => ({
+  avatar: look({
+    skin: pick(SKINS, i * 3 + 1),
+    hair: pick(HAIRS, i * 7),
+    hairColor: pick(HAIRCOLS, i * 5),
+    top: pick(TOPS, i * 2 + 1),
+    bottom: pick(BOTTOMS, i),
+  }),
+  route: i % 3,
+  at: (i * 0.137) % 1,
+  side: i % 2 ? 1.3 : -1.3,
+  back: i % 4 >= 2,
+  speed: 1.2 + (i % 3) * 0.2,
+}));
+
 function LondonLife() {
   const L = buildLondon();
   const eye = L.things.find((t): t is Extract<typeof t, { kind: "landmark" }> => t.kind === "landmark" && t.name === "eye");
   const els = useRef<(HTMLDivElement | null)[]>([]);
-  const vehicles = useRef(
-    [
-      { kind: "bus", route: 0, at: 0.0, speed: 2.6 },
-      { kind: "bus", route: 2, at: 0.5, speed: 2.4 },
-      { kind: "cab", route: 0, at: 0.35, speed: 3.6 },
-      { kind: "cab", route: 1, at: 0.1, speed: 3.4 },
-      { kind: "cab", route: 2, at: 0.8, speed: 3.8 },
-      { kind: "bus", route: 1, at: 0.6, speed: 2.5 },
-      { kind: "boat", route: -1, at: 0.0, speed: 1.6 },
-      { kind: "boat", route: -1, at: 0.55, speed: 1.3 },
-    ] as { kind: "bus" | "cab" | "boat"; route: number; at: number; speed: number }[],
-  );
+  const people = useRef<(HTMLDivElement | null)[]>([]);
+  const vehicles = useRef(TRAFFIC.map((v) => ({ ...v, speed: v.route < 0 ? 1.4 + v.at : ROUTE_SPEED[v.route] })));
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -296,6 +351,27 @@ function LondonLife() {
         el.style.transform = `translate3d(${Math.round(x - m.ax)}px, ${Math.round(y - m.ay)}px, 0)`;
         el.style.zIndex = String(Math.round(y));
       });
+      NPCS.forEach((n, i) => {
+        const el = people.current[i];
+        if (!el) return;
+        const p = pointAt(n.route, n.at * lengths[n.route] + (reduce ? 0 : secs * n.speed), n.back);
+        const len = Math.hypot(p.dx, p.dy) || 1;
+        // Step off the road onto the pavement (left of travel for some, right for others).
+        const x = (p.x + (-p.dy / len) * n.side) * TILE;
+        const y = (p.y + (p.dx / len) * n.side) * TILE;
+        el.style.transform = `translate3d(${Math.round(x - 20)}px, ${Math.round(y - 46)}px, 0)`;
+        el.style.zIndex = String(Math.round(y));
+        const ang = Math.atan2(p.dx, -p.dy);
+        const root = el.querySelector(".td-root");
+        if (root && !reduce) poseWorldFigure(root, ang, secs * n.speed * 5, 1, now);
+        const bubble = el.querySelector<HTMLElement>(".npc-say");
+        if (bubble) {
+          const slot = Math.floor(secs / 6 + i * 0.7);
+          const talking = (slot + i) % 5 === 0;
+          bubble.style.display = talking ? "block" : "none";
+          if (talking) bubble.textContent = NPC_LINES[(slot + i) % NPC_LINES.length];
+        }
+      });
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -320,6 +396,22 @@ function LondonLife() {
           }}
         />
       )}
+      {NPCS.map((n, i) => (
+        <div
+          key={`npc-${i}`}
+          aria-hidden
+          ref={(el) => {
+            people.current[i] = el;
+          }}
+          className="pointer-events-none absolute top-0 left-0 h-[46px] w-10"
+        >
+          <span className="npc-say absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-xl bg-white px-2 py-0.5 text-[10px] font-bold whitespace-nowrap text-[#0d1726] shadow" />
+          <div className="td-root absolute inset-x-0 bottom-1 h-0">
+            <span className="absolute -bottom-1 left-1/2 h-2 w-7 -translate-x-1/2 rounded-[50%] bg-black/25" />
+            <WorldFigure avatar={n.avatar} badge={null} />
+          </div>
+        </div>
+      ))}
       {vehicles.current.map((v, i) => (
         <div
           key={i}
@@ -328,7 +420,13 @@ function LondonLife() {
             els.current[i] = el;
           }}
           className="pointer-events-none absolute top-0 left-0"
-        />
+        >
+          {v.kind === "bus" && (
+            <span className="absolute top-1 left-1/2 -translate-x-1/2 rounded bg-[#15151c] px-1 font-mono text-[9px] leading-tight font-black text-[#ffb020]">
+              {BUS_ROUTE_CODES[v.route]}
+            </span>
+          )}
+        </div>
       ))}
     </>
   );

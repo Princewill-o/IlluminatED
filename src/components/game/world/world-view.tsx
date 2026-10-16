@@ -2,12 +2,13 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-import { Bus, DoorOpen, MessageCircle, Sparkles } from "lucide-react";
+import { Bike, Bus, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { ArtScenery, fadeArtProps } from "./art";
+import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
@@ -33,7 +34,21 @@ function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
   const r = portal.rect;
   // Bus stops are obvious already: only light up when you're at one.
   if (portal.to.kind === "bus" && !near) return null;
-  const Icon = portal.to.kind === "map" || portal.to.kind === "bus" ? Bus : portal.to.kind === "desk" ? MessageCircle : portal.to.kind === "link" ? Sparkles : DoorOpen;
+  const k = portal.to.kind;
+  const Icon =
+    k === "bike"
+      ? Bike
+      : k === "games"
+        ? Gamepad2
+        : k === "tube" || (k === "map" && portal.to.mapId.startsWith("station-"))
+          ? TrainFront
+          : k === "map" || k === "bus"
+            ? Bus
+            : k === "desk"
+              ? MessageCircle
+              : k === "link"
+                ? Sparkles
+                : DoorOpen;
   return (
     <div
       className={cn(
@@ -58,7 +73,9 @@ function Sprite({
   hidden = false,
   innerRef,
   bubbleRef,
+  bike,
 }: {
+  bike?: string | null;
   avatar: Me["avatar"];
   badge: string | null;
   username: string;
@@ -76,6 +93,7 @@ function Sprite({
       />
       <div className="td-root absolute inset-x-0 bottom-2 h-0">
         <span aria-hidden className="absolute -bottom-1 left-1/2 h-3 w-10 -translate-x-1/2 rounded-[50%] bg-black/25" />
+        {bike && <BikeUnder colour={bike} />}
         <WorldFigure avatar={avatar} badge={badge} ghost={hidden} />
       </div>
       <div className="absolute top-full left-1/2 -mt-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
@@ -151,7 +169,13 @@ export function WorldView({
   onPortal,
   onRoom,
   onChangeServer,
+  speed = 1,
+  bike = null,
 }: {
+  /** Movement multiplier (hire bikes). */
+  speed?: number;
+  /** Colour of the bike you're riding, if any. */
+  bike?: string | null;
   map: WorldMap;
   serverId: string;
   me: Me;
@@ -171,6 +195,12 @@ export function WorldView({
   const keys = useRef(new Set<string>());
   const stick = useRef({ x: 0, y: 0 });
   const target = useRef<{ x: number; y: number } | null>(null);
+  /** Camera position in world px, shared with the click handler. */
+  const camRef = useRef({ x: 0, y: 0 });
+  /** Pre-rendered 3D maps are viewed closer up, so people are small next to buildings and cars. */
+  const zoom = map.art === "london" ? 1.7 : map.art ? 1.35 : 1;
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
   const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false });
   const myChat = useRef<{ text: string; until: number } | null>(null);
   const [near, setNear] = useState<Portal | null>(null);
@@ -272,7 +302,7 @@ export function WorldView({
         }
       }
       const p = pos.current;
-      const next = step(map, p, dx, dy, dt);
+      const next = step(map, p, dx, dy, dt, speedRef.current);
       const moved = next.x !== p.x || next.y !== p.y;
       if ((dx || dy) && !moved) target.current = null;
       if (dx) p.d = dx > 0 ? 1 : -1;
@@ -284,16 +314,18 @@ export function WorldView({
 
       const vp = viewport.current;
       if (vp && layer.current) {
-        const vw = vp.clientWidth;
-        const vh = vp.clientHeight;
+        const vw = vp.clientWidth / zoom;
+        const vh = vp.clientHeight / zoom;
         const tx = map.width < vw ? (map.width - vw) / 2 : Math.max(0, Math.min(map.width - vw, p.x - vw / 2));
         const ty = map.height < vh ? (map.height - vh) / 2 : Math.max(0, Math.min(map.height - vh, p.y - vh / 2));
         // Smooth camera follow (snaps on the first frame).
         const k = Number.isNaN(cam.x) || reduced ? 1 : 1 - Math.exp(-dt * 7);
         cam.x = Number.isNaN(cam.x) ? tx : cam.x + (tx - cam.x) * k;
         cam.y = Number.isNaN(cam.y) ? ty : cam.y + (ty - cam.y) * k;
-        layer.current.style.transform = `translate3d(${-Math.round(cam.x)}px, ${-Math.round(cam.y)}px, 0)`;
+        layer.current.style.transform = `translate3d(${-Math.round(cam.x * zoom)}px, ${-Math.round(cam.y * zoom)}px, 0) scale(${zoom})`;
+        camRef.current = { x: cam.x, y: cam.y };
         const fctx = fxCanvas.current?.getContext("2d");
+        if (fctx) fctx.setTransform(zoom, 0, 0, zoom, 0, 0);
         if (fctx) drawFx(fctx, fx, { x: Math.round(cam.x), y: Math.round(cam.y) }, vw, vh, now, dt, { x: p.x, y: p.y, walking: moved }, phaseRef.current, reduced);
       }
       // Ambient sound: footsteps, and birdsong outdoors.
@@ -363,7 +395,7 @@ export function WorldView({
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [map, players, reportMove, stopped, onRoom]);
+  }, [map, players, reportMove, stopped, onRoom, zoom]);
 
   const sayIt = (id: string) => {
     const text = chatText(id);
@@ -385,19 +417,17 @@ export function WorldView({
       onPointerDown={(e) => {
         if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-world]")) return;
         const r = viewport.current!.getBoundingClientRect();
-        const m = layer.current!.style.transform.match(/translate3d\((-?[\d.]+)px, (-?[\d.]+)px/);
-        const ox = m ? -Number(m[1]) : 0;
-        const oy = m ? -Number(m[2]) : 0;
-        target.current = { x: e.clientX - r.left + ox, y: e.clientY - r.top + oy };
+        target.current = { x: (e.clientX - r.left) / zoom + camRef.current.x, y: (e.clientY - r.top) / zoom + camRef.current.y };
       }}
     >
       <div
         ref={layer}
         data-world
-        className="absolute top-0 left-0 will-change-transform"
+        className="absolute top-0 left-0 origin-top-left will-change-transform"
         style={{ width: map.width, height: map.height }}
       >
-        {map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office"} />}
+        {map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
+        {map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
         ))}
@@ -431,6 +461,7 @@ export function WorldView({
         ))}
         <Sprite
           me
+          bike={bike}
           avatar={me.avatar}
           badge={me.badge}
           username={me.username}

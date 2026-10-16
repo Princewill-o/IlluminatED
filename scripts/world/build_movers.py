@@ -101,7 +101,7 @@ def shoot(name, group, w_tiles, up_tiles, down_tiles, frames, setup):
     for f in range(frames):
         setup(f)
         bpy.context.view_layer.update()
-        sh.light = "FLAT"; sh.color_type = "MATERIAL"
+        sh.light = "FLAT"; sh.color_type = "TEXTURE"
         colours.append(render_arr())
         sh.light = "STUDIO"; sh.color_type = "SINGLE"; sh.single_color = (1, 1, 1)
         lights.append(render_arr()[..., 0])
@@ -143,31 +143,45 @@ def turn(f):
 
 shoot("eye", eye, 10.6, 10.6, 0.6, 8, turn)
 
-# ── Red double-decker bus ────────────────────────────────────────────────────
+# ── Red double-decker bus (modern London double-decker) ──────────────────────
+def bevel(o, w=0.08):
+    m = o.modifiers.new("bv", "BEVEL"); m.width = w; m.segments = 3
+    return o
+
 bus_root = empty("bus")
-bus = []
 def busbody(parent):
+    red, glass, ink = "#d4241f", "#1f2633", "#15151c"
     parts = [
-        box("#d4342c", (0, 0, 1.05), (2.6, 0.95, 1.9), parent),
-        box("#2f3644", (0.0, 0.0, 1.45), (2.62, 0.97, 0.38), parent),     # upper windows
-        box("#2f3644", (0.15, 0.0, 0.62), (2.3, 0.97, 0.36), parent),     # lower windows
-        box("#f4f0ea", (0, 0, 2.02), (2.6, 0.95, 0.06), parent),          # roof
-        box("#ffd166", (0, 0, 0.95), (2.62, 0.97, 0.06), parent),         # yellow stripe
-        box("#2f3644", (1.31, 0, 1.05), (0.02, 0.8, 1.5), parent),        # windscreen
+        bevel(box(red, (0, 0, 1.12), (2.7, 0.98, 1.96), parent), 0.14),           # body
+        box("#c21d19", (0, 0, 2.11), (2.56, 0.9, 0.06), parent),                   # roof
+        box(glass, (-0.08, 0, 1.58), (2.5, 1.0, 0.46), parent),                    # upper deck windows, one long band
+        box(glass, (-0.18, 0, 0.78), (2.2, 1.0, 0.42), parent),                    # lower deck windows
+        box(red, (-0.6, 0, 1.58), (0.06, 1.01, 0.46), parent),                     # window pillars
+        box(red, (0.2, 0, 1.58), (0.06, 1.01, 0.46), parent),
+        box(red, (-0.5, 0, 0.78), (0.06, 1.01, 0.42), parent),
+        box(glass, (1.33, 0, 1.6), (0.06, 0.86, 0.44), parent),                    # upper windscreen
+        box(glass, (1.33, 0, 0.74), (0.06, 0.86, 0.62), parent),                   # lower windscreen
+        box(ink, (1.35, 0, 1.2), (0.05, 0.7, 0.2), parent),                        # destination blind
+        box("#ffb020", (1.37, 0, 1.2), (0.03, 0.5, 0.1), parent),                  # route number glow
+        box(glass, (0.95, 0.5, 0.62), (0.4, 0.02, 0.9), parent),                   # front doors (kerb side)
+        box(glass, (-0.25, 0.5, 0.62), (0.36, 0.02, 0.9), parent),                 # middle doors
+        box(ink, (0, 0, 0.16), (2.72, 1.0, 0.14), parent),                         # skirt
+        box("#f4f0ea", (1.36, 0.36, 0.34), (0.03, 0.14, 0.08), parent),            # lights
+        box("#f4f0ea", (1.36, -0.36, 0.34), (0.03, 0.14, 0.08), parent),
     ]
-    for x in (-0.85, 0.85):
-        for y in (-0.48, 0.48):
-            parts.append(cyl("#2a2730", (x, y, 0.22), 0.22, 0.12, parent, rot=(math.radians(90), 0, 0)))
+    for x in (-0.85, 0.9):
+        for y in (-0.47, 0.47):
+            parts.append(cyl("#2a2730", (x, y, 0.22), 0.24, 0.14, parent, rot=(math.radians(90), 0, 0)))
     return parts
 bus = busbody(bus_root)
 for d, rz in (("E", 0), ("W", math.pi), ("N", math.pi / 2), ("S", -math.pi / 2)):
-    shoot(f"bus-{d}", bus, 3.4, 3.2, 1.4, 1, lambda f, rz=rz: setattr(bus_root, "rotation_euler", (0, 0, rz)))
+    shoot(f"bus-{d}", bus, 3.4, 3.4, 1.4, 1, lambda f, rz=rz: setattr(bus_root, "rotation_euler", (0, 0, rz)))
 
 # ── Black cab ────────────────────────────────────────────────────────────────
 cab_root = empty("cab")
 cab = [
-    box("#24222b", (0, 0, 0.42), (1.6, 0.8, 0.5), cab_root),
-    box("#24222b", (-0.1, 0, 0.82), (1.0, 0.76, 0.42), cab_root),
+    bevel(box("#24222b", (0, 0, 0.42), (1.6, 0.8, 0.5), cab_root)),
+    bevel(box("#24222b", (-0.1, 0, 0.82), (1.0, 0.76, 0.42), cab_root)),
     box("#54607a", (-0.1, 0, 0.84), (1.02, 0.78, 0.26), cab_root),
     box("#ffd166", (-0.1, 0, 1.08), (0.24, 0.12, 0.08), cab_root),
 ]
@@ -176,6 +190,30 @@ for x in (-0.55, 0.55):
         cab.append(cyl("#1a1820", (x, y, 0.18), 0.18, 0.1, cab_root, rot=(math.radians(90), 0, 0)))
 for d, rz in (("E", 0), ("W", math.pi), ("N", math.pi / 2), ("S", -math.pi / 2)):
     shoot(f"cab-{d}", cab, 2.2, 2.0, 1.0, 1, lambda f, rz=rz: setattr(cab_root, "rotation_euler", (0, 0, rz)))
+
+# ── Everyday traffic: Kenney car kit (CC0), textured ────────────────────────
+KIT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "kenney", "car-kit")
+for car in ("sedan", "van", "suv", "police", "ambulance", "delivery", "hatchback-sports"):
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=os.path.join(KIT, f"{car}.glb"))
+    new_objs = [o for o in bpy.data.objects if o not in before]
+    root = empty(f"car-{car}")
+    meshes = [o for o in new_objs if o.type == "MESH"]
+    for o in new_objs:
+        if o.parent is None:
+            o.parent = root
+    bpy.context.view_layer.update()
+    xs = [ (o.matrix_world @ Vector(c)).x for o in meshes for c in o.bound_box]
+    ys = [ (o.matrix_world @ Vector(c)).y for o in meshes for c in o.bound_box]
+    long = max(max(xs) - min(xs), max(ys) - min(ys))
+    target = 2.0 if car in ("van", "ambulance", "delivery") else 1.7
+    root.scale = (target / long,) * 3
+    # Kenney cars face -Y/+Z; turn so the nose points +X like the bus.
+    face = math.pi / 2  # glTF noses point -Y after import
+    ALL.extend(meshes)
+    for d, rz in (("E", 0), ("W", math.pi), ("N", math.pi / 2), ("S", -math.pi / 2)):
+        shoot(f"{car}-{d}", meshes, 2.6, 2.0, 1.0, 1, lambda f, rz=rz, root=root, face=face: setattr(root, "rotation_euler", (0, 0, rz + face)))
+        META[f"{car}-{d}"]["tex"] = True
 
 # ── Riverboat ────────────────────────────────────────────────────────────────
 boat_root = empty("boat", (0, 0, -0.3))
