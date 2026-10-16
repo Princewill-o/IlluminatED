@@ -174,7 +174,7 @@ function LondonSigns({ props }: { props: Prop[] }) {
                 </span>
               )}
               <span
-                className="absolute rounded-sm bg-[#1b1622]/85 px-1.5 text-[9px] leading-4 font-black whitespace-nowrap text-white"
+                className="absolute rounded-sm bg-[#13203a]/85 px-1.5 text-[9px] leading-4 font-black whitespace-nowrap text-white"
                 style={{ left: (t.x + t.w / 2) * TILE, top: front - 1.55 * COT * TILE, transform: "translateX(-50%)" }}
               >
                 {t.label}
@@ -206,7 +206,7 @@ function LondonSigns({ props }: { props: Prop[] }) {
             <span
               key={t.id}
               aria-hidden
-              className="pointer-events-none absolute rounded-full bg-[#c6f36b] px-2 text-[10px] leading-5 font-black whitespace-nowrap text-[#0b0910] shadow-[0_2px_0_0_rgba(0,0,0,0.4)]"
+              className="pointer-events-none absolute rounded-full bg-[#f2d9a6] px-2 text-[10px] leading-5 font-black whitespace-nowrap text-[#0d1726] shadow-[0_2px_0_0_rgba(0,0,0,0.4)]"
               style={{ left: (t.x + t.w / 2) * TILE, top: (p?.y ?? t.y * TILE) - 6, transform: "translateX(-50%)", zIndex: (p?.z ?? 0) + 1 }}
             >
               Your house

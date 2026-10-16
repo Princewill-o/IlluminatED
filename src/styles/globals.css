@@ -6,17 +6,17 @@
 @variant dark (&:is(.dark *));
 
 :root {
-  --background: #faf8f4;
+  --background: #f7f1e6;
   --foreground: #121a2b;
   --card: #ffffff;
   --card-foreground: #121a2b;
   --popover: #ffffff;
   --popover-foreground: #121a2b;
-  --primary: #1b3a6b;
+  --primary: #1f4fbf;
   --primary-foreground: #ffffff;
   --secondary: #eef1f6;
   --secondary-foreground: #1b3a6b;
-  --muted: #f1eee7;
+  --muted: #efe7d8;
   --muted-foreground: #5a6272;
   --accent: #fbf0dc;
   --accent-foreground: #6b3d00;
@@ -140,11 +140,11 @@
   --color-warm: var(--warm);
   --color-warm-text: var(--warm-text);
   --color-glow: var(--glow);
-  --color-brand: var(--brand, #7c4dff);
+  --color-brand: var(--brand, #2b5fd9);
   --color-ink-lime: var(--ink-lime, #3f7a00);
   --color-ink-sun: var(--ink-sun, #9a5b00);
   --color-ink-coral: var(--ink-coral, #c8372a);
-  --color-ink-lilac: var(--ink-lilac, #6d3fe0);
+  --color-ink-lilac: var(--ink-lilac, #1f4fbf);
   --color-ink-sky: var(--ink-sky, #0b6fae);
   --color-ink-mint: var(--ink-mint, #0f7a52);
   --color-raised: var(--surface-raised, #ffffff);
@@ -342,20 +342,20 @@ body {
 /* ─── IlluminatEDSocial: purple accents; follows light/dark ─── */
 .social {
   color-scheme: light;
-  --background: #f5f3fa;
-  --foreground: #17121f;
+  --background: #f6f0e4;
+  --foreground: #13203a;
   --card: #ffffff;
-  --card-foreground: #17121f;
+  --card-foreground: #13203a;
   --popover: #ffffff;
-  --popover-foreground: #17121f;
-  --primary: #6d3fe0;
+  --popover-foreground: #13203a;
+  --primary: #1f4fbf;
   --primary-foreground: #ffffff;
-  --secondary: #ece7f8;
-  --secondary-foreground: #2c1d57;
-  --muted: #efecf5;
-  --muted-foreground: #645c76;
-  --accent: #e7defe;
-  --accent-foreground: #3b2380;
+  --secondary: #e8eefb;
+  --secondary-foreground: #1b3a6b;
+  --muted: #f1ece2;
+  --muted-foreground: #5a6272;
+  --accent: #dde8fd;
+  --accent-foreground: #1b3a6b;
   --destructive: #c8372a;
   --destructive-foreground: #ffffff;
   --success: #0f7a52;
@@ -363,152 +363,116 @@ body {
   --danger-soft: #fde8e6;
   --warm: #b26b00;
   --warm-text: #8a5200;
-  --glow: #ece7f8;
-  --border: rgb(23 18 31 / 9%);
-  --input: rgb(23 18 31 / 16%);
-  --ring: #7c4dff;
-  --chart-1: #6d3fe0;
+  --glow: #e8eefb;
+  --border: rgb(19 32 58 / 9%);
+  --input: rgb(19 32 58 / 16%);
+  --ring: #2b5fd9;
+  --chart-1: #1f4fbf;
   --chart-2: #d98a00;
   --chart-3: #0f9a6a;
   --chart-4: #1f8fd6;
   --chart-5: #e0533f;
   --sidebar: #ffffff;
-  --sidebar-foreground: #17121f;
-  --sidebar-primary: #6d3fe0;
+  --sidebar-foreground: #13203a;
+  --sidebar-primary: #1f4fbf;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ece7f8;
-  --sidebar-accent-foreground: #17121f;
-  --sidebar-border: rgb(23 18 31 / 9%);
-  --sidebar-ring: #7c4dff;
+  --sidebar-accent: #e8eefb;
+  --sidebar-accent-foreground: #13203a;
+  --sidebar-border: rgb(19 32 58 / 9%);
+  --sidebar-ring: #2b5fd9;
   /* Accent inks: readable text versions of the bright game colours. */
-  --brand: #7c4dff;
+  --brand: #2b5fd9;
   --ink-lime: #3f7a00;
   --ink-sun: #9a5b00;
   --ink-coral: #c8372a;
-  --ink-lilac: #6d3fe0;
+  --ink-lilac: #1f4fbf;
   --ink-sky: #0b6fae;
   --ink-mint: #0f7a52;
   --surface-raised: #ffffff;
   --chrome: rgb(255 255 255 / 88%);
-  --btn-edge: rgb(44 29 87 / 22%);
-  --hover: rgb(23 18 31 / 5%);
-  --selected: rgb(109 63 224 / 10%);
+  --btn-edge: rgb(27 58 107 / 22%);
+  --hover: rgb(19 32 58 / 5%);
+  --selected: rgb(37 99 235 / 10%);
   background-color: var(--background);
   color: var(--foreground);
 }
 .dark .social {
   color-scheme: dark;
-  --background: #0b0910;
-  --foreground: #f4f0ff;
-  --card: #15111f;
-  --card-foreground: #f4f0ff;
-  --popover: #18131f;
-  --popover-foreground: #f4f0ff;
-  --primary: #a67fff;
-  --primary-foreground: #0b0910;
-  --secondary: #1f1830;
-  --secondary-foreground: #ece5ff;
-  --muted: #17131f;
-  --muted-foreground: #aaa2bd;
-  --accent: #261c3a;
-  --accent-foreground: #e4d9ff;
+  --background: #0d1726;
+  --foreground: #f3f6fb;
+  --card: #14223a;
+  --card-foreground: #f3f6fb;
+  --popover: #14223a;
+  --popover-foreground: #f3f6fb;
+  --primary: #8fb4ff;
+  --primary-foreground: #0d1726;
+  --secondary: #1b2c48;
+  --secondary-foreground: #e3ebf9;
+  --muted: #152238;
+  --muted-foreground: #a3afc2;
+  --accent: #1f3354;
+  --accent-foreground: #dbe7ff;
   --destructive: #ff8f85;
-  --destructive-foreground: #0b0910;
+  --destructive-foreground: #0d1726;
   --success: #5fd3a5;
   --success-soft: #0f2e22;
   --danger-soft: #36161a;
   --warm: #ffd166;
   --warm-text: #ffd166;
-  --glow: #1f1830;
+  --glow: #1b2c48;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 16%);
-  --ring: #c6f36b;
-  --chart-1: #a67fff;
+  --ring: #f2d9a6;
+  --chart-1: #8fb4ff;
   --chart-2: #ffd166;
   --chart-3: #5fd3a5;
   --chart-4: #6bc6ff;
   --chart-5: #ff7a6b;
-  --sidebar: #0b0910;
-  --sidebar-foreground: #f4f0ff;
-  --sidebar-primary: #a67fff;
-  --sidebar-primary-foreground: #0b0910;
-  --sidebar-accent: #1f1830;
-  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar: #0d1726;
+  --sidebar-foreground: #f3f6fb;
+  --sidebar-primary: #8fb4ff;
+  --sidebar-primary-foreground: #0d1726;
+  --sidebar-accent: #1b2c48;
+  --sidebar-accent-foreground: #f3f6fb;
   --sidebar-border: rgb(255 255 255 / 10%);
-  --sidebar-ring: #c6f36b;
-  --brand: #7c4dff;
-  --ink-lime: #c6f36b;
+  --sidebar-ring: #f2d9a6;
+  --brand: #2b5fd9;
+  --ink-lime: #f2d9a6;
   --ink-sun: #ffd166;
   --ink-coral: #ff8a7a;
-  --ink-lilac: #b99aff;
+  --ink-lilac: #9ec0ff;
   --ink-sky: #6bc6ff;
   --ink-mint: #5fd3a5;
-  --surface-raised: #1b1527;
-  --chrome: rgb(11 9 16 / 90%);
+  --surface-raised: #1a2a44;
+  --chrome: rgb(13 23 38 / 90%);
   --btn-edge: rgb(0 0 0 / 55%);
   --hover: rgb(255 255 255 / 6%);
   --selected: rgb(255 255 255 / 8%);
 }
 html:not(.dark) body:has(.social) {
-  background-color: #f5f3fa;
+  background-color: #f6f0e4;
 }
 html.dark body:has(.social) {
-  background-color: #0b0910;
-}
-
-/* ─── Opening screen (src/components/splash-screen.tsx) ─── */
-html.splash-done #splash {
-  display: none;
-}
-html.splash-active,
-html.splash-active body {
-  overflow: hidden;
-}
-/* If scripts never load, don't trap people behind the splash. */
-#splash {
-  animation: splash-fallback 0.4s ease 6.5s forwards;
-}
-@keyframes splash-fallback {
-  to {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-}
-/* On IlluminatEDSocial pages the splash uses the forum's black and purple. */
-html.dark body:has(.social) #splash {
-  background: #0b0910;
-}
-html.dark body:has(.social) #splash .splash-dot {
-  background: rgb(255 255 255 / 12%);
-}
-html.dark body:has(.social) #splash .splash-dot.active {
-  background: #a67fff;
-}
-html.dark body:has(.social) #splash .splash-wordmark-light {
-  display: none;
-}
-html.dark body:has(.social) #splash .splash-wordmark-dark {
-  display: block;
+  background-color: #0d1726;
 }
 
 /* ─── IlluminatED City (games): bright, flat, no gradients; follows light/dark ─── */
 .arcade {
   color-scheme: light;
-  --background: #f5f3fa;
-  --foreground: #17121f;
+  --background: #f6f0e4;
+  --foreground: #13203a;
   --card: #ffffff;
-  --card-foreground: #17121f;
+  --card-foreground: #13203a;
   --popover: #ffffff;
-  --popover-foreground: #17121f;
-  --primary: #6d3fe0;
+  --popover-foreground: #13203a;
+  --primary: #1f4fbf;
   --primary-foreground: #ffffff;
-  --secondary: #ece7f8;
-  --secondary-foreground: #2c1d57;
-  --muted: #efecf5;
-  --muted-foreground: #645c76;
-  --accent: #e7defe;
-  --accent-foreground: #3b2380;
+  --secondary: #e8eefb;
+  --secondary-foreground: #1b3a6b;
+  --muted: #f1ece2;
+  --muted-foreground: #5a6272;
+  --accent: #dde8fd;
+  --accent-foreground: #1b3a6b;
   --destructive: #c8372a;
   --destructive-foreground: #ffffff;
   --success: #0f7a52;
@@ -516,104 +480,103 @@ html.dark body:has(.social) #splash .splash-wordmark-dark {
   --danger-soft: #fde8e6;
   --warm: #b26b00;
   --warm-text: #8a5200;
-  --glow: #ece7f8;
-  --border: rgb(23 18 31 / 9%);
-  --input: rgb(23 18 31 / 16%);
-  --ring: #7c4dff;
-  --chart-1: #6d3fe0;
+  --glow: #e8eefb;
+  --border: rgb(19 32 58 / 9%);
+  --input: rgb(19 32 58 / 16%);
+  --ring: #2b5fd9;
+  --chart-1: #1f4fbf;
   --chart-2: #d98a00;
   --chart-3: #0f9a6a;
   --chart-4: #1f8fd6;
   --chart-5: #e0533f;
   --sidebar: #ffffff;
-  --sidebar-foreground: #17121f;
-  --sidebar-primary: #6d3fe0;
+  --sidebar-foreground: #13203a;
+  --sidebar-primary: #1f4fbf;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ece7f8;
-  --sidebar-accent-foreground: #17121f;
-  --sidebar-border: rgb(23 18 31 / 9%);
-  --sidebar-ring: #7c4dff;
+  --sidebar-accent: #e8eefb;
+  --sidebar-accent-foreground: #13203a;
+  --sidebar-border: rgb(19 32 58 / 9%);
+  --sidebar-ring: #2b5fd9;
   /* Accent inks: readable text versions of the bright game colours. */
-  --brand: #7c4dff;
+  --brand: #2b5fd9;
   --ink-lime: #3f7a00;
   --ink-sun: #9a5b00;
   --ink-coral: #c8372a;
-  --ink-lilac: #6d3fe0;
+  --ink-lilac: #1f4fbf;
   --ink-sky: #0b6fae;
   --ink-mint: #0f7a52;
   --surface-raised: #ffffff;
   --chrome: rgb(255 255 255 / 88%);
-  --btn-edge: rgb(44 29 87 / 22%);
-  --hover: rgb(23 18 31 / 5%);
-  --selected: rgb(109 63 224 / 10%);
+  --btn-edge: rgb(27 58 107 / 22%);
+  --hover: rgb(19 32 58 / 5%);
+  --selected: rgb(37 99 235 / 10%);
   background-color: var(--background);
   color: var(--foreground);
-  --arcade-purple: #7c4dff;
-  --arcade-lilac: #a67fff;
-  --arcade-lime: #c6f36b;
+  --arcade-purple: #2b5fd9;
+  --arcade-lilac: #8fb4ff;
+  --arcade-lime: #f2d9a6;
   --arcade-sun: #ffd166;
   --arcade-coral: #ff7a6b;
   --arcade-mint: #5fd3a5;
 }
 .dark .arcade {
   color-scheme: dark;
-  --background: #0b0910;
-  --foreground: #f4f0ff;
-  --card: #15111f;
-  --card-foreground: #f4f0ff;
-  --popover: #18131f;
-  --popover-foreground: #f4f0ff;
-  --primary: #a67fff;
-  --primary-foreground: #0b0910;
-  --secondary: #1f1830;
-  --secondary-foreground: #ece5ff;
-  --muted: #17131f;
-  --muted-foreground: #aaa2bd;
-  --accent: #261c3a;
-  --accent-foreground: #e4d9ff;
+  --background: #0d1726;
+  --foreground: #f3f6fb;
+  --card: #14223a;
+  --card-foreground: #f3f6fb;
+  --popover: #14223a;
+  --popover-foreground: #f3f6fb;
+  --primary: #8fb4ff;
+  --primary-foreground: #0d1726;
+  --secondary: #1b2c48;
+  --secondary-foreground: #e3ebf9;
+  --muted: #152238;
+  --muted-foreground: #a3afc2;
+  --accent: #1f3354;
+  --accent-foreground: #dbe7ff;
   --destructive: #ff8f85;
-  --destructive-foreground: #0b0910;
+  --destructive-foreground: #0d1726;
   --success: #5fd3a5;
   --success-soft: #0f2e22;
   --danger-soft: #36161a;
   --warm: #ffd166;
   --warm-text: #ffd166;
-  --glow: #1f1830;
+  --glow: #1b2c48;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 16%);
-  --ring: #c6f36b;
-  --chart-1: #a67fff;
+  --ring: #f2d9a6;
+  --chart-1: #8fb4ff;
   --chart-2: #ffd166;
   --chart-3: #5fd3a5;
   --chart-4: #6bc6ff;
   --chart-5: #ff7a6b;
-  --sidebar: #0b0910;
-  --sidebar-foreground: #f4f0ff;
-  --sidebar-primary: #a67fff;
-  --sidebar-primary-foreground: #0b0910;
-  --sidebar-accent: #1f1830;
-  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar: #0d1726;
+  --sidebar-foreground: #f3f6fb;
+  --sidebar-primary: #8fb4ff;
+  --sidebar-primary-foreground: #0d1726;
+  --sidebar-accent: #1b2c48;
+  --sidebar-accent-foreground: #f3f6fb;
   --sidebar-border: rgb(255 255 255 / 10%);
-  --sidebar-ring: #c6f36b;
-  --brand: #7c4dff;
-  --ink-lime: #c6f36b;
+  --sidebar-ring: #f2d9a6;
+  --brand: #2b5fd9;
+  --ink-lime: #f2d9a6;
   --ink-sun: #ffd166;
   --ink-coral: #ff8a7a;
-  --ink-lilac: #b99aff;
+  --ink-lilac: #9ec0ff;
   --ink-sky: #6bc6ff;
   --ink-mint: #5fd3a5;
-  --surface-raised: #1b1527;
-  --chrome: rgb(11 9 16 / 90%);
+  --surface-raised: #1a2a44;
+  --chrome: rgb(13 23 38 / 90%);
   --btn-edge: rgb(0 0 0 / 55%);
   --hover: rgb(255 255 255 / 6%);
   --selected: rgb(255 255 255 / 8%);
 }
 html:not(.dark) body:has(.arcade) {
-  background-color: #f5f3fa;
+  background-color: #f6f0e4;
 }
-html.dark body:has(.arcade),
-html.dark body:has(.arcade) #splash {
-  background-color: #0b0910;
+html.dark body:has(.arcade) {
+  background-color: #0d1726;
 }
 .arcade-display {
   font-weight: 800;
@@ -661,20 +624,20 @@ html.dark body:has(.arcade) #splash {
 /* ─── The app (signed in): purple accents, flat; light and dark follow the toggle ─── */
 .app-theme {
   color-scheme: light;
-  --background: #f5f3fa;
-  --foreground: #17121f;
+  --background: #f6f0e4;
+  --foreground: #13203a;
   --card: #ffffff;
-  --card-foreground: #17121f;
+  --card-foreground: #13203a;
   --popover: #ffffff;
-  --popover-foreground: #17121f;
-  --primary: #6d3fe0;
+  --popover-foreground: #13203a;
+  --primary: #1f4fbf;
   --primary-foreground: #ffffff;
-  --secondary: #ece7f8;
-  --secondary-foreground: #2c1d57;
-  --muted: #efecf5;
-  --muted-foreground: #645c76;
-  --accent: #e7defe;
-  --accent-foreground: #3b2380;
+  --secondary: #e8eefb;
+  --secondary-foreground: #1b3a6b;
+  --muted: #f1ece2;
+  --muted-foreground: #5a6272;
+  --accent: #dde8fd;
+  --accent-foreground: #1b3a6b;
   --destructive: #c8372a;
   --destructive-foreground: #ffffff;
   --success: #0f7a52;
@@ -682,89 +645,89 @@ html.dark body:has(.arcade) #splash {
   --danger-soft: #fde8e6;
   --warm: #b26b00;
   --warm-text: #8a5200;
-  --glow: #ece7f8;
-  --border: rgb(23 18 31 / 9%);
-  --input: rgb(23 18 31 / 16%);
-  --ring: #7c4dff;
-  --chart-1: #6d3fe0;
+  --glow: #e8eefb;
+  --border: rgb(19 32 58 / 9%);
+  --input: rgb(19 32 58 / 16%);
+  --ring: #2b5fd9;
+  --chart-1: #1f4fbf;
   --chart-2: #d98a00;
   --chart-3: #0f9a6a;
   --chart-4: #1f8fd6;
   --chart-5: #e0533f;
   --sidebar: #ffffff;
-  --sidebar-foreground: #17121f;
-  --sidebar-primary: #6d3fe0;
+  --sidebar-foreground: #13203a;
+  --sidebar-primary: #1f4fbf;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ece7f8;
-  --sidebar-accent-foreground: #17121f;
-  --sidebar-border: rgb(23 18 31 / 9%);
-  --sidebar-ring: #7c4dff;
+  --sidebar-accent: #e8eefb;
+  --sidebar-accent-foreground: #13203a;
+  --sidebar-border: rgb(19 32 58 / 9%);
+  --sidebar-ring: #2b5fd9;
   /* Accent inks: readable text versions of the bright game colours. */
-  --brand: #7c4dff;
+  --brand: #2b5fd9;
   --ink-lime: #3f7a00;
   --ink-sun: #9a5b00;
   --ink-coral: #c8372a;
-  --ink-lilac: #6d3fe0;
+  --ink-lilac: #1f4fbf;
   --ink-sky: #0b6fae;
   --ink-mint: #0f7a52;
   --surface-raised: #ffffff;
   --chrome: rgb(255 255 255 / 88%);
-  --btn-edge: rgb(44 29 87 / 22%);
-  --hover: rgb(23 18 31 / 5%);
-  --selected: rgb(109 63 224 / 10%);
+  --btn-edge: rgb(27 58 107 / 22%);
+  --hover: rgb(19 32 58 / 5%);
+  --selected: rgb(37 99 235 / 10%);
   background-color: var(--background);
   color: var(--foreground);
   -webkit-tap-highlight-color: transparent;
 }
 .dark .app-theme {
   color-scheme: dark;
-  --background: #0b0910;
-  --foreground: #f4f0ff;
-  --card: #15111f;
-  --card-foreground: #f4f0ff;
-  --popover: #18131f;
-  --popover-foreground: #f4f0ff;
-  --primary: #a67fff;
-  --primary-foreground: #0b0910;
-  --secondary: #1f1830;
-  --secondary-foreground: #ece5ff;
-  --muted: #17131f;
-  --muted-foreground: #aaa2bd;
-  --accent: #261c3a;
-  --accent-foreground: #e4d9ff;
+  --background: #0d1726;
+  --foreground: #f3f6fb;
+  --card: #14223a;
+  --card-foreground: #f3f6fb;
+  --popover: #14223a;
+  --popover-foreground: #f3f6fb;
+  --primary: #8fb4ff;
+  --primary-foreground: #0d1726;
+  --secondary: #1b2c48;
+  --secondary-foreground: #e3ebf9;
+  --muted: #152238;
+  --muted-foreground: #a3afc2;
+  --accent: #1f3354;
+  --accent-foreground: #dbe7ff;
   --destructive: #ff8f85;
-  --destructive-foreground: #0b0910;
+  --destructive-foreground: #0d1726;
   --success: #5fd3a5;
   --success-soft: #0f2e22;
   --danger-soft: #36161a;
   --warm: #ffd166;
   --warm-text: #ffd166;
-  --glow: #1f1830;
+  --glow: #1b2c48;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 16%);
-  --ring: #c6f36b;
-  --chart-1: #a67fff;
+  --ring: #f2d9a6;
+  --chart-1: #8fb4ff;
   --chart-2: #ffd166;
   --chart-3: #5fd3a5;
   --chart-4: #6bc6ff;
   --chart-5: #ff7a6b;
-  --sidebar: #0b0910;
-  --sidebar-foreground: #f4f0ff;
-  --sidebar-primary: #a67fff;
-  --sidebar-primary-foreground: #0b0910;
-  --sidebar-accent: #1f1830;
-  --sidebar-accent-foreground: #f4f0ff;
+  --sidebar: #0d1726;
+  --sidebar-foreground: #f3f6fb;
+  --sidebar-primary: #8fb4ff;
+  --sidebar-primary-foreground: #0d1726;
+  --sidebar-accent: #1b2c48;
+  --sidebar-accent-foreground: #f3f6fb;
   --sidebar-border: rgb(255 255 255 / 10%);
-  --sidebar-ring: #c6f36b;
-  --brand: #7c4dff;
-  --ink-lime: #c6f36b;
+  --sidebar-ring: #f2d9a6;
+  --brand: #2b5fd9;
+  --ink-lime: #f2d9a6;
   --ink-sun: #ffd166;
   --ink-coral: #ff8a7a;
-  --ink-lilac: #b99aff;
+  --ink-lilac: #9ec0ff;
   --ink-sky: #6bc6ff;
   --ink-mint: #5fd3a5;
-  --surface-raised: #1b1527;
-  --chrome: rgb(11 9 16 / 90%);
+  --surface-raised: #1a2a44;
+  --chrome: rgb(13 23 38 / 90%);
   --btn-edge: rgb(0 0 0 / 55%);
   --hover: rgb(255 255 255 / 6%);
   --selected: rgb(255 255 255 / 8%);
@@ -773,10 +736,10 @@ body:has(.app-theme) {
   overscroll-behavior-y: none;
 }
 html:not(.dark) body:has(.app-theme) {
-  background-color: #f5f3fa;
+  background-color: #f6f0e4;
 }
 html.dark body:has(.app-theme) {
-  background-color: #0b0910;
+  background-color: #0d1726;
 }
 /* Inside the app, the game and forum sections drop their own "back to the site" links. */
 .app-theme .site-only {

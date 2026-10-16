@@ -92,7 +92,7 @@ export function HomeEditor({
                         onClick={() => (sel ? place(x, y) : mine && setSel(mine.key))}
                         className={cn(
                           "absolute border border-white/0 hover:border-white/60",
-                          mine && sel === mine.key && "bg-[#c6f36b]/30",
+                          mine && sel === mine.key && "bg-[#f2d9a6]/30",
                         )}
                         style={{ left: x * TILE, top: y * TILE, width: TILE, height: TILE }}
                       />
@@ -121,7 +121,7 @@ export function HomeEditor({
             type="button"
             disabled={!dirty || pending}
             onClick={() => act(() => saveLayout(layout), "Saved. Your room looks like this in Worlds now.")}
-            className="rounded-full bg-[#c6f36b] px-5 py-2 font-black text-[#0b0910] disabled:opacity-40"
+            className="rounded-full bg-[#f2d9a6] px-5 py-2 font-black text-[#0d1726] disabled:opacity-40"
           >
             Save room
           </button>

@@ -158,13 +158,13 @@ function SocialScreen() {
   return (
     <div className="text-[11px]">
       <p className="text-[15px] font-bold tracking-tight">
-        IlluminatED<span className="text-[#a67fff]">Social</span>
+        IlluminatED<span className="text-[#8fb4ff]">Social</span>
       </p>
       <div className="mt-3 flex gap-1.5 overflow-hidden text-[9px]">
         {["Universities", "Sixth form", "Applying"].map((c, i) => (
           <span
             key={c}
-            className={`shrink-0 rounded-full px-2.5 py-1 ${i === 0 ? "bg-[#a67fff] font-semibold text-[#09080d]" : "border border-white/15"}`}
+            className={`shrink-0 rounded-full px-2.5 py-1 ${i === 0 ? "bg-[#8fb4ff] font-semibold text-[#09080d]" : "border border-white/15"}`}
           >
             {c}
           </span>
@@ -201,7 +201,7 @@ function SocialScreen() {
           </li>
         ))}
       </ul>
-      <div className="mt-3 rounded-xl bg-[#a67fff] py-2.5 text-center text-[11px] font-semibold text-[#09080d]">
+      <div className="mt-3 rounded-xl bg-[#8fb4ff] py-2.5 text-center text-[11px] font-semibold text-[#09080d]">
         Start a thread
       </div>
     </div>

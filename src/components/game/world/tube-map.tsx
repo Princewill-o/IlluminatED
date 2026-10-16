@@ -14,8 +14,8 @@ export type TubeTrip =
 export function TubeBadge({ size = 28 }: { size?: number }) {
   return (
     <svg viewBox="0 0 40 40" width={size} height={size} aria-hidden>
-      <path d="M20 2 36 11v18L20 38 4 29V11Z" fill="#7c4dff" stroke="#1b1622" strokeWidth="2.5" />
-      <rect x="1" y="16" width="38" height="8" rx="2" fill="#c6f36b" stroke="#1b1622" strokeWidth="2" />
+      <path d="M20 2 36 11v18L20 38 4 29V11Z" fill="#2b5fd9" stroke="#13203a" strokeWidth="2.5" />
+      <rect x="1" y="16" width="38" height="8" rx="2" fill="#f2d9a6" stroke="#13203a" strokeWidth="2" />
     </svg>
   );
 }
@@ -40,12 +40,12 @@ export function TubeMap({
         role="dialog"
         aria-label="Underground"
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[88%] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-white/10 bg-[#f6f2e8] p-5 text-[#1b1622] md:rounded-3xl"
+        className="max-h-[88%] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-white/10 bg-[#f6f2e8] p-5 text-[#13203a] md:rounded-3xl"
       >
         <div className="flex items-center gap-3">
           <TubeBadge size={36} />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black tracking-[0.25em] text-[#6d3fe0] uppercase">Underground</p>
+            <p className="text-xs font-black tracking-[0.25em] text-[#1f4fbf] uppercase">Underground</p>
             <h2 className="truncate text-2xl font-black">{current ? current.name : "Station"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-black/10">
@@ -53,19 +53,19 @@ export function TubeMap({
           </button>
         </div>
 
-        <p className="mt-4 text-xs font-black tracking-widest text-[#645c76] uppercase">London stations</p>
+        <p className="mt-4 text-xs font-black tracking-widest text-[#5a6272] uppercase">London stations</p>
         <ul className="relative mt-2 space-y-1.5 pl-5">
-          <span aria-hidden className="absolute top-2 bottom-2 left-[9px] w-1.5 rounded-full bg-[#7c4dff]" />
+          <span aria-hidden className="absolute top-2 bottom-2 left-[9px] w-1.5 rounded-full bg-[#2b5fd9]" />
           {stations.map((s) => {
             const on = s.id === here;
             return (
               <li key={s.id} className="relative">
-                <span aria-hidden className={cn("absolute top-1/2 -left-[15px] size-4 -translate-y-1/2 rounded-full border-[3px] border-[#1b1622]", on ? "bg-[#c6f36b]" : "bg-white")} />
+                <span aria-hidden className={cn("absolute top-1/2 -left-[15px] size-4 -translate-y-1/2 rounded-full border-[3px] border-[#13203a]", on ? "bg-[#f2d9a6]" : "bg-white")} />
                 <button
                   type="button"
                   disabled={on}
                   onClick={() => onGo({ kind: "station", id: s.id })}
-                  className="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left font-bold shadow-[0_2px_0_0_rgba(27,22,34,0.15)] transition active:scale-[0.98] disabled:bg-[#c6f36b]/40"
+                  className="flex w-full items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left font-bold shadow-[0_2px_0_0_rgba(27,22,34,0.15)] transition active:scale-[0.98] disabled:bg-[#f2d9a6]/40"
                 >
                   <span className="flex-1">{s.name}</span>
                   <span className="flex gap-1">
@@ -80,7 +80,7 @@ export function TubeMap({
           })}
         </ul>
 
-        <p className="mt-5 text-xs font-black tracking-widest text-[#645c76] uppercase">Further afield</p>
+        <p className="mt-5 text-xs font-black tracking-widest text-[#5a6272] uppercase">Further afield</p>
         <div className="mt-2 grid gap-1.5">
           <button type="button" onClick={() => onGo({ kind: "map", mapId: "home", label: "Your house" })} className="flex items-center gap-3 rounded-2xl bg-[#ffb26b] px-3 py-3 text-left font-black active:scale-[0.98]">
             <Home className="size-5" aria-hidden /> Your house <span className="ml-auto text-xs font-bold">Homeward line</span>
@@ -99,7 +99,7 @@ export function TubeMap({
             </button>
           ))}
         </div>
-        <p className="mt-4 flex items-center gap-2 text-xs text-[#645c76]">
+        <p className="mt-4 flex items-center gap-2 text-xs text-[#5a6272]">
           <TrainFront className="size-4" aria-hidden /> Trains every minute. Please mind the gap.
         </p>
       </div>

@@ -73,10 +73,10 @@ export default async function TiggyPage({
               </Link>{" "}
               or{" "}
               <Link
-                href="/tutors"
+                href="/games/arcade"
                 className="text-primary underline underline-offset-4"
               >
-                ask a tutor
+                a quick arcade game
               </Link>
               .
             </p>

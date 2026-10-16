@@ -386,7 +386,7 @@ export function PromotionPanic(props: Props) {
               className={cn(
                 "grid size-8 place-items-center rounded-lg border-2 text-sm font-black",
                 i < state.strikes
-                  ? "border-[#ff7a6b] bg-[#ff7a6b] text-[#0b0910]"
+                  ? "border-[#ff7a6b] bg-[#ff7a6b] text-[#0d1726]"
                   : "border-border text-foreground/30",
               )}
             >
@@ -481,7 +481,7 @@ export function PromotionPanic(props: Props) {
 
         <div>
           {banner && state.phase === "question" && (
-            <p className="arcade-pop mb-2 inline-block rounded-full bg-[#ff7a6b] px-3 py-1 text-xs font-black tracking-wider text-[#0b0910] uppercase">
+            <p className="arcade-pop mb-2 inline-block rounded-full bg-[#ff7a6b] px-3 py-1 text-xs font-black tracking-wider text-[#0d1726] uppercase">
               {state.streak} in a row · {banner}
             </p>
           )}
@@ -498,7 +498,7 @@ export function PromotionPanic(props: Props) {
               <div
                 className={cn(
                   "h-full",
-                  left <= 5 ? "bg-[#ff7a6b]" : "bg-[#a67fff]",
+                  left <= 5 ? "bg-[#ff7a6b]" : "bg-[#8fb4ff]",
                 )}
                 style={{ width: `${feedback ? 0 : (left / limit) * 100}%` }}
               />
@@ -545,11 +545,11 @@ export function PromotionPanic(props: Props) {
                         "border-dashed border-border bg-transparent text-foreground/30 line-through shadow-none",
                       feedback &&
                         isAnswer &&
-                        "border-[#5fd3a5] bg-[#5fd3a5] text-[#0b0910]",
+                        "border-[#5fd3a5] bg-[#5fd3a5] text-[#0d1726]",
                       feedback &&
                         chosen &&
                         !isAnswer &&
-                        "border-[#ff7a6b] bg-[#ff7a6b] text-[#0b0910]",
+                        "border-[#ff7a6b] bg-[#ff7a6b] text-[#0d1726]",
                       feedback &&
                         !isAnswer &&
                         !chosen &&
@@ -609,7 +609,7 @@ export function PromotionPanic(props: Props) {
                 <button
                   type="button"
                   onClick={advance}
-                  className="arcade-btn mt-4 rounded-full bg-[#c6f36b] px-6 py-2.5 font-black text-[#0b0910]"
+                  className="arcade-btn mt-4 rounded-full bg-[#f2d9a6] px-6 py-2.5 font-black text-[#0d1726]"
                 >
                   {state.fired
                     ? "Uh oh… see your review"
@@ -668,7 +668,7 @@ function PromotionSplash({
       Array.from({ length: 36 }, (_, i) => ({
         left: (i * 37) % 100,
         delay: (i % 9) * 0.08,
-        color: ["#c6f36b", "#ffd166", "#a67fff", "#ff7a6b", "#6bc6ff"][i % 5],
+        color: ["#f2d9a6", "#ffd166", "#8fb4ff", "#ff7a6b", "#6bc6ff"][i % 5],
       })),
     [],
   );
@@ -775,7 +775,7 @@ function Intro({
             <button
               type="button"
               onClick={onStart}
-              className="arcade-btn rounded-full bg-[#c6f36b] px-8 py-4 text-lg font-black text-[#0b0910]"
+              className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]"
             >
               Clock in ↵
             </button>
@@ -788,7 +788,7 @@ function Intro({
               {sound ? "Sound on" : "Sound off"}
             </button>
             {dailyBonus && (
-              <span className="rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0b0910]">
+              <span className="rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0d1726]">
                 Daily Grind: double Clout on your first shift today
               </span>
             )}
@@ -918,8 +918,8 @@ function Results({
                 className={cn(
                   "mt-4 rounded-2xl p-3 font-black",
                   state.score > challenge.score
-                    ? "bg-[#5fd3a5] text-[#0b0910]"
-                    : "bg-[#ff7a6b] text-[#0b0910]",
+                    ? "bg-[#5fd3a5] text-[#0d1726]"
+                    : "bg-[#ff7a6b] text-[#0d1726]",
                 )}
               >
                 {state.score > challenge.score
@@ -964,14 +964,14 @@ function Results({
           )}
           {res && (
             <div className="flex flex-wrap items-center gap-2 font-bold">
-              <span className="rounded-full bg-[#a67fff] px-3 py-1 text-[#0b0910]">
+              <span className="rounded-full bg-[#8fb4ff] px-3 py-1 text-[#0d1726]">
                 +{res.xp} XP
               </span>
-              <span className="rounded-full bg-[#ffd166] px-3 py-1 text-[#0b0910]">
+              <span className="rounded-full bg-[#ffd166] px-3 py-1 text-[#0d1726]">
                 +{res.clout} Clout
               </span>
               {res.dailyBonus && (
-                <span className="rounded-full bg-[#c6f36b] px-3 py-1 text-[#0b0910]">
+                <span className="rounded-full bg-[#f2d9a6] px-3 py-1 text-[#0d1726]">
                   Daily Grind ×2
                 </span>
               )}
@@ -982,7 +982,7 @@ function Results({
                 {res.streak}-day streak
               </span>
               {res.newBest && previousBest > 0 && (
-                <span className="rounded-full bg-[#ff7a6b] px-3 py-1 text-[#0b0910]">
+                <span className="rounded-full bg-[#ff7a6b] px-3 py-1 text-[#0d1726]">
                   New best here!
                 </span>
               )}
@@ -994,7 +994,7 @@ function Results({
             </div>
           )}
           {res && res.unlocked.length > 0 && (
-            <p className="arcade-pop mt-3 rounded-xl bg-[#c6f36b] p-3 font-black text-[#0b0910]">
+            <p className="arcade-pop mt-3 rounded-xl bg-[#f2d9a6] p-3 font-black text-[#0d1726]">
               Unlocked:{" "}
               {res.unlocked
                 .map((id) => cosmeticById(id)?.name ?? id)
@@ -1011,7 +1011,7 @@ function Results({
           <button
             type="button"
             onClick={onReplay}
-            className="arcade-btn rounded-full bg-[#c6f36b] px-6 py-3 font-black text-[#0b0910]"
+            className="arcade-btn rounded-full bg-[#f2d9a6] px-6 py-3 font-black text-[#0d1726]"
           >
             Play again
           </button>
@@ -1019,7 +1019,7 @@ function Results({
             <button
               type="button"
               onClick={onRetryChallenge}
-              className="arcade-btn rounded-full bg-[#ff7a6b] px-6 py-3 font-black text-[#0b0910]"
+              className="arcade-btn rounded-full bg-[#ff7a6b] px-6 py-3 font-black text-[#0d1726]"
             >
               Retry the challenge
             </button>

@@ -91,7 +91,7 @@ export function ReadinessPanel({
                   href={
                     board?.pastPapers ??
                     course.officialLinks[0]?.url ??
-                    "/resources"
+                    "/courses"
                   }
                   className="underline"
                 >

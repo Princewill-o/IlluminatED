@@ -56,7 +56,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             )}
           </p>
           {org.about && <p className="mt-4 leading-7 whitespace-pre-line">{org.about}</p>}
-          <Link href={`/games/world?map=office-${org.slug}`} className="mt-5 inline-block rounded-full bg-[#c6f36b] px-5 py-3 font-black text-[#0b0910]">
+          <Link href={`/games/world?map=office-${org.slug}`} className="mt-5 inline-block rounded-full bg-[#f2d9a6] px-5 py-3 font-black text-[#0d1726]">
             Visit their office
           </Link>
         </div>
@@ -84,14 +84,14 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
       <section className="mt-6" id="office-hours">
         <h2 className="text-lg font-extrabold">Office hours</h2>
         {booking && BOOKING[booking] && (
-          <p className="mt-3 rounded-2xl bg-[#ffd166] p-3 text-sm font-bold text-[#0b0910]" role="alert">
+          <p className="mt-3 rounded-2xl bg-[#ffd166] p-3 text-sm font-bold text-[#0d1726]" role="alert">
             {BOOKING[booking]}
           </p>
         )}
         {mine.length > 0 && (
           <ul className="mt-3 space-y-2">
             {mine.map((s) => (
-              <li key={s.id} className="rounded-2xl bg-[#5fd3a5] p-3 text-sm font-bold text-[#0b0910]">
+              <li key={s.id} className="rounded-2xl bg-[#5fd3a5] p-3 text-sm font-bold text-[#0d1726]">
                 ✓ Booked: {when(s.startsAt)} with @{s.staff} in {s.room}
               </li>
             ))}
@@ -108,7 +108,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
                 <form action={bookSlot}>
                   <input type="hidden" name="slot" value={s.id} />
                   <input type="hidden" name="slug" value={org.slug} />
-                  <button className="rounded-full bg-[#c6f36b] px-4 py-2 font-black text-[#0b0910]">Book</button>
+                  <button className="rounded-full bg-[#f2d9a6] px-4 py-2 font-black text-[#0d1726]">Book</button>
                 </form>
               )}
             </li>

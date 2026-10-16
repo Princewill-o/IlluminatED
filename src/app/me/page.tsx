@@ -9,7 +9,6 @@ import {
   CreditCard,
   Crown,
   FileLock2,
-  GraduationCap,
   KeyRound,
   LifeBuoy,
   type LucideIcon,
@@ -17,7 +16,7 @@ import {
   Shield,
   Shirt,
   SlidersHorizontal,
-  Users,
+  Video,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -26,7 +25,7 @@ import { SignOutButton } from "@/components/app/sign-out-button";
 import { AvatarFigure } from "@/components/game/avatar";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { stageLabel, yearLabel } from "@/lib/account/details";
-import { isTutor, requireAccount } from "@/lib/account/server";
+import { requireAccount } from "@/lib/account/server";
 import { isPlatformAdmin } from "@/lib/billing";
 import { myMembership } from "@/lib/employers/server";
 import { loadPlayer } from "@/lib/game/server";
@@ -85,7 +84,7 @@ export default async function MePage() {
               aria-valuemax={100}
               aria-valuenow={Math.round(lp.fraction * 100)}
             >
-              <div className="h-full bg-[#c6f36b]" style={{ width: `${lp.fraction * 100}%` }} />
+              <div className="h-full bg-[#f2d9a6]" style={{ width: `${lp.fraction * 100}%` }} />
             </div>
           </div>
         </div>
@@ -107,7 +106,7 @@ export default async function MePage() {
 
       <Link
         href="/games/locker"
-        className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[#c6f36b] py-3.5 font-black text-[#0b0910] transition active:scale-[0.98]"
+        className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[#f2d9a6] py-3.5 font-black text-[#0d1726] transition active:scale-[0.98]"
       >
         <Shirt className="size-5" aria-hidden /> Edit my character
       </Link>
@@ -120,8 +119,7 @@ export default async function MePage() {
           { href: "/games/careers#cv", label: "My job, skills and CV", icon: Briefcase },
           { href: "/games/home", label: "My home", icon: Home },
           { href: "/companies", label: "Companies and careers advice", icon: Building2 },
-          { href: "/tutors", label: "My tutoring", icon: GraduationCap },
-          ...(isTutor(account) ? [{ href: "/tutors/desk", label: "Tutor desk", icon: Users }] : []),
+          { href: "/creators", label: "Creator scheme: get paid to post", icon: Video },
         ]}
       />
       <Group

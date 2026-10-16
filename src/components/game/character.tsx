@@ -26,7 +26,7 @@ const FRAME = 176;
 const COLS = 7;
 /** Head radius in sheet pixels (0.5 units at 64 px per unit). */
 const U = 32;
-const INK = "#1b1622";
+const INK = "#13203a";
 const BASE = "/characters";
 
 interface Meta {
@@ -273,9 +273,9 @@ function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: numb
   }
   if (f.extras === "extras-paint")
     cheeks.forEach((x) => {
-      g.fillStyle = "#7c4dff";
+      g.fillStyle = "#2b5fd9";
       g.fillRect(x - 0.1 * u, cy - 0.03 * u, 0.2 * u, 0.04 * u);
-      g.fillStyle = "#c6f36b";
+      g.fillStyle = "#f2d9a6";
       g.fillRect(x - 0.1 * u, cy + 0.03 * u, 0.2 * u, 0.04 * u);
     });
 
@@ -326,7 +326,7 @@ function drawLogo(g: CanvasRenderingContext2D, id: string, x: number, y: number,
   }
   // IlluminatED's own "i" badge.
   ellipse(g, x, y, s / 2, s / 2, INK);
-  g.fillStyle = "#c6f36b";
+  g.fillStyle = "#f2d9a6";
   g.font = `900 ${Math.round(s * 0.72)}px ui-sans-serif, system-ui, sans-serif`;
   g.textAlign = "center";
   g.textBaseline = "middle";

@@ -15,7 +15,7 @@ export type Mood = "happy" | "sad" | "wow" | "cool" | "cross";
 // Characters are now Blender-rendered sprites; see ./character.tsx.
 export { AvatarFigure } from "./character";
 
-const INK = "#1b1622";
+const INK = "#13203a";
 const O = { stroke: INK, strokeWidth: 3, strokeLinejoin: "round" as const };
 const HEAD_SPACE = "translate(100 90) scale(0.93) translate(-100 -100)";
 
@@ -133,9 +133,9 @@ function Head({ type, skin }: { type: string; skin: string }) {
         <g>
           <path d="M56 58 Q40 40 50 26 Q58 44 72 50 Z" fill="#f4efe6" {...O} />
           <path d="M144 58 Q160 40 150 26 Q142 44 128 50 Z" fill="#f4efe6" {...O} />
-          <ellipse cx="38" cy="92" rx="18" ry="9" fill="#f4f0ff" transform="rotate(-20 38 92)" {...O} />
-          <ellipse cx="162" cy="92" rx="18" ry="9" fill="#f4f0ff" transform="rotate(20 162 92)" {...O} />
-          <circle cx="100" cy="100" r="58" fill="#f4f0ff" {...O} />
+          <ellipse cx="38" cy="92" rx="18" ry="9" fill="#f3f6fb" transform="rotate(-20 38 92)" {...O} />
+          <ellipse cx="162" cy="92" rx="18" ry="9" fill="#f3f6fb" transform="rotate(20 162 92)" {...O} />
+          <circle cx="100" cy="100" r="58" fill="#f3f6fb" {...O} />
           <path d="M60 64 Q72 50 92 58 Q96 74 80 80 Q62 82 60 64 Z" fill={INK} />
           <circle cx="140" cy="76" r="9" fill={INK} />
           <ellipse cx="100" cy="134" rx="30" ry="18" fill="#ff9fcf" {...O} />
@@ -159,8 +159,8 @@ function Head({ type, skin }: { type: string; skin: string }) {
         <g>
           <path d="M76 50 L62 18" stroke={INK} strokeWidth="4" />
           <path d="M124 50 L138 18" stroke={INK} strokeWidth="4" />
-          <circle cx="62" cy="16" r="7" fill="#c6f36b" {...O} />
-          <circle cx="138" cy="16" r="7" fill="#c6f36b" {...O} />
+          <circle cx="62" cy="16" r="7" fill="#f2d9a6" {...O} />
+          <circle cx="138" cy="16" r="7" fill="#f2d9a6" {...O} />
           <ellipse cx="100" cy="100" rx="58" ry="60" fill="#8de08a" {...O} />
         </g>
       );
@@ -366,11 +366,11 @@ function Extras({ id, skin }: { id: string; skin: string }) {
       );
     case "extras-paint":
       return (
-        <g fill="#7c4dff">
+        <g fill="#2b5fd9">
           <rect x="62" y="114" width="20" height="5" rx="2.5" />
-          <rect x="64" y="122" width="16" height="5" rx="2.5" fill="#c6f36b" />
+          <rect x="64" y="122" width="16" height="5" rx="2.5" fill="#f2d9a6" />
           <rect x="118" y="114" width="20" height="5" rx="2.5" />
-          <rect x="120" y="122" width="16" height="5" rx="2.5" fill="#c6f36b" />
+          <rect x="120" y="122" width="16" height="5" rx="2.5" fill="#f2d9a6" />
         </g>
       );
     default:
@@ -393,7 +393,7 @@ function HairBack({ style, color }: { style: string; color: string }) {
       return (
         <g>
           <ellipse cx="168" cy="96" rx="17" ry="40" transform="rotate(-28 168 96)" {...f} />
-          <circle cx="152" cy="62" r="9" fill="#a67fff" {...O} />
+          <circle cx="152" cy="62" r="9" fill="#8fb4ff" {...O} />
         </g>
       );
     case "hair-braids":
@@ -405,8 +405,8 @@ function HairBack({ style, color }: { style: string; color: string }) {
               <ellipse cx="158" cy={126 + i * 17} rx="11" ry="11" {...f} />
             </g>
           ))}
-          <circle cx="42" cy="210" r="6" fill="#a67fff" {...O} />
-          <circle cx="158" cy="210" r="6" fill="#a67fff" {...O} />
+          <circle cx="42" cy="210" r="6" fill="#8fb4ff" {...O} />
+          <circle cx="158" cy="210" r="6" fill="#8fb4ff" {...O} />
         </g>
       );
     case "hair-afro":
@@ -484,7 +484,7 @@ const TOPS: Record<string, { sleeves: "short" | "long"; sleeve?: string }> = {
 
 function TopBack({ id }: { id: string }) {
   if (id !== "top-cape") return null;
-  return <path d="M70 156 Q40 230 52 268 L148 268 Q160 230 130 156 Z" fill="#7c4dff" {...O} />;
+  return <path d="M70 156 Q40 230 52 268 L148 268 Q160 230 130 156 Z" fill="#2b5fd9" {...O} />;
 }
 
 function Torso({ id, skin }: { id: string; skin: string }) {
@@ -523,8 +523,8 @@ function TopDetail({ id, color, dark }: { id: string; color: string; dark: strin
       return (
         <g>
           <path d="M88 151 Q100 162 112 151" fill="none" stroke={dark} strokeWidth="4" />
-          <circle cx="100" cy="186" r="12" fill="#0b0910" />
-          <text x="100" y="192" textAnchor="middle" fontSize="16" fontWeight="800" fill="#c6f36b">i</text>
+          <circle cx="100" cy="186" r="12" fill="#0d1726" />
+          <text x="100" y="192" textAnchor="middle" fontSize="16" fontWeight="800" fill="#f2d9a6">i</text>
         </g>
       );
     case "top-hoodie":
@@ -538,7 +538,7 @@ function TopDetail({ id, color, dark }: { id: string; color: string; dark: strin
       );
     case "top-stripes":
       return (
-        <g fill="#7c4dff">
+        <g fill="#2b5fd9">
           {[164, 180, 196, 212].map((y) => (
             <rect key={y} x="66" y={y} width="68" height="7" />
           ))}
@@ -573,7 +573,7 @@ function TopDetail({ id, color, dark }: { id: string; color: string; dark: strin
     case "top-denim":
       return (
         <g>
-          <path d="M90 151 L110 151 L108 222 L92 222 Z" fill="#f4f0ff" />
+          <path d="M90 151 L110 151 L108 222 L92 222 Z" fill="#f3f6fb" />
           <path d="M84 150 L96 172 L90 222 M116 150 L104 172 L110 222" fill="none" stroke={INK} strokeWidth="3" />
           <rect x="70" y="176" width="14" height="12" rx="2" fill={dark} />
           <rect x="116" y="176" width="14" height="12" rx="2" fill={dark} />
@@ -590,25 +590,25 @@ function TopDetail({ id, color, dark }: { id: string; color: string; dark: strin
     case "top-tux":
       return (
         <g>
-          <path d="M86 150 L100 196 L114 150 Z" fill="#f4f0ff" />
+          <path d="M86 150 L100 196 L114 150 Z" fill="#f3f6fb" />
           {id === "top-suit" ? (
-            <path d="M96 158 L104 158 L106 188 L100 196 L94 188 Z" fill="#a67fff" />
+            <path d="M96 158 L104 158 L106 188 L100 196 L94 188 Z" fill="#8fb4ff" />
           ) : (
-            <path d="M89 158 L100 164 L111 158 L111 170 L100 164 L89 170 Z" fill="#0b0910" />
+            <path d="M89 158 L100 164 L111 158 L111 170 L100 164 L89 170 Z" fill="#0d1726" />
           )}
           <path d="M84 150 L100 196 L76 176 Z" fill={shade(color, 0.14)} {...O} strokeWidth={2} />
           <path d="M116 150 L100 196 L124 176 Z" fill={shade(color, 0.14)} {...O} strokeWidth={2} />
-          <circle cx="100" cy="206" r="2.5" fill="#f4f0ff" />
+          <circle cx="100" cy="206" r="2.5" fill="#f3f6fb" />
         </g>
       );
     case "top-astronaut":
       return (
         <g>
-          <rect x="78" y="172" width="44" height="30" rx="6" fill="#7c4dff" {...O} strokeWidth={2} />
-          <circle cx="88" cy="182" r="4" fill="#c6f36b" />
+          <rect x="78" y="172" width="44" height="30" rx="6" fill="#2b5fd9" {...O} strokeWidth={2} />
+          <circle cx="88" cy="182" r="4" fill="#f2d9a6" />
           <circle cx="100" cy="182" r="4" fill="#ff7a6b" />
           <circle cx="112" cy="182" r="4" fill="#ffd166" />
-          <rect x="84" y="192" width="32" height="5" rx="2.5" fill="#0b0910" />
+          <rect x="84" y="192" width="32" height="5" rx="2.5" fill="#0d1726" />
           <path d="M74 152 Q100 142 126 152 L126 160 Q100 150 74 160 Z" fill="#b3abc4" {...O} strokeWidth={2} />
         </g>
       );
@@ -624,7 +624,7 @@ function TopDetail({ id, color, dark }: { id: string; color: string; dark: strin
     case "top-labcoat":
       return (
         <g>
-          <path d="M90 151 L100 222 L110 151 Z" fill="#7c4dff" />
+          <path d="M90 151 L100 222 L110 151 Z" fill="#2b5fd9" />
           <line x1="100" y1="160" x2="100" y2="222" stroke="#d8d4e0" strokeWidth="2" />
           <rect x="112" y="184" width="18" height="14" rx="3" fill="#e9e6f2" {...O} strokeWidth={2} />
           <rect x="116" y="178" width="3" height="11" fill="#ff7a6b" />
@@ -711,7 +711,7 @@ function Legs({ bottom, skin }: { bottom: string; skin: string }) {
 }
 
 function Shoes({ id }: { id: string }) {
-  const c = colour(id, "#f4f0ff");
+  const c = colour(id, "#f3f6fb");
   const pair = (draw: (x: number, dir: -1 | 1) => React.ReactNode) => (
     <>
       {draw(85, -1)}
@@ -742,7 +742,7 @@ function Shoes({ id }: { id: string }) {
         <g key={x}>
           <rect x={x - 13} y="246" width="26" height="24" rx="6" fill="#fff" {...O} />
           <rect x={x - 16 + (d > 0 ? 4 : -4)} y="272" width="32" height="8" rx="4" fill={c} {...O} />
-          <rect x={x - 14} y="262" width="28" height="9" rx="3" fill="#7c4dff" {...O} strokeWidth={2} />
+          <rect x={x - 14} y="262" width="28" height="9" rx="3" fill="#2b5fd9" {...O} strokeWidth={2} />
         </g>
       ));
     case "shoes-smart":
@@ -761,14 +761,14 @@ function Shoes({ id }: { id: string }) {
           <path d={`M${x - 10} 282 L${x} 298 L${x + 10} 282 Z`} fill="#ff7a6b" />
           <path d={`M${x - 5} 282 L${x} 292 L${x + 5} 282 Z`} fill="#ffd166" />
           {sneaker(x, d, c, 254)}
-          <rect x={x - 14} y="262" width="28" height="5" fill="#7c4dff" />
+          <rect x={x - 14} y="262" width="28" height="5" fill="#2b5fd9" />
         </g>
       ));
     default:
       return pair((x, d) => (
         <g key={x}>
           {sneaker(x, d, c)}
-          <path d={`M${x - 12} 276 L${x + 12} 276`} stroke="#7c4dff" strokeWidth="3" />
+          <path d={`M${x - 12} 276 L${x + 12} 276`} stroke="#2b5fd9" strokeWidth="3" />
         </g>
       ));
   }
@@ -834,7 +834,7 @@ function Eyewear({ id }: { id: string }) {
 }
 
 function Hat({ id, hair }: { id: string; hair: string }) {
-  const c = cosmeticById(id)?.color ?? "#a67fff";
+  const c = cosmeticById(id)?.color ?? "#8fb4ff";
   switch (id) {
     case "hat-cap":
       return (
@@ -849,14 +849,14 @@ function Hat({ id, hair }: { id: string; hair: string }) {
         <g>
           <path d="M42 80 Q44 24 100 24 Q156 24 158 80 Z" fill={c} {...O} />
           <rect x="36" y="68" width="128" height="22" rx="9" fill={shade(c, -0.22)} {...O} />
-          <circle cx="100" cy="20" r="13" fill="#f4f0ff" {...O} />
+          <circle cx="100" cy="20" r="13" fill="#f3f6fb" {...O} />
         </g>
       );
     case "hat-party":
       return (
         <g>
           <path d="M100 -6 L134 56 L66 56 Z" fill={c} {...O} />
-          <path d="M84 26 L116 26 M76 42 L124 42" stroke="#7c4dff" strokeWidth="5" />
+          <path d="M84 26 L116 26 M76 42 L124 42" stroke="#2b5fd9" strokeWidth="5" />
           <circle cx="100" cy="-6" r="8" fill="#ff7a6b" {...O} />
         </g>
       );
@@ -864,18 +864,18 @@ function Hat({ id, hair }: { id: string; hair: string }) {
       return (
         <g>
           <path d="M40 104 Q38 30 100 30 Q162 30 160 104" fill="none" stroke={INK} strokeWidth="10" />
-          <path d="M40 104 Q38 30 100 30 Q162 30 160 104" fill="none" stroke="#7c4dff" strokeWidth="5" />
+          <path d="M40 104 Q38 30 100 30 Q162 30 160 104" fill="none" stroke="#2b5fd9" strokeWidth="5" />
           <rect x="28" y="88" width="24" height="36" rx="10" fill={c} {...O} />
           <rect x="148" y="88" width="24" height="36" rx="10" fill={c} {...O} />
-          <circle cx="40" cy="106" r="5" fill="#c6f36b" />
-          <circle cx="160" cy="106" r="5" fill="#c6f36b" />
+          <circle cx="40" cy="106" r="5" fill="#f2d9a6" />
+          <circle cx="160" cy="106" r="5" fill="#f2d9a6" />
         </g>
       );
     case "hat-tophat":
       return (
         <g transform="rotate(-10 110 40)">
           <rect x="80" y="2" width="52" height="46" rx="4" fill={c} {...O} />
-          <rect x="80" y="34" width="52" height="8" fill="#a67fff" />
+          <rect x="80" y="34" width="52" height="8" fill="#8fb4ff" />
           <rect x="66" y="44" width="80" height="10" rx="5" fill={c} {...O} />
         </g>
       );
@@ -911,7 +911,7 @@ function Hat({ id, hair }: { id: string; hair: string }) {
         <g>
           <ellipse cx="100" cy="72" rx="84" ry="13" fill={shade(c, -0.2)} {...O} />
           <path d="M56 72 Q58 26 100 26 Q142 26 144 72 Z" fill={c} {...O} />
-          <rect x="57" y="58" width="86" height="9" fill="#7c4dff" />
+          <rect x="57" y="58" width="86" height="9" fill="#2b5fd9" />
         </g>
       );
     case "hat-grad":
@@ -945,9 +945,9 @@ function Held({ id }: { id: string }) {
     case "held-coffee":
       return (
         <g>
-          <path d="M150 196 L176 196 L172 228 L154 228 Z" fill="#f4f0ff" {...O} />
-          <rect x="148" y="190" width="30" height="8" rx="3" fill="#7c4dff" {...O} strokeWidth={2} />
-          <rect x="152" y="206" width="22" height="10" fill="#a67fff" />
+          <path d="M150 196 L176 196 L172 228 L154 228 Z" fill="#f3f6fb" {...O} />
+          <rect x="148" y="190" width="30" height="8" rx="3" fill="#2b5fd9" {...O} strokeWidth={2} />
+          <rect x="152" y="206" width="22" height="10" fill="#8fb4ff" />
           <path d="M158 184 q4 -6 0 -12 M168 184 q4 -6 0 -12" stroke="#b3abc4" strokeWidth="3" fill="none" strokeLinecap="round" />
         </g>
       );
@@ -997,7 +997,7 @@ function Held({ id }: { id: string }) {
       return (
         <g>
           <circle cx="166" cy="204" r="16" fill="#ffd166" {...O} />
-          <circle cx="166" cy="204" r="11" fill="#f4f0ff" />
+          <circle cx="166" cy="204" r="11" fill="#f3f6fb" />
           <path d="M166 194 L170 204 L166 214 L162 204 Z" fill="#ff7a6b" />
         </g>
       );
@@ -1053,7 +1053,7 @@ function Pet({ id }: { id: string }) {
     case "pet-dragon":
       return (
         <g>
-          <path d="M32 34 L54 12 L48 38 Z" fill="#a67fff" {...O} />
+          <path d="M32 34 L54 12 L48 38 Z" fill="#8fb4ff" {...O} />
           <ellipse cx="28" cy="48" rx="22" ry="16" fill="#5fd3a5" {...O} />
           <circle cx="14" cy="28" r="14" fill="#5fd3a5" {...O} />
           <path d="M8 16 L4 4 L14 12 M18 14 L22 2 L24 14" stroke="#ffd166" strokeWidth="3" fill="none" />
@@ -1070,7 +1070,7 @@ function Pet({ id }: { id: string }) {
           <circle cx="20" cy="28" r="2.5" fill={INK} />
           <circle cx="32" cy="28" r="2.5" fill={INK} />
           <ellipse cx="26" cy="35" rx="4" ry="3" fill={INK} />
-          <rect x="14" y="44" width="24" height="10" rx="3" fill="#7c4dff" />
+          <rect x="14" y="44" width="24" height="10" rx="3" fill="#2b5fd9" />
         </g>
       );
     case "pet-robot":
@@ -1079,7 +1079,7 @@ function Pet({ id }: { id: string }) {
           <line x1="26" y1="2" x2="26" y2="12" stroke={INK} strokeWidth="3" />
           <circle cx="26" cy="2" r="4" fill="#ff7a6b" />
           <rect x="8" y="12" width="36" height="26" rx="6" fill="#b3abc4" {...O} />
-          <rect x="14" y="18" width="24" height="12" rx="4" fill="#0b0910" />
+          <rect x="14" y="18" width="24" height="12" rx="4" fill="#0d1726" />
           <circle cx="20" cy="24" r="3" fill="#6bc6ff" />
           <circle cx="32" cy="24" r="3" fill="#6bc6ff" />
           <rect x="12" y="40" width="28" height="22" rx="4" fill="#d8d4e0" {...O} />
@@ -1095,15 +1095,15 @@ function Pet({ id }: { id: string }) {
           <circle cx="16" cy="26" r="2.5" fill={INK} />
           <circle cx="24" cy="26" r="2.5" fill={INK} />
           <ellipse cx="20" cy="34" rx="4" ry="3" fill={INK} />
-          <path d="M16 42 L20 54 L24 42 Z" fill="#7c4dff" />
+          <path d="M16 42 L20 54 L24 42 Z" fill="#2b5fd9" />
         </g>
       );
     case "pet-cow":
       return (
         <g>
-          <ellipse cx="30" cy="50" rx="22" ry="12" fill="#f4f0ff" {...O} />
+          <ellipse cx="30" cy="50" rx="22" ry="12" fill="#f3f6fb" {...O} />
           <circle cx="38" cy="48" r="5" fill={INK} />
-          <circle cx="20" cy="28" r="15" fill="#f4f0ff" {...O} />
+          <circle cx="20" cy="28" r="15" fill="#f3f6fb" {...O} />
           <path d="M8 16 L4 8 M32 16 L36 8" stroke="#c9a46b" strokeWidth="4" strokeLinecap="round" />
           <ellipse cx="20" cy="36" rx="10" ry="6" fill="#ff9fcf" {...O} strokeWidth={2} />
           <circle cx="14" cy="24" r="2.5" fill={INK} />

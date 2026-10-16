@@ -115,7 +115,7 @@ export function Locker({
         <div className="relative rounded-3xl bg-brand px-6 pt-6 pb-2">
           <AvatarFigure avatar={avatar} size={250} facing={facing} clip={clip} className="mx-auto" />
           <div className="absolute bottom-3 left-3 flex gap-1.5">
-            <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0b0910] active:scale-95">
+            <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0d1726] active:scale-95">
               <RotateCw className="size-4" aria-hidden />
             </button>
             <button
@@ -124,7 +124,7 @@ export function Locker({
               aria-pressed={clip === "walk"}
               aria-label="Walk"
               title="Walk"
-              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "walk" ? "bg-[#c6f36b] text-[#0b0910]" : "bg-white/90 text-[#0b0910]")}
+              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "walk" ? "bg-[#f2d9a6] text-[#0d1726]" : "bg-white/90 text-[#0d1726]")}
             >
               <Footprints className="size-4" aria-hidden />
             </button>
@@ -137,7 +137,7 @@ export function Locker({
               aria-pressed={clip === "wave"}
               aria-label="Wave"
               title="Wave"
-              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "wave" ? "bg-[#c6f36b] text-[#0b0910]" : "bg-white/90 text-[#0b0910]")}
+              className={cn("grid size-9 place-items-center rounded-full active:scale-95", clip === "wave" ? "bg-[#f2d9a6] text-[#0d1726]" : "bg-white/90 text-[#0d1726]")}
             >
               <Hand className="size-4" aria-hidden />
             </button>
@@ -156,7 +156,7 @@ export function Locker({
             type="button"
             onClick={save}
             disabled={!dirty || pending || !canSave || previewing.length > 0}
-            className="arcade-btn flex-1 rounded-full bg-[#c6f36b] py-3 font-black text-[#0b0910] disabled:opacity-40 disabled:shadow-none"
+            className="arcade-btn flex-1 rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726] disabled:opacity-40 disabled:shadow-none"
           >
             {dirty ? "Save outfit" : "Outfit saved ✓"}
           </button>
@@ -239,7 +239,7 @@ export function Locker({
             const r = RARITY[item.rarity];
             return (
               <li key={item.id}>
-                <div className={cn("flex h-full flex-col rounded-2xl border-2 bg-card p-2.5", wearing ? "border-[#c6f36b]" : "border-border")}>
+                <div className={cn("flex h-full flex-col rounded-2xl border-2 bg-card p-2.5", wearing ? "border-[#f2d9a6]" : "border-border")}>
                   <div
                     className={cn(
                       "relative grid place-items-center overflow-hidden rounded-xl bg-secondary pt-2",
@@ -247,13 +247,13 @@ export function Locker({
                     )}
                   >
                     <span
-                      className="absolute top-1.5 left-1.5 rounded-full px-2 py-0.5 text-[10px] font-black text-[#0b0910]"
+                      className="absolute top-1.5 left-1.5 rounded-full px-2 py-0.5 text-[10px] font-black text-[#0d1726]"
                       style={{ background: r.color }}
                     >
                       {r.mark} {r.label}
                     </span>
                     {item.slot === "skin" || item.slot === "hairColor" ? (
-                      <span className="my-6 size-20 rounded-full border-4 border-[#1b1622]" style={{ background: item.color }} aria-hidden />
+                      <span className="my-6 size-20 rounded-full border-4 border-[#13203a]" style={{ background: item.color }} aria-hidden />
                     ) : (
                       <AvatarFigure
                         avatar={preview}
@@ -270,7 +270,7 @@ export function Locker({
                   {item.set && <p className="mt-0.5 text-[11px] text-muted-foreground">{setName(item.set)}</p>}
                   <div className="mt-auto pt-2">
                     {wearing ? (
-                      <span className="block rounded-full bg-[#c6f36b] py-1.5 text-center text-xs font-black text-[#0b0910]">Wearing ✓</span>
+                      <span className="block rounded-full bg-[#f2d9a6] py-1.5 text-center text-xs font-black text-[#0d1726]">Wearing ✓</span>
                     ) : mine ? (
                       <button
                         type="button"
@@ -298,7 +298,7 @@ export function Locker({
                           type="button"
                           onClick={() => buy(item)}
                           disabled={pending || clout < item.price || !canSave}
-                          className="flex-1 rounded-full bg-[#ffd166] py-1.5 text-xs font-black text-[#0b0910] transition active:scale-95 disabled:opacity-40"
+                          className="flex-1 rounded-full bg-[#ffd166] py-1.5 text-xs font-black text-[#0d1726] transition active:scale-95 disabled:opacity-40"
                         >
                           {fmt(item.price)}
                         </button>

@@ -245,7 +245,7 @@ export function WorldApp({
         <button
           type="button"
           onClick={() => setServer(best.id)}
-          className="arcade-btn mt-6 w-full rounded-full bg-[#c6f36b] py-4 text-lg font-black text-[#0b0910] sm:w-auto sm:px-10"
+          className="arcade-btn mt-6 w-full rounded-full bg-[#f2d9a6] py-4 text-lg font-black text-[#0d1726] sm:w-auto sm:px-10"
         >
           Quick join: {best.name} →
         </button>
@@ -302,17 +302,17 @@ export function WorldApp({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-0 bg-[#0b0910] transition-opacity duration-300 motion-reduce:transition-none",
+          "pointer-events-none absolute inset-0 bg-[#0d1726] transition-opacity duration-300 motion-reduce:transition-none",
           fading ? "opacity-100" : "opacity-0",
         )}
       />
       {mindGap && (
         <div className="pointer-events-none absolute inset-0 z-[100001] grid place-items-center" aria-live="polite">
-          <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#1b1622]">Please mind the gap</p>
+          <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#13203a]">Please mind the gap</p>
         </div>
       )}
       {atHome && (
-        <Link href="/games/home" className="absolute right-3 bottom-3 z-[100001] rounded-full bg-[#c6f36b] px-4 py-2 text-sm font-black text-[#0b0910] shadow-lg">
+        <Link href="/games/home" className="absolute right-3 bottom-3 z-[100001] rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] shadow-lg">
           Decorate
         </Link>
       )}
@@ -348,7 +348,7 @@ export function WorldApp({
                     {s.title && <span className="block truncate text-xs text-muted-foreground">{s.title}</span>}
                   </span>
                   {s.userId !== me.id && (
-                    <Link href={`/messages/new?to=${s.userId}`} className="rounded-full bg-[#c6f36b] px-3 py-1.5 text-xs font-black text-[#0b0910]">
+                    <Link href={`/messages/new?to=${s.userId}`} className="rounded-full bg-[#f2d9a6] px-3 py-1.5 text-xs font-black text-[#0d1726]">
                       Message
                     </Link>
                   )}

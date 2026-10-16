@@ -522,7 +522,7 @@ export const WORKPLACES: Workplace[] = [
     name: "Lawz & Order LLP",
     companyId: "lawz",
     sector: "Law",
-    accent: "#a67fff",
+    accent: "#8fb4ff",
     roles: [
       { id: "legal-admin", title: "Legal Receptionist", rank: 1, pay: 70, tasks: ["reception", "booking", "gdpr", "clause", "email"], uniform: { top: "top-suit" }, summary: "Greet clients, manage the diary and handle confidential information." },
       { id: "paralegal", title: "Paralegal", rank: 2, pay: 110, tasks: ["clause", "clause", "gdpr", "email", "inbox"], uniform: { top: "top-suit", held: "held-briefcase" }, summary: "Review contracts, research legal points and draft letters." },

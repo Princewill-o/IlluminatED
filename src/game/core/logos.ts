@@ -15,7 +15,7 @@ export interface Logo {
   shapes: LogoShape[];
 }
 
-const INK = "#1b1622";
+const INK = "#13203a";
 const W = "#ffffff";
 
 const circle = (cx: number, cy: number, r: number) =>
@@ -86,7 +86,7 @@ export const LOGOS: Record<string, Logo> = {
   },
   // Tesler Motors: a lightning bolt.
   tesler: {
-    bg: "#c6f36b",
+    bg: "#f2d9a6",
     shapes: [{ d: "M36 8L16 36h13l-4 20l21-29h-13Z", fill: INK }],
   },
   // Gregz: a croissant.
@@ -100,7 +100,7 @@ export const LOGOS: Record<string, Logo> = {
   },
   // Lawz & Order: balanced scales.
   lawz: {
-    bg: "#a67fff",
+    bg: "#8fb4ff",
     shapes: [
       { d: rect(30, 12, 4, 38, 2), fill: W },
       { d: rect(14, 18, 36, 4, 2), fill: W },
@@ -132,7 +132,7 @@ export const LOGOS: Record<string, Logo> = {
   },
   // Psyke Sports: a stopwatch.
   psyke: {
-    bg: "#c6f36b",
+    bg: "#f2d9a6",
     shapes: [
       { d: circle(32, 36, 17), fill: INK },
       { d: circle(32, 36, 12), fill: W },

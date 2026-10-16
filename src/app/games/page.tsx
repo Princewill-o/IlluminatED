@@ -38,9 +38,9 @@ export default async function GamesHome() {
 
       <Link
         href="/games/world"
-        className="mb-4 flex items-center gap-4 overflow-hidden rounded-3xl border-2 border-[#c6f36b] bg-card p-4 transition active:scale-[0.99] md:p-5"
+        className="mb-4 flex items-center gap-4 overflow-hidden rounded-3xl border-2 border-[#f2d9a6] bg-card p-4 transition active:scale-[0.99] md:p-5"
       >
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#c6f36b] text-[#0b0910]" aria-hidden>
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#f2d9a6] text-[#0d1726]" aria-hidden>
           <MapIcon className="size-7" />
         </span>
         <span className="min-w-0 flex-1">
@@ -49,7 +49,7 @@ export default async function GamesHome() {
             Walk the city with other players, visit company offices on Careers Campus and meet verified employers.
           </span>
         </span>
-        <span className="hidden rounded-full bg-[#c6f36b] px-4 py-2 text-sm font-black text-[#0b0910] sm:block">Join a server →</span>
+        <span className="hidden rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] sm:block">Join a server →</span>
       </Link>
       <section className="grid items-center gap-6 rounded-3xl bg-brand p-6 text-white md:grid-cols-[1fr_auto] md:p-10">
         <div>
@@ -59,7 +59,7 @@ export default async function GamesHome() {
           <h1 className="arcade-display mt-3 text-5xl md:text-7xl">
             Intern to CEO.
             <br />
-            <span className="text-[#c6f36b]">One shift.</span>
+            <span className="text-[#f2d9a6]">One shift.</span>
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-8">
             Pick a (totally made-up) company, answer real revision questions
@@ -69,12 +69,12 @@ export default async function GamesHome() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               href={`/games/promotion-panic/${first.id}`}
-              className="arcade-btn rounded-full bg-[#c6f36b] px-8 py-4 text-lg font-black text-[#0b0910]"
+              className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]"
             >
               Quick shift at {first.name} →
             </Link>
             {player.dailyBonusReady && (
-              <span className="rounded-full bg-[#0b0910] px-4 py-2 text-sm font-black text-[#ffd166]">
+              <span className="rounded-full bg-[#0d1726] px-4 py-2 text-sm font-black text-[#ffd166]">
                 Daily Grind ready: double Clout
               </span>
             )}
@@ -101,7 +101,7 @@ export default async function GamesHome() {
             aria-valuemax={100}
           >
             <div
-              className="h-full bg-[#a67fff]"
+              className="h-full bg-[#8fb4ff]"
               style={{ width: `${lp.fraction * 100}%` }}
             />
           </div>
@@ -170,12 +170,12 @@ export default async function GamesHome() {
                       className="mx-auto h-36 w-full"
                     />
                     {forYou && (
-                      <span className="absolute top-4 left-4 rounded-full bg-[#c6f36b] px-3 py-1 text-xs font-black text-[#0b0910]">
+                      <span className="absolute top-4 left-4 rounded-full bg-[#f2d9a6] px-3 py-1 text-xs font-black text-[#0d1726]">
                         For you
                       </span>
                     )}
                     {(prog?.bestRank ?? 0) >= CEO_RANK && (
-                      <span className="absolute top-4 right-4 rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0b0910]">
+                      <span className="absolute top-4 right-4 rounded-full bg-[#ffd166] px-3 py-1 text-xs font-black text-[#0d1726]">
                         CEO
                       </span>
                     )}

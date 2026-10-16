@@ -83,7 +83,7 @@ export function StudyTimer({ mode }: { mode: Mode }) {
         </div>
         {exam && <div className="mt-8 flex flex-wrap justify-center gap-5 text-sm text-blue-300">
           {!started && <Link href="/dashboard" className="underline underline-offset-4">Back to dashboard</Link>}
-          {!started && <Link href="/resources" className="underline underline-offset-4">Get a practice paper</Link>}
+          {!started && <Link href="/courses" className="underline underline-offset-4">Find past papers</Link>}
         </div>}
         {prompt && <div role="alertdialog" aria-modal="true" aria-labelledby={`${mode}-confirm-title`} className="fixed inset-0 z-[100] grid place-items-center bg-black/75 p-5">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-left text-slate-950 shadow-2xl">

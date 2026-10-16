@@ -198,7 +198,7 @@ export const COMPANIES: Company[] = [
     boss: { name: "Volt Ramirez", title: "Chief Zoom Officer", look: { skin: "skin-4", hair: "hair-mohawk", hairColor: "haircol-green", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-cargo", shoes: "shoes-boots", mouth: "mouth-laugh", eyes: "eyes-sparkle" } },
     courseIds: ["gcse-physics", "alevel-physics", "btec-engineering"],
     generators: ["speed", "ohm", "power", "weight", "density"],
-    accent: "#c6f36b",
+    accent: "#f2d9a6",
     building: "factory",
     wins: [
       "Volt Ramirez revs approvingly. Indoors.",
@@ -263,7 +263,7 @@ export const COMPANIES: Company[] = [
       "alevel-psychology",
     ],
     generators: ["grammar"],
-    accent: "#a67fff",
+    accent: "#8fb4ff",
     building: "courthouse",
     wins: [
       "Judge Mental bangs the gavel. On the table this time.",
@@ -349,7 +349,7 @@ export const COMPANIES: Company[] = [
       title: "Head of Cardio and Chaos", look: { skin: "skin-8", hair: "hair-buzz", hat: "hat-cap", top: "top-tracksuit", bottom: "bottom-joggers", shoes: "shoes-trainers", extras: "extras-paint", mouth: "mouth-laugh", brows: "brows-raised" } },
     courseIds: ["btec-sport", "gcse-biology"],
     generators: ["pace", "speed", "percent"],
-    accent: "#c6f36b",
+    accent: "#f2d9a6",
     building: "stadium",
     wins: [
       "Coach Sweats blows the whistle. A happy whistle.",

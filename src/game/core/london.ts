@@ -31,7 +31,7 @@ export interface Station {
 
 /** Parody Underground lines (colours are our own). */
 export const LINES: Record<string, { name: string; colour: string }> = {
-  revision: { name: "Revision line", colour: "#7c4dff" },
+  revision: { name: "Revision line", colour: "#2b5fd9" },
   careers: { name: "Careers line", colour: "#5fd3a5" },
   homeward: { name: "Homeward line", colour: "#ffb26b" },
   city: { name: "City line", colour: "#ff7a6b" },
@@ -260,7 +260,7 @@ export function buildLondon(): Built {
   }
   station("brixton", "Brixton", 72, 63, ["homeward", "revision"], { x: 73.5, y: 65.6 });
   // Your front door (everyone sees their own house here).
-  things.push({ kind: "building", id: "my-house", x: 8, y: 68, w: 4, h: 3, height: 2.6, colour: "#c6f36b", roof: "#2d1b69", style: "terrace", label: "Your house" });
+  things.push({ kind: "building", id: "my-house", x: 8, y: 68, w: 4, h: 3, height: 2.6, colour: "#f2d9a6", roof: "#2d1b69", style: "terrace", label: "Your house" });
   fill(8, 68, 4, 3, "X");
   for (let x = 0; x < 66; x++) if (get(x, 67) === "g") set(x, 67, "-");
 

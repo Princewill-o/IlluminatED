@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { type EmployerState, addSlot, postAdvice, updateOrg } from "@/app/employers/actions";
 
 const field = "mt-1.5 w-full rounded-xl border bg-background px-4 py-3";
-const ACCENTS = ["#6bc6ff", "#ffd166", "#ff8fd1", "#5fd3a5", "#c6f36b", "#ffb26b", "#c49bff", "#ff7a6b"];
+const ACCENTS = ["#6bc6ff", "#ffd166", "#ff8fd1", "#5fd3a5", "#f2d9a6", "#ffb26b", "#c49bff", "#ff7a6b"];
 
 function Status({ s }: { s: EmployerState }) {
   if (!s) return null;

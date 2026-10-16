@@ -29,7 +29,7 @@ export function JobCentre({ job, avatar }: { job: ActiveJob | null; avatar: Avat
               {w.companyId ? (
                 <CompanyLogo id={w.companyId} size={36} />
               ) : (
-                <span className="grid size-9 place-items-center rounded-xl font-black text-[#0b0910]" style={{ background: w.accent }}>
+                <span className="grid size-9 place-items-center rounded-xl font-black text-[#0d1726]" style={{ background: w.accent }}>
                   {w.name[0]}
                 </span>
               )}
@@ -62,7 +62,7 @@ export function MyJob({ job, avatar }: { job: ActiveJob; avatar: Avatar }) {
     <div className="rounded-3xl border border-border bg-card p-5">
       <Ladder workplace={w} job={job} />
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-[#c6f36b] px-5 py-3 font-black text-[#0b0910]">
+        <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-[#f2d9a6] px-5 py-3 font-black text-[#0d1726]">
           Go to work
         </button>
         <button

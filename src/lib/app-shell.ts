@@ -3,7 +3,6 @@ import {
   Gamepad2,
   House,
   type LucideIcon,
-  MessagesSquare,
   UserRound,
 } from "lucide-react";
 
@@ -41,6 +40,7 @@ const WEBSITE_PATHS = new Set([
   "/employers",
   "/employers/join",
   "/guardian/messages",
+  "/creators",
 ]);
 
 export function isAppPath(path: string) {
@@ -76,26 +76,19 @@ export const APP_TABS: AppTab[] = [
       "/revision",
       "/exam-mode",
       "/tiggy",
-      "/tutors",
-      "/library",
-      "/reading",
-      "/resources",
       "/calculator",
       "/qualifications",
       "/careers",
-      "/jobs",
       "/next-steps",
       "/gcse",
       "/a-level",
       "/btec",
       "/t-levels",
       "/level-2-3",
-      "/data",
       "/companies",
     ],
   },
   { id: "play", label: "Play", href: "/games", icon: Gamepad2, match: ["/games"] },
-  { id: "social", label: "Social", href: "/social", icon: MessagesSquare, match: ["/social"] },
   {
     id: "me",
     label: "Me",
@@ -120,6 +113,8 @@ export function screenTitle(path: string) {
   if (path === "/dashboard") return null;
   if (path.startsWith("/games/locker")) return "Locker";
   if (path.startsWith("/games/careers")) return "Careers";
+  if (path.startsWith("/games/arcade")) return "Arcade";
+  if (path.startsWith("/creators")) return "Creators";
   if (path.startsWith("/games/home")) return "Your home";
   if (path.startsWith("/games/promotion-panic")) return "Promotion Panic";
   if (path.startsWith("/games/world")) return "Worlds";

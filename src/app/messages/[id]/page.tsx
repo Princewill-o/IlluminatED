@@ -46,7 +46,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
         )}
       </div>
 
-      {booked && <p className="mb-2 rounded-2xl bg-[#5fd3a5] p-3 text-sm font-bold text-[#0b0910]">✓ Office hours booked.</p>}
+      {booked && <p className="mb-2 rounded-2xl bg-[#5fd3a5] p-3 text-sm font-bold text-[#0d1726]">✓ Office hours booked.</p>}
       {meetings.map((m) => {
         const live = new Date(m.startsAt).getTime() - 10 * 60_000 < now && new Date(m.endsAt).getTime() > now;
         return (
@@ -56,7 +56,7 @@ export default async function ThreadPage({ params, searchParams }: { params: Pro
             </span>
             <Link
               href={`/games/world?map=office-${m.orgSlug}`}
-              className={live ? "rounded-full bg-[#c6f36b] px-3 py-1.5 font-black text-[#0b0910]" : "rounded-full bg-black/30 px-3 py-1.5 font-bold"}
+              className={live ? "rounded-full bg-[#f2d9a6] px-3 py-1.5 font-black text-[#0d1726]" : "rounded-full bg-black/30 px-3 py-1.5 font-bold"}
             >
               {live ? "Walk to the meeting room now" : "Office"}
             </Link>

@@ -35,7 +35,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
   return (
     <div className="mx-auto max-w-3xl px-4 pt-5 pb-10 md:pt-10">
       {welcome && (
-        <p className="mb-4 rounded-2xl bg-[#5fd3a5] p-4 font-bold text-[#0b0910]" role="status">
+        <p className="mb-4 rounded-2xl bg-[#5fd3a5] p-4 font-bold text-[#0d1726]" role="status">
           ✓ You&apos;re verified. Your office at {m.org.name} is open on Careers Campus.
         </p>
       )}
@@ -48,7 +48,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href={`/games/world?map=office-${m.org.slug}`} className="rounded-full bg-[#c6f36b] px-4 py-2.5 text-sm font-black text-[#0b0910]">
+          <Link href={`/games/world?map=office-${m.org.slug}`} className="rounded-full bg-[#f2d9a6] px-4 py-2.5 text-sm font-black text-[#0d1726]">
             Walk into your office
           </Link>
           <Link href="/messages" className="rounded-full bg-brand px-4 py-2.5 text-sm font-black text-white">
@@ -83,7 +83,7 @@ export default async function EmployerOfficePage({ searchParams }: { searchParam
             <li key={s.id} className="flex items-center gap-3 py-2.5 text-sm">
               <span className="flex-1">
                 <strong>{when(s.startsAt)}</strong> · {s.room}
-                {s.bookedBy ? <span className="ml-2 rounded-full bg-[#ffd166] px-2 py-0.5 text-xs font-black text-[#0b0910]">Booked</span> : null}
+                {s.bookedBy ? <span className="ml-2 rounded-full bg-[#ffd166] px-2 py-0.5 text-xs font-black text-[#0d1726]">Booked</span> : null}
               </span>
               <form action={removeSlot}>
                 <input type="hidden" name="id" value={s.id} />

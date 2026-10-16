@@ -14,7 +14,7 @@ export default async function CompaniesPage() {
       <p className="text-muted-foreground mt-2">
         Verified employers on IlluminatED. Read their advice, visit their office on Careers Campus and book office hours.
       </p>
-      <Link href="/games/world?map=campus" className="mt-5 inline-block rounded-full bg-[#c6f36b] px-5 py-3 font-black text-[#0b0910]">
+      <Link href="/games/world?map=campus" className="mt-5 inline-block rounded-full bg-[#f2d9a6] px-5 py-3 font-black text-[#0d1726]">
         Walk around Careers Campus
       </Link>
       <ul className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -30,7 +30,7 @@ export default async function CompaniesPage() {
         {orgs.map((o) => (
           <li key={o.id}>
             <Link href={`/companies/${o.slug}`} className="bg-card flex items-center gap-4 rounded-3xl border p-4 transition active:scale-[0.98]">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl text-lg font-black text-[#0b0910]" style={{ background: o.accent }}>
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl text-lg font-black text-[#0d1726]" style={{ background: o.accent }}>
                 {o.name.slice(0, 1).toUpperCase()}
               </span>
               <span className="min-w-0">

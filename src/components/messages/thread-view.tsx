@@ -216,7 +216,7 @@ export function ThreadView({
           placeholder={usable ? "Message…" : "You can't send messages in this conversation yet"}
           className="bg-card max-h-32 flex-1 resize-none rounded-3xl border px-4 py-3"
         />
-        <button disabled={!usable || !text.trim()} className="rounded-full bg-[#c6f36b] px-5 font-black text-[#0b0910] disabled:opacity-40">
+        <button disabled={!usable || !text.trim()} className="rounded-full bg-[#f2d9a6] px-5 font-black text-[#0d1726] disabled:opacity-40">
           Send
         </button>
       </form>

@@ -75,7 +75,7 @@ function AvatarBubble({ avatar, size = 34, active = false }: { avatar: Avatar; s
     <span
       className={cn(
         "grid shrink-0 place-items-center overflow-hidden rounded-full bg-brand",
-        active ? "ring-2 ring-[#c6f36b] ring-offset-2 ring-offset-background" : "ring-1 ring-border",
+        active ? "ring-2 ring-[#f2d9a6] ring-offset-2 ring-offset-background" : "ring-1 ring-border",
       )}
       style={{ width: size, height: size }}
     >
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       aria-current={on ? "page" : undefined}
                       aria-label="Play"
                       className={cn(
-                        "-mt-6 grid size-[58px] place-items-center rounded-full border-4 border-background bg-[#c6f36b] text-[#0b0910] shadow-[0_4px_0_0_rgba(0,0,0,0.6)] transition-transform active:translate-y-0.5 active:scale-95",
+                        "-mt-6 grid size-[58px] place-items-center rounded-full border-4 border-background bg-[#f2d9a6] text-[#0d1726] shadow-[0_4px_0_0_rgba(0,0,0,0.6)] transition-transform active:translate-y-0.5 active:scale-95",
                         on && "bg-[#d8ff7d]",
                       )}
                     >
@@ -215,7 +215,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       on ? "font-extrabold text-foreground" : "font-medium text-muted-foreground",
                     )}
                   >
-                    {on && <span aria-hidden className="absolute top-0 h-[3px] w-8 rounded-b-full bg-[#a67fff]" />}
+                    {on && <span aria-hidden className="absolute top-0 h-[3px] w-8 rounded-b-full bg-[#8fb4ff]" />}
                     {tab.id === "me" ? (
                       <AvatarBubble avatar={player.avatar} size={26} active={on} />
                     ) : (

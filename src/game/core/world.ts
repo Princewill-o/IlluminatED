@@ -226,7 +226,7 @@ function cityMap(): WorldMap {
       portals,
       rooms: [],
       spawn: centre(38, 21),
-      accent: "#a67fff",
+      accent: "#8fb4ff",
     },
     g,
   );
@@ -448,7 +448,7 @@ export function londonMap(): WorldMap {
     portals,
     rooms: [],
     spawn: L.spawn,
-    accent: "#7c4dff",
+    accent: "#2b5fd9",
   };
 }
 
@@ -485,7 +485,7 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): World
     layout,
     rooms: [],
     spawn: { x: 10 * TILE, y: 11.5 * TILE },
-    accent: "#7c4dff",
+    accent: "#2b5fd9",
   };
 }
 

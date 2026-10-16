@@ -32,13 +32,6 @@ const ROWS: {
     lasts: "Until you clear it",
   },
   {
-    name: "illuminated:splash-seen",
-    where: "Session storage",
-    what: "Stops the welcome animation playing on every page.",
-    kind: "Functional",
-    lasts: "Until you close the tab",
-  },
-  {
     name: "illuminated:quiz-progress, flashcards, planner, exam-date, alevel-year, recent",
     where: "Local storage",
     what: "Things you save while you study: quiz answers, flashcard marks, your revision plan, exam countdown, A level year and recently viewed pages.",

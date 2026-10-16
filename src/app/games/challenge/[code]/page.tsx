@@ -50,7 +50,7 @@ export default async function ChallengePage({
   return (
     <div id="challenge" className="mx-auto max-w-4xl px-4 pt-8 pb-10">
       <section className="overflow-hidden rounded-3xl border border-border bg-card">
-        <div className="bg-[#ff7a6b] px-6 py-3 text-center text-sm font-black tracking-[0.3em] text-[#0b0910] uppercase">
+        <div className="bg-[#ff7a6b] px-6 py-3 text-center text-sm font-black tracking-[0.3em] text-[#0d1726] uppercase">
           You&apos;ve been challenged
         </div>
         <div className="grid items-center gap-6 p-6 md:grid-cols-[auto_1fr] md:p-10">
@@ -87,7 +87,7 @@ export default async function ChallengePage({
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href={playHref}
-                className="arcade-btn rounded-full bg-[#c6f36b] px-8 py-4 text-lg font-black text-[#0b0910]"
+                className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]"
               >
                 {viewer ? "Accept the challenge →" : "Join free and accept →"}
               </Link>

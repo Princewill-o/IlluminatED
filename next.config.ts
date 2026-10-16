@@ -5,7 +5,7 @@ const isDev = process.env.NODE_ENV !== "production";
 
 /**
  * Content Security Policy. Next.js needs inline scripts (its hydration data and
- * the splash boot script in the root layout) and inline styles, so both allow
+ * the theme script in the root layout) and inline styles, so both allow
  * 'unsafe-inline'. Dev mode also needs 'unsafe-eval' for fast refresh.
  */
 const csp = [
@@ -59,6 +59,17 @@ const nextConfig: NextConfig = {
   ...(process.env.VERCEL_ENV && !process.env.NEXT_PUBLIC_VERCEL_ENV
     ? { env: { NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV } }
     : {}),
+  // Features retired so IlluminatED stays a revision game.
+  async redirects() {
+    return [
+      ...["/tutors", "/jobs", "/data", "/library", "/reading", "/resources"].flatMap((p) => [
+        { source: p, destination: "/learn", permanent: false },
+        { source: `${p}/:path*`, destination: "/learn", permanent: false },
+      ]),
+      { source: "/social", destination: "/games/world", permanent: false },
+      { source: "/social/:path((?!guidelines).*)", destination: "/games/world", permanent: false },
+    ];
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

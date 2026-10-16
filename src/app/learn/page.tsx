@@ -9,14 +9,14 @@ import { courseById } from "@/lib/data/courses";
 export const metadata: Metadata = { title: "Learn" };
 
 const TOOLS: { href: string; title: string; text: string; icon: LucideIcon; tint: string }[] = [
-  { href: "/quizzes", title: "Quiz centre", text: "Quick, topic, mixed and timed", icon: BookOpenCheck, tint: "#a67fff" },
+  { href: "/quizzes", title: "Quiz centre", text: "Quick, topic, mixed and timed", icon: BookOpenCheck, tint: "#8fb4ff" },
   { href: "/flashcards", title: "Flashcards", text: "Key terms and recall", icon: Layers, tint: "#6bc6ff" },
   { href: "/tiggy", title: "Ask Tiggy", text: "Your AI study buddy", icon: MessageCircleQuestion, tint: "#ffd166" },
   { href: "/exam-mode", title: "Exam mode", text: "Practise under pressure", icon: Timer, tint: "#ff7a6b" },
   { href: "/revision", title: "Revision planner", text: "Plan sessions, print sheets", icon: CalendarDays, tint: "#5fd3a5" },
-  { href: "/tutors", title: "Get a tutor", text: "1:1 help when you're stuck", icon: GraduationCap, tint: "#ff8fd1" },
-  { href: "/courses", title: "All courses", text: "GCSE, A level, BTEC, T Levels", icon: Trophy, tint: "#c6f36b" },
-  { href: "/library", title: "Library", text: "Set texts and reading", icon: Library, tint: "#c49bff" },
+  { href: "/games/arcade", title: "Arcade", text: "60-second revision games", icon: GraduationCap, tint: "#ff8fd1" },
+  { href: "/courses", title: "All courses", text: "GCSE, A level, BTEC, T Levels", icon: Trophy, tint: "#f2d9a6" },
+  { href: "/games/careers", title: "Work a shift", text: "Real job tasks, real CV skills", icon: Library, tint: "#c49bff" },
   { href: "/calculator", title: "Grade calculator", text: "What you need to hit your target", icon: Calculator, tint: "#6bc6ff" },
   { href: "/next-steps", title: "Next steps", text: "Sixth form, uni, apprenticeships", icon: Compass, tint: "#ffd166" },
   { href: "/careers", title: "Careers", text: "Explore apprenticeship standards", icon: Briefcase, tint: "#5fd3a5" },
@@ -68,7 +68,7 @@ export default async function LearnPage() {
         href="/games"
         className="mt-6 flex items-center gap-4 rounded-3xl bg-brand p-5 text-white transition active:scale-[0.98]"
       >
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#0b0910] text-[#c6f36b]" aria-hidden>
+        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#0d1726] text-[#f2d9a6]" aria-hidden>
           <Gamepad2 className="size-7" />
         </span>
         <span>
@@ -94,7 +94,7 @@ export default async function LearnPage() {
                   className="bg-card flex h-full flex-col gap-3 rounded-3xl border p-4 transition hover:border-white/25 active:scale-[0.97]"
                 >
                   <span className="grid size-11 place-items-center rounded-2xl" style={{ background: t.tint }} aria-hidden>
-                    <Icon className="size-6 text-[#0b0910]" />
+                    <Icon className="size-6 text-[#0d1726]" />
                   </span>
                   <span>
                     <span className="block font-extrabold">{t.title}</span>

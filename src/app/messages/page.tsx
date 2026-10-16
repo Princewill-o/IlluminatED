@@ -29,7 +29,7 @@ export default async function MessagesPage() {
           : "Ask verified people at real companies for careers advice. You can't message other learners."}
       </p>
       {!staff && (
-        <Link href="/companies" className="mt-4 inline-block rounded-full bg-[#c6f36b] px-5 py-2.5 text-sm font-black text-[#0b0910]">
+        <Link href="/companies" className="mt-4 inline-block rounded-full bg-[#f2d9a6] px-5 py-2.5 text-sm font-black text-[#0d1726]">
           Find a company to ask
         </Link>
       )}
@@ -40,7 +40,7 @@ export default async function MessagesPage() {
           return (
             <li key={t.id}>
               <Link href={`/messages/${t.id}`} className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-hover">
-                <span className="grid size-11 shrink-0 place-items-center rounded-full text-base font-black text-[#0b0910]" style={{ background: t.org.accent }}>
+                <span className="grid size-11 shrink-0 place-items-center rounded-full text-base font-black text-[#0d1726]" style={{ background: t.org.accent }}>
                   {them.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="min-w-0 flex-1">

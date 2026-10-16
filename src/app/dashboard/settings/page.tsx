@@ -86,15 +86,8 @@ export default async function SettingsPage() {
       <Section id="delete" title="Delete your account" className="pb-20">
         <div className="max-w-4xl">
           <p className="text-muted-foreground max-w-2xl leading-relaxed">
-            This permanently deletes your account, quiz progress, tutor requests
-            and messages, and everything you've posted on{" "}
-            <Link
-              href="/social"
-              className="text-primary underline underline-offset-4"
-            >
-              IlluminatEDSocial
-            </Link>
-            . It can't be undone.
+            This permanently deletes your account, quiz progress, game progress,
+            job record, home and messages. It can't be undone.
           </p>
           <div className="mt-6">
             <DeleteAccountForm />

@@ -20,8 +20,8 @@ export default async function NextStepsPage() {
         crumbs={[{ label: "Home", href: "/" }, { label: "Your next steps" }]}
       />
       <Section rule={false}>
-        <Link href="/jobs" className="text-primary mb-6 block underline">
-          Browse jobs, apprenticeships and university suggestions
+        <Link href="/games/careers" className="text-primary mb-6 block underline">
+          Try real jobs in the game and build your CV
         </Link>
         <NextSteps
           userId={account?.id}

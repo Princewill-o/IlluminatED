@@ -39,10 +39,10 @@ const C = {
   oak: "#ead7b8",
   oakEdge: "#cdb48a",
   oakFront: "#d8c19c",
-  purple: "#7c4dff",
+  purple: "#2b5fd9",
   purpleDark: "#5b33d6",
-  purpleLight: "#a67fff",
-  lime: "#c6f36b",
+  purpleLight: "#8fb4ff",
+  lime: "#f2d9a6",
   grass: "#a3d98a",
   grassDark: "#93cc7a",
   grassLight: "#b4e39c",
@@ -61,7 +61,7 @@ const C = {
   waterHi: "#9fdcff",
 };
 
-const BOOKS = ["#ff7a6b", "#ffd166", "#6bc6ff", "#5fd3a5", "#a67fff", "#ff8fd1", "#f4f0ff"];
+const BOOKS = ["#ff7a6b", "#ffd166", "#6bc6ff", "#5fd3a5", "#8fb4ff", "#ff8fd1", "#f3f6fb"];
 
 const WALLISH = new Set(["#", "W", "G"]);
 const RUGGY = new Set(["l", "s", "v", "o"]);
@@ -165,7 +165,7 @@ function ground(ctx: Ctx, map: WorldMap, ch: string, tx: number, ty: number) {
     case ":":
       R(0, 0, 32, 32, C.road);
       for (let i = 0; i < 5; i++) R(Math.floor(hash(tx, ty, i) * 30), Math.floor(hash(ty, tx, i) * 30), 2, 2, C.roadDot);
-      if (ch === ":" && tx % 2 === 0) R(4, 30, 24, 4, "#f4f0ff");
+      if (ch === ":" && tx % 2 === 0) R(4, 30, 24, 4, "#f3f6fb");
       break;
     default:
       R(0, 0, 32, 32, map.kind === "office" ? C.floor : C.grass);
@@ -419,7 +419,7 @@ export function drawBadge(ctx: Ctx, s: Pick<Structure, "companyId" | "label" | "
       ctx.fill(new Path2D(shape.d));
     }
   } else {
-    ctx.fillStyle = "#0b0910";
+    ctx.fillStyle = "#0d1726";
     ctx.font = "900 38px ui-sans-serif, system-ui, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";

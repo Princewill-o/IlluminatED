@@ -35,6 +35,7 @@ const PUBLIC_PATHS = [
   "/social/auth/callback",
   "/employers",
   "/guardian/messages",
+  "/creators",
 ];
 
 /** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
@@ -47,7 +48,8 @@ const GAME_CHALLENGE = /^\/games\/challenge\/[A-Za-z0-9]{6}\/?$/;
 const isPublic = (path: string) =>
   PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
   METADATA_IMAGE.test(path) ||
-  GAME_CHALLENGE.test(path);
+  GAME_CHALLENGE.test(path) ||
+  /^\/r\/[A-Za-z0-9_.-]{2,30}\/?$/.test(path);
 
 /**
  * Keeps the Supabase session fresh, sends signed-out visitors to sign in,

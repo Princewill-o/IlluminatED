@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -5,6 +6,8 @@ import type { Metadata } from "next";
 
 import { ImportProgress } from "@/components/account/import-progress";
 import { ReadinessPanel } from "@/components/account/readiness-panel";
+import { CreatorCard } from "@/components/creators/creator-card";
+import { ClaimReferral } from "@/components/creators/creator-tools";
 import {
   ExamCountdown,
   MasteryChart,
@@ -14,7 +17,6 @@ import {
 import { AvatarFigure } from "@/components/game/avatar";
 import { Empty, Section } from "@/components/kit";
 import { NextSteps } from "@/components/next-steps";
-import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
 import { timeAgo } from "@/components/social/util";
 import { StudyTimer } from "@/components/study-timers";
 import { TiggyTour, TourButton } from "@/components/tiggy-tour";
@@ -25,11 +27,9 @@ import {
   type TopicStatus,
 } from "@/lib/account/dashboard";
 import { stageLabel, yearLabel } from "@/lib/account/details";
-import { isTutor, requireAccount } from "@/lib/account/server";
+import { requireAccount } from "@/lib/account/server";
 import { TOPICS } from "@/lib/data/topics";
 import { loadPlayer } from "@/lib/game/server";
-import { STATUS_LABELS, helpLabel, speedLabel } from "@/lib/tutoring";
-import { listMyRequests } from "@/lib/tutoring-server";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Your dashboard" };
@@ -96,22 +96,15 @@ function TopicRow({ s }: { s: TopicStat }) {
 export default async function DashboardPage() {
   const account = await requireAccount("/dashboard");
   const { details, profile } = account;
-  const [data, requests, player] = await Promise.all([
+  const [data, player] = await Promise.all([
     loadDashboard(account.id, details),
-    listMyRequests(account.id),
     loadPlayer(account.id),
   ]);
-
-  const activeRequests = requests.filter(
-    (r) => r.status === "open" || r.status === "matched",
-  );
 
   return (
     <>
       <TiggyTour name={profile.username} />
-      <div className="container pt-6 lg:pt-10">
-        <Q4CampaignArtwork compact />
-      </div>
+      {(await cookies()).has("ref") && <ClaimReferral />}
       <header className="container pt-6 pb-8 lg:pt-10">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -125,14 +118,6 @@ export default async function DashboardPage() {
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm">
-            {isTutor(account) && (
-              <Link
-                href="/tutors/desk"
-                className="hover:bg-muted rounded-full border px-4 py-2 font-medium"
-              >
-                Tutor desk
-              </Link>
-            )}
             <TourButton className="hover:bg-muted rounded-full border px-4 py-2 font-medium" />
             <Link
               href="/calculator"
@@ -145,12 +130,6 @@ export default async function DashboardPage() {
               className="hover:bg-muted rounded-full border px-4 py-2 font-medium"
             >
               Edit details
-            </Link>
-            <Link
-              href="/tutors/request"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-4 py-2 font-semibold"
-            >
-              Request a tutor
             </Link>
           </div>
         </div>
@@ -195,7 +174,7 @@ export default async function DashboardPage() {
               {player.ready && player.shiftsPlayed > 0 ? ` You're level ${player.level} with ${player.clout.toLocaleString("en-GB")} Clout.` : ""}
             </span>
           </span>
-          <span className="justify-self-start rounded-full bg-[#c6f36b] px-6 py-3 font-black text-[#0b0910] group-hover:bg-[#d4f88a] sm:justify-self-end">
+          <span className="justify-self-start rounded-full bg-[#f2d9a6] px-6 py-3 font-black text-[#0d1726] group-hover:bg-[#d4f88a] sm:justify-self-end">
             {player.dailyBonusReady ? "Play · double Clout today" : "Play now"} →
           </span>
         </Link>
@@ -203,18 +182,7 @@ export default async function DashboardPage() {
 
       <section className="container grid gap-5 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" aria-label="Study tools and community">
         <StudyTimer mode="pomodoro" />
-        <div className="relative overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-sky-50 via-white to-violet-100 p-7 text-slate-950">
-          <div aria-hidden className="absolute -right-8 -top-8 size-36 rounded-full bg-yellow-300/60" />
-          <div aria-hidden className="absolute bottom-6 right-8 size-16 rotate-12 rounded-2xl bg-blue-300/60" />
-          <p className="relative text-xs font-bold uppercase tracking-widest text-blue-700">One account, more ways to grow</p>
-          <h2 className="relative mt-3 text-2xl font-bold">Meet IlluminatED Social</h2>
-          <p className="relative mt-3 max-w-sm text-sm leading-6 text-slate-700">Ask students about sixth form, university and apprenticeships, swap advice, and explore what comes next.</p>
-          <div className="relative mt-6 flex flex-wrap gap-2">
-            <Link href="/social" className="rounded-full bg-blue-700 px-5 py-2.5 text-sm font-bold text-white">Explore Social</Link>
-            <Link href="/exam-mode" className="rounded-full border border-blue-700 px-5 py-2.5 text-sm font-bold text-blue-800">Open exam mode</Link>
-          </div>
-          <Link href="/games" className="relative mt-6 block text-xs font-semibold text-violet-800 underline">Study games are here: play Promotion Panic</Link>
-        </div>
+        <CreatorCard />
       </section>
 
       <Section id="next-steps" title="Plan what comes next" rule={false}>
@@ -381,10 +349,10 @@ export default async function DashboardPage() {
           <Empty title="No topic pages for your subjects yet">
             We're adding topics over time. Meanwhile, use your{" "}
             <Link
-              href="/resources"
+              href="/courses"
               className="text-primary underline underline-offset-4"
             >
-              board's past papers
+              course pages
             </Link>{" "}
             or{" "}
             <Link
@@ -499,69 +467,36 @@ export default async function DashboardPage() {
         </section>
 
         <section
-          aria-labelledby="tutor-title"
+          aria-labelledby="career-title"
           className="border-foreground/80 border-t py-10"
         >
           <div className="mb-6 flex items-baseline justify-between">
-            <h2 id="tutor-title" className="text-2xl tracking-tight">
-              Tutoring
+            <h2 id="career-title" className="text-2xl tracking-tight">
+              Work and home
             </h2>
-            <Link href="/tutors" className="text-primary text-sm font-medium">
-              How it works
+            <Link href="/games/careers" className="text-primary text-sm font-medium">
+              Careers
             </Link>
           </div>
-          {requests.length ? (
-            <ul className="divide-y border-y text-sm">
-              {requests.slice(0, 6).map((r) => (
-                <li key={r.id}>
-                  <Link
-                    href={`/tutors/requests/${r.id}`}
-                    className="group flex items-center justify-between gap-4 py-3"
-                  >
-                    <span className="min-w-0">
-                      <span className="group-hover:text-primary block truncate font-medium">
-                        {helpLabel(r.helpType)}: {r.subject}
-                      </span>
-                      <span className="text-muted-foreground text-xs">
-                        {speedLabel(r.speed)} · {timeAgo(r.createdAt)}
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2 text-xs">
-                      {STATUS_LABELS[r.status]}
-                      <ArrowRight className="size-3.5" aria-hidden />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              Stuck on homework, planning coursework or preparing for an exam? A
-              tutor can help one to one.
-            </p>
-          )}
-          {activeRequests.length === 0 && (
-            <Link
-              href="/tutors/request"
-              className="text-primary mt-5 inline-flex items-center gap-1.5 text-sm font-semibold"
-            >
-              Request a tutor <ArrowRight className="size-4" aria-hidden />
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Get a job at Pizzazz Pizza, Goggle, St Plasters and more. Every shift is real work from that job, pays Clout, and builds experience you can put on your CV.
+            Spend it on furniture and a bigger home.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-sm">
+            <Link href="/games/careers" className="bg-primary text-primary-foreground rounded-full px-4 py-2 font-semibold">
+              Find a job
             </Link>
-          )}
+            <Link href="/games/home" className="hover:bg-muted rounded-full border px-4 py-2 font-medium">
+              Decorate your home
+            </Link>
+          </div>
         </section>
       </div>
 
       <div className="container pb-16">
         <p className="text-muted-foreground border-t pt-6 text-sm">
           Scores are from IlluminatED practice questions and aren't predicted
-          grades. Your forum name is{" "}
-          <Link
-            href={`/social/u/${profile.username}`}
-            className="text-primary underline underline-offset-4"
-          >
-            {profile.username}
-          </Link>{" "}
-          on IlluminatEDSocial.
+          grades.
         </p>
       </div>
     </>

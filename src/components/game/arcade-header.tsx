@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/games/world", label: "Worlds" },
   { href: "/games/careers", label: "Careers" },
+  { href: "/games/arcade", label: "Arcade" },
   { href: "/games/home", label: "Home" },
   { href: "/games", label: "Promotion Panic" },
   { href: "/games/locker", label: "Locker" },

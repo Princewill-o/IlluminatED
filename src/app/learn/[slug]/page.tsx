@@ -90,8 +90,8 @@ export default async function LessonPage({
           Ask Tiggy
         </Link>
         <span className="text-muted-foreground"> · </span>
-        <Link className="text-primary underline" href="/tutors">
-          Get help from a tutor
+        <Link className="text-primary underline" href="/games/arcade">
+          Practise in the Arcade
         </Link>
       </Section>
     </>

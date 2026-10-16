@@ -113,13 +113,13 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
       <path
         d="M24 62 L80 22 L136 62"
         fill="none"
-        stroke="#f4f0ff"
+        stroke="#f3f6fb"
         strokeWidth="5"
       />
       <rect x="58" y="82" width="44" height="50" fill={WALL} />
       <path
         d="M58 82 L102 132 M102 82 L58 132"
-        stroke="#f4f0ff"
+        stroke="#f3f6fb"
         strokeWidth="4"
       />
       <rect
@@ -128,7 +128,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         width="44"
         height="50"
         fill="none"
-        stroke="#f4f0ff"
+        stroke="#f3f6fb"
         strokeWidth="4"
       />
       <circle cx="80" cy="54" r="9" fill={WALL} />
@@ -138,7 +138,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   ),
   hospital: (a) => (
     <g>
-      <rect x="22" y="40" width="116" height="92" fill="#f4f0ff" />
+      <rect x="22" y="40" width="116" height="92" fill="#f3f6fb" />
       <rect x="22" y="40" width="116" height="10" fill={a} />
       <rect x="66" y="12" width="28" height="28" rx="4" fill={a} />
       <rect x="77" y="16" width="6" height="20" fill="#fff" />
@@ -190,7 +190,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
       <path d="M50 40 Q80 2 110 40 Z" fill={a} />
       <path d="M18 56 L80 34 L142 56 Z" fill={WALL} />
       {[28, 50, 72, 94, 116].map((x) => (
-        <rect key={x} x={x} y="58" width="14" height="58" fill="#f4f0ff" />
+        <rect key={x} x={x} y="58" width="14" height="58" fill="#f3f6fb" />
       ))}
       <rect x="18" y="116" width="124" height="16" fill={WALL} />
       <path d="M68 48 L92 48 M80 40 L80 54" stroke={a} strokeWidth="3" />
@@ -209,7 +209,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         textAnchor="middle"
         fontSize="16"
         fontWeight="900"
-        fill="#0b0910"
+        fill="#0d1726"
       >
         NOW SHOWING
       </text>
@@ -225,7 +225,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         <path
           key={i}
           d={`M${22 + i * 14.5} 62 L${36.5 + i * 14.5} 62 L${36.5 + i * 14.5} 76 Q${29 + i * 14.5} 84 ${22 + i * 14.5} 76 Z`}
-          fill={i % 2 ? "#f4f0ff" : a}
+          fill={i % 2 ? "#f3f6fb" : a}
         />
       ))}
       <rect x="18" y="56" width="124" height="8" fill={a} />
@@ -271,14 +271,14 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
     <g>
       <ellipse cx="80" cy="106" rx="70" ry="26" fill={WALL} />
       <ellipse cx="80" cy="100" rx="56" ry="16" fill="#5fd3a5" />
-      <line x1="80" y1="86" x2="80" y2="114" stroke="#f4f0ff" strokeWidth="2" />
+      <line x1="80" y1="86" x2="80" y2="114" stroke="#f3f6fb" strokeWidth="2" />
       <ellipse
         cx="80"
         cy="100"
         rx="8"
         ry="4"
         fill="none"
-        stroke="#f4f0ff"
+        stroke="#f3f6fb"
         strokeWidth="2"
       />
       <path
@@ -301,10 +301,10 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
       <rect x="102" y="78" width="20" height="20" fill="#6bc6ff" />
       <rect x="66" y="100" width="28" height="32" rx="12" fill="#ff7a6b" />
       <circle cx="80" cy="52" r="9" fill="#ffd166" />
-      <text x="44" y="94" fontSize="13" fontWeight="900" fill="#0b0910">
+      <text x="44" y="94" fontSize="13" fontWeight="900" fill="#0d1726">
         A
       </text>
-      <text x="107" y="94" fontSize="13" fontWeight="900" fill="#0b0910">
+      <text x="107" y="94" fontSize="13" fontWeight="900" fill="#0d1726">
         B
       </text>
     </g>
@@ -328,7 +328,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
       <path
         d="M66 20 Q76 26 72 36 Q82 40 78 50 M90 14 Q98 22 94 30 Q100 34 98 42"
         fill="none"
-        stroke="#0b0910"
+        stroke="#0d1726"
         strokeWidth="4"
       />
       <ellipse
@@ -337,7 +337,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         rx="30"
         ry="8"
         fill="none"
-        stroke="#f4f0ff"
+        stroke="#f3f6fb"
         strokeWidth="2"
         transform="rotate(-20 80 32)"
       />

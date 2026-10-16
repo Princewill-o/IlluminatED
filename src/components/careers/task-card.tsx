@@ -31,7 +31,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
       <p className="mt-2 leading-7">{task.prompt}</p>
 
       {task.doc?.type === "code" && (
-        <pre className="mt-3 overflow-x-auto rounded-2xl bg-[#1b1622] p-4 text-[13px] leading-6 text-[#e9e6f2]">
+        <pre className="mt-3 overflow-x-auto rounded-2xl bg-[#13203a] p-4 text-[13px] leading-6 text-[#e9e6f2]">
           <code>
             {task.doc.text!.split("\n").map((l, i) => (
               <span key={i} className="block">
@@ -43,7 +43,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
         </pre>
       )}
       {task.doc?.type === "ticket" && (
-        <pre className="mt-3 w-fit rotate-[-1deg] rounded-md border border-dashed border-[#c9bfaa] bg-[#fffaf0] px-5 py-4 font-mono text-sm leading-6 whitespace-pre-wrap text-[#1b1622] shadow-sm">
+        <pre className="mt-3 w-fit rotate-[-1deg] rounded-md border border-dashed border-[#c9bfaa] bg-[#fffaf0] px-5 py-4 font-mono text-sm leading-6 whitespace-pre-wrap text-[#13203a] shadow-sm">
           {task.doc.text}
         </pre>
       )}

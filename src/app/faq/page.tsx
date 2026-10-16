@@ -160,12 +160,12 @@ const FAQ: { group: string; items: { q: string; a: React.ReactNode }[] }[] = [
         ),
       },
       {
-        q: "How much does a tutor cost?",
+        q: "Can I still book a tutor?",
         a: (
           <>
-            It depends on the kind of help and how quickly you need it. See the{" "}
-            <Link href="/tutors">tutoring page</Link> for prices. Sending a
-            request doesn't charge you anything.
+            We've retired one-to-one tutoring so IlluminatED can focus on revising
+            through play. <Link href="/tiggy">Tiggy</Link> can explain any topic
+            step by step, for free.
           </>
         ),
       },

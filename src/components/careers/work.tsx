@@ -154,7 +154,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
             </p>
           </div>
         </div>
-        <button type="button" onClick={() => setI(0)} className="mt-5 w-full rounded-full bg-[#c6f36b] py-3 font-black text-[#0b0910]">
+        <button type="button" onClick={() => setI(0)} className="mt-5 w-full rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
           Clock in
         </button>
       </Panel>
@@ -191,7 +191,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
           <p className="mt-1 text-4xl font-black text-ink-sun">+{summary.pay} Clout</p>
           <p className="mt-1 text-muted-foreground">{correct}/5 tasks done right</p>
           {summary.promoted && next && (
-            <p className="mt-4 rounded-2xl bg-[#c6f36b] px-4 py-3 font-black text-[#0b0910]">
+            <p className="mt-4 rounded-2xl bg-[#f2d9a6] px-4 py-3 font-black text-[#0d1726]">
               <Trophy className="mr-1 inline size-5" aria-hidden /> Promoted to {next.title}! New uniform, better pay.
             </p>
           )}
@@ -241,7 +241,7 @@ export function WorkplaceDoor({
       <Ladder workplace={workplace} job={mine} />
       <div className="mt-4 grid gap-2">
         {mine ? (
-          <button type="button" onClick={() => setMode("shift")} className="flex items-center justify-center gap-2 rounded-full bg-[#c6f36b] py-3 font-black text-[#0b0910]">
+          <button type="button" onClick={() => setMode("shift")} className="flex items-center justify-center gap-2 rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
             <Briefcase className="size-5" aria-hidden /> Start a shift as {roleOf(workplace.id, mine.role)?.title}
           </button>
         ) : (
@@ -301,7 +301,7 @@ function Panel({ title, workplace, onClose, children }: { title: string; workpla
           {workplace.companyId ? (
             <CompanyLogo id={workplace.companyId} size={40} />
           ) : (
-            <span className="grid size-10 place-items-center rounded-xl font-black text-[#0b0910]" style={{ background: workplace.accent }}>
+            <span className="grid size-10 place-items-center rounded-xl font-black text-[#0d1726]" style={{ background: workplace.accent }}>
               {workplace.name[0]}
             </span>
           )}

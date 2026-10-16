@@ -22,7 +22,7 @@ export default async function QualificationsPage({
         intro="Find the exact qualification you're taking, who awards it, whether it's still available, and a link to its specification."
         crumbs={[
           { label: "Home", href: "/" },
-          { label: "Resources", href: "/resources" },
+          { label: "Learn", href: "/learn" },
           { label: "Qualification search" },
         ]}
       >

@@ -34,7 +34,7 @@ export function OpenForm({ to, adult }: { to: string; adult: boolean }) {
         </>
       )}
       {state?.error && <p className="text-destructive text-sm font-semibold" role="alert">{state.error}</p>}
-      <button disabled={pending} className="h-12 w-full rounded-full bg-[#c6f36b] font-black text-[#0b0910] disabled:opacity-60">
+      <button disabled={pending} className="h-12 w-full rounded-full bg-[#f2d9a6] font-black text-[#0d1726] disabled:opacity-60">
         {pending ? "Starting…" : adult ? "Start conversation" : "Ask my parent or carer"}
       </button>
     </form>

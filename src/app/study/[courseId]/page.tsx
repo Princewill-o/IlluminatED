@@ -97,9 +97,6 @@ export default async function StudyTopicPage({
           >
             Browse available practice quizzes
           </Link>
-          <Link className="text-primary underline" href="/tutors">
-            Get tutor support
-          </Link>
           <Link className="text-primary underline" href="/tiggy">
             Ask Tiggy for an explanation
           </Link>
