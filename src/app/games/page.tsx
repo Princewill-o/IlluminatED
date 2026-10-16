@@ -1,6 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 
-import { Map as MapIcon } from "lucide-react";
+import { BadgeCheck, Briefcase, ClipboardList, Gamepad2, Shirt, Sofa } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
@@ -36,102 +37,77 @@ export default async function GamesHome() {
         </p>
       )}
 
-      <Link
-        href="/games/world"
-        className="mb-4 flex items-center gap-4 overflow-hidden rounded-3xl border-2 border-[#f2d9a6] bg-card p-4 transition active:scale-[0.99] md:p-5"
-      >
-        <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#f2d9a6] text-[#0d1726]" aria-hidden>
-          <MapIcon className="size-7" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-lg font-black">Enter the world</span>
-          <span className="block text-sm text-muted-foreground">
-            Walk the city with other players, visit company offices on Careers Campus and meet verified employers.
-          </span>
-        </span>
-        <span className="hidden rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] sm:block">Join a server →</span>
-      </Link>
-      <section className="grid items-center gap-6 rounded-3xl bg-brand p-6 text-white md:grid-cols-[1fr_auto] md:p-10">
-        <div>
-          <p className="text-xs font-black tracking-[0.3em] text-white/75 uppercase">
-            Now hiring · Promotion Panic
-          </p>
-          <h1 className="arcade-display mt-3 text-5xl md:text-7xl">
-            Intern to CEO.
-            <br />
-            <span className="text-[#f2d9a6]">One shift.</span>
-          </h1>
-          <p className="mt-4 max-w-xl text-lg leading-8">
-            Pick a (totally made-up) company, answer real revision questions
-            against the clock, and get promoted before your three strikes run
-            out. Earn Clout, unlock outfits and challenge your mates.
-          </p>
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Link
-              href={`/games/promotion-panic/${first.id}`}
-              className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]"
-            >
-              Quick shift at {first.name} →
-            </Link>
-            {player.dailyBonusReady && (
-              <span className="rounded-full bg-[#0d1726] px-4 py-2 text-sm font-black text-[#ffd166]">
-                Daily Grind ready: double Clout
-              </span>
-            )}
+      <section className="relative overflow-hidden rounded-[2rem] bg-[#13203a] text-white shadow-[0_10px_0_rgba(19,32,58,0.15)]">
+        <Image src="/landing/world.webp" alt="" fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover opacity-70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#13203a] via-[#13203a]/75 to-transparent" />
+        <div className="relative grid gap-6 p-6 md:grid-cols-[1fr_260px] md:p-10">
+          <div className="max-w-xl">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-black tracking-[0.2em] uppercase backdrop-blur">
+              <span className="size-2 animate-pulse rounded-full bg-[#6cc04a]" /> London is live
+            </p>
+            <h1 className="arcade-display mt-4 text-5xl leading-[0.95] md:text-7xl">
+              Your life.
+              <br />
+              <span className="text-[#f2d9a6]">Your London.</span>
+            </h1>
+            <p className="mt-4 text-lg leading-8 text-white/85">
+              Catch the BL1, ride the Tube, hire a Lyme bike, work shifts and hand in homework, all while revising for real. We&apos;ll put you on the
+              server nearest you.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Link href="/games/world" className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]">
+                Play London →
+              </Link>
+              <Link href="/games/locker" className="rounded-full bg-white/15 px-5 py-3 font-black backdrop-blur hover:bg-white/25">
+                Edit your character
+              </Link>
+              {player.dailyBonusReady && <span className="rounded-full bg-[#0d1726] px-4 py-2 text-sm font-black text-[#ffd166]">Daily Grind ready: double Clout</span>}
+            </div>
+          </div>
+          <div className="self-end rounded-3xl bg-[#f7f1e6] p-5 text-[#13203a]">
+            <AvatarFigure avatar={player.avatar} size={150} className="mx-auto" />
+            <p className="mt-2 text-center font-black">@{account.profile.username}</p>
+            <p className="text-center text-xs text-[#13203a]/70">
+              Level {lp.level} · {levelTitle(lp.level)}
+            </p>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#13203a]/10" role="progressbar" aria-label="Progress to next level" aria-valuenow={Math.round(lp.fraction * 100)} aria-valuemin={0} aria-valuemax={100}>
+              <div className="h-full bg-[#2b5fd9]" style={{ width: `${lp.fraction * 100}%` }} />
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-1.5 text-center text-[11px] font-bold">
+              <div className="rounded-xl bg-white p-2">
+                <p className="text-lg font-black text-[#c98a00]">{fmt(player.clout)}</p>Clout
+              </div>
+              <div className="rounded-xl bg-white p-2">
+                <p className="text-lg font-black text-[#d4536a]">{player.streak}</p>Streak
+              </div>
+              <div className="rounded-xl bg-white p-2">
+                <p className="text-lg font-black text-[#15987f]">
+                  {ceos}/{companies.length}
+                </p>
+                CEO of
+              </div>
+            </div>
           </div>
         </div>
-        <div className="rounded-3xl bg-card p-5 text-foreground">
-          <AvatarFigure
-            avatar={player.avatar}
-            size={190}
-            className="mx-auto"
-          />
-          <p className="mt-3 text-center font-black">
-            @{account.profile.username}
-          </p>
-          <p className="text-center text-xs text-muted-foreground">
-            Level {lp.level} · {levelTitle(lp.level)}
-          </p>
-          <div
-            className="mt-2 h-2 overflow-hidden rounded-full bg-foreground/[0.08]"
-            role="progressbar"
-            aria-label="Progress to next level"
-            aria-valuenow={Math.round(lp.fraction * 100)}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          >
-            <div
-              className="h-full bg-[#8fb4ff]"
-              style={{ width: `${lp.fraction * 100}%` }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-xl bg-foreground/[0.05] p-2">
-              <p className="text-lg font-black text-ink-sun">
-                {fmt(player.clout)}
-              </p>
-              Clout
-            </div>
-            <div className="rounded-xl bg-foreground/[0.05] p-2">
-              <p className="text-lg font-black text-ink-coral">
-                {player.streak}
-              </p>
-              Day streak
-            </div>
-            <div className="rounded-xl bg-foreground/[0.05] p-2">
-              <p className="text-lg font-black text-ink-lime">
-                {ceos}/{companies.length}
-              </p>
-              CEO of
-            </div>
-          </div>
-          <Link
-            href="/games/locker"
-            className="mt-4 block rounded-full border border-border py-2 text-center text-sm font-bold hover:bg-hover"
-          >
-            Open your Locker
+      </section>
+
+      <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" aria-label="Things to do">
+        {[
+          { href: `/games/promotion-panic/${first.id}`, title: "Promotion Panic", text: "Intern to CEO in one shift", colour: "#2b5fd9", Icon: Briefcase },
+          { href: "/games/careers", title: "Jobs", text: "Interviews and shifts", colour: "#e0a100", Icon: BadgeCheck },
+          { href: "/homework", title: "Homework", text: "Quests from your class", colour: "#15987f", Icon: ClipboardList },
+          { href: "/games/arcade", title: "Arcade", text: "60-second games", colour: "#d4536a", Icon: Gamepad2 },
+          { href: "/games/home", title: "Your flat", text: "Decorate and upgrade", colour: "#7a5ce6", Icon: Sofa },
+          { href: "/games/locker", title: "Locker", text: "Outfits and looks", colour: "#13203a", Icon: Shirt },
+        ].map(({ href, title, text, colour, Icon }) => (
+          <Link key={title} href={href} className="group rounded-3xl border-2 border-white bg-card p-4 shadow-[0_4px_0_rgba(19,32,58,0.08)] transition hover:-translate-y-1">
+            <span className="grid size-11 place-items-center rounded-2xl text-white transition group-hover:rotate-[-6deg]" style={{ background: colour }}>
+              <Icon className="size-6" aria-hidden />
+            </span>
+            <p className="mt-3 font-black">{title}</p>
+            <p className="text-xs text-muted-foreground">{text}</p>
           </Link>
-        </div>
+        ))}
       </section>
 
       <section className="mt-10" aria-labelledby="map">
