@@ -90,3 +90,21 @@ end;
 $$;
 revoke all on function public.world_xp(text) from public, anon;
 grant execute on function public.world_xp(text) to authenticated;
+
+-- Paying for things in the world: energy drinks, meals, medicine. Prices match src/game/core/law.ts.
+create or replace function public.world_buy(p_item text) returns integer
+language plpgsql security definer set search_path = '' as $$
+declare
+  uid uuid := (select auth.uid());
+  price integer := case p_item when 'medicine' then 1 when 'drink' then 3 when 'meal' then 6 when 'coffee' then 2 end;
+  left_over integer;
+begin
+  if uid is null or not private.is_active_member() then raise exception 'not_allowed'; end if;
+  if price is null then raise exception 'unknown_item'; end if;
+  perform private.spend_clout(uid, price);
+  select clout into left_over from public.player_stats where user_id = uid;
+  return left_over;
+end;
+$$;
+revoke all on function public.world_buy(text) from public, anon;
+grant execute on function public.world_buy(text) to authenticated;

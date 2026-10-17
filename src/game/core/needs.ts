@@ -38,6 +38,11 @@ export const ACTIVITIES = {
   homework: { label: "Handed in homework", change: { focus: -10, mood: +12 } },
   arcade: { label: "Played the arcade", change: { mood: +10, energy: -3 } },
   wave: { label: "Said hi", change: { social: +6, mood: +2 } },
+  drink: { label: "Energy drink", change: { energy: +35 } },
+  meal: { label: "Meal deal", change: { hunger: +45, energy: +10 } },
+  coffee: { label: "Flat white", change: { energy: +15, focus: +10 } },
+  medicine: { label: "Took medicine", change: { energy: +30, mood: +5 } },
+  hospital: { label: "Seen by a doctor", change: { energy: +60, mood: +15, hunger: +20 } },
 } as const satisfies Record<string, { label: string; change: Partial<Record<NeedId, number>> }>;
 
 export type Activity = keyof typeof ACTIVITIES;

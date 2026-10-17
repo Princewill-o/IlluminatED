@@ -8,15 +8,22 @@ import { useRouter } from "next/navigation";
 import { Gamepad2 } from "lucide-react";
 
 import { play, soundOn } from "../sound";
+import { PLAYER } from "./art";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
+import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
-import { BikeDock, Dealership, TrainJourney } from "./transport";
+import { TrainCutscene } from "./train-cutscene";
+import { BikeDock, Dealership } from "./transport";
 import { TubeMap, type TubeTrip } from "./tube-map";
+import { useLife } from "./use-life";
+import { useNeeds } from "./use-needs";
 import { doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
+import { TRAIN_CALL } from "./world3d";
+import { NPC_SPOTS } from "./world3d";
 import { EventAdPopup, useTechEvents } from "../event-ads";
 import { GamesHub } from "../hub/games-hub";
 
@@ -26,6 +33,7 @@ import type { BikeBrand } from "@/game/core/bikes";
 import { workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import type { Placed } from "@/game/core/homes";
+import { PRISON_LOOK, SHOP, addStar, cardsLeft, chargeFor, sentenceMs } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
 import {
   CITY,
@@ -40,6 +48,9 @@ import {
   SERVER_CAPACITY,
   type WorldMap,
   campusMap,
+  courtMap,
+  hospitalMap,
+  prisonMap,
   highlandsMap,
   busStops,
   homeMap,
@@ -65,6 +76,9 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
   if (id === "campus") return campusMap(offices);
   if (id === "highlands") return HIGHLANDS;
+  if (id === "hospital") return hospitalMap();
+  if (id === "court") return courtMap();
+  if (id === "prison") return prisonMap();
   if (id.startsWith("station-")) return stationMap(id.slice("station-".length));
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
@@ -92,7 +106,10 @@ export function WorldApp({
   homework = [],
   cars = [],
   xp = 0,
+  homeworkDone = 0,
 }: {
+  /** Homework you've handed in: each one is a get-out-of-jail-free card. */
+  homeworkDone?: number;
   /** Cars you own (dealership). */
   cars?: string[];
   /** Total XP, for the level badge. */
@@ -144,6 +161,7 @@ export function WorldApp({
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
   const [dealer, setDealer] = useState(false);
+  const [boarding, setBoarding] = useState(false);
   const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
   const [driving, setDriving] = useState<string | null>(null);
@@ -158,6 +176,18 @@ export function WorldApp({
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), r.levelled ? 3200 : 1800);
   }, []);
+  const [shop, setShop] = useState<"tescow" | "bootz" | null>(null);
+  const [arrest, setArrest] = useState(false);
+  const { life, update: updateLife } = useLife();
+  const { needs } = useNeeds();
+  const [nearPerson, setNearPerson] = useState(false);
+  const say = useCallback((text: string, big = false) => {
+    setToast({ text, big });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), big ? 3200 : 2200);
+  }, []);
+  const jailed = life.jailUntil > Date.now();
+  const cards = cardsLeft(homeworkDone, life);
   const [journey, setJourney] = useState<{ to: string; go: () => void } | null>(null);
   useEffect(() => setWallet(clout), [clout]);
   // Hired bikes go back to the dock by themselves when the time runs out.
@@ -230,7 +260,13 @@ export function WorldApp({
       else if (to.kind === "bike") setDock(true);
       else if (to.kind === "games") setGames(true);
       else if (to.kind === "dealer") setDealer(true);
-      else {
+      else if (to.kind === "shop") setShop(to.shop);
+      else if (to.kind === "doctor") {
+        play("door", soundOn());
+        doActivity("hospital");
+        updateLife((l) => ({ ...l, sick: false }));
+        say("The doctor sorted you out. Feeling much better.", true);
+      } else if (to.kind === "map") {
         // No bikes or cars indoors: leave them outside.
         if (to.mapId !== "city") setBike(null);
         if (to.mapId !== "city" && to.mapId !== "highlands") setDriving(null);
@@ -254,8 +290,80 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, me.id],
+    [router, offices, mapId, me.id, updateLife, say],
   );
+
+  /** Taken somewhere (arrest, prison, release): fade and arrive at a set spot or the map's start. */
+  const goTo = useCallback((dest: string, label: string, spot?: { x: number; y: number }) => {
+    const next = loadMap(dest, offices, me.id);
+    if (!next) return;
+    setBike(null);
+    setDriving(null);
+    setSceneName(label);
+    setFading(true);
+    if (fadeTimer.current) clearTimeout(fadeTimer.current);
+    fadeTimer.current = setTimeout(() => {
+      setArrive(spot ?? next.spawn);
+      setMapId(dest);
+      setTrip((n) => n + 1);
+      fadeTimer.current = setTimeout(() => setFading(false), 550);
+    }, 430);
+  }, [offices, me.id]);
+  const courtSteps = useMemo(() => {
+    const p = CITY.portals.find((q) => q.id === "court");
+    return p ? safeSpot(CITY, p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h + 40) : undefined;
+  }, []);
+
+  // Feeling unwell when you run yourself down: slower, until medicine or a doctor.
+  useEffect(() => {
+    if (needs && needs.energy < 12 && !life.sick) {
+      updateLife((l) => ({ ...l, sick: true }));
+      say("You feel unwell. Get medicine at Bootz (1 Clout) or see a doctor at St Tomas' Hospital.", true);
+    }
+  }, [needs, life.sick, updateLife, say]);
+
+  // The police: two stars or more and they come for you.
+  useEffect(() => {
+    if (life.stars < 2 || jailed || life.hearing || !outdoors || arrest) return;
+    const t = setTimeout(() => {
+      setArrest(true);
+      play("door", soundOn());
+      setTimeout(() => {
+        updateLife((l) => ({ ...l, hearing: { stars: l.stars, charge: chargeFor(l.stars) }, stars: 0, heatAt: 0 }));
+        setArrest(false);
+        goTo("court", "Crown Court");
+      }, 2600);
+    }, 8000);
+    return () => clearTimeout(t);
+  }, [life.stars, life.hearing, jailed, outdoors, arrest, updateLife, goTo]);
+
+  // Prison: you stay inside until your time is up (or you use a homework card).
+  useEffect(() => {
+    if (jailed && mapId !== "prison") goTo("prison", "HMP Thames");
+    if (!jailed && mapId === "prison") {
+      say("You've been released. Stay out of trouble!", true);
+      goTo("city", "London", courtSteps);
+    }
+  }, [jailed, mapId, goTo, say, courtSteps]);
+
+  // Someone near you on the street (for the Shove button).
+  useEffect(() => {
+    if (!outdoors) return setNearPerson(false);
+    const t = setInterval(() => setNearPerson(NPC_SPOTS.some((n) => Math.hypot(n.x - PLAYER.x, n.y - PLAYER.y) < 52)), 300);
+    return () => clearInterval(t);
+  }, [outdoors]);
+  const fight = useCallback(() => {
+    window.dispatchEvent(new Event("illuminated:fight"));
+    updateLife((l) => addStar(l, Date.now()));
+    say("Scuffle! The police are watching...");
+  }, [updateLife, say]);
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "f" && nearPerson && !(e.target instanceof HTMLInputElement)) fight();
+    };
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [nearPerson, fight]);
 
   // Riding the Underground: to another London station, or further afield.
   const ride = useCallback(
@@ -270,15 +378,20 @@ export function WorldApp({
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
         void gainXp("train");
-        setJourney({
+        // The train pulls in to the platform first, then you're on board.
+        TRAIN_CALL.at = performance.now();
+        setBoarding(true);
+        setTimeout(() => setBoarding(false), 5200);
+        setTimeout(() => setJourney({
           to: st.name,
           go: () => {
             setJourney(null);
             setArrive(safeSpot(inside, inside.width / 2, (STATION_PLATFORM_Y + 0.5) * TILE));
+            TRAIN_CALL.at = performance.now() - 5500;
             setMapId(`station-${t.id}`);
             setTrip((n) => n + 1);
           },
-        });
+        }), 5200);
         play("train", soundOn());
         return;
       } else {
@@ -457,13 +570,13 @@ export function WorldApp({
         key={`${mapId}:${server}:${trip}`}
         map={map}
         serverId={atHome ? "solo" : inOffice ? "main" : server}
-        me={me}
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
         onChangeServer={() => setServer(null)}
         ads={events}
-        speed={driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1}
+        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : me}
+        speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
         car={driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
       />
@@ -525,12 +638,63 @@ export function WorldApp({
         <Gamepad2 className="size-4" aria-hidden /> Games
       </button>
       <EventAdPopup events={events} />
+      <WantedStars stars={life.stars} />
+      {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
+      {nearPerson && !jailed && (
+        <button type="button" onClick={fight} className="absolute right-3 bottom-40 z-[100001] rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
+          Shove (F)
+        </button>
+      )}
+      {arrest && <ArrestOverlay />}
+      {mapId === "court" && life.hearing && (
+        <HearingDialog
+          charge={life.hearing.charge}
+          stars={life.hearing.stars}
+          cards={cards}
+          onVerdict={(v) => {
+            const h = life.hearing!;
+            if (v === "guilty") {
+              updateLife((l) => ({ ...l, hearing: null, jailUntil: Date.now() + sentenceMs(h.stars) }));
+            } else {
+              updateLife((l) => ({ ...l, hearing: null, cardsUsed: l.cardsUsed + (v === "dismissed" ? 1 : 0) }));
+              say(v === "dismissed" ? "Case dismissed: your homework got you off!" : "Not guilty. You're free to go.", true);
+              goTo("city", "London", courtSteps);
+            }
+          }}
+        />
+      )}
+      {jailed && mapId === "prison" && (
+        <PrisonHud
+          leftMs={life.jailUntil - Date.now()}
+          cards={cards}
+          onCard={() => updateLife((l) => ({ ...l, jailUntil: 0, cardsUsed: l.cardsUsed + 1 }))}
+        />
+      )}
+      {shop && (
+        <ShopDialog
+          shop={shop}
+          clout={wallet}
+          onBought={(item, left) => {
+            if (left !== null) setWallet(left);
+            doActivity(item === "medicine" ? "medicine" : item);
+            if (item === "medicine") updateLife((l) => ({ ...l, sick: false }));
+            say(item === "medicine" ? "Medicine taken. You feel better." : `${SHOP[item].name}: ${SHOP[item].blurb}`);
+            setShop(null);
+          }}
+          onClose={() => setShop(null)}
+        />
+      )}
       {toast && (
         <div className={cn("xp-toast pointer-events-none absolute top-20 left-1/2 z-[100002] -translate-x-1/2 rounded-full px-5 py-2 font-black shadow-xl", toast.big ? "bg-[#f2d9a6] text-xl text-[#13203a]" : "bg-[#2b5fd9] text-white")} role="status">
           {toast.text}
         </div>
       )}
-      {journey && <TrainJourney to={journey.to} onArrive={journey.go} />}
+      {boarding && (
+        <div className="pointer-events-none absolute inset-x-0 top-24 z-[100001] mx-auto w-fit rounded-full bg-[#141418] px-5 py-2 font-mono text-sm font-black text-[#ffd400] shadow-xl" role="status">
+          Train approaching. Please stand behind the yellow line.
+        </div>
+      )}
+      {journey && <TrainCutscene to={journey.to} line="Revision" avatar={me.avatar} onArrive={journey.go} />}
 <SceneWipe show={fading} label={sceneName} />
       <button
         type="button"

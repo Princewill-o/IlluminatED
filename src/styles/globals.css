@@ -907,3 +907,10 @@ html.dark body:has(.app-theme) {
 @keyframes ad-in { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
 .ad-in { animation: ad-in .4s cubic-bezier(.3,1.4,.5,1) both; }
 @media (prefers-reduced-motion: reduce) { .ad-in { animation: none; } }
+@keyframes wanted-on { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+.wanted-on { animation: wanted-on 1s ease-in-out infinite; }
+@keyframes arrest-flash { 0%, 100% { background: rgba(43, 95, 217, 0.35); } 50% { background: rgba(200, 50, 45, 0.35); } }
+.arrest-flash { animation: arrest-flash 0.5s steps(1) infinite; }
+@keyframes gavel { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(-35deg); } 60% { transform: rotate(10deg); } }
+.gavel { animation: gavel .7s ease-in-out infinite; transform-origin: 80% 80%; }
+@media (prefers-reduced-motion: reduce) { .wanted-on, .arrest-flash, .gavel { animation: none; } }

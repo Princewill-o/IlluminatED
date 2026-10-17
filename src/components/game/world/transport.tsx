@@ -56,7 +56,7 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
                     start(async () => {
                       setError(null);
                       const r = await hireBike(b.id);
-                      if (r.ok) onRide(b, r.clout);
+                      if (r.ok) onRide(b, r.clout ?? clout);
                       else setError(r.error);
                     })
                   }
@@ -419,7 +419,7 @@ export function Dealership({
                         start(async () => {
                           setError(null);
                           const r = await buyCar(c.id);
-                          if (r.ok) onBought(c.id, r.clout);
+                          if (r.ok) onBought(c.id, r.clout ?? clout);
                           else setError(r.error);
                         })
                       }
