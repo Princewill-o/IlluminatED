@@ -170,7 +170,7 @@ export default async function DashboardPage() {
             <span className="block text-xs font-black uppercase tracking-[0.25em] text-ink-lilac">New · IlluminatED City</span>
             <span className="mt-2 block text-2xl font-extrabold md:text-3xl">Promotion Panic: intern to CEO in one shift</span>
             <span className="mt-2 block text-sm leading-6 text-muted-foreground">
-              Revise your subjects at Barklays, Goggle, Tescow and more. Earn Clout, unlock outfits, challenge your mates.
+              Revise your subjects at Barclays, Google, Tesco and more. Earn Clout, unlock outfits, challenge your mates.
               {player.ready && player.shiftsPlayed > 0 ? ` You're level ${player.level} with ${player.clout.toLocaleString("en-GB")} Clout.` : ""}
             </span>
           </span>
@@ -479,7 +479,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            Get a job at Pizzazz Pizza, Goggle, St Plasters and more. Every shift is real work from that job, pays Clout, and builds experience you can put on your CV.
+            Get a job at Pizzazz Pizza, Google, St Plasters and more. Every simulated shift practises workplace skills, pays in-game Clout, and builds your learning progress.
             Spend it on furniture and a bigger home.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">

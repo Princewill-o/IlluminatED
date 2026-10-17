@@ -146,7 +146,7 @@ export const COSMETICS: Cosmetic[] = [
   L("top-cape", "top", "Cape of Productivity", 2500, { color: "#2b5fd9", set: "royal" }),
   L("top-labcoat", "top", "Dr Ow's lab coat", 0, { unlock: "ceo:st-plasters", color: "#ffffff", set: "st-plasters" }),
   L("top-hivis", "top", "Hi-vis of honour", 0, { unlock: "ceo:bodge", color: "#f2d9a6", set: "bodge" }),
-  L("top-tracksuit", "top", "Psyke tracksuit", 0, { unlock: "ceo:psyke", color: "#6bc6ff", set: "psyke" }),
+  L("top-tracksuit", "top", "Nike tracksuit", 0, { unlock: "ceo:psyke", color: "#6bc6ff", set: "psyke" }),
 
   C("bottom-jeans", "bottom", "Jeans", 0, { color: "#3c5a9a" }),
   C("bottom-joggers", "bottom", "Joggers", 0, { color: "#3a2d58", set: "sporty" }),
@@ -178,8 +178,8 @@ export const COSMETICS: Cosmetic[] = [
   R("hat-headphones", "hat", "Headphones", 300, { color: "#13203a", set: "sporty" }),
   E("hat-tophat", "hat", "Tiny top hat", 800, { color: "#0d1726", set: "royal" }),
   L("hat-crown", "hat", "Crown", 2500, { color: "#ffd166", set: "royal" }),
-  L("hat-hardhat", "hat", "Tesler hard hat", 0, { unlock: "ceo:tesler", color: "#ffd166", set: "tesler" }),
-  L("hat-chef", "hat", "Gregz chef hat", 0, { unlock: "ceo:gregz", color: "#ffffff", set: "gregz" }),
+  L("hat-hardhat", "hat", "Tesla hard hat", 0, { unlock: "ceo:tesler", color: "#ffd166", set: "tesler" }),
+  L("hat-chef", "hat", "Greggs chef hat", 0, { unlock: "ceo:gregz", color: "#ffffff", set: "gregz" }),
   L("hat-explorer", "hat", "Explorer hat", 0, { unlock: "ceo:atlas", color: "#c9a46b", set: "atlas" }),
   E("hat-grad", "hat", "Graduation cap", 0, { unlock: "level:10", color: "#0d1726" }),
   R("hat-lion", "hat", "Tiggy ears", 0, { unlock: "streak:7", color: "#e39b2d" }),
@@ -189,7 +189,7 @@ export const COSMETICS: Cosmetic[] = [
   C("face-round", "face", "Round glasses"),
   R("face-star", "face", "Star glasses", 250, { color: "#ff8fd1", set: "party" }),
   E("face-vr", "face", "VR visor", 600, { color: "#6bc6ff", set: "space" }),
-  L("face-shades", "face", "Netflics shades", 0, { unlock: "ceo:netflics", set: "netflics" }),
+  L("face-shades", "face", "Netflix shades", 0, { unlock: "ceo:netflics", set: "netflics" }),
   L("face-monocle", "face", "Judge's monocle", 0, { unlock: "ceo:lawz", set: "lawz" }),
 
   C("held-none", "held", "Empty hands"),
@@ -198,7 +198,7 @@ export const COSMETICS: Cosmetic[] = [
   C("held-croissant", "held", "Croissant", 120, { set: "bake" }),
   R("held-briefcase", "held", "Briefcase", 250, { set: "office" }),
   R("held-mic", "held", "Microphone", 300, { set: "party" }),
-  L("held-laptop", "held", "Macrosoft laptop", 0, { unlock: "ceo:macrosoft", set: "macrosoft" }),
+  L("held-laptop", "held", "Microsoft laptop", 0, { unlock: "ceo:macrosoft", set: "macrosoft" }),
   L("held-trophy", "held", "Gold star trophy", 0, { unlock: "ceo:tiny-humans", set: "tiny-humans" }),
   E("held-compass", "held", "Golden compass", 0, { unlock: "level:15" }),
 
@@ -209,9 +209,9 @@ export const COSMETICS: Cosmetic[] = [
   E("pet-duck", "pet", "Debugging duck", 600),
   L("pet-dragon", "pet", "Tiny dragon", 3000, { set: "royal" }),
   E("pet-cub", "pet", "Tiggy cub", 0, { unlock: "level:5" }),
-  L("pet-robot", "pet", "Goggle robot", 0, { unlock: "ceo:goggle", set: "goggle" }),
-  L("pet-dog", "pet", "Barklays pup", 0, { unlock: "ceo:barklays", set: "barklays" }),
-  L("pet-cow", "pet", "Tescow calf", 0, { unlock: "ceo:tescow", set: "tescow" }),
+  L("pet-robot", "pet", "Google robot", 0, { unlock: "ceo:goggle", set: "goggle" }),
+  L("pet-dog", "pet", "Barclays pup", 0, { unlock: "ceo:barklays", set: "barklays" }),
+  L("pet-cow", "pet", "Tesco calf", 0, { unlock: "ceo:tescow", set: "tescow" }),
 ];
 
 export const SETS: Record<string, string> = {

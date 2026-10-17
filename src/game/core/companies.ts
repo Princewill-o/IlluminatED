@@ -2,8 +2,8 @@ import type { Avatar } from "./cosmetics";
 import type { GeneratorKind } from "./generators";
 
 /**
- * The parody companies of IlluminatED City. Every name is an obvious joke, and
- * none of them use real logos, colours or trade dress. Each company maps to real
+ * Unofficial educational workplace simulations with cartoon brand badges.
+ * Real companies do not sponsor or endorse these activities. Each company maps to real
  * courses (by existing course id) so a shift is genuine revision in disguise.
  */
 export interface Company {
@@ -45,7 +45,7 @@ export type BuildingShape =
 export const COMPANIES: Company[] = [
   {
     id: "goggle",
-    name: "Goggle",
+    name: "Google",
     tagline: "We know what you'll search before you do.",
     sector: "Tech",
     revises: "Computer Science",
@@ -74,7 +74,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "macrosoft",
-    name: "Macrosoft",
+    name: "Microsoft",
     tagline: "Have you tried turning it off and on again?",
     sector: "IT support",
     revises: "IT and Digital Support",
@@ -101,8 +101,8 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "barklays",
-    name: "Barklays",
-    tagline: "The bank run entirely by dogs. Good boys, good rates.",
+    name: "Barclays",
+    tagline: "Make your money skills count.",
     sector: "Banking",
     revises: "Maths and money",
     boss: {
@@ -134,8 +134,8 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tescow",
-    name: "Tescow",
-    tagline: "Every little moo helps.",
+    name: "Tesco",
+    tagline: "Big ideas, everyday essentials.",
     sector: "Retail",
     revises: "Business and Economics",
     boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-cow", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
@@ -191,7 +191,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tesler",
-    name: "Tesler Motors",
+    name: "Tesla",
     tagline: "Self-driving, self-parking, self-esteem issues.",
     sector: "Engineering",
     revises: "Physics and Engineering",
@@ -207,7 +207,7 @@ export const COMPANIES: Company[] = [
       "Physics: obeyed. Engineers: impressed.",
     ],
     fails: [
-      "The self-driving car drove itself to Gregz for a sausage roll.",
+      "The self-driving car drove itself to Greggs for a sausage roll.",
       "You plugged the car into the toaster.",
       "The prototype is now in orbit. That wasn't the plan.",
       "You confused volts with vibes. Easy mistake.",
@@ -216,7 +216,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "gregz",
-    name: "Gregz",
+    name: "Greggs",
     tagline: "Sausage rolls and chemical bonds since forever.",
     sector: "Food science",
     revises: "Chemistry and Applied Science",
@@ -281,7 +281,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "netflics",
-    name: "Netflics",
+    name: "Netflix",
     tagline: "Are you still revising?",
     sector: "Media",
     revises: "Creative Media and English",
@@ -340,7 +340,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "psyke",
-    name: "Psyke Sports",
+    name: "Nike",
     tagline: "Just do it. Eventually.",
     sector: "Sport",
     revises: "Sport and Physical Education",

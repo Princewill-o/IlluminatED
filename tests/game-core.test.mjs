@@ -183,6 +183,8 @@ test("Ranks and rewards match the database function", () => {
 test("Locker catalogue matches the migration and the default avatar is free", () => {
   assert.equal(new Set(COSMETICS.map((c) => c.id)).size, COSMETICS.length);
   const DYES_SQL = fs.readFileSync("supabase/migrations/20261016160000_characters_v3_dyes.sql", "utf8");
+  const brandSql = fs.readFileSync("supabase/migrations/20261017121000_cartoon_brand_labels.sql", "utf8");
+  const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
     if (c.slot.endsWith("Color") && c.slot !== "hairColor") {
       assert.ok(DYES_SQL.includes(`'${c.id.split("-").slice(1).join("-")}', '${c.name}'`), `dye row for ${c.id}`);
@@ -191,8 +193,11 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
     const q = (v) => (v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`);
     const row = `(${q(c.id)}, ${q(c.slot)}, ${q(c.name)}, ${c.price}, ${q(c.unlock)}, `;
     const tail = `, ${q(c.rarity)}, ${q(c.set)})`;
-    const line = CHARACTERS.split("\n").find((l) => l.includes(row));
-    assert.ok(line && line.includes(tail), `migration row for ${c.id}`);
+    const original = CHARACTERS.split("\n").find((l) => l.includes(`(${q(c.id)}, ${q(c.slot)}, `));
+    const line = brandNames.has(c.id)
+      ? original?.replace(/^(\s*\('[^']+', '[^']+', )'(?:''|[^'])*'/, `$1${q(brandNames.get(c.id))}`)
+      : original;
+    assert.ok(line && line.includes(row) && line.includes(tail), `migration row for ${c.id}`);
   }
   for (const [slot, id] of Object.entries(DEFAULT_AVATAR)) {
     const item = cosmeticById(id);
@@ -370,7 +375,7 @@ test("Careers: every role's shifts and interviews are well-formed and answerable
   assert.equal(C.shiftPay(crew, 0), Math.round(crew.pay * 0.25), "show-up pay");
   assert.ok(C.canPromote(1, 5, 0.7) && !C.canPromote(1, 4, 0.9) && !C.canPromote(3, 99, 1));
   const cv = C.cvLines([{ workplace: "goggle", role: "junior-dev", shifts: 6, correct: 26, total: 30, startedOn: "16 Oct 2026" }], { debugging: { correct: 9, total: 10 } });
-  assert.match(cv.experience[0], /Junior Developer, Goggle \(simulated work experience/);
+  assert.match(cv.experience[0], /Junior Developer, Google \(simulated work experience/);
   assert.match(cv.skills[0], /Debugging and testing \(9\/10/);
 });
 

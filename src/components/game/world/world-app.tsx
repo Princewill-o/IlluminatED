@@ -37,9 +37,10 @@ import { workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import { COMPANIES } from "@/game/core/companies";
 import type { Placed } from "@/game/core/homes";
-import { PRISON_LOOK, SHOP, addStar, cardsLeft, chargeFor, sentenceMs } from "@/game/core/law";
+import { PRISON_LOOK, SHOP, releaseFromPrison, addStar, cardsLeft, chargeFor, sentenceMs } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
+import { trainBoardingDelay } from "@/game/core/train";
 import {
   CITY,
   STATION_PLATFORM_Y,
@@ -264,7 +265,7 @@ export function WorldApp({
       if (to.kind === "prison") {
         if (to.action === "study") setStudy(true);
         else if (to.action === "talk") setInmate(to.name ?? "Sam");
-        else { releaseReason.current = "escaped"; updateLife(l=>({...l,jailUntil:0,stars:2,heatAt:Date.now()})); }
+        else { releaseReason.current = "escaped"; updateLife(l=>releaseFromPrison(l)); }
         return;
       }
       if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
@@ -369,11 +370,12 @@ export function WorldApp({
 
   useEffect(() => {
     if (jailed && life.prisonWork >= 3 && Date.now() >= life.jailUntil) {
-      updateLife(l=>({...l,jailUntil:0})); return;
+      updateLife(l=>releaseFromPrison(l)); return;
     }
     if (jailed && mapId !== "prison") goTo("prison", "HMP Thames");
     if (!jailed && mapId === "prison") {
-      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — the police are looking for you." : "Study complete. You've been released!", true);
+      if (life.stars || life.heatAt || life.hearing) updateLife(releaseFromPrison);
+      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — your wanted stars are cleared." : "Study complete. You've been released!", true);
       setStudy(false); setInmate(null);
       goTo("city", "London", courtSteps);
       releaseReason.current = "released";
@@ -426,20 +428,20 @@ export function WorldApp({
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
         void gainXp("train");
-        // The train pulls in to the platform first, then you're on board.
-        TRAIN_CALL.at = performance.now();
+        // Board the visible train when its doors are fully open.
+        const wait = trainBoardingDelay(performance.now() - TRAIN_CALL.at);
         setBoarding(true);
-        setTimeout(() => setBoarding(false), 5200);
+        setTimeout(() => setBoarding(false), wait);
         setTimeout(() => setJourney({
           to: st.name,
           go: () => {
             setJourney(null);
             setArrive(safeSpot(inside, inside.width / 2, (STATION_PLATFORM_Y + 0.5) * TILE));
-            TRAIN_CALL.at = performance.now() - 5500;
+            TRAIN_CALL.at = performance.now() - 6500;
             setMapId(`station-${t.id}`);
             setTrip((n) => n + 1);
           },
-        }), 5200);
+        }), wait);
         play("train", soundOn());
         return;
       } else {
@@ -735,7 +737,7 @@ export function WorldApp({
           cards={cards}
           progress={life.prisonWork}
           onStudy={()=>setStudy(true)}
-          onCard={() => updateLife((l) => ({ ...l, jailUntil: 0, cardsUsed: l.cardsUsed + 1 }))}
+          onCard={() => updateLife((l) => ({ ...releaseFromPrison(l), cardsUsed: l.cardsUsed + 1 }))}
         />
       )}
       {shop && (
@@ -759,7 +761,7 @@ export function WorldApp({
       )}
       {boarding && (
         <div className="pointer-events-none absolute inset-x-0 top-24 z-[100001] mx-auto w-fit rounded-full bg-[#141418] px-5 py-2 font-mono text-sm font-black text-[#ffd400] shadow-xl" role="status">
-          Train approaching. Please stand behind the yellow line.
+          Waiting for open doors. Please stand behind the yellow line.
         </div>
       )}
       {journey && <TrainCutscene to={journey.to} line="Revision" avatar={me.avatar} onArrive={journey.go} />}

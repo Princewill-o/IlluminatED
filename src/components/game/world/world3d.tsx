@@ -21,6 +21,7 @@ import { buildLondon } from "@/game/core/london";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { trainFrame } from "@/game/core/train";
 import { frameMapCamera } from "@/game/core/view-framing";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
@@ -36,7 +37,7 @@ import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 /** Where the people on the street are (px), for "someone's near you" checks. */
 export const NPC_SPOTS: { x: number; y: number }[] = [];
 
-/** When the platform train's 16-second cycle started (ms, performance clock). */
+/** When the platform train's 24-second cycle started (ms, performance clock). */
 export const TRAIN_CALL = { at: -1 };
 
 export interface Mover3D {
@@ -130,7 +131,7 @@ function roof(g: THREE.Group, colour: string, x0: number, z0: number, x1: number
   g.add(m);
 }
 
-// ── Signs: crisp canvas-text panels (station names, shop fronts, parody company logos) ──
+// ── Signs: crisp canvas-text panels (station names, shop fronts, cartoon company badges) ──
 function sign(text: string, o: { bg: string; fg: string; w: number; h: number; font?: string; logo?: string | null; badge?: boolean }) {
   const H = 128;
   const W = Math.round((o.w / o.h) * H);
@@ -667,11 +668,30 @@ function tubeTrain() {
     box(g, "#eef0f4", x0, 0.3, -0.75, x0 + 6, 2.4, 0.75);
     box(g, "#1f3fa8", x0, 0.45, -0.77, x0 + 6, 0.95, 0.77);
     for (let w = 0; w < 4; w++) box(g, "#2a3346", x0 + 0.5 + w * 1.4, 1.35, -0.78, x0 + 1.4 + w * 1.4, 2.0, 0.78);
-    box(g, "#d72a22", x0 + 2.6, 0.45, -0.79, x0 + 3.4, 2.25, 0.79);
+    // Split platform doors slide apart over a dark doorway, with inset glass.
+    for (const side of [-1, 1]) {
+      box(g, "#192536", x0 + 2.45, 0.4, side * 0.81 - 0.015, x0 + 3.55, 2.25, side * 0.81 + 0.015);
+      for (const direction of [-1, 1]) {
+        const door = new THREE.Group();
+        door.position.x = x0 + 3 + direction * 0.26;
+        door.userData = { slidingDoor: true, restX: door.position.x, direction };
+        box(door, "#e63b38", -0.25, 0.45, side * 0.84 - 0.025, 0.25, 2.25, side * 0.84 + 0.025);
+        box(door, "#8dc5d8", -0.17, 1.35, side * 0.88 - 0.01, 0.17, 2.02, side * 0.88 + 0.01);
+        g.add(door);
+      }
+    }
+    box(g, "#c8d3df", x0 + 0.12, 2.4, -0.7, x0 + 5.88, 2.56, 0.7);
+    for (const axle of [1, 5]) for (const side of [-1, 1]) {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.12, 12), new THREE.MeshStandardMaterial({color: "#293449", roughness: 0.65}));
+      wheel.rotation.x = Math.PI / 2;
+      wheel.position.set(x0 + axle, 0.2, side * 0.58);
+      g.add(wheel);
+    }
     box(g, "#2a2733", x0, 0.05, -0.6, x0 + 6, 0.3, 0.6);
   }
   box(g, "#d72a22", 24.2, 0.3, -0.75, 25.4, 2.4, 0.75);
   box(g, "#1c2430", 25.2, 1.2, -0.55, 25.42, 2.1, 0.55);
+  for (const z of [-0.5, 0.5]) box(g, "#fff5c4", 25.4, 0.75, z - 0.1, 25.45, 0.95, z + 0.1);
   return g;
 }
 
@@ -774,14 +794,14 @@ export function World3D({
         box(world, "#b8bcc8", 1, -0.05, ty + 0.9, map.cols - 1, 0, ty + 1.0);
         box(world, "#b8bcc8", 1, -0.05, ty + 2.0, map.cols - 1, 0, ty + 2.1);
         box(world, "#ffd400", 1, 0.02, ty - 0.35, map.cols - 1, 0.04, ty - 0.2);
-        const board = sign("1 Westbound   1 min", { bg: "#141418", fg: "#ffd400", w: 3, h: 0.4, font: "bold 64px monospace" });
+        const board = sign("1 Revision line", { bg: "#141418", fg: "#ffd400", w: 3, h: 0.4, font: "bold 64px monospace" });
         board.position.set(map.cols - 5, 3.4, 8.2);
         world.add(board);
         const name = sign(map.name.replace(/ station$/, ""), { bg: "#ffffff", fg: "#13203a", w: 5, h: 0.7, badge: true });
         name.position.set(map.cols / 2, 2.3, 1.02);
         world.add(name);
         // You've just stepped off: start with the train standing at the platform.
-        if (TRAIN_CALL.at < 0 || performance.now() - TRAIN_CALL.at > 20_000) TRAIN_CALL.at = performance.now() - 5500;
+        if (TRAIN_CALL.at < 0 || performance.now() - TRAIN_CALL.at > 24_000) TRAIN_CALL.at = performance.now() - 6500;
         const train = tubeTrain();
         // The train only shows inside the station: it comes out of one tunnel and leaves by the other.
         const clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), -1.6), new THREE.Plane(new THREE.Vector3(-1, 0, 0), map.cols - 1.6)];
@@ -1056,15 +1076,15 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = london ? 24 : highland ? 8 : map.kind === "home" ? 0 : map.kind === "station" ? 6 : map.id === "study-lobby" ? 12 : 8;
+    const residentLimit = london ? 80 : highland ? 18 : map.kind === "home" ? 0 : map.kind === "station" ? 18 : map.id === "study-lobby" ? 24 : 12;
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i));
       scene.add(body.root);
       return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
-    const cyclists = L ? Array.from({ length: 4 }, (_, i) => {
+    const cyclists = L ? Array.from({ length: 8 }, (_, i) => {
       const body = makeBody(npcLook(i + 30));
-      const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i]);
+      const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
       bendAll(bike);
       scene.add(body.root, bike);
       return { body, bike, route: i % paths.length, at: i * 0.217 };
@@ -1203,7 +1223,7 @@ export function World3D({
         first = false;
       }
       focus.lerp(new THREE.Vector3(mx, 0, mz), 1 - Math.pow(0.0015, dt));
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors);
+      const framing = frameMapCamera(focus.x, focus.z + (station ? Math.min(2.8, Math.max(0, mz - 7)) : 0), map.cols, map.rows, camera.aspect, indoors);
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
@@ -1304,12 +1324,12 @@ export function World3D({
 
       for (const s of spinners) {
         if (s.userData.train) {
-          // Pull in, wait with the doors open, then leave (16 s loop). The cycle is anchored to
-          // TRAIN_CALL: arriving by train you step off a train already at the platform; boarding,
-          // the train pulls in for you before the ride starts.
-          const t = ((now - TRAIN_CALL.at) / 1000) % 16;
-          const stop = map.cols / 2 - 13;
-          s.position.x = t < 5 ? -28 + (stop + 28) * (1 - Math.pow(1 - t / 5, 3)) : t < 11 ? stop : stop + Math.pow((t - 11) / 5, 2) * 70;
+          const train = trainFrame(now - TRAIN_CALL.at, map.cols);
+          s.position.x = train.x;
+          s.visible = train.visible;
+          for (const door of s.children.filter(child => child.userData.slidingDoor)) {
+            door.position.x = door.userData.restX + door.userData.direction * train.doorOpen * 0.48;
+          }
         } else s.rotation.z += dt * 0.05;
       }
       const near = nearPortal();

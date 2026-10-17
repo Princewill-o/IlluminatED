@@ -58,3 +58,8 @@ export const cardsLeft = (homeworkDone: number, s: LifeState) => Math.max(0, hom
 
 /** The orange jumpsuit while you're inside. */
 export const PRISON_LOOK = { top: "top-tracksuit", topColor: "topcol-orange", bottom: "bottom-joggers", bottomColor: "botcol-orange", hat: "hat-none", held: "held-none" } as const;
+
+/** Every prison exit starts a clean wanted record, without losing study rewards. */
+export function releaseFromPrison(s: LifeState): LifeState {
+  return { ...s, jailUntil: 0, stars: 0, heatAt: 0, hearing: null };
+}

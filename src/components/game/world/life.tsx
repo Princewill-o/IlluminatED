@@ -8,18 +8,18 @@ import { buyWorldItem } from "@/app/games/world/actions";
 import { SHOP, type ShopItem, acquittalChance, sentenceMs } from "@/game/core/law";
 import { cn } from "@/lib/utils";
 
-/** Tescow Express and Bootz Pharmacy: spend Clout to top up your needs. */
+/** Tesco Express and Bootz Pharmacy: spend Clout to top up your needs. */
 export function ShopDialog({ shop, clout, onBought, onClose }: { shop: "tescow" | "bootz"; clout: number; onBought: (item: ShopItem, clout: number | null) => void; onClose: () => void }) {
   const items: ShopItem[] = shop === "bootz" ? ["medicine"] : ["drink", "meal", "coffee"];
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
     <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
-      <div role="dialog" aria-label={shop === "bootz" ? "Bootz Pharmacy" : "Tescow Express"} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-[#f7f1e6] p-5 text-[#13203a] md:rounded-3xl">
+      <div role="dialog" aria-label={shop === "bootz" ? "Bootz Pharmacy" : "Tesco Express"} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-[#f7f1e6] p-5 text-[#13203a] md:rounded-3xl">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-black tracking-[0.25em] uppercase" style={{ color: shop === "bootz" ? "#2b5fd9" : "#c8322d" }}>
-              {shop === "bootz" ? "Bootz Pharmacy" : "Tescow Express"}
+              {shop === "bootz" ? "Bootz Pharmacy" : "Tesco Express"}
             </p>
             <h2 className="mt-1 text-2xl font-black">{shop === "bootz" ? "Feeling rough?" : "Grab something"}</h2>
             <p className="text-sm text-[#13203a]/70">You have {clout} Clout.</p>

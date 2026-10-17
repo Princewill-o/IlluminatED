@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 const IDEAS = [
   ["Intern to CEO", "Screen-record a Promotion Panic run and react as you climb (or get fired)."],
-  ["A day at work", "Do a shift at Goggle or Pizzazz Pizza and show the real task you solved."],
+  ["A day at work", "Do a shift at Google or Pizzazz Pizza and show the real task you solved."],
   ["Room tour", "Show off your home, the furniture you bought and how you earned it."],
   ["Beat my score", "Post your Arcade best and challenge your followers to beat it."],
   ["Study with me", "Revise with IlluminatED for 25 minutes, then show what you learned."],

@@ -1,10 +1,4 @@
-/**
- * Original parody logos for the IlluminatED City companies. Each one is drawn
- * from scratch as a simple flat badge in a 64×64 box (SVG path data), so it can
- * render as SVG in the UI and as Path2D on the world canvas. None of these copy
- * a real brand's mark, colours or shapes: they're jokes about the company
- * names (a paw for a bank run by dogs, a spotty basket for a cow supermarket).
- */
+/** Cartoon brand-inspired badges and original local business symbols. Unofficial simulations. */
 export interface LogoShape {
   d: string;
   fill: string;
@@ -26,7 +20,7 @@ const rect = (x: number, y: number, w: number, h: number, r = 0) =>
     : `M${x} ${y}h${w}v${h}h${-w}Z`;
 
 export const LOGOS: Record<string, Logo> = {
-  // Goggle: a pair of goggles with a strap.
+  // Google: a pair of goggles with a strap.
   goggle: {
     bg: "#6bc6ff",
     shapes: [
@@ -39,7 +33,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: circle(44, 29, 3), fill: "#6bc6ff" },
     ],
   },
-  // Macrosoft: the universal "turn it off and on again" power symbol.
+  // Microsoft: the universal "turn it off and on again" power symbol.
   macrosoft: {
     bg: "#5fd3a5",
     shapes: [
@@ -47,7 +41,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: rect(29, 11, 6, 22, 3), fill: W },
     ],
   },
-  // Barklays: a paw print.
+  // Barclays: a paw print.
   barklays: {
     bg: "#ffd166",
     shapes: [
@@ -58,7 +52,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: circle(46, 28, 5), fill: INK },
     ],
   },
-  // Tescow: a shopping basket with cow spots.
+  // Tesco: a shopping basket with cow spots.
   tescow: {
     bg: "#ff8fd1",
     shapes: [
@@ -84,12 +78,12 @@ export const LOGOS: Record<string, Logo> = {
       { d: circle(30, 34, 1.4), fill: "#ff7a6b" },
     ],
   },
-  // Tesler Motors: a lightning bolt.
+  // Tesla: a lightning bolt.
   tesler: {
     bg: "#f2d9a6",
     shapes: [{ d: "M36 8L16 36h13l-4 20l21-29h-13Z", fill: INK }],
   },
-  // Gregz: a croissant.
+  // Greggs: a croissant.
   gregz: {
     bg: "#ffb26b",
     shapes: [
@@ -109,7 +103,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: "M38 36h16l-8-14Z", fill: W },
     ],
   },
-  // Netflics: a striped popcorn bucket.
+  // Netflix: a striped popcorn bucket.
   netflics: {
     bg: "#ff7a6b",
     shapes: [
@@ -130,7 +124,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: rect(29, 20, 6, 20, 2), fill: "#ffd166" },
     ],
   },
-  // Psyke Sports: a stopwatch.
+  // Nike: a stopwatch.
   psyke: {
     bg: "#f2d9a6",
     shapes: [
@@ -169,3 +163,22 @@ export const LOGOS: Record<string, Logo> = {
 };
 
 export const logoFor = (companyId: string): Logo | null => LOGOS[companyId] ?? null;
+
+// Hand-drawn, playful brand-inspired badges for unofficial learning simulations.
+// Paths are shared by uniforms, building signs and the phone, keeping them consistent.
+Object.assign(LOGOS, {
+  goggle: { bg: "#fff8dc", shapes: [
+    {d:circle(32,32,23),fill:"#4285f4"},{d:circle(32,32,14),fill:W},
+    {d:rect(32,9,23,19),fill:"#ea4335"},{d:rect(9,27,11,15),fill:"#fbbc05"},
+    {d:"M16 45L24 39L37 45L44 42L49 49L32 56Z",fill:"#34a853"},
+    {d:rect(32,25,25,15),fill:"#fff8dc"},{d:rect(31,29,24,9,2),fill:"#4285f4"}]},
+  macrosoft: {bg:"#f5f0ff",shapes:[
+    {d:rect(10,10,20,20,3),fill:"#f35325"},{d:rect(34,10,20,20,3),fill:"#81bc06"},
+    {d:rect(10,34,20,20,3),fill:"#05a6f0"},{d:rect(34,34,20,20,3),fill:"#ffba08"}]},
+  barklays:{bg:"#ddf6ff",shapes:[{d:"M32 11L42 19L56 14L49 34L39 39L32 54L25 39L15 34L8 14L22 19Z",fill:"#00aeef"},{d:"M22 28L32 32L42 28L37 40L27 40Z",fill:W}]},
+  tescow:{bg:"#fff5ef",shapes:[{d:rect(9,12,46,12,3),fill:"#e32328"},... [10,23,36,49].map(x=>({d:`M${x} 37h9l-5 9h-9Z`,fill:"#00539f"}))]},
+  tesler:{bg:"#ffe6e8",shapes:[{d:"M8 14Q32 4 56 14L53 21Q32 13 11 21Z",fill:"#e82127"},{d:"M20 23Q32 18 44 23L37 29L32 56L27 29Z",fill:"#e82127"}]},
+  gregz:{bg:"#064d8e",shapes:[...[ [17,17],[35,17],[17,35],[35,35] ].map(([x,y])=>({d:rect(x,y,12,12,3),fill:"#ffcc45"}))]},
+  netflics:{bg:"#21192b",shapes:[{d:rect(15,10,10,44,2),fill:"#b20710"},{d:rect(39,10,10,44,2),fill:"#b20710"},{d:"M15 10H26L49 54H38Z",fill:"#e50914"}]},
+  psyke:{bg:"#e4f4df",shapes:[{d:"M9 30Q3 49 20 45L57 22L24 35Q14 40 9 30Z",fill:"#17232c"}]},
+} satisfies Record<string, Logo>);

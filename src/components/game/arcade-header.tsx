@@ -46,8 +46,7 @@ export function ArcadeFooter() {
   if (path.startsWith("/games/world")) return null;
   return (
     <p className="mx-auto max-w-6xl px-4 pt-2 pb-6 text-xs leading-6 text-muted-foreground">
-      Every company in IlluminatED City is a made-up parody. Any resemblance to real businesses is for laughs only, and none of
-      them endorse IlluminatED. The questions are real revision, though.
+      Company activities are unofficial educational simulations. Brand names belong to their owners; no sponsorship or endorsement is implied.
     </p>
   );
 }

@@ -267,7 +267,7 @@ const GENERATORS: Record<GeneratorKind, (rng: Rng) => GeneratedQuestion> = {
       `${margin}%`,
       [`${markup}%`, `${100 - margin}%`, `${margin / 2}%`],
       {
-        prompt: `Tescow buys a hamper for ${money(cost)} and sells it for ${money(price)}. What is the gross profit margin?`,
+        prompt: `Tesco buys a hamper for ${money(cost)} and sells it for ${money(price)}. What is the gross profit margin?`,
         explain: `Gross profit margin = profit ÷ selling price × 100. (${money(price)} − ${money(cost)}) ÷ ${money(price)} × 100 = ${margin}%. (Markup on cost would be ${markup}%.)`,
         topic: "Profit margin",
       },
@@ -315,7 +315,7 @@ const GENERATORS: Record<GeneratorKind, (rng: Rng) => GeneratedQuestion> = {
       `${s} m/s`,
       [`${d * t} m/s`, `${round2(t / d)} m/s`, `${d + t} m/s`],
       {
-        prompt: `A self-driving Tesler travels ${d} m in ${t} s. What is its average speed?`,
+        prompt: `A self-driving Tesla travels ${d} m in ${t} s. What is its average speed?`,
         explain: `Speed = distance ÷ time = ${d} ÷ ${t} = ${s} m/s.`,
         topic: "Speed",
       },

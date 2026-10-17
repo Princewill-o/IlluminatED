@@ -107,7 +107,7 @@ export function GamePhone({
           ))}
         </ul>
         <p className="px-5 pb-4 text-center text-[11px] text-[#5a6272]">
-          In-game calls only. All companies are fictional.
+          In-game calls only. Unofficial company simulations; no affiliation or endorsement.
         </p>
       </section>
     </div>

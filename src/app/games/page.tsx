@@ -202,7 +202,7 @@ export default async function GamesHome() {
           ],
           [
             "Experience Sims",
-            "Actually do the job: fix laptops at Macrosoft, run a ward round at St Plaster's.",
+            "Actually do the job: fix laptops at Microsoft, run a ward round at St Plaster's.",
           ],
         ].map(([title, text]) => (
           <div

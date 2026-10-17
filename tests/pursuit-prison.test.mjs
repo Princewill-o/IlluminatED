@@ -83,3 +83,11 @@ test("New Study Quarter destinations are reachable, with a working station and a
   }
   assert.ok(W.tubeStations().some((s) => s.id === "study-quarter"));
 });
+
+ test("Every prison release clears all wanted state and preserves rewards", () => {
+  const jailed = {...L.freshLife(), stars:5, heatAt:100, jailUntil:9999, hearing:{stars:5,charge:"test"}, cardsUsed:2, prisonWork:3};
+  const released = L.releaseFromPrison(jailed);
+  assert.equal(released.stars,0); assert.equal(released.heatAt,0);
+  assert.equal(released.jailUntil,0); assert.equal(released.hearing,null);
+  assert.equal(released.cardsUsed,2); assert.equal(released.prisonWork,3);
+});

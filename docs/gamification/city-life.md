@@ -20,7 +20,7 @@ Cells have open doors. The communal area includes scripted conversations with Sa
 
 A standard release requires both three correct revision answers and the sentence timer to finish. An unused card earned by completing assigned homework provides an alternative immediate release. Failed revision answers do not remove saved study progress.
 
-Patrolling guards can catch players in the service maze, adding 45 seconds and returning them to their cell. This has a six-second cooldown, and existing study progress is retained. Reaching and interacting with the service exit escapes the prison, returning the player to London with two wanted stars.
+Patrolling guards can catch players in the service maze, adding 45 seconds and returning them to their cell. This has a six-second cooldown, and existing study progress is retained. Reaching and interacting with the service exit escapes the prison, returning the player to London with their wanted stars cleared. Every release route also clears the heat timer and pending hearing.
 
 Law/prison state is currently saved in browser local storage, matching the existing life system. It is not a server-authoritative economy, cross-device sentence record or real legal record. No Clout rewards or teacher grades are issued by the local prison revision drill.
 
@@ -35,3 +35,9 @@ The phone also provides map, home-service and character entry points. Game tabs 
 - `node --test tests/game-core.test.mjs tests/bus-commute.test.mjs tests/world-presentation.test.mjs tests/pursuit-prison.test.mjs`
 - Browser verification used temporary local fixtures with fictional player data, removed before the production build. The verified flow included police response, knowledge challenge, court verdict, prison transfer, saved revision progress and phone search.
 - Landing-page screenshots use actual rendered components and CPU residents, with no fabricated live-user count. See `docs/design/game-screenshots.md`.
+
+The city now supports 80 local walking residents and eight cyclists. Residents stay on public walkable routes; these are CPU characters, not an online-player count.
+
+Recognisable workplaces use real names and shared cartoon brand-inspired badges across the phone, uniforms and signs, labelled as unofficial simulations. Existing company IDs are retained for saved progress.
+
+The station uses a shared 24-second arrival, door-opening, dwell, closing and departure sequence. Boarding waits for an open-door window without restarting the visible train. The platform camera frames the carriage while staying within the map.

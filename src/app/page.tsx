@@ -106,7 +106,7 @@ export default function Home() {
             </div>
             <div className="absolute -top-5 -right-3 hidden rounded-2xl bg-[#13203a] px-4 py-3 text-white shadow-xl sm:block">
               <p className="text-2xl font-black text-[#f2d9a6]">+80 Clout</p>
-              <p className="text-xs text-white/70">Shift done at Goggle</p>
+              <p className="text-xs text-white/70">Shift done at Google</p>
             </div>
           </Reveal>
         </div>

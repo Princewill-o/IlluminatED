@@ -456,7 +456,7 @@ export function londonMap(): WorldMap {
   // Motor Mile: the car dealership, on the next shop along.
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
-  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tescow Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
   if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "shop", shop: "bootz" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && (t.style === "office" || t.style === "stone") ? [t] : []));

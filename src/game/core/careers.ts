@@ -334,7 +334,7 @@ const GEN: Record<string, Gen> = {
     };
   },
   fraud(rng) {
-    const normal = ["Tescow, Brixton £23.40", "Rent: standing order £850.00", "Coffee shop £3.10", "Netflics subscription £10.99", "Petrol £45.00"];
+    const normal = ["Tesco, Brixton £23.40", "Rent: standing order £850.00", "Coffee shop £3.10", "Netflix subscription £10.99", "Petrol £45.00"];
     const odd = pick(rng, ["Electronics, Lagos £1,950.00 at 03:12", "Gift cards ×6 £600.00 online, new device", "Crypto exchange £2,400.00, new payee"]);
     const list = shuffle(rng, [...shuffle(rng, normal).slice(0, 3), odd]);
     return {
@@ -459,7 +459,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "goggle",
-    name: "Goggle",
+    name: "Google",
     companyId: "goggle",
     sector: "Technology",
     accent: "#6bc6ff",
@@ -471,7 +471,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "macrosoft",
-    name: "Macrosoft",
+    name: "Microsoft",
     companyId: "macrosoft",
     sector: "IT",
     accent: "#5fd3a5",
@@ -483,7 +483,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "barklays",
-    name: "Barklays",
+    name: "Barclays",
     companyId: "barklays",
     sector: "Finance",
     accent: "#ffd166",
@@ -507,7 +507,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "tescow",
-    name: "Tescow",
+    name: "Tesco",
     companyId: "tescow",
     sector: "Retail",
     accent: "#ff8fd1",
@@ -531,7 +531,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "netflics",
-    name: "Netflics",
+    name: "Netflix",
     companyId: "netflics",
     sector: "Media",
     accent: "#ff7a6b",
