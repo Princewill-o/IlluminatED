@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
-import { Bike, Bus, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
+import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
@@ -10,6 +10,7 @@ import { WorldFigure, poseWorldFigure } from "../character";
 import { ArtScenery, PLAYER, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
+import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
 
@@ -38,6 +39,8 @@ function PortalMarker({ portal, near }: { portal: Portal; near: boolean }) {
   const Icon =
     k === "bike"
       ? Bike
+      : k === "dealer"
+        ? CarFront
       : k === "games"
         ? Gamepad2
         : k === "tube" || (k === "map" && portal.to.mapId.startsWith("station-"))
@@ -74,8 +77,10 @@ function Sprite({
   innerRef,
   bubbleRef,
   bike,
+  car,
 }: {
   bike?: string | null;
+  car?: string | null;
   avatar: Me["avatar"];
   badge: string | null;
   username: string;
@@ -93,8 +98,9 @@ function Sprite({
       />
       <div className="td-root absolute inset-x-0 bottom-2 h-0">
         <span aria-hidden className="absolute -bottom-1 left-1/2 h-3 w-10 -translate-x-1/2 rounded-[50%] bg-black/25" />
-        {bike && <BikeUnder colour={bike} />}
-        <WorldFigure avatar={avatar} badge={badge} ghost={hidden} />
+        {bike && !car && <BikeUnder colour={bike} />}
+        {car && <span className="car-sprite absolute top-0 left-1/2 block" data-car={car} />}
+        <WorldFigure avatar={avatar} badge={badge} ghost={hidden || Boolean(car)} />
       </div>
       <div className="absolute top-full left-1/2 -mt-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", me ? "bg-[#f2d9a6] text-[#0d1726]" : "bg-black/70 text-white")}>
@@ -171,7 +177,10 @@ export function WorldView({
   onChangeServer,
   speed = 1,
   bike = null,
+  car = null,
 }: {
+  /** The car you're driving, if any (sprite id from the dealership). */
+  car?: string | null;
   /** Movement multiplier (hire bikes). */
   speed?: number;
   /** Colour of the bike you're riding, if any. */
@@ -336,6 +345,20 @@ export function WorldView({
         }
       }
       p.walking = moved;
+      // Driving: turn the car sprite to face where you're going.
+      const cs = meEl.current?.querySelector<HTMLElement>(".car-sprite");
+      if (cs?.dataset.car) {
+        if (moved) cs.dataset.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "E" : "W") : dy > 0 ? "S" : "N";
+        const key = `${cs.dataset.car}-${cs.dataset.dir ?? "E"}`;
+        const m = (MOVERS as Record<string, { w: number; h: number; ax: number; ay: number }>)[key];
+        if (m && cs.dataset.key !== key) {
+          cs.dataset.key = key;
+          cs.style.backgroundImage = `url(/world/movers/${key}.webp)`;
+          cs.style.width = `${m.w}px`;
+          cs.style.height = `${m.h}px`;
+          cs.style.transform = `translate(${-m.ax}px, ${-m.ay}px)`;
+        }
+      }
       reportMove(p.x, p.y, p.d, moved);
 
       const vp = viewport.current;
@@ -488,6 +511,7 @@ export function WorldView({
         <Sprite
           me
           bike={bike}
+          car={car}
           avatar={me.avatar}
           badge={me.badge}
           username={me.username}

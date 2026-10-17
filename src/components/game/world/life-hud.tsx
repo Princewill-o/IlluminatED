@@ -11,6 +11,7 @@ import { useNeeds } from "./use-needs";
 import { AvatarFigure } from "@/components/game/avatar";
 import type { Avatar } from "@/game/core/cosmetics";
 import { ACTIVITIES, NEEDS, moodWord, nextHint, weatherAt } from "@/game/core/needs";
+import { levelProgress, levelTitle } from "@/game/core/progression";
 import { cn } from "@/lib/utils";
 
 export interface Quest {
@@ -136,5 +137,24 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
         </p>
       )}
     </>
+  );
+}
+
+/** Your level and XP, top centre, filling as you live your life in the world. */
+export function LevelBadge({ xp }: { xp: number }) {
+  const lp = levelProgress(xp);
+  return (
+    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border-2 border-white bg-[#f7f1e6]/95 py-1 pr-3 pl-1 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] sm:flex">
+      <span className="grid size-8 place-items-center rounded-full bg-[#2b5fd9] text-sm font-black text-white">{lp.level}</span>
+      <span className="text-xs leading-tight font-black">
+        {levelTitle(lp.level)}
+        <span className="mt-0.5 block h-1.5 w-28 overflow-hidden rounded-full bg-[#13203a]/10">
+          <span className="block h-full bg-[#2b5fd9] transition-[width] duration-700" style={{ width: `${Math.round(lp.fraction * 100)}%` }} />
+        </span>
+      </span>
+      <span className="text-[10px] font-bold text-[#13203a]/60 tabular-nums">
+        {lp.into}/{lp.needed} XP
+      </span>
+    </div>
   );
 }

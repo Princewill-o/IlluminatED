@@ -193,5 +193,5 @@ export function buildHighlands(): Region {
 /** What Blender needs (same shape as londonScene). */
 export function highlandsScene() {
   const r = buildHighlands();
-  return { cols: r.cols, rows: r.rows, tiles: r.tiles, things: r.things, stations: [] };
+  return { region: "highlands", cols: r.cols, rows: r.rows, tiles: r.tiles, things: r.things, stations: [] };
 }

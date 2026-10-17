@@ -9,6 +9,7 @@ import { loadCareer, loadHome } from "@/lib/game/careers-server";
 import { loadPlayer } from "@/lib/game/server";
 import { worldPass } from "@/lib/game/world-pass";
 import { loadMyHomework } from "@/lib/school/server";
+import { getSupabase } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Worlds" };
 
@@ -16,6 +17,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
   const { map, server } = await searchParams;
   const account = await requireAccount("/games/world");
   const [player, orgs, membership, career, home, homework] = await Promise.all([loadPlayer(account.id), listOrgs(), myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id)]);
+  const sbCars = await getSupabase();
+  const cars = sbCars ? (((await sbCars.from("player_cars").select("car").eq("user_id", account.id)).data ?? []) as { car: string }[]).map((r) => r.car) : [];
   const a = career.active;
   const job = a ? { workplace: a.workplace, role: a.role, rank: a.rank, shifts: a.shifts, rankShifts: a.rankShifts, rankCorrect: a.rankCorrect, rankTotal: a.rankTotal } : null;
   const staff = await staffFor(orgs.map((o) => o.id));
@@ -52,6 +55,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       job={job}
       clout={player.clout}
       quests={quests}
+      cars={cars}
+      xp={player.xp}
       homework={homework.filter((h) => !h.mine).flatMap((h) => h.questions.map((q) => q.key))}
       home={{ style: homeById(home.current)?.style ?? 0, layout: home.layout }}
     />

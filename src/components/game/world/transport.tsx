@@ -6,8 +6,9 @@ import { Bike, X } from "lucide-react";
 
 import { TubeBadge } from "./tube-map";
 
-import { hireBike } from "@/app/games/world/actions";
+import { buyCar, hireBike } from "@/app/games/world/actions";
 import { BIKES, type BikeBrand } from "@/game/core/bikes";
+import { CARS } from "@/game/core/cars";
 import { STATION_PLATFORM_Y, TILE, type WorldMap } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -82,44 +83,150 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
   );
 }
 
-/** Inside a station: the track, platform edge, signs and a train that pulls in and out. */
-export function StationArt({ map }: { map: WorldMap }) {
-  const trackY = (STATION_PLATFORM_Y + 3) * TILE;
+/** A tube train in the new deep-level style: red cab ends, white and blue cars, red doors. */
+function TubeTrain({ cars = 4, tall }: { cars?: number; tall: number }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute top-0 left-0" style={{ width: map.width, height: map.height }}>
-      {/* Tiled wall with the station name. */}
-      <div className="absolute flex items-center gap-2 rounded-lg border-4 border-[#13203a] bg-[#f6f2e8] px-4 py-1" style={{ left: map.width / 2 - 120, top: TILE * 0.15, width: 240 }}>
-        <TubeBadge size={22} />
-        <span className="truncate text-sm font-black text-[#13203a]">{map.name.replace(/ station$/, "")}</span>
+    <div className="flex items-end" style={{ height: tall }}>
+      {Array.from({ length: cars }, (_, c) => {
+        const end = c === cars - 1;
+        return (
+          <div key={c} className="relative mr-[3px] h-full overflow-hidden border-2 border-[#13203a] bg-[#eef0f4]" style={{ width: 230, borderRadius: end ? "8px 40px 14px 8px" : 8 }}>
+            {/* blue lower band and pin stripe */}
+            <div className="absolute inset-x-0 bottom-[14%] h-[22%] bg-[#1f3fa8]" />
+            <div className="absolute inset-x-0 bottom-[38%] h-[3%] bg-[#1f3fa8]" />
+            {/* windows */}
+            {[0, 1, 2].map((w) => (
+              <div key={w} className="absolute top-[22%] h-[28%] w-[34px] rounded-[4px] border-2 border-[#13203a] bg-[#2a3346]" style={{ left: 18 + w * 42 }}>
+                <div className="absolute top-1 left-1 h-1 w-3 rounded-full bg-white/40" />
+              </div>
+            ))}
+            {/* red double doors with a green light */}
+            <div className="absolute top-[10%] bottom-[14%] left-[146px] w-[44px] border-x-2 border-[#13203a] bg-[#d72a22]">
+              <div className="absolute inset-y-[12%] left-1/2 w-[2px] -translate-x-1/2 bg-[#13203a]" />
+              <div className="absolute top-[18%] left-[6px] h-[30%] w-[12px] rounded-sm bg-[#2a3346]" />
+              <div className="absolute top-[18%] right-[6px] h-[30%] w-[12px] rounded-sm bg-[#2a3346]" />
+            </div>
+            <div className="absolute top-[4%] left-[160px] h-[5%] w-[16px] rounded-full bg-[#6cf08a]" />
+            {/* red cab end with the lit outline round the windscreen */}
+            {end && (
+              <div className="absolute inset-y-0 right-0 w-[70px] bg-[#d72a22]">
+                <div className="absolute top-[12%] right-[10px] bottom-[26%] left-[8px] border-[3px] border-white/90 bg-[#1c2430] [clip-path:polygon(18%_0,82%_0,100%_18%,100%_82%,82%_100%,18%_100%,0_82%,0_18%)]" />
+                <div className="absolute right-[18px] bottom-[10%] h-[8%] w-[28px] rounded-sm bg-[#13203a]" />
+              </div>
+            )}
+            <div className="absolute inset-x-0 bottom-0 h-[14%] bg-[#2a2733]" />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Inside a station, drawn over the whole room: a white-tiled arched tunnel with
+ * steel beams, an LED departures board, ticket machines, gate line, benches,
+ * the platform edge and a train that pulls in, waits and leaves.
+ */
+export function StationArt({ map }: { map: WorldMap }) {
+  const T = TILE;
+  const W = map.width;
+  const trackY = (STATION_PLATFORM_Y + 3) * T;
+  const name = map.name.replace(/ station$/, "");
+  const [clock, setClock] = useState("");
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleTimeString("en-GB", { timeZone: "Europe/London" }));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div aria-hidden className="pointer-events-none absolute top-0 left-0 overflow-hidden bg-[#e9e6df]" style={{ width: W, height: map.height }}>
+      {/* Ticket hall floor */}
+      <div className="absolute inset-x-0 top-0 [background:repeating-linear-gradient(90deg,transparent_0_31px,rgba(19,32,58,.06)_31px_32px),repeating-linear-gradient(0deg,#efece6_0_31px,rgba(19,32,58,.06)_31px_32px)]" style={{ height: 7 * T }} />
+      {/* Back wall: cream tiles with a blue frieze */}
+      <div className="absolute inset-x-0 top-0 bg-[#f6f2e8] [background-image:repeating-linear-gradient(90deg,transparent_0_15px,rgba(19,32,58,.08)_15px_16px),repeating-linear-gradient(0deg,transparent_0_9px,rgba(19,32,58,.08)_9px_10px)]" style={{ height: T * 1.15 }} />
+      <div className="absolute inset-x-0 bg-[#2b5fd9]" style={{ top: T * 1.1, height: 6 }} />
+      {/* Name board */}
+      <div className="absolute flex items-center gap-2 rounded-md border-[3px] border-[#13203a] bg-white px-3 py-0.5" style={{ left: W / 2 - 110, top: 4, width: 220 }}>
+        <TubeBadge size={20} />
+        <span className="truncate text-sm font-black text-[#13203a]">{name}</span>
       </div>
-      {/* Platform edge. */}
-      <div className="absolute bg-[#ffd166]" style={{ left: TILE, top: trackY - 8, width: map.width - TILE * 2, height: 6 }} />
-      <div className="absolute bg-[#cfc8b8]" style={{ left: TILE, top: trackY - 2, width: map.width - TILE * 2, height: 4 }} />
-      {/* Track pit with rails and sleepers. */}
-      <div
-        className="absolute overflow-hidden bg-[#2a2733]"
-        style={{
-          left: TILE,
-          top: trackY + 2,
-          width: map.width - TILE * 2,
-          height: TILE * 3 - 2,
-          backgroundImage: "repeating-linear-gradient(90deg, #4a4350 0 6px, transparent 6px 22px)",
-        }}
-      >
-        <div className="absolute inset-x-0 h-1 bg-[#b8bcc8]" style={{ top: TILE * 0.9 }} />
-        <div className="absolute inset-x-0 h-1 bg-[#b8bcc8]" style={{ top: TILE * 2.1 }} />
-        <div className="station-train absolute flex" style={{ top: 4, height: TILE * 2.6 }}>
-          {[0, 1, 2, 3].map((c) => (
-            <div key={c} className="relative mr-1 h-full w-[220px] rounded-md border-2 border-[#13203a] bg-[#eef0f4]">
-              <div className="absolute inset-x-0 top-1 h-3 bg-[#c8322d]" />
-              <div className="absolute inset-x-0 bottom-2 h-2 bg-[#2b5fd9]" />
-              {[0, 1, 2, 3, 4].map((w) => (
-                <div key={w} className="absolute top-6 h-9 w-8 rounded-sm bg-[#1f2633]" style={{ left: 12 + w * 41 }} />
-              ))}
-              <div className="absolute top-5 left-[96px] h-[52px] w-6 border-x-2 border-[#13203a]/40" />
+      {/* Ticket machines and help points */}
+      {[2, 25].map((x) => (
+        <div key={x} className="absolute flex gap-1" style={{ left: x * T + 2, top: 1.4 * T }}>
+          {[0, 1, 2].map((k) => (
+            <div key={k} className="relative h-[52px] w-[28px] rounded-t-md border-2 border-[#13203a] bg-[#2b5fd9]">
+              <div className="absolute inset-x-1 top-1.5 h-4 rounded-sm bg-[#bfe3ff]" />
+              <div className="absolute inset-x-2 top-7 h-1.5 rounded-full bg-[#ffd166]" />
             </div>
           ))}
         </div>
+      ))}
+      {/* Gate line: steel barriers with green arrows */}
+      <div className="absolute inset-x-0" style={{ top: 7 * T - 6, height: T + 6 }}>
+        {Array.from({ length: map.cols - 2 }, (_, i) => {
+          const x = i + 1;
+          const gate = x >= 12 && x < 18;
+          return (
+            <div key={x} className="absolute" style={{ left: x * T, top: 0, width: T, height: T + 6 }}>
+              {gate ? (
+                <>
+                  <div className="absolute top-1 left-0 h-[30px] w-[7px] rounded-sm border border-[#13203a] bg-[#c9ced8]" />
+                  <div className="absolute top-2 left-2 h-[10px] w-[9px] rounded-sm bg-[#d72a22]" />
+                  <div className="absolute top-3 right-2 text-[10px] font-black text-[#15987f]">&#9650;</div>
+                </>
+              ) : (
+                <div className="absolute inset-x-0 top-3 h-[22px] border-y-2 border-[#13203a] bg-[#c9ced8]" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* Platform: arched tiled tunnel */}
+      <div className="absolute inset-x-0 overflow-hidden" style={{ top: 8 * T, height: map.height - 8 * T }}>
+        <div className="absolute inset-0 bg-[#f4f4f6] [background-image:repeating-linear-gradient(90deg,transparent_0_47px,rgba(19,32,58,.07)_47px_48px),repeating-linear-gradient(0deg,transparent_0_23px,rgba(19,32,58,.07)_23px_24px)]" />
+        {/* steel arches overhead */}
+        {Array.from({ length: Math.ceil(W / (T * 6)) }, (_, k) => (
+          <div key={k} className="absolute top-0 h-4 w-[6px] bg-[#4a4fb8]" style={{ left: k * T * 6 + T * 2 }} />
+        ))}
+        <div className="absolute inset-x-0 top-0 h-3 bg-[#4a4fb8] [background-image:repeating-linear-gradient(90deg,transparent_0_10px,rgba(255,255,255,.25)_10px_12px)]" />
+        {/* LED departures board */}
+        <div className="absolute rounded-md border-[3px] border-[#13203a] bg-[#141418] px-3 py-1 font-mono text-[11px] leading-tight font-black text-[#ffd400] shadow-lg" style={{ left: W / 2 - 120, top: 18, width: 240 }}>
+          <div className="flex justify-between">
+            <span>1 Westbound</span>
+            <span>1 min</span>
+          </div>
+          <div className="flex justify-between">
+            <span>2 Eastbound</span>
+            <span>3 mins</span>
+          </div>
+          <div className="text-center">{clock}</div>
+        </div>
+        {/* Benches and posters */}
+        {[4, 22].map((x) => (
+          <div key={x} className="absolute flex gap-[2px]" style={{ left: x * T, top: 2 * T + 4 }}>
+            {[0, 1, 2, 3].map((k) => (
+              <div key={k} className="h-[24px] w-[30px] rounded-t-md border-2 border-[#13203a] bg-[#4a4fb8]" />
+            ))}
+          </div>
+        ))}
+        {[9, 19].map((x) => (
+          <div key={x} className="absolute h-[44px] w-[64px] rounded-sm border-2 border-[#13203a] bg-[#f2d9a6] p-1 text-[7px] leading-tight font-black text-[#13203a]" style={{ left: x * T, top: 1 * T }}>
+            REVISE ON THE MOVE · IlluminatED
+          </div>
+        ))}
+      </div>
+      {/* Platform edge: yellow line and tactile strip */}
+      <div className="absolute inset-x-0 bg-[#d9d6cf]" style={{ top: trackY - 18, height: 18 }} />
+      <div className="absolute inset-x-0 bg-[#ffd400]" style={{ top: trackY - 12, height: 5 }} />
+      <div className="absolute inset-x-0 [background:radial-gradient(circle,#c9a800_1.5px,transparent_2px)_0_0/8px_8px] bg-[#ffd400]/60" style={{ top: trackY - 6, height: 6 }} />
+      {/* Track */}
+      <div className="absolute inset-x-0 overflow-hidden bg-[#2a2733] [background-image:repeating-linear-gradient(90deg,#3d3846_0_8px,transparent_8px_26px)]" style={{ top: trackY, height: map.height - trackY }}>
+        <div className="absolute inset-x-0 h-1 bg-[#b8bcc8]" style={{ top: T * 0.9 }} />
+        <div className="absolute inset-x-0 h-1 bg-[#b8bcc8]" style={{ top: T * 2.1 }} />
+      </div>
+      <div className="station-train absolute" style={{ top: trackY - T * 1.9, left: 0 }}>
+        <TubeTrain tall={T * 3.6} />
       </div>
     </div>
   );
@@ -247,6 +354,86 @@ export function BusRide({ route, to, onArrive }: { route: string; to: string; on
       <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-[#f7f1e6]">
         <BusJourneyScene route={route} to={to} className="h-56" />
         <p className="p-4 text-center font-black text-[#13203a]">Next stop: {to}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Motor Mile: buy a car with Clout, or take one from your garage for a drive. */
+export function Dealership({
+  clout,
+  owned,
+  driving,
+  onBought,
+  onDrive,
+  onClose,
+}: {
+  clout: number;
+  owned: string[];
+  driving: string | null;
+  onBought: (car: string, clout: number) => void;
+  onDrive: (car: string | null) => void;
+  onClose: () => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  return (
+    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+      <div role="dialog" aria-label="Car dealership" onClick={(e) => e.stopPropagation()} className="max-h-[90%] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-[#f7f1e6] text-[#13203a] md:rounded-3xl">
+        <div className="relative overflow-hidden bg-[#13203a] px-5 pt-5 pb-4 text-white">
+          <div className="absolute inset-x-0 bottom-0 h-3 [background:repeating-linear-gradient(90deg,#ffd166_0_30px,transparent_30px_60px)] opacity-60" />
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xs font-black tracking-[0.25em] text-[#f2d9a6] uppercase">Motor Mile</p>
+              <h2 className="mt-1 text-2xl font-black">Car dealership</h2>
+              <p className="text-sm text-white/75">Buy once, keep it forever. Cars are much faster than walking. You have {clout} Clout.</p>
+            </div>
+            <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-white/15">
+              <X className="size-4" />
+            </button>
+          </div>
+        </div>
+        <ul className="grid gap-3 p-4 sm:grid-cols-2">
+          {CARS.map((c) => {
+            const mine = owned.includes(c.id);
+            const on = driving === c.id;
+            return (
+              <li key={c.id} className="flex flex-col rounded-3xl border-2 border-white bg-white p-3 shadow-[0_4px_0_rgba(19,32,58,0.08)]">
+                <div className="grid h-28 place-items-center rounded-2xl bg-[#e8eef8] [background-image:linear-gradient(transparent_70%,#d0d8e6_70%)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`/world/movers/${c.id}-E.webp`} alt="" className="dealer-car h-24 object-contain" />
+                </div>
+                <p className="mt-3 font-black">{c.name}</p>
+                <p className="text-xs text-[#13203a]/70">{c.blurb}</p>
+                <p className="mt-1 text-xs font-bold">{c.speed}x walking speed</p>
+                <div className="mt-3 flex items-center gap-2">
+                  {mine ? (
+                    <button type="button" onClick={() => onDrive(on ? null : c.id)} className={`flex-1 rounded-full py-2.5 text-sm font-black ${on ? "bg-[#13203a] text-white" : "bg-[#2b5fd9] text-white"}`}>
+                      {on ? "Park it" : "Drive"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={pending || clout < c.price}
+                      onClick={() =>
+                        start(async () => {
+                          setError(null);
+                          const r = await buyCar(c.id);
+                          if (r.ok) onBought(c.id, r.clout);
+                          else setError(r.error);
+                        })
+                      }
+                      className="flex-1 rounded-full bg-[#f2d9a6] py-2.5 text-sm font-black disabled:opacity-50"
+                    >
+                      Buy for {c.price} Clout
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        {error && <p className="px-5 pb-4 text-sm font-bold text-[#c8322d]">{error}</p>}
       </div>
     </div>
   );

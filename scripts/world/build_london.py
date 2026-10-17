@@ -306,9 +306,42 @@ def building(t):
         if style == "shop":
             awn = ["#2d6a4f", RED, "#1b3a6b", "#1f5f8b"][t["x"] % 4]
             p.box(x0 + 0.1, y0 + d - 0.02, 1.05, x0 + w - 0.1, y0 + d + 0.55, 1.18, awn)       # awning over the pavement
-    else:  # houses
-        m = HOUSES[seed % len(HOUSES)]
-        objs.append(place(SUBURBAN + m, x0, y0 + 0.2, w, d - 0.2, f"{t['id']}-k"))
+    else:  # London terraces (or Highland cottages): built here, not suburban kit houses
+        highland = SCENE.get("region") == "highlands"
+        wall = ["#f2ead8", "#e6dcc6", "#d9c7a6", "#efe6d4"][seed % 4] if highland else [BRICK, "#a65840", LBRICK, "#e8dcc4", "#c26b4f"][seed % 5]
+        roof = SLATE if highland or seed % 3 else "#6b4a3f"
+        floors = 2 if highland else 3
+        fh = 0.95
+        top = 0.15 + floors * fh
+        p.box(x0, y0 + 0.25, 0.13, x0 + w, y0 + d, top, wall)                                  # body
+        p.box(x0 - 0.04, y0 + d - 0.06, top - 0.12, x0 + w + 0.04, y0 + d + 0.04, top, WHITE)   # cornice
+        p.prism(x0 - 0.05, y0 + 0.2, x0 + w + 0.05, y0 + d + 0.05, top, top + 0.9, roof, ridge="x")  # pitched slate roof
+        bays = max(2, round(w / 1.3))
+        bw = w / bays
+        for b in range(bays):
+            # Chimney stacks on the party walls with pots.
+            if b % 2 == 0:
+                cx = x0 + b * bw + 0.15
+                p.box(cx, y0 + d * 0.45, top + 0.3, cx + 0.35, y0 + d * 0.45 + 0.3, top + 1.25, BRICK_D if not highland else STONE_D)
+                p.cyl(cx + 0.1, y0 + d * 0.45 + 0.15, top + 1.25, top + 1.4, 0.06, "#c46a3c", seg=8)
+                p.cyl(cx + 0.25, y0 + d * 0.45 + 0.15, top + 1.25, top + 1.4, 0.06, "#c46a3c", seg=8)
+            for f in range(floors):
+                z0 = 0.15 + f * fh
+                wx0, wx1 = x0 + b * bw + bw * 0.28, x0 + b * bw + bw * 0.72
+                if f == 0 and b == bays // 2:
+                    # Front door with a fanlight and a step.
+                    door = ["#1b3a6b", "#2d6a4f", INKY, RED][seed % 4]
+                    p.box(wx0, y0 + d - 0.02, z0, wx1, y0 + d + 0.03, z0 + 0.72, door)
+                    p.box(wx0 - 0.05, y0 + d - 0.02, z0 + 0.72, wx1 + 0.05, y0 + d + 0.04, z0 + 0.8, WHITE)
+                    p.box(wx0 - 0.1, y0 + d, 0.13, wx1 + 0.1, y0 + d + 0.25, 0.2, STONE_D)
+                    continue
+                # Sash window: white frame, glass, glazing bar, sill.
+                p.box(wx0 - 0.05, y0 + d - 0.02, z0 + 0.18, wx1 + 0.05, y0 + d + 0.02, z0 + 0.78, WHITE)
+                p.box(wx0, y0 + d - 0.01, z0 + 0.23, wx1, y0 + d + 0.03, z0 + 0.73, GLASS)
+                p.box(wx0, y0 + d - 0.01, z0 + 0.47, wx1, y0 + d + 0.04, z0 + 0.49, WHITE)
+                p.box(wx0 - 0.08, y0 + d, z0 + 0.14, wx1 + 0.08, y0 + d + 0.1, z0 + 0.18, WHITE)
+                if not highland and f == 1:
+                    p.box(wx0 - 0.04, y0 + d + 0.04, z0 + 0.14, wx1 + 0.04, y0 + d + 0.18, z0 + 0.4, INKY)   # little balcony rail
         p.box(x0 + w * 0.25, y0 + d - 0.05, 0.13, x0 + w * 0.75, y0 + d + 0.3, 0.15, "#e3cfa3")  # front path
         if t.get("label") == "Your house":
             p.box(x0 + w * 0.3, y0 + d + 0.35, 0.13, x0 + w * 0.7, y0 + d + 0.8, 0.16, "#2b5fd9")   # welcome mat

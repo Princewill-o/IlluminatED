@@ -167,43 +167,37 @@ export function drawFx(
   }
   ctx.restore();
 
-  // Time of day (outdoors). Light pools are cut out of the darkness in flat steps.
+  // Time of day (outdoors): a soft blue evening tint, with smooth warm pools under the street lamps.
   if (fx.outdoor && phase !== "day") {
     ctx.save();
-    ctx.fillStyle = phase === "night" ? "rgba(14, 12, 48, 0.56)" : "rgba(60, 20, 70, 0.18)";
+    ctx.fillStyle = phase === "night" ? "rgba(28, 34, 78, 0.34)" : "rgba(70, 40, 90, 0.12)";
     ctx.fillRect(0, 0, vw, vh);
     ctx.globalCompositeOperation = "destination-out";
-    const pools = [...fx.lights, { x: me.x, y: me.y - 10, r: 56 }];
+    const pools = [...fx.lights, { x: me.x, y: me.y - 10, r: 70 }];
     for (const l of pools) {
       const x = l.x - cam.x;
       const y = l.y - cam.y;
       if (x < -l.r || y < -l.r || x > vw + l.r || y > vh + l.r) continue;
-      for (const [f, a] of [
-        [1, 0.16],
-        [0.68, 0.24],
-        [0.38, 0.32],
-      ] as const) {
-        ctx.fillStyle = `rgba(0, 0, 0, ${a})`;
-        ring(ctx, x, y, l.r * f);
-      }
+      const g = ctx.createRadialGradient(x, y, 0, x, y, l.r);
+      g.addColorStop(0, "rgba(0,0,0,0.75)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x - l.r, y - l.r, l.r * 2, l.r * 2);
     }
-    // Warm sodium glow on top, in the same flat steps.
-    ctx.globalCompositeOperation = "source-over";
+    ctx.globalCompositeOperation = "lighter";
     for (const l of fx.lights) {
       const x = l.x - cam.x;
       const y = l.y - cam.y;
       if (x < -l.r || y < -l.r || x > vw + l.r || y > vh + l.r) continue;
-      for (const [f, a] of [
-        [1, phase === "night" ? 0.08 : 0.03],
-        [0.68, phase === "night" ? 0.1 : 0.035],
-        [0.38, phase === "night" ? 0.13 : 0.045],
-      ] as const) {
-        ctx.fillStyle = `rgba(255, 186, 92, ${a})`;
-        ring(ctx, x, y, l.r * f);
-      }
+      const g = ctx.createRadialGradient(x, y, 0, x, y, l.r * 0.8);
+      g.addColorStop(0, phase === "night" ? "rgba(255,190,110,0.16)" : "rgba(255,190,110,0.06)");
+      g.addColorStop(1, "rgba(255,190,110,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(x - l.r, y - l.r, l.r * 2, l.r * 2);
     }
+    ctx.globalCompositeOperation = "source-over";
     if (phase === "dusk") {
-      ctx.fillStyle = "rgba(255, 140, 80, 0.10)";
+      ctx.fillStyle = "rgba(255, 150, 90, 0.08)";
       ctx.fillRect(0, 0, vw, vh);
     }
     ctx.restore();

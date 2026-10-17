@@ -150,28 +150,40 @@ def bevel(o, w=0.08):
 
 bus_root = empty("bus")
 def busbody(parent):
-    red, glass, ink = "#d4241f", "#1f2633", "#15151c"
+    """A New Routemaster-style double-decker: rounded roof, wraparound upper glass,
+    diagonal glazed staircases front and back, sloping lower windscreen, black nose."""
+    red, glass, ink, white = "#d72a22", "#1c2430", "#15151c", "#eef0f4"
     parts = [
-        bevel(box(red, (0, 0, 1.12), (2.7, 0.98, 1.96), parent), 0.14),           # body
-        box("#c21d19", (0, 0, 2.11), (2.56, 0.9, 0.06), parent),                   # roof
-        box(glass, (-0.08, 0, 1.58), (2.5, 1.0, 0.46), parent),                    # upper deck windows, one long band
-        box(glass, (-0.18, 0, 0.78), (2.2, 1.0, 0.42), parent),                    # lower deck windows
-        box(red, (-0.6, 0, 1.58), (0.06, 1.01, 0.46), parent),                     # window pillars
-        box(red, (0.2, 0, 1.58), (0.06, 1.01, 0.46), parent),
-        box(red, (-0.5, 0, 0.78), (0.06, 1.01, 0.42), parent),
-        box(glass, (1.33, 0, 1.6), (0.06, 0.86, 0.44), parent),                    # upper windscreen
-        box(glass, (1.33, 0, 0.74), (0.06, 0.86, 0.62), parent),                   # lower windscreen
-        box(ink, (1.35, 0, 1.2), (0.05, 0.7, 0.2), parent),                        # destination blind
-        box("#ffb020", (1.37, 0, 1.2), (0.03, 0.5, 0.1), parent),                  # route number glow
-        box(glass, (0.95, 0.5, 0.62), (0.4, 0.02, 0.9), parent),                   # front doors (kerb side)
-        box(glass, (-0.25, 0.5, 0.62), (0.36, 0.02, 0.9), parent),                 # middle doors
-        box(ink, (0, 0, 0.16), (2.72, 1.0, 0.14), parent),                         # skirt
-        box("#f4f0ea", (1.36, 0.36, 0.34), (0.03, 0.14, 0.08), parent),            # lights
-        box("#f4f0ea", (1.36, -0.36, 0.34), (0.03, 0.14, 0.08), parent),
+        bevel(box(red, (0, 0, 1.15), (2.8, 0.98, 1.98), parent), 0.3),            # body, very rounded roof edges
+        box(glass, (-0.1, 0, 1.62), (2.3, 1.0, 0.42), parent),                     # upper deck band
+        box(glass, (1.25, 0, 1.62), (0.34, 0.99, 0.42), parent),                   # wraparound front corner glass
+        bevel(box(glass, (1.39, 0, 1.62), (0.04, 0.84, 0.46), parent), 0.02),      # upper windscreen
+        box(glass, (-0.4, 0, 0.82), (1.4, 1.0, 0.38), parent),                     # lower deck windows
+        box(red, (-0.45, 0, 0.82), (0.06, 1.01, 0.38), parent),                    # pillar
+        box(red, (0.35, 0, 1.62), (0.06, 1.01, 0.42), parent),
+        box(red, (-0.65, 0, 1.62), (0.06, 1.01, 0.42), parent),
     ]
-    for x in (-0.85, 0.9):
+    # The swoosh: diagonal glazed staircases at the front and the back.
+    for x0, tilt in ((0.75, 0.62), (-1.15, -0.62)):
+        parts.append(box(glass, (x0, 0, 1.2), (0.26, 1.0, 1.15), parent, rot=(0, tilt, 0)))
+    parts += [
+        box(glass, (1.31, 0, 0.75), (0.16, 0.86, 0.7), parent, rot=(0, -0.28, 0)),   # sloping lower windscreen
+        box(ink, (1.33, 0, 0.3), (0.12, 0.9, 0.3), parent),                           # black nose
+        box(ink, (1.38, 0, 1.2), (0.05, 0.72, 0.2), parent),                          # dot-matrix destination
+        box(white, (1.41, 0.12, 1.2), (0.02, 0.36, 0.08), parent),                    # destination text
+        box("#ffb020", (1.41, -0.26, 1.2), (0.02, 0.12, 0.1), parent),               # route number
+        box(glass, (0.98, 0.5, 0.62), (0.36, 0.02, 0.9), parent),                     # doors (kerb side)
+        box(glass, (-0.1, 0.5, 0.62), (0.4, 0.02, 0.9), parent),
+        box(glass, (-1.25, 0.5, 0.62), (0.3, 0.02, 0.9), parent),
+        box(ink, (0, 0, 0.17), (2.82, 1.0, 0.12), parent),                            # skirt
+        box(white, (-0.2, -0.5, 1.2), (0.5, 0.02, 0.05), parent),                     # fleet stripe detail
+    ]
+    for y in (-0.36, 0.36):
+        parts.append(cyl(white, (1.4, y, 0.36), 0.1, 0.04, parent, rot=(0, math.radians(90), 0)))   # round headlights
+    for x in (-0.95, 0.85):
         for y in (-0.47, 0.47):
-            parts.append(cyl("#2a2730", (x, y, 0.22), 0.24, 0.14, parent, rot=(math.radians(90), 0, 0)))
+            parts.append(cyl("#2a2730", (x, y, 0.22), 0.25, 0.14, parent, rot=(math.radians(90), 0, 0)))
+            parts.append(cyl("#9aa0ab", (x, y * 1.03, 0.22), 0.12, 0.15, parent, rot=(math.radians(90), 0, 0)))
     return parts
 bus = busbody(bus_root)
 for d, rz in (("E", 0), ("W", math.pi), ("N", math.pi / 2), ("S", -math.pi / 2)):

@@ -37,7 +37,8 @@ export type PortalTarget =
   | { kind: "bus"; stop: string }
   | { kind: "act"; activity: "sleep" | "eat" | "study" | "hike" }
   | { kind: "bike"; dock: string }
-  | { kind: "games" };
+  | { kind: "games" }
+  | { kind: "dealer" };
 
 export interface Portal {
   id: string;
@@ -441,6 +442,10 @@ export function londonMap(): WorldMap {
   }
   // Pizzazz Pizza: the first shop on the West End parade.
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
+  // Motor Mile: the car dealership, on the next shop along.
+  const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
+  const dealer = shops[1];
+  if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   const rows = L.tiles.map((r) => r.split(""));
   // Doors are always walkable (bus stops are walked up to, not into).

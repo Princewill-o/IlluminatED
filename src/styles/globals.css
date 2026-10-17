@@ -844,7 +844,7 @@ html.dark body:has(.app-theme) {
   25%, 65% { transform: translateX(4%); animation-timing-function: ease-in; }
   100% { transform: translateX(130%); }
 }
-.station-train { width: 896px; animation: train-call 16s ease-out infinite; }
+.station-train { width: 940px; animation: train-call 16s ease-out infinite; }
 @keyframes tunnel-rush { to { background-position-x: -400px; } }
 .tunnel-lights {
   background-image: repeating-linear-gradient(90deg, transparent 0 150px, rgba(255, 209, 102, 0.85) 150px 165px, transparent 165px 200px),
@@ -886,3 +886,8 @@ html.dark body:has(.app-theme) {
 @media (prefers-reduced-motion: reduce) {
   .journey-far, .journey-mid, .journey-near, .journey-lamps, .journey-bus, .journey-wheel, .carriage-sway { animation: none; }
 }
+@keyframes dealer-turn { 0%,100% { transform: translateX(-4px); } 50% { transform: translateX(4px); } }
+.dealer-car { animation: dealer-turn 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .dealer-car { animation: none; } }
+@keyframes xp-pop { 0% { opacity: 0; translate: -50% 10px; scale: .8; } 15% { opacity: 1; translate: -50% 0; scale: 1.05; } 25% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: -50% -14px; } }
+.xp-toast { animation: xp-pop 1.8s ease-out both; }

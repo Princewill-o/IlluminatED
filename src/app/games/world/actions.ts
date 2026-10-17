@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { bikeById } from "@/game/core/bikes";
+import { carById } from "@/game/core/cars";
 import { getSupabase } from "@/lib/social/server";
 
 const FRIENDLY: Record<string, string> = {
@@ -23,4 +24,34 @@ export async function hireBike(brand: string) {
   if (error) return { ok: false as const, error: friendly(error.message) };
   revalidatePath("/games/world");
   return { ok: true as const, clout: data as number };
+}
+
+const CAR_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to buy a car.",
+  not_enough_clout: "Not enough Clout yet. Work shifts and revise to save up.",
+  already_owned: "You already own this one. It's in your garage.",
+  unknown_item: "That car isn't on the forecourt.",
+};
+
+/** Buys a car with Clout. Returns the Clout left. */
+export async function buyCar(car: string) {
+  if (!carById(car)) return { ok: false as const, error: CAR_ERRORS.unknown_item };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: "Couldn't reach the server. Try again in a moment." };
+  const { data, error } = await sb.rpc("car_buy", { p_car: car });
+  if (error) {
+    const k = Object.keys(CAR_ERRORS).find((x) => error.message.includes(x));
+    return { ok: false as const, error: k ? CAR_ERRORS[k] : "The dealership is opening soon. Try again later." };
+  }
+  revalidatePath("/games/world");
+  return { ok: true as const, clout: data as number };
+}
+
+/** XP for things you do in the world. Quietly does nothing if it can't save. */
+export async function earnWorldXp(kind: "bus" | "hike" | "train" | "eat" | "study" | "sleep") {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc("world_xp", { p_kind: kind });
+  if (error) return null;
+  return data as { xp: number; total?: number; level?: number; levelled?: boolean };
 }

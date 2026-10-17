@@ -9,17 +9,19 @@ import { play, soundOn } from "../sound";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { GamesHall } from "./games-hall";
-import { LifeHud, type Quest } from "./life-hud";
+import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
-import { BikeDock, TrainJourney } from "./transport";
+import { BikeDock, Dealership, TrainJourney } from "./transport";
 import { TubeMap, type TubeTrip } from "./tube-map";
 import { doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
 
+import { earnWorldXp } from "@/app/games/world/actions";
 import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
 import type { BikeBrand } from "@/game/core/bikes";
 import { workplaceById } from "@/game/core/careers";
+import { carById } from "@/game/core/cars";
 import type { Placed } from "@/game/core/homes";
 import { homeStyle } from "@/game/core/london";
 import {
@@ -85,7 +87,13 @@ export function WorldApp({
   clout,
   quests,
   homework = [],
+  cars = [],
+  xp = 0,
 }: {
+  /** Cars you own (dealership). */
+  cars?: string[];
+  /** Total XP, for the level badge. */
+  xp?: number;
   /** Question keys from homework you haven't handed in: the bus revises those topics. */
   homework?: string[];
   me: Me;
@@ -132,6 +140,20 @@ export function WorldApp({
   const [games, setGames] = useState(false);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
+  const [dealer, setDealer] = useState(false);
+  const [garage, setGarage] = useState<string[]>(cars);
+  const [driving, setDriving] = useState<string | null>(null);
+  const [xpNow, setXpNow] = useState(xp);
+  const [toast, setToast] = useState<{ text: string; big?: boolean } | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gainXp = useCallback(async (kind: "bus" | "hike" | "train" | "eat" | "study" | "sleep") => {
+    const r = await earnWorldXp(kind);
+    if (!r || !r.xp) return;
+    setXpNow((x) => r.total ?? x + r.xp);
+    setToast(r.levelled ? { text: `Level up! You're now level ${r.level}`, big: true } : { text: `+${r.xp} XP` });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), r.levelled ? 3200 : 1800);
+  }, []);
   const [journey, setJourney] = useState<{ to: string; go: () => void } | null>(null);
   useEffect(() => setWallet(clout), [clout]);
   // Hired bikes go back to the dock by themselves when the time runs out.
@@ -146,6 +168,7 @@ export function WorldApp({
   }, []);
   const map = useMemo(() => loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id]);
   const inOffice = mapId.startsWith("office-");
+  const outdoors = mapId === "city" || mapId === "highlands";
   const atHome = mapId === "home";
   const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
 
@@ -193,15 +216,18 @@ export function WorldApp({
       else if (to.kind === "act") {
         play("door", soundOn());
         doActivity(to.activity);
+        void gainXp(to.activity);
       }
       else if (to.kind === "desk") setDesk(true);
       else if (to.kind === "tube") setTube(to.station);
       else if (to.kind === "work") setWork(to.workplace);
       else if (to.kind === "bike") setDock(true);
       else if (to.kind === "games") setGames(true);
+      else if (to.kind === "dealer") setDealer(true);
       else {
-        // No bikes indoors: leave it at the dock outside.
+        // No bikes or cars indoors: leave them outside.
         if (to.mapId !== "city") setBike(null);
+        if (to.mapId !== "city" && to.mapId !== "highlands") setDriving(null);
         const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
         // Arrive outside the door that leads back to where you came from.
@@ -237,6 +263,7 @@ export function WorldApp({
         if (!st || !inside) return;
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
+        void gainXp("train");
         setJourney({
           to: st.name,
           go: () => {
@@ -291,7 +318,10 @@ export function WorldApp({
   const busRide = useCallback(
     (t: BusTrip, revised: boolean) => {
       setBus(null);
-      if (revised) doActivity("bus");
+      if (revised) {
+        doActivity("bus");
+        void gainXp("bus");
+      }
       let dest = "city";
       let spot: { x: number; y: number } | undefined;
       if (t.kind === "stop") {
@@ -426,8 +456,9 @@ export function WorldApp({
         onPortal={onPortal}
         onRoom={setRoom}
         onChangeServer={() => setServer(null)}
-        speed={bike && (mapId === "city" || mapId === "highlands") ? bike.brand.speed : 1}
-        bike={bike && (mapId === "city" || mapId === "highlands") ? bike.brand.colour : null}
+        speed={driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1}
+        car={driving && outdoors ? driving : null}
+        bike={!driving && bike && outdoors ? bike.brand.colour : null}
       />
       {bike && mapId === "city" && (
         <button
@@ -457,6 +488,37 @@ export function WorldApp({
         />
       )}
       {games && server && <GamesHall serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
+      {dealer && (
+        <Dealership
+          clout={wallet}
+          owned={garage}
+          driving={driving}
+          onBought={(c, left) => {
+            setWallet(left);
+            setGarage((g) => [...g, c]);
+            setDriving(c);
+            setBike(null);
+            router.refresh();
+          }}
+          onDrive={(c) => {
+            setDriving(c);
+            if (c) setBike(null);
+            setDealer(false);
+          }}
+          onClose={() => setDealer(false)}
+        />
+      )}
+      {driving && outdoors && (
+        <button type="button" onClick={() => setDriving(null)} className="absolute bottom-3 left-1/2 z-[100001] -translate-x-1/2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white shadow-lg">
+          Driving your {carById(driving)?.name} · Park
+        </button>
+      )}
+      <LevelBadge xp={xpNow} />
+      {toast && (
+        <div className={cn("xp-toast pointer-events-none absolute top-20 left-1/2 z-[100002] -translate-x-1/2 rounded-full px-5 py-2 font-black shadow-xl", toast.big ? "bg-[#f2d9a6] text-xl text-[#13203a]" : "bg-[#2b5fd9] text-white")} role="status">
+          {toast.text}
+        </div>
+      )}
       {journey && <TrainJourney to={journey.to} onArrive={journey.go} />}
 <SceneWipe show={fading} label={sceneName} />
       <button
