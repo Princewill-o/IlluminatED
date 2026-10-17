@@ -17,6 +17,8 @@ import { look } from "@/game/core/cosmetics";
 import { furnitureById } from "@/game/core/homes";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
+import { frameMapCamera } from "@/game/core/view-framing";
+import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
 import { buildHighlands } from "@/game/core/regions";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, type Portal, type WorldMap } from "@/game/core/world";
@@ -193,7 +195,7 @@ const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "hairco
 const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
 const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
 const npcLook = (i: number) =>
-  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5] });
+  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5], topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6], bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3] });
 
 // ── Kenney models ──
 const loader = new GLTFLoader();
@@ -963,8 +965,8 @@ export function World3D({
     const others = new Map<string, Body & { x: number; z: number }>();
 
     // Traffic: buses and Kenney cars driving the road loops on the left.
-    const L = highland ? null : buildLondon();
-    const traffic: { obj: THREE.Group; route: number; at: number; speed: number }[] = [];
+    const L = london ? buildLondon() : null;
+    const traffic: { obj: THREE.Group; route: number; at: number; speed: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
       const kinds = ["bus", "sedan", "taxi", "van", "bus", "suv", "delivery", "taxi", "bus", "police", "sedan", "hatchback-sports", "bus", "ambulance", "van", "taxi"];
       kinds.forEach((k, i) => {
@@ -995,14 +997,26 @@ export function World3D({
       return { x: pts[0][0], z: pts[0][1], dx: 1, dz: 0 };
     };
 
-    // Pedestrians on the pavements.
-    const npcs: { body: Body; route: number; at: number; side: number; speed: number; last: THREE.Vector3 }[] = [];
-    if (L) {
-      Array.from({ length: 12 }, (_, i) => i).forEach((i) => {
-        const body = makeBody(npcLook(i));
-        scene.add(body.root);
-        npcs.push({ body, route: i % 3, at: (i * 0.137) % 1, side: i % 2 ? 1.3 : -1.3, speed: 1.1 + (i % 3) * 0.2, last: new THREE.Vector3() });
-      });
+    // Local ambient residents: not connected players. Keep the city lively, not crowded.
+    const residentLimit = london ? 24 : highland ? 8 : map.kind === "home" ? 0 : map.kind === "station" ? 6 : 8;
+    const npcs = residentPaths(map, residentLimit).map((path, i) => {
+      const body = makeBody(npcLook(i));
+      scene.add(body.root);
+      return { body, path, offset: i * 3.71 };
+    });
+    const cyclists = L ? Array.from({ length: 4 }, (_, i) => {
+      const body = makeBody(npcLook(i + 30));
+      const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i]);
+      bendAll(bike);
+      scene.add(body.root, bike);
+      return { body, bike, route: i % paths.length, at: i * 0.217 };
+    }) : [];
+    if (L) for (let i = 0; i < 3; i++) {
+      const obj = new THREE.Group();
+      void place(obj, `/world3d/cars/${["sedan", "suv", "taxi"][i]}.glb`, -0.85, -0.45, 1.7, 0.9, 0, Math.PI / 2);
+      const body = makeBody(npcLook(40 + i));
+      scene.add(obj, body.root);
+      traffic.push({ obj, route: i, at: 0.12 + i * 0.19, speed: 2.1, commuter: { body, offset: i * 13 } });
     }
 
     // ── Clicks: walk to where you tap on the ground ──
@@ -1012,7 +1026,7 @@ export function World3D({
       const r = renderer.domElement.getBoundingClientRect();
       ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
       const hit = new THREE.Vector3();
-      if (ray.ray.intersectPlane(plane, hit)) onGround(hit.x * TILE, hit.z * TILE);
+      if (ray.ray.intersectPlane(plane, hit) && hit.x >= 0 && hit.z >= 0 && hit.x <= map.cols && hit.z <= map.rows) onGround(hit.x * TILE, hit.z * TILE);
     };
     renderer.domElement.addEventListener("click", onClick);
 
@@ -1086,10 +1100,10 @@ export function World3D({
         first = false;
       }
       focus.lerp(new THREE.Vector3(mx, 0, mz), 1 - Math.pow(0.0015, dt));
-      FOCUS.value.copy(focus);
-      if (indoors) camera.position.set(focus.x, focus.y + 12.5, focus.z + 11.5);
-      else camera.position.set(focus.x, focus.y + 19, focus.z + 18);
-      camera.lookAt(focus.x, focus.y + 0.6, focus.z);
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors);
+      FOCUS.value.set(framing.x, 0, framing.z);
+      camera.position.set(framing.x, framing.height, framing.z + framing.distance);
+      camera.lookAt(framing.x, framing.target, framing.z);
       sun.position.set(focus.x - 10, 22, focus.z + 12);
       sun.target.position.copy(focus);
 
@@ -1122,23 +1136,42 @@ export function World3D({
       // Traffic and pedestrians.
       let ti = 0;
       for (const v of traffic) {
-        const q = pointAt(v.route, v.at * lengths[v.route] + (reduce ? 0 : secs * v.speed));
+        const phase = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
+        const q = pointAt(v.route, v.at * lengths[v.route] + (phase ? phase.distance * v.speed : reduce ? 0 : secs * v.speed));
         const len = Math.hypot(q.dx, q.dz) || 1;
         // Drive on the left.
-        v.obj.position.set(q.x + (q.dz / len) * 0.5, 0.02, q.z - (q.dx / len) * 0.5);
+        const lane = 0.5 + (phase?.pull ?? 0) * 0.85;
+        v.obj.position.set(q.x + (q.dz / len) * lane, 0.02, q.z - (q.dx / len) * lane);
+        if (v.commuter && phase) {
+          const driver = v.commuter.body;
+          const kerb = lane + 0.65 + phase.stroll * 0.65;
+          driver.root.visible = phase.out;
+          driver.root.position.set(q.x + (q.dz / len) * kerb, 0.12, q.z - (q.dx / len) * kerb);
+          driver.root.rotation.y = Math.atan2(q.dz, -q.dx) + (phase.stroll > 0 && !phase.walking ? Math.PI / 2 : 0);
+          setWalking(driver, phase.walking && !reduce);
+        }
         v.obj.rotation.y = Math.atan2(-q.dz, q.dx);
         const horiz = Math.abs(q.dx) > Math.abs(q.dz);
         const long = (v.obj.userData.label ? 2.8 : 1.8) * TILE;
         TRAFFIC_BOXES[ti++] = { x: v.obj.position.x * TILE, y: v.obj.position.z * TILE, hw: (horiz ? long : TILE * 0.95) / 2, hh: (horiz ? TILE * 0.95 : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz) };
       }
-      for (const n of npcs) {
-        const q = pointAt(n.route, n.at * lengths[n.route] + (reduce ? 0 : secs * n.speed));
-        const len = Math.hypot(q.dx, q.dz) || 1;
-        const x = q.x + (-q.dz / len) * n.side;
-        const z = q.z + (q.dx / len) * n.side;
-        n.body.root.position.set(x, 0, z);
-        n.body.root.rotation.y = Math.atan2(q.dx, q.dz);
-        setWalking(n.body, !reduce);
+      const onlineCount = seen.size;
+      npcs.forEach((n, i) => {
+        const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
+        n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
+        n.body.root.position.set(pose.x, 0, pose.z);
+        n.body.root.rotation.y = pose.angle;
+        setWalking(n.body, pose.walking && !reduce);
+      });
+      for (const c of cyclists) {
+        const q = pointAt(c.route, c.at * lengths[c.route] + (reduce ? 0 : secs * 1.8));
+        const length = Math.hypot(q.dx, q.dz) || 1;
+        const x = q.x + (q.dz / length) * 0.95;
+        const z = q.z - (q.dx / length) * 0.95;
+        c.bike.position.set(x, 0.12, z);
+        c.bike.rotation.y = Math.atan2(-q.dz, q.dx);
+        c.body.root.position.set(x, 0.42, z);
+        c.body.root.rotation.y = Math.atan2(q.dx, q.dz);
       }
 
       for (const s of spinners) {

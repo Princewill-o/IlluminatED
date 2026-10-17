@@ -572,6 +572,7 @@ export function WorldView({
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
         <div className="pointer-events-auto rounded-2xl bg-black/70 px-3 py-2 text-xs text-white backdrop-blur">
           <p className="font-black">{map.name}</p>
+          {map.kind !== "home" && <p className="mt-0.5 text-[10px] text-white/70">Ambient residents · computer controlled</p>}
           <button type="button" onClick={onChangeServer} className="mt-0.5 flex items-center gap-1.5 text-[#d8d4e0]" aria-label="Change server">
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
