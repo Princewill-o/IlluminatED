@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
 export { NPC_SPOTS } from "./art";
@@ -1150,9 +1149,11 @@ export function World3D({
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
     renderer.domElement.addEventListener("webglcontextlost",contextLost);
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 2));
-    renderer.shadowMap.enabled = !mobile;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // Keep high-DPI Windows screens from multiplying the GPU workload by four.
+    let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
+    renderer.setPixelRatio(pixelRatio);
+    // Characters already have inexpensive contact shadows.
+    renderer.shadowMap.enabled = false;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
@@ -1367,14 +1368,14 @@ export function World3D({
         sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
         world.add(sg);
       }
-    // Street lamps glow at night.
-    if (phase !== "day")
-      lamps.forEach((p, i) => {
-        if (i % 2) return;
-        const l = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
-        l.position.copy(p);
-        scene.add(l);
-      });
+    // A fixed pool lights nearby lamps without adding a shader light for every
+    // street in the city. The visible lamp models remain in the scenery.
+    const lampLights = phase === "day" ? [] : lamps.slice(0, 4).map(() => {
+      const light = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
+      scene.add(light);
+      return light;
+    });
+    let nextLampUpdate = 0;
 
     if (map.id === "study-lobby") learningLobby(world, map);
 
@@ -1505,7 +1506,7 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = london ? (mobile ? 36 : 80) : highland ? 18 : map.kind === "home" ? 0 : map.kind === "station" ? 18 : map.id === "study-lobby" ? 24 : 12;
+    const residentLimit = london ? (mobile ? 16 : 24) : highland ? 12 : map.kind === "home" ? 0 : map.kind === "station" ? 12 : map.id === "study-lobby" ? 16 : 8;
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i));
       scene.add(body.root);
@@ -1645,13 +1646,32 @@ export function World3D({
     let last = performance.now();
     const start = last;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let slowFrames = 0;
     const frame = (now: number) => {
+      if (document.hidden) {
+        last = now;
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      // Reduce resolution when sustained frame times exceed the 60fps budget.
+      slowFrames = now - last > 22 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+      if (slowFrames >= 90 && pixelRatio > 0.75) {
+        pixelRatio = Math.max(0.75, pixelRatio - 0.25);
+        renderer.setPixelRatio(pixelRatio);
+        slowFrames = 0;
+      }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
       const p = getMe();
       const mx = p.x / TILE;
       const mz = p.y / TILE;
+      if (lampLights.length && now >= nextLampUpdate) {
+        nextLampUpdate = now + 500;
+        const nearest = [...lamps].sort((a, b) =>
+          (a.x - mx) ** 2 + (a.z - mz) ** 2 - ((b.x - mx) ** 2 + (b.z - mz) ** 2));
+        lampLights.forEach((light, i) => light.position.copy(nearest[i]));
+      }
       // Face the way you're going.
       const dx = mx - lastMe.x;
       const dz = mz - lastMe.z;
@@ -1886,36 +1906,40 @@ export function World3D({
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    // Once everything static has loaded, merge it into a few big meshes (one per material)
-    // so the whole city draws in a handful of calls instead of thousands.
-    void Promise.all(jobs).then(() => {
+    // Share repeated geometry instead of expanding every copy into vertex buffers.
+    // Spatial batches retain useful frustum culling across the city.
+    void Promise.allSettled(jobs).then(async () => {
+      if (disposed) return;
       world.updateMatrixWorld(true);
-      const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
-      const drop: THREE.Mesh[] = [];
+      const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
         if (!m.isMesh || m === water || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
-        const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()) as THREE.BufferGeometry;
-        for (const k of Object.keys(g.attributes)) if (k !== "position" && k !== "normal" && k !== "uv") g.deleteAttribute(k);
-        if (!g.attributes.uv) g.setAttribute("uv", new THREE.Float32BufferAttribute(new Float32Array((g.attributes.position.count) * 2), 2));
-        if (!g.attributes.normal) g.computeVertexNormals();
-        g.applyMatrix4(m.matrixWorld);
-        const list = groups.get(m.material) ?? [];
-        list.push(g);
-        groups.set(m.material, list);
-        drop.push(m);
+        const position = new THREE.Vector3().setFromMatrixPosition(m.matrixWorld);
+        const key = `${m.geometry.uuid}:${m.material.uuid}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
+        const list = groups.get(key) ?? [];
+        list.push(m);
+        groups.set(key, list);
       });
-      for (const m of drop) m.parent?.remove(m);
-      for (const [material, geos] of groups) {
-        const merged = mergeGeometries(geos, false);
-        geos.forEach((g) => g.dispose());
-        if (!merged) continue;
-        const mesh = new THREE.Mesh(merged, material);
-        mesh.castShadow = mesh.receiveShadow = true;
-        scene.add(mesh);
+      let batchStart = performance.now();
+      for (const meshes of groups.values()) {
+        if (disposed) return;
+        if (meshes.length > 1) {
+          const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
+          meshes.forEach((source, i) => {
+            mesh.setMatrixAt(i, source.matrixWorld);
+            source.parent?.remove(source);
+          });
+          mesh.computeBoundingSphere();
+          scene.add(mesh);
+        }
+        if (performance.now() - batchStart > 4) {
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+          batchStart = performance.now();
+        }
       }
     });
 
@@ -1932,6 +1956,7 @@ export function World3D({
       renderer.forceContextLoss();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
+        if (o instanceof THREE.InstancedMesh) o.dispose();
         if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
       });
       playerLabel.remove();

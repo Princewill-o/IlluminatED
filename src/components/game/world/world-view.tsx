@@ -361,6 +361,11 @@ export function WorldView({
     let nextChirp = performance.now() + 3000;
     let bumpUntil = 0;
     const frame = (now: number) => {
+      if (document.hidden) {
+        last = now;
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (pausedRef.current) {
@@ -440,7 +445,7 @@ export function WorldView({
       }
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
-      const cs = meEl.current?.querySelector<HTMLElement>(".car-sprite");
+      const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");
       if (cs?.dataset.car) {
         const facingX = Math.cos(p.heading), facingY = Math.sin(p.heading);
         cs.dataset.dir = Math.abs(facingX) > Math.abs(facingY) ? (facingX > 0 ? "E" : "W") : facingY > 0 ? "S" : "N";
@@ -459,7 +464,7 @@ export function WorldView({
       reportMove(p.x, p.y, p.d, moved);
 
       const vp = viewport.current;
-      if (vp && layer.current) {
+      if (!is3d && vp && layer.current) {
         const scale = Math.max(zoom, vp.clientWidth / map.width, vp.clientHeight / map.height);
         activeZoom.current = scale;
         const vw = vp.clientWidth / scale;
@@ -489,7 +494,7 @@ export function WorldView({
       // Each figure turns smoothly towards where it's heading, and its walk cycle
       // advances with the distance covered, so fists swing in time with the feet.
       const place = (el: HTMLDivElement | null | undefined, key: string, x: number, y: number, vx: number, vy: number, walking: boolean) => {
-        if (!el) return;
+        if (is3d || !el) return;
         el.style.transform = `translate3d(${x - SPRITE_W / 2}px, ${y - SPRITE_H / 2 - 4}px, 0)`;
         el.style.zIndex = String(Math.round(y));
         const a = anim.get(key) ?? { ang: Math.PI, phase: 0, walk: 0 };
@@ -506,7 +511,7 @@ export function WorldView({
         poseWorldFigure(el, a.ang, reduced ? 0 : a.phase, reduced ? 0 : a.walk, reduced ? 0 : now);
       };
       place(meEl.current, "me", p.x, p.y, moved ? dx : 0, moved ? dy : 0, moved);
-      if (map.art && layer.current && now - lastFade > 120) {
+      if (!is3d && map.art && layer.current && now - lastFade > 120) {
         lastFade = now;
         fadeArtProps(layer.current, p.x, p.y);
       }
@@ -572,11 +577,11 @@ export function WorldView({
       <div
         ref={layer}
         data-world
-        className={`absolute top-0 left-0 origin-top-left will-change-transform ${is3d ? "pointer-events-none" : ""}`}
+        className={`absolute top-0 left-0 origin-top-left will-change-transform ${is3d ? "pointer-events-none hidden" : ""}`}
         style={{ width: map.width, height: map.height }}
       >
-        {map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
-        {map.kind === "station" && <StationArt map={map} />}
+        {!is3d && (map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />)}
+        {!is3d && map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
         ))}
