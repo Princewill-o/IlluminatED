@@ -452,7 +452,7 @@ export const WORKPLACES: Workplace[] = [
     sector: "Hospitality",
     accent: "#ff7a6b",
     roles: [
-      { id: "crew", title: "Crew Member", rank: 1, pay: 60, tasks: ["pizzaOrder", "change", "foodSafety", "pizzaOrder", "reception"], uniform: { top: "top-apron", hat: "hat-cap" }, summary: "Take orders, make pizzas exactly to ticket, handle cash and follow food safety and allergen rules." },
+      { id: "crew", title: "Pizza Maker & Delivery Assistant", rank: 1, pay: 60, tasks: ["pizzaOrder", "change", "foodSafety", "pizzaOrder", "reception"], uniform: { top: "top-apron", hat: "hat-cap" }, summary: "Take orders, make pizzas exactly to ticket, handle cash and follow food safety and allergen rules." },
       { id: "shift-lead", title: "Shift Leader", rank: 2, pay: 90, tasks: ["foodSafety", "stock", "pizzaOrder", "basket", "email"], uniform: { top: "top-apron", hat: "hat-chef" }, summary: "Run the shift: stock levels, food safety checks, complaints and the till." },
       { id: "manager", title: "Restaurant Manager", rank: 3, pay: 135, tasks: ["stock", "email", "inbox", "foodSafety", "basket"], uniform: { top: "top-suit", held: "held-briefcase" }, summary: "Manage the restaurant: ordering, rotas, standards and customer issues." },
     ],
@@ -512,7 +512,7 @@ export const WORKPLACES: Workplace[] = [
     sector: "Retail",
     accent: "#ff8fd1",
     roles: [
-      { id: "cashier", title: "Customer Assistant", rank: 1, pay: 60, tasks: ["basket", "change", "reception", "foodSafety", "basket"], uniform: { top: "top-polo", hat: "hat-cap" }, summary: "Serve customers at the till, apply offers and keep food safe." },
+      { id: "cashier", title: "Customer Assistant & Shelf Stacker", rank: 1, pay: 60, tasks: ["basket", "change", "reception", "foodSafety", "basket"], uniform: { top: "top-polo", hat: "hat-cap" }, summary: "Serve customers at the till, apply offers and keep food safe." },
       { id: "stock-controller", title: "Stock Controller", rank: 2, pay: 90, tasks: ["stock", "basket", "stock", "foodSafety", "inbox"], uniform: { top: "top-hivis" }, summary: "Plan reorders, manage waste and keep shelves full." },
       { id: "store-manager", title: "Store Manager", rank: 3, pay: 140, tasks: ["inbox", "stock", "email", "basket", "gdpr"], uniform: { top: "top-suit" }, summary: "Run the store: stock, team priorities and customer service." },
     ],

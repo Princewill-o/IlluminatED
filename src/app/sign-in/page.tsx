@@ -10,7 +10,7 @@ import { safeNext } from "@/lib/account/paths";
 import { getAccount } from "@/lib/account/server";
 import { socialConfigured } from "@/lib/social/config";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = {robots:{index:false,follow:false},
   title: "Sign in",
   description:
     "Sign in to IlluminatED to save quiz progress, get a personal dashboard, request a tutor and post on IlluminatEDSocial.",

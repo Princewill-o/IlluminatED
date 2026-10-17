@@ -9,6 +9,7 @@ import { safeNext } from "./paths";
 import { COURSES } from "@/lib/data/courses";
 import { TOPICS } from "@/lib/data/topics";
 import { CAREER_ROUTES } from "@/lib/education/state";
+import { getSchoolAccess } from "@/lib/school/access";
 import { siteOrigin as canonicalOrigin } from "@/lib/site";
 import { getSupabase, getViewer } from "@/lib/social/server";
 
@@ -63,6 +64,10 @@ export async function sendSignInLink(
 /** After signing in, send people to onboarding until their account is set up. */
 async function afterSignIn(userId: string, next: string): Promise<never> {
   const sb = (await getSupabase())!;
+  const { data: school } = await sb.rpc("school_access");
+  const access = Array.isArray(school) ? school[0] : school;
+  if (access && !access.active) redirect("/school-access");
+  if (access?.role === "teacher" && !next.startsWith("/games")) redirect("/teacher");
   const [{ data: profile }, { data: details }] = await Promise.all([
     sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
     sb
@@ -263,6 +268,10 @@ export async function saveDetails(
   if (!viewer)
     return { error: "Your sign-in has expired. Please sign in again." };
 
+  const schoolAccess = await getSchoolAccess();
+  if (schoolAccess && !schoolAccess.active) return {error:"Your school licence needs attention. Contact your teacher."};
+  const schoolName = schoolAccess?.name ?? String(fd.get("privateSchool")??"").trim().replace(/\s+/g," ");
+  if (schoolName.length<2 || schoolName.length>100) return {step:0,error:"Enter your school or college, or Independent learner."};
   const needsProfile = !viewer.profile;
   const username = String(fd.get("username") ?? "").trim();
   if (needsProfile) {
@@ -378,6 +387,8 @@ export async function saveDetails(
   if (error)
     return { error: "We couldn't save your details. Please try again." };
 
+  const {error:schoolError}=await sb.from("private_school").upsert({user_id:viewer.id,school_name:schoolName,updated_at:new Date().toISOString()});
+  if(schoolError)return {error:"We could not save your private school details. Please try again."};
   revalidatePath("/dashboard");
   if (fd.get("mode") === "edit")
     return { ok: true, message: "Your details are saved." };

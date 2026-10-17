@@ -37,6 +37,8 @@ const PUBLIC_PATHS = [
   "/guardian/messages",
   "/creators",
   "/book",
+  "/schools",
+  "/revision-games",
 ];
 
 /** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
@@ -108,7 +110,7 @@ export async function middleware(request: NextRequest) {
   const setupPath = path === "/onboarding" || path === "/getting-started" ||
     path === "/personalising" || path === "/account/password" ||
     // Employers verify their work email before they have learner details.
-    path === "/employers/join";
+    path === "/employers/join" || path === "/teacher" || path === "/school-access" || path.startsWith("/homework/class/");
   if (signedIn && supabase && !isPublic(path) && !setupPath) {
     const { data: details, error } = await supabase
       .from("learner_details")

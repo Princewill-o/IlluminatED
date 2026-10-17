@@ -67,6 +67,7 @@ function mountStudy({ start, submit, onReward } = {}) {
       if (name === "react/jsx-runtime") return { jsx, jsxs: jsx };
       if (name === "next/link") return { default: "a" };
       if (name === "lucide-react") return {};
+      if (name === "@/components/app/app-shell") return { notifyPlayerChanged() {} };
       if (name === "@/app/games/study/actions")
         return {
           async startStudy(courseId) {

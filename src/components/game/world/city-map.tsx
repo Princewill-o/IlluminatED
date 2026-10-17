@@ -27,7 +27,7 @@ const COLOUR: Record<string, string> = {
   L: "#e9e2d2",
 };
 
-export type PlaceKind = "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer" | "hospital" | "court" | "study";
+export type PlaceKind = "university" | "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer" | "hospital" | "court" | "study";
 export interface Place {
   id: string;
   name: string;
@@ -37,6 +37,7 @@ export interface Place {
 }
 
 const KIND: Record<PlaceKind, { label: string; colour: string }> = {
+  university:{label:"Universities",colour:"#7153b9"},
   station: { label: "Underground", colour: "#2b5fd9" },
   bus: { label: "Bus stops", colour: "#d4241f" },
   bike: { label: "Bike docks", colour: "#6cc04a" },
@@ -57,6 +58,7 @@ function kindOf(p: Portal): PlaceKind | null {
   if (t.kind === "act" && t.activity === "hike") return "view";
   if (t.kind === "act" && t.activity === "eat") return "food";
   if (t.kind === "map" && t.mapId === "home") return "home";
+  if (t.kind === "university" || t.kind === "map" && (t.mapId==="universities" || t.mapId.startsWith("university-"))) return "university";
   if (t.kind === "bus") return "bus";
   if (t.kind === "bike") return "bike";
   if (t.kind === "work" || t.kind === "game") return "job";

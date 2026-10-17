@@ -151,6 +151,7 @@ function Joystick({ onMove }: { onMove: (dx: number, dy: number) => void }) {
       onPointerMove={(e) => active.current === e.pointerId && update(e)}
       onPointerUp={end}
       onPointerCancel={end}
+      onLostPointerCapture={end}
     >
       <div
         className="absolute top-1/2 left-1/2 size-14 rounded-full bg-[#8fb4ff] shadow-[0_4px_0_0_rgba(0,0,0,0.5)]"
@@ -225,7 +226,7 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
   /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
-  const [webgl] = useState(() => typeof window === "undefined" || Boolean(document.createElement("canvas").getContext("webgl2")));
+  const [webgl,setWebgl] = useState(true);
   const is3d = webgl;
   const speedRef = useRef(speed);
   speedRef.current = speed;
@@ -269,8 +270,14 @@ export function WorldView({
     return () => ro.disconnect();
   }, []);
 
-  useEffect(() => setTouch(window.matchMedia("(pointer: coarse)").matches), []);
+  useEffect(() => {
+    const query = window.matchMedia("(pointer: coarse)");
+    const changed = () => setTouch(query.matches || navigator.maxTouchPoints > 0);
+    changed(); query.addEventListener("change", changed);
+    return () => query.removeEventListener("change", changed);
+  }, []);
 
+  const unavailable3d=useCallback(()=>setWebgl(false),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
     () => [...players.current.values()].filter((rp) => !hidden.has(rp.id)).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar })),
@@ -569,6 +576,7 @@ export function WorldView({
           car={car}
           bike={bike}
           ads={ads}
+          onUnavailable={unavailable3d}
           getMe={getMe3d}
           getOthers={getOthers3d}
           getPolice={getPolice}

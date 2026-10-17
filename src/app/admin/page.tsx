@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { inviteEmail, setDemoStatus } from "./actions";
 
 import { PageHeader, Section, Note } from "@/components/kit";
+import { SchoolLicenceAdmin, type SchoolLicence } from "@/components/school/licence-admin";
 import { getSupabase , getViewer } from "@/lib/social/server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default async function AdminPage() {
   const { data, error } = await sb.rpc("platform_admin_overview", { p_page: 0, p_search: "" });
   if (error) return <><PageHeader title="Platform admin" intro="The admin overview is temporarily unavailable."/><Section rule={false}><Note>Refresh this page. If the problem continues, use billing support to report it.</Note></Section></>;
   const o = data as Overview;
+  const {data:schools}=await sb.from("school_licences").select("id,name,seats,status,expires_at,agreement_reference").order("created_at",{ascending:false});
   const [{ data: demos }, { data: invites }] = await Promise.all([
     sb.from("demo_requests").select("*").order("created_at", { ascending: false }).limit(50),
     sb.from("access_invites").select("email, note, created_at").order("created_at", { ascending: false }).limit(50),
@@ -73,6 +75,8 @@ export default async function AdminPage() {
           <form action={inviteEmail} className="mt-3 space-y-2">
             <input name="email" type="email" required placeholder="student@school.org.uk" className="w-full rounded-xl border bg-background px-3 py-2" />
             <input name="note" placeholder="Note (e.g. Kingston College, 12C)" className="w-full rounded-xl border bg-background px-3 py-2" />
+            <label className="block text-sm font-bold">School licence<select name="schoolId" className="mt-1 w-full rounded-xl border bg-background p-3"><option value="">Individual invitation</option>{(schools??[]).map(s=><option key={s.id} value={s.id}>{s.name} · {s.status}</option>)}</select></label>
+            <label className="block text-sm font-bold">School role<select name="schoolRole" className="mt-1 w-full rounded-xl border bg-background p-3"><option value="student">Student</option><option value="teacher">Teacher</option></select></label>
             <button className="rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground">Invite</button>
           </form>
           <ul className="mt-4 space-y-1 text-sm">
@@ -82,6 +86,7 @@ export default async function AdminPage() {
           </ul>
         </div>
       </div>
+      <SchoolLicenceAdmin schools={(schools??[]) as SchoolLicence[]}/>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{totals.map(([label,value]) => <div key={label} className="rounded-2xl border p-5"><p className="text-muted-foreground text-sm">{label}</p><p className="mt-2 text-3xl font-bold">{value}</p></div>)}</div>
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         <div><h2 className="text-xl font-bold">Recent accounts</h2><div className="mt-3 overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b"><th className="p-3">Account</th><th className="p-3">Plan</th><th className="p-3">Progress</th></tr></thead><tbody>{o.users.map(u => <tr key={u.id} className="border-b"><td className="p-3"><p>{u.email ?? u.username ?? "—"}</p><p className="text-muted-foreground text-xs">Joined {date(u.created_at)}</p></td><td className="p-3">{u.plan}<p className="text-muted-foreground text-xs">{u.billing_status}</p></td><td className="p-3">{u.answers} answers{u.accuracy === null ? "" : ` · ${u.accuracy}%`}</td></tr>)}</tbody></table></div></div>

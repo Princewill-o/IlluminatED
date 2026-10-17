@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
 import { ArcadeFooter, ArcadeHeader } from "@/components/game/arcade-header";
+import { GameSceneWelcome } from "@/components/game/game-scene-welcome";
 
 export const metadata: Metadata = {
+  robots:{index:false,follow:false},
   title: { absolute: "IlluminatED City", template: "%s | IlluminatED City" },
   description:
     "Build knowledge and explore careers in IlluminatED City. Study your subjects, practise simulated workplace tasks and earn learning awards.",
@@ -15,6 +17,7 @@ export default function GamesLayout({ children }: { children: React.ReactNode })
   return (
     <div className="arcade">
       <ArcadeHeader />
+      <GameSceneWelcome/>
       {children}
       <ArcadeFooter />
     </div>

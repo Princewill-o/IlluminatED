@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 
 import { type LearnerDetails, rowToDetails } from "./details";
 
+import { getSchoolAccess, type SchoolAccess } from "@/lib/school/access";
 import { getSupabase, getViewer, type Viewer } from "@/lib/social/server";
 
 export interface Account extends Viewer {
   details: LearnerDetails | null;
   tutorialCompleted: boolean;
+  school: SchoolAccess | null;
 }
 
 /** The signed-in person with their study details, or null. */
@@ -16,6 +18,8 @@ export async function getAccount(): Promise<Account | null> {
   const viewer = await getViewer();
   if (!viewer) return null;
   const sb = (await getSupabase())!;
+  const school = await getSchoolAccess();
+  const {data: privateSchool} = await sb.from("private_school").select("school_name").eq("user_id",viewer.id).maybeSingle();
   const { data } = await sb
     .from("learner_details")
     .select("*")
@@ -29,9 +33,10 @@ export async function getAccount(): Promise<Account | null> {
     .maybeSingle();
   return {
     ...viewer,
+    school,
     tutorialCompleted: Boolean(data?.tutorial_completed_at),
     details: data
-      ? { ...rowToDetails(data), careerRoute: career?.value?.route }
+      ? { ...rowToDetails(data), schoolName: school?.name ?? privateSchool?.school_name ?? null, careerRoute: career?.value?.route }
       : null,
   };
 }
@@ -40,6 +45,8 @@ export async function getAccount(): Promise<Account | null> {
 export async function requireAccount(next: string) {
   const account = await getAccount();
   if (!account) redirect(`/sign-in?next=${encodeURIComponent(next)}`);
+  if (account.school && !account.school.active) redirect("/school-access");
+  if (next === "/dashboard" && account.school?.role === "teacher") redirect("/teacher");
   if (!account.profile || !account.details)
     redirect(`/onboarding?next=${encodeURIComponent(next)}`);
   if (!account.tutorialCompleted)

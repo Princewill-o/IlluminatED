@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { startStudy, submitStudy } from "@/app/games/study/actions";
+import { notifyPlayerChanged } from "@/components/app/app-shell";
 
 type Course = { id: string; title: string; level: string };
 type Session = {
@@ -193,6 +194,7 @@ export function StudyRoom({
       if (!rewardedSessions.current.has(session.id)) {
         rewardedSessions.current.add(session.id);
         try {
+          notifyPlayerChanged();
           reward.current?.({
             xp: response.result.xp,
             clout: response.result.clout,

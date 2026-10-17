@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 
 import type { Metadata } from "next";
 
+import { CustomHomework } from "@/components/school/custom-homework";
 import { CopyCode, SetHomework, TeacherControls } from "@/components/school/school";
-import { requireAccount } from "@/lib/account/server";
 import { courseById } from "@/lib/data/courses";
 import { QUESTION_BANK, TOPICS } from "@/lib/data/topics";
+import { requireTeacher } from "@/lib/school/access";
 import { loadClassForTeacher } from "@/lib/school/server";
 
 export const metadata: Metadata = { title: "Your class" };
@@ -16,7 +17,7 @@ const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 export default async function ClassPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const account = await requireAccount(`/homework/class/${id}`);
+  const {viewer:account} = await requireTeacher();
   const data = await loadClassForTeacher(id, account.id);
   if (!data) notFound();
   const { cls, students, homework, submissions } = data;
@@ -57,6 +58,7 @@ export default async function ClassPage({ params }: { params: Promise<{ id: stri
 
       <section className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <SetHomework classId={cls.id} topics={topics} />
+        <CustomHomework classId={cls.id}/>
         <div className="rounded-3xl border bg-card p-5">
           <p className="text-lg font-bold">Knowledge gaps</p>
           <p className="mt-1 text-sm text-muted-foreground">Topics the class gets wrong most, across all homework.</p>

@@ -38,6 +38,7 @@ export interface StudySubject {
 
 export interface LearnerDetails {
   careerRoute?: string;
+  schoolName?: string | null;
   stage: Stage;
   yearGroup: YearGroup;
   ageBand: AgeBand;

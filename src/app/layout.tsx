@@ -9,7 +9,7 @@ import { FeatureTracker } from "@/components/feature-tracker";
 import { HideOnSocial } from "@/components/hide-on-social";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeProvider } from "@/components/theme-provider";
-import { SITE_URL } from "@/lib/site";
+import { PUBLIC_WEB_URL as SITE_URL } from "@/lib/site";
 import "@/styles/globals.css";
 
 const dmSans = localFont({
@@ -45,16 +45,18 @@ const dmSans = localFont({
 });
 
 const description =
-  "Free revision for GCSE, A level, BTEC, T Level and Level 2/3 learners: courses, quizzes, flashcards, planners and official resources.";
+  "GCSE, A-Level, BTEC and T Level revision through educational games, quizzes and teacher-set homework. A learning platform for UK students, schools and sixth forms.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "IlluminatED: revision for UK learners",
+    default: "IlluminatED | GCSE & A-Level Revision Games",
     template: "%s | IlluminatED",
   },
   description,
   applicationName: "IlluminatED",
+  verification: process.env.GOOGLE_SITE_VERIFICATION ? {google:process.env.GOOGLE_SITE_VERIFICATION} : undefined,
+  twitter:{card:"summary_large_image",title:"IlluminatED | GCSE & A-Level Revision Games",description},
   appleWebApp: {
     capable: true,
     title: "IlluminatED",
@@ -70,7 +72,7 @@ export const metadata: Metadata = {
     apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "IlluminatED: revision for UK learners",
+    title: "IlluminatED | GCSE & A-Level Revision Games",
     description,
     siteName: "IlluminatED",
     locale: "en_GB",
