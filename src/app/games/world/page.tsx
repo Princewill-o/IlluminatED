@@ -56,6 +56,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       clout={player.clout}
       quests={quests}
       cars={cars}
+      homeworkDone={homework.filter((h) => h.mine).length}
       xp={player.xp}
       homework={homework.filter((h) => !h.mine).flatMap((h) => h.questions.map((q) => q.key))}
       home={{ style: homeById(home.current)?.style ?? 0, layout: home.layout }}

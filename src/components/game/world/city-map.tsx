@@ -27,7 +27,7 @@ const COLOUR: Record<string, string> = {
   L: "#e9e2d2",
 };
 
-export type PlaceKind = "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer";
+export type PlaceKind = "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer" | "hospital" | "court";
 export interface Place {
   id: string;
   name: string;
@@ -46,6 +46,8 @@ const KIND: Record<PlaceKind, { label: string; colour: string }> = {
   view: { label: "Viewpoints", colour: "#15987f" },
   food: { label: "Food", colour: "#e98a1f" },
   dealer: { label: "Car dealership", colour: "#d72a22" },
+  hospital: { label: "Hospital and pharmacy", colour: "#15987f" },
+  court: { label: "Crown Court", colour: "#7a4f32" },
 };
 
 function kindOf(p: Portal): PlaceKind | null {
@@ -59,6 +61,9 @@ function kindOf(p: Portal): PlaceKind | null {
   if (t.kind === "work" || t.kind === "game") return "job";
   if (t.kind === "games") return "games";
   if (t.kind === "dealer") return "dealer";
+  if (t.kind === "shop") return t.shop === "bootz" ? "hospital" : "food";
+  if (t.kind === "map" && t.mapId === "hospital") return "hospital";
+  if (t.kind === "map" && t.mapId === "court") return "court";
   return null;
 }
 

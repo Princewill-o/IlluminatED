@@ -7,7 +7,7 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
 import { faceCanvas } from "./character";
 
-import { type Avatar, cosmeticById } from "@/game/core/cosmetics";
+import { type Avatar, cosmeticById, look } from "@/game/core/cosmetics";
 import { BOTTOM_LOOK, HAIR_LOOK, TOP_LOOK } from "@/game/core/looks";
 
 /**
@@ -180,7 +180,7 @@ function dress(object: THREE.Object3D, headMesh: THREE.SkinnedMesh | null, bodyM
 export interface Character3D {
   object: THREE.Group;
   mixer: THREE.AnimationMixer;
-  play: (clip: "idle" | "walk" | "sit" | "emote-yes") => void;
+  play: (clip: string) => void;
 }
 
 /** Builds your dressed 3D character at about `height` units tall. */
@@ -243,3 +243,12 @@ export async function buildCharacter(a: Avatar, height = 1.15): Promise<Characte
   }
   return { object: holder, mixer, play };
 }
+
+/** Londoners: varied looks for people in the street, on trains and in buildings. */
+const NPC_SKIN = ["skin-1", "skin-2", "skin-3", "skin-4", "skin-5", "skin-6", "skin-7", "skin-8"];
+const NPC_HAIR = ["hair-short", "hair-bob", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff", "hair-spiky"];
+const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn", "haircol-ginger", "haircol-silver"];
+const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
+const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
+export const npcLook = (i: number) =>
+  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5] });

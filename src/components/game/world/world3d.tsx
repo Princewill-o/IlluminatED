@@ -7,13 +7,13 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
 import { BUS_ROUTE_CODES, TRAFFIC_BOXES } from "./art";
-import { type Character3D, buildCharacter } from "../char3d";
+import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
 
 import { COMPANIES } from "@/game/core/companies";
-import type { Avatar } from "@/game/core/cosmetics";
 import { look } from "@/game/core/cosmetics";
+import type { Avatar } from "@/game/core/cosmetics";
 import { furnitureById } from "@/game/core/homes";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
@@ -21,7 +21,7 @@ import { frameMapCamera } from "@/game/core/view-framing";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
 import { buildHighlands } from "@/game/core/regions";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
-import { TILE, type Portal, type WorldMap } from "@/game/core/world";
+import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
 /**
  * The live 3D world (three.js), viewed like Animal Crossing: a tilted camera that
@@ -30,6 +30,12 @@ import { TILE, type Portal, type WorldMap } from "@/game/core/world";
  * Models are Kenney CC0 kits (public/world3d); terraces, landmarks, buses and
  * mountains are built here from simple shapes.
  */
+
+/** Where the people on the street are (px), for "someone's near you" checks. */
+export const NPC_SPOTS: { x: number; y: number }[] = [];
+
+/** When the platform train's 16-second cycle started (ms, performance clock). */
+export const TRAIN_CALL = { at: -1 };
 
 export interface Mover3D {
   id: string;
@@ -187,15 +193,6 @@ function sign(text: string, o: { bg: string; fg: string; w: number; h: number; f
   bend(m);
   return new THREE.Mesh(new THREE.PlaneGeometry(o.w, o.h), m);
 }
-
-/** Londoners: varied looks for the people on the street. */
-const NPC_SKIN = ["skin-1", "skin-2", "skin-3", "skin-4", "skin-5", "skin-6", "skin-7", "skin-8"];
-const NPC_HAIR = ["hair-short", "hair-bob", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff", "hair-spiky"];
-const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn", "haircol-ginger", "haircol-silver"];
-const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
-const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
-const npcLook = (i: number) =>
-  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5], topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6], bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3] });
 
 // ── Kenney models ──
 const loader = new GLTFLoader();
@@ -580,6 +577,18 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   for (let y = 0; y < H; y++)
     for (let x = 0; x < Wd; x++) {
       const ch = rows[y][x];
+      if (ch === "G" && map.kind === "prison") {
+        // Cell bars.
+        for (let k = 0; k < 4; k++) {
+          const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.4, 8), mat("#5d6070"));
+          bar.position.set(x + 0.12 + k * 0.25, 1.2, y + 0.5);
+          bar.castShadow = true;
+          g.add(bar);
+        }
+        box(g, "#5d6070", x, 2.35, y + 0.42, x + 1, 2.45, y + 0.58);
+        box(g, "#c9c4b8", x, -0.05, y, x + 1, 0.01, y + 1);
+        continue;
+      }
       if (ch === "#" || ch === "W" || ch === "G") {
         // Back and side walls full height; the front wall is cut low so you can see in.
         const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
@@ -604,7 +613,11 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         }
         let w = 1;
         while (rows[y][x + w] === ch) w++;
-        if (station && ch === "r") {
+        if (map.kind === "hospital" && ch === "d") {
+          jobs.push(place(g, "/world3d/furniture/bedSingle.glb", x + 0.1, y + 0.05, w - 0.2, 1.9));
+        } else if (map.kind === "prison" && ch === "b") {
+          jobs.push(place(g, "/world3d/furniture/bedBunk.glb", x - 0.3, y - 1.5, 1.6, 2.4));
+        } else if (station && ch === "r") {
           for (let i = 0; i < w; i++) box(g, "#c9ced8", x + i, 0, y + 0.3, x + i + 1, 0.9, y + 0.7);
         } else if (station && ch === "v") {
           for (let i = 0; i < w; i++) {
@@ -763,7 +776,25 @@ export function World3D({
         const name = sign(map.name.replace(/ station$/, ""), { bg: "#ffffff", fg: "#13203a", w: 5, h: 0.7, badge: true });
         name.position.set(map.cols / 2, 2.3, 1.02);
         world.add(name);
+        // You've just stepped off: start with the train standing at the platform.
+        if (TRAIN_CALL.at < 0 || performance.now() - TRAIN_CALL.at > 20_000) TRAIN_CALL.at = performance.now() - 5500;
         const train = tubeTrain();
+        // The train only shows inside the station: it comes out of one tunnel and leaves by the other.
+        const clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), -1.6), new THREE.Plane(new THREE.Vector3(-1, 0, 0), map.cols - 1.6)];
+        train.traverse((o) => {
+          const m = o as THREE.Mesh;
+          if (m.isMesh) {
+            m.material = (m.material as THREE.Material).clone();
+            (m.material as THREE.Material).clippingPlanes = clip;
+          }
+        });
+        renderer.localClippingEnabled = true;
+        // Tunnel mouths at both ends of the platform.
+        for (const tx of [1, map.cols - 2.6]) {
+          box(world, "#4a4552", tx, -0.45, ty - 0.1, tx + 1.6, 2.8, ty + 0.1);
+          box(world, "#0b0a0f", tx + (tx < 5 ? 0 : 0.1), -0.45, ty + 0.1, tx + 1.5, 2.6, map.rows - 1);
+          box(world, "#d9d2c3", tx - 0.1, 2.6, ty - 0.15, tx + 1.7, 2.9, ty + 0.15);
+        }
         train.position.set(-30, -0.05, ty + 1.5);
         train.userData.train = true;
         world.add(train);
@@ -956,6 +987,24 @@ export function World3D({
     let disposed = false;
     const me = makeBody(JSON.parse(avatarKey) as Avatar);
     scene.add(me.root);
+    // People who work here: the judge in court, guards in prison, a doctor at the hospital.
+    const staff: [Avatar, number, number, number][] =
+      map.kind === "court"
+        ? [[look({ top: "top-suit", topColor: "topcol-black", hair: "hair-short", hairColor: "haircol-silver", skin: "skin-3" }), 11, 1.9, 0]]
+        : map.kind === "prison"
+          ? [
+              [look({ top: "top-suit", topColor: "topcol-navy", bottom: "bottom-smart", bottomColor: "botcol-navy", hat: "hat-cap", hair: "hair-buzz", skin: "skin-6" }), 8, 9.4, 0.3],
+              [look({ top: "top-suit", topColor: "topcol-navy", bottom: "bottom-smart", bottomColor: "botcol-navy", hat: "hat-cap", hair: "hair-bob", skin: "skin-2" }), 16, 9.4, -0.3],
+            ]
+          : map.kind === "hospital"
+            ? [[look({ top: "top-labcoat", hair: "hair-ponytail", skin: "skin-5" }), 13, 10.6, 0]]
+            : [];
+    for (const [a, x, z, ry] of staff) {
+      const b = makeBody(a);
+      b.root.position.set(x, 0, z);
+      b.root.rotation.y = ry;
+      scene.add(b.root);
+    }
     // Your car (when driving): a Kenney model swapped in for your character.
     const carHolder = new THREE.Group();
     scene.add(carHolder);
@@ -1002,7 +1051,7 @@ export function World3D({
     const npcs = residentPaths(map, residentLimit).map((path, i) => {
       const body = makeBody(npcLook(i));
       scene.add(body.root);
-      return { body, path, offset: i * 3.71 };
+      return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
     const cyclists = L ? Array.from({ length: 4 }, (_, i) => {
       const body = makeBody(npcLook(i + 30));
@@ -1018,6 +1067,26 @@ export function World3D({
       scene.add(obj, body.root);
       traffic.push({ obj, route: i, at: 0.12 + i * 0.19, speed: 2.1, commuter: { body, offset: i * 13 } });
     }
+
+    // ── Scuffles: you swing, the nearest person goes down ──
+    let swingUntil = 0;
+    const onFight = () => {
+      const now = performance.now();
+      swingUntil = now + 700;
+      me.char?.play("attack-melee-right");
+      const p = getMe();
+      let best: (typeof npcs)[number] | null = null;
+      let bd = 2.2;
+      for (const n of npcs) {
+        const d = Math.hypot(n.body.root.position.x - p.x / TILE, n.body.root.position.z - p.y / TILE);
+        if (d < bd) [best, bd] = [n, d];
+      }
+      if (best) {
+        best.knockedUntil = now + 2600;
+        best.body.char?.play("die");
+      }
+    };
+    window.addEventListener("illuminated:fight", onFight);
 
     // ── Clicks: walk to where you tap on the ground ──
     const ray = new THREE.Raycaster();
@@ -1068,7 +1137,13 @@ export function World3D({
       lastMe.set(mx, 0, mz);
       me.root.position.set(mx, 0, mz);
       carHolder.position.set(mx, 0.08, mz);
-      setWalking(me, p.walking);
+      if (performance.now() > swingUntil) {
+        if (swingUntil) {
+          swingUntil = 0;
+          me.walking = !p.walking;
+        }
+        setWalking(me, p.walking);
+      }
       // Swap your character for your car when driving.
       const want = carRef.current;
       if (want !== carLoaded) {
@@ -1140,12 +1215,13 @@ export function World3D({
         const q = pointAt(v.route, v.at * lengths[v.route] + (phase ? phase.distance * v.speed : reduce ? 0 : secs * v.speed));
         const len = Math.hypot(q.dx, q.dz) || 1;
         // Drive on the left.
-        const lane = 0.5 + (phase?.pull ?? 0) * 0.85;
+        const parkingClear = !blocked(map, (q.x + (q.dz / len) * 2.65) * TILE, (q.z - (q.dx / len) * 2.65) * TILE);
+        const lane = 0.5 + (parkingClear ? phase?.pull ?? 0 : 0) * 0.85;
         v.obj.position.set(q.x + (q.dz / len) * lane, 0.02, q.z - (q.dx / len) * lane);
         if (v.commuter && phase) {
           const driver = v.commuter.body;
           const kerb = lane + 0.65 + phase.stroll * 0.65;
-          driver.root.visible = phase.out;
+          driver.root.visible = phase.out && parkingClear;
           driver.root.position.set(q.x + (q.dz / len) * kerb, 0.12, q.z - (q.dx / len) * kerb);
           driver.root.rotation.y = Math.atan2(q.dz, -q.dx) + (phase.stroll > 0 && !phase.walking ? Math.PI / 2 : 0);
           setWalking(driver, phase.walking && !reduce);
@@ -1155,8 +1231,12 @@ export function World3D({
         const long = (v.obj.userData.label ? 2.8 : 1.8) * TILE;
         TRAFFIC_BOXES[ti++] = { x: v.obj.position.x * TILE, y: v.obj.position.z * TILE, hw: (horiz ? long : TILE * 0.95) / 2, hh: (horiz ? TILE * 0.95 : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz) };
       }
+      NPC_SPOTS.length = 0;
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
+        if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE });
+        if (n.knockedUntil > now) return;
+        if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; }
         const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
         n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
         n.body.root.position.set(pose.x, 0, pose.z);
@@ -1176,10 +1256,12 @@ export function World3D({
 
       for (const s of spinners) {
         if (s.userData.train) {
-          // Pull in, wait with the doors open, then leave (16 s loop).
-          const t = secs % 16;
+          // Pull in, wait with the doors open, then leave (16 s loop). The cycle is anchored to
+          // TRAIN_CALL: arriving by train you step off a train already at the platform; boarding,
+          // the train pulls in for you before the ride starts.
+          const t = ((now - TRAIN_CALL.at) / 1000) % 16;
           const stop = map.cols / 2 - 13;
-          s.position.x = t < 4 ? -30 + (stop + 30) * (1 - Math.pow(1 - t / 4, 3)) : t < 10 ? stop : stop + Math.pow((t - 10) / 6, 2) * 70;
+          s.position.x = t < 5 ? -28 + (stop + 28) * (1 - Math.pow(1 - t / 5, 3)) : t < 11 ? stop : stop + Math.pow((t - 11) / 5, 2) * 70;
         } else s.rotation.z += dt * 0.05;
       }
       const near = nearPortal();
@@ -1203,7 +1285,7 @@ export function World3D({
         const m = o as THREE.Mesh;
         if (!m.isMesh || m === water || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
-        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin) spin = true;
+        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
         const g = (m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone()) as THREE.BufferGeometry;
         for (const k of Object.keys(g.attributes)) if (k !== "position" && k !== "normal" && k !== "uv") g.deleteAttribute(k);
@@ -1232,6 +1314,7 @@ export function World3D({
       TRAFFIC_BOXES.length = 0;
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
+      window.removeEventListener("illuminated:fight", onFight);
       renderer.dispose();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;

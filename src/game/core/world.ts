@@ -38,7 +38,9 @@ export type PortalTarget =
   | { kind: "act"; activity: "sleep" | "eat" | "study" | "hike" }
   | { kind: "bike"; dock: string }
   | { kind: "games" }
-  | { kind: "dealer" };
+  | { kind: "dealer" }
+  | { kind: "shop"; shop: "tescow" | "bootz" }
+  | { kind: "doctor" };
 
 export interface Portal {
   id: string;
@@ -69,7 +71,7 @@ export interface Room {
 
 export interface WorldMap {
   id: string;
-  kind: "city" | "campus" | "office" | "home" | "station";
+  kind: "city" | "campus" | "office" | "home" | "station" | "hospital" | "court" | "prison";
   /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
   art?: "london" | "highlands" | `home-${number}`;
   /** Furniture placement (homes only). */
@@ -453,6 +455,15 @@ export function londonMap(): WorldMap {
   // Motor Mile: the car dealership, on the next shop along.
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tescow Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
+  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "shop", shop: "bootz" } });
+  // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
+  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && (t.style === "office" || t.style === "stone") ? [t] : []));
+  const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
+  const hosp = near(30, 52);
+  const court = near(44, 28, hosp);
+  if (hosp) portals.push({ id: "hospital", rect: px(hosp.x + 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
+  if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   const rows = L.tiles.map((r) => r.split(""));
@@ -543,6 +554,95 @@ export function stationMap(stationId: string): WorldMap | null {
       spawn: centre(15, 3),
       accent: "#2b5fd9",
       sign: { x: 15, y: 4, text: st.name },
+    },
+    g,
+  );
+}
+
+/** St Tomas' Hospital: reception, a doctor's desk and a ward of beds. */
+export function hospitalMap(): WorldMap {
+  const g = new Grid(26, 16, ".");
+  g.border("#");
+  for (let x = 1; x < 25; x++) g.set(x, 0, "W");
+  g.fill(10, 11, 6, 1, "r");
+  g.fill(3, 2, 8, 1, "b");
+  for (const x of [2, 6, 17, 21]) g.fill(x, 4, 3, 2, "d");
+  g.set(1, 1, "p");
+  g.set(24, 1, "p");
+  g.fill(17, 9, 4, 1, "s");
+  return finish(
+    {
+      id: "hospital",
+      kind: "hospital",
+      name: "St Tomas' Hospital",
+      structures: [],
+      portals: [
+        { id: "doctor", rect: px(12, 12, 2, 1), label: "See a doctor (free, takes a moment)", to: { kind: "doctor" } },
+        { id: "exit", rect: px(12, 15, 2, 1), label: "Back out to London", to: { kind: "map", mapId: "city", label: "London" } },
+      ],
+      rooms: [],
+      spawn: centre(13, 13),
+      accent: "#15987f",
+      sign: { x: 13, y: 8, text: "St Tomas' Hospital" },
+    },
+    g,
+  );
+}
+
+/** The Crown Court: judge's bench, the dock and the public gallery. */
+export function courtMap(): WorldMap {
+  const g = new Grid(22, 16, ".");
+  g.border("#");
+  for (let x = 1; x < 21; x++) g.set(x, 0, "W");
+  g.fill(6, 2, 10, 1, "A");
+  g.fill(8, 7, 6, 1, "r");
+  for (const y of [10, 12]) {
+    g.fill(2, y, 7, 1, "s");
+    g.fill(13, y, 7, 1, "s");
+  }
+  g.set(1, 1, "p");
+  g.set(20, 1, "p");
+  return finish(
+    {
+      id: "court",
+      kind: "court",
+      name: "Crown Court",
+      structures: [],
+      portals: [{ id: "exit", rect: px(10, 15, 2, 1), label: "Leave the court", to: { kind: "map", mapId: "city", label: "London" } }],
+      rooms: [],
+      spawn: centre(11, 8),
+      accent: "#7a4f32",
+      sign: { x: 11, y: 4, text: "Crown Court" },
+    },
+    g,
+  );
+}
+
+/** HMP Thames: a row of cells with bars, a landing and the guards' desk. No way out until you're released. */
+export function prisonMap(): WorldMap {
+  const g = new Grid(24, 14, ".");
+  g.border("#");
+  for (let x = 1; x < 23; x++) g.set(x, 0, "W");
+  // Cells along the back: walls between them, bars at the front (G), a gap only for your door.
+  for (let c = 0; c < 5; c++) {
+    const x0 = 1 + c * 4.4;
+    const xs = Math.round(x0);
+    g.fill(xs + 3, 1, 1, 5, "#");
+    g.fill(xs, 6, 4, 1, "G");
+    g.set(xs + 1, 3, "b");
+  }
+  g.fill(9, 10, 6, 1, "A");
+  return finish(
+    {
+      id: "prison",
+      kind: "prison",
+      name: "HMP Thames",
+      structures: [],
+      portals: [],
+      rooms: [],
+      spawn: centre(2, 3),
+      accent: "#e98a1f",
+      sign: { x: 12, y: 8, text: "HMP Thames" },
     },
     g,
   );
