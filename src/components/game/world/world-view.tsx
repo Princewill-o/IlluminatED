@@ -645,7 +645,9 @@ export function WorldView({
           onGround={walkTo3d}
         />
       )}
-      <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0" aria-hidden />
+      {/* The 3D renderer supplies its own lighting. Hide the retained 2D night
+          tint when switching renderers so its last frame cannot cover the world. */}
+      <canvas ref={fxCanvas} className={cn("pointer-events-none absolute inset-0", is3d && "hidden")} aria-hidden />
 
       {/* HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
