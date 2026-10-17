@@ -683,7 +683,7 @@ export function WorldView({
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
-        <button type="button" onClick={onChangeServer} className="pointer-events-auto min-h-11 max-w-[calc(100%-4rem)] rounded-2xl bg-black/70 px-3 py-2 text-left text-xs text-white backdrop-blur focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8fb4ff]" aria-label={`Change server · ${map.name}`}>
+        <button type="button" onClick={onChangeServer} className="pointer-events-auto min-h-11 max-w-[calc(100%-4rem)] rounded-2xl border border-[#c8b182]/40 bg-[#183b35]/95 px-3 py-2 text-left text-xs text-[#fff3d8] shadow-[0_8px_24px_rgba(12,30,28,0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8b182]" aria-label={`Change server · ${map.name}`}>
           <span className="block truncate font-black">{map.name}</span>
           {map.kind !== "home" && <span className="mt-0.5 hidden text-[10px] text-white/70 sm:block">Ambient residents · computer controlled</span>}
           <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-[#d8d4e0] sm:text-xs">

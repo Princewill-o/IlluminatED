@@ -24,7 +24,7 @@ export interface Quest {
   done?: boolean;
 }
 
-const card = "pointer-events-auto rounded-2xl border-2 border-white bg-[#f7f1e6]/95 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] backdrop-blur";
+const card = "pointer-events-auto rounded-2xl border border-[#d4c7ad] bg-[#faf6ed]/[0.98] text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16),inset_0_1px_0_rgba(255,255,255,0.9)]";
 
 /** The Sims-style overlay: today's tasks, the clock and weather, money, and your needs. */
 export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Avatar; name: string; clout: number; quests: Quest[]; onLocate?: (q: Quest) => boolean }) {
@@ -59,7 +59,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
           <span className="ml-auto">{open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
         </button>
         {open && (
-          <ul id="city-quests" className="mt-1 max-h-[min(36dvh,260px)] space-y-2 overflow-y-auto overscroll-contain pb-2">
+          <ul id="city-quests" className="mt-1 max-h-[min(36dvh,260px)] space-y-2 overflow-y-auto overscroll-contain pb-2 [scrollbar-color:#b9b59e_transparent] [scrollbar-width:thin]">
             {quests.length === 0 && <li className="text-xs text-[#5a6272]">Nothing set. Join your class in Homework to see what your teacher sets.</li>}
             {quests.slice(0, 5).map((q) => {
               const body = (
@@ -151,12 +151,12 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 export function LevelBadge({ xp }: { xp: number }) {
   const lp = levelProgress(xp);
   return (
-    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border-2 border-white bg-[#f7f1e6]/95 py-1 pr-2 pl-1 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] lg:flex">
-      <span className="grid size-7 place-items-center rounded-full bg-[#2b5fd9] text-sm font-black text-white">{lp.level}</span>
+    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border border-[#d4c7ad] bg-[#faf6ed]/[0.98] py-1.5 pr-3 pl-1.5 text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16)] lg:flex">
+      <span className="grid size-7 place-items-center rounded-full bg-[#254e46] text-sm font-black text-[#f7e3b6] ring-1 ring-[#c8b182]">{lp.level}</span>
       <span className="text-xs leading-tight font-black">
         {levelTitle(lp.level)}
         <span className="mt-0.5 block h-1.5 w-20 xl:w-28 overflow-hidden rounded-full bg-[#13203a]/10">
-          <span className="block h-full bg-[#2b5fd9] transition-[width] duration-700" style={{ width: `${Math.round(lp.fraction * 100)}%` }} />
+          <span className="block h-full bg-[#477a65] transition-[width] duration-700" style={{ width: `${Math.round(lp.fraction * 100)}%` }} />
         </span>
       </span>
       <span className="text-[10px] font-bold text-[#13203a]/60 tabular-nums">

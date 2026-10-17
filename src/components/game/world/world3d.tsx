@@ -365,6 +365,82 @@ const TOWERS = "abcde".split("").map((c) => `${COMMERCIAL}building-skyscraper-${
 
 const ARCH = { stone: "#f6f2ea", ink: "#263950", glass: "#95cddd", brass: "#dfb968", slate: "#4c6078" };
 
+// Three shared, small mural textures keep street art inexpensive to draw.
+const MURALS = new Map<number, THREE.MeshBasicMaterial>();
+function muralMaterial(variant: number) {
+  const cached = MURALS.get(variant);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = 768;
+  canvas.height = 384;
+  const ctx = canvas.getContext("2d")!;
+  const palette = [["#143d3a", "#a5f0cb", "#ffbd82"], ["#30264c", "#d2b7ff", "#ff876c"], ["#18364e", "#83d8ec", "#f6d88e"]][variant];
+  ctx.fillStyle = palette[0];
+  ctx.fillRect(0, 0, 768, 384);
+  // Brick seams, flowing spray strokes, and deterministic paint flecks.
+  ctx.strokeStyle = "#ffffff12";
+  ctx.lineWidth = 2;
+  for (let y = 0; y < 384; y += 32) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(768, y); ctx.stroke();
+    for (let x = (y / 32 % 2) * 48; x < 768; x += 96) {
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 32); ctx.stroke();
+    }
+  }
+  ctx.lineCap = "round";
+  for (let i = 0; i < 7; i++) {
+    ctx.strokeStyle = i % 2 ? palette[1] : palette[2];
+    ctx.globalAlpha = 0.24;
+    ctx.lineWidth = 12 + i * 3;
+    ctx.beginPath();
+    ctx.moveTo(-30, 70 + i * 44);
+    ctx.bezierCurveTo(220, -90 + i * 45, 480, 490 - i * 48, 800, 60 + i * 30);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 0.55;
+  for (let i = 0; i < 160; i++) {
+    ctx.fillStyle = i % 2 ? palette[1] : palette[2];
+    ctx.beginPath(); ctx.arc((i * 173 + variant * 37) % 768, (i * 97) % 384, 1 + i % 4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.save(); ctx.translate(384, 207); ctx.rotate(-0.055);
+  ctx.textAlign = "center";
+  ctx.font = "italic 900 104px system-ui, sans-serif";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 17; ctx.strokeStyle = "#101c2b";
+  const word = ["STAY CURIOUS", "CREATE MORE", "DREAM BIG"][variant];
+  ctx.strokeText(word, 0, 0, 670);
+  ctx.fillStyle = palette[1]; ctx.fillText(word, 0, 0, 670);
+  ctx.font = "700 20px system-ui, sans-serif";
+  ctx.fillStyle = "#fff4df";
+  ctx.fillText("ILLUMINATED  /  THE CITY IS YOUR CANVAS", 0, 57);
+  ctx.restore();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshBasicMaterial({ map: texture, toneMapped: false });
+  bend(material);
+  MURALS.set(variant, material);
+  return material;
+}
+
+/** Flush art panels and bronze edging stay inside existing building footprints. */
+function artFrontage(g: THREE.Group, x: number, z: number, width: number, variant: number) {
+  const w = Math.min(3.5, width * 0.32);
+  if (w < 1.2) return;
+  const cx = x + width - w / 2 - 0.25;
+  box(g, ARCH.ink, cx - w / 2 - 0.08, 0.38, z - 0.06, cx + w / 2 + 0.08, 2.28, z + 0.035);
+  box(g, ARCH.brass, cx - w / 2 - 0.09, 0.34, z, cx + w / 2 + 0.09, 0.4, z + 0.07);
+  const mural = new THREE.Mesh(new THREE.PlaneGeometry(w, 1.75), muralMaterial(variant % 3));
+  mural.position.set(cx, 1.32, z + 0.045);
+  g.add(mural);
+}
+
+function architecturalPlanter(g: THREE.Group, x: number, z: number) {
+  box(g, "#324b47", x - 0.35, 0.14, z - 0.22, x + 0.35, 0.55, z + 0.22);
+  box(g, ARCH.brass, x - 0.36, 0.5, z - 0.23, x + 0.36, 0.56, z + 0.23);
+  box(g, "#476f59", x - 0.28, 0.56, z - 0.17, x + 0.28, 0.86, z + 0.17);
+  box(g, "#719579", x - 0.2, 0.86, z - 0.13, x + 0.2, 1.02, z + 0.13);
+}
+
 /** Framed glazing reads clearly from the street without transparent materials. */
 function facadeWindow(g: THREE.Group, x: number, y: number, z: number, w: number, h: number, side = false) {
   const pane = (colour: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) =>
@@ -1168,7 +1244,7 @@ export function World3D({
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
     const phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
-    const hemi = new THREE.HemisphereLight(phase === "night" ? "#8fa3e0" : "#ffffff", phase === "night" ? "#4a5278" : "#b7c99a", phase === "night" ? 1.5 : 1.7);
+    const hemi = new THREE.HemisphereLight(phase === "night" ? "#b9c9ed" : "#fff9ef", phase === "night" ? "#63766b" : "#b7c99a", phase === "night" ? 1.85 : 1.7);
     scene.add(hemi);
     const sun = new THREE.DirectionalLight(phase === "night" ? "#9fb0ff" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.55 : 1.6);
     sun.castShadow = true;
@@ -1250,13 +1326,22 @@ export function World3D({
           if (ch === "T") jobs.push(place(g, `/world3d/suburban/${(x + y) % 3 === 1 ? "tree-small" : "tree-large"}.glb`, x - 0.4, y - 0.4, 1.8, 1.8));
           else if (ch === "L") jobs.push(place(g, "/world3d/roads/light-square.glb", x, y, 1, 1, 0.12));
         }
-      for (const st of map.structures) {
+      for (const [index, st] of map.structures.entries()) {
         const g = new THREE.Group();
         world.add(g);
-        box(g, "#eef0f4", st.x, 0, st.y, st.x + st.w, 3.2, st.y + st.h);
-        box(g, st.accent, st.x - 0.05, 2.6, st.y + st.h - 0.05, st.x + st.w + 0.05, 3.3, st.y + st.h + 0.05);
-        for (let i = 0; i < st.w - 1; i += 1.5) box(g, "#3e4a60", st.x + 0.4 + i, 1.2, st.y + st.h - 0.02, st.x + 1.1 + i, 2.2, st.y + st.h + 0.02);
-        const sg = sign(st.label, { bg: "#ffffff", fg: "#13203a", w: Math.min(st.w - 0.4, 5), h: 0.55, logo: st.companyId ?? null });
+        const front = st.y + st.h;
+        const stone = ["#e8dfcc", "#d4ddd7", "#ddd5c9"][index % 3];
+        box(g, stone, st.x, 0, st.y, st.x + st.w, 3.2, front);
+        box(g, ARCH.ink, st.x, 0.12, front - 0.05, st.x + st.w, 0.38, front + 0.03);
+        box(g, "#253e3c", st.x - 0.05, 2.6, front - 0.05, st.x + st.w + 0.05, 3.3, front + 0.05);
+        box(g, ARCH.brass, st.x - 0.06, 2.55, front, st.x + st.w + 0.06, 2.62, front + 0.08);
+        box(g, ARCH.stone, st.x - 0.08, 3.3, st.y - 0.08, st.x + st.w + 0.08, 3.46, front + 0.08);
+        box(g, st.accent, st.x + 0.3, 3.47, front - 0.18, st.x + 2.1, 3.55, front + 0.04);
+        for (let i = 0; i < st.w - 1; i += 1.5) facadeWindow(g, st.x + 0.4 + i, 1.2, front, 0.7, 1.0);
+        entrance(g, st.x + st.w / 2, front + 0.04, "#253e3c", 1.3);
+        architecturalPlanter(g, st.x + 0.55, front - 0.25);
+        if (index % 2 === 0) artFrontage(g, st.x, front + 0.09, st.w, index % 3);
+        const sg = sign(st.label, { bg: "#253e3c", fg: "#fff3d8", w: Math.min(st.w - 0.4, 5), h: 0.55, logo: st.companyId ?? null });
         sg.position.set(st.x + st.w / 2, 2.95, st.y + st.h + 0.07);
         g.add(sg);
       }
@@ -1319,6 +1404,9 @@ export function World3D({
         world.add(g);
         if (t.kind === "building") {
           jobs.push(building(g, t));
+          if (!t.companyId && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
+            artFrontage(g, t.x, t.y + t.h + 0.1, t.w, Math.floor((t.x + t.y) / 3) % 3);
+          }
           const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
           if (co) {
             const sg = sign(co.name, { bg: co.accent, fg: "#13203a", w: Math.min(t.w - 0.4, 4), h: 0.4, logo: co.id });
@@ -1338,10 +1426,12 @@ export function World3D({
           box(g, "#cfe6ef", t.x + 0.28, 0.5, t.y + 0.79, t.x + 0.72, 1.7, t.y + 0.82);
         } else if (t.kind === "postbox") cyl(g, "#c8322d", t.x + 0.5, t.y + 0.5, 0.1, 1.15, 0.24, 14);
         else if (t.kind === "bench") {
-          box(g, "#8a5a36", t.x + 0.05, 0.35, t.y + 0.4, t.x + 0.95, 0.43, t.y + 0.7);
-          box(g, "#8a5a36", t.x + 0.05, 0.43, t.y + 0.35, t.x + 0.95, 0.75, t.y + 0.4);
+          for (let slat = 0; slat < 3; slat++) box(g, "#b18b60", t.x + 0.05, 0.35, t.y + 0.4 + slat * 0.1, t.x + 0.95, 0.43, t.y + 0.48 + slat * 0.1);
+          box(g, "#b18b60", t.x + 0.05, 0.43, t.y + 0.35, t.x + 0.95, 0.75, t.y + 0.4);
+          for (const leg of [0.15, 0.8]) box(g, "#263e3b", t.x + leg, 0.1, t.y + 0.36, t.x + leg + 0.06, 0.6, t.y + 0.7);
         } else if (t.kind === "busstop") {
-          box(g, "#c8322d", t.x - 0.1, 1.9, t.y + 0.25, t.x + 1.1, 2, t.y + 0.75);
+          box(g, "#263e3b", t.x - 0.1, 1.9, t.y + 0.25, t.x + 1.1, 2, t.y + 0.75);
+          box(g, ARCH.brass, t.x - 0.1, 1.86, t.y + 0.73, t.x + 1.1, 1.91, t.y + 0.77);
           box(g, "#cfe6ef", t.x - 0.05, 0.4, t.y + 0.25, t.x + 1.05, 1.8, t.y + 0.3);
           box(g, "#2a2730", t.x - 0.1, 0.1, t.y + 0.25, t.x - 0.05, 1.9, t.y + 0.75);
           box(g, "#2a2730", t.x + 1.05, 0.1, t.y + 0.25, t.x + 1.1, 1.9, t.y + 0.75);
