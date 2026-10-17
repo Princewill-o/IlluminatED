@@ -35,8 +35,11 @@ export const CONTACT_TOPICS = [
 
 export type ContactTopic = (typeof CONTACT_TOPICS)[number]["value"];
 
-/** Canonical public address. Deployment aliases never appear in customer links. */
+/** Registered business origin for existing auth and billing callbacks. */
 export const SITE_URL = "https://illumed.co.uk";
+
+/** Primary public host, matching the live domain redirect. */
+export const PUBLIC_WEB_URL = "https://www.illumed.co.uk";
 
 export function siteOrigin(): string {
   // Keep sandbox development usable without redirecting local accounts to production.

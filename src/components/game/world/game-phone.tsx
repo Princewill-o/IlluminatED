@@ -20,12 +20,14 @@ export function GamePhone({
   onMap,
   onHome,
   onLocker,
+  onUniversities = onMap,
 }: {
   onClose: () => void;
   onCall: (id: string) => void;
   onMap: () => void;
   onHome: () => void;
   onLocker: () => void;
+  onUniversities?: () => void;
 }) {
   const [search, setSearch] = useState("");
   return (
@@ -47,9 +49,10 @@ export function GamePhone({
             <X className="size-5" />
           </button>
         </header>
-        <div className="grid grid-cols-3 gap-2 p-4 text-xs font-bold">
+        <div className="grid grid-cols-2 gap-2 p-4 text-xs font-bold">
           {[
             { name: "City map", Icon: Map, action: onMap },
+            {name:"Universities",Icon:Map,action:onUniversities},
             { name: "Home services", Icon: Home, action: onHome },
             { name: "Locker", Icon: Shirt, action: onLocker },
           ].map(({ name, Icon, action }) => (

@@ -11,14 +11,17 @@ import { play, soundOn } from "../sound";
 import { PLAYER } from "./art";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
+import { DailyShift } from "./daily-shift";
 import { GamePhone } from "./game-phone";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
+import { SceneIntro } from "./scene-intro";
 import { TrainCutscene } from "./train-cutscene";
 import { BikeDock, Dealership } from "./transport";
 import { TubeMap, type TubeTrip } from "./tube-map";
+import { UniversityGuide } from "./university-guide";
 import { useLife } from "./use-life";
 import { useNeeds } from "./use-needs";
 import { doActivity } from "./use-needs";
@@ -43,6 +46,7 @@ import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/
 import { trainBoardingDelay } from "@/game/core/train";
 import {
   CITY,
+  universityDistrictMap, universityInteriorMap, supermarketMap,
   STATION_PLATFORM_Y,
   TILE,
   stationMap,
@@ -80,6 +84,9 @@ const BUS_STOPS = busStops();
 let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
+  if (id === "universities") return universityDistrictMap();
+  if (id === "supermarket") return supermarketMap();
+  if (id.startsWith("university-")) return universityInteriorMap(id.slice(11));
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
   if (id === "study-lobby") return studyLobbyMap();
   if (id === "campus") return campusMap(offices);
@@ -115,9 +122,11 @@ export function WorldApp({
   cars = [],
   xp = 0,
   homeworkDone = 0,
+  wantedResetToken,
 }: {
   /** Homework you've handed in: each one is a get-out-of-jail-free card. */
   homeworkDone?: number;
+  wantedResetToken?: string;
   /** Cars you own (dealership). */
   cars?: string[];
   /** Total XP, for the level badge. */
@@ -148,9 +157,13 @@ export function WorldApp({
   const [arrive, setArrive] = useState<{ x: number; y: number } | undefined>();
   const [desk, setDesk] = useState(false);
   const [work, setWork] = useState<string | null>(null);
+  const [dailyJob,setDailyJob]=useState<ActiveJob|null>(null);
+  const [dailyBusy,setDailyBusy]=useState(false);
+  const [university,setUniversity]=useState<{id:string;topic:"courses"|"events"|"networking"}|null>(null);
   const [bus, setBus] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
+  const [intro,setIntro]=useState<{id:number;title:string;subtitle:string}|null>(null);
   const [sceneName, setSceneName] = useState("London");
   const [tutorial, setTutorial] = useState(false);
   const [waypoint, setWaypoint] = useState<Place | null>(null);
@@ -196,9 +209,12 @@ export function WorldApp({
   useEffect(() => () => { if (arrestTimer.current) clearTimeout(arrestTimer.current); }, []);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("phone") === "1") setPhone(true); }, []);
   const [arrest, setArrest] = useState(false);
-  const { life, update: updateLife } = useLife();
+  const { life, update: updateLife } = useLife(me.id,wantedResetToken);
   const { needs } = useNeeds();
   const [nearPerson, setNearPerson] = useState(false);
+  const [safety, setSafety] = useState(false);
+  const boardingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (boardingTimer.current) clearTimeout(boardingTimer.current); }, []);
   const say = useCallback((text: string, big = false) => {
     setToast({ text, big });
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -221,6 +237,9 @@ export function WorldApp({
   const map = useMemo(() => loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id]);
   const inOffice = mapId.startsWith("office-");
   const outdoors = mapId === "city" || mapId === "highlands";
+  useEffect(()=>{if(server)setIntro({id:Date.now(),title:map.name,subtitle:map.kind==="home"?"A place to recharge and make your own.":mapId==="prison"?"Reflect, study and make better choices.":mapId==="supermarket"?"Stock the shelves. Help customers. Build your skills.":mapId.startsWith("university")||mapId==="universities"?"Meet the guides and explore your next steps.":"Your next chapter starts here."});},[mapId,server,map.name,map.kind,trip]);
+  useEffect(()=>{const scene=(e:Event)=>{const d=(e as CustomEvent<{title?:string;subtitle?:string}>).detail;if(d?.title)setIntro({id:Date.now(),title:d.title.slice(0,100),subtitle:d.subtitle?.slice(0,160)??""});};window.addEventListener("illuminated:scene",scene);return()=>window.removeEventListener("illuminated:scene",scene);},[]);
+
   const atHome = mapId === "home";
   const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
 
@@ -261,7 +280,7 @@ export function WorldApp({
     (portal: Portal) => {
       const to = portal.to;
       if (jailed && to.kind !== "prison") { say("Find the study desk or explore the prison first."); return; }
-      if (life.stars >= 2 && ["map", "link", "game", "bus", "tube"].includes(to.kind)) { say("Lose the wanted stars before travelling or starting another activity."); return; }
+
       if (to.kind === "prison") {
         if (to.action === "study") setStudy(true);
         else if (to.action === "talk") setInmate(to.name ?? "Sam");
@@ -279,12 +298,14 @@ export function WorldApp({
         play("door", soundOn());
         doActivity(to.activity);
         void gainXp(to.activity);
+        setIntro({id:Date.now(),title:{sleep:"Rest and recharge",eat:"Time to refuel",study:"A little learning, every day",hike:"Take a moment outside"}[to.activity],subtitle:"Look after yourself while building your future."});
       }
-      else if (to.kind === "desk") setDesk(true);
+      else if (to.kind === "desk") {setDesk(true);setIntro({id:Date.now(),title:"Your next study session",subtitle:"Small steps build confidence. Focus on one question at a time."});}
       else if (to.kind === "tube") setTube(to.station);
-      else if (to.kind === "work") setWork(to.workplace);
-      else if (to.kind === "bike") setDock(true);
-      else if (to.kind === "games") setGames(true);
+      else if (to.kind === "university") setUniversity({id:to.university,topic:to.topic});
+      else if (to.kind === "work") {setWork(to.workplace);setIntro({id:Date.now(),title:workplaceById(to.workplace)?.name??"Workplace",subtitle:"Meet the team and practise workplace skills."});}
+      else if (to.kind === "bike") {setDock(true);setIntro({id:Date.now(),title:"Ride through the city",subtitle:"Look out for pedestrians and travel safely."});}
+      else if (to.kind === "games") {setGames(true);setIntro({id:Date.now(),title:"Games Hall",subtitle:"Play fairly, take a break and enjoy a challenge."});}
       else if (to.kind === "dealer") setDealer(true);
       else if (to.kind === "shop") setShop(to.shop);
       else if (to.kind === "doctor") {
@@ -353,7 +374,7 @@ export function WorldApp({
 
   // Spatial pursuit: actual car arrival, foot chase, a search area and a knowledge challenge.
   useEffect(() => {
-    if (life.stars < 2 || jailed || life.hearing || !outdoors || arrest) {
+    if (life.stars < 1 || jailed || life.hearing || !outdoors || arrest) {
       pursuitRef.current = null; setPursuit(null); return;
     }
     const timer = setInterval(() => {
@@ -369,13 +390,13 @@ export function WorldApp({
   }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, updateLife, say]);
 
   useEffect(() => {
-    if (jailed && life.prisonWork >= 3 && Date.now() >= life.jailUntil) {
+    if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
       updateLife(l=>releaseFromPrison(l)); return;
     }
     if (jailed && mapId !== "prison") goTo("prison", "HMP Thames");
     if (!jailed && mapId === "prison") {
       if (life.stars || life.heatAt || life.hearing) updateLife(releaseFromPrison);
-      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — your wanted stars are cleared." : "Study complete. You've been released!", true);
+      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — your wanted stars are cleared." : life.prisonWork>=3?"Study complete. You have been released with no wanted stars.":"You have served your sentence. Your wanted stars are cleared.", true);
       setStudy(false); setInmate(null);
       goTo("city", "London", courtSteps);
       releaseReason.current = "released";
@@ -403,10 +424,8 @@ export function WorldApp({
     return () => clearInterval(t);
   }, [outdoors]);
   const fight = useCallback(() => {
-    window.dispatchEvent(new Event("illuminated:fight"));
-    updateLife((l) => addStar(l, Date.now()));
-    say("Scuffle! The police are watching...");
-  }, [updateLife, say]);
+    setSafety(true);
+  }, []);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "f" && nearPerson && !phone && !study && !inmate && !arrest && pursuit?.stage !== "challenge" && !document.querySelector('[role="dialog"]') && !(e.target instanceof HTMLElement && e.target.closest("input, textarea, button, [role=dialog]"))) fight();
@@ -427,12 +446,11 @@ export function WorldApp({
         if (!st || !inside) return;
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
-        void gainXp("train");
         // Board the visible train when its doors are fully open.
         const wait = trainBoardingDelay(performance.now() - TRAIN_CALL.at);
         setBoarding(true);
-        setTimeout(() => setBoarding(false), wait);
-        setTimeout(() => setJourney({
+        if (boardingTimer.current) clearTimeout(boardingTimer.current);
+        boardingTimer.current = setTimeout(() => { setBoarding(false); void gainXp("train"); setJourney({
           to: st.name,
           go: () => {
             setJourney(null);
@@ -441,7 +459,7 @@ export function WorldApp({
             setMapId(`station-${t.id}`);
             setTrip((n) => n + 1);
           },
-        }), wait);
+        }); }, wait);
         play("train", soundOn());
         return;
       } else {
@@ -618,7 +636,7 @@ export function WorldApp({
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
       <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || inmate || shop || boarding || arrest || pursuit?.stage === "challenge")}
+        paused={Boolean(intro) || safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || inmate || shop || boarding || arrest || pursuit?.stage === "challenge")}
         police={pursuit}
         map={map}
         serverId={atHome ? "solo" : inOffice ? "main" : server}
@@ -691,6 +709,13 @@ export function WorldApp({
       </button>
       <EventAdPopup events={events} />
       <WantedStars stars={life.stars} />
+      {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
+        <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
+        <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>
+        <p className="mt-3 text-sm">In this fictional game, choosing to shove brings the police. There is no reward for hurting others.</p>
+        <button type="button" className="mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
+        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));updateLife(l=>addStar(l,Date.now()));say("Someone was hurt. The police are responding. Think about how to put things right.",true);}}>Continue with consequences</button>
+      </section></div>}
       {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
       {nearPerson && !jailed && (
         <button type="button" onClick={fight} className="absolute right-3 bottom-52 z-[100001] rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
@@ -705,7 +730,7 @@ export function WorldApp({
       }}/ >}
       {arrest && <ArrestOverlay />}
       <button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="absolute right-3 bottom-24 z-[100001] grid size-12 place-items-center rounded-2xl border-2 border-white bg-[#13203a] text-white shadow-lg"><Smartphone className="size-6"/></button>
-      {phone && <GamePhone onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=2)say("Finish your current law activity first.");else router.push("/games/home");}} onLocker={()=>{if(!jailed&&life.stars<2)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+      {phone && <GamePhone onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=2)say("Finish your current law activity first.");else router.push("/games/home");}} onLocker={()=>{if(!jailed&&life.stars<2)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=2){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
@@ -760,8 +785,8 @@ export function WorldApp({
         </div>
       )}
       {boarding && (
-        <div className="pointer-events-none absolute inset-x-0 top-24 z-[100001] mx-auto w-fit rounded-full bg-[#141418] px-5 py-2 font-mono text-sm font-black text-[#ffd400] shadow-xl" role="status">
-          Waiting for open doors. Please stand behind the yellow line.
+        <div className="absolute inset-x-0 top-24 z-[100001] mx-auto w-fit rounded-full bg-[#141418] px-5 py-2 font-mono text-sm font-black text-[#ffd400] shadow-xl" role="status">
+          Waiting for open doors. Stay behind the yellow line. <button type="button" className="ml-3 underline" onClick={()=>{if(boardingTimer.current)clearTimeout(boardingTimer.current);setBoarding(false);}}>Cancel</button>
         </div>
       )}
       {journey && <TrainCutscene to={journey.to} line="Revision" avatar={me.avatar} onArrive={journey.go} />}
@@ -784,7 +809,10 @@ export function WorldApp({
           Decorate
         </Link>
       )}
-      {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} />}
+      {intro&&!journey&&<SceneIntro key={intro.id} title={intro.title} subtitle={intro.subtitle} onDone={()=>setIntro(null)}/>}
+      {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
+      {dailyJob&&map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")&&<DailyShift job={dailyJob} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
+      {work && workplaceById(work) && <WorkplaceDoor workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else if(mapId==="city"){setDailyJob(next);setIntro({id:Date.now(),title:"Your delivery shift",subtitle:"Collect the orders. Travel safely. Check every ticket."});}else say("Visit Pizzazz in London to collect your delivery route.",true);}} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} />}
       <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
         quests={quests}

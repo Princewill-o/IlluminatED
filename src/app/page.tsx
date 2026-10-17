@@ -4,15 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { ArrowRight, Building2, Check, ClipboardCheck, GraduationCap, School, ShieldCheck, Sparkles, User } from "lucide-react";
+import type { Metadata } from "next";
 
 import { DeletedNotice } from "@/components/deleted-notice";
 import { Reveal } from "@/components/landing";
+import { SiteStructuredData } from "@/components/seo/structured-data";
+
+export const metadata:Metadata={title:{absolute:"IlluminatED | GCSE & A-Level Revision Games for Schools"},description:"A UK revision platform for GCSE, A-Level, BTEC and T Level students. Explore learning games, quizzes, teacher-set homework and student progress tracking.",alternates:{canonical:"/"},openGraph:{url:"/",title:"IlluminatED | GCSE & A-Level Revision Games for Schools"}};
 
 const AUDIENCES = [
   {
     icon: GraduationCap,
     title: "Students",
-    text: "GCSE, A level, BTEC and T Level revision as a life sim: explore London, work real jobs, earn Clout and build a CV.",
+    text: "GCSE, A level, BTEC and T Level revision as a life sim: explore London, practise simulated jobs, earn Clout and build a CV.",
   },
   {
     icon: School,
@@ -60,10 +64,12 @@ const FAQ = [
 export default function Home() {
   return (
     <>
+      <SiteStructuredData/>
       <Suspense fallback={null}>
         <DeletedNotice />
       </Suspense>
 
+      <nav aria-label="Explore IlluminatED" className="container flex flex-wrap gap-5 pt-4 text-sm font-semibold text-primary"><Link href="/schools">For schools and teachers</Link><Link href="/revision-games">Revision games for students</Link></nav>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute -top-40 -right-40 size-[36rem] rounded-full bg-[#dde8fd] opacity-70 blur-3xl dark:bg-[#1b2c48]" />

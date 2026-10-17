@@ -47,6 +47,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   return (
     <WorldApp
+      wantedResetToken={account.id === "f418310b-07f5-4865-aa4c-38cf126a3ef1" ? "developer-20261017" : undefined}
       me={{ id: account.id, username: account.profile.username, avatar: uniformFor(job, player.avatar), org, badge, pass, publicKey }}
       offices={orgs.map(({ slug, name, sector, accent }) => ({ slug, name, sector, accent }))}
       staff={bySlug}

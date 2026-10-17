@@ -3,6 +3,7 @@ import { COMPANIES } from "./companies";
 import { type Placed, STARTER_LAYOUT, furnitureById } from "./homes";
 import { buildHome, buildLondon } from "./london";
 import { buildHighlands } from "./regions";
+import { UNIVERSITIES, universityById } from "./universities";
 
 /**
  * The walkable multiplayer worlds: clean top-down pixel art in the spirit of
@@ -28,6 +29,7 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | {kind:"university"; university:string; topic:"courses"|"events"|"networking"}
   | { kind: "prison"; action: "study" | "escape" | "talk"; name?: string }
   | { kind: "game"; companyId: string }
   | { kind: "map"; mapId: string; label: string }
@@ -468,6 +470,7 @@ export function londonMap(): WorldMap {
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   portals.push(
+    {id:"universities",rect:px(92,83,2,1),label:"University Quarter: explore universities",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
     {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: study and build skills",to:{kind:"link",href:"/learn"}},
     {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter Club: social lobby",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter Lobby"}},
     {id:"reading-garden",rect:px(87,80,2,2),label:"Reading garden: restore Focus",to:{kind:"act",activity:"study"}},
@@ -882,3 +885,31 @@ export const PHRASES = [
 
 export const chatText = (id: string) =>
   EMOTES.find((e) => e.id === id)?.label ?? PHRASES.find((p) => p.id === id)?.text ?? null;
+
+/** Walkable fictional district, not a geographical replica of the universities. */
+export function universityDistrictMap(): WorldMap {
+ const g=new Grid(48,38,"g");g.border("T");g.fill(1,17,46,6,"-");g.fill(22,1,5,36,"-");
+ const structures:Structure[]=[],portals:Portal[]=[];
+ UNIVERSITIES.forEach((u,i)=>{
+  const x=i%2?30:6,y=i<2?5:26;
+  g.fill(x,y,12,6,"#");g.fill(x+4,y+6,3,i<2?7:1,"-");
+  if(i>=2)g.fill(x+4,22,3,4,"-");
+  structures.push({x,y,w:12,h:6,label:u.fullName,accent:u.colour,door:"bottom"});
+  portals.push({id:`enter-${u.id}`,rect:px(x+4,y+6,3,1),label:`Enter ${u.fullName}`,to:{kind:"map",mapId:`university-${u.id}`,label:u.fullName}});
+ });
+ for(const x of [4,20,28,44]) for(const y of [3,14,24,35])g.set(x,y,"T");
+ portals.push({id:"london",rect:px(1,18,2,2),label:"Return to London",to:{kind:"map",mapId:"city",label:"London"}});
+ return finish({id:"universities",kind:"campus",name:"University Quarter",structures,portals,rooms:[],spawn:centre(4,20),accent:"#7153b9",sign:{x:24,y:19,text:"Explore your next chapter"}},g);
+}
+export function universityInteriorMap(id:string): WorldMap|null {
+ const u=universityById(id);if(!u)return null;
+ const g=new Grid(26,23,".");g.border("#");
+ const portals:Portal[]=[{id:"exit",rect:px(12,21,2,1),label:"Back to University Quarter",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
+ ...(["courses","events","networking"] as const).map((topic,i)=>({id:`${id}-${topic}`,rect:px(5+i*7,8,2,2),label:`Talk: ${topic==="courses"?"subject guide":topic==="events"?"events ambassador":"networking mentor"}`,to:{kind:"university" as const,university:id,topic}}))];
+ return finish({id:`university-${id}`,kind:"office",name:`${u.name} · discovery lounge`,structures:[],portals,rooms:[{name:"Courses and questions",rect:px(2,3,7,10)},{name:"Open days and events",rect:px(10,3,7,10)},{name:"Networking safely",rect:px(18,3,6,10)}],spawn:centre(13,18),accent:u.colour,sign:{x:13,y:3,text:`${u.name}: ask, explore, plan`}},g);
+}
+export function supermarketMap():WorldMap {
+ const g=new Grid(30,25,".");g.border("#");
+ for(const x of [8,15,22])g.fill(x,6,2,10,"#");
+ return finish({id:"supermarket",kind:"office",name:"Tesco · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
+}

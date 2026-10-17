@@ -8,6 +8,7 @@ import { QUESTION_BANK } from "@/lib/data/topics";
 import { getSupabase } from "@/lib/social/server";
 
 const FRIENDLY: Record<string, string> = {
+  school_licence_required: "You need an active school licence and the correct student or teacher role.",
   not_allowed: "You don't have access to that.",
   no_class: "No class has that code. Check it with your teacher.",
   own_class: "That's your own class.",
@@ -104,4 +105,13 @@ export async function submitHomework(homeworkId: string, answers: number[]) {
   if (!r.ok) return r;
   const row = r.data[0];
   return { ok: true as const, data: row };
+}
+
+/** Teacher-authored multiple-choice work: answer keys remain in the private schema. */
+export async function setCustomHomework(input: {classId:string;title:string;instructions:string;due:string;questions:{question:string;options:string[];answer:number;explain:string}[]}) {
+ const question=z.object({question:z.string().trim().min(3).max(1200),options:z.array(z.string().trim().min(1).max(300)).length(4),answer:z.number().int().min(0).max(3),explain:z.string().trim().min(3).max(1500)}).refine(q=>new Set(q.options).size===4);
+ const p=z.object({classId:z.string().uuid(),title:z.string().trim().min(2).max(80),instructions:z.string().trim().max(500),due:z.string().datetime({offset:true}),questions:z.array(question).min(1).max(30)}).safeParse(input);
+ if(!p.success)return {ok:false as const,error:"Add a title, due date, four distinct options and an explanation for each question."};
+ const qs=p.data.questions;
+ return rpc<string>("homework_create",{p_class:p.data.classId,p_title:p.data.title,p_instructions:p.data.instructions,p_due:p.data.due,p_questions:qs.map(q=>({key:`teacher-${crypto.randomUUID()}`,q:q.question,options:q.options,topic:"Teacher-created homework"})),p_answers:qs.map(q=>q.answer),p_explains:qs.map(q=>q.explain)},[`/homework/class/${p.data.classId}`,"/teacher"]);
 }

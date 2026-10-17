@@ -11,6 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
 
+import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
 import { COMPANIES } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
@@ -478,6 +479,7 @@ export function lymeBike(green = "#4cd137") {
   const wheel = (x: number) => {
     const w = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.045, 8, 22), mat("#1b1622"));
     w.position.set(x, 0.24, 0);
+    w.userData.bikeWheel = true;
     w.castShadow = true;
     g.add(w);
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 10), mat("#8d93a0"));
@@ -590,6 +592,14 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         }
         box(g, "#5d6070", x, 2.35, y + 0.42, x + 1, 2.45, y + 0.58);
         box(g, "#c9c4b8", x, -0.05, y, x + 1, 0.01, y + 1);
+        continue;
+      }
+      if (map.id === "supermarket" && ch === "#" && x > 1 && x < Wd-2 && y > 1 && y < H-2) {
+        box(g,"#e2e8ef",x,0,y,x+1,1.5,y+1);
+        for(const shelf of [0.35,0.85,1.35]) {
+          box(g,"#ffffff",x-0.02,shelf,y-0.03,x+1.02,shelf+0.06,y+1.03);
+          for(let item=0;item<3;item++)box(g,["#e99a3b","#6ca962","#c94f58","#8e77bc"][(x+y+item)%4],x+0.08+item*0.3,shelf+0.07,y+0.06,x+0.29+item*0.3,shelf+0.3,y+0.32);
+        }
         continue;
       }
       if (ch === "#" || ch === "W" || ch === "G") {
@@ -706,6 +716,7 @@ export function World3D({
   nearPortal,
   getPolice,
   onGround,
+  onUnavailable,
 }: {
   map: WorldMap;
   getMe: () => { x: number; y: number; walking: boolean };
@@ -716,6 +727,7 @@ export function World3D({
   bike?: string | null;
   /** Real hackathons and tech events for the billboards. */
   ads?: TechEvent[];
+  onUnavailable?:()=>void;
   getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
   onGround: (x: number, y: number) => void;
@@ -736,9 +748,13 @@ export function World3D({
     const indoors = !london && !highland && map.kind !== "campus";
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
+    let renderer: THREE.WebGLRenderer;
+    try{renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
+    const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
+    renderer.domElement.addEventListener("webglcontextlost",contextLost);
+    const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 2));
+    renderer.shadowMap.enabled = !mobile;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
@@ -801,7 +817,7 @@ export function World3D({
         name.position.set(map.cols / 2, 2.3, 1.02);
         world.add(name);
         // You've just stepped off: start with the train standing at the platform.
-        if (TRAIN_CALL.at < 0 || performance.now() - TRAIN_CALL.at > 24_000) TRAIN_CALL.at = performance.now() - 6500;
+        if (TRAIN_CALL.at < 0) TRAIN_CALL.at = performance.now() - 6500;
         const train = tubeTrain();
         // The train only shows inside the station: it comes out of one tunnel and leaves by the other.
         const clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), -1.6), new THREE.Plane(new THREE.Vector3(-1, 0, 0), map.cols - 1.6)];
@@ -842,6 +858,12 @@ export function World3D({
         const sg = sign(st.label, { bg: "#ffffff", fg: "#13203a", w: Math.min(st.w - 0.4, 5), h: 0.55, logo: st.companyId ?? null });
         sg.position.set(st.x + st.w / 2, 2.95, st.y + st.h + 0.07);
         g.add(sg);
+      }
+      if(map.id === "universities") {
+        for(const st of map.structures)for(let i=0;i<4;i++) {
+          const column=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.2,2.3,12),mat("#f7f1e6"));
+          column.position.set(st.x+1.4+i*2.8,1.15,st.y+st.h-0.3);world.add(column);
+        }
       }
     } else if (highland) {
       const H = buildHighlands();
@@ -1086,13 +1108,13 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = london ? 80 : highland ? 18 : map.kind === "home" ? 0 : map.kind === "station" ? 18 : map.id === "study-lobby" ? 24 : 12;
+    const residentLimit = london ? (mobile ? 36 : 80) : highland ? 18 : map.kind === "home" ? 0 : map.kind === "station" ? 18 : map.id === "study-lobby" ? 24 : 12;
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i));
       scene.add(body.root);
       return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
-    const cyclists = L ? Array.from({ length: 8 }, (_, i) => {
+    const cyclists = L ? Array.from({ length: mobile ? 4 : 8 }, (_, i) => {
       const body = makeBody(npcLook(i + 30));
       const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
       bendAll(bike);
@@ -1146,6 +1168,19 @@ export function World3D({
       scene.add(person.root);
     }
 
+    for(const [i,portal] of map.portals.filter(p=>p.to.kind === "university").entries()) {
+      const body=makeBody(npcLook(60+i));
+      const x=(portal.rect.x+portal.rect.w/2)/TILE,z=portal.rect.y/TILE-0.5;
+      body.root.position.set(x,0,z);scene.add(body.root);
+      const caption=sign(["Subject guide","Events ambassador","Networking mentor"][i%3],{bg:"#ffffff",fg:"#13203a",w:2.5,h:0.35});
+      caption.position.set(x,1.9,z);world.add(caption);
+      box(world,["#b7d8f1","#d8c7f2","#bce0bd"][i%3],x-1,0,z-1.3,x+1,0.65,z-0.7);
+    }
+    if(map.id === "city") {
+      const gate=map.portals.find(p=>p.id === "universities");
+      if(gate){const x=gate.rect.x/TILE,z=gate.rect.y/TILE;for(const dx of [-0.3,2.3])box(world,"#d6c8b3",x+dx,0,z-0.5,x+dx+0.2,2.6,z);
+      const board=sign("University Quarter",{bg:"#7153b9",fg:"#ffffff",w:3.1,h:0.45});board.position.set(x+1.1,2.5,z);world.add(board);}
+    }
     // ── Clicks: walk to where you tap on the ground ──
     const ray = new THREE.Raycaster();
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1);
@@ -1200,7 +1235,7 @@ export function World3D({
           swingUntil = 0;
           me.walking = !p.walking;
         }
-        setWalking(me, p.walking);
+        setWalking(me, p.walking && !bikeRef.current);
       }
       // Swap your character for your car when driving.
       const want = carRef.current;
@@ -1232,7 +1267,8 @@ export function World3D({
         focus.set(mx, 0, mz);
         first = false;
       }
-      const followed = followPlayerCamera(focus, { x: mx, z: mz }, dt);
+      const shot=cinematicOffset(now-CAMERA_SHOT.at,reduce);
+      const followed = followPlayerCamera(focus, { x: mx+shot.x, z: mz+shot.z }, dt);
       focus.set(followed.x, 0, followed.z);
       const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz });
       FOCUS.value.set(framing.x, 0, framing.z);
@@ -1360,6 +1396,24 @@ export function World3D({
       }
       water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
       for (const m of mixers) m.update(dt);
+      const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
+        if (!body.char) return;
+        body.char.play("drive");
+        // Apply a gentle pedal motion over the seated driving pose after animation updates.
+        for (const [name, side] of [["leg-left", 1], ["leg-right", -1]] as const) {
+          const leg = body.char.object.getObjectByName(name);
+          if (leg && moving) leg.rotateX(Math.sin(phase) * 0.22 * side);
+        }
+        body.root.rotation.y = heading;
+        body.root.position.set(cycle.position.x - Math.sin(heading) * 0.19, 0, cycle.position.z - Math.cos(heading) * 0.19);
+        body.root.updateMatrixWorld(true);
+        const hip = body.char.object.getObjectByName("torso");
+        if (hip) body.root.position.y += cycle.position.y + 0.66 - hip.getWorldPosition(new THREE.Vector3()).y;
+        cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
+      };
+      if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
+      else if (me.char && now > swingUntil) me.char.play(p.walking ? "walk" : "idle");
+      for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, !reduce, secs * 8 + c.at * 10);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(frame);
     };
@@ -1405,7 +1459,9 @@ export function World3D({
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
       window.removeEventListener("illuminated:fight", onFight);
+      renderer.domElement.removeEventListener("webglcontextlost",contextLost);
       renderer.dispose();
+      renderer.forceContextLoss();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();

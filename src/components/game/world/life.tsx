@@ -160,7 +160,7 @@ export function PrisonHud({ leftMs, cards, progress, onStudy, onCard }: { leftMs
   return <div className="absolute top-24 left-1/2 z-[65] w-[min(360px,calc(100%-24px))] -translate-x-1/2 rounded-3xl bg-[#f2d9a6] p-4 text-[#13203a] shadow-xl">
     <p className="text-xs font-black tracking-widest uppercase">HMP Thames · fictional game</p>
     <p className="mt-1 text-lg font-black">Time left {Math.floor(seconds/60)}:{String(seconds%60).padStart(2,"0")} · Study {progress}/3</p>
-    <p className="mt-1 text-xs">Cell doors are open. Talk to inmates, study or explore the service maze. Guards add 45 seconds if they catch an escape attempt.</p>
+    <p className="mt-1 text-xs">Serve your time or complete three study tasks to be released with no stars. Cell doors are open: talk, study or explore. Guards add 45 seconds if they catch an escape attempt.</p>
     <button type="button" onClick={onStudy} className="mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
     <button type="button" disabled={!cards} onClick={onCard} className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
     <a href="/homework" className="mt-2 block text-center text-xs font-bold underline">Complete assigned homework</a>

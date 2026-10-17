@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { SITE_URL as SITE } from "@/lib/site";
+import { PUBLIC_WEB_URL as SITE } from "@/lib/site";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,6 +9,12 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [
         "/dashboard",
+        "/admin",
+        "/teacher",
+        "/homework",
+        "/school-access",
+        "/getting-started",
+        "/api/",
         "/tutors",
         "/social/u",
         "/account",

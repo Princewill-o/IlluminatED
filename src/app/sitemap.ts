@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
 
-import { SITE_URL as SITE } from "@/lib/site";
+import { PUBLIC_WEB_URL as SITE } from "@/lib/site";
 
 /** Only the pages anyone can open. Everything else needs an account. */
 const PUBLIC_PAGES = [
   "/",
   "/about",
+  "/book",
+  "/schools",
+  "/revision-games",
   "/faq",
   "/accessibility",
   "/your-data",
@@ -15,7 +18,6 @@ const PUBLIC_PAGES = [
   "/contact",
   "/safeguarding",
   "/social/guidelines",
-  "/sign-in",
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {

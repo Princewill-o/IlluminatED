@@ -34,6 +34,7 @@ const radioCard =
 export function DetailsForm({
   mode,
   needsProfile,
+  schoolName,
   initial,
   next,
   courses,
@@ -41,6 +42,7 @@ export function DetailsForm({
 }: {
   mode: "onboarding" | "edit";
   needsProfile: boolean;
+  schoolName?: string;
   initial: LearnerDetails | null;
   next: string;
   courses: SlimCourse[];
@@ -53,6 +55,7 @@ export function DetailsForm({
   const top = useRef<HTMLDivElement>(null);
 
   const [username, setUsername] = useState("");
+  const [privateSchool,setPrivateSchool]=useState(initial?.schoolName??schoolName??"");
   const [ageBand, setAgeBand] = useState<string>(initial?.ageBand ?? "");
   const [stage, setStage] = useState<string>(initial?.stage ?? "");
   const [yearGroup, setYearGroup] = useState<string>(initial?.yearGroup ?? "");
@@ -84,6 +87,7 @@ export function DetailsForm({
     if (s === 0) {
       if (needsProfile && !/^[A-Za-z0-9_]{3,20}$/.test(username))
         return "Choose a username: 3 to 20 letters, numbers or underscores.";
+      if(privateSchool.trim().length<2||privateSchool.trim().length>100)return "Enter your school or college, or Independent learner.";
       if (!ageBand) return "Tell us your age range.";
       if (!stage) return "Choose what you're studying.";
       if (!yearGroup) return "Choose your year group.";
@@ -174,6 +178,7 @@ export function DetailsForm({
       {/* Step 1: about you */}
       <fieldset hidden={!visible(0)} className="mt-8 space-y-7">
         <legend className="sr-only">About you</legend>
+        <div><label htmlFor="privateSchool" className={labelCls}>School or college</label><input id="privateSchool" name="privateSchool" value={privateSchool} onChange={e=>setPrivateSchool(e.target.value)} readOnly={Boolean(schoolName)} required minLength={2} maxLength={100} placeholder="School, college or Independent learner" className={cn(fieldCls,"mt-2 h-11 w-full")} aria-describedby="private-school-help"/><p id="private-school-help" className="mt-2 text-xs text-muted-foreground">Private account information, never shown on your public profile. A school licence is assigned by your administrator.</p></div>
         {needsProfile && (
           <div>
             <label htmlFor="username" className={labelCls}>

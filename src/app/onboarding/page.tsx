@@ -24,6 +24,8 @@ export default async function OnboardingPage({
   const next = safeNext(sp.next);
   const account = await getAccount();
   if (!account) redirect(`/sign-in?next=${encodeURIComponent(next)}`);
+  if (account.school && !account.school.active) redirect("/school-access");
+  if (account.school?.role === "teacher" && !next.startsWith("/games")) redirect("/teacher");
   if (account.profile && account.details)
     redirect(account.tutorialCompleted ? next : `/getting-started?next=${encodeURIComponent(next)}`);
 
@@ -69,6 +71,7 @@ export default async function OnboardingPage({
       <div className="mt-8">
         <DetailsForm
           mode="onboarding"
+          schoolName={account.school?.name}
           needsProfile={!account.profile}
           initial={account.details}
           next={next}

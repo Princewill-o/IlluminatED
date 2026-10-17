@@ -280,6 +280,29 @@ export function buildLondon(): Built {
   }
   for(let x=91;x<111;x++)if(get(x,71)==="g")set(x,71,"-");
 
+  // Infill only unused grass, preserving roads, the river, exits and the main park.
+  // Small plots and pavement lanes form neighbourhoods instead of empty fields.
+  let infill = 0;
+  const neighbourhoodNames = ["Corner café", "Community studio", "Cycle workshop", "Neighbourhood shop"];
+  for (let y=4;y<H-6;y+=6) for(let x=3;x<W-6;x+=6) {
+    if(infill>=54 || (x<28&&y<18))continue;
+    const clear=Array.from({length:5},(_,dy)=>Array.from({length:5},(_,dx)=>["g","-"].includes(get(x+dx-1,y+dy-1))).every(Boolean)).every(Boolean);
+    if(!clear || Array.from({length:3},(_,dy)=>Array.from({length:3},(_,dx)=>get(x+dx,y+dy)==="g").filter(Boolean).length).reduce((a,b)=>a+b,0)<4 || things.some(t=>Math.abs(t.x-x)<5&&Math.abs(t.y-y)<5))continue;
+    const retail=y>24&&infill%4===0;
+    building(x,y,3,3,retail?2:2.5+(infill%3)*0.45,retail?"shop":"terrace",{id:`neighbourhood-${infill}`,colour:COLOURS[infill%COLOURS.length],label:retail?neighbourhoodNames[Math.floor(infill/4)%4]:undefined});
+    for(let dy=-1;dy<=3;dy++)for(let dx=-1;dx<=3;dx++)if(get(x+dx,y+dy)==="g")set(x+dx,y+dy,"-");
+    infill++;
+  }
+  for(let y=53;y<H-1;y++)for(let x=78;x<W-1;x++)if(get(x,y)==="g"&&(x%6<=1||y%6<=1))set(x,y,"-");
+  // South Walk: a compact residential edge with a continuous public footpath.
+  for(let x=3;x<78;x+=7){
+    const clear=Array.from({length:3},(_,dy)=>Array.from({length:4},(_,dx)=>["g","-","_"].includes(get(x+dx,84+dy))).every(Boolean)).every(Boolean);
+    if(!clear)continue;
+    building(x,84,4,3,2.3,"terrace",{id:`south-walk-${x}`,colour:COLOURS[x%COLOURS.length],label:"South Walk homes"});
+    for(let y=82;y<84;y++)if(get(x+2,y)==="g")set(x+2,y,"-");
+  }
+
+
   // ── Street furniture and trees along the roads ───────────────────────────
   for (let x = 2; x < W - 2; x += 5) {
     street(x, 18);

@@ -212,6 +212,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
 
 /** What you see at a workplace door: the role ladder and what you can do here. */
 export function WorkplaceDoor({
+  onPracticalShift,
   workplace,
   job,
   avatar,
@@ -221,6 +222,7 @@ export function WorkplaceDoor({
   job: ActiveJob | null;
   avatar: Avatar;
   onClose: () => void;
+  onPracticalShift?: (job:ActiveJob)=>void;
 }) {
   const [mode, setMode] = useState<"door" | "interview" | "shift">("door");
   const [hired, setHired] = useState<ActiveJob | null>(null);
@@ -242,6 +244,7 @@ export function WorkplaceDoor({
     <Panel onClose={onClose} title={workplace.name} workplace={workplace}>
       <Ladder workplace={workplace} job={mine} />
       <div className="mt-4 grid gap-2">
+        {mine&&onPracticalShift&&["pizzazz","tescow"].includes(workplace.id)&&<button type="button" onClick={()=>onPracticalShift(mine)} className="rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white">{workplace.id==="pizzazz"?"Start a pizza delivery route":"Work on the supermarket floor"}</button>}
         {mine ? (
           <button type="button" onClick={() => setMode("shift")} className="flex items-center justify-center gap-2 rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
             <Briefcase className="size-5" aria-hidden /> Start a shift as {roleOf(workplace.id, mine.role)?.title}

@@ -17,6 +17,9 @@ export async function GET(request: Request) {
   const { data, error } = await sb.auth.exchangeCodeForSession(code);
   if (error || !data.user) return fail;
 
+  const {data:school}=await sb.rpc("school_access");
+  if(school&&!school.active)return NextResponse.redirect(new URL("/school-access",url.origin));
+  if(school?.role==="teacher"&&!next.startsWith("/games"))return NextResponse.redirect(new URL("/teacher",url.origin));
   const [{ data: profile }, { data: details }] = await Promise.all([
     sb.from("profiles").select("id").eq("id", data.user.id).maybeSingle(),
     sb

@@ -1,10 +1,13 @@
 import Link from "next/link";
+import {redirect} from "next/navigation";
+
 
 import type { Metadata } from "next";
 
 
-import { CreateClass, JoinClass, LeaveClass } from "@/components/school/school";
+import { JoinClass, LeaveClass } from "@/components/school/school";
 import { requireAccount } from "@/lib/account/server";
+import {getSchoolAccess} from "@/lib/school/access";
 import { loadClasses, loadMyHomework } from "@/lib/school/server";
 
 export const metadata: Metadata = { title: "Homework" };
@@ -12,6 +15,8 @@ export const metadata: Metadata = { title: "Homework" };
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
 export default async function HomeworkPage() {
+  const school=await getSchoolAccess();
+  if(school?.role==="teacher")redirect("/teacher");
   const account = await requireAccount("/homework");
   const [{ teaching, joined }, homework] = await Promise.all([loadClasses(account.id), loadMyHomework(account.id)]);
   const now = Date.now();
@@ -94,9 +99,7 @@ export default async function HomeworkPage() {
               breakdown. Students are identified only by their username.
             </p>
           </div>
-          <div className="mt-4">
-            <CreateClass />
-          </div>
+          <p className="mt-4 text-sm">Approved school teachers use their <Link href="/teacher" className="underline">teacher workspace</Link> to create classes.</p>
           {teaching.length > 0 && (
             <ul className="mt-4 space-y-2">
               {teaching.map((c) => (

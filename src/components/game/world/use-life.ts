@@ -1,48 +1,24 @@
 "use client";
+import {useCallback,useEffect,useState} from "react";
 
-import { useCallback, useEffect, useState } from "react";
+import {freshLife,type LifeState} from "@/game/core/law";
+import {lifeStorageKey,readAccountLife,resetAccountWanted,type LifeStorage} from "@/game/core/life-storage";
 
-import { type LifeState, cooled, freshLife } from "@/game/core/law";
-
-const KEY = "illuminated:life";
-const EVENT = "illuminated:life";
-
-export function readLife(): LifeState {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return cooled({ ...freshLife(), ...(JSON.parse(raw) as LifeState) }, Date.now());
-  } catch {
-    // Storage blocked: fresh each visit.
-  }
-  return freshLife();
-}
-
-export function writeLife(s: LifeState) {
-  try {
-    localStorage.setItem(KEY, JSON.stringify(s));
-  } catch {
-    // Not saved; fine for this visit.
-  }
-  window.dispatchEvent(new CustomEvent(EVENT));
-}
-
-/** Your wanted level, health and prison state, kept in the browser and ticking with the clock. */
-export function useLife() {
-  const [life, setLife] = useState<LifeState>(freshLife);
-  useEffect(() => {
-    setLife(readLife());
-    const t = setInterval(() => setLife(readLife()), 1000);
-    const on = () => setLife(readLife());
-    window.addEventListener(EVENT, on);
-    return () => {
-      clearInterval(t);
-      window.removeEventListener(EVENT, on);
-    };
-  }, []);
-  const update = useCallback((f: (s: LifeState) => LifeState) => {
-    const next = f(readLife());
-    writeLife(next);
-    setLife(next);
-  }, []);
-  return { life, update };
+const EVENT="illuminated:life";
+const memory=new Map<string,string>();
+const store:LifeStorage={getItem:key=>{try{return localStorage.getItem(key)??memory.get(key)??null;}catch{return memory.get(key)??null;}},setItem:(key,value)=>{memory.set(key,value);try{localStorage.setItem(key,value);}catch{/* Keep this browser session playable when storage is blocked. */}}};
+export function readLife(userId:string):LifeState{return readAccountLife(store,userId,Date.now());}
+export function writeLife(userId:string,state:LifeState){store.setItem(lifeStorageKey(userId),JSON.stringify(state));window.dispatchEvent(new CustomEvent(EVENT));}
+/** Browser-local game state, scoped to the signed-in account. */
+export function useLife(userId:string,resetWantedToken?:string){
+ const [life,setLife]=useState<LifeState>(freshLife);
+ useEffect(()=>{
+  if(resetWantedToken)resetAccountWanted(store,userId,resetWantedToken,Date.now());
+  setLife(readLife(userId));
+  const timer=setInterval(()=>setLife(readLife(userId)),1000);
+  const on=()=>setLife(readLife(userId));window.addEventListener(EVENT,on);
+  return()=>{clearInterval(timer);window.removeEventListener(EVENT,on);};
+ },[userId,resetWantedToken]);
+ const update=useCallback((f:(state:LifeState)=>LifeState)=>{const next=f(readLife(userId));writeLife(userId,next);setLife(next);},[userId]);
+ return {life,update};
 }
