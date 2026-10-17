@@ -28,36 +28,24 @@ const AUDIENCES = [
 
 const FEATURES = [
   {
-    img: "/landing/world.webp",
-    w: 1548,
-    h: 1104,
-    tag: "Explore",
-    title: "A cosy 3D London to live in",
-    text: "Students walk London with their class: Big Ben, the Tube, company headquarters and their own flat. Buses take them across town, with a quick revision round on the way.",
+    img: "/landing/game-london.webp", w: 1440, h: 960, tag: "Explore",
+    title: "Your school day. A whole new world.",
+    text: "Walk through 3D London, discover company headquarters and hop between neighbourhoods. Your tasks, Clout and wellbeing stay with you as you explore.",
   },
   {
-    img: "/landing/interview.webp",
-    w: 880,
-    h: 870,
-    tag: "Work",
-    title: "Real jobs, real skills",
-    text: "Interview at a hospital, a tech company or a pizza shop, then work shifts made of genuine tasks: fixing code, data protection, triage, giving change. Every answer explains the why.",
+    img: "/landing/game-bus.webp", w: 1440, h: 960, tag: "Revise",
+    title: "Make the journey count",
+    text: "Jump on a bus and tackle three quick revision questions on the way. Practise, check your answers and arrive with a little more Focus.",
   },
   {
-    img: "/landing/panic.webp",
-    w: 1545,
-    h: 790,
-    tag: "Revise",
-    title: "Revision that gets you promoted",
-    text: "Promotion Panic turns exam questions into a race from intern to CEO. Wrong answers come back until they're learned.",
+    img: "/landing/game-connect-four.webp", w: 1440, h: 960, tag: "Play",
+    title: "A study break with a competitive streak",
+    text: "Play Connect Four, draughts, noughts and crosses or London Tycoon. Challenge the computer, pass the device round or create an online room with friends.",
   },
   {
-    img: "/landing/locker.webp",
-    w: 1540,
-    h: 840,
-    tag: "Express",
-    title: "A character that's really theirs",
-    text: "Mix hairstyles, outfits and colours, then spend Clout earned from revision on new looks, furniture and a bigger flat.",
+    img: "/landing/game-home.webp", w: 1440, h: 960, tag: "Unwind",
+    title: "Somewhere to call your own",
+    text: "Head back to your furnished home, look after your character’s needs and make room for your next goal. Earn Clout through play to unlock new furniture and bigger homes.",
   },
 ];
 
@@ -109,7 +97,7 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.1} className="relative">
             <div className="overflow-hidden rounded-[2rem] border-[6px] border-white bg-white shadow-2xl shadow-[#13203a]/15 ring-1 ring-border dark:border-[#1b2c48]">
-              <Image src="/landing/world.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1548} height={1104} priority className="h-auto w-full" />
+              <Image src="/landing/game-london.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1440} height={960} priority className="h-auto w-full" />
             </div>
             <div className="absolute -bottom-6 -left-4 hidden rounded-2xl border bg-card p-4 shadow-xl sm:block">
               <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Homework quest</p>
@@ -150,11 +138,12 @@ export default function Home() {
         <h2 id="how-title" className="mt-3 max-w-3xl text-3xl tracking-tight text-balance md:text-5xl">
           Revision, careers and wellbeing in one world students want to open
         </h2>
+        <p className="mt-4 max-w-2xl text-muted-foreground">A look inside the current game, captured in daylight with a demonstration character.</p>
         <div className="mt-14 space-y-20 lg:space-y-28">
           {FEATURES.map((s, i) => (
             <Reveal key={s.tag} className={`grid items-center gap-8 lg:grid-cols-2 lg:gap-16 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
               <div className="overflow-hidden rounded-[1.75rem] border-[6px] border-white bg-white shadow-xl shadow-[#13203a]/10 ring-1 ring-border dark:border-[#1b2c48]">
-                <Image src={s.img} alt={s.title} width={s.w} height={s.h} className="h-auto w-full" />
+                <Image src={s.img} alt={s.title} width={s.w} height={s.h} sizes="(max-width: 1024px) 100vw, 50vw" className="h-auto w-full" />
               </div>
               <div>
                 <span className="inline-block rounded-full bg-secondary px-3 py-1 text-xs font-black tracking-widest text-primary uppercase">{s.tag}</span>
@@ -162,6 +151,21 @@ export default function Home() {
                 <p className="mt-3 max-w-lg text-lg leading-relaxed text-muted-foreground">{s.text}</p>
               </div>
             </Reveal>
+          ))}
+        </div>
+      </section>
+
+      <section className="container pb-20" aria-labelledby="more-game-title">
+        <h2 id="more-game-title" className="text-3xl tracking-tight">More than the school run</h2>
+        <div className="mt-8 grid gap-6 md:grid-cols-2">
+          {[
+            { image: "/landing/game-highlands.webp", title: "Take the scenic route", text: "Visit the Highlands, explore Glen Lorne and take a change of scenery." },
+            { image: "/landing/game-hub.webp", title: "Find your next favourite game", text: "Browse the Games Hub for board games, computer opponents and online rooms." },
+          ].map((shot) => (
+            <figure key={shot.image} className="overflow-hidden rounded-3xl border bg-card shadow-sm">
+              <Image src={shot.image} alt={shot.title} width={1440} height={960} sizes="(max-width: 768px) 100vw, 50vw" className="h-auto w-full" />
+              <figcaption className="p-6"><h3 className="text-xl font-bold">{shot.title}</h3><p className="mt-2 leading-relaxed text-muted-foreground">{shot.text}</p></figcaption>
+            </figure>
           ))}
         </div>
       </section>

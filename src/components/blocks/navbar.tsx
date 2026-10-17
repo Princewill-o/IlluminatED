@@ -20,7 +20,7 @@ export const Navbar = () => {
 
   return (
     <Navbar1
-      logo={<span className="inline-flex items-center"><Logo wordmarkClassName="max-[380px]:hidden" /><PlanBadge /></span>}
+      logo={<span className="inline-flex items-center"><Logo wordmarkClassName="max-[480px]:hidden" /><PlanBadge /></span>}
       groups={signedIn ? NAV : []}
       actions={<ThemeToggle className="rounded-full" />}
       cta={

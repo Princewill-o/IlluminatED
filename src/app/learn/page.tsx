@@ -101,7 +101,7 @@ export default async function LearnPage() {
       </section>
 
       <Link href="/games/world" className="group relative mt-8 block overflow-hidden rounded-[2rem] bg-[#13203a] text-white">
-        <Image src="/landing/world.webp" alt="" fill sizes="1000px" className="object-cover opacity-60 transition duration-500 group-hover:scale-105" />
+        <Image src="/landing/game-london.webp" alt="" fill sizes="1000px" className="object-cover opacity-60 transition duration-500 group-hover:scale-105" />
         <span className="absolute inset-0 bg-gradient-to-r from-[#13203a] to-transparent" />
         <span className="relative flex items-center gap-4 p-6 md:p-8">
           <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#f2d9a6] text-[#13203a]" aria-hidden>

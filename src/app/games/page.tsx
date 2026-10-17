@@ -38,7 +38,7 @@ export default async function GamesHome() {
       )}
 
       <section className="relative overflow-hidden rounded-[2rem] bg-[#13203a] text-white shadow-[0_10px_0_rgba(19,32,58,0.15)]">
-        <Image src="/landing/world.webp" alt="" fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover opacity-70" />
+        <Image src="/landing/game-london.webp" alt="" fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#13203a] via-[#13203a]/75 to-transparent" />
         <div className="relative grid gap-6 p-6 md:grid-cols-[1fr_260px] md:p-10">
           <div className="max-w-xl">
