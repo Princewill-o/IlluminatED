@@ -354,10 +354,45 @@ function landmark(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["thi
   const cz = z + d / 2;
   switch (name) {
     case "big-ben": {
-      box(g, GOLDEN, x + 0.3, 0, z + 0.3, x + w - 0.3, 7, z + d - 0.3);
-      cyl(g, "#f6f2ea", cx, z + d - 0.28, 5.6, 5.6 + 0.05, 0.55, 24).rotation.x = Math.PI / 2;
-      const c = cyl(g, "#2f5b4a", cx, cz, 7, 9.4, 0.01, 4, 0.9);
-      c.rotation.y = Math.PI / 4;
+      // Elizabeth Tower: stone shaft with ribs, four clock faces, belfry, slate spire and gold pinnacles.
+      const x0 = x + 0.25;
+      const z0 = z + 0.25;
+      const x1 = x + w - 0.25;
+      const z1 = z + d - 0.25;
+      box(g, GOLDEN, x0, 0, z0, x1, 6.4, z1);
+      for (let i = 0; i <= 4; i++) {
+        const t = x0 + ((x1 - x0) * i) / 4;
+        box(g, "#c9a24a", t - 0.04, 0.3, z1 - 0.02, t + 0.04, 6.2, z1 + 0.04);
+      }
+      for (const yy of [1.6, 3.2, 4.8]) box(g, "#c9a24a", x0 - 0.04, yy, z0 - 0.04, x1 + 0.04, yy + 0.1, z1 + 0.04);
+      box(g, "#e3c26a", x0 - 0.12, 6.4, z0 - 0.12, x1 + 0.12, 8.2, z1 + 0.12);
+      // Clock faces on all four sides.
+      const r = (x1 - x0) * 0.4;
+      const face = (px: number, pz: number, ry: number) => {
+        const f = new THREE.Group();
+        f.position.set(px, 7.3, pz);
+        f.rotation.y = ry;
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 32), mat("#f6f2ea"));
+        f.add(disc);
+        const rim = new THREE.Mesh(new THREE.RingGeometry(r, r * 1.12, 32), mat("#2f3644"));
+        f.add(rim);
+        const hand1 = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.08, r * 0.75), mat("#1b1622"));
+        hand1.position.set(0, r * 0.32, 0.01);
+        f.add(hand1);
+        const hand2 = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.55, r * 0.08), mat("#1b1622"));
+        hand2.position.set(r * 0.25, 0, 0.012);
+        f.add(hand2);
+        g.add(f);
+      };
+      face(cx, z1 + 0.13, 0);
+      face(cx, z0 - 0.13, Math.PI);
+      face(x1 + 0.13, cz, Math.PI / 2);
+      face(x0 - 0.13, cz, -Math.PI / 2);
+      box(g, "#d9b45a", x0 - 0.05, 8.2, z0 - 0.05, x1 + 0.05, 9.1, z1 + 0.05);
+      for (const [px, pz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) cyl(g, "#d9b45a", px, pz, 8.2, 10.2, 0.01, 6, 0.12);
+      const sp = cyl(g, "#3e4a60", cx, cz, 9.1, 11.6, 0.01, 4, (x1 - x0) * 0.62);
+      sp.rotation.y = Math.PI / 4;
+      cyl(g, "#ffd166", cx, cz, 11.6, 12.1, 0.01, 6, 0.06);
       break;
     }
     case "parliament":

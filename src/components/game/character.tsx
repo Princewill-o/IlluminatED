@@ -196,6 +196,23 @@ function star(g: CanvasRenderingContext2D, x: number, y: number, r: number, fill
   g.stroke();
 }
 
+/** The face as a transparent image, for the front of the 3D head (same art as the 2D sprite). */
+export function faceCanvas(a: Avatar, px = 256) {
+  const c = document.createElement("canvas");
+  c.width = px;
+  c.height = px;
+  const g = c.getContext("2d")!;
+  g.scale(px / (1.2 * U), px / (1.2 * U));
+  drawFace(
+    g,
+    { eyes: a.eyes ?? "eyes-round", brows: a.brows ?? "brows-soft", mouth: a.mouth ?? "mouth-smile", extras: a.extras ?? "extras-none", face: "face-none", head: "head-human" },
+    0.6 * U,
+    0.55 * U,
+    0,
+  );
+  return c;
+}
+
 /** Draws the face at (fx, fy). side: 0 = facing us, 1 = facing right (profile). */
 function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: number, side: 0 | 1) {
   const u = U;

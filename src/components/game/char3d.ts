@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
+import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
+import { faceCanvas } from "./character";
+
 import { type Avatar, cosmeticById } from "@/game/core/cosmetics";
 import { BOTTOM_LOOK, HAIR_LOOK, TOP_LOOK } from "@/game/core/looks";
 
@@ -97,11 +100,22 @@ function recolour(mesh: THREE.SkinnedMesh, part: "head" | "body", cols: ReturnTy
     const c = orig[i];
     const small = (counts.get(keyOf(c)) ?? 0) < n * 0.05;
     const f0 = (pos.getY(i) - minY) / Math.max(0.001, maxY - minY);
+    const nz = g.attributes.normal ? g.attributes.normal.getZ(i) : 0;
+    // The front of the face below the fringe is all skin: we draw the eyes and mouth on top.
+    if (part === "head" && nz > 0.6 && f0 > 0.12 && f0 < 0.56) {
+      target.set(cols.skin);
+      target.toArray(out, i * 3);
+      continue;
+    }
     if (isSkin(c) && (part === "head" || f0 > 0.3)) {
       // Keep Kenney's light and shade on the skin, in your skin tone.
       c.getHSL(hsl, THREE.SRGBColorSpace);
       target.set(cols.skin).offsetHSL(0, 0, (hsl.l - 0.47) * 0.35);
-    } else if (small && (isDark(c) || c.r + c.g + c.b > 2.4)) target.copy(c);
+    } else if (small && (isDark(c) || c.r + c.g + c.b > 2.4)) {
+      // Kenney's printed eyes and mouth: paint them over with skin (we draw your chosen face).
+      if (part === "head") target.set(cols.skin);
+      else target.copy(c);
+    }
     else if (part === "head") target.set(cols.hair);
     else {
       const f = (pos.getY(i) - minY) / Math.max(0.001, maxY - minY);
@@ -114,6 +128,53 @@ function recolour(mesh: THREE.SkinnedMesh, part: "head" | "body", cols: ReturnTy
   g.setAttribute("color", new THREE.BufferAttribute(out, 3));
   mesh.geometry = g;
   mesh.material = new THREE.MeshLambertMaterial({ vertexColors: true });
+}
+
+/** Face, hat, eyewear and held item, fixed to the head and hand bones so they move with you. */
+function dress(object: THREE.Object3D, headMesh: THREE.SkinnedMesh | null, bodyMesh: THREE.SkinnedMesh | null, a: Avatar) {
+  object.updateMatrixWorld(true);
+  const headBone = object.getObjectByName("head");
+  if (headMesh && headBone) {
+    headMesh.geometry.computeBoundingBox();
+    const hb = headMesh.geometry.boundingBox!.clone().applyMatrix4(headMesh.matrixWorld);
+    const w = hb.max.x - hb.min.x;
+    const h = hb.max.y - hb.min.y;
+    const cx = (hb.min.x + hb.max.x) / 2;
+    const cz = (hb.min.z + hb.max.z) / 2;
+    // The face: the same drawn eyes, brows and mouth as the 2D character, on the front of the head.
+    const tex = new THREE.CanvasTexture(faceCanvas(a));
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, w * 0.86), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    face.position.set(cx, hb.min.y + h * 0.36, hb.max.z + 0.004);
+    headBone.attach(face);
+    const hatItem = cosmeticById(a.hat ?? "");
+    const hat = hat3d(a.hat ?? "", hatItem?.color ?? "#8fb4ff");
+    if (hat) {
+      hat.scale.setScalar(w);
+      hat.position.set(cx, hb.max.y - h * 0.27, cz);
+      headBone.attach(hat);
+    }
+    const eye = eyewear3d(a.face ?? "", cosmeticById(a.face ?? "")?.color ?? "#1b1622");
+    if (eye) {
+      eye.scale.setScalar(w);
+      eye.position.set(cx, hb.min.y + h * 0.42, hb.max.z + w * 0.06);
+      headBone.attach(eye);
+    }
+  }
+  const arm = object.getObjectByName("arm-right") ?? object.getObjectByName("arm-left");
+  const item = held3d(a.held ?? "");
+  if (item && arm && bodyMesh) {
+    bodyMesh.geometry.computeBoundingBox();
+    const bb = bodyMesh.geometry.boundingBox!.clone().applyMatrix4(bodyMesh.matrixWorld);
+    const s = (bb.max.y - bb.min.y) * 1.1;
+    const armPos = new THREE.Vector3();
+    arm.getWorldPosition(armPos);
+    // The hand is at the end of the arm (arms rest out to the side on Kenney's rig).
+    const handX = armPos.x < 0 ? bb.min.x + s * 0.12 : bb.max.x - s * 0.12;
+    item.scale.setScalar(s);
+    item.position.set(handX, armPos.y - s * 0.15, armPos.z + s * 0.1);
+    arm.attach(item);
+  }
 }
 
 export interface Character3D {
@@ -148,6 +209,7 @@ export async function buildCharacter(a: Avatar, height = 1.15): Promise<Characte
   const cols = avatarColours(a);
   if (headMesh) recolour(headMesh, "head", cols);
   if (bodyMesh) recolour(bodyMesh, "body", cols);
+  dress(object, headMesh, bodyMesh, a);
   object.traverse((o) => {
     if ((o as THREE.Mesh).isMesh) {
       o.castShadow = true;
@@ -171,5 +233,13 @@ export async function buildCharacter(a: Avatar, height = 1.15): Promise<Characte
     current = next;
   };
   play("idle");
+  // A pet trots along beside you.
+  const pet = pet3d(a.pet ?? "");
+  if (pet) {
+    pet.scale.setScalar(height / 1.15);
+    pet.position.set(height * 0.5, 0, -height * 0.15);
+    pet.userData.pet = true;
+    holder.add(pet);
+  }
   return { object: holder, mixer, play };
 }
