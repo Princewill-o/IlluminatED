@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-import { Map, Phone, PhoneCall, X, Home, Shirt, Briefcase, BookOpen, Trophy } from "lucide-react";
+import { Map, Phone, PhoneCall, X, Home, Shirt, Briefcase, BookOpen, Trophy, CarFront } from "lucide-react";
 
 import { CompanyLogo } from "../company-logo";
 
@@ -22,6 +22,7 @@ export function GamePhone({
   onLocker,
   onStudy,
   onAwards,
+  onGarage = onMap,
   onUniversities = onMap,
 }: {
   onClose: () => void;
@@ -31,6 +32,7 @@ export function GamePhone({
   onLocker: () => void;
   onStudy: () => void;
   onAwards: () => void;
+  onGarage?: () => void;
   onUniversities?: () => void;
 }) {
   const [search, setSearch] = useState("");
@@ -44,21 +46,22 @@ export function GamePhone({
         aria-modal="true"
         aria-label="Your game phone"
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[90%] w-full max-w-sm flex-col overflow-hidden rounded-[2.5rem] border-[7px] border-[#13203a] bg-[#f7f1e6] text-[#13203a] [color-scheme:light] shadow-2xl"
+        className="flex max-h-[90%] w-full max-w-xs flex-col overflow-hidden rounded-[2rem] border-[5px] border-[#13203a] bg-[#f7f1e6] text-[#13203a] [color-scheme:light] shadow-2xl"
       >
         <header className="flex items-center gap-2 bg-[#13203a] px-5 py-4 text-white">
           <Phone className="size-5" />
           <h2 className="flex-1 font-black">City Phone</h2>
-          <button type="button" aria-label="Close phone" onClick={onClose}>
+          <button type="button" aria-label="Close phone" onClick={onClose} className="grid size-11 shrink-0 place-items-center">
             <X className="size-5" />
           </button>
         </header>
-        <div className="grid grid-cols-2 gap-2 p-4 text-xs font-bold">
+        <div className="grid grid-cols-3 gap-2 p-3 text-[11px] font-bold">
           {[
             { name: "City map", Icon: Map, action: onMap },
             {name:"Universities",Icon:Map,action:onUniversities},
             { name: "Home services", Icon: Home, action: onHome },
             { name: "Locker", Icon: Shirt, action: onLocker },
+            { name: "Garage", Icon: CarFront, action: onGarage },
             { name: "Study room", Icon: BookOpen, action: onStudy },
             { name: "Your awards", Icon: Trophy, action: onAwards },
           ].map(({ name, Icon, action }) => (

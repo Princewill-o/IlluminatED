@@ -1,4 +1,5 @@
-import { type Avatar, look } from "./cosmetics";
+import { type Avatar } from "./cosmetics";
+import { applyUniform } from "./outfits";
 import { type Rng, createRng, pick, randInt, shuffle } from "./rng";
 
 /**
@@ -649,5 +650,5 @@ export function cvLines(records: CareerRecord[], skills: Record<string, { correc
 /** Your look on duty: the role's uniform over your own avatar. */
 export const uniformFor = (job: { workplace: string; role: string } | null, avatar: Avatar): Avatar => {
   const role = job ? roleOf(job.workplace, job.role) : null;
-  return role ? look({ ...avatar, ...role.uniform }) : avatar;
+  return role ? applyUniform(avatar, role.uniform) : avatar;
 };

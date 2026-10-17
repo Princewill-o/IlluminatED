@@ -30,7 +30,14 @@ const card = "pointer-events-auto rounded-2xl border-2 border-white bg-[#f7f1e6]
 export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Avatar; name: string; clout: number; quests: Quest[]; onLocate?: (q: Quest) => boolean }) {
   const { needs, last } = useNeeds();
   const [now, setNow] = useState<Date | null>(null);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const roomy = window.matchMedia("(min-width: 1280px) and (min-height: 720px)");
+    const resize = () => setOpen(roomy.matches);
+    resize();
+    roomy.addEventListener("change", resize);
+    return () => roomy.removeEventListener("change", resize);
+  }, []);
   useEffect(() => {
     setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 20_000);
@@ -45,14 +52,14 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   return (
     <>
       {/* Today's tasks */}
-      <div className={cn(card, "absolute top-[68px] left-3 z-[50] w-[min(300px,calc(100%-24px))] px-3 py-2.5")}>
-        <button type="button" onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-2 text-left text-sm font-black" aria-expanded={open}>
+      <div className={cn(card, "absolute top-[68px] left-3 z-[50] w-[min(200px,calc(100%-120px))] px-2.5 py-1 sm:w-[248px] xl:w-[264px]")}>
+        <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-h-11 w-full items-center gap-2 text-left text-xs font-black sm:text-sm" aria-expanded={open} aria-controls="city-quests">
           Today's tasks
           <span className="rounded-full bg-[#dde8fd] px-2 py-0.5 text-[10px] text-[#1f4fbf]">{todo} to do</span>
           <span className="ml-auto">{open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
         </button>
         {open && (
-          <ul className="mt-1.5 space-y-1.5">
+          <ul id="city-quests" className="mt-1 max-h-[min(36dvh,260px)] space-y-2 overflow-y-auto overscroll-contain pb-2">
             {quests.length === 0 && <li className="text-xs text-[#5a6272]">Nothing set. Join your class in Homework to see what your teacher sets.</li>}
             {quests.slice(0, 5).map((q) => {
               const body = (
@@ -67,14 +74,14 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
               return (
                 <li key={q.id} className="text-xs font-bold">
                   {q.href ? (
-                    <Link href={q.href} className="flex items-start gap-2 hover:underline">
+                    <Link href={q.href} className="flex min-h-11 items-center gap-2 hover:underline">
                       {body}
                     </Link>
                   ) : (
                     <span className="flex items-start gap-2">{body}</span>
                   )}
                   {onLocate && !q.done && (
-                    <button type="button" onClick={() => onLocate(q)} className="mt-0.5 ml-6 flex items-center gap-1 text-[10px] font-black text-[#2b5fd9]">
+                    <button type="button" onClick={() => onLocate(q)} className="ml-5 flex min-h-11 items-center gap-1 text-xs font-black text-[#2b5fd9]">
                       <MapPin className="size-3" aria-hidden /> Show me where
                     </button>
                   )}
@@ -86,8 +93,8 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
       </div>
 
       {/* Weather, time, money */}
-      <div className="pointer-events-none absolute top-[60px] right-3 z-[50] hidden gap-2 md:flex">
-        <div className={cn(card, "flex items-center gap-2 px-3 py-1.5")}>
+      <div className="pointer-events-none absolute top-[68px] right-[140px] z-[50] hidden gap-1.5 xl:flex [@media(max-height:719px)]:!hidden">
+        <div className={cn(card, "flex items-center gap-1.5 px-2.5 py-1.5")}>
           <WIcon className="size-5 text-[#e98a1f]" aria-hidden />
           <div>
             <p className="text-sm leading-4 font-black">{w.temp}°C</p>
@@ -105,17 +112,17 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
       </div>
 
       {/* You and your needs */}
-      <div className={cn(card, "absolute bottom-16 left-3 z-[50] hidden items-center gap-3 py-2 pr-3 pl-2 md:flex")}>
-        <div className="flex size-16 justify-center overflow-hidden rounded-full border-4 border-white bg-[#8fb4ff]">
+      <div className={cn(card, "absolute bottom-16 left-3 z-[50] hidden max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 lg:flex xl:max-w-[280px] [@media(max-height:650px)]:!hidden")}>
+        <div className="flex size-12 shrink-0 justify-center overflow-hidden rounded-full border-4 border-white bg-[#8fb4ff]">
           <div className="-mt-1 shrink-0">
-            <AvatarFigure avatar={avatar} size={96} showPet={false} />
+            <AvatarFigure avatar={avatar} size={76} showPet={false} />
           </div>
         </div>
         <div>
           <p className="text-sm font-black">
             {name} <span className="text-xs font-bold text-[#5a6272]">· {moodWord(needs)}</span>
           </p>
-          <div className="mt-1 grid grid-cols-[auto_110px] items-center gap-x-2 gap-y-1">
+          <div className="mt-1 grid grid-cols-[auto_76px] xl:grid-cols-[auto_92px] items-center gap-x-2 gap-y-1">
             {NEEDS.map((d) => (
               <div key={d.id} className="contents">
                 <span className="text-[10px] font-black">{d.label}</span>
@@ -130,7 +137,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 
       {(last || hint) && (
         <p
-          className="pointer-events-none absolute inset-x-0 top-[124px] z-[50] mx-auto hidden w-fit rounded-full bg-[#13203a] px-4 py-1.5 text-xs font-bold text-white md:block"
+          className="pointer-events-none absolute inset-x-0 top-[130px] z-[50] mx-auto hidden w-fit max-w-[32%] text-center rounded-full bg-[#13203a] px-4 py-1.5 text-xs font-bold text-white xl:block [@media(max-height:719px)]:!hidden"
           role="status"
         >
           {last ? ACTIVITIES[last].label : hint}
@@ -144,11 +151,11 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 export function LevelBadge({ xp }: { xp: number }) {
   const lp = levelProgress(xp);
   return (
-    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border-2 border-white bg-[#f7f1e6]/95 py-1 pr-3 pl-1 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] sm:flex">
-      <span className="grid size-8 place-items-center rounded-full bg-[#2b5fd9] text-sm font-black text-white">{lp.level}</span>
+    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border-2 border-white bg-[#f7f1e6]/95 py-1 pr-2 pl-1 text-[#13203a] shadow-[0_4px_0_rgba(19,32,58,0.18)] lg:flex">
+      <span className="grid size-7 place-items-center rounded-full bg-[#2b5fd9] text-sm font-black text-white">{lp.level}</span>
       <span className="text-xs leading-tight font-black">
         {levelTitle(lp.level)}
-        <span className="mt-0.5 block h-1.5 w-28 overflow-hidden rounded-full bg-[#13203a]/10">
+        <span className="mt-0.5 block h-1.5 w-20 xl:w-28 overflow-hidden rounded-full bg-[#13203a]/10">
           <span className="block h-full bg-[#2b5fd9] transition-[width] duration-700" style={{ width: `${Math.round(lp.fraction * 100)}%` }} />
         </span>
       </span>

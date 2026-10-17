@@ -7,7 +7,7 @@ import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, Train
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
-import { ArtScenery, PLAYER, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 import { World3D } from "./world3d";
@@ -17,8 +17,11 @@ import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 
 import { doActivity } from "@/components/game/world/use-needs";
+import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import type { Pursuit } from "@/game/core/pursuit";
-import { EMOTES, PHRASES, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
+import { CAR_LENGTH } from "@/game/core/vehicles";
+import { EMOTES, PHRASES, TILE, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
 const SPRITE_H = 64;
@@ -115,7 +118,7 @@ function Sprite({
   );
 }
 
-function Joystick({ onMove }: { onMove: (dx: number, dy: number) => void }) {
+function Joystick({ onMove, driving = false }: { onMove: (dx: number, dy: number) => void; driving?: boolean }) {
   const base = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const active = useRef<number | null>(null);
@@ -141,8 +144,8 @@ function Joystick({ onMove }: { onMove: (dx: number, dy: number) => void }) {
     <div
       ref={base}
       role="application"
-      aria-label="Move joystick"
-      className="pointer-events-auto relative size-32 touch-none rounded-full border-2 border-white/20 bg-black/40"
+      aria-label={driving ? "Drive: up to accelerate, down to brake or reverse, left or right to steer" : "Move joystick"}
+      className="pointer-events-auto relative size-24 touch-none rounded-full border-2 border-white/20 bg-black/40 sm:size-28"
       onPointerDown={(e) => {
         active.current = e.pointerId;
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -154,7 +157,7 @@ function Joystick({ onMove }: { onMove: (dx: number, dy: number) => void }) {
       onLostPointerCapture={end}
     >
       <div
-        className="absolute top-1/2 left-1/2 size-14 rounded-full bg-[#8fb4ff] shadow-[0_4px_0_0_rgba(0,0,0,0.5)]"
+        className="absolute top-1/2 left-1/2 size-11 rounded-full bg-[#8fb4ff] shadow-[0_4px_0_0_rgba(0,0,0,0.5)]"
         style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
       />
     </div>
@@ -179,6 +182,7 @@ export function WorldView({
   onPortal,
   onRoom,
   onChangeServer,
+  onDrivingOffence,
   speed = 1,
   bike = null,
   car = null,
@@ -199,10 +203,11 @@ export function WorldView({
   map: WorldMap;
   serverId: string;
   me: Me;
-  arriveAt?: { x: number; y: number };
+  arriveAt?: { x: number; y: number; heading?: number };
   onPortal: (portal: Portal) => void;
   onRoom?: (room: string | null) => void;
   onChangeServer: () => void;
+  onDrivingOffence?: (offence: RoadViolation) => void;
 }) {
   const policeRef = useRef(police);
   policeRef.current = police;
@@ -230,7 +235,12 @@ export function WorldView({
   const is3d = webgl;
   const speedRef = useRef(speed);
   speedRef.current = speed;
-  const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false });
+  const carRef = useRef(car);
+  carRef.current = car;
+  const offenceCallback = useRef(onDrivingOffence);
+  offenceCallback.current = onDrivingOffence;
+  const roadCooldown = useRef(createRoadCooldown());
+  const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false, heading: arriveAt?.heading ?? 0, speed: 0 });
   const myChat = useRef<{ text: string; until: number } | null>(null);
   const [near, setNear] = useState<Portal | null>(null);
   const [sheet, setSheet] = useState(false);
@@ -243,6 +253,17 @@ export function WorldView({
   const fxCanvas = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<Phase>("day");
   const phaseRef = useRef<Phase>("day");
+
+  // Collecting a car/parking is an explicit move. Reset momentum before resuming.
+  useEffect(() => {
+    const requested = arriveAt ?? pos.current;
+    const candidate = { ...requested, heading: arriveAt?.heading ?? pos.current.heading, speed: 0 };
+    const destination = car ? (vehicleFits(map, candidate) ? candidate : nearestDrivingSpot(map, requested)) : safeSpot(map, requested.x, requested.y);
+    if (destination) Object.assign(pos.current, destination, { speed: 0, walking: false });
+    keys.current.clear();
+    stick.current = { x: 0, y: 0 };
+    target.current = null;
+  }, [map, car, arriveAt]);
 
   // Live UK time of day (checked every minute).
   useEffect(() => {
@@ -285,6 +306,7 @@ export function WorldView({
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
   const walkTo3d = useCallback((x: number, y: number) => {
+    if (carRef.current) return;
     target.current = { x, y };
   }, []);
   const enter = useCallback(() => {
@@ -298,7 +320,7 @@ export function WorldView({
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (pausedRef.current || e.target instanceof HTMLElement && e.target.closest("button, a, [role=dialog], [contenteditable=true]")) return;
       const k = e.key.toLowerCase();
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) {
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || k === " " && carRef.current) {
         e.preventDefault();
         keys.current.add(k);
         target.current = null;
@@ -337,6 +359,7 @@ export function WorldView({
         keys.current.clear();
         stick.current = { x: 0, y: 0 };
         target.current = null;
+        pos.current.speed = 0;
       }
       const k = keys.current;
       let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
@@ -345,7 +368,7 @@ export function WorldView({
         dx = stick.current.x;
         dy = stick.current.y;
       }
-      if (!dx && !dy && target.current) {
+      if (!carRef.current && !dx && !dy && target.current) {
         dx = target.current.x - pos.current.x;
         dy = target.current.y - pos.current.y;
         if (Math.hypot(dx, dy) < 8) {
@@ -354,17 +377,38 @@ export function WorldView({
         }
       }
       const p = pos.current;
-      const next = step(map, p, dx, dy, dt, speedRef.current);
+      const driving = Boolean(carRef.current);
+      const before = { x: p.x, y: p.y, heading: p.heading, speed: p.speed };
+      let collision: DrivingCollision | undefined;
+      const obstacles: VehicleObstacle[] = map.art === "london" ? [
+        ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
+        ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
+      ] : [];
+      const driven = driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" "), maxSpeed: 96 * speedRef.current }, dt,
+        obstacles, (impact) => { collision = impact; }) : null;
+      if (driven && map.art === "london" && !pausedRef.current) {
+        const violation = checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) });
+        if (violation && acceptRoadViolation(roadCooldown.current, violation, Date.now())) {
+          play("door", soundOn());
+          offenceCallback.current?.(violation);
+        }
+      }
+      const next = driven ?? step(map, p, dx, dy, dt, speedRef.current);
       const moved = next.x !== p.x || next.y !== p.y;
       if ((dx || dy) && !moved) target.current = null;
       if (dx) p.d = dx > 0 ? 1 : -1;
       if (p.walking && !moved) stopped();
       p.x = next.x;
       p.y = next.y;
+      if (driven) {
+        p.heading = driven.heading;
+        p.speed = driven.speed;
+      }
       // Traffic: step into a car or bus and you get bumped back onto the pavement.
       PLAYER.x = p.x;
       PLAYER.y = p.y;
-      if (map.art === "london") {
+      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
+      if (map.art === "london" && !driving) {
         for (const b of TRAFFIC_BOXES) {
           if (!b) continue;
           const ox = b.hw + 10 - Math.abs(p.x - b.x);
@@ -390,15 +434,18 @@ export function WorldView({
       // Driving: turn the car sprite to face where you're going.
       const cs = meEl.current?.querySelector<HTMLElement>(".car-sprite");
       if (cs?.dataset.car) {
-        if (moved) cs.dataset.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "E" : "W") : dy > 0 ? "S" : "N";
+        const facingX = Math.cos(p.heading), facingY = Math.sin(p.heading);
+        cs.dataset.dir = Math.abs(facingX) > Math.abs(facingY) ? (facingX > 0 ? "E" : "W") : facingY > 0 ? "S" : "N";
         const key = `${cs.dataset.car}-${cs.dataset.dir ?? "E"}`;
         const m = (MOVERS as Record<string, { w: number; h: number; ax: number; ay: number }>)[key];
         if (m && cs.dataset.key !== key) {
           cs.dataset.key = key;
           cs.style.backgroundImage = `url(/world/movers/${key}.webp)`;
+          const scale = CAR_LENGTH / 1.8;
           cs.style.width = `${m.w}px`;
           cs.style.height = `${m.h}px`;
-          cs.style.transform = `translate(${-m.ax}px, ${-m.ay}px)`;
+          cs.style.transform = `translate(${-m.ax}px, ${-m.ay}px) scale(${scale})`;
+          cs.style.transformOrigin = `${m.ax}px ${m.ay}px`;
         }
       }
       reportMove(p.x, p.y, p.d, moved);
@@ -423,7 +470,7 @@ export function WorldView({
       }
       // Ambient sound: footsteps, and birdsong outdoors.
       const sound = soundOn();
-      if (moved && now - lastStep > 330) {
+      if (moved && !driving && now - lastStep > 330) {
         lastStep = now;
         play("step", sound);
       }
@@ -487,8 +534,8 @@ export function WorldView({
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
-  }, [map, players, reportMove, stopped, onRoom, zoom]);
+    return () => { cancelAnimationFrame(raf); PLAYER_VEHICLE.active = false; };
+  }, [map, players, reportMove, stopped, onRoom, zoom, is3d]);
 
   const sayIt = (id: string) => {
     const text = chatText(id);
@@ -508,6 +555,7 @@ export function WorldView({
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
       onPointerDown={(e) => {
+        if (carRef.current) return;
         if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-world]")) return;
         const r = viewport.current!.getBoundingClientRect();
         target.current = { x: (e.clientX - r.left) / activeZoom.current + camRef.current.x, y: (e.clientY - r.top) / activeZoom.current + camRef.current.y };
@@ -519,7 +567,7 @@ export function WorldView({
         className="absolute top-0 left-0 origin-top-left will-change-transform"
         style={{ width: map.width, height: map.height, display: is3d ? "none" : undefined }}
       >
-        {is3d ? null : map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
+        {is3d ? null : map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
         {map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
@@ -588,16 +636,16 @@ export function WorldView({
 
       {/* HUD */}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
-        <div className="pointer-events-auto rounded-2xl bg-black/70 px-3 py-2 text-xs text-white backdrop-blur">
-          <p className="font-black">{map.name}</p>
-          {map.kind !== "home" && <p className="mt-0.5 text-[10px] text-white/70">Ambient residents · computer controlled</p>}
-          <button type="button" onClick={onChangeServer} className="mt-0.5 flex items-center gap-1.5 text-[#d8d4e0]" aria-label="Change server">
+        <button type="button" onClick={onChangeServer} className="pointer-events-auto min-h-11 max-w-[calc(100%-4rem)] rounded-2xl bg-black/70 px-3 py-2 text-left text-xs text-white backdrop-blur focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8fb4ff]" aria-label={`Change server · ${map.name}`}>
+          <span className="block truncate font-black">{map.name}</span>
+          {map.kind !== "home" && <span className="mt-0.5 hidden text-[10px] text-white/70 sm:block">Ambient residents · computer controlled</span>}
+          <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-[#d8d4e0] sm:text-xs">
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
             {world.status === "live" && world.ping !== null && <span className="text-[#8d85a0]">· {world.ping} ms</span>}
             {!map.id.startsWith("office-") && <span className="text-[#8d85a0]">· {serverById(serverId)?.name}</span>}
-          </button>
-        </div>
+          </span>
+        </button>
         <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur" aria-live="polite">
           {others.length + 1} here
         </div>
@@ -624,19 +672,19 @@ export function WorldView({
           <button
             type="button"
             onClick={enter}
-            className="arcade-btn pointer-events-auto rounded-full bg-[#f2d9a6] px-6 py-3 font-black text-[#0d1726]"
+            className="arcade-btn pointer-events-auto min-h-11 max-w-[calc(100%-7rem)] rounded-2xl bg-[#f2d9a6] px-4 py-2.5 text-center text-xs leading-snug font-black whitespace-normal text-[#0d1726] sm:max-w-md sm:rounded-full sm:px-6 sm:text-sm"
           >
             {near.label} {touch ? "" : "(E)"}
           </button>
         </div>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between p-4">
-        {touch ? <Joystick onMove={(x, y) => {
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {touch ? <div className="flex items-end gap-2"><Joystick driving={Boolean(car)} onMove={(x, y) => {
           stick.current = { x, y };
           if (x || y) target.current = null;
-        }} /> : (
-          <p className="rounded-xl bg-black/60 px-3 py-2 text-xs text-[#d8d4e0]">WASD or arrows to walk · click to walk there · E to enter</p>
+        }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}</div> : (
+          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ brake & reverse · A D / ← → steer · Space brake" : "WASD or arrows to walk · click to walk there · E to enter"}</p>
         )}
         <div className="pointer-events-auto relative">
           {sheet && (
@@ -663,7 +711,7 @@ export function WorldView({
             onClick={() => setSheet((s) => !s)}
             aria-expanded={sheet}
             aria-label="Emotes and phrases"
-            className="grid size-14 place-items-center rounded-full bg-[#2b5fd9] text-2xl shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:scale-95"
+            className="grid size-11 place-items-center rounded-full bg-[#2b5fd9] text-xl shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:scale-95 sm:size-12"
           >
             <MessageCircle className="size-6 text-white" aria-hidden />
           </button>

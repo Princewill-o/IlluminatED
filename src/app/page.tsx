@@ -3,20 +3,21 @@ import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { ArrowRight, Building2, Check, ClipboardCheck, GraduationCap, School, ShieldCheck, Sparkles, User } from "lucide-react";
+import { ArrowRight, BookOpen, BriefcaseBusiness, Building2, Check, ClipboardCheck, GraduationCap, School, ShieldCheck, Sparkles, Trophy, User } from "lucide-react";
 import type { Metadata } from "next";
 
 import { DeletedNotice } from "@/components/deleted-notice";
 import { Reveal } from "@/components/landing";
+import { LearningEvidence } from "@/components/landing/learning-evidence";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 
-export const metadata:Metadata={title:{absolute:"IlluminatED | GCSE & A-Level Revision Games for Schools"},description:"A UK revision platform for GCSE, A-Level, BTEC and T Level students. Explore learning games, quizzes, teacher-set homework and student progress tracking.",alternates:{canonical:"/"},openGraph:{url:"/",title:"IlluminatED | GCSE & A-Level Revision Games for Schools"}};
+export const metadata:Metadata={title:{absolute:"IlluminatED | GCSE & A-Level Revision Games for Schools"},description:"A UK education and simulated work experience platform: GCSE and sixth-form revision, in-game study, career tasks, homework quests and learning awards.",alternates:{canonical:"/"},openGraph:{url:"/",title:"IlluminatED | GCSE & A-Level Revision Games for Schools"}};
 
 const AUDIENCES = [
   {
     icon: GraduationCap,
     title: "Students",
-    text: "GCSE, A level, BTEC and T Level revision as a life sim: explore London, practise simulated jobs, earn Clout and build a CV.",
+    text: "Study GCSE, A level, BTEC and T Level subjects, try simulated workplace tasks and see your learning progress in a playable city.",
   },
   {
     icon: School,
@@ -26,30 +27,30 @@ const AUDIENCES = [
   {
     icon: Building2,
     title: "Colleges",
-    text: "Resits, BTECs and T Levels, plus employability: real work tasks across tech, health, finance, law, retail and hospitality.",
+    text: "Resits, BTECs and T Levels, plus simulated workplace scenarios across tech, health, finance, law, retail and hospitality.",
   },
 ];
 
 const FEATURES = [
   {
-    img: "/landing/game-city-life.webp", w: 1440, h: 960, tag: "Explore",
-    title: "Your school day. A whole new world.",
-    text: "Walk through 3D London, discover company headquarters and hop between neighbourhoods. Your tasks, Clout and wellbeing stay with you as you explore.",
+    img: "/landing/game-lobby.webp", w: 1440, h: 960, tag: "Study",
+    title: "A place to focus, inside your game",
+    text: "Head to the Study Quarter for short, untimed subject sessions. Answer five questions, read the explanations and save your progress. Study on the Learn dashboard whenever you want a quieter route.",
+  },
+  {
+    img: "/landing/interview.webp", w: 1440, h: 960, tag: "Practise work",
+    title: "Try a career before choosing a path",
+    text: "Explore roles and complete simulated workplace tasks, from interviews to day-to-day decisions. Build a record of the skills you have practised. Your learning record captures simulated practice and skill development.",
   },
   {
     img: "/landing/game-bus.webp", w: 1440, h: 960, tag: "Revise",
-    title: "Make the journey count",
-    text: "Jump on a bus and tackle three quick revision questions on the way. Practise, check your answers and arrive with a little more Focus.",
+    title: "Small moments. More practice.",
+    text: "Use quizzes, flashcards and timed exam practice to check what you know. Even a bus journey through the city can include a few revision questions with feedback.",
   },
   {
-    img: "/landing/game-connect-four.webp", w: 1440, h: 960, tag: "Play",
-    title: "A study break with a competitive streak",
-    text: "Play Connect Four, draughts, noughts and crosses or London Tycoon. Challenge the computer, pass the device round or create an online room with friends.",
-  },
-  {
-    img: "/landing/game-home-framed.webp", w: 1440, h: 960, tag: "Unwind",
-    title: "Somewhere to call your own",
-    text: "Head back to your furnished home, look after your character’s needs and make room for your next goal. Earn Clout through play to unlock new furniture and bigger homes.",
+    img: "/landing/game-city-life.webp", w: 1440, h: 960, tag: "Progress",
+    title: "Give your learning a sense of progress",
+    text: "Earn XP, in-game Clout and learning awards for study and workplace practice. Explore London, customise your character and return to your own home between learning sessions.",
   },
 ];
 
@@ -69,28 +70,27 @@ export default function Home() {
         <DeletedNotice />
       </Suspense>
 
-      <nav aria-label="Explore IlluminatED" className="container flex flex-wrap gap-5 pt-4 text-sm font-semibold text-primary"><Link href="/schools">For schools and teachers</Link><Link href="/revision-games">Revision games for students</Link></nav>
+      <nav aria-label="Explore IlluminatED" className="container flex flex-wrap gap-x-5 gap-y-1 pt-2 text-sm font-semibold text-primary"><Link href="/schools">For schools and teachers</Link><Link href="/revision-games">Revision games for students</Link></nav>
       {/* ── Hero ── */}
       <section className="relative overflow-hidden">
         <div aria-hidden className="pointer-events-none absolute -top-40 -right-40 size-[36rem] rounded-full bg-[#dde8fd] opacity-70 blur-3xl dark:bg-[#1b2c48]" />
         <div aria-hidden className="pointer-events-none absolute top-60 -left-40 size-[28rem] rounded-full bg-[#f2d9a6] opacity-50 blur-3xl dark:opacity-10" />
-        <div className="relative container grid items-center gap-12 pt-10 pb-16 lg:grid-cols-[1fr_1.15fr] lg:pt-16 lg:pb-24">
+        <div className="relative container grid items-center gap-8 pt-7 pb-12 sm:pt-10 sm:pb-16 lg:grid-cols-[1fr_1.1fr] lg:gap-10 lg:py-16">
           <Reveal>
-            <p className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3.5 py-1.5 text-sm font-semibold text-primary backdrop-blur">
+            <p className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3.5 py-1.5 text-xs leading-5 font-semibold text-primary backdrop-blur sm:text-sm">
               <Sparkles className="size-4" aria-hidden /> For students, schools, colleges and sixth forms
             </p>
-            <h1 className="mt-6 text-[2.75rem] leading-[1.02] tracking-tight text-balance md:text-6xl lg:text-[4.2rem]">
-              Revision that feels like a game. <span className="text-primary">Skills that last.</span>
+            <h1 className="mt-5 text-[clamp(2.1rem,4.4vw,3.65rem)] leading-[1.08] tracking-tight text-balance">
+              Learn for exams. Practise work skills. <span className="text-primary">Grow through play.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              IlluminatED is a cosy life sim for GCSE to sixth form. Students explore London, take on real jobs and complete their teachers&apos; homework as quests,
-              building knowledge and experience they can put on a CV.
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+              IlluminatED brings education and simulated work experience into a playable city. Study your subjects, complete homework quests and try workplace challenges, with saved progress and awards that make the next step feel achievable.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/book" className="inline-flex h-13 items-center gap-2 rounded-full bg-primary px-7 text-base font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90">
+              <Link href="/book" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90">
                 Book a demo <ArrowRight className="size-4" aria-hidden />
               </Link>
-              <Link href="/sign-in" className="inline-flex h-13 items-center rounded-full border bg-card px-7 text-base font-semibold hover:bg-muted">
+              <Link href="/sign-in" className="inline-flex min-h-11 items-center rounded-full border bg-card px-6 py-2.5 text-sm font-semibold hover:bg-muted">
                 Log in
               </Link>
             </div>
@@ -112,18 +112,20 @@ export default function Home() {
             </div>
             <div className="absolute -top-5 -right-3 hidden rounded-2xl bg-[#13203a] px-4 py-3 text-white shadow-xl sm:block">
               <p className="text-2xl font-black text-[#f2d9a6]">+80 Clout</p>
-              <p className="text-xs text-white/70">Shift done at Google</p>
+              <p className="text-xs text-white/70">Simulated shift complete</p>
             </div>
           </Reveal>
         </div>
       </section>
+
+      <LearningEvidence />
 
       <section className="relative overflow-hidden border-y bg-[#dde8fd] dark:bg-[#14223a]" aria-labelledby="city-life-title">
         <div aria-hidden className="pointer-events-none absolute -right-20 -bottom-32 size-96 rounded-full border-[35px] border-white/30" />
         <div className="relative container grid items-center gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-card px-3 py-1.5 text-xs font-black tracking-widest text-primary uppercase"><Sparkles className="size-4" aria-hidden /> A city with a pulse</span>
-            <h2 id="city-life-title" className="mt-5 text-4xl leading-tight tracking-tight md:text-5xl">A little life between lessons.</h2>
+            <h2 id="city-life-title" className="mt-5 text-3xl leading-tight tracking-tight sm:text-4xl">A little life between lessons.</h2>
             <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">Walk past residents, cyclists and passing traffic. Find a spot in the Study Quarter Lobby, take a revision break and call a company from your own game phone.</p>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Ambient residents are computer controlled. Online friends join through the game’s multiplayer features.</p>
             <div className="mt-6 flex flex-wrap gap-2">{["Explore", "Meet up", "Call companies", "Make it yours"].map(label=><span key={label} className="rounded-xl border-2 border-primary/15 bg-card px-3 py-2 text-sm font-bold shadow-[0_3px_0_rgba(19,32,58,0.08)]">{label}</span>)}</div>
@@ -162,14 +164,26 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="container py-12 sm:py-16" aria-labelledby="learning-loop-title">
+        <h2 id="learning-loop-title" className="text-3xl tracking-tight">A clear next step every time you log in</h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: BookOpen, title: "Study your subjects", text: "Your courses, questions, explanations, flashcards and exam practice, together on Learn." },
+            { icon: BriefcaseBusiness, title: "Explore work", text: "Try career scenarios and practise communication, problem-solving and workplace decisions." },
+            { icon: ClipboardCheck, title: "Follow your quests", text: "Teacher-set homework appears in your game, with deadlines and marked answers." },
+            { icon: Trophy, title: "Keep growing", text: "Private saved study progress, skill records and eight learning awards show what you have achieved." },
+          ].map(({ icon: Icon, title, text }) => <article key={title} className="rounded-2xl border bg-card p-5"><Icon className="size-5 text-primary" aria-hidden /><h3 className="mt-3 font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p></article>)}
+        </div>
+      </section>
+
       {/* ── Product ── */}
-      <section className="container py-20 lg:py-28" aria-labelledby="how-title">
+      <section className="container pb-14 sm:pb-20" aria-labelledby="how-title">
         <p className="text-sm font-bold tracking-widest text-primary uppercase">The platform</p>
         <h2 id="how-title" className="mt-3 max-w-3xl text-3xl tracking-tight text-balance md:text-5xl">
-          Revision, careers and wellbeing in one world students want to open
+          Subject learning and workplace practice, connected by play
         </h2>
-        <p className="mt-4 max-w-2xl text-muted-foreground">A look inside the current game, captured in daylight with a demonstration character.</p>
-        <div className="mt-14 space-y-20 lg:space-y-28">
+        <p className="mt-4 max-w-2xl text-muted-foreground">One place for exam preparation, simulated work experience and a learning journey you can see.</p>
+        <div className="mt-8 space-y-12 lg:space-y-16">
           {FEATURES.map((s, i) => (
             <Reveal key={s.tag} className={`grid items-center gap-8 lg:grid-cols-2 lg:gap-16 ${i % 2 ? "lg:[&>*:first-child]:order-2" : ""}`}>
               <div className="overflow-hidden rounded-[1.75rem] border-[6px] border-white bg-white shadow-xl shadow-[#13203a]/10 ring-1 ring-border dark:border-[#1b2c48]">
@@ -255,7 +269,7 @@ export default function Home() {
               <span className="text-4xl font-bold tracking-tight">£5.99</span> <span className="text-muted-foreground">a month</span>
             </p>
             <ul className="mt-6 space-y-2.5 text-[15px]">
-              {["The full game: London, jobs, arcade and Promotion Panic", "Every course and exam board", "Cancel any time"].map((t) => (
+              {["London, Study Quarter, career simulations and games", "Every course and exam board", "Cancel any time"].map((t) => (
                 <li key={t} className="flex gap-2">
                   <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden /> {t}
                 </li>
@@ -318,10 +332,10 @@ export default function Home() {
           <h2 className="relative mx-auto max-w-2xl text-3xl tracking-tight text-balance md:text-5xl">Bring IlluminatED to your learners</h2>
           <p className="relative mx-auto mt-4 max-w-lg text-lg text-white/75">A 20-minute call, a walkthrough of the platform, and access set up for you.</p>
           <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/book" className="inline-flex h-13 items-center gap-2 rounded-full bg-[#f2d9a6] px-7 font-semibold text-[#13203a]">
+            <Link href="/book" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[#f2d9a6] px-7 font-semibold text-[#13203a]">
               Book a demo <ArrowRight className="size-4" aria-hidden />
             </Link>
-            <Link href="/sign-in" className="inline-flex h-13 items-center rounded-full border border-white/30 px-7 font-semibold hover:bg-white/10">
+            <Link href="/sign-in" className="inline-flex min-h-11 items-center rounded-full border border-white/30 px-7 font-semibold hover:bg-white/10">
               Log in
             </Link>
           </div>

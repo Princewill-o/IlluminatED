@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Bike, BookOpen, Briefcase, Bus, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
+import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
 
 import { TubeBadge } from "./tube-map";
 
@@ -53,10 +53,16 @@ const STEPS = [
     hint: "Watch the road: cars and buses will bump you back onto the pavement.",
   },
   {
+    icon: CarFront,
+    title: "Drive safely through London",
+    body: "Take an owned car from Garage. W / ↑ accelerates, S / ↓ brakes then reverses, A D / ← → steer and Space brakes. On a phone, push the driving joystick up, down or sideways for the same controls.",
+    hint: "Keep left. Brake before the stop line on amber and wait on red. Give way at zebra crossings. Collisions and road violations earn wanted stars.",
+  },
+  {
     icon: Heart,
     title: "Look after your needs",
     body: "Energy, Focus, Mood, Hunger and Social drop through the day. Sleep and eat at home, study to raise Focus, and hang out with friends for Social. Low bars make everything harder.",
-    hint: "Your bars are top left, next to your portrait.",
+    hint: "Your needs appear beside your portrait on larger screens.",
   },
   {
     icon: BookOpen,
@@ -66,8 +72,8 @@ const STEPS = [
   },
   {
     icon: Briefcase,
-    title: "Get a job, earn Clout",
-    body: "Company HQs and shops hire students. Interview, then clock in for shifts. Clout buys bikes, arcade games, furniture and new homes.",
+    title: "Practise work skills, earn Clout",
+    body: "Visit company HQs and shops for simulated interviews and workplace tasks. Clout buys bikes, arcade games, furniture and new homes.",
     hint: "Look for the door markers on company buildings.",
   },
   {
@@ -79,7 +85,7 @@ const STEPS = [
   {
     icon: Siren,
     title: "Actions have game consequences",
-    body: "Scuffles earn wanted stars. With two stars, a police car responds. Leave the red search area for six seconds to escape; if caught, a knowledge challenge gives you a chance to avoid court.",
+    body: "Road violations, collisions and scuffles earn wanted stars, and police may respond. Leave the red search area for six seconds to escape; if caught, a knowledge challenge gives you a chance to avoid court.",
     hint: "In prison, cells are open: study, use completed homework, talk to inmates or find the service-maze exit. Guards add time if they catch you.",
   },
   {
@@ -105,22 +111,22 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
     }
   }, []);
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/55 md:place-items-center">
-      <div role="dialog" aria-label="How to play" className="w-full max-w-md overflow-hidden rounded-t-3xl bg-[#f7f1e6] text-[#13203a] md:rounded-3xl">
-        <div className="relative h-36 overflow-hidden bg-[#2b5fd9]">
+    <div className="absolute inset-0 z-[100000] grid place-items-center bg-black/55 p-2 sm:p-3">
+      <div role="dialog" aria-modal="true" aria-label="How to play" className="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[#f7f1e6] text-[#13203a]">
+        <div className="relative h-20 shrink-0 overflow-hidden bg-[#2b5fd9] sm:h-24 [@media(max-height:450px)]:h-14">
           <div className="tutorial-rings absolute inset-0" />
-          <span key={i} className="tutorial-pop absolute top-1/2 left-1/2 grid size-20 place-items-center rounded-3xl bg-[#f6f2e8] shadow-lg">
-            <Icon className="size-10 text-[#2b5fd9]" aria-hidden />
+          <span key={i} className="tutorial-pop absolute top-1/2 left-1/2 grid size-12 place-items-center rounded-2xl bg-[#f6f2e8] shadow-lg">
+            <Icon className="size-6 text-[#2b5fd9]" aria-hidden />
           </span>
-          <button type="button" onClick={onClose} aria-label="Skip the tutorial" className="absolute top-3 right-3 grid size-9 place-items-center rounded-full bg-white/90">
+          <button type="button" onClick={onClose} aria-label="Skip the tutorial" className="absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-white/90">
             <X className="size-4" />
           </button>
         </div>
-        <div key={`t${i}`} className="tutorial-text p-5">
+        <div key={`t${i}`} className="tutorial-text min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
           <p className="text-xs font-black tracking-[0.25em] text-[#2b5fd9] uppercase">
             How to play · {i + 1} of {STEPS.length}
           </p>
-          <h2 className="mt-1 text-2xl font-black">{s.title}</h2>
+          <h2 className="mt-1 text-xl font-black">{s.title}</h2>
           <p className="mt-2 text-sm leading-relaxed">{s.body}</p>
           <p className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-bold">{s.hint}</p>
           <div className="mt-4 flex items-center gap-1.5">
@@ -128,16 +134,16 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
               <span key={k} className={`h-1.5 flex-1 rounded-full ${k <= i ? "bg-[#2b5fd9]" : "bg-[#13203a]/15"}`} />
             ))}
           </div>
-          <div className="mt-4 flex gap-2">
-            {i > 0 && (
-              <button type="button" onClick={() => setI(i - 1)} className="flex-1 rounded-full bg-white py-3 font-black">
-                Back
-              </button>
-            )}
-            <button type="button" onClick={() => (i < STEPS.length - 1 ? setI(i + 1) : onClose())} className="flex-1 rounded-full bg-[#2b5fd9] py-3 font-black text-white">
-              {i < STEPS.length - 1 ? "Next" : "Start playing"}
+        </div>
+        <div className="flex shrink-0 gap-2 border-t border-[#13203a]/10 p-3 pt-2">
+          {i > 0 && (
+            <button type="button" onClick={() => setI(i - 1)} className="min-h-11 flex-1 rounded-full bg-white px-3 py-2 text-sm font-black">
+              Back
             </button>
-          </div>
+          )}
+          <button type="button" onClick={() => (i < STEPS.length - 1 ? setI(i + 1) : onClose())} className="min-h-11 flex-1 rounded-full bg-[#2b5fd9] px-3 py-2 text-sm font-black text-white">
+            {i < STEPS.length - 1 ? "Next" : "Start playing"}
+          </button>
         </div>
       </div>
     </div>

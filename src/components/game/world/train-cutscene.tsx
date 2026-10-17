@@ -14,7 +14,7 @@ import type { Avatar } from "@/game/core/cosmetics";
  * other passengers sitting, reading and standing, and you holding the rail, until
  * the display says the next station and the train pulls in.
  */
-const RIDE_MS = 7500;
+const RIDE_MS = 2400;
 
 function mat(c: string, emissive = false) {
   return new THREE.MeshLambertMaterial({ color: c, emissive: emissive ? c : "#000000", emissiveIntensity: emissive ? 0.9 : 0 });
@@ -53,14 +53,13 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
   done.current = onArrive;
 
   useEffect(() => {
-    if (!ready) return;
     const a = setTimeout(() => setStage(1), RIDE_MS * 0.55);
     const b = setTimeout(() => done.current(), RIDE_MS);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, [ready]);
+  }, []);
 
   useEffect(() => {
     const el = host.current;
@@ -233,7 +232,7 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
   return (
     <div className="absolute inset-0 z-[100005] bg-[#0c0b10]" role="status" aria-live="polite">
       <div ref={host} className="absolute inset-0" aria-hidden />
-      {ready&&<button type="button" className="absolute right-3 bottom-14 z-20 min-h-11 rounded-full border border-white/40 bg-black/60 px-4 py-2 text-xs font-bold text-white" onClick={()=>done.current()}>Skip journey</button>}
+      <button type="button" className="absolute right-3 bottom-14 z-20 min-h-11 rounded-full border border-white/40 bg-black/60 px-4 py-2 text-xs font-bold text-white" onClick={()=>done.current()}>Skip journey</button>
       {fallback&&<div className="absolute inset-0 grid place-items-center bg-[#13203a] text-white"><div className="text-center"><TrainFront className="mx-auto size-20 text-[#a8c6ff]"/><p className="mt-5 text-xl font-bold">Travelling to {to}</p><p className="mt-2 text-sm">Your journey continues in 2D mode.</p></div></div>}
       <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex justify-center px-3">
         <p className="rounded-lg bg-black/80 px-4 py-2 font-mono text-sm font-black tracking-wide text-[#ffb020]">

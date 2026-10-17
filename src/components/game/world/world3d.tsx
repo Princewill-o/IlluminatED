@@ -6,7 +6,8 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 
-import { BUS_ROUTE_CODES, TRAFFIC_BOXES } from "./art";
+import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
@@ -22,7 +23,9 @@ import { buildLondon } from "@/game/core/london";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { trainFrame } from "@/game/core/train";
+import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
@@ -35,9 +38,6 @@ import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
  * mountains are built here from simple shapes.
  */
 
-/** Where the people on the street are (px), for "someone's near you" checks. */
-export const NPC_SPOTS: { x: number; y: number }[] = [];
-
 /** When the platform train's 24-second cycle started (ms, performance clock). */
 export const TRAIN_CALL = { at: -1 };
 
@@ -48,6 +48,7 @@ export interface Mover3D {
   walking: boolean;
   avatar: Avatar;
   car?: string | null;
+  heading?: number;
 }
 
 // ── Rolling-log curvature: every material bends the world down away from the camera focus ──
@@ -226,14 +227,32 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
   return o;
 }
 
+/** The kit's compact cars need a shared real footprint, including their mirrors. */
+async function placeCar(g: THREE.Group, model: string) {
+  const gltf = await load(`/world3d/cars/${model}.glb`);
+  const car = gltf.scene.clone(true);
+  car.rotation.y = Math.PI / 2;
+  const bounds = new THREE.Box3().setFromObject(car);
+  const size = bounds.getSize(new THREE.Vector3());
+  const fitted = new THREE.Group();
+  fitted.add(car);
+  fitted.scale.set(CAR_LENGTH / size.x, CAR_WIDTH / size.z, CAR_WIDTH / size.z);
+  const fitBounds = new THREE.Box3().setFromObject(fitted);
+  const centre = fitBounds.getCenter(new THREE.Vector3());
+  fitted.position.set(-centre.x, -fitBounds.min.y, -centre.z);
+  bendAll(fitted);
+  g.add(fitted);
+  return fitted;
+}
+
 const GROUND: Record<string, [string, number]> = {
   g: ["#8fd16f", 0.05],
   f: ["#88cc69", 0.05],
   T: ["#8fd16f", 0.05],
   "-": ["#e9e1d0", 0.12],
   _: ["#ecd8a4", 0.08],
-  "=": ["#6b6f7e", 0],
-  ":": ["#6b6f7e", 0],
+  "=": ["#586171", 0],
+  ":": ["#586171", 0],
   "|": ["#cbbfa8", 0.3],
   X: ["#e9e1d0", 0.12],
   L: ["#e9e1d0", 0.12],
@@ -281,6 +300,65 @@ function groundMesh(tiles: string[], highland: boolean) {
   const mesh = new THREE.Mesh(geo, m);
   mesh.receiveShadow = true;
   return mesh;
+}
+
+/** Current lane markings, zebras and stop lines use the same world positions
+ * as the canvas fallback and traffic-rule collision checks. */
+function roadMarkings(map: WorldMap) {
+  const position: number[] = [], colour: number[] = [];
+  const c = new THREE.Color();
+  for (const paint of cityRoadPaint(map)) {
+    const x = paint.x, z = paint.y, x1 = x + paint.w, z1 = z + paint.h;
+    position.push(x, .018, z, x, .018, z1, x1, .018, z1, x, .018, z, x1, .018, z1, x1, .018, z);
+    c.set(paint.colour);
+    for (let i = 0; i < 6; i++) colour.push(c.r, c.g, c.b);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colour, 3));
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false });
+  bend(material);
+  return new THREE.Mesh(geometry, material);
+}
+
+type Signal3D = { post: ReturnType<typeof citySignalPosts>[number]; lamps: THREE.MeshBasicMaterial[]; pedestrian: THREE.MeshBasicMaterial; phase: string };
+function streetSignals(world: THREE.Group): Signal3D[] {
+  const sphere = new THREE.SphereGeometry(.12, 12, 8);
+  const materials = new Map<string, { lamps: THREE.MeshBasicMaterial[]; pedestrian: THREE.MeshBasicMaterial }>();
+  return citySignalPosts().map(post => {
+    const key = `${post.junction.id}-${post.axis}`;
+    let lighting = materials.get(key);
+    if (!lighting) {
+      lighting = { lamps: ["#53272c", "#54472c", "#244736"].map(color => { const m = new THREE.MeshBasicMaterial({ color, toneMapped: false }); bend(m); return m; }), pedestrian: new THREE.MeshBasicMaterial({ color: "#ff4b52", toneMapped: false }) };
+      bend(lighting.pedestrian); materials.set(key, lighting);
+    }
+    const g = new THREE.Group(); g.position.set(post.x, 0, post.y);
+    // Each head faces the driver approaching its stop line. Opposite and
+    // perpendicular signals show their housing backs/sides, not another lane's green.
+    g.rotation.y = post.approach === "north" ? 0 : post.approach === "south" ? Math.PI : post.approach === "east" ? -Math.PI / 2 : Math.PI / 2;
+    world.add(g);
+    cyl(g, "#28353e", 0, 0, .12, 2.85, .055, 8);
+    box(g, "#52616c", -.33, 1.88, -.15, .33, 3.06, .21);
+    box(g, "#17232b", -.29, 1.92, -.17, .29, 3.02, .235);
+    lighting.lamps.forEach((material, i) => { const light = new THREE.Mesh(sphere, material); light.position.set(0, 2.82 - i * .35, .25); g.add(light); });
+    box(g, "#17232b", -.22, .95, -.13, .22, 1.54, .21);
+    // Small pedestrian icon: head and body glow green only during all-red.
+    const walker = new THREE.Mesh(new THREE.SphereGeometry(.065, 8, 6), lighting.pedestrian);
+    walker.position.set(0, 1.4, .24); g.add(walker);
+    const torso = new THREE.Mesh(BOX, lighting.pedestrian); torso.scale.set(.1, .21, .035); torso.position.set(0, 1.22, .24); g.add(torso);
+    return { post, lamps: lighting.lamps, pedestrian: lighting.pedestrian, phase: "" };
+  });
+}
+function updateStreetSignals(signals: Signal3D[], now: number) {
+  const colours = ["#ff4b52", "#ffd04a", "#46f09c"], dark = ["#53272c", "#54472c", "#244736"];
+  for (const signal of signals) {
+    const state = signalAt(signal.post.junction, now), colour = state[signal.post.axis], phase = `${colour}-${state.pedestrian}`;
+    if (signal.phase === phase) continue;
+    signal.phase = phase;
+    signal.lamps.forEach((lamp, i) => lamp.color.set(["red", "amber", "green"][i] === colour ? colours[i] : dark[i]));
+    signal.pedestrian.color.set(state.pedestrian === "walk" ? "#46f09c" : "#ff4b52");
+  }
 }
 
 // ── Buildings ──
@@ -593,6 +671,55 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   }
 }
 
+/** Familiar high-street places get their own frontage rather than a generic office. */
+function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>) {
+  const identity = `${t.id} ${t.label ?? ""}`.toLowerCase();
+  const coffee = identity.includes("starbucks"), chicken = identity.includes("kfc"), burgers = identity.includes("mcdonald");
+  if (!coffee && !chicken && !burgers) return false;
+  const x = t.x + 0.12, z = t.y + 0.12, w = t.w - 0.24, d = t.h - 0.24;
+  const accent = coffee ? "#006241" : chicken ? "#b72025" : "#c92627";
+  const trim = burgers ? "#ffc72c" : "#fff7e9";
+  const name = coffee ? "STARBUCKS" : chicken ? "KFC" : "McDonald's";
+  const h = coffee ? 2.55 : 2.8;
+  box(g, coffee ? "#e7d8bc" : "#e9e2d8", x, 0.12, z, x + w, h, z + d);
+  box(g, "#302e30", x - 0.06, h, z - 0.06, x + w + 0.06, h + 0.18, z + d + 0.06);
+  // Deep glazing, solid mullions and a separate entrance give the frontage depth.
+  for (let i = 0; i < 3; i++) {
+    const x0 = x + 0.18 + i * w / 3;
+    const x1 = Math.min(x + w - 0.18, x0 + w / 3 - 0.2);
+    box(g, "#344e55", x0, 0.35, z + d - 0.06, x1, 1.85, z + d + 0.03);
+    box(g, "#9ec6c9", x0 + 0.06, 0.42, z + d + 0.035, x1 - 0.06, 1.77, z + d + 0.045);
+    box(g, "#edf3e8", x0, 1.02, z + d + 0.05, x1, 1.07, z + d + 0.08);
+  }
+  const doorX = x + w / 2;
+  box(g, "#233e42", doorX - 0.32, 0.14, z + d + 0.05, doorX + 0.32, 1.88, z + d + 0.1);
+  box(g, "#bbd9d6", doorX - 0.25, 0.27, z + d + 0.105, doorX + 0.25, 1.75, z + d + 0.12);
+  box(g, "#f2e9ce", doorX + 0.13, 0.8, z + d + 0.12, doorX + 0.18, 1.1, z + d + 0.16);
+  box(g, accent, x - 0.04, 1.96, z + d - 0.05, x + w + 0.04, 2.55, z + d + 0.18);
+  const board = sign(name, { bg: accent, fg: trim, w: Math.max(1.8, w - 0.4), h: 0.43 });
+  board.position.set(x + w / 2, 2.25, z + d + 0.19);
+  g.add(board);
+  box(g, accent, x - 0.05, 1.82, z + d + 0.06, x + w + 0.05, 1.94, z + d + 0.55);
+  if (chicken) {
+    // Red and cream awning stripes and a bold bucket-shaped roof sign.
+    for (let i = 0; i < 8; i++) box(g, i % 2 ? "#fff7e9" : accent, x + i * w / 8, 1.83, z + d + 0.1, x + (i + 1) * w / 8, 1.96, z + d + 0.56);
+    cyl(g, "#fff7e9", x + w * 0.75, z + d * 0.45, h + 0.18, h + 0.9, 0.46, 20, 0.6);
+    const bucket = sign("KFC", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
+    bucket.position.set(x + w * 0.75, h + 0.58, z + d * 0.45 + 0.55);
+    g.add(bucket);
+  } else if (burgers) {
+    // Raised golden arches read clearly even when the shop is behind the player.
+    const arches = sign("M", { bg: accent, fg: "#ffc72c", w: 1.3, h: 1.05, font: "900 100px system-ui, sans-serif" });
+    arches.position.set(x + w * 0.23, h + 0.72, z + d * 0.6);
+    g.add(arches);
+    box(g, "#ffc72c", x, 0.13, z + d + 0.08, x + w, 0.25, z + d + 0.22);
+  } else {
+    roof(g, "#344d3e", x - 0.04, z - 0.04, x + w + 0.04, z + d * 0.7, h + 0.18, 0.65);
+    for (const xx of [x + 0.22, x + w - 0.22]) cyl(g, "#3c6e45", xx, z + d + 0.18, 0.1, 0.56, 0.19, 12);
+  }
+  return true;
+}
+
 async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>) {
   const x0 = t.x + 0.08;
   const z0 = t.y + 0.08;
@@ -600,6 +727,7 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const d = t.h - 0.16;
   const seed = t.x * 7 + t.y * 13;
   box(g, "#e9e1d0", x0 - 0.05, 0, z0 - 0.05, x0 + w + 0.05, 0.13, z0 + d + 0.05);
+  if (restaurantShop(g, t)) return;
   if (t.style === "terrace") return terrace(g, t, false);
   const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
   if (co) return headquarters(g, t, co);
@@ -812,6 +940,7 @@ function busModel(route: string) {
       wh.rotation.x = Math.PI / 2;
       wh.position.y = 0.25;
     }
+  g.scale.set(BUS_LENGTH / 2.8, 1.35, BUS_WIDTH / 1.0);
   return g;
 }
 
@@ -989,7 +1118,7 @@ export function World3D({
   onUnavailable,
 }: {
   map: WorldMap;
-  getMe: () => { x: number; y: number; walking: boolean };
+  getMe: () => { x: number; y: number; walking: boolean; heading?: number };
   getOthers: () => Mover3D[];
   avatar: Avatar;
   car: string | null;
@@ -1063,6 +1192,9 @@ export function World3D({
     scene.add(world);
     const tiles = map.tiles;
     if (!indoors) world.add(groundMesh(tiles, highland));
+    const signals = london ? streetSignals(world) : [];
+    if (london) world.add(roadMarkings(map));
+    updateStreetSignals(signals, Date.now());
     const water = new THREE.Mesh(new THREE.PlaneGeometry(map.cols, map.rows), new THREE.MeshLambertMaterial({ color: "#5fb8d9", transparent: true, opacity: 0.92 }));
     bend(water.material);
     water.rotation.x = -Math.PI / 2;
@@ -1343,7 +1475,7 @@ export function World3D({
 
     // Traffic: buses and Kenney cars driving the road loops on the left.
     const L = london ? buildLondon() : null;
-    const traffic: { obj: THREE.Group; route: number; at: number; speed: number; commuter?: { body: Body; offset: number } }[] = [];
+    const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
       const kinds = ["bus", "sedan", "taxi", "van", "bus", "suv", "delivery", "taxi", "bus", "police", "sedan", "hatchback-sports", "bus", "ambulance", "van", "taxi"];
       kinds.forEach((k, i) => {
@@ -1353,12 +1485,12 @@ export function World3D({
           const b = busModel(BUS_ROUTE_CODES[route]);
           g.add(b);
           g.userData.label = BUS_ROUTE_CODES[route];
-        } else void place(g, `/world3d/cars/${k}.glb`, -0.85, -0.45, 1.7, 0.9, 0, Math.PI / 2);
+        } else void placeCar(g, k);
         scene.add(g);
-        traffic.push({ obj: g, route, at: (i * 0.173) % 1, speed: [2.6, 2.8, 2.5][route] });
+        traffic.push({ obj: g, route, at: (i * 0.173) % 1, distance: 0, speed: [2.6, 2.8, 2.5][route] });
       });
     }
-    const paths = L ? L.routes : [];
+    const paths = L ? L.routes.map(route => { const first = route[0], last = route[route.length - 1]; return first[0] === last[0] && first[1] === last[1] ? route : [...route, first]; }) : [];
     const lengths = paths.map((pts) => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0));
     const pointAt = (pi: number, dist: number) => {
       const pts = paths[pi];
@@ -1381,20 +1513,56 @@ export function World3D({
       scene.add(body.root);
       return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
+    const crossingNpcs = london ? crossingPedestrianPoses(Date.now()).map((pose, i) => {
+      const body = makeBody(npcLook(90 + i)); scene.add(body.root);
+      return { id: pose.id, body };
+    }) : [];
     const cyclists = L ? Array.from({ length: mobile ? 4 : 8 }, (_, i) => {
       const body = makeBody(npcLook(i + 30));
       const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
       bendAll(bike);
       scene.add(body.root, bike);
-      return { body, bike, route: i % paths.length, at: i * 0.217 };
+      return { body, bike, route: i % paths.length, at: i * 0.217, distance: 0, moving: false };
     }) : [];
     if (L) for (let i = 0; i < 3; i++) {
       const obj = new THREE.Group();
-      void place(obj, `/world3d/cars/${["sedan", "suv", "taxi"][i]}.glb`, -0.85, -0.45, 1.7, 0.9, 0, Math.PI / 2);
+      void placeCar(obj, ["sedan", "suv", "taxi"][i]);
       const body = makeBody(npcLook(40 + i));
       scene.add(obj, body.root);
-      traffic.push({ obj, route: i, at: 0.12 + i * 0.19, speed: 2.1, commuter: { body, offset: i * 13 } });
+      traffic.push({ obj, route: i, at: 0.12 + i * 0.19, distance: 0, speed: 2.1, commuter: { body, offset: i * 13 } });
     }
+
+    const trafficPose = (v: typeof traffic[number]) => {
+      const q = pointAt(v.route, v.distance), length = Math.hypot(q.dx, q.dz) || 1;
+      return { ...q, x: q.x + q.dz / length * ROAD_LANE_OFFSET, z: q.z - q.dx / length * ROAD_LANE_OFFSET };
+    };
+    const cyclistPose = (c: typeof cyclists[number]) => {
+      const q = pointAt(c.route, c.distance), length = Math.hypot(q.dx, q.dz) || 1;
+      return { ...q, x: q.x + q.dz / length * ROAD_LANE_OFFSET, z: q.z - q.dx / length * ROAD_LANE_OFFSET };
+    };
+    const bicycleLength = 1.7, bicycleWidth = .65;
+    const parked: TrafficVehicle[] = [];
+    traffic.forEach((v, i) => {
+      v.distance = v.at * lengths[v.route];
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const q = trafficPose(v), length = v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH;
+        if (!parked.some(other => Math.hypot(other.x - q.x, other.y - q.z) < (length + (other.length ?? CAR_LENGTH)) / 2 + .8)) {
+          parked.push({ id: `ambient-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length }); break;
+        }
+        v.distance += .9;
+      }
+    });
+
+    cyclists.forEach((c, i) => {
+      c.distance = c.at * lengths[c.route];
+      for (let attempt = 0; attempt < 100; attempt++) {
+        const q = cyclistPose(c);
+        if (!parked.some(other => Math.hypot(other.x - q.x, other.y - q.z) < (bicycleLength + (other.length ?? CAR_LENGTH)) / 2 + .8)) {
+          parked.push({ id: `cyclist-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: bicycleLength, width: bicycleWidth }); break;
+        }
+        c.distance += .9;
+      }
+    });
 
     // ── Scuffles: you swing, the nearest person goes down ──
     let swingUntil = 0;
@@ -1421,9 +1589,9 @@ export function World3D({
     const responseCar = new THREE.Group();
     const responders = london || highland ? [makeBody({...npcLook(51),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(52),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
     if (london || highland) {
-      void place(responseCar,"/world3d/cars/police.glb",-0.9,-0.48,1.8,0.96,0,Math.PI/2);
-      box(responseCar,"#2b5fd9",-0.2,0.78,-0.25,0.05,0.87,0.25);
-      box(responseCar,"#e04a3f",0.05,0.78,-0.25,0.3,0.87,0.25);
+      void placeCar(responseCar, "police");
+      box(responseCar,"#2b5fd9",-0.4,1.4,-0.42,0.05,1.56,0.42);
+      box(responseCar,"#e04a3f",0.05,1.4,-0.42,0.5,1.56,0.42);
       scene.add(responseCar,...responders.map(b=>b.root));
     }
     const carLast = new THREE.Vector3();
@@ -1492,8 +1660,10 @@ export function World3D({
       if (Math.hypot(dx, dz) > 0.002) {
         const ang = Math.atan2(dx, dz);
         me.root.rotation.y = ang;
-        carHolder.rotation.y = ang - Math.PI / 2;
       }
+      // Heading belongs to the car, so reversing never makes its body flip around.
+      if (p.heading !== undefined) carHolder.rotation.y = -p.heading;
+      else if (Math.hypot(dx, dz) > 0.002) carHolder.rotation.y = Math.atan2(-dz, dx);
       lastMe.set(mx, 0, mz);
       me.root.position.set(mx, 0, mz);
       carHolder.position.set(mx, 0.08, mz);
@@ -1509,7 +1679,11 @@ export function World3D({
       if (want !== carLoaded) {
         carLoaded = want;
         carHolder.clear();
-        if (want) void place(carHolder, `/world3d/cars/${want === "cab" ? "taxi" : want}.glb`, -0.9, -0.48, 1.8, 0.96, 0, Math.PI / 2);
+        if (want) {
+          const model = new THREE.Group();
+          carHolder.add(model);
+          void placeCar(model, want === "cab" ? "taxi" : want);
+        }
       }
       me.root.visible = !want;
       // Riding a hire bike: the bike appears under you and you sit up on it.
@@ -1542,7 +1716,7 @@ export function World3D({
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
       playerRing.position.set(mx, 0.18, mz);
-      playerRing.scale.setScalar(want ? 1.8 : 1);
+      playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
       const screen = new THREE.Vector3(mx, want ? 2.3 : 2.6, mz).project(camera);
       const sx = (screen.x + 1) * el.clientWidth / 2;
@@ -1600,28 +1774,45 @@ export function World3D({
       const patrols=prisonGuardPositions(Date.now()/1000);
       guardBodies.forEach((body,i)=>{const p=patrols[i];body.root.position.set(p.x/TILE,0,p.y/TILE);body.root.rotation.y=p.angle;setWalking(body,!reduce);});
 
-      // Traffic and pedestrians.
+      // Traffic obeys the visible signal phase and queues behind cars and
+      // crossing pedestrians. Accumulated distance prevents post-red jumps.
+      const roadTime = Date.now();
+      updateStreetSignals(signals, roadTime);
+      const crossingWalkers = london ? crossingPedestrianPoses(roadTime) : [];
+      const currentTraffic: TrafficVehicle[] = traffic.map((v, i) => {
+        const q = trafficPose(v);
+        return { id: `ambient-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH, width: v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH };
+      });
+      cyclists.forEach((c, i) => {
+        const q = cyclistPose(c);
+        currentTraffic.push({ id: `cyclist-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: bicycleLength, width: bicycleWidth });
+      });
+      if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE });
+      const pedestrians = [...NPC_SPOTS.map(p => ({ x: p.x / TILE, y: p.y / TILE })), ...crossingWalkers.map(p => ({ x: p.x, y: p.y }))];
+      if (!PLAYER_VEHICLE.active) pedestrians.push({ x: PLAYER.x / TILE, y: PLAYER.y / TILE });
       let ti = 0;
-      for (const v of traffic) {
-        const phase = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
-        const q = pointAt(v.route, v.at * lengths[v.route] + (phase ? phase.distance * v.speed : reduce ? 0 : secs * v.speed));
-        const len = Math.hypot(q.dx, q.dz) || 1;
-        // Drive on the left.
-        const parkingClear = !blocked(map, (q.x + (q.dz / len) * 2.65) * TILE, (q.z - (q.dx / len) * 2.65) * TILE);
-        const lane = 0.5 + (parkingClear ? phase?.pull ?? 0 : 0) * 0.85;
-        v.obj.position.set(q.x + (q.dz / len) * lane, 0.02, q.z - (q.dx / len) * lane);
-        if (v.commuter && phase) {
+      for (const [i, v] of traffic.entries()) {
+        const commuter = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
+        const own = currentTraffic[i];
+        const step = reduce || commuter?.out ? 0 : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic.filter(other => other.id !== own.id), pedestrians);
+        v.distance += step;
+        const q = trafficPose(v), len = Math.hypot(q.dx, q.dz) || 1;
+        v.obj.position.set(q.x, .02, q.z);
+        own.x = q.x; own.y = q.z; own.heading = Math.atan2(q.dz, q.dx);
+        if (v.commuter && commuter) {
           const driver = v.commuter.body;
-          const kerb = lane + 0.65 + phase.stroll * 0.65;
-          driver.root.visible = phase.out && parkingClear;
-          driver.root.position.set(q.x + (q.dz / len) * kerb, 0.12, q.z - (q.dx / len) * kerb);
-          driver.root.rotation.y = Math.atan2(q.dz, -q.dx) + (phase.stroll > 0 && !phase.walking ? Math.PI / 2 : 0);
-          setWalking(driver, phase.walking && !reduce);
+          const kerb = .65 + commuter.stroll * .65;
+          const x = q.x + q.dz / len * kerb, z = q.z - q.dx / len * kerb;
+          driver.root.visible = commuter.out && !blocked(map, x * TILE, z * TILE);
+          driver.root.position.set(x, .12, z);
+          driver.root.rotation.y = Math.atan2(q.dz, -q.dx) + (commuter.stroll > 0 && !commuter.walking ? Math.PI / 2 : 0);
+          setWalking(driver, commuter.walking && !reduce);
         }
         v.obj.rotation.y = Math.atan2(-q.dz, q.dx);
         const horiz = Math.abs(q.dx) > Math.abs(q.dz);
-        const long = (v.obj.userData.label ? 2.8 : 1.8) * TILE;
-        TRAFFIC_BOXES[ti++] = { x: v.obj.position.x * TILE, y: v.obj.position.z * TILE, hw: (horiz ? long : TILE * 0.95) / 2, hh: (horiz ? TILE * 0.95 : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz) };
+        const long = (v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH) * TILE;
+        const wide = (v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH) * TILE;
+        TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horiz ? long : wide) / 2, hh: (horiz ? wide : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
       }
       NPC_SPOTS.length = 0;
       const onlineCount = seen.size;
@@ -1635,16 +1826,28 @@ export function World3D({
         n.body.root.rotation.y = pose.angle;
         setWalking(n.body, pose.walking && !reduce);
       });
-      for (const c of cyclists) {
-        const q = pointAt(c.route, c.at * lengths[c.route] + (reduce ? 0 : secs * 1.8));
-        const length = Math.hypot(q.dx, q.dz) || 1;
-        const x = q.x + (q.dz / length) * 0.95;
-        const z = q.z - (q.dx / length) * 0.95;
-        c.bike.position.set(x, 0.12, z);
+      crossingNpcs.forEach((n, i) => {
+        const pose = crossingWalkers[i];
+        n.body.root.position.set(pose.x, .12, pose.y);
+        n.body.root.rotation.y = Math.PI / 2 - pose.heading;
+        setWalking(n.body, pose.walking && !reduce);
+        NPC_SPOTS.push({ x: pose.x * TILE, y: pose.y * TILE });
+      });
+      for (const [i, c] of cyclists.entries()) {
+        const own = currentTraffic[traffic.length + i];
+        const step = reduce ? 0 : trafficMoveDistance(own, dt * 1.8, roadTime, currentTraffic.filter(other => other.id !== own.id), pedestrians);
+        c.distance += step;
+        c.moving = step > .0001;
+        const q = cyclistPose(c);
+        own.x = q.x; own.y = q.z; own.heading = Math.atan2(q.dz, q.dx);
+        c.bike.position.set(q.x, .12, q.z);
         c.bike.rotation.y = Math.atan2(-q.dz, q.dx);
-        c.body.root.position.set(x, 0.42, z);
+        c.body.root.position.set(q.x, .42, q.z);
         c.body.root.rotation.y = Math.atan2(q.dx, q.dz);
+        const horizontal = Math.abs(q.dx) > Math.abs(q.dz);
+        TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horizontal ? bicycleLength : bicycleWidth) * TILE / 2, hh: (horizontal ? bicycleWidth : bicycleLength) * TILE / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
       }
+      TRAFFIC_BOXES.length = ti;
 
       for (const s of spinners) {
         if (s.userData.train) {
@@ -1680,7 +1883,7 @@ export function World3D({
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
       else if (me.char && now > swingUntil) me.char.play(p.walking ? "walk" : "idle");
-      for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, !reduce, secs * 8 + c.at * 10);
+      for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(frame);
     };

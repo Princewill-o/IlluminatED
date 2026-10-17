@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import META_JSON from "../../../public/characters/meta.json";
 
-import { type Avatar, DEFAULT_AVATAR, cosmeticById } from "@/game/core/cosmetics";
+import { type Avatar, DEFAULT_AVATAR } from "@/game/core/cosmetics";
 import { logoFor } from "@/game/core/logos";
-import { BOTTOM_LOOK, HAIR_LOOK, SHOES_LOOK, TOP_LOOK } from "@/game/core/looks";
+import { HAIR_LOOK } from "@/game/core/looks";
+import { outfitColours, outfitVariants } from "@/game/core/outfits";
 
 /**
  * IlluminatED characters, rendered from Blender.
@@ -70,8 +71,8 @@ function load(name: string) {
 }
 
 const tinted = new Map<string, HTMLCanvasElement>();
-function tint(img: HTMLImageElement, name: string, colour: string) {
-  const key = `${name}|${colour}`;
+function tint(img: HTMLImageElement, name: string, colour: string, torso?: string) {
+  const key = `${name}|${colour}|${torso ?? ""}`;
   let c = tinted.get(key);
   if (!c) {
     c = document.createElement("canvas");
@@ -79,11 +80,26 @@ function tint(img: HTMLImageElement, name: string, colour: string) {
     c.height = img.height;
     const g = c.getContext("2d")!;
     g.drawImage(img, 0, 0);
-    g.globalCompositeOperation = "multiply";
+    // Imported ties/badges must not retain the source character's colours.
+    const flat = name.endsWith("-detail");
+    g.globalCompositeOperation = flat ? "source-in" : "multiply";
     g.fillStyle = colour;
     g.fillRect(0, 0, c.width, c.height);
-    g.globalCompositeOperation = "destination-in";
-    g.drawImage(img, 0, 0);
+    if (!flat) {
+      g.globalCompositeOperation = "destination-in";
+      g.drawImage(img, 0, 0);
+    }
+    if (torso) {
+      // skinU also contains the source character's bare stomach/front panels.
+      // Cover its central torso while leaving the separate hand pixels skin.
+      g.globalCompositeOperation = "source-atop";
+      g.fillStyle = torso;
+      META.anchors.forEach((anchor, i) => {
+        const x = (i % COLS) * FRAME + anchor.head[0];
+        const y = Math.floor(i / COLS) * FRAME + anchor.head[1];
+        g.fillRect(x - U * 0.64, y + U * 0.58, U * 1.28, U * 1.85 - U * 0.58);
+      });
+    }
     tinted.set(key, c);
   }
   return c;
@@ -103,16 +119,12 @@ const TOP_LOGO: Record<string, string> = {
 export interface Layer {
   name: string;
   tint?: string;
+  /** Clothing coverage on the combined torso/hand skin sheet. */
+  torso?: string;
 }
 
 const has = (name: string) => META_LAYERS.has(name);
 const pick = (...names: string[]) => names.find(has) ?? names[names.length - 1];
-
-/** Item colour, unless it's been dyed. */
-function dyed(item: string | undefined, dye: string | undefined) {
-  const d = dye && !dye.endsWith("-auto") ? cosmeticById(dye)?.color : undefined;
-  return d ?? cosmeticById(item ?? "")?.color ?? "#8d93a0";
-}
 
 /**
  * The layers for an outfit, back to front. Bodies, heads, hair and clothes are
@@ -120,21 +132,22 @@ function dyed(item: string | undefined, dye: string | undefined) {
  * and animal heads are our own sheets on the same rig.
  */
 export function layersFor(a: Avatar, showPet = true): { back: Layer[]; front: Layer[]; overHead: Layer[]; pet: Layer | null } {
-  const skin = cosmeticById(a.skin)?.color ?? "#d09460";
-  const hair = cosmeticById(a.hairColor)?.color ?? INK;
+  const { skin, hair, ...colours } = outfitColours(a);
+  const variants = outfitVariants(a);
   const animal = ANIMAL_HEADS.has(a.head ?? "");
-  const topV = TOP_LOOK[a.top ?? ""] ?? "male-a";
-  const botV = BOTTOM_LOOK[a.bottom ?? ""] ?? "male-a";
-  const shoeV = SHOES_LOOK[a.shoes ?? ""] ?? "male-a";
+  const topV = variants.top;
+  const botV = variants.bottom;
+  const shoeV = variants.shoes;
   const hairLook = HAIR_LOOK[a.hair ?? ""] ?? HAIR_LOOK["hair-short"];
   const back: Layer[] = [];
   if (a.top === "top-cape") back.push({ name: "cape-back" });
-  if (has(`kb-${botV}-skinL`)) back.push({ name: `kb-${botV}-skinL`, tint: skin });
-  back.push({ name: pick(`kb-${botV}-bottom`, "kb-male-a-bottom"), tint: dyed(a.bottom, a.bottomColor) });
-  back.push({ name: pick(`kb-${shoeV}-shoes`, "kb-male-a-shoes"), tint: dyed(a.shoes, a.shoesColor) });
-  if (has(`kb-${topV}-skinU`)) back.push({ name: `kb-${topV}-skinU`, tint: skin });
-  back.push({ name: pick(`kb-${topV}-top`, "kb-male-a-top"), tint: dyed(a.top, a.topColor) });
-  if (has(`kb-${topV}-detail`)) back.push({ name: `kb-${topV}-detail` });
+  const bareLegs = a.bottom === "bottom-skirt" || a.bottom === "bottom-shorts";
+  if (has(`kb-${botV}-skinL`)) back.push({ name: `kb-${botV}-skinL`, tint: bareLegs ? skin : colours.bottom });
+  back.push({ name: pick(`kb-${botV}-bottom`, "kb-male-a-bottom"), tint: a.bottom === "bottom-skirt" ? skin : colours.bottom });
+  back.push({ name: pick(`kb-${shoeV}-shoes`, "kb-male-a-shoes"), tint: colours.shoes });
+  if (has(`kb-${topV}-skinU`)) back.push({ name: `kb-${topV}-skinU`, tint: skin, torso: colours.top });
+  back.push({ name: pick(`kb-${topV}-top`, "kb-male-a-top"), tint: colours.top });
+  if (has(`kb-${topV}-detail`)) back.push({ name: `kb-${topV}-detail`, tint: colours.top });
   const front: Layer[] = [animal ? { name: a.head! } : { name: `kh-${hairLook.head}-skin`, tint: skin }];
   const overHead: Layer[] = [];
   if (!animal && hairLook.hair) overHead.push({ name: hairLook.hair, tint: hair });
@@ -410,7 +423,7 @@ export async function createPainter(
   const sheet = (l: Layer) => {
     const img = byName.get(l.name);
     if (!img) return null;
-    return l.tint ? tint(img, l.name, l.tint) : img;
+    return l.tint ? tint(img, l.name, l.tint, l.torso) : img;
   };
   return {
     width: (h) => Math.round((h * crop[2]) / crop[3]),
@@ -435,7 +448,30 @@ export async function createPainter(
         if (s) g.drawImage(s, sx, sy, FRAME, FRAME, 0, 0, FRAME, FRAME);
       };
       const an = META.anchors[idx];
-      plan.back.forEach(put);
+      let skirtDrawn = false;
+      const skirt = () => {
+        if (skirtDrawn || a.bottom !== "bottom-skirt") return;
+        skirtDrawn = true;
+        const x = an.head[0], y = an.head[1] + U * 1.3;
+        const side = dir === "E";
+        const waist = U * (side ? 0.45 : 0.65), hem = U * (side ? 0.60 : 0.82);
+        const length = U * 0.52;
+        g.beginPath();
+        g.moveTo(x - waist, y); g.lineTo(x + waist, y);
+        g.lineTo(x + hem, y + length); g.lineTo(x - hem, y + length); g.closePath();
+        g.fillStyle = outfitColours(a).bottom; g.fill();
+        g.strokeStyle = INK; g.lineWidth = 1.2; g.stroke();
+        g.globalAlpha = 0.18;
+        for (const fraction of [-0.5, 0, 0.5]) {
+          g.beginPath(); g.moveTo(x + waist * fraction, y + 1); g.lineTo(x + hem * fraction, y + length - 1); g.stroke();
+        }
+        g.globalAlpha = 1;
+      };
+      for (const layer of plan.back) {
+        if (layer.name.endsWith("-skinU") || layer.name.endsWith("-top")) skirt();
+        put(layer);
+      }
+      skirt();
       // Uniform logos on the chest; in the world your company badge also shows on your back.
       if (chestLogo && (dir === "S" || (dir === "N" && logo))) drawLogo(g, chestLogo, an.chest[0], an.chest[1] - 1, 15);
       plan.front.forEach(put);

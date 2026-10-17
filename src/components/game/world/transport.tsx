@@ -30,14 +30,14 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
   const [pending, start] = useTransition();
   return (
     <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
-      <div role="dialog" aria-label="Bike dock" onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-[#f7f1e6] p-5 text-[#13203a] md:rounded-3xl">
+      <div role="dialog" aria-modal="true" aria-label="Bike dock" onClick={(e) => e.stopPropagation()} className="max-h-[calc(100%-16px)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl bg-[#f7f1e6] p-4 text-[#13203a] sm:p-5 md:rounded-3xl">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-black tracking-[0.25em] text-[#2b5fd9] uppercase">Bike dock</p>
             <h2 className="mt-1 text-2xl font-black">Hire a bike</h2>
             <p className="text-sm text-[#13203a]/70">Walking is slow. Bikes get you across London fast. You have {clout} Clout.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-white">
+          <button type="button" onClick={onClose} aria-label="Close" className="grid size-11 shrink-0 place-items-center rounded-full bg-white">
             <X className="size-4" />
           </button>
         </div>
@@ -236,8 +236,8 @@ export function StationArt({ map }: { map: WorldMap }) {
 export function TrainJourney({ to, onArrive }: { to: string; onArrive: () => void }) {
   const [stage, setStage] = useState(0);
   useEffect(() => {
-    const a = setTimeout(() => setStage(1), 1600);
-    const b = setTimeout(onArrive, 3600);
+    const a = setTimeout(() => setStage(1), 800);
+    const b = setTimeout(onArrive, 1600);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
@@ -346,7 +346,7 @@ export function BusJourneyScene({ route, to, className = "h-40" }: { route: stri
 /** Riding without revising: a few seconds of the journey, then you're there. */
 export function BusRide({ route, to, onArrive }: { route: string; to: string; onArrive: () => void }) {
   useEffect(() => {
-    const t = setTimeout(onArrive, 3600);
+    const t = setTimeout(onArrive, 1600);
     return () => clearTimeout(t);
   }, [onArrive]);
   return (
@@ -378,9 +378,9 @@ export function Dealership({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
-      <div role="dialog" aria-label="Car dealership" onClick={(e) => e.stopPropagation()} className="max-h-[90%] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-[#f7f1e6] text-[#13203a] md:rounded-3xl">
-        <div className="relative overflow-hidden bg-[#13203a] px-5 pt-5 pb-4 text-white">
+    <div className="absolute inset-0 z-[100000] grid place-items-center bg-black/60 p-2 sm:p-3" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Car dealership" onClick={(e) => e.stopPropagation()} className="max-h-full w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl bg-[#f7f1e6] text-[#13203a]">
+        <div className="relative overflow-hidden bg-[#13203a] px-4 pt-4 pb-4 text-white">
           <div className="absolute inset-x-0 bottom-0 h-3 [background:repeating-linear-gradient(90deg,#ffd166_0_30px,transparent_30px_60px)] opacity-60" />
           <div className="flex items-start justify-between">
             <div>
@@ -388,27 +388,36 @@ export function Dealership({
               <h2 className="mt-1 text-2xl font-black">Car dealership</h2>
               <p className="text-sm text-white/75">Buy once, keep it forever. Cars are much faster than walking. You have {clout} Clout.</p>
             </div>
-            <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-white/15">
+            <button type="button" onClick={onClose} aria-label="Close" className="grid size-11 shrink-0 place-items-center rounded-full bg-white/15">
               <X className="size-4" />
             </button>
           </div>
         </div>
+        <details className="mx-4 mt-3 rounded-xl bg-[#e8eef8] px-3 text-[#13203a]">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-bold">Driving controls and road rules</summary>
+          <div className="space-y-2 pb-3 text-xs leading-5">
+            <p><strong>Keyboard:</strong> W / ↑ accelerate · S / ↓ brake, then reverse · A D / ← → steer · Space brake.</p>
+            <p><strong>Touch:</strong> push the driving joystick up to accelerate, down to brake or reverse, and sideways to steer. Use Park to get out.</p>
+            <p><strong>Keep left.</strong> Brake before the stop line on amber; wait on red. Give way to people at zebra crossings and leave room for other cars.</p>
+            <p>Collisions and road violations add wanted stars, and the game’s police may respond.</p>
+          </div>
+        </details>
         <ul className="grid gap-3 p-4 sm:grid-cols-2">
           {CARS.map((c) => {
             const mine = owned.includes(c.id);
             const on = driving === c.id;
             return (
-              <li key={c.id} className="flex flex-col rounded-3xl border-2 border-white bg-white p-3 shadow-[0_4px_0_rgba(19,32,58,0.08)]">
-                <div className="grid h-28 place-items-center rounded-2xl bg-[#e8eef8] [background-image:linear-gradient(transparent_70%,#d0d8e6_70%)]">
+              <li key={c.id} className="flex flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-[0_4px_0_rgba(19,32,58,0.08)]">
+                <div className="grid h-20 place-items-center rounded-xl bg-[#e8eef8] [background-image:linear-gradient(transparent_70%,#d0d8e6_70%)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/world/movers/${c.id}-E.webp`} alt="" className="dealer-car h-24 object-contain" />
+                  <img src={`/world/movers/${c.id}-E.webp`} alt="" className="dealer-car h-16 object-contain" />
                 </div>
                 <p className="mt-3 font-black">{c.name}</p>
                 <p className="text-xs text-[#13203a]/70">{c.blurb}</p>
                 <p className="mt-1 text-xs font-bold">{c.speed}x walking speed</p>
                 <div className="mt-3 flex items-center gap-2">
                   {mine ? (
-                    <button type="button" onClick={() => onDrive(on ? null : c.id)} className={`flex-1 rounded-full py-2.5 text-sm font-black ${on ? "bg-[#13203a] text-white" : "bg-[#2b5fd9] text-white"}`}>
+                    <button type="button" onClick={() => onDrive(on ? null : c.id)} className={`min-h-11 flex-1 rounded-full px-3 py-2.5 text-sm font-black ${on ? "bg-[#13203a] text-white" : "bg-[#2b5fd9] text-white"}`}>
                       {on ? "Park it" : "Drive"}
                     </button>
                   ) : (
@@ -423,7 +432,7 @@ export function Dealership({
                           else setError(r.error);
                         })
                       }
-                      className="flex-1 rounded-full bg-[#f2d9a6] py-2.5 text-sm font-black disabled:opacity-50"
+                      className="min-h-11 flex-1 rounded-full bg-[#f2d9a6] px-3 py-2.5 text-sm font-black disabled:opacity-50"
                     >
                       Buy for {c.price} Clout
                     </button>

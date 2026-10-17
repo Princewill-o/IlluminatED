@@ -122,10 +122,23 @@ export function CityMap({ map, waypoint, onPick, onClose, searchArea }: { search
   const kinds = (Object.keys(KIND) as PlaceKind[]).filter((k) => places.some((p) => p.kind === k));
   const [show, setShow] = useState<Set<PlaceKind>>(new Set(Object.keys(KIND) as PlaceKind[]));
   const me = { x: (PLAYER.x / TILE) * S, y: (PLAYER.y / TILE) * S };
+  const mapViewport = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const viewport = mapViewport.current;
+    if (viewport) {
+      viewport.scrollLeft = (PLAYER.x / TILE) * S - viewport.clientWidth / 2;
+      viewport.scrollTop = (PLAYER.y / TILE) * S - viewport.clientHeight / 2;
+    }
+  }, [map, S]);
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose]);
   return (
-    <div className="absolute inset-0 z-[100003] grid place-items-center bg-[#13203a]/80 p-3" onClick={onClose}>
-      <div role="dialog" aria-label="Map of London" onClick={(e) => e.stopPropagation()} className="map-open flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-[#f7f1e6] text-[#13203a] md:flex-row">
-        <div className="relative min-h-0 flex-1 overflow-auto bg-[#d9cfbd]">
+    <div className="absolute inset-0 z-[100003] grid place-items-center bg-[#13203a]/80 p-2 sm:p-3" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label={`Map of ${map.name}`} onClick={(e) => e.stopPropagation()} className="map-open flex h-full max-h-[760px] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-[#f7f1e6] text-[#13203a] md:flex-row">
+        <div ref={mapViewport} className="relative min-h-[160px] flex-1 overflow-auto overscroll-contain bg-[#d9cfbd]">
           <div className="relative" style={{ width: map.cols * S, height: map.rows * S }}>
             {searchArea && <span aria-label="Police search area" className="pointer-events-none absolute z-10 rounded-full border-2 border-[#e04a3f] bg-[#e04a3f]/20" style={{left:(searchArea.origin.x-searchArea.radius)/TILE*S,top:(searchArea.origin.y-searchArea.radius)/TILE*S,width:searchArea.radius*2/TILE*S,height:searchArea.radius*2/TILE*S}}/>}
             <canvas ref={canvas} className="absolute inset-0" style={{ imageRendering: "pixelated" }} aria-hidden />
@@ -143,10 +156,10 @@ export function CityMap({ map, waypoint, onPick, onClose, searchArea }: { search
             <span className="map-me absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#f2a03a]" style={{ left: me.x, top: me.y }} />
           </div>
         </div>
-        <div className="w-full shrink-0 overflow-y-auto p-4 md:w-64">
+        <div className="max-h-[52%] w-full shrink-0 overflow-y-auto overscroll-contain p-3 sm:p-4 md:max-h-full md:w-64">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-black">{map.name}</h2>
-            <button type="button" onClick={onClose} aria-label="Close the map" className="grid size-9 place-items-center rounded-full bg-white">
+            <button type="button" onClick={onClose} aria-label="Close the map" className="grid size-11 shrink-0 place-items-center rounded-full bg-white">
               <X className="size-4" />
             </button>
           </div>
@@ -154,21 +167,23 @@ export function CityMap({ map, waypoint, onPick, onClose, searchArea }: { search
           <ul className="mt-3 space-y-1.5">
             {kinds.map((k) => (
               <li key={k}>
-                <label className="flex items-center gap-2 rounded-xl bg-white px-2 py-1.5 text-sm font-bold">
-                  <input type="checkbox" checked={show.has(k)} onChange={() => setShow((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; })} className="size-4" />
-                  <span className="size-3 rounded-full" style={{ background: KIND[k].colour }} />
-                  <span className="flex-1">{KIND[k].label}</span>
-                  <button type="button" className="text-xs text-[#2b5fd9] underline" onClick={(e) => { e.preventDefault(); onPick(nearest(k, places)); onClose(); }}>
+                <div className="flex items-center gap-1 rounded-xl bg-white px-2 text-sm font-bold">
+                  <label className="flex min-h-11 min-w-0 flex-1 items-center gap-2">
+                    <input type="checkbox" checked={show.has(k)} onChange={() => setShow((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; })} className="size-4" />
+                    <span className="size-3 rounded-full" style={{ background: KIND[k].colour }} />
+                    <span className="flex-1">{KIND[k].label}</span>
+                  </label>
+                  <button type="button" aria-label={`Find nearest ${KIND[k].label.toLowerCase()}`} className="min-h-11 shrink-0 px-1.5 text-xs text-[#2b5fd9] underline" onClick={() => { onPick(nearest(k, places)); onClose(); }}>
                     Nearest
                   </button>
-                </label>
+                </div>
               </li>
             ))}
           </ul>
           {waypoint && (
             <div className="mt-3 rounded-xl bg-[#13203a] p-3 text-sm text-white">
               <p className="font-black">Heading to {waypoint.name}</p>
-              <button type="button" onClick={() => onPick(null)} className="mt-1 text-xs underline">Clear waypoint</button>
+              <button type="button" onClick={() => onPick(null)} className="mt-1 min-h-11 text-sm underline">Clear waypoint</button>
             </div>
           )}
         </div>
@@ -181,7 +196,8 @@ export function CityMap({ map, waypoint, onPick, onClose, searchArea }: { search
 export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searchArea?: { origin: { x: number; y: number }; radius: number } | null; map: WorldMap; waypoint: Place | null; onOpen: () => void; onArrive: () => void }) {
   const S = 4;
   const canvas = useCityCanvas(map, S);
-  const wrap = useRef<HTMLDivElement>(null);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const viewport = useRef<HTMLSpanElement>(null);
   const arrow = useRef<HTMLDivElement>(null);
   const dist = useRef<HTMLSpanElement>(null);
   const pin = useRef<HTMLSpanElement>(null);
@@ -191,7 +207,7 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
     const tick = () => {
       const mx = (PLAYER.x / TILE) * S;
       const my = (PLAYER.y / TILE) * S;
-      if (wrap.current) wrap.current.style.transform = `translate(${70 - mx}px, ${70 - my}px)`;
+      if (wrap.current && viewport.current) wrap.current.style.transform = `translate(${viewport.current.clientWidth / 2 - mx}px, ${viewport.current.clientHeight / 2 - my}px)`;
       if (waypoint) {
         const dx = waypoint.x - PLAYER.x;
         const dy = waypoint.y - PLAYER.y;
@@ -210,8 +226,8 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
     return () => cancelAnimationFrame(raf);
   }, [waypoint, onArrive]);
   return (
-    <button type="button" onClick={onOpen} aria-label="Open the map" className="absolute top-28 right-3 z-[100001] block text-left">
-      <span className="relative block size-[140px] overflow-hidden rounded-full border-4 border-[#f6f2e8] bg-[#d9cfbd] shadow-xl">
+    <button type="button" onClick={onOpen} aria-label="Open the map" className="absolute top-[72px] right-3 z-[100001] block text-left">
+      <span ref={viewport} className="relative block size-20 overflow-hidden rounded-full border-4 border-[#f6f2e8] bg-[#d9cfbd] shadow-xl sm:size-[104px] xl:size-28">
         <span ref={wrap} className="absolute top-0 left-0 block" style={{ width: map.cols * S, height: map.rows * S }}>
           {searchArea && <span aria-label="Police search area" className="pointer-events-none absolute z-10 rounded-full border-2 border-[#e04a3f] bg-[#e04a3f]/20" style={{left:(searchArea.origin.x-searchArea.radius)/TILE*S,top:(searchArea.origin.y-searchArea.radius)/TILE*S,width:searchArea.radius*2/TILE*S,height:searchArea.radius*2/TILE*S}}/>}
             <canvas ref={canvas} className="absolute inset-0" aria-hidden />
@@ -230,7 +246,7 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
           <span ref={arrow} className="inline-block">
             <ArrowUp className="size-3.5" aria-hidden />
           </span>
-          <span className="max-w-24 truncate">{waypoint.name}</span>
+          <span className="hidden max-w-24 truncate sm:inline">{waypoint.name}</span>
           <span ref={dist} className="text-[#f2d9a6]" />
         </span>
       )}
