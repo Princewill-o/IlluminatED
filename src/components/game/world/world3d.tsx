@@ -22,7 +22,7 @@ import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
 import { trainFrame } from "@/game/core/train";
-import { frameMapCamera } from "@/game/core/view-framing";
+import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -1015,6 +1015,16 @@ export function World3D({
 
     let disposed = false;
     const me = makeBody(JSON.parse(avatarKey) as Avatar);
+    // Keep your character recognisable in crowds and behind tall buildings.
+    const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.47, 32), new THREE.MeshBasicMaterial({ color: "#62e5ff", transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+    playerRing.rotation.x = -Math.PI / 2;
+    playerRing.renderOrder = 1000;
+    const playerLabel = document.createElement("div");
+    playerLabel.className = "pointer-events-none absolute z-10 rounded-full bg-[#164bc3] px-2 py-1 text-[10px] font-black tracking-wide text-white shadow-md";
+    playerLabel.setAttribute("aria-hidden", "true");
+    playerLabel.textContent = "YOU ↓";
+    el.appendChild(playerLabel);
+    scene.add(playerRing);
     scene.add(me.root);
     // People who work here: the judge in court, guards in prison, a doctor at the hospital.
     const staff: [Avatar, number, number, number][] =
@@ -1222,11 +1232,22 @@ export function World3D({
         focus.set(mx, 0, mz);
         first = false;
       }
-      focus.lerp(new THREE.Vector3(mx, 0, mz), 1 - Math.pow(0.0015, dt));
-      const framing = frameMapCamera(focus.x, focus.z + (station ? Math.min(2.8, Math.max(0, mz - 7)) : 0), map.cols, map.rows, camera.aspect, indoors);
+      const followed = followPlayerCamera(focus, { x: mx, z: mz }, dt);
+      focus.set(followed.x, 0, followed.z);
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz });
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
+      playerRing.position.set(mx, 0.18, mz);
+      playerRing.scale.setScalar(want ? 1.8 : 1);
+      camera.updateMatrixWorld();
+      const screen = new THREE.Vector3(mx, want ? 2.3 : 2.6, mz).project(camera);
+      const sx = (screen.x + 1) * el.clientWidth / 2;
+      const sy = (1 - screen.y) * el.clientHeight / 2;
+      playerLabel.style.left = `${Math.max(42, Math.min(el.clientWidth - 42, sx))}px`;
+      playerLabel.style.top = `${Math.max(120, Math.min(el.clientHeight - 170, sy))}px`;
+      playerLabel.style.transform = "translate(-50%, -100%)";
+      playerLabel.textContent = sx < 42 ? "← YOU" : sx > el.clientWidth - 42 ? "YOU →" : "YOU ↓";
       sun.position.set(focus.x - 10, 22, focus.z + 12);
       sun.target.position.copy(focus);
 
@@ -1389,6 +1410,7 @@ export function World3D({
         const m = o as THREE.Mesh;
         if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
       });
+      playerLabel.remove();
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.

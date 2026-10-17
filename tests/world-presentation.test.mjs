@@ -42,3 +42,81 @@ test("Commuters park before leaving their car, return before driving and move co
     if (a.out) assert.equal(a.parked, true);
   }
 });
+
+test("Camera tracks walking and driving, snaps after travel, and never trails far behind", () => {
+  const { followPlayerCamera } = projectData("src/game/core/view-framing.ts");
+  for (const fps of [30, 60, 120])
+    for (const speed of [3, 12]) {
+      let camera = { x: 10, z: 10 };
+      for (let i = 0; i < fps * 3; i++) {
+        const player = { x: 10 + (speed * i) / fps, z: 10 + (speed * i) / fps };
+        camera = followPlayerCamera(camera, player, 1 / fps);
+        assert.ok(
+          Math.hypot(camera.x - player.x, camera.z - player.z) <= 0.35001,
+        );
+      }
+    }
+  assert.deepEqual(
+    { ...followPlayerCamera({ x: 0, z: 0 }, { x: 80, z: 60 }, 1 / 60) },
+    { x: 80, z: 60 },
+  );
+  const still = followPlayerCamera({ x: 10, z: 10 }, { x: 10, z: 10 }, 1 / 60);
+  assert.deepEqual({ ...still }, { x: 10, z: 10 });
+});
+
+test("Player remains visible near every map edge while the ground stays within bounds", () => {
+  const { frameMapCamera, projectCameraGround } = projectData(
+    "src/game/core/view-framing.ts",
+  );
+  for (const map of [londonMap(), highlandsMap(), homeMap(0)])
+    for (const aspect of [0.46, 1, 1.5, 3.5]) {
+      const indoors = map.kind === "home";
+      for (const x of [1.5, map.cols / 2, map.cols - 1.5])
+        for (const z of [1.5, map.rows / 2, map.rows - 1.5]) {
+          const frame = frameMapCamera(
+            x,
+            z,
+            map.cols,
+            map.rows,
+            aspect,
+            indoors,
+          );
+          const p = projectCameraGround(frame, { x, z }, aspect, indoors);
+          assert.ok(
+            Math.abs(p.x) <= 0.941 && Math.abs(p.y) <= 0.881,
+            `${map.id} ${aspect} ${x},${z}: ${JSON.stringify(p)}`,
+          );
+        }
+    }
+});
+
+test("Camera keeps a moving driver visible while following into each boundary", () => {
+  const C = projectData("src/game/core/view-framing.ts");
+  for (const aspect of [0.46, 1.5, 3.5])
+    for (const [dx, dz] of [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ]) {
+      let camera = { x: 50, z: 50 };
+      for (let i = 0; i < 300; i++) {
+        const player = {
+          x: Math.max(1.5, Math.min(98.5, 50 + dx * i * 0.2)),
+          z: Math.max(1.5, Math.min(98.5, 50 + dz * i * 0.2)),
+        };
+        camera = C.followPlayerCamera(camera, player, 1 / 60);
+        const f = C.frameMapCamera(
+          camera.x,
+          camera.z,
+          100,
+          100,
+          aspect,
+          false,
+          player,
+        );
+        const p = C.projectCameraGround(f, player, aspect, false);
+        assert.ok(Math.abs(p.x) < 0.95 && Math.abs(p.y) < 0.89);
+      }
+    }
+});

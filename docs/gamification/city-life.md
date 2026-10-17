@@ -40,4 +40,7 @@ The city now supports 80 local walking residents and eight cyclists. Residents s
 
 Recognisable workplaces use real names and shared cartoon brand-inspired badges across the phone, uniforms and signs, labelled as unofficial simulations. Existing company IDs are retained for saved progress.
 
-The station uses a shared 24-second arrival, door-opening, dwell, closing and departure sequence. Boarding waits for an open-door window without restarting the visible train. The platform camera frames the carriage while staying within the map.
+The station uses a shared 24-second arrival, door-opening, dwell, closing and departure sequence. Boarding waits for an open-door window without restarting the visible train. The platform camera follows the player while staying within the map.
+
+Player tracking keeps camera lag below 0.35 tiles while walking or driving and snaps after jumps over six tiles. Map-boundary framing is retained. A blue ground ring and screen-clamped YOU marker identify the local player even in crowds or behind buildings.
+Near the map boundary the camera tilts toward an overhead view, retaining the player without a sudden close zoom or revealing ground outside the map.
