@@ -5,7 +5,7 @@ import { ArcadeFooter, ArcadeHeader } from "@/components/game/arcade-header";
 export const metadata: Metadata = {
   title: { absolute: "IlluminatED City", template: "%s | IlluminatED City" },
   description:
-    "Revise by playing. Climb from intern to CEO at Google, Barclays, Tesco and more in Promotion Panic.",
+    "Build knowledge and explore careers in IlluminatED City. Study your subjects, practise simulated workplace tasks and earn learning awards.",
 };
 
 export const dynamic = "force-dynamic";

@@ -1,5 +1,9 @@
 # IlluminatED
 
+The Learn dashboard connects subject study, the in-game Study Quarter, simulated workplace tasks and eight learning awards. Study sessions use five untimed questions, server-scored answers with explanations, private saved progress and game XP/Clout. The city Study Quarter and game phone open the same study room and awards cabinet.
+
+Study setup and verification: [Study Quarter](docs/gamification/study-quarter.md). Run `npm run test:study`; with PostgreSQL tools installed, run `npm run test:study:db` for disposable database checks.
+
 Free revision for UK learners: GCSE (Year 11 focus), A level (Years 12–13), BTEC, T Levels and other Level 2/3 qualifications. Everything works without an account; signing in adds a personal dashboard, tutor requests and IlluminatEDSocial.
 
 Built with Next.js 15 (App Router), React 19, Tailwind CSS 4 and shadcn/ui, starting from the Mainline template by Shadcnblocks.com (MIT, see `LICENSE`).

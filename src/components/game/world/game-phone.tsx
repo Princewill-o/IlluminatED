@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-import { Map, Phone, PhoneCall, X, Home, Shirt, Briefcase } from "lucide-react";
+import { Map, Phone, PhoneCall, X, Home, Shirt, Briefcase, BookOpen, Trophy } from "lucide-react";
 
 import { CompanyLogo } from "../company-logo";
 
@@ -20,12 +20,16 @@ export function GamePhone({
   onMap,
   onHome,
   onLocker,
+  onStudy,
+  onAwards,
 }: {
   onClose: () => void;
   onCall: (id: string) => void;
   onMap: () => void;
   onHome: () => void;
   onLocker: () => void;
+  onStudy: () => void;
+  onAwards: () => void;
 }) {
   const [search, setSearch] = useState("");
   return (
@@ -52,6 +56,8 @@ export function GamePhone({
             { name: "City map", Icon: Map, action: onMap },
             { name: "Home services", Icon: Home, action: onHome },
             { name: "Locker", Icon: Shirt, action: onLocker },
+            { name: "Study room", Icon: BookOpen, action: onStudy },
+            { name: "Your awards", Icon: Trophy, action: onAwards },
           ].map(({ name, Icon, action }) => (
             <button
               key={name}

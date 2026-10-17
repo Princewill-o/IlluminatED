@@ -60,7 +60,8 @@ function kindOf(p: Portal): PlaceKind | null {
   if (t.kind === "bus") return "bus";
   if (t.kind === "bike") return "bike";
   if (t.kind === "work" || t.kind === "game") return "job";
-  if (t.kind === "games" || t.kind === "map" && t.mapId === "study-lobby") return "games";
+  if (t.kind === "study-room" || t.kind === "awards" || t.kind === "map" && t.mapId === "study-lobby") return "study";
+  if (t.kind === "games") return "games";
   if (t.kind === "act" && t.activity === "study" || t.kind === "link" && t.href === "/learn") return "study";
   if (t.kind === "dealer") return "dealer";
   if (t.kind === "shop") return t.shop === "bootz" ? "hospital" : "food";
@@ -81,6 +82,7 @@ export const PLACES = placesFor(CITY);
 export function placeForTask(tag: string, title: string): PlaceKind | null {
   const t = `${tag} ${title}`.toLowerCase();
   if (t.includes("bus")) return "bus";
+  if (t.includes("study") || t.includes("learn")) return "study";
   if (t.includes("job") || t.includes("shift")) return "job";
   if (t.includes("arcade") || t.includes("game")) return "games";
   if (t.includes("homework")) return "home";

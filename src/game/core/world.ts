@@ -28,6 +28,8 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "study-room" }
+  | { kind: "awards" }
   | { kind: "prison"; action: "study" | "escape" | "talk"; name?: string }
   | { kind: "game"; companyId: string }
   | { kind: "map"; mapId: string; label: string }
@@ -468,8 +470,8 @@ export function londonMap(): WorldMap {
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   portals.push(
-    {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: study and build skills",to:{kind:"link",href:"/learn"}},
-    {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter Club: social lobby",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter Lobby"}},
+    {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: subject study sessions",to:{kind:"study-room"}},
+    {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter: study room and awards",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter"}},
     {id:"reading-garden",rect:px(87,80,2,2),label:"Reading garden: restore Focus",to:{kind:"act",activity:"study"}},
   );
   const rows = L.tiles.map((r) => r.split(""));
@@ -651,7 +653,7 @@ export function prisonMap(): WorldMap {
   return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
 }
 
-/** A shared, open social lobby in the new Study Quarter. */
+/** A shared learning space: real subject practice, simulated careers and earned awards. */
 export function studyLobbyMap(): WorldMap {
   const g = new Grid(26, 22, "."); g.border("#");
   for(let x=2;x<24;x+=4)g.set(x,0,"W");
@@ -664,11 +666,13 @@ export function studyLobbyMap(): WorldMap {
   g.fill(3,9,1,4,"b");
   g.fill(2,16,4,1,"t");g.fill(20,16,4,1,"t");
   for(const [x,y] of [[1,1],[24,1],[1,20],[24,20]])g.set(x,y,"p");
-  return finish({id:"study-lobby",kind:"office",name:"Study Quarter Lobby",structures:[],portals:[
+  return finish({id:"study-lobby",kind:"office",name:"Study Quarter",structures:[],portals:[
     {id:"lobby-games",rect:px(11,3,4,2),label:"Games table: play with friends",to:{kind:"games"}},
-    {id:"lobby-study",rect:px(3,17,3,2),label:"Study corner: build Focus",to:{kind:"act",activity:"study"}},
+    {id:"lobby-study",rect:px(3,17,3,2),label:"Study desks: choose a subject",to:{kind:"study-room"}},
+    {id:"lobby-careers",rect:px(20,17,3,2),label:"Careers desk: simulated work experience",to:{kind:"link",href:"/games/careers"}},
+    {id:"lobby-awards",rect:px(4,5,2,2),label:"Awards cabinet: your learning milestones",to:{kind:"awards"}},
     {id:"lobby-exit",rect:px(11,20,4,1),label:"Back to Study Quarter",to:{kind:"map",mapId:"city",label:"London"}},
-  ],rooms:[],spawn:centre(13,14),accent:"#7a5ce6",sign:{x:13,y:6,text:"Study Quarter · meet, study, play"}},g);
+  ],rooms:[{name:"Study desks · choose a subject and earn XP",rect:px(1,15,7,5)},{name:"Careers desk · practise workplace skills",rect:px(18,15,7,5)}],spawn:centre(13,14),accent:"#2b5fd9",sign:{x:13,y:6,text:"Study Quarter · learn, work, grow"}},g);
 }
 
 /** Your home: a private room (single player). style picks the colourway. */

@@ -1,9 +1,9 @@
 import type { BuildingShape } from "@/game/core/companies";
 
-const WALL = "#241b36";
-const WALL_DARK = "#1a1428";
-const WINDOW = "#3a2d58";
-const LIT = "#ffd166";
+const WALL = "#e9e2d5";
+const WALL_DARK = "#a8b6bc";
+const WINDOW = "#426479";
+const LIT = "#b7e4ec";
 
 function Windows({
   x,
@@ -29,21 +29,19 @@ function Windows({
     for (let c = 0; c < cols; c++) {
       const i = r * cols + c;
       cells.push(
-        <rect
-          key={i}
-          x={x + c * (w + gap)}
-          y={y + r * (h + gap)}
-          width={w}
-          height={h}
-          rx="2"
-          fill={lit.includes(i) ? LIT : WINDOW}
-        />,
+        <g key={i} transform={`translate(${x + c * (w + gap)} ${y + r * (h + gap)})`}>
+          <rect x="-2" y="-2" width={w + 4} height={h + 4} rx="1" fill="#f9f4e9" />
+          <rect width={w} height={h} rx="1" fill={lit.includes(i) ? LIT : WINDOW} />
+          <path d={`M1 ${h - 2} L${w - 2} 1`} stroke="#d5eef1" opacity="0.22" strokeWidth="2" />
+          <path d={`M${w / 2} 0 V${h}`} stroke="#f9f4e9" strokeWidth="1" />
+          <path d={`M-3 ${h + 3} H${w + 3}`} stroke="#71868e" strokeWidth="2" />
+        </g>,
       );
     }
   return <g>{cells}</g>;
 }
 
-/** Flat, low-detail buildings for the city map. One accent colour each. */
+/** Architectural workplace portraits, matched to the live city's materials. */
 export function Building({
   shape,
   accent,
@@ -55,7 +53,9 @@ export function Building({
 }) {
   return (
     <svg viewBox="0 0 160 140" className={className} aria-hidden>
-      <rect x="0" y="132" width="160" height="8" fill="#0f0c16" />
+      <ellipse cx="82" cy="133" rx="72" ry="6" fill="#182b3d" opacity="0.18" />
+      <path d="M8 132 H152 L144 139 H16 Z" fill="#c9c9bd" />
+      <path d="M16 132 H144" stroke="#faf5e9" strokeWidth="3" />
       {SHAPES[shape](accent)}
     </svg>
   );
@@ -64,12 +64,16 @@ export function Building({
 const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   tower: (a) => (
     <g>
+      <path d="M110 20 L120 28 V132 H110 Z" fill="#718fa0" />
       <rect x="50" y="20" width="60" height="112" fill={WALL} />
+      <rect x="60" y="10" width="40" height="10" fill="#a8c7d2" />
       <rect x="50" y="20" width="60" height="10" fill={a} />
       <line x1="80" y1="2" x2="80" y2="20" stroke={a} strokeWidth="3" />
       <circle cx="80" cy="4" r="4" fill={a} />
       <Windows x={58} y={38} cols={3} rows={5} lit={[1, 5, 6, 10, 14]} />
-      <rect x="70" y="116" width="20" height="16" fill={a} />
+      <rect x="68" y="114" width="24" height="18" fill={WINDOW} />
+      <path d="M80 115 V132" stroke="#d5eef1" strokeWidth="2" />
+      <path d="M64 113 H96" stroke={a} strokeWidth="5" />
       <rect x="20" y="70" width="30" height="62" fill={WALL_DARK} />
       <Windows x={26} y={80} cols={2} rows={3} w={7} h={9} gap={5} lit={[3]} />
       <rect x="110" y="56" width="32" height="76" fill={WALL_DARK} />
@@ -87,21 +91,30 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   ),
   dome: (a) => (
     <g>
-      <path d="M20 48 L80 14 L140 48 Z" fill={a} />
+      <rect x="26" y="44" width="108" height="80" fill="#8496a0" />
+      <path d="M48 38 Q80 -2 112 38 Z" fill="#799e98" />
+      <path d="M80 8 V2" stroke="#dfb968" strokeWidth="3" />
+      <path d="M20 48 L80 20 L140 48 Z" fill={WALL} />
+      <path d="M30 45 L80 24 L130 45" stroke={a} strokeWidth="3" fill="none" />
       <rect x="24" y="48" width="112" height="10" fill={WALL} />
       {[32, 54, 76, 98, 120].map((x) => (
-        <rect key={x} x={x} y="58" width="10" height="60" fill="#3a2d58" />
+        <g key={x}>
+          <rect x={x - 3} y="56" width="16" height="5" fill="#f9f4e9" />
+          <rect x={x} y="61" width="10" height="52" fill="#eee8da" />
+          <rect x={x + 1} y="61" width="2" height="52" fill="#fff9ec" />
+          <rect x={x - 3} y="113" width="16" height="5" fill="#f9f4e9" />
+        </g>
       ))}
       <rect x="20" y="118" width="120" height="7" fill={WALL} />
       <rect x="14" y="125" width="132" height="7" fill={WALL_DARK} />
-      <circle cx="80" cy="34" r="7" fill={WALL} />
+      <circle cx="80" cy="37" r="7" fill={a} />
       <text
         x="80"
-        y="38"
+        y="41"
         textAnchor="middle"
         fontSize="10"
         fontWeight="900"
-        fill={a}
+        fill={WINDOW}
       >
         £
       </text>
@@ -109,6 +122,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   ),
   barn: (a) => (
     <g>
+      <path d="M136 62 L146 70 V132 H136 Z" fill="#bc8c8b" />
       <path d="M24 62 L80 22 L136 62 L136 132 L24 132 Z" fill={a} />
       <path
         d="M24 62 L80 22 L136 62"
@@ -116,7 +130,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         stroke="#f3f6fb"
         strokeWidth="5"
       />
-      <rect x="58" y="82" width="44" height="50" fill={WALL} />
+      <rect x="58" y="82" width="44" height="50" fill={WINDOW} />
       <path
         d="M58 82 L102 132 M102 82 L58 132"
         stroke="#f3f6fb"
@@ -131,13 +145,14 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         stroke="#f3f6fb"
         strokeWidth="4"
       />
-      <circle cx="80" cy="54" r="9" fill={WALL} />
-      <circle cx="40" cy="96" r="7" fill={WALL} opacity="0.5" />
-      <circle cx="120" cy="108" r="9" fill={WALL} opacity="0.5" />
+      <Windows x={72} y={46} cols={1} rows={1} w={16} h={14} />
+      <Windows x={34} y={87} cols={1} rows={2} w={12} h={12} gap={9} lit={[0]} />
+      <Windows x={114} y={87} cols={1} rows={2} w={12} h={12} gap={9} lit={[1]} />
     </g>
   ),
   hospital: (a) => (
     <g>
+      <path d="M138 40 L147 47 V132 H138 Z" fill="#a8b6bc" />
       <rect x="22" y="40" width="116" height="92" fill="#f3f6fb" />
       <rect x="22" y="40" width="116" height="10" fill={a} />
       <rect x="66" y="12" width="28" height="28" rx="4" fill={a} />
@@ -153,15 +168,16 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         gap={8}
         lit={[2, 8]}
       />
-      <rect x="66" y="112" width="28" height="20" fill={a} />
+      <rect x="66" y="112" width="28" height="20" fill={WINDOW} />
+      <path d="M80 113 V132" stroke="#d5eef1" strokeWidth="2" />
+      <path d="M60 111 H100" stroke={a} strokeWidth="5" />
     </g>
   ),
   factory: (a) => (
     <g>
       <rect x="112" y="16" width="16" height="70" fill={WALL_DARK} />
       <rect x="112" y="24" width="16" height="6" fill={a} />
-      <circle cx="122" cy="8" r="8" fill="#3a2d58" />
-      <circle cx="136" cy="2" r="6" fill="#3a2d58" />
+      <rect x="109" y="12" width="22" height="6" fill="#71868e" />
       <path
         d="M16 132 L16 62 L44 44 L44 62 L72 44 L72 62 L100 44 L100 62 L144 62 L144 132 Z"
         fill={WALL}
@@ -183,14 +199,21 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         lit={[0, 3, 7, 11]}
       />
       <rect x="60" y="110" width="40" height="22" fill={a} />
+      <path d="M64 115 H96 M64 120 H96 M64 125 H96" stroke={WINDOW} strokeWidth="2" />
     </g>
   ),
   courthouse: (a) => (
     <g>
-      <path d="M50 40 Q80 2 110 40 Z" fill={a} />
+      <rect x="24" y="52" width="112" height="72" fill="#7b8f9e" />
+      <path d="M50 40 Q80 2 110 40 Z" fill="#6d8394" />
       <path d="M18 56 L80 34 L142 56 Z" fill={WALL} />
       {[28, 50, 72, 94, 116].map((x) => (
-        <rect key={x} x={x} y="58" width="14" height="58" fill="#f3f6fb" />
+        <g key={x}>
+          <rect x={x - 2} y="56" width="18" height="5" fill="#f9f4e9" />
+          <rect x={x} y="61" width="14" height="50" fill="#eee8da" />
+          <rect x={x + 2} y="61" width="3" height="50" fill="#fff9ec" />
+          <rect x={x - 2} y="111" width="18" height="5" fill="#f9f4e9" />
+        </g>
       ))}
       <rect x="18" y="116" width="124" height="16" fill={WALL} />
       <path d="M68 48 L92 48 M80 40 L80 54" stroke={a} strokeWidth="3" />
@@ -198,10 +221,13 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   ),
   cinema: (a) => (
     <g>
-      <rect x="18" y="30" width="124" height="102" fill={WALL} />
+      <rect x="18" y="30" width="124" height="102" fill="#655d80" />
+      <path d="M142 30 L150 38 V132 H142 Z" fill="#48445e" />
+      <rect x="24" y="25" width="12" height="107" fill={a} />
+      <rect x="124" y="25" width="12" height="107" fill={a} />
       <rect x="10" y="54" width="140" height="30" fill={a} />
       {Array.from({ length: 13 }, (_, i) => (
-        <circle key={i} cx={16 + i * 11} cy="50" r="3" fill={LIT} />
+        <circle key={i} cx={16 + i * 11} cy="50" r="3" fill="#ffde92" />
       ))}
       <text
         x="80"
@@ -215,12 +241,16 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
       </text>
       <rect x="40" y="96" width="32" height="36" fill={WINDOW} />
       <rect x="88" y="96" width="32" height="36" fill={WINDOW} />
+      <path d="M56 97 V132 M104 97 V132" stroke="#e4dae8" strokeWidth="2" />
       <path d="M50 20 L60 30 L70 20" stroke={a} strokeWidth="4" fill="none" />
     </g>
   ),
   bakery: (a) => (
     <g>
+      <path d="M138 36 L147 45 V132 H138 Z" fill="#b4a894" />
       <rect x="22" y="36" width="116" height="96" fill={WALL} />
+      <path d="M18 36 H142 L132 22 H28 Z" fill="#6a7d8f" />
+      <Windows x={40} y={43} cols={4} rows={1} w={11} h={8} gap={13} lit={[0, 3]} />
       {Array.from({ length: 8 }, (_, i) => (
         <path
           key={i}
@@ -235,10 +265,13 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         fill="#ffb26b"
       />
       <rect x="100" y="88" width="26" height="44" fill={a} />
+      <rect x="105" y="94" width="16" height="24" fill={WINDOW} />
+      <circle cx="120" cy="123" r="1.5" fill="#dfb968" />
     </g>
   ),
   crane: (a) => (
     <g>
+      <path d="M104 64 L113 72 V132 H104 Z" fill="#9b857b" />
       <rect x="30" y="64" width="74" height="68" fill={WALL} />
       <Windows
         x={38}
@@ -296,11 +329,12 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   nursery: (a) => (
     <g>
       <path d="M18 66 L80 24 L142 66 Z" fill={a} />
-      <rect x="26" y="66" width="108" height="66" fill={WALL} />
+      <rect x="26" y="66" width="108" height="66" fill="#f2dbb8" />
       <rect x="38" y="78" width="20" height="20" fill="#ffd166" />
       <rect x="102" y="78" width="20" height="20" fill="#6bc6ff" />
       <rect x="66" y="100" width="28" height="32" rx="12" fill="#ff7a6b" />
       <circle cx="80" cy="52" r="9" fill="#ffd166" />
+      <path d="M36 124 V132 M48 120 V132 M112 120 V132 M124 124 V132" stroke="#5fa792" strokeWidth="5" />
       <text x="44" y="94" fontSize="13" fontWeight="900" fill="#0d1726">
         A
       </text>
@@ -311,6 +345,7 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
   ),
   globe: (a) => (
     <g>
+      <path d="M130 66 L139 74 V132 H130 Z" fill="#7895a8" />
       <rect x="30" y="66" width="100" height="66" fill={WALL} />
       <Windows
         x={40}
@@ -322,13 +357,15 @@ const SHAPES: Record<BuildingShape, (a: string) => React.ReactNode> = {
         gap={8}
         lit={[2, 6]}
       />
-      <rect x="70" y="112" width="20" height="20" fill={a} />
+      <rect x="70" y="112" width="20" height="20" fill={WINDOW} />
+      <path d="M80 113 V132" stroke="#d5eef1" strokeWidth="2" />
+      <path d="M66 111 H94" stroke={a} strokeWidth="5" />
       <rect x="76" y="54" width="8" height="12" fill="#b3abc4" />
       <circle cx="80" cy="32" r="24" fill={a} />
       <path
         d="M66 20 Q76 26 72 36 Q82 40 78 50 M90 14 Q98 22 94 30 Q100 34 98 42"
         fill="none"
-        stroke="#0d1726"
+        stroke="#3e7f85"
         strokeWidth="4"
       />
       <ellipse

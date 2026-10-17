@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
 
-import { COMPANIES } from "@/game/core/companies";
+import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
 import { furnitureById } from "@/game/core/homes";
@@ -287,6 +287,260 @@ const COMMERCIAL = "/world3d/commercial/";
 const MIDRISE = "abcdefghijklmn".split("").map((c) => `${COMMERCIAL}building-${c}.glb`);
 const TOWERS = "abcde".split("").map((c) => `${COMMERCIAL}building-skyscraper-${c}.glb`);
 
+const ARCH = { stone: "#f6f2ea", ink: "#263950", glass: "#95cddd", brass: "#dfb968", slate: "#4c6078" };
+
+/** Framed glazing reads clearly from the street without transparent materials. */
+function facadeWindow(g: THREE.Group, x: number, y: number, z: number, w: number, h: number, side = false) {
+  const pane = (colour: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) =>
+    side ? box(g, colour, z0, y0, x0, z1, y1, x1) : box(g, colour, x0, y0, z0, x1, y1, z1);
+  pane(ARCH.stone, x - 0.055, y - 0.055, z, x + w + 0.055, y + h + 0.055, z + 0.055);
+  pane(ARCH.glass, x, y, z + 0.056, x + w, y + h, z + 0.075);
+  pane(ARCH.stone, x + w / 2 - 0.025, y, z + 0.076, x + w / 2 + 0.025, y + h, z + 0.09);
+  pane(ARCH.ink, x - 0.08, y - 0.08, z - 0.03, x + w + 0.08, y - 0.02, z + 0.12);
+}
+
+function entrance(g: THREE.Group, cx: number, front: number, accent: string, width = 0.9) {
+  box(g, ARCH.stone, cx - width / 2 - 0.1, 0.14, front - 0.04, cx + width / 2 + 0.1, 1.35, front + 0.06);
+  box(g, ARCH.ink, cx - width / 2, 0.15, front + 0.065, cx + width / 2, 1.27, front + 0.09);
+  box(g, "#b5dce2", cx - width / 2 + 0.06, 0.46, front + 0.095, cx + width / 2 - 0.06, 1.18, front + 0.11);
+  box(g, ARCH.stone, cx - 0.025, 0.16, front + 0.115, cx + 0.025, 1.26, front + 0.13);
+  box(g, ARCH.brass, cx + 0.09, 0.62, front + 0.14, cx + 0.13, 0.86, front + 0.17);
+  box(g, accent, cx - width / 2 - 0.22, 1.34, front - 0.08, cx + width / 2 + 0.22, 1.44, front + 0.37);
+}
+
+/** Each employer has its own architecture, so a workplace is recognisable before its sign. */
+function headquarters(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>, co: Company) {
+  const w = t.w - 0.16;
+  const d = t.h - 0.16;
+  const cx = w / 2;
+  const a = co.accent;
+  const f = d - 0.12;
+  const b = new THREE.Group();
+  b.position.set(t.x + 0.08, 0, t.y + 0.08);
+  g.add(b);
+  const body = (colour: string, top: number, inset = 0) => box(b, colour, inset, 0.14, 0.12 + inset, w - inset, top, f - inset);
+  const cornice = (y: number, inset = 0, colour = ARCH.stone) => box(b, colour, inset - 0.04, y, 0.08 + inset, w - inset + 0.04, y + 0.12, f - inset + 0.06);
+  const windows = (top: number, cols = 2, start = 2.15, inset = 0) => {
+    const pitch = (w - inset * 2) / cols;
+    for (let y = start; y + 0.56 < top; y += 1.0)
+      for (let col = 0; col < cols; col++) facadeWindow(b, inset + col * pitch + pitch * 0.2, y, f - inset, pitch * 0.6, 0.56);
+    for (let z = 0.7 + inset; z < f - 0.5; z += 1.25)
+      for (let y = start; y + 0.56 < top; y += 1.0) facadeWindow(b, z, y, w - inset, 0.64, 0.56, true);
+  };
+
+  switch (co.building) {
+    case "tower": {
+      body(ARCH.ink, 2.1);
+      box(b, "#92b9ce", 0.26, 2.1, 0.4, w - 0.26, 5.85, f - 0.26);
+      for (const y of [2.2, 3.2, 4.2, 5.2, 5.85]) cornice(y, 0.23, ARCH.slate);
+      for (const x of [0.42, cx, w - 0.42]) box(b, ARCH.stone, x - 0.04, 2.2, f - 0.25, x + 0.04, 5.85, f - 0.18);
+      box(b, a, 0.58, 5.98, 1.0, w - 0.58, 6.3, f - 0.8);
+      cyl(b, ARCH.brass, cx, d / 2, 6.3, 7.05, 0.035, 8);
+      break;
+    }
+    case "dome":
+    case "courthouse": {
+      body("#ded2bc", 3.45);
+      box(b, ARCH.ink, 0.16, 0.25, f - 0.22, w - 0.16, 2.8, f + 0.02);
+      for (const x of [0.24, 0.78, w - 0.78, w - 0.24]) {
+        cyl(b, ARCH.stone, x, f + 0.12, 0.3, 2.72, 0.1, 10);
+        box(b, ARCH.stone, x - 0.16, 2.67, f - 0.03, x + 0.16, 2.81, f + 0.27);
+        box(b, ARCH.stone, x - 0.16, 0.2, f - 0.03, x + 0.16, 0.34, f + 0.27);
+      }
+      box(b, ARCH.stone, -0.02, 2.81, f - 0.15, w + 0.02, 3.04, f + 0.32);
+      roof(b, ARCH.slate, -0.04, f - 0.25, w + 0.04, f + 0.4, 3.04, 0.65);
+      cornice(3.45);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(w * 0.37, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(co.building === "dome" ? "#7aa39a" : ARCH.slate));
+      dome.position.set(cx, 3.62, d * 0.43);
+      b.add(dome);
+      cyl(b, ARCH.brass, cx, d * 0.43, 3.62 + w * 0.37, 4.92, 0.055, 8);
+      break;
+    }
+    case "barn":
+    case "nursery": {
+      const nursery = co.building === "nursery";
+      body(nursery ? "#f2dbb8" : "#c96657", 2.9);
+      roof(b, nursery ? "#78988a" : ARCH.slate, -0.03, 0.06, w + 0.03, f + 0.05, 2.9, 1.05);
+      cornice(2.82);
+      windows(2.9, 2, 2.05);
+      if (nursery) for (let i = 0; i < 5; i++) box(b, [a, "#ffd166", "#6bc6ff", "#5fd3a5", a][i], 0.18 + i * (w - 0.36) / 5, 0.2, f + 0.025, 0.18 + (i + 0.7) * (w - 0.36) / 5, 0.9, f + 0.06);
+      else {
+        box(b, ARCH.stone, cx - 0.44, 3.06, f * 0.54, cx + 0.44, 3.68, f * 0.54 + 0.04);
+        box(b, a, cx - 0.37, 3.13, f * 0.54 + 0.045, cx + 0.37, 3.61, f * 0.54 + 0.065);
+      }
+      break;
+    }
+    case "hospital": {
+      body(ARCH.stone, 4.5);
+      box(b, "#dce7e9", 0.16, 4.5, 0.35, w - 0.16, 4.8, f - 0.3);
+      windows(4.5);
+      for (const x of [0.08, w - 0.22]) box(b, a, x, 0.2, f - 0.015, x + 0.14, 4.46, f + 0.05);
+      box(b, a, cx - 0.46, 4.85, d * 0.48, cx + 0.46, 5.74, d * 0.48 + 0.14);
+      box(b, ARCH.stone, cx - 0.08, 4.99, d * 0.48 + 0.15, cx + 0.08, 5.6, d * 0.48 + 0.18);
+      box(b, ARCH.stone, cx - 0.3, 5.21, d * 0.48 + 0.15, cx + 0.3, 5.37, d * 0.48 + 0.18);
+      break;
+    }
+    case "factory": {
+      body(co.id === "tesler" ? "#e4e9e8" : "#a7c3c4", 3.05);
+      for (let z = 0.15; z < f - 0.5; z += 1.4) {
+        roof(b, ARCH.slate, 0, z, w, Math.min(z + 1.35, f), 3.05, 0.64);
+        box(b, ARCH.glass, 0.15, 3.12, z + 1.28, w - 0.15, 3.45, z + 1.31);
+      }
+      windows(3.05);
+      box(b, a, w - 0.5, 3.05, 0.5, w - 0.2, 4.65, 0.88);
+      box(b, ARCH.slate, w - 0.56, 4.65, 0.45, w - 0.14, 4.8, 0.93);
+      break;
+    }
+    case "cinema": {
+      body("#655d80", 3.65);
+      for (const x of [0.16, w - 0.38]) box(b, a, x, 0.2, f, x + 0.22, 4.25, f + 0.08);
+      box(b, ARCH.stone, 0.35, 3.3, f - 0.04, w - 0.35, 3.84, f + 0.09);
+      box(b, a, 0.55, 3.38, f + 0.1, w - 0.55, 3.76, f + 0.13);
+      box(b, a, -0.05, 1.38, f - 0.15, w + 0.05, 1.99, f + 0.49);
+      for (let x = 0.12; x < w; x += 0.32) box(b, "#fff0be", x, 2.02, f + 0.38, x + 0.09, 2.12, f + 0.48);
+      break;
+    }
+    case "bakery": {
+      body("#eac9a1", 3.08);
+      roof(b, "#6a7d8f", -0.03, 0.06, w + 0.03, f + 0.04, 3.08, 0.82);
+      windows(3.08);
+      const stripes = 8;
+      for (let i = 0; i < stripes; i++) box(b, i % 2 ? ARCH.stone : a, i * w / stripes, 1.26, f - 0.05, (i + 1) * w / stripes, 1.39, f + 0.45);
+      break;
+    }
+    case "crane": {
+      body("#c49a7c", 3.45);
+      windows(3.45);
+      for (const y of [2.0, 3.45]) cornice(y, 0, ARCH.slate);
+      const mast = w - 0.33;
+      box(b, a, mast - 0.1, 0.2, 0.45, mast + 0.1, 5.35, 0.65);
+      box(b, a, 0.15, 5.2, 0.36, w + 0.03, 5.4, 0.72);
+      for (let y = 0.7; y < 5.1; y += 0.55) box(b, ARCH.slate, mast - 0.13, y, 0.42, mast + 0.13, y + 0.055, 0.68);
+      cyl(b, ARCH.ink, 0.45, 0.54, 3.9, 5.2, 0.022, 6);
+      box(b, a, 0.3, 3.7, 0.39, 0.6, 3.95, 0.69);
+      break;
+    }
+    case "stadium": {
+      body("#d9e4dc", 2.35);
+      box(b, "#5c927b", 0.22, 2.36, 0.42, w - 0.22, 2.42, f - 0.4);
+      for (const x of [0.08, w - 0.25]) box(b, ARCH.stone, x, 2.35, 0.12, x + 0.17, 3.12, f);
+      for (const z of [0.3, f - 0.3]) {
+        box(b, ARCH.slate, 0.14, 2.45, z, w - 0.14, 2.73, z + 0.2);
+        for (const x of [0.25, w - 0.25]) {
+          cyl(b, ARCH.slate, x, z + 0.1, 2.7, 4.3, 0.035, 6);
+          box(b, "#fff0be", x - 0.18, 4.25, z, x + 0.18, 4.43, z + 0.18);
+        }
+      }
+      break;
+    }
+    case "globe": {
+      body("#b6ccdd", 3.3);
+      windows(3.3);
+      cornice(3.3);
+      cyl(b, ARCH.brass, cx, d * 0.48, 3.42, 3.8, 0.1, 10);
+      const globe = new THREE.Mesh(new THREE.SphereGeometry(0.77, 20, 12), mat(a));
+      globe.position.set(cx, 4.45, d * 0.48);
+      b.add(globe);
+      for (const rotation of [0, Math.PI / 2]) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.79, 0.035, 5, 28), mat(ARCH.stone));
+        ring.position.copy(globe.position);
+        ring.rotation.y = rotation;
+        b.add(ring);
+      }
+      break;
+    }
+  }
+  // A shared street-level language: pale plinth, shaded double doors and a crisp fascia.
+  box(b, ARCH.slate, 0, 0.14, f - 0.03, w, 0.27, f + 0.06);
+  if (co.building !== "cinema") box(b, a, 0.02, 1.48, f - 0.03, w - 0.02, 1.98, f + 0.11);
+  entrance(b, cx, f + 0.03, co.building === "bakery" ? ARCH.slate : a);
+}
+
+/** A glazed learning pavilion and a sawtooth-roof workshop anchor the Study Quarter. */
+function studyQuarterBuilding(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>) {
+  const w = t.w - 0.16;
+  const d = t.h - 0.16;
+  const maker = t.id === "makerspace";
+  const accent = maker ? "#2c7f86" : "#755ab5";
+  const b = new THREE.Group();
+  b.position.set(t.x + 0.08, 0, t.y + 0.08);
+  g.add(b);
+  box(b, maker ? "#c58365" : "#e2dbef", 0, 0.15, 0, w, 3.25, d - 0.12);
+  box(b, ARCH.stone, -0.04, 0.15, -0.04, w + 0.04, 0.32, d);
+  box(b, ARCH.stone, -0.04, 3.2, -0.04, w + 0.04, 3.38, d);
+  // A tall transparent-looking study frontage, in warm pale frames.
+  for (let x = 0.35; x < w - 1; x += 1.35) facadeWindow(b, x, 0.7, d - 0.1, 0.96, 1.65);
+  for (let z = 0.5; z < d - 0.7; z += 1.3) facadeWindow(b, z, 0.8, w, 0.88, 1.5, true);
+  box(b, accent, 0.12, 2.56, d - 0.04, w - 0.12, 3.08, d + 0.08);
+  entrance(b, w / 2, d - 0.02, accent, 1.1);
+  if (maker) {
+    for (let z = 0.12; z < d - 1; z += 1.5) {
+      roof(b, ARCH.slate, 0, z, w, z + 1.4, 3.38, 0.75);
+      box(b, ARCH.glass, 0.2, 3.47, z + 1.32, w - 0.2, 3.83, z + 1.36);
+    }
+    for (const x of [0.25, w - 0.4]) box(b, accent, x, 0.3, d - 0.04, x + 0.15, 3.2, d + 0.04);
+  } else {
+    // Roof garden and timber pergola remain inside the existing building footprint.
+    box(b, "#8fb794", 0.35, 3.38, 0.35, w - 0.35, 3.51, d - 0.35);
+    for (const x of [0.45, w - 0.55]) for (const z of [0.45, d - 0.55]) box(b, "#b7946b", x, 3.5, z, x + 0.1, 4.2, z + 0.1);
+    for (let x = 0.4; x < w - 0.3; x += 0.55) box(b, "#c9aa7e", x, 4.16, 0.4, x + 0.12, 4.28, d - 0.35);
+    for (const x of [0.5, w - 1.4]) {
+      box(b, ARCH.stone, x, 3.51, 0.6, x + 0.85, 3.77, 1.35);
+      box(b, "#6eaa7d", x + 0.08, 3.77, 0.68, x + 0.77, 4.0, 1.27);
+    }
+  }
+  const plaque = sign(maker ? "MAKERSPACE" : "STUDY QUARTER", { bg: accent, fg: "#ffffff", w: w - 0.8, h: 0.4 });
+  plaque.position.set(w / 2, 2.82, d + 0.1);
+  b.add(plaque);
+}
+
+/** Visual wayfinding follows the lobby's existing walkable interaction areas. */
+function learningLobby(g: THREE.Group, map: WorldMap) {
+  const welcome = sign(map.sign?.text ?? "Study Quarter · learn, work, grow", { bg: "#2b5fd9", fg: "#ffffff", w: 7, h: 0.65 });
+  welcome.position.set(13, 2.2, 5.8);
+  g.add(welcome);
+
+  // The cabinet sits just behind the awards portal; the approach remains open.
+  box(g, ARCH.ink, 3.85, 0.15, 4.05, 6.15, 0.65, 4.94);
+  box(g, "#e6d2a5", 3.85, 0.65, 4.05, 6.15, 0.73, 4.94);
+  box(g, "#46616c", 3.95, 0.73, 4.06, 6.05, 1.86, 4.14);
+  for (const x of [3.85, 6.04]) box(g, ARCH.brass, x, 0.73, 4.05, x + 0.11, 1.92, 4.94);
+  box(g, ARCH.ink, 3.8, 1.9, 4.01, 6.2, 2.03, 4.98);
+  // A sculpted cup with handles, stem and a dark engraved plinth.
+  box(g, ARCH.ink, 4.66, 0.74, 4.33, 5.34, 0.88, 4.8);
+  cyl(g, ARCH.brass, 5, 4.56, 0.88, 1.1, 0.09, 12);
+  cyl(g, "#e8c36d", 5, 4.56, 1.1, 1.59, 0.14, 16, 0.35);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.035, 6, 20), mat("#ffe2a0"));
+  rim.position.set(5, 1.59, 4.56);
+  rim.rotation.x = Math.PI / 2;
+  g.add(rim);
+  for (const x of [4.67, 5.33]) {
+    const handle = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.045, 6, 16), mat(ARCH.brass));
+    handle.position.set(x, 1.35, 4.56);
+    g.add(handle);
+  }
+  const awards = sign("YOUR AWARDS", { bg: ARCH.ink, fg: "#ffe2a0", w: 2.5, h: 0.38 });
+  awards.position.set(5, 2.25, 4.96);
+  g.add(awards);
+
+  for (const desk of [
+    { x: 2, cx: 4, accent: "#2b5fd9", rug: "#d8e5ee", title: "STUDY DESKS", subtitle: "Choose a subject · earn XP" },
+    { x: 20, cx: 22, accent: "#247b69", rug: "#dce9de", title: "CAREERS DESK", subtitle: "Simulated work experience" },
+  ]) {
+    box(g, desk.rug, desk.x + 0.1, 0.03, 17.1, desk.x + 3.9, 0.045, 18.9);
+    for (const x of [desk.x + 0.1, desk.x + 3.8]) box(g, "#b8a184", x, 0.15, 16.05, x + 0.1, 2.2, 16.15);
+    box(g, desk.accent, desk.x + 0.1, 1.82, 16.03, desk.x + 3.9, 2.3, 16.19);
+    const title = sign(desk.title, { bg: desk.accent, fg: "#ffffff", w: 3.5, h: 0.36 });
+    title.position.set(desk.cx, 2.07, 16.21);
+    g.add(title);
+    const subtitle = sign(desk.subtitle, { bg: "#f6f2ea", fg: ARCH.ink, w: 3.5, h: 0.28 });
+    subtitle.position.set(desk.cx, 1.65, 16.21);
+    g.add(subtitle);
+    // Small coloured books on the existing table connect each sign to its desk.
+    for (let i = 0; i < 3; i++) box(g, [desk.accent, ARCH.brass, "#ce8b77"][i], desk.x + 0.3, 0.84 + i * 0.08, 16.28, desk.x + 0.86, 0.91 + i * 0.08, 16.65);
+  }
+}
+
 function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number; id: string }, highland: boolean) {
   const seed = t.x * 7 + t.y * 13;
   const x0 = t.x + 0.08;
@@ -298,7 +552,13 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   const floors = highland ? 2 : 3;
   const top = 0.15 + floors * 0.95;
   box(g, wall, x0, 0, z0 + 0.25, x0 + w, top, z0 + d);
+  box(g, "#877e77", x0, 0.12, z0 + d - 0.03, x0 + w, 0.27, z0 + d + 0.04);
   box(g, "#f6f2ea", x0 - 0.04, top - 0.12, z0 + d - 0.06, x0 + w + 0.04, top, z0 + d + 0.04);
+  if (!highland) {
+    for (const y of [1.06, 2.01]) box(g, "#e8d5ba", x0, y, z0 + d - 0.02, x0 + w, y + 0.07, z0 + d + 0.04);
+    for (const x of [x0, x0 + w - 0.12])
+      for (let y = 0.28; y < top - 0.2; y += 0.35) box(g, "#e8d5ba", x, y, z0 + d - 0.015, x + 0.12, y + 0.2, z0 + d + 0.045);
+  }
   roof(g, roofC, x0 - 0.05, z0 + 0.2, x0 + w + 0.05, z0 + d + 0.05, top, 0.9);
   const bays = Math.max(2, Math.round(w / 1.3));
   const bw = w / bays;
@@ -307,6 +567,7 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
     if (b % 2 === 0) {
       const cx = x0 + b * bw + 0.15;
       box(g, highland ? "#c9bfaa" : "#8c4433", cx, top + 0.3, z0 + d * 0.45, cx + 0.35, top + 1.2, z0 + d * 0.45 + 0.3);
+      box(g, "#d8cbb6", cx - 0.035, top + 1.16, z0 + d * 0.45 - 0.035, cx + 0.385, top + 1.27, z0 + d * 0.45 + 0.335);
     }
     for (let f = 0; f < floors; f++) {
       const y0 = 0.15 + f * 0.95;
@@ -316,11 +577,17 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
       if (f === 0 && b === Math.floor(bays / 2)) {
         box(g, door, wx0, y0, zf - 0.02, wx1, y0 + 0.72, zf + 0.03);
         box(g, "#f6f2ea", wx0 - 0.05, y0 + 0.72, zf - 0.02, wx1 + 0.05, y0 + 0.8, zf + 0.04);
+        box(g, "#f6f2ea", wx0 - 0.05, y0, zf, wx0, y0 + 0.72, zf + 0.05);
+        box(g, "#f6f2ea", wx1, y0, zf, wx1 + 0.05, y0 + 0.72, zf + 0.05);
+        box(g, ARCH.brass, wx1 - 0.07, y0 + 0.31, zf + 0.035, wx1 - 0.035, y0 + 0.37, zf + 0.065);
+        box(g, "#c9bba2", wx0 - 0.09, 0.12, zf, wx1 + 0.09, 0.18, zf + 0.19);
         continue;
       }
       box(g, "#f6f2ea", wx0 - 0.05, y0 + 0.18, zf - 0.02, wx1 + 0.05, y0 + 0.78, zf + 0.02);
       box(g, "#3e4a60", wx0, y0 + 0.23, zf - 0.01, wx1, y0 + 0.73, zf + 0.03);
       box(g, "#f6f2ea", wx0, y0 + 0.47, zf - 0.01, wx1, y0 + 0.49, zf + 0.04);
+      box(g, "#f6f2ea", (wx0 + wx1) / 2 - 0.015, y0 + 0.23, zf + 0.025, (wx0 + wx1) / 2 + 0.015, y0 + 0.73, zf + 0.045);
+      box(g, "#d4c5ac", wx0 - 0.08, y0 + 0.14, zf - 0.02, wx1 + 0.08, y0 + 0.2, zf + 0.12);
     }
   }
 }
@@ -333,6 +600,9 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const seed = t.x * 7 + t.y * 13;
   box(g, "#e9e1d0", x0 - 0.05, 0, z0 - 0.05, x0 + w + 0.05, 0.13, z0 + d + 0.05);
   if (t.style === "terrace") return terrace(g, t, false);
+  const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
+  if (co) return headquarters(g, t, co);
+  if (t.id === "makerspace" || t.id === "study-club") return studyQuarterBuilding(g, t);
   const jobs: Promise<unknown>[] = [];
   if (t.style === "office" || t.style === "stone" || t.style === "company" || t.style === "glass") {
     const lib = t.style === "glass" || t.style === "company" ? TOWERS : MIDRISE;
@@ -898,8 +1168,8 @@ export function World3D({
           jobs.push(building(g, t));
           const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
           if (co) {
-            const sg = sign(co.name, { bg: "#ffffff", fg: "#13203a", w: Math.min(t.w - 0.4, 4), h: 0.62, logo: co.id });
-            sg.position.set(t.x + t.w / 2, 1.35, t.y + t.h + 0.04);
+            const sg = sign(co.name, { bg: co.accent, fg: "#13203a", w: Math.min(t.w - 0.4, 4), h: 0.4, logo: co.id });
+            sg.position.set(t.x + t.w / 2, 1.73, t.y + t.h + (co.building === "cinema" ? 0.3 : 0.04));
             g.add(sg);
           }
         }
@@ -939,7 +1209,7 @@ export function World3D({
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
-        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : p.id === "makerspace" ? "Makerspace" : p.id === "study-club" ? "Study Quarter Club" : null;
+        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : null;
         if (!name) continue;
         const sg = sign(name, { bg: p.id === "pizzazz" ? "#c8322d" : "#13203a", fg: "#ffffff", w: 3, h: 0.5 });
         sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
@@ -954,10 +1224,7 @@ export function World3D({
         scene.add(l);
       });
 
-    if(map.id === "study-lobby") {
-      const welcome=sign("Study Quarter · meet, study, play",{bg:"#2b5fd9",fg:"#ffffff",w:6,h:0.65});
-      welcome.position.set(13,2.2,5.8);world.add(welcome);
-    }
+    if (map.id === "study-lobby") learningLobby(world, map);
 
     // Portal markers: soft glowing rings on the ground.
     const rings: THREE.Mesh[] = [];

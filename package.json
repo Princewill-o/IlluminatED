@@ -13,6 +13,8 @@
     "sync:education": "node scripts/sync-education.mjs",
     "sync:opportunities": "node scripts/sync-opportunities.mjs",
     "test:education": "node --test tests/education.test.mjs",
+    "test:study": "node --test tests/study-room.test.mjs tests/learning-awards.test.mjs && node scripts/build-study-bank.mjs --check",
+    "test:study:db": "node tests/run-study-database.mjs",
     "publish:education": "node --env-file-if-exists=.env.local scripts/publish-education.mjs"
   },
   "dependencies": {
