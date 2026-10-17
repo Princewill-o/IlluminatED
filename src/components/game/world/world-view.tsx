@@ -211,7 +211,7 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
   const [webgl] = useState(() => typeof window === "undefined" || Boolean(document.createElement("canvas").getContext("webgl2")));
-  const is3d = webgl && (map.art === "london" || map.art === "highlands");
+  const is3d = webgl;
   const speedRef = useRef(speed);
   speedRef.current = speed;
   const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false });

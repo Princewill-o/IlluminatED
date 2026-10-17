@@ -6,6 +6,7 @@ import { Eye, Footprints, Hand, RotateCw } from "lucide-react";
 
 import { AvatarFigure } from "./avatar";
 import type { Clip, Facing } from "./character";
+import { Character3DPreview } from "./character-3d-preview";
 import { play, soundOn } from "./sound";
 
 import { buyItem, saveAvatar } from "@/app/games/actions";
@@ -127,7 +128,7 @@ export function Locker({
       <div className="lg:sticky lg:top-6 lg:self-start">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-b from-[#8fb4ff] to-[#dde8fd] px-6 pt-8 pb-3 dark:from-[#1b2c48] dark:to-[#14223a]">
           <span aria-hidden className="absolute inset-x-10 bottom-6 h-6 rounded-[50%] bg-black/15" />
-          <AvatarFigure avatar={avatar} size={290} facing={facing} clip={clip} className="relative mx-auto" />
+          <Character3DPreview avatar={avatar} facing={facing} clip={clip} className="relative mx-auto h-[300px] w-full" />
           <div className="absolute bottom-3 left-3 flex gap-1.5">
             <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0d1726] active:scale-95">
               <RotateCw className="size-4" aria-hidden />

@@ -5,15 +5,19 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
-import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
 
-import { BUS_ROUTE_CODES } from "./art";
+import { BUS_ROUTE_CODES, TRAFFIC_BOXES } from "./art";
+import { type Character3D, buildCharacter } from "../char3d";
 import { ukPhase } from "./fx";
 
+import { COMPANIES } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
+import { look } from "@/game/core/cosmetics";
+import { furnitureById } from "@/game/core/homes";
+import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
-import { HAIR_LOOK } from "@/game/core/looks";
 import { buildHighlands } from "@/game/core/regions";
+import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, type Portal, type WorldMap } from "@/game/core/world";
 
 /**
@@ -35,15 +39,16 @@ export interface Mover3D {
 
 // ── Rolling-log curvature: every material bends the world down away from the camera focus ──
 const FOCUS = { value: new THREE.Vector3() };
-const BEND_Z = 0.0055;
-const BEND_X = 0.0012;
+/** Curvature (z, x): strong outdoors, off indoors. */
+const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uFocus = FOCUS;
+    sh.uniforms.uBend = BEND;
     sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform vec3 uFocus;")
+      .replace("#include <common>", "#include <common>\nuniform vec3 uFocus;\nuniform vec2 uBend;")
       .replace(
         "#include <project_vertex>",
         `vec4 mvPosition = vec4( transformed, 1.0 );
@@ -53,7 +58,7 @@ function bend(m: THREE.Material) {
 vec4 bw = modelMatrix * mvPosition;
 float bz = bw.z - uFocus.z;
 float bx = bw.x - uFocus.x;
-bw.y -= bz * bz * ${BEND_Z.toFixed(5)} + bx * bx * ${BEND_X.toFixed(5)};
+bw.y -= bz * bz * uBend.x + bx * bx * uBend.y;
 mvPosition = viewMatrix * bw;
 gl_Position = projectionMatrix * mvPosition;`,
       );
@@ -113,6 +118,81 @@ function roof(g: THREE.Group, colour: string, x0: number, z0: number, x1: number
   m.castShadow = true;
   g.add(m);
 }
+
+// ── Signs: crisp canvas-text panels (station names, shop fronts, parody company logos) ──
+function sign(text: string, o: { bg: string; fg: string; w: number; h: number; font?: string; logo?: string | null; badge?: boolean }) {
+  const H = 128;
+  const W = Math.round((o.w / o.h) * H);
+  const c = document.createElement("canvas");
+  c.width = W * 2;
+  c.height = H * 2;
+  const ctx = c.getContext("2d")!;
+  ctx.scale(2, 2);
+  ctx.fillStyle = o.bg;
+  ctx.fillRect(0, 0, W, H);
+  let x = H * 0.18;
+  const logo = o.logo ? logoFor(o.logo) : null;
+  if (logo) {
+    const s = H * 0.76;
+    ctx.save();
+    ctx.translate(x, (H - s) / 2);
+    ctx.scale(s / 64, s / 64);
+    ctx.fillStyle = logo.bg;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, 64, 64, 14);
+    ctx.fill();
+    for (const sh of logo.shapes) {
+      ctx.fillStyle = sh.fill;
+      ctx.fill(new Path2D(sh.d));
+    }
+    ctx.restore();
+    x += s + H * 0.14;
+  }
+  if (o.badge) {
+    // Our own hexagon Underground badge (not the real roundel).
+    const r2 = H * 0.36;
+    const cx = x + r2;
+    const cy = H / 2;
+    ctx.fillStyle = "#2b5fd9";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (Math.PI / 3) * i + Math.PI / 6;
+      ctx[i ? "lineTo" : "moveTo"](cx + Math.cos(a) * r2, cy + Math.sin(a) * r2);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(cx - r2 * 1.1, cy - 8, r2 * 2.2, 16);
+    x += r2 * 2 + H * 0.16;
+  }
+  ctx.fillStyle = o.fg;
+  ctx.font = o.font ?? `800 ${Math.round(H * 0.46)}px system-ui, sans-serif`;
+  ctx.textBaseline = "middle";
+  let size = Math.round(H * 0.46);
+  while (ctx.measureText(text).width > W - x - H * 0.15 && size > 16) {
+    size -= 4;
+    ctx.font = o.font ? o.font.replace(/\d+px/, `${size}px`) : `800 ${size}px system-ui, sans-serif`;
+  }
+  ctx.fillText(text, logo || o.badge ? x : Math.max(x, (W - ctx.measureText(text).width) / 2), H / 2 + 2);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  const m = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
+  bend(m);
+  return new THREE.Mesh(new THREE.PlaneGeometry(o.w, o.h), m);
+}
+
+/** Londoners: varied looks for the people on the street. */
+const NPC_SKIN = ["skin-1", "skin-2", "skin-3", "skin-4", "skin-5", "skin-6", "skin-7", "skin-8"];
+const NPC_HAIR = ["hair-short", "hair-bob", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff", "hair-spiky"];
+const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn", "haircol-ginger", "haircol-silver"];
+const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
+const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
+const npcLook = (i: number) =>
+  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5] });
 
 // ── Kenney models ──
 const loader = new GLTFLoader();
@@ -354,8 +434,19 @@ function landmark(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["thi
   }
 }
 
-function busModel() {
+function busModel(route: string) {
   const g = new THREE.Group();
+  // Route number and destination on the front and both sides.
+  const blind = sign(`${route}  London`, { bg: "#15151c", fg: "#ffb020", w: 0.9, h: 0.18, font: "bold 64px monospace" });
+  blind.position.set(1.41, 1.2, 0);
+  blind.rotation.y = Math.PI / 2;
+  g.add(blind);
+  for (const side of [-1, 1]) {
+    const s = sign(route, { bg: "#15151c", fg: "#ffb020", w: 0.5, h: 0.2, font: "bold 80px monospace" });
+    s.position.set(-0.9, 1.2, side * 0.49);
+    s.rotation.y = side > 0 ? 0 : Math.PI;
+    g.add(s);
+  }
   box(g, "#d72a22", -1.35, 0.25, -0.48, 1.35, 2.05, 0.48);
   box(g, "#1c2430", -1.15, 1.4, -0.5, 1.2, 1.82, 0.5);
   box(g, "#1c2430", -0.9, 0.62, -0.5, 0.6, 1.0, 0.5);
@@ -370,6 +461,123 @@ function busModel() {
       wh.rotation.x = Math.PI / 2;
       wh.position.y = 0.25;
     }
+  return g;
+}
+
+// ── Indoors: rooms built from the tile map (walls, floors, furniture), cut away at the front ──
+const FURNITURE_MODEL: Record<string, string[]> = {
+  bed: ["bedDouble"],
+  wardrobe: ["bookcaseClosedDoors"],
+  shelf: ["bookcaseOpen"],
+  desk: ["desk", "computerScreen"],
+  tv: ["cabinetTelevision", "televisionModern"],
+  sofa: ["loungeSofa"],
+  table: ["tableCoffee"],
+  petbed: ["rugRound"],
+  plant: ["plantSmall1"],
+  lamp: ["lampRoundFloor"],
+  armchair: ["loungeChair"],
+  beanbag: ["loungeChairRelax"],
+  rug: ["rugRound"],
+  fridge: ["kitchenFridge"],
+  fishtank: ["tableGlass"],
+  gaming: ["desk", "computerScreen"],
+  telescope: ["lampSquareFloor"],
+  trophies: ["bookcaseClosedWide"],
+  piano: ["kitchenBar"],
+  arcade: ["kitchenFridgeLarge"],
+};
+const TILE_MODEL: Record<string, string> = { d: "desk", c: "chairDesk", t: "table", o: "table", s: "loungeSofa", v: "kitchenFridgeLarge", k: "kitchenCabinet", F: "kitchenFridge", A: "desk", r: "kitchenBar", b: "bookcaseOpen", p: "plantSmall2", L: "lampSquareFloor" };
+const FLOOR: Record<string, string> = { ".": "#ead9bb", m: "#dfe7f2", l: "#8e7ae0", ",": "#f2f1ee", e: "#b9ad96", X: "#ead9bb", "-": "#e9e1d0", _: "#ecd8a4" };
+
+function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], station: boolean) {
+  const g = new THREE.Group();
+  world.add(g);
+  const rows = map.tiles;
+  const H = rows.length;
+  const Wd = rows[0].length;
+  const furn = "dctosvkFArbpL";
+  const home = map.kind === "home";
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < Wd; x++) {
+      const ch = rows[y][x];
+      if (ch === "#" || ch === "W" || ch === "G") {
+        // Back and side walls full height; the front wall is cut low so you can see in.
+        const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
+        const h = front ? 0.35 : ch === "G" ? 2.4 : 3;
+        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
+        if (ch === "W") box(g, "#9fd2ef", x + 0.15, 1.1, y + 0.98, x + 0.85, 2.3, y + 1.02);
+        if (!front) box(g, home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
+        continue;
+      }
+      if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
+      box(g, FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
+    }
+  // Office / station furniture from tile runs.
+  if (!home)
+    for (let y = 0; y < H; y++) {
+      let x = 0;
+      while (x < Wd) {
+        const ch = rows[y][x];
+        if (!furn.includes(ch)) {
+          x++;
+          continue;
+        }
+        let w = 1;
+        while (rows[y][x + w] === ch) w++;
+        if (station && ch === "r") {
+          for (let i = 0; i < w; i++) box(g, "#c9ced8", x + i, 0, y + 0.3, x + i + 1, 0.9, y + 0.7);
+        } else if (station && ch === "v") {
+          for (let i = 0; i < w; i++) {
+            box(g, "#2b5fd9", x + i + 0.1, 0, y + 0.3, x + i + 0.9, 1.6, y + 0.9);
+            box(g, "#bfe3ff", x + i + 0.2, 1.0, y + 0.9, x + i + 0.8, 1.4, y + 0.92);
+          }
+        } else if (station && ch === "s") {
+          box(g, "#4a4fb8", x + 0.05, 0.35, y + 0.3, x + w - 0.05, 0.5, y + 0.8);
+          box(g, "#4a4fb8", x + 0.05, 0.5, y + 0.7, x + w - 0.05, 1.0, y + 0.8);
+        } else {
+          const model = TILE_MODEL[ch];
+          // Long runs (desk rows, counters) get one model per two tiles.
+          const step = w > 2 ? 2 : w;
+          for (let i = 0; i < w; i += step) jobs.push(place(g, `/world3d/furniture/${model}.glb`, x + i + 0.05, y + 0.05, Math.min(step, w - i) - 0.1, 0.9));
+        }
+        x += w;
+      }
+    }
+  // Station gates: steel posts with red paddles.
+  if (station)
+    for (let x = 0; x < Wd; x++)
+      if (rows[7]?.[x] === "e") {
+        box(g, "#c9ced8", x, 0, 7.3, x + 0.18, 1, 7.7);
+        box(g, "#d72a22", x + 0.18, 0.55, 7.45, x + 0.55, 0.75, 7.55);
+      }
+  // Your furniture at home, as real 3D pieces.
+  if (home && map.layout)
+    for (const p of map.layout) {
+      const f = furnitureById(p.item);
+      const models = f ? FURNITURE_MODEL[f.id] : null;
+      if (!f || !models) continue;
+      models.forEach((m, i) => {
+        if (i === 0) jobs.push(place(g, `/world3d/furniture/${m}.glb`, p.x + 0.05, p.y + 0.05, f.w - 0.1, f.h - 0.1));
+        else jobs.push(place(g, `/world3d/furniture/${m}.glb`, p.x + f.w * 0.3, p.y + 0.1, f.w * 0.4, Math.min(0.6, f.h * 0.4), m === "televisionModern" ? 0.55 : 0.78));
+      });
+    }
+  return g;
+}
+
+/** A deep-level tube train: red cab ends, white and blue cars, red doors. */
+function tubeTrain() {
+  const g = new THREE.Group();
+  for (let c = 0; c < 4; c++) {
+    const x0 = c * 6.2;
+    box(g, "#eef0f4", x0, 0.3, -0.75, x0 + 6, 2.4, 0.75);
+    box(g, "#1f3fa8", x0, 0.45, -0.77, x0 + 6, 0.95, 0.77);
+    for (let w = 0; w < 4; w++) box(g, "#2a3346", x0 + 0.5 + w * 1.4, 1.35, -0.78, x0 + 1.4 + w * 1.4, 2.0, 0.78);
+    box(g, "#d72a22", x0 + 2.6, 0.45, -0.79, x0 + 3.4, 2.25, 0.79);
+    box(g, "#2a2733", x0, 0.05, -0.6, x0 + 6, 0.3, 0.6);
+  }
+  box(g, "#d72a22", 24.2, 0.3, -0.75, 25.4, 2.4, 0.75);
+  box(g, "#1c2430", 25.2, 1.2, -0.55, 25.42, 2.1, 0.55);
   return g;
 }
 
@@ -399,6 +607,10 @@ export function World3D({
     const el = host.current;
     if (!el) return;
     const highland = map.art === "highlands";
+    const london = map.art === "london";
+    const indoors = !london && !highland && map.kind !== "campus";
+    const station = map.kind === "station";
+    BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.shadowMap.enabled = true;
@@ -425,14 +637,20 @@ export function World3D({
     sun.shadow.bias = -0.0008;
     sun.shadow.radius = 4;
     scene.add(sun, sun.target);
-    if (phase === "night") scene.background = new THREE.Color("#33407a");
-    if (phase === "night") scene.fog = new THREE.Fog("#33407a", 32, 66);
+    if (phase === "night" && !indoors) scene.background = new THREE.Color("#33407a");
+    if (phase === "night" && !indoors) scene.fog = new THREE.Fog("#33407a", 32, 66);
+    if (indoors) {
+      scene.background = new THREE.Color("#1d1a2b");
+      scene.fog = null;
+      hemi.intensity = 1.9;
+      sun.intensity = 1.2;
+    }
 
     // ── Build the world ──
     const world = new THREE.Group();
     scene.add(world);
     const tiles = map.tiles;
-    world.add(groundMesh(tiles, highland));
+    if (!indoors) world.add(groundMesh(tiles, highland));
     const water = new THREE.Mesh(new THREE.PlaneGeometry(map.cols, map.rows), new THREE.MeshLambertMaterial({ color: "#5fb8d9", transparent: true, opacity: 0.92 }));
     bend(water.material);
     water.rotation.x = -Math.PI / 2;
@@ -442,7 +660,46 @@ export function World3D({
     const spinners: THREE.Object3D[] = [];
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
-    if (highland) {
+    if (indoors) {
+      interior(world, map, jobs, station);
+      if (station) {
+        const ty = STATION_PLATFORM_Y + 3;
+        box(world, "#2a2733", 1, -0.45, ty, map.cols - 1, -0.05, map.rows - 1);
+        box(world, "#b8bcc8", 1, -0.05, ty + 0.9, map.cols - 1, 0, ty + 1.0);
+        box(world, "#b8bcc8", 1, -0.05, ty + 2.0, map.cols - 1, 0, ty + 2.1);
+        box(world, "#ffd400", 1, 0.02, ty - 0.35, map.cols - 1, 0.04, ty - 0.2);
+        const board = sign("1 Westbound   1 min", { bg: "#141418", fg: "#ffd400", w: 3, h: 0.4, font: "bold 64px monospace" });
+        board.position.set(map.cols - 5, 3.4, 8.2);
+        world.add(board);
+        const name = sign(map.name.replace(/ station$/, ""), { bg: "#ffffff", fg: "#13203a", w: 5, h: 0.7, badge: true });
+        name.position.set(map.cols / 2, 2.3, 1.02);
+        world.add(name);
+        const train = tubeTrain();
+        train.position.set(-30, -0.05, ty + 1.5);
+        train.userData.train = true;
+        world.add(train);
+        spinners.push(train);
+      }
+    } else if (map.kind === "campus") {
+      for (let y = 0; y < map.rows; y++)
+        for (let x = 0; x < map.cols; x++) {
+          const ch = map.tiles[y][x];
+          const g = new THREE.Group();
+          world.add(g);
+          if (ch === "T") jobs.push(place(g, `/world3d/suburban/${(x + y) % 3 === 1 ? "tree-small" : "tree-large"}.glb`, x - 0.4, y - 0.4, 1.8, 1.8));
+          else if (ch === "L") jobs.push(place(g, "/world3d/roads/light-square.glb", x, y, 1, 1, 0.12));
+        }
+      for (const st of map.structures) {
+        const g = new THREE.Group();
+        world.add(g);
+        box(g, "#eef0f4", st.x, 0, st.y, st.x + st.w, 3.2, st.y + st.h);
+        box(g, st.accent, st.x - 0.05, 2.6, st.y + st.h - 0.05, st.x + st.w + 0.05, 3.3, st.y + st.h + 0.05);
+        for (let i = 0; i < st.w - 1; i += 1.5) box(g, "#3e4a60", st.x + 0.4 + i, 1.2, st.y + st.h - 0.02, st.x + 1.1 + i, 2.2, st.y + st.h + 0.02);
+        const sg = sign(st.label, { bg: "#ffffff", fg: "#13203a", w: Math.min(st.w - 0.4, 5), h: 0.55, logo: st.companyId ?? null });
+        sg.position.set(st.x + st.w / 2, 2.95, st.y + st.h + 0.07);
+        g.add(sg);
+      }
+    } else if (highland) {
       const H = buildHighlands();
       for (const t of H.things) {
         const g = new THREE.Group();
@@ -469,10 +726,20 @@ export function World3D({
         else if (t.kind === "flower") jobs.push(place(g, `/world3d/nature/${["flower_redA", "flower_yellowB", "flower_purpleA"][(t.x + t.y) % 3]}.glb`, t.x + 0.3, t.y + 0.3, 0.4, 0.4));
         else if (t.kind === "tent") jobs.push(place(g, "/world3d/nature/tent_detailedOpen.glb", t.x + 0.1, t.y + 0.1, 1.8, 1.8));
         else if (t.kind === "campfire") jobs.push(place(g, "/world3d/nature/campfire_stones.glb", t.x + 0.1, t.y + 0.1, 0.8, 0.8));
-        else if (t.kind === "building") terrace(g, t, true);
+        else if (t.kind === "building") {
+          terrace(g, t, true);
+          if (t.label) {
+            const sg = sign(t.label, { bg: t.label.includes("Cafe") ? "#2d6a4f" : "#7a4f32", fg: "#ffffff", w: 2.6, h: 0.45 });
+            sg.position.set(t.x + t.w / 2, 1.05, t.y + t.h + 0.04);
+            g.add(sg);
+          }
+        }
         else if (t.kind === "station") {
           box(g, "#b5463a", t.x + 0.05, 0, t.y + 0.05, t.x + t.w - 0.05, 2.6, t.y + t.h - 0.05);
           box(g, "#2d1b69", t.x, 2, t.y + t.h - 0.1, t.x + t.w, 2.35, t.y + t.h);
+          const nm = sign(t.name, { bg: "#ffffff", fg: "#13203a", w: t.w + 0.4, h: 0.5, badge: true });
+          nm.position.set(t.x + t.w / 2, 2.18, t.y + t.h + 0.04);
+          g.add(nm);
         } else if (t.kind === "lamp") {
           jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1));
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
@@ -483,7 +750,15 @@ export function World3D({
       for (const t of L.things) {
         const g = new THREE.Group();
         world.add(g);
-        if (t.kind === "building") jobs.push(building(g, t));
+        if (t.kind === "building") {
+          jobs.push(building(g, t));
+          const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
+          if (co) {
+            const sg = sign(co.name, { bg: "#ffffff", fg: "#13203a", w: Math.min(t.w - 0.4, 4), h: 0.62, logo: co.id });
+            sg.position.set(t.x + t.w / 2, 1.35, t.y + t.h + 0.04);
+            g.add(sg);
+          }
+        }
         else if (t.kind === "landmark") {
           landmark(g, t);
           g.traverse((c) => c.userData.spin && spinners.push(c));
@@ -507,12 +782,25 @@ export function World3D({
           box(g, "#b5463a", t.x + 0.05, 0, t.y + 0.05, t.x + t.w - 0.05, 2.6, t.y + t.h - 0.05);
           box(g, "#2a2730", t.x + 0.6, 0.12, t.y + t.h - 0.08, t.x + t.w - 0.6, 1.7, t.y + t.h - 0.02);
           box(g, "#2d1b69", t.x - 0.02, 2, t.y + t.h - 0.1, t.x + t.w + 0.02, 2.35, t.y + t.h + 0.02);
+          const st = L.stations.find((x) => x.id === t.id);
+          const nm = sign(st?.name ?? t.name, { bg: "#ffffff", fg: "#13203a", w: t.w + 0.4, h: 0.5, badge: true });
+          nm.position.set(t.x + t.w / 2, 2.18, t.y + t.h + 0.04);
+          g.add(nm);
           const hex = cyl(g, "#2b5fd9", t.x + t.w + 0.35, t.y + t.h + 0.3, 2.6, 2.66, 0.42, 6);
           hex.rotation.x = Math.PI / 2;
           cyl(g, "#2a2730", t.x + t.w + 0.35, t.y + t.h + 0.3, 0.1, 2.6, 0.05, 8);
         }
       }
     }
+    // Shop fronts with names over the door.
+    if (!highland && map.art === "london")
+      for (const p of map.portals) {
+        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : null;
+        if (!name) continue;
+        const sg = sign(name, { bg: p.id === "pizzazz" ? "#c8322d" : "#13203a", fg: "#ffffff", w: 3, h: 0.5 });
+        sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
+        world.add(sg);
+      }
     // Street lamps glow at night.
     if (phase !== "day")
       lamps.forEach((p, i) => {
@@ -540,48 +828,35 @@ export function World3D({
     const mixers: THREE.AnimationMixer[] = [];
     interface Body {
       root: THREE.Group;
-      mixer: THREE.AnimationMixer | null;
-      idle: THREE.AnimationAction | null;
-      walk: THREE.AnimationAction | null;
+      char: Character3D | null;
       walking: boolean;
-      key: string;
     }
-    const charUrl = (a: Avatar) => `/world3d/chars/character-${HAIR_LOOK[a.hair]?.head ?? "male-a"}.glb`;
     const makeBody = (a: Avatar): Body => {
       const root = new THREE.Group();
-      const b: Body = { root, mixer: null, idle: null, walk: null, walking: false, key: charUrl(a) };
+      const b: Body = { root, char: null, walking: false };
       const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
       bend(shadow.material);
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = 0.14;
       root.add(shadow);
-      void load(b.key).then((gltf) => {
-        const o = cloneSkinned(gltf.scene) as THREE.Group;
-        const bb = new THREE.Box3().setFromObject(o);
-        o.scale.setScalar(1.15 / (bb.max.y - bb.min.y));
-        o.position.y = 0.12;
-        bendAll(o);
-        root.add(o);
-        const mixer = new THREE.AnimationMixer(o);
-        const clip = (n: string) => gltf.animations.find((c) => c.name === n);
-        const idle = clip("idle");
-        const walk = clip("walk");
-        b.mixer = mixer;
-        b.idle = idle ? mixer.clipAction(idle) : null;
-        b.walk = walk ? mixer.clipAction(walk) : null;
-        b.idle?.play();
-        mixers.push(mixer);
+      void buildCharacter(a).then((c) => {
+        if (disposed) return;
+        bendAll(c.object);
+        c.object.position.y = 0.12;
+        root.add(c.object);
+        b.char = c;
+        mixers.push(c.mixer);
+        c.play(b.walking ? "walk" : "idle");
       });
       return b;
     };
     const setWalking = (b: Body, on: boolean) => {
-      if (b.walking === on || !b.idle || !b.walk) return;
+      if (b.walking === on) return;
       b.walking = on;
-      const [from, to] = on ? [b.idle, b.walk] : [b.walk, b.idle];
-      to.reset().play();
-      from.crossFadeTo(to, 0.2, false);
+      b.char?.play(on ? "walk" : "idle");
     };
 
+    let disposed = false;
     const me = makeBody(JSON.parse(avatarKey) as Avatar);
     scene.add(me.root);
     // Your car (when driving): a Kenney model swapped in for your character.
@@ -600,7 +875,7 @@ export function World3D({
         const route = i % 3;
         const g = new THREE.Group();
         if (k === "bus") {
-          const b = busModel();
+          const b = busModel(BUS_ROUTE_CODES[route]);
           g.add(b);
           g.userData.label = BUS_ROUTE_CODES[route];
         } else void place(g, `/world3d/cars/${k}.glb`, -0.85, -0.45, 1.7, 0.9, 0, Math.PI / 2);
@@ -627,10 +902,8 @@ export function World3D({
     // Pedestrians on the pavements.
     const npcs: { body: Body; route: number; at: number; side: number; speed: number; last: THREE.Vector3 }[] = [];
     if (L) {
-      const heads = ["female-a", "male-b", "female-c", "male-d", "female-e", "male-f", "female-b", "male-c", "female-d", "male-e"];
-      heads.forEach((h, i) => {
-        const hair = Object.entries(HAIR_LOOK).find(([, v]) => v.head === h)?.[0] ?? "hair-short";
-        const body = makeBody({ ...(JSON.parse(avatarKey) as Avatar), hair });
+      Array.from({ length: 12 }, (_, i) => i).forEach((i) => {
+        const body = makeBody(npcLook(i));
         scene.add(body.root);
         npcs.push({ body, route: i % 3, at: (i * 0.137) % 1, side: i % 2 ? 1.3 : -1.3, speed: 1.1 + (i % 3) * 0.2, last: new THREE.Vector3() });
       });
@@ -702,7 +975,8 @@ export function World3D({
       }
       focus.lerp(new THREE.Vector3(mx, 0, mz), 1 - Math.pow(0.0015, dt));
       FOCUS.value.copy(focus);
-      camera.position.set(focus.x, focus.y + 19, focus.z + 18);
+      if (indoors) camera.position.set(focus.x, focus.y + 12.5, focus.z + 11.5);
+      else camera.position.set(focus.x, focus.y + 19, focus.z + 18);
       camera.lookAt(focus.x, focus.y + 0.6, focus.z);
       sun.position.set(focus.x - 10, 22, focus.z + 12);
       sun.target.position.copy(focus);
@@ -734,12 +1008,16 @@ export function World3D({
         }
 
       // Traffic and pedestrians.
+      let ti = 0;
       for (const v of traffic) {
         const q = pointAt(v.route, v.at * lengths[v.route] + (reduce ? 0 : secs * v.speed));
         const len = Math.hypot(q.dx, q.dz) || 1;
         // Drive on the left.
         v.obj.position.set(q.x + (q.dz / len) * 0.5, 0.02, q.z - (q.dx / len) * 0.5);
         v.obj.rotation.y = Math.atan2(-q.dz, q.dx);
+        const horiz = Math.abs(q.dx) > Math.abs(q.dz);
+        const long = (v.obj.userData.label ? 2.8 : 1.8) * TILE;
+        TRAFFIC_BOXES[ti++] = { x: v.obj.position.x * TILE, y: v.obj.position.z * TILE, hw: (horiz ? long : TILE * 0.95) / 2, hh: (horiz ? TILE * 0.95 : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz) };
       }
       for (const n of npcs) {
         const q = pointAt(n.route, n.at * lengths[n.route] + (reduce ? 0 : secs * n.speed));
@@ -751,7 +1029,14 @@ export function World3D({
         setWalking(n.body, !reduce);
       }
 
-      for (const s of spinners) s.rotation.z += dt * 0.05;
+      for (const s of spinners) {
+        if (s.userData.train) {
+          // Pull in, wait with the doors open, then leave (16 s loop).
+          const t = secs % 16;
+          const stop = map.cols / 2 - 13;
+          s.position.x = t < 4 ? -30 + (stop + 30) * (1 - Math.pow(1 - t / 4, 3)) : t < 10 ? stop : stop + Math.pow((t - 10) / 6, 2) * 70;
+        } else s.rotation.z += dt * 0.05;
+      }
       const near = nearPortal();
       for (const r of rings) {
         const on = near?.id === r.userData.portal;
@@ -798,6 +1083,8 @@ export function World3D({
 
     return () => {
       cancelAnimationFrame(raf);
+      disposed = true;
+      TRAFFIC_BOXES.length = 0;
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
       renderer.dispose();
