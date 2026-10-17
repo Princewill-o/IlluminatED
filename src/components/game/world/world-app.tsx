@@ -455,6 +455,7 @@ export function WorldApp({
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
       <WorldView
         key={`${mapId}:${server}:${trip}`}
+        paused={Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading)}
         map={map}
         serverId={atHome ? "solo" : inOffice ? "main" : server}
         me={me}

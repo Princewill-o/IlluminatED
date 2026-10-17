@@ -181,7 +181,9 @@ export function WorldView({
   bike = null,
   car = null,
   ads = [],
+  paused = false,
 }: {
+  paused?: boolean;
   /** Real tech events shown on billboards around the world. */
   ads?: TechEvent[];
   /** The car you're driving, if any (sprite id from the dealership). */
@@ -206,6 +208,8 @@ export function WorldView({
   const meBubble = useRef<HTMLDivElement | null>(null);
   const els = useRef(new Map<string, HTMLDivElement>());
   const bubbles = useRef(new Map<string, HTMLDivElement>());
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
   const keys = useRef(new Set<string>());
   const stick = useRef({ x: 0, y: 0 });
   const target = useRef<{ x: number; y: number } | null>(null);
@@ -270,6 +274,7 @@ export function WorldView({
     target.current = { x, y };
   }, []);
   const enter = useCallback(() => {
+    if (pausedRef.current) return;
     if (nearRef.current) onPortal(nearRef.current);
   }, [onPortal]);
 
@@ -277,6 +282,7 @@ export function WorldView({
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      if (pausedRef.current || e.target instanceof HTMLElement && e.target.closest("button, a, [role=dialog], [contenteditable=true]")) return;
       const k = e.key.toLowerCase();
       if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) {
         e.preventDefault();
@@ -313,6 +319,11 @@ export function WorldView({
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      if (pausedRef.current) {
+        keys.current.clear();
+        stick.current = { x: 0, y: 0 };
+        target.current = null;
+      }
       const k = keys.current;
       let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
       let dy = (k.has("s") || k.has("arrowdown") ? 1 : 0) - (k.has("w") || k.has("arrowup") ? 1 : 0);

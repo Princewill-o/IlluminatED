@@ -209,17 +209,18 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
       )}
 
       <div className="mt-4">
+        {game && game !== "quiz" && mode === "online" && !room && <p className="rounded-2xl bg-white p-4 text-sm font-bold">Create a room or enter a friend’s room code to play online.</p>}
         {game === "quiz" && serverId && <GamesHall serverId={serverId} me={me} onClose={() => setGame(null)} />}
         {game === "quiz" && !serverId && <p className="rounded-2xl bg-white p-4 text-sm font-bold">Quiz Battle runs inside the world: head to the Games Hall at Battersea.</p>}
-        {game === "tycoon" && <TycoonGame key={`${mode}${room}`} me={me} mode={mode} room={room} />}
-        {game === "c4" && <TwoPlayer key={`c4${mode}${room}`} me={me} mode={mode} room={room} kind="c4" />}
-        {game === "draughts" && <TwoPlayer key={`d${mode}${room}`} me={me} mode={mode} room={room} kind="draughts" />}
-        {game === "ttt" && <TwoPlayer key={`t${mode}${room}`} me={me} mode={mode} room={room} kind="ttt" />}
+        {game === "tycoon" && (mode !== "online" || room) && <TycoonGame key={`${mode}${room}`} me={me} mode={mode} room={room} />}
+        {game === "c4" && (mode !== "online" || room) && <TwoPlayer key={`c4${mode}${room}`} me={me} mode={mode} room={room} kind="c4" />}
+        {game === "draughts" && (mode !== "online" || room) && <TwoPlayer key={`d${mode}${room}`} me={me} mode={mode} room={room} kind="draughts" />}
+        {game === "ttt" && (mode !== "online" || room) && <TwoPlayer key={`t${mode}${room}`} me={me} mode={mode} room={room} kind="ttt" />}
       </div>
     </div>
   );
 
-  if (!onClose) return <div className="text-[#13203a]">{body}</div>;
+  if (!onClose) return <div className="rounded-3xl bg-[#f7f1e6] p-5 text-[#13203a] [color-scheme:light]">{body}</div>;
   return (
     <div className="absolute inset-0 z-[100004] overflow-y-auto bg-black/60 p-3 md:p-6" onClick={onClose}>
       <div role="dialog" aria-label="Games Hub" onClick={(e) => e.stopPropagation()} className="mx-auto max-w-5xl rounded-3xl bg-[#f7f1e6] p-5 text-[#13203a]">

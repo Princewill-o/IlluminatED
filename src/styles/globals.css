@@ -752,29 +752,29 @@ html.dark body:has(.app-theme) {
  * rules are unlayered, so they win over utilities without !important.) New
  * screens should use the tokens (bg-card, text-foreground, …) directly.
  */
-.app-theme :is(.bg-white, .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-slate-50, .bg-blue-50, .bg-sky-50, .bg-amber-50, .bg-emerald-50, .bg-rose-50) {
+.app-theme :not(.arcade, .arcade *):is(.bg-white, .bg-white\/70, .bg-white\/80, .bg-white\/90, .bg-slate-50, .bg-blue-50, .bg-sky-50, .bg-amber-50, .bg-emerald-50, .bg-rose-50) {
   background-color: var(--card);
 }
-.app-theme :is(.text-slate-900, .text-slate-950, .text-blue-950, .text-amber-950, .text-blue-900) {
+.app-theme :not(.arcade, .arcade *):is(.text-slate-900, .text-slate-950, .text-blue-950, .text-amber-950, .text-blue-900) {
   color: var(--foreground);
 }
-.app-theme :is(.text-slate-500, .text-slate-600, .text-slate-700, .text-blue-100) {
+.app-theme :not(.arcade, .arcade *):is(.text-slate-500, .text-slate-600, .text-slate-700, .text-blue-100) {
   color: var(--muted-foreground);
 }
-.app-theme :is(.border-white, .border-slate-200, .border-slate-300, .border-blue-100, .border-blue-200, .border-sky-200) {
+.app-theme :not(.arcade, .arcade *):is(.border-white, .border-slate-200, .border-slate-300, .border-blue-100, .border-blue-200, .border-sky-200) {
   border-color: var(--border);
 }
-.app-theme :is(.bg-blue-500, .bg-blue-600, .bg-blue-700) {
+.app-theme :not(.arcade, .arcade *):is(.bg-blue-500, .bg-blue-600, .bg-blue-700) {
   background-color: var(--brand);
   color: #fff;
 }
-.app-theme :is(.text-blue-600, .text-blue-700, .text-blue-800, .text-violet-800) {
+.app-theme :not(.arcade, .arcade *):is(.text-blue-600, .text-blue-700, .text-blue-800, .text-violet-800) {
   color: var(--ink-lilac);
 }
-.app-theme :is(.border-blue-600, .border-blue-700) {
+.app-theme :not(.arcade, .arcade *):is(.border-blue-600, .border-blue-700) {
   border-color: var(--primary);
 }
-.app-theme :is(.hover\:bg-slate-50, .hover\:bg-blue-500):hover {
+.app-theme :not(.arcade, .arcade *):is(.hover\:bg-slate-50, .hover\:bg-blue-500):hover {
   background-color: var(--hover);
 }
 /* Flat colours only in the app. */
