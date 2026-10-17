@@ -474,7 +474,7 @@ export default async function DashboardPage() {
             <h2 id="career-title" className="text-2xl tracking-tight">
               Work and home
             </h2>
-            <Link href="/games/careers" className="text-primary text-sm font-medium">
+            <Link href="/games/world?phone=1" className="text-primary text-sm font-medium">
               Careers
             </Link>
           </div>
@@ -483,10 +483,10 @@ export default async function DashboardPage() {
             Spend it on furniture and a bigger home.
           </p>
           <div className="mt-5 flex flex-wrap gap-2 text-sm">
-            <Link href="/games/careers" className="bg-primary text-primary-foreground rounded-full px-4 py-2 font-semibold">
+            <Link href="/games/world?phone=1" className="bg-primary text-primary-foreground rounded-full px-4 py-2 font-semibold">
               Find a job
             </Link>
-            <Link href="/games/home" className="hover:bg-muted rounded-full border px-4 py-2 font-medium">
+            <Link href="/games/world?phone=1" className="hover:bg-muted rounded-full border px-4 py-2 font-medium">
               Decorate your home
             </Link>
           </div>

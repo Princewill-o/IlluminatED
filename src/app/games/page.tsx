@@ -26,7 +26,6 @@ export default async function GamesHome() {
   const ceos = companies.filter(
     (c) => (player.companies[c.id]?.bestRank ?? 0) >= CEO_RANK,
   ).length;
-  const first = companies[0];
 
   return (
     <div id="city" className="mx-auto max-w-6xl px-4 pt-6 pb-10">
@@ -38,7 +37,7 @@ export default async function GamesHome() {
       )}
 
       <section className="relative overflow-hidden rounded-[2rem] bg-[#13203a] text-white shadow-[0_10px_0_rgba(19,32,58,0.15)]">
-        <Image src="/landing/game-london.webp" alt="" fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover opacity-70" />
+        <Image src="/landing/game-city-life.webp" alt="" fill priority sizes="(max-width: 1200px) 100vw, 1150px" className="object-cover opacity-70" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#13203a] via-[#13203a]/75 to-transparent" />
         <div className="relative grid gap-6 p-6 md:grid-cols-[1fr_260px] md:p-10">
           <div className="max-w-xl">
@@ -93,11 +92,11 @@ export default async function GamesHome() {
 
       <section className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" aria-label="Things to do">
         {[
-          { href: `/games/promotion-panic/${first.id}`, title: "Promotion Panic", text: "Intern to CEO in one shift", colour: "#2b5fd9", Icon: Briefcase },
-          { href: "/games/careers", title: "Jobs", text: "Interviews and shifts", colour: "#e0a100", Icon: BadgeCheck },
+          { href: "/games/world?phone=1", title: "Promotion Panic", text: "Intern to CEO in one shift", colour: "#2b5fd9", Icon: Briefcase },
+          { href: "/games/world?phone=1", title: "Jobs", text: "Interviews and shifts", colour: "#e0a100", Icon: BadgeCheck },
           { href: "/homework", title: "Homework", text: "Quests from your class", colour: "#15987f", Icon: ClipboardList },
-          { href: "/games/hub", title: "Games Hub", text: "Tycoon, draughts and more", colour: "#d4536a", Icon: Gamepad2 },
-          { href: "/games/home", title: "Your flat", text: "Decorate and upgrade", colour: "#7a5ce6", Icon: Sofa },
+          { href: "/games/world", title: "Games Hub", text: "Tycoon, draughts and more", colour: "#d4536a", Icon: Gamepad2 },
+          { href: "/games/world?phone=1", title: "Your flat", text: "Decorate and upgrade", colour: "#7a5ce6", Icon: Sofa },
           { href: "/games/locker", title: "Locker", text: "Outfits and looks", colour: "#13203a", Icon: Shirt },
         ].map(({ href, title, text, colour, Icon }) => (
           <Link key={title} href={href} className="group rounded-3xl border-2 border-white bg-card p-4 shadow-[0_4px_0_rgba(19,32,58,0.08)] transition hover:-translate-y-1">
@@ -117,8 +116,7 @@ export default async function GamesHome() {
               The city
             </h2>
             <p className="mt-1 text-muted-foreground">
-              Every building is a company. Every company is a subject in
-              disguise.
+              Join the city, then visit a company or call using your in-game phone. Company cards here show your progress.
             </p>
           </div>
           <p className="text-sm font-bold text-ink-lime">
@@ -132,10 +130,7 @@ export default async function GamesHome() {
             const forYou = isRecommended(c, courseIds);
             return (
               <li key={c.id}>
-                <Link
-                  href={`/games/promotion-panic/${c.id}`}
-                  className="group block h-full overflow-hidden rounded-3xl border border-border bg-card transition hover:-translate-y-1 hover:border-primary focus-visible:-translate-y-1"
-                >
+                <article className="block h-full overflow-hidden rounded-3xl border border-border bg-card">
                   <div
                     className="relative px-6 pt-6"
                     style={{ background: `color-mix(in srgb, ${c.accent} 24%, var(--card))` }}
@@ -185,11 +180,11 @@ export default async function GamesHome() {
                         </span>
                       )}
                     </p>
-                    <span className="mt-4 inline-block rounded-full bg-brand px-4 py-2 text-sm font-black text-white group-hover:bg-[#8d63ff]">
-                      {prog ? "Clock in again" : "Start as intern"} →
+                    <span className="mt-4 inline-block rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">
+                      Call from your game phone
                     </span>
                   </div>
-                </Link>
+                </article>
               </li>
             );
           })}

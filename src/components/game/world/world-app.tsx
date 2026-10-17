@@ -5,12 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Gamepad2 } from "lucide-react";
+import { Gamepad2, Smartphone } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { PLAYER } from "./art";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
+import { GamePhone } from "./game-phone";
+import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
@@ -30,16 +32,20 @@ import { GamesHub } from "../hub/games-hub";
 import { earnWorldXp } from "@/app/games/world/actions";
 import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
 import type { BikeBrand } from "@/game/core/bikes";
+import { WORKPLACES } from "@/game/core/careers";
 import { workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
+import { COMPANIES } from "@/game/core/companies";
 import type { Placed } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, addStar, cardsLeft, chargeFor, sentenceMs } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
+import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import {
   CITY,
   STATION_PLATFORM_Y,
   TILE,
   stationMap,
+  studyLobbyMap,
   type OfficeOrg,
   type Portal,
   REGIONS,
@@ -74,6 +80,7 @@ let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "city") return CITY;
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
+  if (id === "study-lobby") return studyLobbyMap();
   if (id === "campus") return campusMap(offices);
   if (id === "highlands") return HIGHLANDS;
   if (id === "hospital") return hospitalMap();
@@ -177,6 +184,16 @@ export function WorldApp({
     toastTimer.current = setTimeout(() => setToast(null), r.levelled ? 3200 : 1800);
   }, []);
   const [shop, setShop] = useState<"tescow" | "bootz" | null>(null);
+  const [phone, setPhone] = useState(false);
+  const [study, setStudy] = useState(false);
+  const [inmate, setInmate] = useState<string | null>(null);
+  const [pursuit, setPursuit] = useState<Pursuit | null>(null);
+  const pursuitRef = useRef<Pursuit | null>(null);
+  const guardCaughtAt = useRef(0);
+  const releaseReason = useRef("released");
+  const arrestTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (arrestTimer.current) clearTimeout(arrestTimer.current); }, []);
+  useEffect(() => { if (new URLSearchParams(window.location.search).get("phone") === "1") setPhone(true); }, []);
   const [arrest, setArrest] = useState(false);
   const { life, update: updateLife } = useLife();
   const { needs } = useNeeds();
@@ -186,7 +203,7 @@ export function WorldApp({
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), big ? 3200 : 2200);
   }, []);
-  const jailed = life.jailUntil > Date.now();
+  const jailed = life.jailUntil > 0;
   const cards = cardsLeft(homeworkDone, life);
   const [journey, setJourney] = useState<{ to: string; go: () => void } | null>(null);
   useEffect(() => setWallet(clout), [clout]);
@@ -242,6 +259,14 @@ export function WorldApp({
   const onPortal = useCallback(
     (portal: Portal) => {
       const to = portal.to;
+      if (jailed && to.kind !== "prison") { say("Find the study desk or explore the prison first."); return; }
+      if (life.stars >= 2 && ["map", "link", "game", "bus", "tube"].includes(to.kind)) { say("Lose the wanted stars before travelling or starting another activity."); return; }
+      if (to.kind === "prison") {
+        if (to.action === "study") setStudy(true);
+        else if (to.action === "talk") setInmate(to.name ?? "Sam");
+        else { releaseReason.current = "escaped"; updateLife(l=>({...l,jailUntil:0,stars:2,heatAt:Date.now()})); }
+        return;
+      }
       if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
       else if (to.kind === "link") {
         if (to.href === "/learn") doActivity("study");
@@ -290,7 +315,7 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, me.id, updateLife, say],
+    [router, offices, mapId, me.id, updateLife, say, jailed, life.stars],
   );
 
   /** Taken somewhere (arrest, prison, release): fade and arrive at a set spot or the map's start. */
@@ -299,6 +324,9 @@ export function WorldApp({
     if (!next) return;
     setBike(null);
     setDriving(null);
+    setGames(false); setPhone(false); setStudy(false); setInmate(null);
+    setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false);
+    setDealer(false); setDock(false); setDesk(false);
     setSceneName(label);
     setFading(true);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
@@ -322,29 +350,49 @@ export function WorldApp({
     }
   }, [needs, life.sick, updateLife, say]);
 
-  // The police: two stars or more and they come for you.
+  // Spatial pursuit: actual car arrival, foot chase, a search area and a knowledge challenge.
   useEffect(() => {
-    if (life.stars < 2 || jailed || life.hearing || !outdoors || arrest) return;
-    const t = setTimeout(() => {
-      setArrest(true);
-      play("door", soundOn());
-      setTimeout(() => {
-        updateLife((l) => ({ ...l, hearing: { stars: l.stars, charge: chargeFor(l.stars) }, stars: 0, heatAt: 0 }));
-        setArrest(false);
-        goTo("court", "Crown Court");
-      }, 2600);
-    }, 8000);
-    return () => clearTimeout(t);
-  }, [life.stars, life.hearing, jailed, outdoors, arrest, updateLife, goTo]);
+    if (life.stars < 2 || jailed || life.hearing || !outdoors || arrest) {
+      pursuitRef.current = null; setPursuit(null); return;
+    }
+    const timer = setInterval(() => {
+      const current = pursuitRef.current ?? startPursuit(map, PLAYER);
+      const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2);
+      if (next.escaped) {
+        pursuitRef.current = null; setPursuit(null);
+        updateLife(l=>({...l,stars:0,heatAt:0}));
+        say("You left the search area and lost the police. Wanted stars cleared.", true);
+      } else { pursuitRef.current = next; setPursuit(next); }
+    }, 200);
+    return () => clearInterval(timer);
+  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, updateLife, say]);
 
-  // Prison: you stay inside until your time is up (or you use a homework card).
   useEffect(() => {
+    if (jailed && life.prisonWork >= 3 && Date.now() >= life.jailUntil) {
+      updateLife(l=>({...l,jailUntil:0})); return;
+    }
     if (jailed && mapId !== "prison") goTo("prison", "HMP Thames");
     if (!jailed && mapId === "prison") {
-      say("You've been released. Stay out of trouble!", true);
+      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — the police are looking for you." : "Study complete. You've been released!", true);
+      setStudy(false); setInmate(null);
       goTo("city", "London", courtSteps);
+      releaseReason.current = "released";
     }
-  }, [jailed, mapId, goTo, say, courtSteps]);
+  }, [jailed, life, mapId, goTo, say, courtSteps, updateLife]);
+
+  useEffect(() => {
+    if (!jailed || mapId !== "prison" || study || inmate) return;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      if (now - guardCaughtAt.current > 6000 && caughtByPrisonGuard(map, PLAYER, now/1000)) {
+        guardCaughtAt.current = now;
+        updateLife(l=>({...l,jailUntil:Math.max(l.jailUntil,now)+45000}));
+        say("A guard caught your escape attempt. 45 seconds added; your study progress is kept.", true);
+        goTo("prison", "Back to your cell");
+      }
+    }, 250);
+    return () => clearInterval(timer);
+  }, [jailed, mapId, map, study, inmate, updateLife, say, goTo]);
 
   // Someone near you on the street (for the Shove button).
   useEffect(() => {
@@ -359,11 +407,11 @@ export function WorldApp({
   }, [updateLife, say]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === "f" && nearPerson && !(e.target instanceof HTMLInputElement)) fight();
+      if (e.key.toLowerCase() === "f" && nearPerson && !phone && !study && !inmate && !arrest && pursuit?.stage !== "challenge" && !document.querySelector('[role="dialog"]') && !(e.target instanceof HTMLElement && e.target.closest("input, textarea, button, [role=dialog]"))) fight();
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [nearPerson, fight]);
+  }, [nearPerson, fight, phone, study, inmate, arrest, pursuit?.stage]);
 
   // Riding the Underground: to another London station, or further afield.
   const ride = useCallback(
@@ -568,13 +616,14 @@ export function WorldApp({
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
       <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading)}
+        paused={Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || inmate || shop || boarding || arrest || pursuit?.stage === "challenge")}
+        police={pursuit}
         map={map}
         serverId={atHome ? "solo" : inOffice ? "main" : server}
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
-        onChangeServer={() => setServer(null)}
+        onChangeServer={() => { if (jailed || life.stars >= 2) say("Finish your current law activity before changing servers."); else setServer(null); }}
         ads={events}
         me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
@@ -635,18 +684,34 @@ export function WorldApp({
         </button>
       )}
       <LevelBadge xp={xpNow} />
-      <button type="button" onClick={() => setGames(true)} className="absolute right-3 bottom-28 z-[100001] flex items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+      <button type="button" onClick={() => { if(jailed || life.stars >= 2) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Gamepad2 className="size-4" aria-hidden /> Games
       </button>
       <EventAdPopup events={events} />
       <WantedStars stars={life.stars} />
       {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
       {nearPerson && !jailed && (
-        <button type="button" onClick={fight} className="absolute right-3 bottom-40 z-[100001] rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
+        <button type="button" onClick={fight} className="absolute right-3 bottom-52 z-[100001] rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
           Shove (F)
         </button>
       )}
+      {pursuit && pursuit.stage !== "challenge" && <div role="status" className="pointer-events-none absolute top-40 left-1/2 z-[65] max-w-[60%] -translate-x-1/2 rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div>}
+      {pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
+        pursuitRef.current = null; setPursuit(null);
+        if(correct) { updateLife(l=>({...l,stars:0,heatAt:0})); say("Correct. The officers let you go with a warning.",true); }
+        else { setArrest(true); arrestTimer.current=setTimeout(()=>{updateLife(l=>({...l,hearing:{stars:l.stars,charge:chargeFor(l.stars)},stars:0,heatAt:0}));setArrest(false);goTo("court","Crown Court");},2600); }
+      }}/ >}
       {arrest && <ArrestOverlay />}
+      <button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="absolute right-3 bottom-24 z-[100001] grid size-12 place-items-center rounded-2xl border-2 border-white bg-[#13203a] text-white shadow-lg"><Smartphone className="size-6"/></button>
+      {phone && <GamePhone onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=2)say("Finish your current law activity first.");else router.push("/games/home");}} onLocker={()=>{if(!jailed&&life.stars<2)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+        setPhone(false);
+        if(jailed||life.stars>=2){say("Finish your current law activity before calling companies.");return;}
+        const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
+        if(workplace)setWork(workplace.id);
+        else { const company=COMPANIES.find(c=>c.id===id); setInmate(`Call: ${company?.name??id}`); }
+      }}/ >}
+      {study && <PrisonStudy progress={life.prisonWork} onCorrect={()=>updateLife(l=>({...l,prisonWork:Math.min(3,l.prisonWork+1)}))} onClose={()=>setStudy(false)}/>}
+      {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
       {mapId === "court" && life.hearing && (
         <HearingDialog
           charge={life.hearing.charge}
@@ -655,7 +720,7 @@ export function WorldApp({
           onVerdict={(v) => {
             const h = life.hearing!;
             if (v === "guilty") {
-              updateLife((l) => ({ ...l, hearing: null, jailUntil: Date.now() + sentenceMs(h.stars) }));
+              updateLife((l) => ({ ...l, hearing: null, jailUntil: Date.now() + sentenceMs(h.stars), prisonWork: 0 }));
             } else {
               updateLife((l) => ({ ...l, hearing: null, cardsUsed: l.cardsUsed + (v === "dismissed" ? 1 : 0) }));
               say(v === "dismissed" ? "Case dismissed: your homework got you off!" : "Not guilty. You're free to go.", true);
@@ -668,6 +733,8 @@ export function WorldApp({
         <PrisonHud
           leftMs={life.jailUntil - Date.now()}
           cards={cards}
+          progress={life.prisonWork}
+          onStudy={()=>setStudy(true)}
           onCard={() => updateLife((l) => ({ ...l, jailUntil: 0, cardsUsed: l.cardsUsed + 1 }))}
         />
       )}
@@ -727,8 +794,8 @@ export function WorldApp({
           return true;
         }}
       />
-      {map.art && (mapId === "city" || mapId === "highlands") && <MiniMap map={map} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
-      {mapOpen && <CityMap map={map} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
+      {map.art && (mapId === "city" || mapId === "highlands") && <MiniMap map={map} searchArea={pursuit} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
+      {mapOpen && <CityMap map={map} searchArea={pursuit} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">

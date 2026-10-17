@@ -27,7 +27,7 @@ const COLOUR: Record<string, string> = {
   L: "#e9e2d2",
 };
 
-export type PlaceKind = "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer" | "hospital" | "court";
+export type PlaceKind = "station" | "bus" | "bike" | "job" | "games" | "home" | "view" | "food" | "dealer" | "hospital" | "court" | "study";
 export interface Place {
   id: string;
   name: string;
@@ -47,6 +47,7 @@ const KIND: Record<PlaceKind, { label: string; colour: string }> = {
   food: { label: "Food", colour: "#e98a1f" },
   dealer: { label: "Car dealership", colour: "#d72a22" },
   hospital: { label: "Hospital and pharmacy", colour: "#15987f" },
+  study: { label: "Study spaces", colour: "#1f4fbf" },
   court: { label: "Crown Court", colour: "#7a4f32" },
 };
 
@@ -59,7 +60,8 @@ function kindOf(p: Portal): PlaceKind | null {
   if (t.kind === "bus") return "bus";
   if (t.kind === "bike") return "bike";
   if (t.kind === "work" || t.kind === "game") return "job";
-  if (t.kind === "games") return "games";
+  if (t.kind === "games" || t.kind === "map" && t.mapId === "study-lobby") return "games";
+  if (t.kind === "act" && t.activity === "study" || t.kind === "link" && t.href === "/learn") return "study";
   if (t.kind === "dealer") return "dealer";
   if (t.kind === "shop") return t.shop === "bootz" ? "hospital" : "food";
   if (t.kind === "map" && t.mapId === "hospital") return "hospital";
@@ -109,7 +111,7 @@ function useCityCanvas(map: WorldMap, scale: number) {
 }
 
 /** Full-screen map: legend, places, and setting a waypoint. */
-export function CityMap({ map, waypoint, onPick, onClose }: { map: WorldMap; waypoint: Place | null; onPick: (p: Place | null) => void; onClose: () => void }) {
+export function CityMap({ map, waypoint, onPick, onClose, searchArea }: { searchArea?: { origin: { x: number; y: number }; radius: number } | null; map: WorldMap; waypoint: Place | null; onPick: (p: Place | null) => void; onClose: () => void }) {
   const S = map.cols > 100 ? 6 : 8;
   const canvas = useCityCanvas(map, S);
   const places = useMemo(() => placesFor(map), [map]);
@@ -121,6 +123,7 @@ export function CityMap({ map, waypoint, onPick, onClose }: { map: WorldMap; way
       <div role="dialog" aria-label="Map of London" onClick={(e) => e.stopPropagation()} className="map-open flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-[#f7f1e6] text-[#13203a] md:flex-row">
         <div className="relative min-h-0 flex-1 overflow-auto bg-[#d9cfbd]">
           <div className="relative" style={{ width: map.cols * S, height: map.rows * S }}>
+            {searchArea && <span aria-label="Police search area" className="pointer-events-none absolute z-10 rounded-full border-2 border-[#e04a3f] bg-[#e04a3f]/20" style={{left:(searchArea.origin.x-searchArea.radius)/TILE*S,top:(searchArea.origin.y-searchArea.radius)/TILE*S,width:searchArea.radius*2/TILE*S,height:searchArea.radius*2/TILE*S}}/>}
             <canvas ref={canvas} className="absolute inset-0" style={{ imageRendering: "pixelated" }} aria-hidden />
             {places.filter((p) => show.has(p.kind)).map((p) => (
               <button
@@ -171,7 +174,7 @@ export function CityMap({ map, waypoint, onPick, onClose }: { map: WorldMap; way
 }
 
 /** Small map that follows you, with an arrow and distance to your waypoint. */
-export function MiniMap({ map, waypoint, onOpen, onArrive }: { map: WorldMap; waypoint: Place | null; onOpen: () => void; onArrive: () => void }) {
+export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searchArea?: { origin: { x: number; y: number }; radius: number } | null; map: WorldMap; waypoint: Place | null; onOpen: () => void; onArrive: () => void }) {
   const S = 4;
   const canvas = useCityCanvas(map, S);
   const wrap = useRef<HTMLDivElement>(null);
@@ -206,7 +209,8 @@ export function MiniMap({ map, waypoint, onOpen, onArrive }: { map: WorldMap; wa
     <button type="button" onClick={onOpen} aria-label="Open the map" className="absolute top-28 right-3 z-[100001] block text-left">
       <span className="relative block size-[140px] overflow-hidden rounded-full border-4 border-[#f6f2e8] bg-[#d9cfbd] shadow-xl">
         <span ref={wrap} className="absolute top-0 left-0 block" style={{ width: map.cols * S, height: map.rows * S }}>
-          <canvas ref={canvas} className="absolute inset-0" aria-hidden />
+          {searchArea && <span aria-label="Police search area" className="pointer-events-none absolute z-10 rounded-full border-2 border-[#e04a3f] bg-[#e04a3f]/20" style={{left:(searchArea.origin.x-searchArea.radius)/TILE*S,top:(searchArea.origin.y-searchArea.radius)/TILE*S,width:searchArea.radius*2/TILE*S,height:searchArea.radius*2/TILE*S}}/>}
+            <canvas ref={canvas} className="absolute inset-0" aria-hidden />
           {places.map((p) => (
             <span key={p.id} className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white" style={{ left: (p.x / TILE) * S, top: (p.y / TILE) * S, background: KIND[p.kind].colour }} />
           ))}

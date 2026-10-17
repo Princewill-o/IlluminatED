@@ -118,9 +118,8 @@ export default async function MePage() {
         rows={[
           { href: "/dashboard/settings", label: "Subjects and exam date", icon: SlidersHorizontal },
           { href: "/messages", label: "Messages", icon: MessageCircle },
-          { href: "/games/careers#cv", label: "My job, skills and CV", icon: Briefcase },
-          { href: "/games/home", label: "My home", icon: Home },
-          { href: "/companies", label: "Companies and careers advice", icon: Building2 },
+          { href: "/games/world?phone=1", label: "My job, skills and CV", icon: Briefcase },
+          { href: "/games/world?phone=1", label: "My home", icon: Home },
           { href: "/creators", label: "Creator scheme: get paid to post", icon: Video },
         ]}
       />

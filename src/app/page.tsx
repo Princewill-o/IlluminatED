@@ -28,7 +28,7 @@ const AUDIENCES = [
 
 const FEATURES = [
   {
-    img: "/landing/game-london.webp", w: 1440, h: 960, tag: "Explore",
+    img: "/landing/game-city-life.webp", w: 1440, h: 960, tag: "Explore",
     title: "Your school day. A whole new world.",
     text: "Walk through 3D London, discover company headquarters and hop between neighbourhoods. Your tasks, Clout and wellbeing stay with you as you explore.",
   },
@@ -43,7 +43,7 @@ const FEATURES = [
     text: "Play Connect Four, draughts, noughts and crosses or London Tycoon. Challenge the computer, pass the device round or create an online room with friends.",
   },
   {
-    img: "/landing/game-home.webp", w: 1440, h: 960, tag: "Unwind",
+    img: "/landing/game-home-framed.webp", w: 1440, h: 960, tag: "Unwind",
     title: "Somewhere to call your own",
     text: "Head back to your furnished home, look after your character’s needs and make room for your next goal. Earn Clout through play to unlock new furniture and bigger homes.",
   },
@@ -97,7 +97,7 @@ export default function Home() {
           </Reveal>
           <Reveal delay={0.1} className="relative">
             <div className="overflow-hidden rounded-[2rem] border-[6px] border-white bg-white shadow-2xl shadow-[#13203a]/15 ring-1 ring-border dark:border-[#1b2c48]">
-              <Image src="/landing/game-london.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1440} height={960} priority className="h-auto w-full" />
+              <Image src="/landing/game-city-life.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1440} height={960} priority className="h-auto w-full" />
             </div>
             <div className="absolute -bottom-6 -left-4 hidden rounded-2xl border bg-card p-4 shadow-xl sm:block">
               <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Homework quest</p>
@@ -109,6 +109,30 @@ export default function Home() {
               <p className="text-xs text-white/70">Shift done at Goggle</p>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-y bg-[#dde8fd] dark:bg-[#14223a]" aria-labelledby="city-life-title">
+        <div aria-hidden className="pointer-events-none absolute -right-20 -bottom-32 size-96 rounded-full border-[35px] border-white/30" />
+        <div className="relative container grid items-center gap-10 py-16 lg:grid-cols-[0.85fr_1.15fr] lg:py-20">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-card px-3 py-1.5 text-xs font-black tracking-widest text-primary uppercase"><Sparkles className="size-4" aria-hidden /> A city with a pulse</span>
+            <h2 id="city-life-title" className="mt-5 text-4xl leading-tight tracking-tight md:text-5xl">A little life between lessons.</h2>
+            <p className="mt-5 max-w-lg text-lg leading-relaxed text-muted-foreground">Walk past residents, cyclists and passing traffic. Find a spot in the Study Quarter Lobby, take a revision break and call a company from your own game phone.</p>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Ambient residents are computer controlled. Online friends join through the game’s multiplayer features.</p>
+            <div className="mt-6 flex flex-wrap gap-2">{["Explore", "Meet up", "Call companies", "Make it yours"].map(label=><span key={label} className="rounded-xl border-2 border-primary/15 bg-card px-3 py-2 text-sm font-bold shadow-[0_3px_0_rgba(19,32,58,0.08)]">{label}</span>)}</div>
+          </div>
+          <div className="relative pb-12 sm:pr-12 sm:pb-16">
+            <figure className="relative rotate-[-1deg] overflow-hidden rounded-[1.75rem] border-[7px] border-white bg-white text-[#13203a] shadow-[10px_12px_0_#8fb4ff]">
+              <div className="flex items-center justify-between px-3 py-2 text-xs font-black"><span>Inside the Study Quarter</span><span className="rounded-full bg-[#e8eefb] px-2 py-1 text-[#1f4fbf]">CPU residents</span></div>
+              <Image src="/landing/game-lobby.webp" alt="Several computer-controlled residents sharing the furnished Study Quarter Lobby" width={1440} height={960} sizes="(max-width: 1024px) 100vw, 55vw" className="h-auto w-full rounded-xl" />
+              <figcaption className="px-3 py-3 text-sm font-bold">Your next stop: a game, a study session or a catch-up.</figcaption>
+            </figure>
+            <figure className="relative z-10 -mt-14 ml-auto w-[52%] rotate-[3deg] overflow-hidden rounded-2xl border-[5px] border-white bg-[#13203a] text-white shadow-xl sm:absolute sm:right-0 sm:bottom-0 sm:mt-0 sm:w-[43%]">
+              <Image src="/landing/game-phone.webp" alt="The in-game phone with a searchable directory of fictional companies" width={1440} height={960} sizes="(max-width: 640px) 50vw, 25vw" className="h-auto w-full" />
+              <figcaption className="px-3 py-2 text-xs font-black">Your city. On speed dial.</figcaption>
+            </figure>
+          </div>
         </div>
       </section>
 

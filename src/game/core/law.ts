@@ -24,16 +24,17 @@ export interface LifeState {
   /** A court hearing is waiting. */
   hearing: { stars: number; charge: string } | null;
   cardsUsed: number;
+  prisonWork: number;
 }
 
-export const freshLife = (): LifeState => ({ stars: 0, heatAt: 0, sick: false, jailUntil: 0, hearing: null, cardsUsed: 0 });
+export const freshLife = (): LifeState => ({ stars: 0, heatAt: 0, sick: false, jailUntil: 0, hearing: null, cardsUsed: 0, prisonWork: 0 });
 
 export const STAR_FADE_MS = 60_000;
 export const MAX_STARS = 5;
 
 /** Stars fade one every minute you keep out of trouble. */
 export function cooled(s: LifeState, now: number): LifeState {
-  if (!s.stars) return s;
+  if (!s.stars || s.stars >= 2) return s;
   const gone = Math.floor((now - s.heatAt) / STAR_FADE_MS);
   if (gone <= 0) return s;
   const stars = Math.max(0, s.stars - gone);

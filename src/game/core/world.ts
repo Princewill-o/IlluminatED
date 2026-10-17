@@ -28,6 +28,7 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "prison"; action: "study" | "escape" | "talk"; name?: string }
   | { kind: "game"; companyId: string }
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
@@ -466,6 +467,11 @@ export function londonMap(): WorldMap {
   if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
+  portals.push(
+    {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: study and build skills",to:{kind:"link",href:"/learn"}},
+    {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter Club: social lobby",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter Lobby"}},
+    {id:"reading-garden",rect:px(87,80,2,2),label:"Reading garden: restore Focus",to:{kind:"act",activity:"study"}},
+  );
   const rows = L.tiles.map((r) => r.split(""));
   // Doors are always walkable (bus stops are walked up to, not into).
   for (const p of portals.filter((q) => q.to.kind !== "bus"))
@@ -496,7 +502,8 @@ const BUS_AREAS = [
   { id: "west-end", name: "West End", until: 35 },
   { id: "st-pauls", name: "St Paul's", until: 55 },
   { id: "the-city", name: "The City", until: 75 },
-  { id: "tower-bridge", name: "Tower Bridge", until: 999 },
+  { id: "tower-bridge", name: "Tower Bridge", until: 96 },
+  { id: "study-quarter", name: "Study Quarter", until: 999 },
 ] as const;
 const busStopFor = (x: number) => BUS_AREAS.find((a) => x < a.until)!;
 
@@ -620,32 +627,48 @@ export function courtMap(): WorldMap {
 
 /** HMP Thames: a row of cells with bars, a landing and the guards' desk. No way out until you're released. */
 export function prisonMap(): WorldMap {
-  const g = new Grid(24, 14, ".");
+  const g = new Grid(48, 34, ".");
   g.border("#");
-  for (let x = 1; x < 23; x++) g.set(x, 0, "W");
-  // Cells along the back: walls between them, bars at the front (G), a gap only for your door.
+  // Open cells: bars have actual door gaps into the communal corridor.
   for (let c = 0; c < 5; c++) {
-    const x0 = 1 + c * 4.4;
-    const xs = Math.round(x0);
-    g.fill(xs + 3, 1, 1, 5, "#");
-    g.fill(xs, 6, 4, 1, "G");
-    g.set(xs + 1, 3, "b");
+    const x = 1 + c * 5;
+    g.fill(x + 4, 1, 1, 6, "#"); g.fill(x, 7, 5, 1, "G");
+    g.set(x + 2, 7, "."); g.set(x + 1, 2, "b");
   }
-  g.fill(9, 10, 6, 1, "A");
-  return finish(
-    {
-      id: "prison",
-      kind: "prison",
-      name: "HMP Thames",
-      structures: [],
-      portals: [],
-      rooms: [],
-      spawn: centre(2, 3),
-      accent: "#e98a1f",
-      sign: { x: 12, y: 8, text: "HMP Thames" },
-    },
-    g,
-  );
+  g.fill(2, 13, 5, 1, "t"); g.fill(11, 13, 5, 1, "t");
+  g.fill(2, 22, 5, 1, "b");
+  // A connected service maze: alternating wall gaps make a genuine escape route.
+  g.fill(26, 1, 1, 32, "#"); g.set(26, 18, ".");
+  for (const [x, gap] of [[30, 27], [34, 9], [38, 27], [42, 9]]) {
+    g.fill(x, 3, 1, 28, "#"); g.set(x, gap, "."); g.set(x, gap + 1, ".");
+  }
+  const portals: Portal[] = [
+    { id: "prison-study", rect: px(8, 23, 3, 2), label: "Study desk: earn your release", to: { kind: "prison", action: "study" } },
+    { id: "inmate-sam", rect: px(8, 10, 2, 2), label: "Talk to Sam", to: { kind: "prison", action: "talk", name: "Sam" } },
+    { id: "inmate-riley", rect: px(18, 16, 2, 2), label: "Talk to Riley", to: { kind: "prison", action: "talk", name: "Riley" } },
+    { id: "prison-escape", rect: px(44, 30, 2, 2), label: "Service exit: escape", to: { kind: "prison", action: "escape" } },
+  ];
+  return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
+}
+
+/** A shared, open social lobby in the new Study Quarter. */
+export function studyLobbyMap(): WorldMap {
+  const g = new Grid(26, 22, "."); g.border("#");
+  for(let x=2;x<24;x+=4)g.set(x,0,"W");
+  g.fill(7,7,13,12,"m");
+  g.fill(2,3,4,1,"s");g.fill(20,3,4,1,"s");
+  g.fill(7,11,3,1,"s");g.fill(17,11,3,1,"s");
+  g.fill(11,8,4,1,"t");g.fill(11,7,4,1,"c");
+  g.fill(11,5,4,1,"r");
+  for(const [x,y] of [[6,8],[20,8],[6,18],[20,18]])g.set(x,y,"p");
+  g.fill(3,9,1,4,"b");
+  g.fill(2,16,4,1,"t");g.fill(20,16,4,1,"t");
+  for(const [x,y] of [[1,1],[24,1],[1,20],[24,20]])g.set(x,y,"p");
+  return finish({id:"study-lobby",kind:"office",name:"Study Quarter Lobby",structures:[],portals:[
+    {id:"lobby-games",rect:px(11,3,4,2),label:"Games table: play with friends",to:{kind:"games"}},
+    {id:"lobby-study",rect:px(3,17,3,2),label:"Study corner: build Focus",to:{kind:"act",activity:"study"}},
+    {id:"lobby-exit",rect:px(11,20,4,1),label:"Back to Study Quarter",to:{kind:"map",mapId:"city",label:"London"}},
+  ],rooms:[],spawn:centre(13,14),accent:"#7a5ce6",sign:{x:13,y:6,text:"Study Quarter · meet, study, play"}},g);
 }
 
 /** Your home: a private room (single player). style picks the colourway. */

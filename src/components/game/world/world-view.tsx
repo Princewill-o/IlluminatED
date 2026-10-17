@@ -17,6 +17,7 @@ import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 
 import { doActivity } from "@/components/game/world/use-needs";
+import type { Pursuit } from "@/game/core/pursuit";
 import { EMOTES, PHRASES, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -182,8 +183,10 @@ export function WorldView({
   car = null,
   ads = [],
   paused = false,
+  police = null,
 }: {
   paused?: boolean;
+  police?: Pursuit | null;
   /** Real tech events shown on billboards around the world. */
   ads?: TechEvent[];
   /** The car you're driving, if any (sprite id from the dealership). */
@@ -200,6 +203,9 @@ export function WorldView({
   onRoom?: (room: string | null) => void;
   onChangeServer: () => void;
 }) {
+  const policeRef = useRef(police);
+  policeRef.current = police;
+  const getPolice = useCallback(() => policeRef.current, []);
   const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
   const world = useWorld({ mapId: map.id, serverId, me, start: start.current });
   const viewport = useRef<HTMLDivElement>(null);
@@ -217,6 +223,7 @@ export function WorldView({
   const camRef = useRef({ x: 0, y: 0 });
   /** Pre-rendered 3D maps are viewed closer up, so people are small next to buildings and cars. */
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
+  const activeZoom = useRef(zoom);
   /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
   const [webgl] = useState(() => typeof window === "undefined" || Boolean(document.createElement("canvas").getContext("webgl2")));
   const is3d = webgl;
@@ -391,15 +398,17 @@ export function WorldView({
 
       const vp = viewport.current;
       if (vp && layer.current) {
-        const vw = vp.clientWidth / zoom;
-        const vh = vp.clientHeight / zoom;
+        const scale = Math.max(zoom, vp.clientWidth / map.width, vp.clientHeight / map.height);
+        activeZoom.current = scale;
+        const vw = vp.clientWidth / scale;
+        const vh = vp.clientHeight / scale;
         const tx = map.width < vw ? (map.width - vw) / 2 : Math.max(0, Math.min(map.width - vw, p.x - vw / 2));
         const ty = map.height < vh ? (map.height - vh) / 2 : Math.max(0, Math.min(map.height - vh, p.y - vh / 2));
         // Smooth camera follow (snaps on the first frame).
         const k = Number.isNaN(cam.x) || reduced ? 1 : 1 - Math.exp(-dt * 7);
         cam.x = Number.isNaN(cam.x) ? tx : cam.x + (tx - cam.x) * k;
         cam.y = Number.isNaN(cam.y) ? ty : cam.y + (ty - cam.y) * k;
-        layer.current.style.transform = `translate3d(${-Math.round(cam.x * zoom)}px, ${-Math.round(cam.y * zoom)}px, 0) scale(${zoom})`;
+        layer.current.style.transform = `translate3d(${-Math.round(cam.x * scale)}px, ${-Math.round(cam.y * scale)}px, 0) scale(${scale})`;
         camRef.current = { x: cam.x, y: cam.y };
         const fctx = fxCanvas.current?.getContext("2d");
         if (fctx) fctx.setTransform(zoom, 0, 0, zoom, 0, 0);
@@ -494,7 +503,7 @@ export function WorldView({
       onPointerDown={(e) => {
         if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-world]")) return;
         const r = viewport.current!.getBoundingClientRect();
-        target.current = { x: (e.clientX - r.left) / zoom + camRef.current.x, y: (e.clientY - r.top) / zoom + camRef.current.y };
+        target.current = { x: (e.clientX - r.left) / activeZoom.current + camRef.current.x, y: (e.clientY - r.top) / activeZoom.current + camRef.current.y };
       }}
     >
       <div
@@ -562,6 +571,7 @@ export function WorldView({
           ads={ads}
           getMe={getMe3d}
           getOthers={getOthers3d}
+          getPolice={getPolice}
           nearPortal={nearPortal3d}
           onGround={walkTo3d}
         />

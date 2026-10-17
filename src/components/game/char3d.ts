@@ -251,4 +251,4 @@ const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "hairco
 const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
 const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
 export const npcLook = (i: number) =>
-  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5] });
+  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5], topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6], bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3] });

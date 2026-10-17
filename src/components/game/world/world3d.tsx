@@ -15,11 +15,13 @@ import { COMPANIES } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
 import { furnitureById } from "@/game/core/homes";
+import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
-import { frameMapCamera } from "@/game/core/view-framing";
-import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
+import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { frameMapCamera } from "@/game/core/view-framing";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -682,6 +684,7 @@ export function World3D({
   bike = null,
   ads = [],
   nearPortal,
+  getPolice,
   onGround,
 }: {
   map: WorldMap;
@@ -693,6 +696,7 @@ export function World3D({
   bike?: string | null;
   /** Real hackathons and tech events for the billboards. */
   ads?: TechEvent[];
+  getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
   onGround: (x: number, y: number) => void;
 }) {
@@ -915,7 +919,7 @@ export function World3D({
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
-        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : null;
+        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : p.id === "makerspace" ? "Makerspace" : p.id === "study-club" ? "Study Quarter Club" : null;
         if (!name) continue;
         const sg = sign(name, { bg: p.id === "pizzazz" ? "#c8322d" : "#13203a", fg: "#ffffff", w: 3, h: 0.5 });
         sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
@@ -929,6 +933,11 @@ export function World3D({
         l.position.copy(p);
         scene.add(l);
       });
+
+    if(map.id === "study-lobby") {
+      const welcome=sign("Study Quarter · meet, study, play",{bg:"#2b5fd9",fg:"#ffffff",w:6,h:0.65});
+      welcome.position.set(13,2.2,5.8);world.add(welcome);
+    }
 
     // Portal markers: soft glowing rings on the ground.
     const rings: THREE.Mesh[] = [];
@@ -1047,9 +1056,9 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = london ? 24 : highland ? 8 : map.kind === "home" ? 0 : map.kind === "station" ? 6 : 8;
-    const npcs = residentPaths(map, residentLimit).map((path, i) => {
-      const body = makeBody(npcLook(i));
+    const residentLimit = london ? 24 : highland ? 8 : map.kind === "home" ? 0 : map.kind === "station" ? 6 : map.id === "study-lobby" ? 12 : 8;
+    const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
+      const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i));
       scene.add(body.root);
       return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
@@ -1078,6 +1087,7 @@ export function World3D({
       let best: (typeof npcs)[number] | null = null;
       let bd = 2.2;
       for (const n of npcs) {
+        if (!n.body.root.visible) continue;
         const d = Math.hypot(n.body.root.position.x - p.x / TILE, n.body.root.position.z - p.y / TILE);
         if (d < bd) [best, bd] = [n, d];
       }
@@ -1087,6 +1097,24 @@ export function World3D({
       }
     };
     window.addEventListener("illuminated:fight", onFight);
+
+    // A responding car and its officers are tied to the actual pursuit simulation.
+    const responseCar = new THREE.Group();
+    const responders = london || highland ? [makeBody({...npcLook(51),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(52),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
+    if (london || highland) {
+      void place(responseCar,"/world3d/cars/police.glb",-0.9,-0.48,1.8,0.96,0,Math.PI/2);
+      box(responseCar,"#2b5fd9",-0.2,0.78,-0.25,0.05,0.87,0.25);
+      box(responseCar,"#e04a3f",0.05,0.78,-0.25,0.3,0.87,0.25);
+      scene.add(responseCar,...responders.map(b=>b.root));
+    }
+    const carLast = new THREE.Vector3();
+    const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
+    guardBodies.forEach(b=>scene.add(b.root));
+    if(map.kind === "prison") for(const portal of map.portals.filter(p=>p.to.kind === "prison"&&p.to.action === "talk")) {
+      const person=makeBody({...npcLook(portal.id === "inmate-sam"?57:58),...PRISON_LOOK});
+      person.root.position.set(portal.rect.x/TILE+0.5,0,portal.rect.y/TILE+0.5);
+      scene.add(person.root);
+    }
 
     // ── Clicks: walk to where you tap on the ground ──
     const ray = new THREE.Raycaster();
@@ -1208,6 +1236,26 @@ export function World3D({
           others.delete(id);
         }
 
+      const pursuit = getPolice?.();
+      responseCar.visible = !!pursuit && (london || highland);
+      if (pursuit && (london || highland)) {
+        const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;
+        if(Math.hypot(cx-carLast.x,cz-carLast.z)>0.01)responseCar.rotation.y=Math.atan2(-(cz-carLast.z),cx-carLast.x);
+        responseCar.position.set(cx,0.05,cz); carLast.set(cx,0,cz);
+      }
+      responders.forEach((body,i)=>{
+        const officer=pursuit?.officers[i];
+        body.root.visible=!!officer;
+        if(officer){
+          const ox=officer.x/TILE,oz=officer.y/TILE;
+          body.root.rotation.y=Math.atan2(mx-ox,mz-oz);
+          body.root.position.set(ox,0,oz);
+          setWalking(body,pursuit?.stage === "chasing");
+        }
+      });
+      const patrols=prisonGuardPositions(Date.now()/1000);
+      guardBodies.forEach((body,i)=>{const p=patrols[i];body.root.position.set(p.x/TILE,0,p.y/TILE);body.root.rotation.y=p.angle;setWalking(body,!reduce);});
+
       // Traffic and pedestrians.
       let ti = 0;
       for (const v of traffic) {
@@ -1312,6 +1360,7 @@ export function World3D({
       cancelAnimationFrame(raf);
       disposed = true;
       TRAFFIC_BOXES.length = 0;
+      NPC_SPOTS.length = 0;
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
       window.removeEventListener("illuminated:fight", onFight);
@@ -1322,7 +1371,7 @@ export function World3D({
       });
       el.removeChild(renderer.domElement);
     };
-    // getMe/getOthers/nearPortal/onGround are stable refs from the parent.
+    // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, avatarKey]);
 

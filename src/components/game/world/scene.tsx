@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Bike, BookOpen, Briefcase, Bus, Footprints, Gamepad2, Heart, TrainFront, X } from "lucide-react";
+import { Bike, BookOpen, Briefcase, Bus, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
 
 import { TubeBadge } from "./tube-map";
 
@@ -69,6 +69,18 @@ const STEPS = [
     title: "Get a job, earn Clout",
     body: "Company HQs and shops hire students. Interview, then clock in for shifts. Clout buys bikes, arcade games, furniture and new homes.",
     hint: "Look for the door markers on company buildings.",
+  },
+  {
+    icon: Smartphone,
+    title: "Your city is on your phone",
+    body: "Open the phone to call fictional companies, find jobs and open home services. Visit the Study Quarter for the makerspace, reading garden and shared lobby.",
+    hint: "Use the phone button on the right. CPU residents are scenery, separate from connected players.",
+  },
+  {
+    icon: Siren,
+    title: "Actions have game consequences",
+    body: "Scuffles earn wanted stars. With two stars, a police car responds. Leave the red search area for six seconds to escape; if caught, a knowledge challenge gives you a chance to avoid court.",
+    hint: "In prison, cells are open: study, use completed homework, talk to inmates or find the service-maze exit. Guards add time if they catch you.",
   },
   {
     icon: Gamepad2,

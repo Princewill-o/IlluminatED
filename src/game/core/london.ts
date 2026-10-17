@@ -12,8 +12,8 @@ import { COMPANIES } from "./companies";
  * and the collisions always line up. Units are tiles (32px). North is up.
  */
 
-export const LONDON_COLS = 96;
-export const LONDON_ROWS = 72;
+export const LONDON_COLS = 112;
+export const LONDON_ROWS = 88;
 
 export type Thing =
   | { kind: "building"; id: string; x: number; y: number; w: number; h: number; height: number; colour: string; roof: string; style: "terrace" | "shop" | "office" | "glass" | "brick" | "stone" | "company"; accent?: string; label?: string; companyId?: string }
@@ -119,6 +119,8 @@ export function buildLondon(): Built {
   };
   hroad(20);
   hroad(60);
+  hroad(76);
+  vroad(100, 0, H);
   for (const x of [15, 34, 52, 70]) vroad(x, 0, H);
   vroad(88, 0, 36);
   // Millennium-style footbridge.
@@ -130,7 +132,7 @@ export function buildLondon(): Built {
   const routes: [number, number][][] = [
     // A bus loop: along the top road, down Tower Bridge road, along the south road, up Westminster Bridge.
     [[15.5, 20.5], [70.5, 20.5], [70.5, 60.5], [34.5, 60.5], [34.5, 20.5]].map(([x, y]) => [x, y] as [number, number]),
-    [[52.5, 20.5], [88.5, 20.5], [88.5, 34], [88.5, 20.5], [52.5, 20.5]].map(([x, y]) => [x, y] as [number, number]),
+    [[52.5, 20.5], [100.5, 20.5], [100.5, 76.5], [70.5, 76.5], [70.5, 20.5], [52.5, 20.5]].map(([x, y]) => [x, y] as [number, number]),
     [[15.5, 2], [15.5, 60.5], [52.5, 60.5], [52.5, 2], [15.5, 2]].map(([x, y]) => [x, y] as [number, number]),
   ];
 
@@ -266,6 +268,18 @@ export function buildLondon(): Built {
   fill(8, 68, 4, 3, "X");
   for (let x = 0; x < 66; x++) if (get(x, 67) === "g") set(x, 67, "-");
 
+  // Study Quarter: a connected new eastern district and a southern green walk.
+  building(91, 65, 6, 5, 3.2, "brick", { id: "makerspace", label: "Makerspace", colour: "#bedbe2" });
+  building(104, 65, 6, 5, 2.8, "shop", { id: "study-club", label: "Study Quarter Club", colour: "#d5c7eb" });
+  station("study-quarter", "Study Quarter", 92, 79, ["revision", "careers"], { x: 94, y: 82.5 });
+  for(let x=2;x<109;x++) if(get(x,82)==="g")set(x,82,"_");
+  fill(87,79,3,6,"_");
+  things.push({kind:"busstop",id:"study-quarter-bus",x:97,y:74});
+  for(const [x,y] of [[82,80],[86,84],[104,82],[108,84]]){
+    things.push({kind:"bench",id:id("bench"),x,y});set(x,y,"B");
+  }
+  for(let x=91;x<111;x++)if(get(x,71)==="g")set(x,71,"-");
+
   // ── Street furniture and trees along the roads ───────────────────────────
   for (let x = 2; x < W - 2; x += 5) {
     street(x, 18);
@@ -299,7 +313,7 @@ export function buildLondon(): Built {
     things,
     stations,
     spawn: { x: 34 * 32 + 16, y: 26 * 32 },
-    river: Array.from({ length: 25 }, (_, i) => [i * 4, riverY(i * 4) - 0.5] as [number, number]),
+    river: Array.from({ length: Math.ceil(W / 4) + 1 }, (_, i) => [i * 4, riverY(i * 4) - 0.5] as [number, number]),
     routes,
   };
   return cache;
