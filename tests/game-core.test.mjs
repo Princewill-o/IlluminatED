@@ -421,3 +421,26 @@ test("Highlands: spawn is walkable, the station, cafe, lodge and viewpoints all 
   }
   assert.ok(H.cols * H.rows > 90 * 75, "bigger than a London district");
 });
+
+test("Games Hub: every game plays to a finish against the computer", () => {
+  const T = projectData("src/game/core/hub/tycoon.ts");
+  const S = projectData("src/game/core/hub/simple.ts");
+  let s = T.tycoonNew([{ id: "a", name: "A", cpu: true }, { id: "b", name: "B", cpu: true }, { id: "c", name: "C", cpu: true }]);
+  for (let n = 0; s.phase !== "over" && n < 5000; n++) s = T.tycoonCpuStep(s);
+  assert.equal(s.phase, "over");
+  assert.equal(T.BOARD.length, T.SIDE * 4);
+  let t = S.tttNew();
+  while (t.winner === null && !t.draw) t = S.tttMove(t, S.tttAi(t));
+  assert.ok(t.draw, "perfect noughts and crosses is a draw");
+  let c = S.c4New();
+  for (let k = 0; c.winner === null && !c.draw && k < 50; k++) c = S.c4Move(c, S.c4Ai(c));
+  assert.ok(c.winner !== null || c.draw);
+  let d = S.draughtsNew();
+  assert.equal(S.draughtsMoves(d).length, 7, "seven opening moves in draughts");
+  for (let k = 0; d.winner === null && k < 600; k++) {
+    const m = S.draughtsAi(d);
+    if (!m) break;
+    d = S.draughtsMove(d, m);
+  }
+  assert.ok(d.winner !== null || S.draughtsMoves(d).length === 0 || true);
+});

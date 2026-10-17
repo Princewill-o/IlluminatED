@@ -5,10 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { Gamepad2 } from "lucide-react";
+
 import { play, soundOn } from "../sound";
 import { BusStop, type BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
-import { GamesHall } from "./games-hall";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import { BikeDock, Dealership, TrainJourney } from "./transport";
@@ -16,6 +17,8 @@ import { TubeMap, type TubeTrip } from "./tube-map";
 import { doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
+import { EventAdPopup, useTechEvents } from "../event-ads";
+import { GamesHub } from "../hub/games-hub";
 
 import { earnWorldXp } from "@/app/games/world/actions";
 import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
@@ -141,6 +144,7 @@ export function WorldApp({
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
   const [dealer, setDealer] = useState(false);
+  const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
   const [driving, setDriving] = useState<string | null>(null);
   const [xpNow, setXpNow] = useState(xp);
@@ -211,7 +215,9 @@ export function WorldApp({
       if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
       else if (to.kind === "link") {
         if (to.href === "/learn") doActivity("study");
-        router.push(to.href);
+        // Games open as a pop-up right here instead of leaving the world.
+        if (to.href === "/games" || to.href === "/games/hub" || to.href === "/games/arcade") setGames(true);
+        else router.push(to.href);
       } else if (to.kind === "bus") setBus(to.stop);
       else if (to.kind === "act") {
         play("door", soundOn());
@@ -456,6 +462,7 @@ export function WorldApp({
         onPortal={onPortal}
         onRoom={setRoom}
         onChangeServer={() => setServer(null)}
+        ads={events}
         speed={driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1}
         car={driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
@@ -487,7 +494,7 @@ export function WorldApp({
           onClose={() => setDock(false)}
         />
       )}
-      {games && server && <GamesHall serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
+      {games && <GamesHub serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
       {dealer && (
         <Dealership
           clout={wallet}
@@ -514,6 +521,10 @@ export function WorldApp({
         </button>
       )}
       <LevelBadge xp={xpNow} />
+      <button type="button" onClick={() => setGames(true)} className="absolute right-3 bottom-28 z-[100001] flex items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Gamepad2 className="size-4" aria-hidden /> Games
+      </button>
+      <EventAdPopup events={events} />
       {toast && (
         <div className={cn("xp-toast pointer-events-none absolute top-20 left-1/2 z-[100002] -translate-x-1/2 rounded-full px-5 py-2 font-black shadow-xl", toast.big ? "bg-[#f2d9a6] text-xl text-[#13203a]" : "bg-[#2b5fd9] text-white")} role="status">
           {toast.text}

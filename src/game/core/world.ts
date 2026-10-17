@@ -442,6 +442,14 @@ export function londonMap(): WorldMap {
   }
   // Pizzazz Pizza: the first shop on the West End parade.
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
+  // Lyme e-bikes parked on pavements all over London (tap one to ride).
+  for (let y = 1; y < L.tiles.length - 1; y++)
+    for (let x = 1; x < L.tiles[0].length - 1; x++) {
+      if (L.tiles[y][x] !== "-") continue;
+      const kerb = "=:".includes(L.tiles[y + 1][x]) || "=:".includes(L.tiles[y - 1][x]);
+      if (!kerb || (x * 7 + y * 13) % 11 !== 0 || portals.some((p) => Math.abs(p.rect.x / TILE - x) < 3 && Math.abs(p.rect.y / TILE - y) < 3)) continue;
+      portals.push({ id: `lyme-${x}-${y}`, rect: px(x, y, 1, 1), label: "Lyme e-bike: hire and ride", to: { kind: "bike", dock: `lyme-${x}-${y}` } });
+    }
   // Motor Mile: the car dealership, on the next shop along.
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];

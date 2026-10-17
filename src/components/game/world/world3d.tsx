@@ -8,6 +8,7 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 
 import { BUS_ROUTE_CODES, TRAFFIC_BOXES } from "./art";
 import { type Character3D, buildCharacter } from "../char3d";
+import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
 
 import { COMPANIES } from "@/game/core/companies";
@@ -469,6 +470,47 @@ function landmark(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["thi
   }
 }
 
+/** A Lyme-style e-bike: white step-through frame, green fork, bars and basket, black rear cover. Faces +x. */
+export function lymeBike(green = "#4cd137") {
+  const g = new THREE.Group();
+  const wheel = (x: number) => {
+    const w = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.045, 8, 22), mat("#1b1622"));
+    w.position.set(x, 0.24, 0);
+    w.castShadow = true;
+    g.add(w);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.06, 10), mat("#8d93a0"));
+    hub.rotation.x = Math.PI / 2;
+    hub.position.set(x, 0.24, 0);
+    g.add(hub);
+  };
+  wheel(-0.42);
+  wheel(0.42);
+  // Frame: low step-through tube, seat post, rear cover.
+  const tube = (x0: number, y0: number, x1: number, y1: number, c: string, r = 0.035) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 10), mat(c));
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, 0);
+    m.rotation.z = Math.atan2(y1 - y0, x1 - x0) - Math.PI / 2;
+    m.castShadow = true;
+    g.add(m);
+  };
+  tube(-0.12, 0.24, 0.26, 0.26, "#f3f6fb", 0.05);
+  tube(0.26, 0.26, 0.34, 0.66, "#f3f6fb", 0.045);
+  tube(-0.12, 0.24, -0.2, 0.62, "#f3f6fb", 0.04);
+  box(g, "#2a2733", -0.52, 0.2, -0.08, -0.06, 0.42, 0.08);
+  box(g, "#1b1622", -0.3, 0.62, -0.07, -0.08, 0.68, 0.07);
+  // Green fork, stem, handlebars and basket.
+  tube(0.42, 0.24, 0.36, 0.76, green, 0.035);
+  tube(0.36, 0.76, 0.36, 0.86, green, 0.03);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.46, 8), mat("#1b1622"));
+  bar.rotation.x = Math.PI / 2;
+  bar.position.set(0.34, 0.88, 0);
+  g.add(bar);
+  box(g, green, 0.46, 0.5, -0.15, 0.72, 0.72, 0.15);
+  box(g, "#3aa82b", 0.47, 0.71, -0.14, 0.71, 0.73, 0.14);
+  return g;
+}
+
 function busModel(route: string) {
   const g = new THREE.Group();
   // Route number and destination on the front and both sides.
@@ -622,6 +664,8 @@ export function World3D({
   getOthers,
   avatar,
   car,
+  bike = null,
+  ads = [],
   nearPortal,
   onGround,
 }: {
@@ -630,12 +674,19 @@ export function World3D({
   getOthers: () => Mover3D[];
   avatar: Avatar;
   car: string | null;
+  /** Colour of the hire bike you're riding, if any. */
+  bike?: string | null;
+  /** Real hackathons and tech events for the billboards. */
+  ads?: TechEvent[];
   nearPortal: () => Portal | null;
   onGround: (x: number, y: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
   const carRef = useRef(car);
   carRef.current = car;
+  const bikeRef = useRef(bike);
+  bikeRef.current = bike;
   const avatarKey = JSON.stringify(avatar);
 
   useEffect(() => {
@@ -655,6 +706,7 @@ export function World3D({
     renderer.domElement.style.display = "block";
 
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     const sky = highland ? "#bfe3ff" : "#cfe6f7";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
@@ -851,6 +903,14 @@ export function World3D({
     bend(ringMat);
     for (const p of map.portals) {
       if (p.to.kind === "bus") continue;
+      if (p.to.kind === "bike") {
+        const b = lymeBike();
+        b.position.set((p.rect.x + p.rect.w / 2) / TILE, 0.12, (p.rect.y + p.rect.h / 2) / TILE);
+        b.rotation.y = ((p.rect.x / TILE) % 2) * 0.4 + Math.PI / 2;
+        b.scale.setScalar(0.95);
+        bendAll(b);
+        world.add(b);
+      }
       const r = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.42, 28), ringMat);
       r.rotation.x = -Math.PI / 2;
       r.position.set((p.rect.x + p.rect.w / 2) / TILE, 0.2, (p.rect.y + p.rect.h / 2) / TILE);
@@ -898,6 +958,7 @@ export function World3D({
     const carHolder = new THREE.Group();
     scene.add(carHolder);
     let carLoaded: string | null = null;
+    let rideBike: THREE.Group | null = null;
 
     const others = new Map<string, Body & { x: number; z: number }>();
 
@@ -1002,6 +1063,22 @@ export function World3D({
         if (want) void place(carHolder, `/world3d/cars/${want === "cab" ? "taxi" : want}.glb`, -0.9, -0.48, 1.8, 0.96, 0, Math.PI / 2);
       }
       me.root.visible = !want;
+      // Riding a hire bike: the bike appears under you and you sit up on it.
+      const riding = !want && bikeRef.current;
+      if (riding && !rideBike) {
+        rideBike = lymeBike(bikeRef.current ?? undefined);
+        bendAll(rideBike);
+        scene.add(rideBike);
+      }
+      if (!riding && rideBike) {
+        scene.remove(rideBike);
+        rideBike = null;
+      }
+      if (rideBike) {
+        rideBike.position.set(mx, 0.12, mz);
+        rideBike.rotation.y = me.root.rotation.y - Math.PI / 2;
+        me.root.position.y = 0.42;
+      }
 
       // Camera: follows you from the south, tilted down, with a little lag.
       if (first) {
@@ -1132,6 +1209,39 @@ export function World3D({
     // getMe/getOthers/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, avatarKey]);
+
+  // Billboards: real upcoming hackathons and tech events on big boards around town.
+  const adKey = ads.map((a) => a.id).join(",");
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene || !ads.length || (map.art !== "london" && map.art !== "highlands")) return;
+    const g = new THREE.Group();
+    const spots = map.art === "london" ? [[30, 18.6], [56, 18.6], [24, 62.4], [62, 62.4], [44, 36.6], [80, 36.6]] : [[30, 36.4], [50, 36.4]];
+    spots.forEach(([x, z], i) => {
+      const e = ads[i % ads.length];
+      const when = new Date(e.start).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" });
+      const board = new THREE.Group();
+      box(board, "#2a2733", -0.06, 0, -0.06, 0.06, 2.2, 0.06);
+      box(board, "#13203a", -1.7, 2.1, -0.08, 1.7, 3.6, 0.02);
+      const top = sign(e.hackathon ? "HACKATHON" : "TECH EVENT", { bg: "#ffd166", fg: "#13203a", w: 3.2, h: 0.32 });
+      top.position.set(0, 3.38, 0.03);
+      board.add(top);
+      const title = sign(e.name, { bg: "#13203a", fg: "#ffffff", w: 3.2, h: 0.6 });
+      title.position.set(0, 2.9, 0.03);
+      board.add(title);
+      const sub = sign(`${when} · ${e.where} · ${e.source}`, { bg: "#13203a", fg: "#6bc6ff", w: 3.2, h: 0.3 });
+      sub.position.set(0, 2.4, 0.03);
+      board.add(sub);
+      board.position.set(x, 0, z);
+      bendAll(board);
+      g.add(board);
+    });
+    scene.add(g);
+    return () => {
+      scene.remove(g);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adKey, map]);
 
   return <div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />;
 }

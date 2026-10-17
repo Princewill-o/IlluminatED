@@ -96,7 +96,7 @@ export default async function GamesHome() {
           { href: `/games/promotion-panic/${first.id}`, title: "Promotion Panic", text: "Intern to CEO in one shift", colour: "#2b5fd9", Icon: Briefcase },
           { href: "/games/careers", title: "Jobs", text: "Interviews and shifts", colour: "#e0a100", Icon: BadgeCheck },
           { href: "/homework", title: "Homework", text: "Quests from your class", colour: "#15987f", Icon: ClipboardList },
-          { href: "/games/arcade", title: "Arcade", text: "60-second games", colour: "#d4536a", Icon: Gamepad2 },
+          { href: "/games/hub", title: "Games Hub", text: "Tycoon, draughts and more", colour: "#d4536a", Icon: Gamepad2 },
           { href: "/games/home", title: "Your flat", text: "Decorate and upgrade", colour: "#7a5ce6", Icon: Sofa },
           { href: "/games/locker", title: "Locker", text: "Outfits and looks", colour: "#13203a", Icon: Shirt },
         ].map(({ href, title, text, colour, Icon }) => (

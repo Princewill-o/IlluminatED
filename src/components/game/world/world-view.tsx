@@ -13,6 +13,7 @@ import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-wor
 import { World3D } from "./world3d";
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
+import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 
 import { doActivity } from "@/components/game/world/use-needs";
@@ -179,7 +180,10 @@ export function WorldView({
   speed = 1,
   bike = null,
   car = null,
+  ads = [],
 }: {
+  /** Real tech events shown on billboards around the world. */
+  ads?: TechEvent[];
   /** The car you're driving, if any (sprite id from the dealership). */
   car?: string | null;
   /** Movement multiplier (hire bikes). */
@@ -543,6 +547,8 @@ export function WorldView({
           map={map}
           avatar={me.avatar}
           car={car}
+          bike={bike}
+          ads={ads}
           getMe={getMe3d}
           getOthers={getOthers3d}
           nearPortal={nearPortal3d}

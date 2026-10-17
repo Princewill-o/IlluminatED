@@ -891,3 +891,19 @@ html.dark body:has(.app-theme) {
 @media (prefers-reduced-motion: reduce) { .dealer-car { animation: none; } }
 @keyframes xp-pop { 0% { opacity: 0; translate: -50% 10px; scale: .8; } 15% { opacity: 1; translate: -50% 0; scale: 1.05; } 25% { scale: 1; } 85% { opacity: 1; } 100% { opacity: 0; translate: -50% -14px; } }
 .xp-toast { animation: xp-pop 1.8s ease-out both; }
+
+/* Games Hub */
+@keyframes hub-pop { from { transform: scale(0.3) rotate(-15deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.hub-pop { display: inline-block; animation: hub-pop .25s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes c4-drop { from { transform: translateY(-420%); } 70% { transform: translateY(6%); } to { transform: none; } }
+.c4-drop { animation: c4-drop .45s cubic-bezier(.5,0,.7,1) both; }
+@keyframes hub-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.hub-pulse { animation: hub-pulse 1.2s ease-in-out infinite; }
+@keyframes hub-dice { 0% { transform: rotate(-200deg) scale(.4); } 80% { transform: rotate(10deg) scale(1.08); } 100% { transform: none; } }
+.hub-dice { animation: hub-dice .45s ease-out both; }
+@keyframes hub-token { from { transform: translateY(-8px); } to { transform: none; } }
+.hub-token { animation: hub-token .3s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .hub-pop, .c4-drop, .hub-pulse, .hub-dice, .hub-token { animation: none; } }
+@keyframes ad-in { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
+.ad-in { animation: ad-in .4s cubic-bezier(.3,1.4,.5,1) both; }
+@media (prefers-reduced-motion: reduce) { .ad-in { animation: none; } }
