@@ -11,6 +11,7 @@ export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
+import { TRAIN_CALL } from "./train-state";
 
 import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
 import { COMPANIES, type Company } from "@/game/core/companies";
@@ -37,9 +38,6 @@ import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
  * Models are Kenney CC0 kits (public/world3d); terraces, landmarks, buses and
  * mountains are built here from simple shapes.
  */
-
-/** When the platform train's 24-second cycle started (ms, performance clock). */
-export const TRAIN_CALL = { at: -1 };
 
 export interface Mover3D {
   id: string;

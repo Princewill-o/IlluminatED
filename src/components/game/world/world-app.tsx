@@ -2,37 +2,42 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { BookOpen, CarFront, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { PLAYER, TRAFFIC_BOXES } from "./art";
-import { BusStop, type BusTrip } from "./bus-stop";
+import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
+import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
-import { DailyShift } from "./daily-shift";
-import { GamePhone } from "./game-phone";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
-import { LearningAwards } from "./learning-awards";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
-import { TrainCutscene } from "./train-cutscene";
+import { TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
-import { TubeMap, type TubeTrip } from "./tube-map";
-import { UniversityGuide } from "./university-guide";
+import type { TubeTrip } from "./tube-map";
 import { useLife } from "./use-life";
 import { useNeeds, doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
-import { TRAIN_CALL, NPC_SPOTS } from "./world3d";
 import { EventAdPopup, useTechEvents } from "../event-ads";
-import { GamesHub } from "../hub/games-hub";
-import { StudyRoom } from "../study/study-room";
+const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
+const StudyRoom = dynamic(() => import("../study/study-room").then((module) => module.StudyRoom), { ssr: false, loading: () => null });
+const GamePhone = dynamic(() => import("./game-phone").then((module) => module.GamePhone), { ssr: false, loading: () => null });
+const LearningAwards = dynamic(() => import("./learning-awards").then((module) => module.LearningAwards), { ssr: false, loading: () => null });
+const UniversityGuide = dynamic(() => import("./university-guide").then((module) => module.UniversityGuide), { ssr: false, loading: () => null });
+const DailyShift = dynamic(() => import("./daily-shift").then((module) => module.DailyShift), { ssr: false, loading: () => null });
+const BusStop = dynamic(() => import("./bus-stop").then((module) => module.BusStop), { ssr: false, loading: () => null });
+const TubeMap = dynamic(() => import("./tube-map").then((module) => module.TubeMap), { ssr: false, loading: () => null });
+
+const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
 
 import { earnWorldXp } from "@/app/games/world/actions";
-import { type ActiveJob, WorkplaceDoor } from "@/components/careers/work";
+import type { ActiveJob } from "@/components/careers/work";
+import { WorkplaceDoor } from "@/components/careers/work";
 import type { LearningAward } from "@/game/core/awards";
 import type { BikeBrand } from "@/game/core/bikes";
 import { WORKPLACES, workplaceById } from "@/game/core/careers";
@@ -280,6 +285,10 @@ export function WorldApp({
 
   const atHome = mapId === "home";
   const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
+
+  useEffect(() => {
+    if (TRAIN_CALL.at < 0) TRAIN_CALL.at = performance.now() - 6500;
+  }, []);
 
   // Where you are decides your server: we read your device's time zone (no GPS, nothing stored
   // on our side) and drop you straight into the nearest region's least-empty open server.
