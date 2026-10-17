@@ -7,8 +7,8 @@ import { ArrowRight, BookOpen, BriefcaseBusiness, Building2, Check, ClipboardChe
 import type { Metadata } from "next";
 
 import { DeletedNotice } from "@/components/deleted-notice";
-import { Reveal } from "@/components/landing";
 import { LearningEvidence } from "@/components/landing/learning-evidence";
+import { Reveal } from "@/components/landing/reveal";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 
 export const metadata:Metadata={title:{absolute:"IlluminatED | GCSE & A-Level Revision Games for Schools"},description:"A UK education and simulated work experience platform: GCSE and sixth-form revision, in-game study, career tasks, homework quests and learning awards.",alternates:{canonical:"/"},openGraph:{url:"/",title:"IlluminatED | GCSE & A-Level Revision Games for Schools"}};
@@ -101,7 +101,7 @@ export default function Home() {
               </Link>
             </p>
           </Reveal>
-          <Reveal delay={0.1} className="relative">
+          <Reveal className="relative">
             <div className="overflow-hidden rounded-[2rem] border-[6px] border-white bg-white shadow-2xl shadow-[#13203a]/15 ring-1 ring-border dark:border-[#1b2c48]">
               <Image src="/landing/game-city-life.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1440} height={960} priority className="h-auto w-full" />
             </div>

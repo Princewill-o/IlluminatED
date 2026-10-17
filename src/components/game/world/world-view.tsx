@@ -2,6 +2,8 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
+import dynamic from "next/dynamic";
+
 import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
@@ -10,7 +12,7 @@ import { WorldFigure, poseWorldFigure } from "../character";
 import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
-import { World3D } from "./world3d";
+const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import type { TechEvent } from "../event-ads";
@@ -231,8 +233,14 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
   /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
-  const [webgl,setWebgl] = useState(true);
+  const [webgl,setWebgl] = useState(false);
   const is3d = webgl;
+  // Paint the lighter 2D city first so slow devices have a usable scene while
+  // the separately bundled Three.js engine is fetched and prepared.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setWebgl(true), 180);
+    return () => window.clearTimeout(timer);
+  }, [map.id]);
   const speedRef = useRef(speed);
   speedRef.current = speed;
   const carRef = useRef(car);
@@ -564,10 +572,10 @@ export function WorldView({
       <div
         ref={layer}
         data-world
-        className="absolute top-0 left-0 origin-top-left will-change-transform"
-        style={{ width: map.width, height: map.height, display: is3d ? "none" : undefined }}
+        className={`absolute top-0 left-0 origin-top-left will-change-transform ${is3d ? "pointer-events-none" : ""}`}
+        style={{ width: map.width, height: map.height }}
       >
-        {is3d ? null : map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
+        {map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
         {map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />

@@ -1,10 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
-import { AppShell } from "./app-shell";
-
 import { isAppPath } from "@/lib/app-shell";
+
+const AppShell = dynamic(() => import("./app-shell").then((module) => module.AppShell));
 
 /**
  * Chooses the website chrome (navbar + footer) or the app shell (tabs) for the

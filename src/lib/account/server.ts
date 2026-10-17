@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import { type LearnerDetails, rowToDetails } from "./details";
 
-import { getSchoolAccess, type SchoolAccess } from "@/lib/school/access";
+import { getSchoolAccessForVerifiedViewer, type SchoolAccess } from "@/lib/school/access";
 import { getSupabase, getViewer, type Viewer } from "@/lib/social/server";
 
 export interface Account extends Viewer {
@@ -18,19 +18,15 @@ export async function getAccount(): Promise<Account | null> {
   const viewer = await getViewer();
   if (!viewer) return null;
   const sb = (await getSupabase())!;
-  const school = await getSchoolAccess();
-  const {data: privateSchool} = await sb.from("private_school").select("school_name").eq("user_id",viewer.id).maybeSingle();
-  const { data } = await sb
-    .from("learner_details")
-    .select("*")
-    .eq("user_id", viewer.id)
-    .maybeSingle();
-  const { data: career } = await sb
-    .from("education_learner_state")
-    .select("value")
-    .eq("user_id", viewer.id)
-    .eq("namespace", "career")
-    .maybeSingle();
+  const [school, privateSchoolResult, detailsResult, careerResult] = await Promise.all([
+    getSchoolAccessForVerifiedViewer(),
+    sb.from("private_school").select("school_name").eq("user_id", viewer.id).maybeSingle(),
+    sb.from("learner_details").select("*").eq("user_id", viewer.id).maybeSingle(),
+    sb.from("education_learner_state").select("value").eq("user_id", viewer.id).eq("namespace", "career").maybeSingle(),
+  ]);
+  const privateSchool = privateSchoolResult.data;
+  const data = detailsResult.data;
+  const career = careerResult.data;
   return {
     ...viewer,
     school,

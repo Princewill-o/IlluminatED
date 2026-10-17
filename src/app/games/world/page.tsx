@@ -32,11 +32,10 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
     careerTotal: career.history.reduce((sum, record) => sum + record.total, 0),
     careerWorkplaces: new Set(career.history.filter((record) => record.shifts > 0).map((record) => record.workplace)).size,
   });
-  const sbCars = await getSupabase();
+  const [sbCars, staff] = await Promise.all([getSupabase(), staffFor(orgs.map((o) => o.id))]);
   const cars = sbCars ? (((await sbCars.from("player_cars").select("car").eq("user_id", account.id)).data ?? []) as { car: string }[]).map((r) => r.car) : [];
   const a = career.active;
   const job = a ? { workplace: a.workplace, role: a.role, rank: a.rank, shifts: a.shifts, rankShifts: a.rankShifts, rankCorrect: a.rankCorrect, rankTotal: a.rankTotal } : null;
-  const staff = await staffFor(orgs.map((o) => o.id));
   const bySlug = Object.fromEntries(orgs.map((o) => [o.slug, (staff[o.id] ?? []).map(({ userId, username, title }) => ({ userId, username, title }))]));
 
   // The logo on your back: the company where you've climbed highest (then best score).
