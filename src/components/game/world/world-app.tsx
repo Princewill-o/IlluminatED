@@ -49,7 +49,7 @@ import { PRISON_LOOK, SHOP, releaseFromPrison, addStar, cardsLeft, clearWanted, 
 import { homeStyle } from "@/game/core/london";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
-import { trainBoardingDelay } from "@/game/core/train";
+import { canBoardTrain } from "@/game/core/train";
 import {
   CITY,
   universityDistrictMap, universityInteriorMap, supermarketMap,
@@ -191,7 +191,7 @@ export function WorldApp({
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
   const [dealer, setDealer] = useState(false);
-  const [boarding, setBoarding] = useState(false);
+  const boardedStation = useRef<string | null>(null);
   const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
   const [driving, setDriving] = useState<string | null>(null);
@@ -225,8 +225,6 @@ export function WorldApp({
   const { needs } = useNeeds();
   const [nearPerson, setNearPerson] = useState(false);
   const [safety, setSafety] = useState(false);
-  const boardingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => () => { if (boardingTimer.current) clearTimeout(boardingTimer.current); }, []);
   const say = useCallback((text: string, big = false) => {
     setToast({ text, big });
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -349,7 +347,13 @@ export function WorldApp({
         say({sleep:"Rested and recharged",eat:"Meal enjoyed",study:"Focus restored",hike:"Fresh air break complete"}[to.activity]);
       }
       else if (to.kind === "desk") {setDesk(true);}
-      else if (to.kind === "tube") setTube(to.station);
+      else if (to.kind === "tube") {
+        if (map.kind === "station") {
+          if (!canBoardTrain(performance.now() - TRAIN_CALL.at, map.cols, PLAYER.x / TILE, PLAYER.y / TILE)) return;
+          boardedStation.current = map.id;
+        }
+        setTube(to.station);
+      }
       else if (to.kind === "university") setUniversity({id:to.university,topic:to.topic});
       else if (to.kind === "work") {setWork(to.workplace);}
       else if (to.kind === "bike") {setDock(true);}
@@ -385,7 +389,7 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, me.id, updateLife, say, jailed, gainXp],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp],
   );
 
   /** Taken somewhere (arrest, prison, release): fade and arrive at a set spot or the map's start. */
@@ -485,6 +489,8 @@ export function WorldApp({
   // Riding the Underground: to another London station, or further afield.
   const ride = useCallback(
     (t: TubeTrip) => {
+      if (map.kind === "station" && boardedStation.current !== map.id) return;
+      boardedStation.current = null;
       setTube(null);
       let dest = "city";
       let spot: { x: number; y: number } | undefined;
@@ -494,11 +500,8 @@ export function WorldApp({
         if (!st || !inside) return;
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
-        // Board the visible train when its doors are fully open.
-        const wait = trainBoardingDelay(performance.now() - TRAIN_CALL.at);
-        setBoarding(true);
-        if (boardingTimer.current) clearTimeout(boardingTimer.current);
-        boardingTimer.current = setTimeout(() => { setBoarding(false); void gainXp("train"); setJourney({
+        // The player has already walked into a stopped train before choosing a destination.
+        void gainXp("train"); setJourney({
           to: st.name,
           go: () => {
             setJourney(null);
@@ -507,7 +510,7 @@ export function WorldApp({
             setMapId(`station-${t.id}`);
             setTrip((n) => n + 1);
           },
-        }); }, wait);
+        });
         play("train", soundOn());
         return;
       } else {
@@ -546,7 +549,7 @@ export function WorldApp({
         }, 650);
       }, 700);
     },
-    [offices, me.id, gainXp],
+    [offices, me.id, gainXp, map.kind, map.id],
   );
 
   // Riding the bus: to another stop in London, home, or the Careers Campus.
@@ -684,7 +687,7 @@ export function WorldApp({
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
       <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || boarding || arrest || pursuit?.stage === "challenge")}
+        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || arrest || pursuit?.stage === "challenge")}
         police={pursuit}
         map={map}
         serverId={atHome ? "solo" : inOffice ? "main" : server}
@@ -834,11 +837,6 @@ export function WorldApp({
       {toast && (
         <div className={cn("xp-toast pointer-events-none absolute top-20 left-1/2 z-[100002] -translate-x-1/2 rounded-full px-5 py-2 font-black shadow-xl", toast.big ? "bg-[#f2d9a6] text-xl text-[#13203a]" : "bg-[#2b5fd9] text-white")} role="status">
           {toast.text}
-        </div>
-      )}
-      {boarding && (
-        <div className="absolute inset-x-0 top-24 z-[100001] mx-auto w-fit rounded-full bg-[#141418] px-5 py-2 font-mono text-sm font-black text-[#ffd400] shadow-xl" role="status">
-          Waiting for open doors. Stay behind the yellow line. <button type="button" className="ml-3 underline" onClick={()=>{if(boardingTimer.current)clearTimeout(boardingTimer.current);setBoarding(false);}}>Cancel</button>
         </div>
       )}
       {journey && <TrainCutscene to={journey.to} line="Revision" avatar={me.avatar} onArrive={journey.go} />}

@@ -1,5 +1,27 @@
 /** Shared station choreography, in milliseconds on the performance clock. */
 export const TRAIN_CYCLE_MS = 24000;
+/** Countdown to the actual station animation events, never a separate timer. */
+export function trainTimes(elapsed: number) {
+  const t = ((elapsed % TRAIN_CYCLE_MS) + TRAIN_CYCLE_MS) % TRAIN_CYCLE_MS;
+  const until = (event: number) => Math.ceil((event > t ? event - t : TRAIN_CYCLE_MS - t + event) / 1000);
+  return {
+    phase: trainFrame(elapsed, 30).phase,
+    arrivalSeconds: until(5000),
+    boardingSeconds: until(6000),
+    closingSeconds: until(12000),
+    departureSeconds: until(13000),
+  };
+}
+/** Door centres match the four carriages in the station renderer (tile units). */
+export function trainDoorOpenAt(elapsed: number, width: number, x: number) {
+  const train = trainFrame(elapsed, width);
+  return train.phase === "boarding" &&
+    Array.from({ length: 4 }, (_, i) => train.x + i * 6.2 + 3)
+      .some(doorX => Math.abs(x - doorX) <= 0.48);
+}
+export function canBoardTrain(elapsed: number, width: number, x: number, y: number) {
+  return y >= 15.6 && y <= 16 && trainDoorOpenAt(elapsed, width, x);
+}
 export function trainFrame(elapsed: number, width: number) {
   const t = ((elapsed % TRAIN_CYCLE_MS) + TRAIN_CYCLE_MS) % TRAIN_CYCLE_MS / 1000;
   const stop = width / 2 - 12.7;

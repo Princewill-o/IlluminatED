@@ -17,13 +17,16 @@ import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
+import { TRAIN_CALL } from "./train-state";
+import { TrainTimes } from "./train-times";
 
 import { doActivity } from "@/components/game/world/use-needs";
 import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
+import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { CAR_LENGTH } from "@/game/core/vehicles";
-import { EMOTES, PHRASES, TILE, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { EMOTES, PHRASES, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
 const SPRITE_H = 64;
@@ -319,8 +322,12 @@ export function WorldView({
   }, []);
   const enter = useCallback(() => {
     if (pausedRef.current) return;
+    // Station trains are boarded by walking through an open doorway.
+    if (map.kind === "station" && nearRef.current?.id === "board") return;
     if (nearRef.current) onPortal(nearRef.current);
-  }, [onPortal]);
+  }, [onPortal, map.kind]);
+  const portalCallback = useRef(onPortal);
+  portalCallback.current = onPortal;
 
   // Keyboard: WASD / arrows to walk, E or Enter to go through a door.
   useEffect(() => {
@@ -406,7 +413,21 @@ export function WorldView({
           offenceCallback.current?.(violation);
         }
       }
-      const next = driven ?? step(map, p, dx, dy, dt, speedRef.current);
+      let next = driven ?? step(map, p, dx, dy, dt, speedRef.current);
+      if (map.kind === "station") {
+        const elapsed = now - TRAIN_CALL.at;
+        const distance = WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
+        const length = Math.hypot(dx, dy) || 1;
+        const doorX = (p.x + dx / length * distance) / TILE;
+        const doorY = (p.y + dy / length * distance) / TILE;
+        // Only an open train doorway lets the player cross the solid track edge.
+        if (!pausedRef.current && dy !== 0 && p.y / TILE >= 14.4 && doorY >= 14.4 && doorY <= 16 &&
+            trainDoorOpenAt(elapsed, map.cols, doorX)) {
+          next = { x: doorX * TILE, y: doorY * TILE };
+        } else if (p.y / TILE >= 15 && !trainDoorOpenAt(elapsed, map.cols, p.x / TILE)) {
+          next = { x: p.x, y: 14.5 * TILE };
+        }
+      }
       const moved = next.x !== p.x || next.y !== p.y;
       if ((dx || dy) && !moved) target.current = null;
       if (dx) p.d = dx > 0 ? 1 : -1;
@@ -535,6 +556,16 @@ export function WorldView({
       }
 
       const portal = portalAt(map, p.x, p.y);
+      if (!pausedRef.current && moved && dy > 0 && map.kind === "station" &&
+          canBoardTrain(now - TRAIN_CALL.at, map.cols, p.x / TILE, p.y / TILE)) {
+        const boardingPortal = map.portals.find(item => item.id === "board");
+        if (boardingPortal) {
+          target.current = null;
+          keys.current.clear();
+          stick.current = { x: 0, y: 0 };
+          portalCallback.current(boardingPortal);
+        }
+      }
       if (portal?.id !== nearRef.current?.id) {
         nearRef.current = portal;
         setNear(portal);
@@ -650,6 +681,7 @@ export function WorldView({
       <canvas ref={fxCanvas} className={cn("pointer-events-none absolute inset-0", is3d && "hidden")} aria-hidden />
 
       {/* HUD */}
+      {map.kind === "station" && <TrainTimes />}
       <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
         <button type="button" onClick={onChangeServer} className="pointer-events-auto min-h-11 max-w-[calc(100%-4rem)] rounded-2xl bg-black/70 px-3 py-2 text-left text-xs text-white backdrop-blur focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8fb4ff]" aria-label={`Change server · ${map.name}`}>
           <span className="block truncate font-black">{map.name}</span>
@@ -682,7 +714,12 @@ export function WorldView({
         </div>
       )}
 
-      {near && (
+      {near && map.kind === "station" && near.id === "board" && (
+        <p className="pointer-events-none absolute inset-x-0 bottom-28 mx-auto w-fit rounded-2xl bg-[#f2d9a6] px-4 py-3 text-center text-xs font-black text-[#0d1726] md:bottom-8">
+          Wait for the train to stop, then walk through an open red doorway to board.
+        </p>
+      )}
+      {near && !(map.kind === "station" && near.id === "board") && (
         <div className="pointer-events-none absolute inset-x-0 bottom-28 flex justify-center md:bottom-8">
           <button
             type="button"
