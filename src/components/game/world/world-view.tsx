@@ -10,6 +10,7 @@ import { WorldFigure, poseWorldFigure } from "../character";
 import { ArtScenery, PLAYER, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
+import { World3D } from "./world3d";
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import { play, soundOn } from "../sound";
@@ -208,6 +209,9 @@ export function WorldView({
   const camRef = useRef({ x: 0, y: 0 });
   /** Pre-rendered 3D maps are viewed closer up, so people are small next to buildings and cars. */
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
+  /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
+  const [webgl] = useState(() => typeof window === "undefined" || Boolean(document.createElement("canvas").getContext("webgl2")));
+  const is3d = webgl && (map.art === "london" || map.art === "highlands");
   const speedRef = useRef(speed);
   speedRef.current = speed;
   const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false });
@@ -252,6 +256,15 @@ export function WorldView({
 
   useEffect(() => setTouch(window.matchMedia("(pointer: coarse)").matches), []);
 
+  const getMe3d = useCallback(() => pos.current, []);
+  const getOthers3d = useCallback(
+    () => [...players.current.values()].filter((rp) => !hidden.has(rp.id)).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar })),
+    [players, hidden],
+  );
+  const nearPortal3d = useCallback(() => nearRef.current, []);
+  const walkTo3d = useCallback((x: number, y: number) => {
+    target.current = { x, y };
+  }, []);
   const enter = useCallback(() => {
     if (nearRef.current) onPortal(nearRef.current);
   }, [onPortal]);
@@ -375,7 +388,7 @@ export function WorldView({
         camRef.current = { x: cam.x, y: cam.y };
         const fctx = fxCanvas.current?.getContext("2d");
         if (fctx) fctx.setTransform(zoom, 0, 0, zoom, 0, 0);
-        if (fctx) drawFx(fctx, fx, { x: Math.round(cam.x), y: Math.round(cam.y) }, vw, vh, now, dt, { x: p.x, y: p.y, walking: moved }, phaseRef.current, reduced);
+        if (fctx && !is3d) drawFx(fctx, fx, { x: Math.round(cam.x), y: Math.round(cam.y) }, vw, vh, now, dt, { x: p.x, y: p.y, walking: moved }, phaseRef.current, reduced);
       }
       // Ambient sound: footsteps, and birdsong outdoors.
       const sound = soundOn();
@@ -473,9 +486,9 @@ export function WorldView({
         ref={layer}
         data-world
         className="absolute top-0 left-0 origin-top-left will-change-transform"
-        style={{ width: map.width, height: map.height }}
+        style={{ width: map.width, height: map.height, display: is3d ? "none" : undefined }}
       >
-        {map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
+        {is3d ? null : map.art ? <ArtScenery map={map} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />}
         {map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
@@ -525,6 +538,17 @@ export function WorldView({
         />
       </div>
 
+      {is3d && (
+        <World3D
+          map={map}
+          avatar={me.avatar}
+          car={car}
+          getMe={getMe3d}
+          getOthers={getOthers3d}
+          nearPortal={nearPortal3d}
+          onGround={walkTo3d}
+        />
+      )}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0" aria-hidden />
 
       {/* HUD */}

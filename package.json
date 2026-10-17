@@ -51,6 +51,7 @@
     "server-only": "^0.0.1",
     "stripe": "^22.6.2",
     "tailwind-merge": "^3.3.1",
+    "three": "^0.169.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -60,6 +61,7 @@
     "@types/node": "^24.7.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.169.0",
     "eslint": "^9",
     "eslint-config-next": "^15.5.26",
     "eslint-config-prettier": "^10.1.8",
