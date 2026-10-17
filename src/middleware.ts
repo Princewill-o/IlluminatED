@@ -65,6 +65,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/book", request.url));
   // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();
+  // Public pages don't need a verified session. Referral links and the landing
+  // page should render immediately instead of waiting for a Supabase round trip.
+  // Signed-in visitors can still open their dashboard from the account button.
+  if (isPublic(path)) return NextResponse.next();
   let response = NextResponse.next({ request });
   if (!socialConfigured) return response;
   const hasSessionCookie = request.cookies
@@ -101,9 +105,6 @@ export async function middleware(request: NextRequest) {
     response.cookies.getAll().forEach((c) => r.cookies.set(c));
     return r;
   };
-
-  if (signedIn && path === "/")
-    return redirectTo(new URL("/dashboard", request.url));
 
   // New learners finish their guided setup before opening any study page.
   // Legal/help pages and the setup flow remain available throughout.
