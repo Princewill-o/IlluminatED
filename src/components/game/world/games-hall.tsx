@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Trophy, Users, X } from "lucide-react";
 
+import { joinGameChannel } from "@/lib/realtime";
 import { browserSupabase } from "@/lib/supabase-browser";
 import { cn } from "@/lib/utils";
 
@@ -80,13 +81,13 @@ export function GamesHall({ serverId, me, onClose }: { serverId: string; me: { i
       setDone(true);
       setRound(null);
     });
-    channel.subscribe(async (s) => {
+    void joinGameChannel(sb, channel, me.id, async (s) => {
       if (disposed) return;
       if (s === "SUBSCRIBED") {
-        setStatus("live");
-        await channel.track({ u: me.username });
-      } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") setStatus("error");
-    });
+        const tracked = await channel.track({ u: me.username });
+        if (!disposed) setStatus(tracked === "ok" ? "live" : "error");
+      } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "AUTH_ERROR") setStatus("error");
+    }, () => disposed);
     return () => {
       disposed = true;
       if (hostTimer.current) clearTimeout(hostTimer.current);

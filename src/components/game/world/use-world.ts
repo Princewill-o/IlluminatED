@@ -6,8 +6,12 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
+import { carById } from "@/game/core/cars";
+import type { WorldAffiliation } from "@/game/core/affiliation";
+import { uniformFor } from "@/game/core/careers";
 import type { Avatar } from "@/game/core/cosmetics";
 import { SERVER_CAPACITY, channelFor, chatText } from "@/game/core/world";
+import { joinGameChannel } from "@/lib/realtime";
 import { browserSupabase } from "@/lib/supabase-browser";
 
 
@@ -24,6 +28,7 @@ import { browserSupabase } from "@/lib/supabase-browser";
 export type Connection = "connecting" | "live" | "reconnecting" | "offline" | "full" | "error" | "solo";
 
 export interface Me {
+  affiliation?: WorldAffiliation | null;
   id: string;
   username: string;
   avatar: Avatar;
@@ -38,6 +43,9 @@ export interface Me {
 }
 
 export interface RemotePlayer {
+  affiliation?: WorldAffiliation | null;
+  car?: string | null;
+  heading?: number;
   id: string;
   username: string;
   avatar: Avatar;
@@ -54,6 +62,8 @@ export interface RemotePlayer {
 }
 
 interface Meta {
+  car?: string | null;
+  heading?: number;
   /** Signed world pass. */
   p: string | null;
   /** Name, only trusted when the server has no signing key (local dev). */
@@ -80,7 +90,7 @@ export function useWorld({
   const [roster, setRoster] = useState(0);
   const players = useRef(new Map<string, RemotePlayer>());
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const pos = useRef({ ...start, d: 1 as 1 | -1 });
+  const pos = useRef({ ...start, d: 1 as 1 | -1, car: null as string | null, heading: 0 });
   const lastTracked = useRef({ x: -1, y: -1 });
   const lastSent = useRef(0);
   const bump = useCallback(() => setRoster((n) => n + 1), []);
@@ -101,7 +111,7 @@ export function useWorld({
     map.clear();
     const topic = channelFor(mapId, serverId);
 
-    const meta = (): Meta => ({ p: me.pass, u: me.username, a: me.avatar, x: Math.round(pos.current.x), y: Math.round(pos.current.y), d: pos.current.d });
+    const meta = (): Meta => ({ p: me.pass, u: me.username, a: me.avatar, x: Math.round(pos.current.x), y: Math.round(pos.current.y), d: pos.current.d, car: pos.current.car, heading: pos.current.heading });
 
     const channel = sb.channel(topic, {
       config: { private: true, presence: { key: me.id }, broadcast: { self: false, ack: true } },
@@ -123,7 +133,7 @@ export function useWorld({
         });
         return null;
       }
-      if (got === "pending" || !got || got.id !== id) return null;
+      if (got === "pending" || !got || got.id !== id || (got.expiresAt && got.expiresAt <= Date.now())) return null;
       return got;
     };
 
@@ -152,9 +162,10 @@ export function useWorld({
           map.set(id, {
             id,
             username: who.username,
-            avatar: m.a,
+            avatar: mapId === "prison" ? m.a : uniformFor(who.occupation ?? null, m.a),
             org: who.org,
             badge: who.badge,
+            affiliation: who.affiliation ?? null,
             x: m.x,
             y: m.y,
             tx: m.x,
@@ -163,12 +174,17 @@ export function useWorld({
             walking: false,
             chat: null,
             heardAt: Date.now(),
+            car: typeof m.car === "string" && carById(m.car) ? m.car : null,
+            heading: Number.isFinite(m.heading) ? m.heading : 0,
           });
         } else {
-          p.avatar = m.a;
+          p.avatar = mapId === "prison" ? m.a : uniformFor(who.occupation ?? null, m.a);
           p.username = who.username;
           p.org = who.org;
           p.badge = who.badge;
+          p.affiliation = who.affiliation ?? null;
+          p.car = typeof m.car === "string" && carById(m.car) ? m.car : null;
+          p.heading = Number.isFinite(m.heading) ? m.heading : 0;
           // Only snap from presence if we haven't heard live movement lately.
           if (Date.now() - p.heardAt > 4000) {
             p.tx = m.x;
@@ -182,16 +198,20 @@ export function useWorld({
     channel.on("presence", { event: "sync" }, sync);
 
     channel.on("broadcast", { event: "m" }, ({ payload }) => {
+      if (!payload || typeof payload.i !== "string" || !Number.isFinite(payload.x) || !Number.isFinite(payload.y)) return;
       const p = map.get(payload.i);
       if (!p) return;
       p.tx = payload.x;
       p.ty = payload.y;
       p.dir = payload.d;
       p.walking = Boolean(payload.w);
+      p.car = typeof payload.car === "string" && carById(payload.car) ? payload.car : null;
+      p.heading = Number.isFinite(payload.heading) ? payload.heading : 0;
       p.heardAt = Date.now();
     });
 
     channel.on("broadcast", { event: "c" }, ({ payload }) => {
+      if (!payload || typeof payload.i !== "string") return;
       const p = map.get(payload.i);
       // Only approved emotes and phrases are shown: the payload is an id, never free text.
       const text = typeof payload.t === "string" ? chatText(payload.t) : null;
@@ -203,9 +223,12 @@ export function useWorld({
     const onStatus = async (s: string) => {
       if (disposed) return;
       if (s === "SUBSCRIBED") {
-        setStatus(navigator.onLine ? "live" : "offline");
-        await channel.track(meta());
+        const tracked = await channel.track(meta());
+        if (disposed) return;
+        setStatus(!navigator.onLine ? "offline" : tracked === "ok" ? "live" : "reconnecting");
         lastTracked.current = { x: pos.current.x, y: pos.current.y };
+      } else if (s === "AUTH_ERROR") {
+        setStatus("error");
       } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") {
         setStatus(navigator.onLine ? "reconnecting" : "offline");
       } else if (s === "CLOSED") {
@@ -213,12 +236,7 @@ export function useWorld({
       }
     };
     // Private channels need the signed-in user's token on the socket first.
-    void sb.realtime
-      .setAuth()
-      .catch(() => undefined)
-      .then(() => {
-        if (!disposed) channel.subscribe((s) => void onStatus(s));
-      });
+    void joinGameChannel(sb, channel, me.id, (s) => void onStatus(s), () => disposed);
 
     // Keep late joiners' view of us fresh, and measure ping.
     const heartbeat = window.setInterval(() => {
@@ -239,7 +257,9 @@ export function useWorld({
     const online = () => {
       setStatus("reconnecting");
       // The socket reconnects by itself; rejoin the channel if it gave up.
-      if (channel.state !== "joined" && channel.state !== "joining") channel.subscribe((s) => void onStatus(s));
+      if (channel.state !== "joined" && channel.state !== "joining") {
+        void joinGameChannel(sb, channel, me.id, (s) => void onStatus(s), () => disposed);
+      }
     };
     window.addEventListener("offline", offline);
     window.addEventListener("online", online);
@@ -259,24 +279,23 @@ export function useWorld({
   }, [mapId, serverId, me.id, bump]);
 
   /** Call every frame with the local position; sends at most ~8 updates a second. */
-  const reportMove = useCallback((x: number, y: number, d: 1 | -1, walking: boolean) => {
-    const prev = pos.current;
-    pos.current = { x, y, d };
+  const reportMove = useCallback((x: number, y: number, d: 1 | -1, walking: boolean, car: string | null = null, heading = 0) => {
+    const vehicleChanged = pos.current.car !== car;
+    pos.current = { x, y, d, car, heading };
     const ch = channelRef.current;
     if (!ch || ch.state !== "joined") return;
     const now = performance.now();
-    const changed = Math.abs(prev.x - x) + Math.abs(prev.y - y) > 0.5;
-    if (changed && now - lastSent.current > 120) {
+    if (vehicleChanged || walking && now - lastSent.current > 120) {
       lastSent.current = now;
-      void ch.send({ type: "broadcast", event: "m", payload: { i: me.id, x: Math.round(x), y: Math.round(y), d, w: walking ? 1 : 0 } });
+      void ch.send({ type: "broadcast", event: "m", payload: { i: me.id, x: Math.round(x), y: Math.round(y), d, w: walking ? 1 : 0, car, heading } });
     }
   }, [me.id]);
 
   const stopped = useCallback(() => {
     const ch = channelRef.current;
     if (!ch || ch.state !== "joined") return;
-    const { x, y, d } = pos.current;
-    void ch.send({ type: "broadcast", event: "m", payload: { i: me.id, x: Math.round(x), y: Math.round(y), d, w: 0 } });
+    const { x, y, d, car, heading } = pos.current;
+    void ch.send({ type: "broadcast", event: "m", payload: { i: me.id, x: Math.round(x), y: Math.round(y), d, w: 0, car, heading } });
   }, [me.id]);
 
   const say = useCallback((text: string) => {
@@ -299,6 +318,7 @@ export function useLobby(here: { map: string; server: string } | null, userId: s
   useEffect(() => {
     const sb = browserSupabase();
     if (!sb) return;
+    let disposed = false;
     const channel = sb.channel("world:lobby", { config: { private: true, presence: { key: userId } } });
     channel.on("presence", { event: "sync" }, () => {
       const state = channel.presenceState<{ m: string; s: string }>();
@@ -312,13 +332,15 @@ export function useLobby(here: { map: string; server: string } | null, userId: s
       setCounts(next);
       setReady(true);
     });
-    channel.subscribe(async (s) => {
+    void joinGameChannel(sb, channel, userId, async (s) => {
+      if (disposed) return;
       if (s === "SUBSCRIBED") {
         if (here) await channel.track({ m: here.map, s: here.server });
         else setReady(true);
       }
-    });
+    }, () => disposed);
     return () => {
+      disposed = true;
       void sb.removeChannel(channel);
     };
   }, [here?.map, here?.server, userId]); // eslint-disable-line react-hooks/exhaustive-deps

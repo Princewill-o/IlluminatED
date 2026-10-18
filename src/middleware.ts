@@ -60,6 +60,7 @@ const isPublic = (path: string) =>
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  if (process.env.NODE_ENV === "development" && process.env.ILLUMINATED_PREVIEW === "1" && path === "/games/city-showcase") return NextResponse.next();
   // Accounts are set up after a demo call: send would-be sign-ups to book one.
   if ((path === "/sign-in" || path === "/sign-in/") && ["sign-up", "signup", "register"].includes(request.nextUrl.searchParams.get("mode") ?? ""))
     return NextResponse.redirect(new URL("/book", request.url));

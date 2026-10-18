@@ -32,6 +32,7 @@ export default function SafeguardingPage() {
       <CrisisHelp className="mt-4" />
 
       <h2 id="how">How we keep you safe</h2>
+<p><strong>Friend messages.</strong> Private messages require an accepted mutual friend request. Use Block to stop messages, or Report to share a selected message’s decrypted text with the safety team. These conversations are end-to-end encrypted and cannot be routinely read or filtered by moderators, including for contact details. Do not share personal information. Public city chat continues to use preset phrases. Compare security codes through a trusted channel and keep your original browser, because messaging keys currently have no recovery.</p>
       <ul>
         <li>
           <strong>Moderation.</strong> Our moderators review reported posts.
@@ -42,7 +43,7 @@ export default function SafeguardingPage() {
         <li>
           <strong>Designed for young people.</strong> The site is for ages 13
           and over. We don't ask for real names, schools or dates of birth, and
-          there are no adverts or tracking.
+          game adverts are contextual event listings, with no behavioural advertising trackers.
         </li>
         <li>
           <strong>No private contact details.</strong> Email addresses and phone

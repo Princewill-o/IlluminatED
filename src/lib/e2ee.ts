@@ -76,14 +76,14 @@ const b64 = (buf: ArrayBuffer | Uint8Array) => {
 };
 const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
-export async function encrypt(key: CryptoKey, text: string) {
+export async function encrypt(key: CryptoKey, text: string, context?: string) {
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(text));
+  const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv, ...(context ? { additionalData: new TextEncoder().encode(context) } : {}) }, key, new TextEncoder().encode(text));
   return { ciphertext: b64(data), iv: b64(iv) };
 }
 
-export async function decrypt(key: CryptoKey, ciphertext: string, iv: string) {
-  const data = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, key, unb64(ciphertext));
+export async function decrypt(key: CryptoKey, ciphertext: string, iv: string, context?: string) {
+  const data = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv), ...(context ? { additionalData: new TextEncoder().encode(context) } : {}) }, key, unb64(ciphertext));
   return new TextDecoder().decode(data);
 }
 

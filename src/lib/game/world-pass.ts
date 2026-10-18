@@ -2,6 +2,8 @@ import "server-only";
 
 import { createHmac, createPrivateKey, createPublicKey, sign } from "node:crypto";
 
+import type { Occupation, WorldAffiliation } from "@/game/core/affiliation";
+
 /**
  * World passes: who a player is in Worlds, signed by the server.
  *
@@ -18,6 +20,8 @@ export interface WorldIdentity {
   org: string | null;
   /** Company id whose parody logo they wear. */
   badge: string | null;
+  affiliation?: WorldAffiliation | null;
+  occupation?: Occupation | null;
   exp: number;
 }
 

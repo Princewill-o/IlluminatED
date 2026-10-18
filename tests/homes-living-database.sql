@@ -1,0 +1,54 @@
+-- Run against a configured test database, or inside this rollback-only transaction.
+begin;
+do $$
+declare uid uuid; candidate uuid; balance integer; rejected boolean; test_layout jsonb;
+begin
+ for candidate in select id from public.profiles where not banned loop
+  perform set_config('request.jwt.claim.sub',candidate::text,true);
+  perform set_config('request.jwt.claims',jsonb_build_object('sub',candidate,'role','authenticated')::text,true);
+  if private.is_active_member() then uid := candidate; exit; end if;
+ end loop;
+ if uid is null then raise exception 'test needs an eligible member'; end if;
+ insert into public.player_stats(user_id) values(uid) on conflict do nothing;
+ update public.player_stats set clout=50000 where user_id=uid;
+ perform public.home_buy('studio');
+ update public.player_homes set owned=array['studio'],current='studio',furniture='{}',layout=null where user_id=uid;
+ perform public.home_buy('cottage');
+ select clout into balance from public.player_stats where user_id=uid;
+ if balance<>38000 then raise exception 'house purchase did not debit correct price'; end if;
+ perform public.home_buy('cottage');
+ select clout into balance from public.player_stats where user_id=uid;
+ if balance<>38000 then raise exception 'owned house was charged twice'; end if;
+ perform public.furniture_buy('velvet-sofa');
+ select clout into balance from public.player_stats where user_id=uid;
+ if balance<>36400 then raise exception 'furniture price mismatch'; end if;
+ test_layout := '[{"key":"bed","item":"bed","x":1,"y":2},{"key":"wardrobe","item":"wardrobe","x":6,"y":2},{"key":"shelf","item":"shelf","x":10,"y":2},{"key":"desk","item":"desk","x":14,"y":2},{"key":"tv","item":"tv","x":14,"y":7},{"key":"sofa","item":"velvet-sofa","x":14,"y":10},{"key":"table","item":"table","x":7,"y":7},{"key":"petbed","item":"petbed","x":2,"y":10},{"key":"plant-1","item":"plant","x":6,"y":5},{"key":"plant-2","item":"plant","x":18,"y":5},{"key":"lamp","item":"lamp","x":5,"y":2},{"key":"shower","item":"shower","x":1,"y":7}]';
+ perform public.home_save_layout(test_layout);
+ if (select h.layout<>test_layout from public.player_homes h where user_id=uid) then raise exception 'layout not saved'; end if;
+ rejected:=false;
+ begin perform public.home_save_layout('[{"key":"a","item":"rain-shower","x":1,"y":2}]'); exception when others then if sqlerrm='not_owned' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'unowned furniture accepted'; end if;
+ rejected:=false;
+ begin perform public.home_save_layout('[{"key":"a","item":"bed","x":1,"y":2},{"key":"b","item":"wardrobe","x":1,"y":2}]'); exception when others then if sqlerrm='overlap' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'overlapping furniture accepted'; end if;
+ rejected:=false;
+ begin perform public.home_save_layout('[{"key":"a","item":"plant","x":9,"y":12}]'); exception when others then if sqlerrm='door_blocked' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'blocked entrance accepted'; end if;
+ rejected:=false;
+ begin perform public.home_save_layout('[{"key":"a","item":"plant","x":1,"y":12}]'); exception when others then if sqlerrm='unreachable' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'unreachable item accepted'; end if;
+ rejected:=false;
+ begin perform public.home_save_layout('[{"key":"a","item":"plant","x":1.5,"y":2}]'); exception when others then if sqlerrm='invalid' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'fractional position accepted'; end if;
+ update public.player_stats set clout=0 where user_id=uid;
+ rejected:=false;
+ begin perform public.furniture_buy('bath'); exception when others then if sqlerrm='not_enough_clout' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'purchase without funds accepted'; end if;
+ perform set_config('request.jwt.claim.sub','',true);
+ perform set_config('request.jwt.claims','{}',true);
+ rejected:=false;
+ begin perform public.home_buy('studio'); exception when others then if sqlerrm='not_allowed' then rejected:=true; else raise; end if; end;
+ if not rejected then raise exception 'anonymous house claim accepted'; end if;
+end $$;
+rollback;
+select 'House and furniture purchases, layout persistence, ownership, overlap, access, funds and anonymous denial passed; test changes rolled back.' as verification;

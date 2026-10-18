@@ -50,6 +50,7 @@ export async function loadCareer(userId: string): Promise<CareerState> {
 }
 
 export interface HomeState {
+  claimed: boolean;
   owned: string[];
   current: string;
   layout: Placed[];
@@ -57,12 +58,13 @@ export interface HomeState {
 }
 
 export async function loadHome(userId: string): Promise<HomeState> {
-  const fallback: HomeState = { owned: ["studio"], current: "studio", layout: STARTER_LAYOUT, furniture: {} };
+  const fallback: HomeState = { claimed: false, owned: ["studio"], current: "studio", layout: STARTER_LAYOUT, furniture: {} };
   const sb = await getSupabase();
   if (!sb) return fallback;
   const { data } = await sb.from("player_homes").select("owned, current, layout, furniture").eq("user_id", userId).maybeSingle();
   if (!data) return fallback;
   return {
+    claimed: true,
     owned: (data.owned as string[]) ?? ["studio"],
     current: String(data.current ?? "studio"),
     layout: Array.isArray(data.layout) ? (data.layout as Placed[]) : STARTER_LAYOUT,

@@ -10,6 +10,9 @@ import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { AffiliationBadge } from "./affiliation-badge";
+import type { WorldAffiliation } from "@/game/core/affiliation";
+import { HomeFloorPlan } from "./home-floor-plan";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
@@ -22,6 +25,7 @@ import { TrainTimes } from "./train-times";
 
 import { doActivity } from "@/components/game/world/use-needs";
 import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
+import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
@@ -83,6 +87,7 @@ function Sprite({
   badge,
   username,
   org,
+  affiliation,
   me = false,
   hidden = false,
   innerRef,
@@ -96,6 +101,7 @@ function Sprite({
   badge: string | null;
   username: string;
   org: string | null;
+  affiliation?: WorldAffiliation | null;
   me?: boolean;
   hidden?: boolean;
   innerRef: (el: HTMLDivElement | null) => void;
@@ -114,6 +120,7 @@ function Sprite({
         <WorldFigure avatar={avatar} badge={badge} ghost={hidden || Boolean(car)} />
       </div>
       <div className="absolute top-full left-1/2 -mt-1 flex -translate-x-1/2 flex-col items-center whitespace-nowrap">
+        <AffiliationBadge value={affiliation} />
         <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", me ? "bg-[#f2d9a6] text-[#0d1726]" : "bg-black/70 text-white")}>
           {me ? "You" : `@${username}`}
         </span>
@@ -194,7 +201,9 @@ export function WorldView({
   ads = [],
   paused = false,
   police = null,
+  homeAction = null,
 }: {
+  homeAction?: HomeAction | null;
   paused?: boolean;
   police?: Pursuit | null;
   /** Real tech events shown on billboards around the world. */
@@ -215,6 +224,9 @@ export function WorldView({
   onDrivingOffence?: (offence: RoadViolation) => void;
 }) {
   const policeRef = useRef(police);
+  const homeActionRef = useRef(homeAction);
+  homeActionRef.current = homeAction;
+  const getHomeAction = useCallback(() => homeActionRef.current, []);
   policeRef.current = police;
   const getPolice = useCallback(() => policeRef.current, []);
   const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
@@ -312,7 +324,7 @@ export function WorldView({
   const unavailable3d=useCallback(()=>setWebgl(false),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
-    () => [...players.current.values()].filter((rp) => !hidden.has(rp.id)).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar })),
+    () => [...players.current.values()].filter((rp) => !hidden.has(rp.id)).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
@@ -482,7 +494,7 @@ export function WorldView({
           cs.style.transformOrigin = `${m.ax}px ${m.ay}px`;
         }
       }
-      reportMove(p.x, p.y, p.d, moved);
+      reportMove(p.x, p.y, p.d, moved, carRef.current, p.heading);
 
       const vp = viewport.current;
       if (!is3d && vp && layer.current) {
@@ -611,7 +623,7 @@ export function WorldView({
         className={`absolute top-0 left-0 origin-top-left will-change-transform ${is3d ? "pointer-events-none hidden" : ""}`}
         style={{ width: map.width, height: map.height }}
       >
-        {!is3d && (map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />)}
+        {!is3d && (map.kind === "home" ? <HomeFloorPlan map={map} /> : map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />)}
         {!is3d && map.kind === "station" && <StationArt map={map} />}
         {map.portals.map((p) => (
           <PortalMarker key={p.id} portal={p} near={near?.id === p.id} />
@@ -632,6 +644,7 @@ export function WorldView({
               badge={rp.badge}
               username={rp.username}
               org={rp.org}
+              affiliation={rp.affiliation}
               hidden={hidden.has(rp.id)}
               innerRef={(el) => {
                 if (el) els.current.set(rp.id, el);
@@ -652,6 +665,7 @@ export function WorldView({
           badge={me.badge}
           username={me.username}
           org={me.org}
+          affiliation={me.affiliation}
           innerRef={(el) => {
             meEl.current = el;
           }}
@@ -666,6 +680,9 @@ export function WorldView({
           map={map}
           avatar={me.avatar}
           car={car}
+          badge={me.badge}
+          username={me.username}
+          affiliation={me.affiliation}
           bike={bike}
           ads={ads}
           onUnavailable={unavailable3d}
@@ -674,6 +691,7 @@ export function WorldView({
           getPolice={getPolice}
           nearPortal={nearPortal3d}
           onGround={walkTo3d}
+          getHomeAction={getHomeAction}
         />
       )}
       {/* The 3D renderer supplies its own lighting. Hide the retained 2D night

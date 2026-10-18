@@ -8,6 +8,7 @@ import { Bot, Building2, Crown, Dice5, Grid3x3, Hash, Swords, Trophy, Users, Wif
 import { EventAdStrip, useTechEvents } from "../event-ads";
 import { GamesHall } from "../world/games-hall";
 
+
 import {
   C4_COLS,
   C4_ROWS,
@@ -41,6 +42,7 @@ import {
   tycoonQuiz,
   tycoonRoll,
 } from "@/game/core/hub/tycoon";
+import { joinGameChannel } from "@/lib/realtime";
 import { browserSupabase } from "@/lib/supabase-browser";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +83,9 @@ function useRoom<T>(code: string | null, me: Me, make: (seats: { id: string; nam
       return;
     }
     setStatus("joining");
+    let disposed = false;
+    setState(null);
+    setSeats([]);
     const c = sb.channel(`world:hub:${code}`, { config: { private: true, presence: { key: me.id }, broadcast: { self: false } } });
     ch.current = c;
     c.on("presence", { event: "sync" }, () => {
@@ -99,14 +104,18 @@ function useRoom<T>(code: string | null, me: Me, make: (seats: { id: string; nam
         return s;
       });
     });
-    c.subscribe(async (s) => {
+    void joinGameChannel(sb, c, me.id, async (s) => {
+      if (disposed) return;
       if (s === "SUBSCRIBED") {
-        setStatus("live");
-        await c.track({ u: me.username, t: Date.now() });
+        const tracked = await c.track({ u: me.username, t: Date.now() });
+        if (disposed) return;
+        setStatus(tracked === "ok" ? "live" : "error");
+        if (tracked !== "ok") return;
         void c.send({ type: "broadcast", event: "hello", payload: {} });
-      } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") setStatus("error");
-    });
+      } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "AUTH_ERROR") setStatus("error");
+    }, () => disposed);
     return () => {
+      disposed = true;
       void sb.removeChannel(c);
       ch.current = null;
     };

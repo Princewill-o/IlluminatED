@@ -212,6 +212,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
 
 /** What you see at a workplace door: the role ladder and what you can do here. */
 export function WorkplaceDoor({
+  station = "reception",
   onPracticalShift,
   workplace,
   job,
@@ -223,6 +224,7 @@ export function WorkplaceDoor({
   avatar: Avatar;
   onClose: () => void;
   onPracticalShift?: (job:ActiveJob)=>void;
+  station?: "reception" | "terminal";
 }) {
   const [mode, setMode] = useState<"door" | "interview" | "shift">("door");
   const [hired, setHired] = useState<ActiveJob | null>(null);
@@ -244,16 +246,16 @@ export function WorkplaceDoor({
     <Panel onClose={onClose} title={workplace.name} workplace={workplace}>
       <Ladder workplace={workplace} job={mine} />
       <div className="mt-4 grid gap-2">
-        {mine&&onPracticalShift&&["pizzazz","tescow"].includes(workplace.id)&&<button type="button" onClick={()=>onPracticalShift(mine)} className="rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white">{workplace.id==="pizzazz"?"Start a pizza delivery route":"Work on the supermarket floor"}</button>}
-        {mine ? (
+        {station === "terminal"&&mine&&onPracticalShift&&["pizzazz","tescow"].includes(workplace.id)&&<button type="button" onClick={()=>onPracticalShift(mine)} className="rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white">{workplace.id==="pizzazz"?"Start a pizza delivery route":"Work on the supermarket floor"}</button>}
+        {mine && station === "terminal" ? (
           <button type="button" onClick={() => setMode("shift")} className="flex items-center justify-center gap-2 rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
-            <Briefcase className="size-5" aria-hidden /> Start a shift as {roleOf(workplace.id, mine.role)?.title}
+            <Briefcase className="size-5" aria-hidden /> Clock in at this station: {roleOf(workplace.id, mine.role)?.title}
           </button>
-        ) : (
+        ) : !mine && station === "reception" ? (
           <button type="button" onClick={() => setMode("interview")} className="flex items-center justify-center gap-2 rounded-full bg-brand py-3 font-black text-white">
             <GraduationCap className="size-5" aria-hidden /> Apply: interview for {workplace.roles[0].title}
           </button>
-        )}
+        ) : <p className="rounded-2xl bg-secondary p-4 text-sm">{mine ? "Walk to a computer or work counter to start your shift." : "Visit reception to apply for a role first."}</p>}
         {job && !mine && <p className="text-center text-xs text-muted-foreground">Getting this job means leaving your current one. Your experience stays on your record.</p>}
         {workplace.companyId && (
           <Link href={`/games/promotion-panic/${workplace.companyId}`} className="rounded-full bg-secondary py-3 text-center font-bold">
@@ -295,12 +297,12 @@ export function Ladder({ workplace, job }: { workplace: Workplace; job: ActiveJo
 
 function Panel({ title, workplace, onClose, children }: { title: string; workplace: Workplace; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[100002] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+    <div className="absolute inset-0 z-[100002] flex items-end justify-end bg-black/10 p-2 md:p-5" onClick={onClose}>
       <div
         role="dialog"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[92dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-background p-5 text-foreground md:rounded-3xl md:p-6"
+        className="max-h-[80dvh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-background p-5 text-foreground md:rounded-3xl md:p-6"
       >
         <div className="mb-4 flex items-center gap-3">
           {workplace.companyId ? (

@@ -737,6 +737,20 @@ export function buildLondon(): Built {
     street(x, 23);
     street(x + 2, 58);
   }
+  // Red telephone kiosks on city pavements, spaced across both river banks.
+  // Existing entrance reservations keep doors and station exits clear.
+  for (const [anchorX, anchorY] of [[8, 18], [28, 23], [48, 18], [68, 23], [88, 18], [103, 23], [8, 58], [28, 58], [48, 58], [68, 58], [88, 58], [103, 58], [8, 74], [28, 74], [48, 74], [68, 74], [88, 74], [8, 79], [28, 79], [48, 79], [68, 79], [88, 79]]) {
+    for (let offset = 0; offset < 5; offset++) {
+      const x = anchorX + offset, y = anchorY;
+      if (!["-", "_"].includes(get(x, y) ?? "") || !free(x, y)) continue;
+      if (things.some(thing => thing.kind === "phonebox" && Math.hypot(thing.x - x, thing.y - y) < 6)) break;
+      // Leave an unobstructed pavement tile on either side of the kiosk.
+      if (!free(x - 1, y) || !free(x + 1, y)) continue;
+      set(x, y, "X");
+      things.push({ kind: "phonebox", id: id("phonebox"), x, y });
+      break;
+    }
+  }
   for (let x = 1; x < W - 1; x += 3) {
     const y = north(x) + 1;
     if (get(x, y) === "g" && free(x, y)) {

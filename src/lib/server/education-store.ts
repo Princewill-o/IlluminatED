@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 
 import { curriculumForCourse, type CourseCurriculum } from "@/lib/education";
+import { newestCurriculum } from "@/lib/education/newest";
 import {
   SUPABASE_URL,
   SUPABASE_KEY,
@@ -47,7 +48,7 @@ export async function getCourseCurriculum(courseId: string) {
   const local = curriculumForCourse(courseId);
   if (!local) return null;
   try {
-    return (await readCatalogue(courseId)) ?? local;
+    return newestCurriculum(local, await readCatalogue(courseId));
   } catch {
     return local;
   }

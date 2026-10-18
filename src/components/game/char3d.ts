@@ -6,6 +6,7 @@ import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js
 
 import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
 import { faceCanvas } from "./character";
+import { addUniformLogo } from "./uniform-logo3d";
 
 import { type Avatar, cosmeticById, look } from "@/game/core/cosmetics";
 import { bodyBand, clipOutfitTriangle, garmentSurface, isSkinTexel, outfitColours, outfitVariants, paletteCell, type OutfitPiece } from "@/game/core/outfits";
@@ -196,7 +197,7 @@ export interface Character3D {
 }
 
 /** Builds your dressed 3D character at about `height` units tall. */
-export async function buildCharacter(a: Avatar, height = 1.15): Promise<Character3D> {
+export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: string | null = null): Promise<Character3D> {
   const variants = outfitVariants(a);
   const [bodyG, headG, bottomG, shoesG] = await Promise.all([
     loadChar(variants.top), loadChar(variants.head), loadChar(variants.bottom), loadChar(variants.shoes),
@@ -255,6 +256,7 @@ export async function buildCharacter(a: Avatar, height = 1.15): Promise<Characte
     }
   }
   dress(object, headMesh, bodyMesh, a);
+  addUniformLogo(object, bodyMesh, workplaceLogo);
   object.traverse((o) => {
     if ((o as THREE.Mesh).isMesh) {
       o.castShadow = true;

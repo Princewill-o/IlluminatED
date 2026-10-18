@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { Check, X } from "lucide-react";
 
+import { WorkLesson } from "./work-lesson";
+
 import { SKILLS, type Task, checkAnswer } from "@/game/core/careers";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +31,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
       </div>
       <h3 className="mt-2 text-xl font-black">{task.title}</h3>
       <p className="mt-2 leading-7">{task.prompt}</p>
+      <WorkLesson task={task} />
 
       {task.doc?.type === "code" && (
         <pre className="mt-3 overflow-x-auto rounded-2xl bg-[#13203a] p-4 text-[13px] leading-6 text-[#e9e6f2]">

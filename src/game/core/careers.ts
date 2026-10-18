@@ -58,6 +58,7 @@ export interface Task {
   numeric?: { unit?: string; prefix?: string; tolerance: number };
   /** Shown after answering: why, so every task teaches. */
   explain: string;
+  lesson?: { text: string; videoId?: string };
 }
 
 type Gen = (rng: Rng) => Task;
@@ -559,7 +560,28 @@ export const SHIFT_TASKS = 5;
 
 export function buildShift(role: Role, seed: number): Task[] {
   const rng = createRng(seed);
-  return role.tasks.slice(0, SHIFT_TASKS).map((k) => (GEN[k] ?? GEN.inbox)(rng));
+  return role.tasks.slice(0, SHIFT_TASKS).map((k, i) => {
+    const base = (GEN[k] ?? GEN.inbox)(rng);
+    const task = i % 2 === 0 || role.rank > 1 ? knowledgeTask(base, role.rank, rng) : base;
+    if (task.options) {
+      const options = shuffle(rng, task.options.map((text, index) => ({text, correct:index === task.answer})));
+      task.options = options.map(option => option.text);
+      task.answer = options.findIndex(option => option.correct);
+    }
+    return {...task, lesson:{text:task.explain,...(task.skill === "sql" ? {videoId:"_a4k3ssyY5E"} : {})}};
+  });
+}
+
+function knowledgeTask(base: Task, rank: number, rng: Rng): Task {
+  const n = randInt(rng, 4, 12) * rank;
+  const numeric = (title: string, prompt: string, answer: number, explain: string): Task => ({kind:base.kind,skill:base.skill,title,prompt,answer,numeric:{tolerance:0.01},explain});
+  if (base.skill === "stock-control") return numeric("Plan for lead time", `Daily demand is ${n} units. Delivery takes 3 days. Keep ${n*2} units as safety stock. There are ${n*2} usable units and ${n} confirmed incoming units. How many additional units must you order?`, n*2, "Target stock = daily demand × lead time + safety stock. Subtract usable stock and confirmed incoming stock. Do not count incoming stock twice.");
+  if (base.skill === "marketing-analytics") return numeric("Campaign efficiency", `A campaign has ${n*1000} impressions, ${n*40} clicks and costs £${n*20}. What is its cost per click in pounds?`, 0.5, "Cost per click = total spend divided by clicks. Impressions measure reach; use clicks as the denominator for cost per click.");
+  if (["numeracy","cash-handling","finance","order-accuracy"].includes(base.skill)) return numeric("Reconcile an invoice", `Order ${n} items at £12 each. Apply a 15% discount to the goods, then add £18 delivery. No tax applies in this simulation. What is the final total in pounds?`, Number((n*12*.85+18).toFixed(2)), "Calculate quantity × unit price, multiply by 0.85, then add delivery. A goods-only discount does not reduce delivery charges.");
+  if (["programming","debugging"].includes(base.skill)) return {...base,title:"Review a boundary condition",prompt:`Count values greater than or equal to ${n}. Which change fixes this code?`,doc:{type:"code",text:`const values = [${n-1}, ${n}, ${n+1}];\nconst count = values.filter(v => v > ${n}).length;`},numeric:undefined,options:[`Use v >= ${n}`,`Use v === ${n}`,`Use v < ${n}`,"Remove the filter"],answer:0,explain:"An inclusive lower boundary uses >=. Test below, exactly at, and above the boundary. Exactly two values should pass here."};
+  if (base.skill === "sql") return {...base,title:"Aggregate the right records",prompt:`Which query returns customers whose completed orders total more than £${n*100}?`,doc:undefined,numeric:undefined,options:[`SELECT customer_id FROM orders WHERE status = 'completed' GROUP BY customer_id HAVING SUM(amount) > ${n*100}`,`SELECT customer_id FROM orders WHERE amount > ${n*100}`,"SELECT customer_id FROM orders GROUP BY amount","SELECT customer_id FROM orders WHERE status = 'cancelled'"],answer:0,explain:"WHERE filters rows before aggregation. GROUP BY collects each customer's rows. HAVING filters the grouped SUM; checking individual amounts misses customers with several smaller orders."};
+  if (["scheduling","prioritisation"].includes(base.skill)) return {...base,title:"Resolve competing constraints",prompt:"A 45-minute task needs a colleague and a room. The colleague is free 09:15–10:15; the room is free 09:30–10:30. Setup needs the room for 10 minutes before the task. Which plan works?",doc:undefined,numeric:undefined,options:["Setup 09:30; task 09:40–10:25","Setup 09:20; task 09:30–10:15","No plan fits; request another slot","Task 09:30–10:15; setup afterwards"],answer:2,explain:"Include setup in room availability. The earliest legal task start is 09:40; it ends at 10:25 after the colleague leaves. Request a new slot instead of breaking a constraint."};
+  return base;
 }
 
 export function checkAnswer(task: Task, value: number | string): boolean {

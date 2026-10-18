@@ -10,12 +10,13 @@ export const NEEDS = [
   { id: "mood", label: "Mood", colour: "#15987f", perHour: -4 },
   { id: "hunger", label: "Hunger", colour: "#e98a1f", perHour: -8 },
   { id: "social", label: "Social", colour: "#d4536a", perHour: -5 },
+  { id: "hygiene", label: "Hygiene", colour: "#329eb1", perHour: -7 },
 ] as const;
 
 export type NeedId = (typeof NEEDS)[number]["id"];
 export type Needs = Record<NeedId, number> & { at: number };
 
-export const fresh = (now: number): Needs => ({ energy: 80, focus: 60, mood: 75, hunger: 70, social: 60, at: now });
+export const fresh = (now: number): Needs => ({ energy: 80, focus: 60, mood: 75, hunger: 70, social: 60, hygiene: 80, at: now });
 
 const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v * 10) / 10));
 
@@ -23,12 +24,17 @@ const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v * 10) / 10))
 export function decay(n: Needs, now: number): Needs {
   const hours = Math.min(12, Math.max(0, (now - n.at) / 3_600_000));
   const out = { ...n, at: now };
-  for (const d of NEEDS) out[d.id] = clamp(n[d.id] + d.perHour * hours);
+  for (const d of NEEDS) out[d.id] = clamp((Number.isFinite(n[d.id]) ? n[d.id] : 80) + d.perHour * hours);
   return out;
 }
 
 /** What each activity does to your needs. */
 export const ACTIVITIES = {
+  shower: { label: "Freshened up", change: { hygiene: +55, mood: +8 } },
+  bathroom: { label: "Bathroom break", change: { hygiene: +10, mood: +5 } },
+  watch: { label: "Watched TV", change: { mood: +18, energy: +5 } },
+  relax: { label: "Relaxed at home", change: { energy: +12, mood: +12 } },
+  music: { label: "Played music", change: { mood: +20, focus: +5 } },
   sleep: { label: "Had a nap", change: { energy: +45, mood: +5 } },
   hike: { label: "Took in the view", change: { mood: +15, energy: -8, focus: +5 } },
   eat: { label: "Ate something", change: { hunger: +40, mood: +5 } },
@@ -75,6 +81,7 @@ export function nextHint(n: Needs) {
     mood: "Mood's dipping: play a quick arcade game.",
     hunger: "Hungry: grab something from the fridge or Pizzazz Pizza.",
     social: "Feeling lonely: say hi to someone nearby.",
+    hygiene: "Freshen up: take a shower at home.",
   }[low.id];
 }
 

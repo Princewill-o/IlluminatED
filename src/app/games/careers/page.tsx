@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Metadata } from "next";
 
 import { CvBox, JobCentre, MyJob } from "@/components/careers/job-centre";
@@ -29,6 +31,7 @@ export default async function CareersPage() {
         get promoted and build experience you can honestly describe on a CV.
       </p>
 
+      <Link href="/games/careers/sources" className="mt-4 inline-block min-h-11 text-sm font-bold text-primary underline">Question answers, explanations and source references →</Link>
       {job && (
         <section className="mt-8">
           <h2 className="text-2xl font-black">

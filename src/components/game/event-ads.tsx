@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { CalendarDays, ExternalLink, X } from "lucide-react";
 
+import { useIllumship } from "./city/membership";
+
 export interface TechEvent {
   id: string;
   name: string;
@@ -19,8 +21,10 @@ export interface TechEvent {
 let cache: Promise<TechEvent[]> | null = null;
 /** Real hackathons and tech events in London (from Luma, and Eventbrite when set up). */
 export function useTechEvents() {
+  const vip = useIllumship();
   const [events, setEvents] = useState<TechEvent[]>([]);
   useEffect(() => {
+    if (vip) return;
     cache ??= fetch("/api/events")
       .then((r) => (r.ok ? r.json() : { events: [] }))
       .then((d: { events?: TechEvent[] }) => d.events ?? [])
@@ -30,8 +34,8 @@ export function useTechEvents() {
     return () => {
       alive = false;
     };
-  }, []);
-  return events;
+  }, [vip]);
+  return vip ? [] : events;
 }
 
 export const eventWhen = (iso: string) =>
@@ -67,23 +71,24 @@ function AdCard({ e, onClose }: { e: TechEvent; onClose?: () => void }) {
 
 /** In-game advert that pops up now and then while you play (a different real event each time). */
 export function EventAdPopup({ events, firstAfter = 40_000, every = 240_000 }: { events: TechEvent[]; firstAfter?: number; every?: number }) {
+  const vip = useIllumship();
   const [i, setI] = useState(-1);
   useEffect(() => {
-    if (!events.length) return;
+    if (vip || !events.length) return;
     const first = setTimeout(() => setI(0), firstAfter);
     const loop = setInterval(() => setI((n) => (n < 0 ? 0 : n + 1)), every);
     return () => {
       clearTimeout(first);
       clearInterval(loop);
     };
-  }, [events.length, firstAfter, every]);
+  }, [events.length, firstAfter, every, vip]);
   // Each advert hides itself after 14 seconds.
   useEffect(() => {
     if (i < 0) return;
     const t = setTimeout(() => setI((n) => (n === i ? -1 - i : n)), 14_000);
     return () => clearTimeout(t);
   }, [i]);
-  if (i < 0 || !events.length) return null;
+  if (vip || i < 0 || !events.length) return null;
   return (
     <div className="absolute bottom-24 left-3 z-[100001] w-[min(330px,calc(100%-24px))]">
       <AdCard e={events[i % events.length]} onClose={() => setI(-1 - i)} />
@@ -93,7 +98,8 @@ export function EventAdPopup({ events, firstAfter = 40_000, every = 240_000 }: {
 
 /** A strip of upcoming events (for the Games Hub). */
 export function EventAdStrip({ events }: { events: TechEvent[] }) {
-  if (!events.length) return null;
+  const vip = useIllumship();
+  if (vip || !events.length) return null;
   return (
     <section className="mt-6" aria-label="Hackathons and tech events">
       <p className="text-xs font-black tracking-[0.2em] text-[#13203a]/60 uppercase">Hackathons and tech events in London · Ads</p>

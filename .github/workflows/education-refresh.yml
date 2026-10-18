@@ -25,6 +25,17 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Back up existing learning and workplace material before refresh
+        if: github.event.schedule != '15 * * * *'
+        uses: actions/upload-artifact@v4
+        with:
+          name: learning-backup-${{ github.run_id }}
+          retention-days: 30
+          path: |
+            src/lib/data/education
+            src/lib/data/topics
+            src/game/core/careers.ts
+            src/lib/education/source-registry.ts
       - name: Weekly curriculum metadata refresh
         if: github.event.schedule != '15 * * * *'
         run: npm run sync:education
@@ -33,6 +44,9 @@ jobs:
           npm run sync:opportunities
           npm run test:education
           npm run typecheck
+      - name: Check learning and workplace reference links
+        if: github.event.schedule != '15 * * * *'
+        run: node scripts/check-learning-sources.mjs
       - name: Publish validated snapshots to Supabase
         if: env.SUPABASE_URL != '' && env.SUPABASE_SECRET_KEY != ''
         run: |

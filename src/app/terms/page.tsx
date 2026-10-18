@@ -202,6 +202,7 @@ export default function TermsPage() {
       </ul>
 
       <h2 id="premium">Premium subscription</h2>
+<p>Illumship is the game’s name for benefits attached to your existing Premium subscription; it is not a second subscription. Benefits include removing contextual game adverts, access to exotic companion cards and unlimited local companion style previews. Tiggy AI retains its published daily allowance. Clout, simulated investments and collectible assets have no cash value and cannot be withdrawn or exchanged for money. Limited expansion purchase windows do not remove access to packs already owned.</p>
       <ul>
         <li>
           <strong>What you get.</strong> Premium adds extra Ask Tiggy features,

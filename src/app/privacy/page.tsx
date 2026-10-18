@@ -43,7 +43,7 @@ export default function PrivacyPage() {
             privately in your account; it is never shown on Social.
           </li>
           <li>
-            No adverts, no tracking for adverts, and we never sell your data.
+            Game screens can show contextual event adverts. We do not use behavioural advertising trackers or sell your data. Illumship removes game adverts.
           </li>
           <li>
             Your data is stored in London. The companies that help us run the
@@ -79,6 +79,7 @@ export default function PrivacyPage() {
       </p>
 
       <h2 id="collect">What we collect</h2>
+<p><strong>City friends and portfolio.</strong> We store mutual friend requests, blocks, asset holdings, Clout transactions and weekly reward claims. Friend message content is encrypted in the browser; we store ciphertext, sender, relationship and timing. Private messaging keys remain in your browser’s IndexedDB. Security-code pins are stored locally. A report discloses only the message text you select to our safety team. The current messaging version uses one browser per account, without key recovery or forward secrecy.</p>
       <h3>When you create an account</h3>
       <ul>
         <li>
@@ -280,7 +281,7 @@ export default function PrivacyPage() {
           shared publicly unless you post it on the forum.
         </li>
         <li>
-          <strong>No adverts and no profiling for adverts.</strong> The only
+          <strong>No behavioural profiling for adverts.</strong> Contextual event adverts can appear in game screens. The only
           personalisation is suggesting topics to revise, based on your own quiz
           answers. That's the main point of the dashboard, and it's never used
           for anything else.

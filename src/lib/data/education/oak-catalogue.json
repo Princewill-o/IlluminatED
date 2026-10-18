@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T23:25:26.694Z",
+  "generatedAt": "2026-10-18T09:56:42.109Z",
   "items": [
     {
       "slug": "maths-secondary-year-10-higher",
@@ -11,7 +11,7 @@
       "board": "",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-10-higher/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "algebraic-manipulation",
@@ -1222,7 +1222,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -1762,7 +1762,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -2252,7 +2252,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -2787,7 +2787,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -3272,7 +3272,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -3827,7 +3827,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -4332,7 +4332,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -4894,7 +4894,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -5381,7 +5381,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -5928,7 +5928,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -6410,7 +6410,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -6957,7 +6957,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -7424,7 +7424,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "geographical-skills",
@@ -8093,7 +8093,7 @@
       "board": "",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-10-foundation/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "algebraic-manipulation",
@@ -9077,7 +9077,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "british-depth-study-norman-england-c1066-c1100",
@@ -9904,7 +9904,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -11154,7 +11154,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -12324,7 +12324,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -13559,7 +13559,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -14709,7 +14709,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -15959,7 +15959,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -17129,7 +17129,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -17487,7 +17487,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -17835,7 +17835,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18198,7 +18198,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18551,7 +18551,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18909,7 +18909,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -19257,7 +19257,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-10-gcse-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "programming-sequence",
@@ -19872,7 +19872,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-10-gcse-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "programming-sequence",
@@ -20477,7 +20477,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "thematic-studies-5160",
@@ -20754,43 +20754,6 @@
           ]
         },
         {
-          "slug": "historic-environments-5158",
-          "title": "Historic environments",
-          "url": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-edexcel/units/historic-environments-5158/lessons",
-          "lessons": [
-            {
-              "slug": "the-historical-context-of-medicine-in-the-early-20th-century",
-              "title": "The historical context of medicine in the early 20th century",
-              "url": "https://www.thenational.academy/pupils/lessons/the-historical-context-of-medicine-in-the-early-20th-century"
-            },
-            {
-              "slug": "the-british-sector-of-the-western-front",
-              "title": "The British sector of the Western Front",
-              "url": "https://www.thenational.academy/pupils/lessons/the-british-sector-of-the-western-front"
-            },
-            {
-              "slug": "conditions-requiring-medical-treatment-on-the-western-front",
-              "title": "Conditions requiring medical treatment on the Western Front",
-              "url": "https://www.thenational.academy/pupils/lessons/conditions-requiring-medical-treatment-on-the-western-front"
-            },
-            {
-              "slug": "the-chain-of-evacuation-on-the-western-front",
-              "title": "The Chain of Evacuation on the Western Front",
-              "url": "https://www.thenational.academy/pupils/lessons/the-chain-of-evacuation-on-the-western-front"
-            },
-            {
-              "slug": "medical-treatment-in-casualty-clearing-stations-and-base-hospitals",
-              "title": "Medical treatment in Casualty Clearing Stations and Base Hospitals",
-              "url": "https://www.thenational.academy/pupils/lessons/medical-treatment-in-casualty-clearing-stations-and-base-hospitals"
-            },
-            {
-              "slug": "the-significance-of-the-western-front-for-experiments-in-surgery-and-medicine",
-              "title": "The significance of the Western Front for experiments in surgery and medicine",
-              "url": "https://www.thenational.academy/pupils/lessons/the-significance-of-the-western-front-for-experiments-in-surgery-and-medicine"
-            }
-          ]
-        },
-        {
           "slug": "historic-environments-5161",
           "title": "Historic environments",
           "url": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-edexcel/units/historic-environments-5161/lessons",
@@ -20834,6 +20797,43 @@
               "slug": "writing-about-notting-hill-and-its-sources",
               "title": "Writing about Notting Hill and its sources",
               "url": "https://www.thenational.academy/pupils/lessons/writing-about-notting-hill-and-its-sources"
+            }
+          ]
+        },
+        {
+          "slug": "historic-environments-5158",
+          "title": "Historic environments",
+          "url": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-edexcel/units/historic-environments-5158/lessons",
+          "lessons": [
+            {
+              "slug": "the-historical-context-of-medicine-in-the-early-20th-century",
+              "title": "The historical context of medicine in the early 20th century",
+              "url": "https://www.thenational.academy/pupils/lessons/the-historical-context-of-medicine-in-the-early-20th-century"
+            },
+            {
+              "slug": "the-british-sector-of-the-western-front",
+              "title": "The British sector of the Western Front",
+              "url": "https://www.thenational.academy/pupils/lessons/the-british-sector-of-the-western-front"
+            },
+            {
+              "slug": "conditions-requiring-medical-treatment-on-the-western-front",
+              "title": "Conditions requiring medical treatment on the Western Front",
+              "url": "https://www.thenational.academy/pupils/lessons/conditions-requiring-medical-treatment-on-the-western-front"
+            },
+            {
+              "slug": "the-chain-of-evacuation-on-the-western-front",
+              "title": "The Chain of Evacuation on the Western Front",
+              "url": "https://www.thenational.academy/pupils/lessons/the-chain-of-evacuation-on-the-western-front"
+            },
+            {
+              "slug": "medical-treatment-in-casualty-clearing-stations-and-base-hospitals",
+              "title": "Medical treatment in Casualty Clearing Stations and Base Hospitals",
+              "url": "https://www.thenational.academy/pupils/lessons/medical-treatment-in-casualty-clearing-stations-and-base-hospitals"
+            },
+            {
+              "slug": "the-significance-of-the-western-front-for-experiments-in-surgery-and-medicine",
+              "title": "The significance of the Western Front for experiments in surgery and medicine",
+              "url": "https://www.thenational.academy/pupils/lessons/the-significance-of-the-western-front-for-experiments-in-surgery-and-medicine"
             }
           ]
         },
@@ -20976,7 +20976,7 @@
       "board": "Edexcel B",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-10-edexcelb/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "geographical-and-statistics-skills",
@@ -21588,7 +21588,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "modern-text-first-study-198",
@@ -22191,143 +22191,6 @@
           ]
         },
         {
-          "slug": "nineteenth-century-text-first-study-154",
-          "title": "Nineteenth century text: first study",
-          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-aqa/units/nineteenth-century-text-first-study-154/lessons",
-          "lessons": [
-            {
-              "slug": "chapter-1-mr-utterson",
-              "title": "'Jekyll and Hyde' Chapter 1: Meeting Mr Utterson",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-1-mr-utterson"
-            },
-            {
-              "slug": "chapter-1-the-story-of-the-door",
-              "title": "'Jekyll and Hyde' Chapter 1: The Story of The Door",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-1-the-story-of-the-door"
-            },
-            {
-              "slug": "chapter-2-search-for-mr-hyde",
-              "title": "'Jekyll and Hyde' Chapter 2: Search for Mr Hyde",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-2-search-for-mr-hyde"
-            },
-            {
-              "slug": "chapters-3-and-4-of-dr-jekyll-and-mr-hyde",
-              "title": "'Jekyll and Hyde': Chapters 3 and 4",
-              "url": "https://www.thenational.academy/pupils/lessons/chapters-3-and-4-of-dr-jekyll-and-mr-hyde"
-            },
-            {
-              "slug": "chapter-5-incident-of-the-letter",
-              "title": "'Jekyll and Hyde' Chapter 5: Incident of the Letter",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-5-incident-of-the-letter"
-            },
-            {
-              "slug": "chapter-6-remarkable-incident-of-dr-lanyon",
-              "title": "'Jekyll and Hyde' Chapter 6: Remarkable Incident of Dr. Lanyon",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-6-remarkable-incident-of-dr-lanyon"
-            },
-            {
-              "slug": "chapter-7-the-incident-at-the-window",
-              "title": "'Jekyll and Hyde' Chapter 7: Incident at the Window",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-7-the-incident-at-the-window"
-            },
-            {
-              "slug": "chapter-8-the-last-night",
-              "title": "'Jekyll and Hyde' Chapter 8: The Last Night",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-8-the-last-night"
-            },
-            {
-              "slug": "chapter-9-dr-lanyons-narrative",
-              "title": "'Jekyll and Hyde' Chapter 9: Dr Lanyon's Narrative",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-9-dr-lanyons-narrative"
-            },
-            {
-              "slug": "chapter-10-henry-jekylls-full-statement-of-the-case",
-              "title": "'Jekyll and Hyde' Chapter 10: Henry Jekyll's Full Statement of the Case",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-10-henry-jekylls-full-statement-of-the-case"
-            },
-            {
-              "slug": "chapter-10-jekylls-confession",
-              "title": "'Jekyll and Hyde' Chapter 10: responding to Jekyll's confession",
-              "url": "https://www.thenational.academy/pupils/lessons/chapter-10-jekylls-confession"
-            },
-            {
-              "slug": "going-gothic",
-              "title": "Introducing the Gothic in 'Jekyll and Hyde'",
-              "url": "https://www.thenational.academy/pupils/lessons/going-gothic"
-            },
-            {
-              "slug": "the-importance-of-science-and-religion-in-the-novella",
-              "title": "'Jekyll and Hyde': the importance of science and religion in the novella",
-              "url": "https://www.thenational.academy/pupils/lessons/the-importance-of-science-and-religion-in-the-novella"
-            },
-            {
-              "slug": "lanyon-as-a-foil-to-jekyll",
-              "title": "'Jekyll and Hyde': examining Lanyon as a foil to Jekyll",
-              "url": "https://www.thenational.academy/pupils/lessons/lanyon-as-a-foil-to-jekyll"
-            },
-            {
-              "slug": "mr-hyde-the-embodiment-of-evil",
-              "title": "'Jekyll and Hyde': examining Mr. Hyde as the embodiment of evil",
-              "url": "https://www.thenational.academy/pupils/lessons/mr-hyde-the-embodiment-of-evil"
-            },
-            {
-              "slug": "mr-hyde-the-murderer",
-              "title": "'Jekyll and Hyde': examining Mr. Hyde as a dangerous character",
-              "url": "https://www.thenational.academy/pupils/lessons/mr-hyde-the-murderer"
-            },
-            {
-              "slug": "developing-paragraphs-on-the-terrifying-mr-hyde",
-              "title": "'Jekyll and Hyde': developing analytical paragraphs about Mr. Hyde",
-              "url": "https://www.thenational.academy/pupils/lessons/developing-paragraphs-on-the-terrifying-mr-hyde"
-            },
-            {
-              "slug": "jekyll-sinner-and-sufferer",
-              "title": "'Jekyll and Hyde': writing about Jekyll's culpability in the novella",
-              "url": "https://www.thenational.academy/pupils/lessons/jekyll-sinner-and-sufferer"
-            },
-            {
-              "slug": "the-duplicitous-upper-classes",
-              "title": "'Jekyll and Hyde': exploring the duplicity of the upper class characters",
-              "url": "https://www.thenational.academy/pupils/lessons/the-duplicitous-upper-classes"
-            },
-            {
-              "slug": "planning-a-successful-jekyll-and-hyde-essay",
-              "title": "'Jekyll and Hyde': planning a successful essay",
-              "url": "https://www.thenational.academy/pupils/lessons/planning-a-successful-jekyll-and-hyde-essay"
-            },
-            {
-              "slug": "introductions-and-conclusions-jekyll-and-hyde",
-              "title": "'Jekyll and Hyde': writing introductions and conclusions",
-              "url": "https://www.thenational.academy/pupils/lessons/introductions-and-conclusions-jekyll-and-hyde"
-            },
-            {
-              "slug": "jekyll-and-hyde-whole-text-structure",
-              "title": "'Jekyll and Hyde': examining the novella's structure",
-              "url": "https://www.thenational.academy/pupils/lessons/jekyll-and-hyde-whole-text-structure"
-            },
-            {
-              "slug": "duplicity-in-jekyll-and-hyde-a-model-essay",
-              "title": "'Jekyll and Hyde': exploring duplicity in a model essay",
-              "url": "https://www.thenational.academy/pupils/lessons/duplicity-in-jekyll-and-hyde-a-model-essay"
-            },
-            {
-              "slug": "duality-in-stevensons-novella",
-              "title": "'Jekyll and Hyde': duality as a theme in the novella",
-              "url": "https://www.thenational.academy/pupils/lessons/duality-in-stevensons-novella"
-            },
-            {
-              "slug": "writing-an-analytical-response-about-duality",
-              "title": "'Jekyll and Hyde': writing an analytical response about duality",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-an-analytical-response-about-duality"
-            },
-            {
-              "slug": "duality-in-jekyll-and-hyde-refining-our-response",
-              "title": "'Jekyll and Hyde': refining written responses on duality",
-              "url": "https://www.thenational.academy/pupils/lessons/duality-in-jekyll-and-hyde-refining-our-response"
-            }
-          ]
-        },
-        {
           "slug": "nineteenth-century-text-first-study-200",
           "title": "Nineteenth century text: first study",
           "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-aqa/units/nineteenth-century-text-first-study-200/lessons",
@@ -22461,6 +22324,143 @@
               "slug": "writing-an-extended-argument",
               "title": "'A Christmas Carol': writing an extended argument",
               "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-argument"
+            }
+          ]
+        },
+        {
+          "slug": "nineteenth-century-text-first-study-154",
+          "title": "Nineteenth century text: first study",
+          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-aqa/units/nineteenth-century-text-first-study-154/lessons",
+          "lessons": [
+            {
+              "slug": "chapter-1-mr-utterson",
+              "title": "'Jekyll and Hyde' Chapter 1: Meeting Mr Utterson",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-1-mr-utterson"
+            },
+            {
+              "slug": "chapter-1-the-story-of-the-door",
+              "title": "'Jekyll and Hyde' Chapter 1: The Story of The Door",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-1-the-story-of-the-door"
+            },
+            {
+              "slug": "chapter-2-search-for-mr-hyde",
+              "title": "'Jekyll and Hyde' Chapter 2: Search for Mr Hyde",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-2-search-for-mr-hyde"
+            },
+            {
+              "slug": "chapters-3-and-4-of-dr-jekyll-and-mr-hyde",
+              "title": "'Jekyll and Hyde': Chapters 3 and 4",
+              "url": "https://www.thenational.academy/pupils/lessons/chapters-3-and-4-of-dr-jekyll-and-mr-hyde"
+            },
+            {
+              "slug": "chapter-5-incident-of-the-letter",
+              "title": "'Jekyll and Hyde' Chapter 5: Incident of the Letter",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-5-incident-of-the-letter"
+            },
+            {
+              "slug": "chapter-6-remarkable-incident-of-dr-lanyon",
+              "title": "'Jekyll and Hyde' Chapter 6: Remarkable Incident of Dr. Lanyon",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-6-remarkable-incident-of-dr-lanyon"
+            },
+            {
+              "slug": "chapter-7-the-incident-at-the-window",
+              "title": "'Jekyll and Hyde' Chapter 7: Incident at the Window",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-7-the-incident-at-the-window"
+            },
+            {
+              "slug": "chapter-8-the-last-night",
+              "title": "'Jekyll and Hyde' Chapter 8: The Last Night",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-8-the-last-night"
+            },
+            {
+              "slug": "chapter-9-dr-lanyons-narrative",
+              "title": "'Jekyll and Hyde' Chapter 9: Dr Lanyon's Narrative",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-9-dr-lanyons-narrative"
+            },
+            {
+              "slug": "chapter-10-henry-jekylls-full-statement-of-the-case",
+              "title": "'Jekyll and Hyde' Chapter 10: Henry Jekyll's Full Statement of the Case",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-10-henry-jekylls-full-statement-of-the-case"
+            },
+            {
+              "slug": "chapter-10-jekylls-confession",
+              "title": "'Jekyll and Hyde' Chapter 10: responding to Jekyll's confession",
+              "url": "https://www.thenational.academy/pupils/lessons/chapter-10-jekylls-confession"
+            },
+            {
+              "slug": "going-gothic",
+              "title": "Introducing the Gothic in 'Jekyll and Hyde'",
+              "url": "https://www.thenational.academy/pupils/lessons/going-gothic"
+            },
+            {
+              "slug": "the-importance-of-science-and-religion-in-the-novella",
+              "title": "'Jekyll and Hyde': the importance of science and religion in the novella",
+              "url": "https://www.thenational.academy/pupils/lessons/the-importance-of-science-and-religion-in-the-novella"
+            },
+            {
+              "slug": "lanyon-as-a-foil-to-jekyll",
+              "title": "'Jekyll and Hyde': examining Lanyon as a foil to Jekyll",
+              "url": "https://www.thenational.academy/pupils/lessons/lanyon-as-a-foil-to-jekyll"
+            },
+            {
+              "slug": "mr-hyde-the-embodiment-of-evil",
+              "title": "'Jekyll and Hyde': examining Mr. Hyde as the embodiment of evil",
+              "url": "https://www.thenational.academy/pupils/lessons/mr-hyde-the-embodiment-of-evil"
+            },
+            {
+              "slug": "mr-hyde-the-murderer",
+              "title": "'Jekyll and Hyde': examining Mr. Hyde as a dangerous character",
+              "url": "https://www.thenational.academy/pupils/lessons/mr-hyde-the-murderer"
+            },
+            {
+              "slug": "developing-paragraphs-on-the-terrifying-mr-hyde",
+              "title": "'Jekyll and Hyde': developing analytical paragraphs about Mr. Hyde",
+              "url": "https://www.thenational.academy/pupils/lessons/developing-paragraphs-on-the-terrifying-mr-hyde"
+            },
+            {
+              "slug": "jekyll-sinner-and-sufferer",
+              "title": "'Jekyll and Hyde': writing about Jekyll's culpability in the novella",
+              "url": "https://www.thenational.academy/pupils/lessons/jekyll-sinner-and-sufferer"
+            },
+            {
+              "slug": "the-duplicitous-upper-classes",
+              "title": "'Jekyll and Hyde': exploring the duplicity of the upper class characters",
+              "url": "https://www.thenational.academy/pupils/lessons/the-duplicitous-upper-classes"
+            },
+            {
+              "slug": "planning-a-successful-jekyll-and-hyde-essay",
+              "title": "'Jekyll and Hyde': planning a successful essay",
+              "url": "https://www.thenational.academy/pupils/lessons/planning-a-successful-jekyll-and-hyde-essay"
+            },
+            {
+              "slug": "introductions-and-conclusions-jekyll-and-hyde",
+              "title": "'Jekyll and Hyde': writing introductions and conclusions",
+              "url": "https://www.thenational.academy/pupils/lessons/introductions-and-conclusions-jekyll-and-hyde"
+            },
+            {
+              "slug": "jekyll-and-hyde-whole-text-structure",
+              "title": "'Jekyll and Hyde': examining the novella's structure",
+              "url": "https://www.thenational.academy/pupils/lessons/jekyll-and-hyde-whole-text-structure"
+            },
+            {
+              "slug": "duplicity-in-jekyll-and-hyde-a-model-essay",
+              "title": "'Jekyll and Hyde': exploring duplicity in a model essay",
+              "url": "https://www.thenational.academy/pupils/lessons/duplicity-in-jekyll-and-hyde-a-model-essay"
+            },
+            {
+              "slug": "duality-in-stevensons-novella",
+              "title": "'Jekyll and Hyde': duality as a theme in the novella",
+              "url": "https://www.thenational.academy/pupils/lessons/duality-in-stevensons-novella"
+            },
+            {
+              "slug": "writing-an-analytical-response-about-duality",
+              "title": "'Jekyll and Hyde': writing an analytical response about duality",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-an-analytical-response-about-duality"
+            },
+            {
+              "slug": "duality-in-jekyll-and-hyde-refining-our-response",
+              "title": "'Jekyll and Hyde': refining written responses on duality",
+              "url": "https://www.thenational.academy/pupils/lessons/duality-in-jekyll-and-hyde-refining-our-response"
             }
           ]
         },
@@ -23462,7 +23462,7 @@
       "board": "Eduqas",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-eduqas/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "modern-text-first-study-4896",
@@ -25047,7 +25047,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "modern-text-first-study-5140",
@@ -25498,143 +25498,6 @@
           ]
         },
         {
-          "slug": "nineteenth-century-text-first-study-200",
-          "title": "Nineteenth century text: first study",
-          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-edexcel/units/nineteenth-century-text-first-study-200/lessons",
-          "lessons": [
-            {
-              "slug": "stave-1-scrooge-the-miser",
-              "title": "'A Christmas Carol' Stave 1: Scrooge the Miser",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-1-scrooge-the-miser"
-            },
-            {
-              "slug": "stave-1-the-characterisation-of-scrooge",
-              "title": "'A Christmas Carol' Stave 1: The Characterisation of Scrooge",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-1-the-characterisation-of-scrooge"
-            },
-            {
-              "slug": "stave-1-meeting-with-marleys-ghost",
-              "title": "'A Christmas Carol' Stave 1: Meeting Marley's ghost",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-1-meeting-with-marleys-ghost"
-            },
-            {
-              "slug": "scrooge-as-a-very-victorian-character",
-              "title": "'A Christmas Carol': Scrooge as a very Victorian character",
-              "url": "https://www.thenational.academy/pupils/lessons/scrooge-as-a-very-victorian-character"
-            },
-            {
-              "slug": "perfect-planning-for-an-essay-on-a-christmas-carol",
-              "title": "'A Christmas Carol': planning an essay on Scrooge",
-              "url": "https://www.thenational.academy/pupils/lessons/perfect-planning-for-an-essay-on-a-christmas-carol"
-            },
-            {
-              "slug": "writing-about-stave-1",
-              "title": "'A Christmas Carol': writing about Stave 1",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-1"
-            },
-            {
-              "slug": "stave-2-the-first-of-the-three-spirits",
-              "title": "'A Christmas Carol' Stave 2: the first of the three spirits",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-2-the-first-of-the-three-spirits"
-            },
-            {
-              "slug": "stave-2-scrooges-childhood-and-fezziwig",
-              "title": "'A Christmas Carol' Stave 2: Scrooge's childhood and Fezziwig",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-2-scrooges-childhood-and-fezziwig"
-            },
-            {
-              "slug": "stave-2-belle-the-one-who-got-away",
-              "title": "'A Christmas Carol' Stave 2: Belle",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-2-belle-the-one-who-got-away"
-            },
-            {
-              "slug": "writing-about-stave-2",
-              "title": "'A Christmas Carol': writing about Stave 2",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-2"
-            },
-            {
-              "slug": "improving-your-analytical-writing",
-              "title": "'A Christmas Carol': improving analytical writing",
-              "url": "https://www.thenational.academy/pupils/lessons/improving-your-analytical-writing"
-            },
-            {
-              "slug": "stave-3-the-second-of-the-three-spirits",
-              "title": "'A Christmas Carol' Stave 3: the second of the three spirits",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-3-the-second-of-the-three-spirits"
-            },
-            {
-              "slug": "stave-3-christmas-around-the-world",
-              "title": "'A Christmas Carol' Stave 3: Christmas around the world",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-3-christmas-around-the-world"
-            },
-            {
-              "slug": "stave-3-the-cratchits-christmas",
-              "title": "'A Christmas Carol' Stave 3: the Cratchits' Christmas",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-3-the-cratchits-christmas"
-            },
-            {
-              "slug": "stave-3-scrooge-and-fred-as-opposite-characters",
-              "title": "'A Christmas Carol' Stave 3: Scrooge and Fred as opposite characters",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-3-scrooge-and-fred-as-opposite-characters"
-            },
-            {
-              "slug": "stave-3-ignorance-and-want",
-              "title": "'A Christmas Carol' Stave 3: Ignorance and Want",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-3-ignorance-and-want"
-            },
-            {
-              "slug": "writing-about-stave-3",
-              "title": "'A Christmas Carol': writing about the presentation of children",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-3"
-            },
-            {
-              "slug": "stave-4-the-last-of-the-three-spirits",
-              "title": "'A Christmas Carol' Stave 4: the last of the three spirits",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-4-the-last-of-the-three-spirits"
-            },
-            {
-              "slug": "stave-4-a-significant-death",
-              "title": "'A Christmas Carol' Stave 4: a significant death",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-4-a-significant-death"
-            },
-            {
-              "slug": "stave-4-death-in-a-christmas-carol",
-              "title": "'A Christmas Carol' Stave 4: death in the novella",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-4-death-in-a-christmas-carol"
-            },
-            {
-              "slug": "stave-4-scrooges-fears",
-              "title": "'A Christmas Carol' Stave 4: Scrooge's fears",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-4-scrooges-fears"
-            },
-            {
-              "slug": "stave-5-the-change-in-scrooge",
-              "title": "'A Christmas Carol' Stave 5: the change in Scrooge",
-              "url": "https://www.thenational.academy/pupils/lessons/stave-5-the-change-in-scrooge"
-            },
-            {
-              "slug": "symbolism-in-a-christmas-carol",
-              "title": "'A Christmas Carol': symbolism in the novella",
-              "url": "https://www.thenational.academy/pupils/lessons/symbolism-in-a-christmas-carol"
-            },
-            {
-              "slug": "scrooges-redemptive-journey",
-              "title": "'A Christmas Carol': Scrooge's redemptive journey",
-              "url": "https://www.thenational.academy/pupils/lessons/scrooges-redemptive-journey"
-            },
-            {
-              "slug": "planning-an-extended-argument",
-              "title": "'A Christmas Carol': planning an extended argument",
-              "url": "https://www.thenational.academy/pupils/lessons/planning-an-extended-argument"
-            },
-            {
-              "slug": "writing-an-extended-argument",
-              "title": "'A Christmas Carol': writing an extended argument",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-argument"
-            }
-          ]
-        },
-        {
           "slug": "nineteenth-century-text-first-study-154",
           "title": "Nineteenth century text: first study",
           "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-edexcel/units/nineteenth-century-text-first-study-154/lessons",
@@ -25768,6 +25631,143 @@
               "slug": "duality-in-jekyll-and-hyde-refining-our-response",
               "title": "'Jekyll and Hyde': refining written responses on duality",
               "url": "https://www.thenational.academy/pupils/lessons/duality-in-jekyll-and-hyde-refining-our-response"
+            }
+          ]
+        },
+        {
+          "slug": "nineteenth-century-text-first-study-200",
+          "title": "Nineteenth century text: first study",
+          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-edexcel/units/nineteenth-century-text-first-study-200/lessons",
+          "lessons": [
+            {
+              "slug": "stave-1-scrooge-the-miser",
+              "title": "'A Christmas Carol' Stave 1: Scrooge the Miser",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-1-scrooge-the-miser"
+            },
+            {
+              "slug": "stave-1-the-characterisation-of-scrooge",
+              "title": "'A Christmas Carol' Stave 1: The Characterisation of Scrooge",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-1-the-characterisation-of-scrooge"
+            },
+            {
+              "slug": "stave-1-meeting-with-marleys-ghost",
+              "title": "'A Christmas Carol' Stave 1: Meeting Marley's ghost",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-1-meeting-with-marleys-ghost"
+            },
+            {
+              "slug": "scrooge-as-a-very-victorian-character",
+              "title": "'A Christmas Carol': Scrooge as a very Victorian character",
+              "url": "https://www.thenational.academy/pupils/lessons/scrooge-as-a-very-victorian-character"
+            },
+            {
+              "slug": "perfect-planning-for-an-essay-on-a-christmas-carol",
+              "title": "'A Christmas Carol': planning an essay on Scrooge",
+              "url": "https://www.thenational.academy/pupils/lessons/perfect-planning-for-an-essay-on-a-christmas-carol"
+            },
+            {
+              "slug": "writing-about-stave-1",
+              "title": "'A Christmas Carol': writing about Stave 1",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-1"
+            },
+            {
+              "slug": "stave-2-the-first-of-the-three-spirits",
+              "title": "'A Christmas Carol' Stave 2: the first of the three spirits",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-2-the-first-of-the-three-spirits"
+            },
+            {
+              "slug": "stave-2-scrooges-childhood-and-fezziwig",
+              "title": "'A Christmas Carol' Stave 2: Scrooge's childhood and Fezziwig",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-2-scrooges-childhood-and-fezziwig"
+            },
+            {
+              "slug": "stave-2-belle-the-one-who-got-away",
+              "title": "'A Christmas Carol' Stave 2: Belle",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-2-belle-the-one-who-got-away"
+            },
+            {
+              "slug": "writing-about-stave-2",
+              "title": "'A Christmas Carol': writing about Stave 2",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-2"
+            },
+            {
+              "slug": "improving-your-analytical-writing",
+              "title": "'A Christmas Carol': improving analytical writing",
+              "url": "https://www.thenational.academy/pupils/lessons/improving-your-analytical-writing"
+            },
+            {
+              "slug": "stave-3-the-second-of-the-three-spirits",
+              "title": "'A Christmas Carol' Stave 3: the second of the three spirits",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-3-the-second-of-the-three-spirits"
+            },
+            {
+              "slug": "stave-3-christmas-around-the-world",
+              "title": "'A Christmas Carol' Stave 3: Christmas around the world",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-3-christmas-around-the-world"
+            },
+            {
+              "slug": "stave-3-the-cratchits-christmas",
+              "title": "'A Christmas Carol' Stave 3: the Cratchits' Christmas",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-3-the-cratchits-christmas"
+            },
+            {
+              "slug": "stave-3-scrooge-and-fred-as-opposite-characters",
+              "title": "'A Christmas Carol' Stave 3: Scrooge and Fred as opposite characters",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-3-scrooge-and-fred-as-opposite-characters"
+            },
+            {
+              "slug": "stave-3-ignorance-and-want",
+              "title": "'A Christmas Carol' Stave 3: Ignorance and Want",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-3-ignorance-and-want"
+            },
+            {
+              "slug": "writing-about-stave-3",
+              "title": "'A Christmas Carol': writing about the presentation of children",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-about-stave-3"
+            },
+            {
+              "slug": "stave-4-the-last-of-the-three-spirits",
+              "title": "'A Christmas Carol' Stave 4: the last of the three spirits",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-4-the-last-of-the-three-spirits"
+            },
+            {
+              "slug": "stave-4-a-significant-death",
+              "title": "'A Christmas Carol' Stave 4: a significant death",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-4-a-significant-death"
+            },
+            {
+              "slug": "stave-4-death-in-a-christmas-carol",
+              "title": "'A Christmas Carol' Stave 4: death in the novella",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-4-death-in-a-christmas-carol"
+            },
+            {
+              "slug": "stave-4-scrooges-fears",
+              "title": "'A Christmas Carol' Stave 4: Scrooge's fears",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-4-scrooges-fears"
+            },
+            {
+              "slug": "stave-5-the-change-in-scrooge",
+              "title": "'A Christmas Carol' Stave 5: the change in Scrooge",
+              "url": "https://www.thenational.academy/pupils/lessons/stave-5-the-change-in-scrooge"
+            },
+            {
+              "slug": "symbolism-in-a-christmas-carol",
+              "title": "'A Christmas Carol': symbolism in the novella",
+              "url": "https://www.thenational.academy/pupils/lessons/symbolism-in-a-christmas-carol"
+            },
+            {
+              "slug": "scrooges-redemptive-journey",
+              "title": "'A Christmas Carol': Scrooge's redemptive journey",
+              "url": "https://www.thenational.academy/pupils/lessons/scrooges-redemptive-journey"
+            },
+            {
+              "slug": "planning-an-extended-argument",
+              "title": "'A Christmas Carol': planning an extended argument",
+              "url": "https://www.thenational.academy/pupils/lessons/planning-an-extended-argument"
+            },
+            {
+              "slug": "writing-an-extended-argument",
+              "title": "'A Christmas Carol': writing an extended argument",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-argument"
             }
           ]
         },
@@ -26591,7 +26591,7 @@
       "board": "",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-11-foundation/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "algebraic-fractions",
@@ -27100,7 +27100,7 @@
       "board": "",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-11-higher/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "algebraic-fractions",
@@ -28144,7 +28144,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -28492,7 +28492,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -28805,7 +28805,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29163,7 +29163,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29481,7 +29481,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29839,7 +29839,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -30152,7 +30152,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -30478,7 +30478,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -30759,7 +30759,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31090,7 +31090,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31376,7 +31376,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31702,7 +31702,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31978,7 +31978,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -32771,7 +32771,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -33504,7 +33504,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -34312,7 +34312,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -35050,7 +35050,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -35873,7 +35873,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -36626,7 +36626,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "period-studies-5149",
@@ -37101,7 +37101,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -37509,7 +37509,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -37872,7 +37872,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -38280,7 +38280,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -38643,7 +38643,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -39081,7 +39081,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -39469,7 +39469,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-11-gcse-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "programming-dictionaries-and-data-files",
@@ -39837,7 +39837,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-11-gcse-ocr/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "programming-dictionaries-and-data-files",
@@ -40205,7 +40205,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-11-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "period-study-superpower-relations-and-the-cold-war-1941-91",
@@ -40665,7 +40665,7 @@
       "board": "Edexcel B",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-11-edexcelb/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "global-inequalities",
@@ -40946,7 +40946,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "fieldwork",
@@ -41284,7 +41284,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "modern-text-first-deep-dive-188",
@@ -42866,50 +42866,8 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
-        {
-          "slug": "modern-text-first-deep-dive-5033",
-          "title": "Modern text: first deep dive",
-          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/modern-text-first-deep-dive-5033/lessons",
-          "lessons": [
-            {
-              "slug": "contextualising-gender-expectations-in-an-inspector-calls",
-              "title": "Contextualising gender expectations in ‘An Inspector Calls'",
-              "url": "https://www.thenational.academy/pupils/lessons/contextualising-gender-expectations-in-an-inspector-calls"
-            },
-            {
-              "slug": "understanding-gender-and-class-through-mrs-birling-in-an-inspector-calls",
-              "title": "Understanding gender and class through Mrs Birling in 'An Inspector Calls'",
-              "url": "https://www.thenational.academy/pupils/lessons/understanding-gender-and-class-through-mrs-birling-in-an-inspector-calls"
-            },
-            {
-              "slug": "sheila-and-changing-attitudes-toward-gender-and-class-in-an-inspector-calls",
-              "title": "Sheila and changing attitudes toward gender and class in 'An Inspector Calls'",
-              "url": "https://www.thenational.academy/pupils/lessons/sheila-and-changing-attitudes-toward-gender-and-class-in-an-inspector-calls"
-            },
-            {
-              "slug": "exploring-interpretations-of-masculinity-in-an-inspector-calls",
-              "title": "Exploring interpretations of masculinity in 'An Inspector Calls'",
-              "url": "https://www.thenational.academy/pupils/lessons/exploring-interpretations-of-masculinity-in-an-inspector-calls"
-            },
-            {
-              "slug": "eva-smith-in-an-inspector-calls-representation-and-symbolism",
-              "title": "Eva Smith in 'An Inspector Calls': representation and symbolism",
-              "url": "https://www.thenational.academy/pupils/lessons/eva-smith-in-an-inspector-calls-representation-and-symbolism"
-            },
-            {
-              "slug": "using-quotations-and-context-effectively-in-an-an-inspector-calls-essay",
-              "title": "Using quotations and context effectively in an 'An Inspector Calls' essay",
-              "url": "https://www.thenational.academy/pupils/lessons/using-quotations-and-context-effectively-in-an-an-inspector-calls-essay"
-            },
-            {
-              "slug": "planning-an-essay-on-societal-expectations-in-an-inspector-calls",
-              "title": "Planning an essay on societal expectations in ‘An Inspector Calls’",
-              "url": "https://www.thenational.academy/pupils/lessons/planning-an-essay-on-societal-expectations-in-an-inspector-calls"
-            }
-          ]
-        },
         {
           "slug": "modern-text-first-deep-dive-5142",
           "title": "Modern text: first deep dive",
@@ -42949,6 +42907,48 @@
               "slug": "exploring-analysis-on-animal-farm",
               "title": "Developing analytical paragraphs on 'Animal Farm'",
               "url": "https://www.thenational.academy/pupils/lessons/exploring-analysis-on-animal-farm"
+            }
+          ]
+        },
+        {
+          "slug": "modern-text-first-deep-dive-5033",
+          "title": "Modern text: first deep dive",
+          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/modern-text-first-deep-dive-5033/lessons",
+          "lessons": [
+            {
+              "slug": "contextualising-gender-expectations-in-an-inspector-calls",
+              "title": "Contextualising gender expectations in ‘An Inspector Calls'",
+              "url": "https://www.thenational.academy/pupils/lessons/contextualising-gender-expectations-in-an-inspector-calls"
+            },
+            {
+              "slug": "understanding-gender-and-class-through-mrs-birling-in-an-inspector-calls",
+              "title": "Understanding gender and class through Mrs Birling in 'An Inspector Calls'",
+              "url": "https://www.thenational.academy/pupils/lessons/understanding-gender-and-class-through-mrs-birling-in-an-inspector-calls"
+            },
+            {
+              "slug": "sheila-and-changing-attitudes-toward-gender-and-class-in-an-inspector-calls",
+              "title": "Sheila and changing attitudes toward gender and class in 'An Inspector Calls'",
+              "url": "https://www.thenational.academy/pupils/lessons/sheila-and-changing-attitudes-toward-gender-and-class-in-an-inspector-calls"
+            },
+            {
+              "slug": "exploring-interpretations-of-masculinity-in-an-inspector-calls",
+              "title": "Exploring interpretations of masculinity in 'An Inspector Calls'",
+              "url": "https://www.thenational.academy/pupils/lessons/exploring-interpretations-of-masculinity-in-an-inspector-calls"
+            },
+            {
+              "slug": "eva-smith-in-an-inspector-calls-representation-and-symbolism",
+              "title": "Eva Smith in 'An Inspector Calls': representation and symbolism",
+              "url": "https://www.thenational.academy/pupils/lessons/eva-smith-in-an-inspector-calls-representation-and-symbolism"
+            },
+            {
+              "slug": "using-quotations-and-context-effectively-in-an-an-inspector-calls-essay",
+              "title": "Using quotations and context effectively in an 'An Inspector Calls' essay",
+              "url": "https://www.thenational.academy/pupils/lessons/using-quotations-and-context-effectively-in-an-an-inspector-calls-essay"
+            },
+            {
+              "slug": "planning-an-essay-on-societal-expectations-in-an-inspector-calls",
+              "title": "Planning an essay on societal expectations in ‘An Inspector Calls’",
+              "url": "https://www.thenational.academy/pupils/lessons/planning-an-essay-on-societal-expectations-in-an-inspector-calls"
             }
           ]
         },
@@ -43121,73 +43121,6 @@
           ]
         },
         {
-          "slug": "poetry-anthology-continued-study-193",
-          "title": "Poetry anthology: continued study",
-          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/poetry-anthology-continued-study-193/lessons",
-          "lessons": [
-            {
-              "slug": "understanding-the-poem-kumukanda",
-              "title": "Understanding the poem ‘Kumukanda’ by Kayo Chingonyi",
-              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-kumukanda"
-            },
-            {
-              "slug": "analysing-the-poem-kumukanda",
-              "title": "Analysing the poem ‘Kumukanda’ by Kayo Chingonyi",
-              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-kumukanda"
-            },
-            {
-              "slug": "a-comparison-of-kumukanda",
-              "title": "Comparing Chingonyi’s ‘Kumukanda’ to other Edexcel 'Belonging' poems",
-              "url": "https://www.thenational.academy/pupils/lessons/a-comparison-of-kumukanda"
-            },
-            {
-              "slug": "understanding-the-poem-in-wales-wanting-to-be-italian",
-              "title": "Understanding the poem ‘In Wales, wanting to be Italian’ by Imtiaz Dharker",
-              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-in-wales-wanting-to-be-italian"
-            },
-            {
-              "slug": "analysing-the-poem-in-wales-wanting-to-be-italian",
-              "title": "Analysing the poem ‘In Wales, wanting to be Italian’ by Imtiaz Dharker",
-              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-in-wales-wanting-to-be-italian"
-            },
-            {
-              "slug": "understanding-the-poem-us",
-              "title": "Understanding the poem ‘Us’ by Zaffar Kunial",
-              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-us"
-            },
-            {
-              "slug": "analysing-the-poem-us",
-              "title": "Analysing the poem 'Us' by Zaffar Kunial",
-              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-us"
-            },
-            {
-              "slug": "comparing-attitudes-to-identity-and-longing-in-the-edexcel-belonging-anthology",
-              "title": "Comparing attitudes to identity and longing in the Edexcel Belonging anthology",
-              "url": "https://www.thenational.academy/pupils/lessons/comparing-attitudes-to-identity-and-longing-in-the-edexcel-belonging-anthology"
-            },
-            {
-              "slug": "making-connections-between-the-poems-in-the-edexcel-belonging-anthology",
-              "title": "Making connections between the poems in the Edexcel Belonging anthology",
-              "url": "https://www.thenational.academy/pupils/lessons/making-connections-between-the-poems-in-the-edexcel-belonging-anthology"
-            },
-            {
-              "slug": "analysing-an-extended-and-developed-response-on-edexcels-belonging-anthology",
-              "title": "Analysing an extended and developed response on Edexcel's Belonging anthology",
-              "url": "https://www.thenational.academy/pupils/lessons/analysing-an-extended-and-developed-response-on-edexcels-belonging-anthology"
-            },
-            {
-              "slug": "planning-an-extended-and-developed-response-on-edexcels-belonging-poetry",
-              "title": "Planning an extended and developed response on Edexcel's Belonging poetry",
-              "url": "https://www.thenational.academy/pupils/lessons/planning-an-extended-and-developed-response-on-edexcels-belonging-poetry"
-            },
-            {
-              "slug": "writing-an-extended-and-developed-response-on-edexcels-belonging-poetry",
-              "title": "Writing an extended and developed response on Edexcel's 'Belonging' poetry",
-              "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-and-developed-response-on-edexcels-belonging-poetry"
-            }
-          ]
-        },
-        {
           "slug": "poetry-anthology-continued-study-192",
           "title": "Poetry anthology: continued study",
           "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/poetry-anthology-continued-study-192/lessons",
@@ -43251,6 +43184,73 @@
               "slug": "writing-an-extended-and-developed-response-on-conflict-poetry",
               "title": "Writing an extended and developed response on Edexcel 'Conflict' poetry",
               "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-and-developed-response-on-conflict-poetry"
+            }
+          ]
+        },
+        {
+          "slug": "poetry-anthology-continued-study-193",
+          "title": "Poetry anthology: continued study",
+          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/poetry-anthology-continued-study-193/lessons",
+          "lessons": [
+            {
+              "slug": "understanding-the-poem-kumukanda",
+              "title": "Understanding the poem ‘Kumukanda’ by Kayo Chingonyi",
+              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-kumukanda"
+            },
+            {
+              "slug": "analysing-the-poem-kumukanda",
+              "title": "Analysing the poem ‘Kumukanda’ by Kayo Chingonyi",
+              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-kumukanda"
+            },
+            {
+              "slug": "a-comparison-of-kumukanda",
+              "title": "Comparing Chingonyi’s ‘Kumukanda’ to other Edexcel 'Belonging' poems",
+              "url": "https://www.thenational.academy/pupils/lessons/a-comparison-of-kumukanda"
+            },
+            {
+              "slug": "understanding-the-poem-in-wales-wanting-to-be-italian",
+              "title": "Understanding the poem ‘In Wales, wanting to be Italian’ by Imtiaz Dharker",
+              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-in-wales-wanting-to-be-italian"
+            },
+            {
+              "slug": "analysing-the-poem-in-wales-wanting-to-be-italian",
+              "title": "Analysing the poem ‘In Wales, wanting to be Italian’ by Imtiaz Dharker",
+              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-in-wales-wanting-to-be-italian"
+            },
+            {
+              "slug": "understanding-the-poem-us",
+              "title": "Understanding the poem ‘Us’ by Zaffar Kunial",
+              "url": "https://www.thenational.academy/pupils/lessons/understanding-the-poem-us"
+            },
+            {
+              "slug": "analysing-the-poem-us",
+              "title": "Analysing the poem 'Us' by Zaffar Kunial",
+              "url": "https://www.thenational.academy/pupils/lessons/analysing-the-poem-us"
+            },
+            {
+              "slug": "comparing-attitudes-to-identity-and-longing-in-the-edexcel-belonging-anthology",
+              "title": "Comparing attitudes to identity and longing in the Edexcel Belonging anthology",
+              "url": "https://www.thenational.academy/pupils/lessons/comparing-attitudes-to-identity-and-longing-in-the-edexcel-belonging-anthology"
+            },
+            {
+              "slug": "making-connections-between-the-poems-in-the-edexcel-belonging-anthology",
+              "title": "Making connections between the poems in the Edexcel Belonging anthology",
+              "url": "https://www.thenational.academy/pupils/lessons/making-connections-between-the-poems-in-the-edexcel-belonging-anthology"
+            },
+            {
+              "slug": "analysing-an-extended-and-developed-response-on-edexcels-belonging-anthology",
+              "title": "Analysing an extended and developed response on Edexcel's Belonging anthology",
+              "url": "https://www.thenational.academy/pupils/lessons/analysing-an-extended-and-developed-response-on-edexcels-belonging-anthology"
+            },
+            {
+              "slug": "planning-an-extended-and-developed-response-on-edexcels-belonging-poetry",
+              "title": "Planning an extended and developed response on Edexcel's Belonging poetry",
+              "url": "https://www.thenational.academy/pupils/lessons/planning-an-extended-and-developed-response-on-edexcels-belonging-poetry"
+            },
+            {
+              "slug": "writing-an-extended-and-developed-response-on-edexcels-belonging-poetry",
+              "title": "Writing an extended and developed response on Edexcel's 'Belonging' poetry",
+              "url": "https://www.thenational.academy/pupils/lessons/writing-an-extended-and-developed-response-on-edexcels-belonging-poetry"
             }
           ]
         },
@@ -43362,48 +43362,6 @@
           ]
         },
         {
-          "slug": "modern-text-second-deep-dive-5144",
-          "title": "Modern text: second deep dive",
-          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/modern-text-second-deep-dive-5144/lessons",
-          "lessons": [
-            {
-              "slug": "the-theme-of-deception-in-animal-farm",
-              "title": "The theme of deception in 'Animal Farm'",
-              "url": "https://www.thenational.academy/pupils/lessons/the-theme-of-deception-in-animal-farm"
-            },
-            {
-              "slug": "squealer-the-most-treacherous-pig",
-              "title": "'Animal Farm': selecting judicious quotes and tracking a character in an essay",
-              "url": "https://www.thenational.academy/pupils/lessons/squealer-the-most-treacherous-pig"
-            },
-            {
-              "slug": "an-analysis-of-squealer",
-              "title": "'Animal Farm': developing analytical paragraphs on Squealer",
-              "url": "https://www.thenational.academy/pupils/lessons/an-analysis-of-squealer"
-            },
-            {
-              "slug": "weaving-context-into-animal-farm-essays",
-              "title": "Weaving context into 'Animal Farm' essays",
-              "url": "https://www.thenational.academy/pupils/lessons/weaving-context-into-animal-farm-essays"
-            },
-            {
-              "slug": "the-role-of-the-windmill-in-animal-farm",
-              "title": "The importance of the windmill in 'Animal Farm'",
-              "url": "https://www.thenational.academy/pupils/lessons/the-role-of-the-windmill-in-animal-farm"
-            },
-            {
-              "slug": "the-role-of-food-and-drink-in-animal-farm",
-              "title": "The importance of food and drink motifs in 'Animal Farm'",
-              "url": "https://www.thenational.academy/pupils/lessons/the-role-of-food-and-drink-in-animal-farm"
-            },
-            {
-              "slug": "planning-an-excellent-animal-farm-essay",
-              "title": "Planning an  excellent 'Animal Farm' essay",
-              "url": "https://www.thenational.academy/pupils/lessons/planning-an-excellent-animal-farm-essay"
-            }
-          ]
-        },
-        {
           "slug": "modern-text-second-deep-dive-5034",
           "title": "Modern text: second deep dive",
           "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/modern-text-second-deep-dive-5034/lessons",
@@ -43442,6 +43400,48 @@
               "slug": "an-inspector-calls-writing-an-essay-on-punishment-justice-and-the-inspector",
               "title": "'An Inspector Calls': writing an essay on punishment, justice and The Inspector",
               "url": "https://www.thenational.academy/pupils/lessons/an-inspector-calls-writing-an-essay-on-punishment-justice-and-the-inspector"
+            }
+          ]
+        },
+        {
+          "slug": "modern-text-second-deep-dive-5144",
+          "title": "Modern text: second deep dive",
+          "url": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units/modern-text-second-deep-dive-5144/lessons",
+          "lessons": [
+            {
+              "slug": "the-theme-of-deception-in-animal-farm",
+              "title": "The theme of deception in 'Animal Farm'",
+              "url": "https://www.thenational.academy/pupils/lessons/the-theme-of-deception-in-animal-farm"
+            },
+            {
+              "slug": "squealer-the-most-treacherous-pig",
+              "title": "'Animal Farm': selecting judicious quotes and tracking a character in an essay",
+              "url": "https://www.thenational.academy/pupils/lessons/squealer-the-most-treacherous-pig"
+            },
+            {
+              "slug": "an-analysis-of-squealer",
+              "title": "'Animal Farm': developing analytical paragraphs on Squealer",
+              "url": "https://www.thenational.academy/pupils/lessons/an-analysis-of-squealer"
+            },
+            {
+              "slug": "weaving-context-into-animal-farm-essays",
+              "title": "Weaving context into 'Animal Farm' essays",
+              "url": "https://www.thenational.academy/pupils/lessons/weaving-context-into-animal-farm-essays"
+            },
+            {
+              "slug": "the-role-of-the-windmill-in-animal-farm",
+              "title": "The importance of the windmill in 'Animal Farm'",
+              "url": "https://www.thenational.academy/pupils/lessons/the-role-of-the-windmill-in-animal-farm"
+            },
+            {
+              "slug": "the-role-of-food-and-drink-in-animal-farm",
+              "title": "The importance of food and drink motifs in 'Animal Farm'",
+              "url": "https://www.thenational.academy/pupils/lessons/the-role-of-food-and-drink-in-animal-farm"
+            },
+            {
+              "slug": "planning-an-excellent-animal-farm-essay",
+              "title": "Planning an  excellent 'Animal Farm' essay",
+              "url": "https://www.thenational.academy/pupils/lessons/planning-an-excellent-animal-farm-essay"
             }
           ]
         },
@@ -44255,7 +44255,7 @@
       "board": "Eduqas",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-eduqas/units",
-      "checkedAt": "2026-10-02T23:25:26.694Z",
+      "checkedAt": "2026-10-18T09:56:42.109Z",
       "units": [
         {
           "slug": "modern-text-first-deep-dive-1719",

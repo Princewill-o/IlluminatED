@@ -1,6 +1,6 @@
 import { WORKPLACES } from "./careers";
 import { COMPANIES } from "./companies";
-import { type Placed, STARTER_LAYOUT, furnitureById } from "./homes";
+import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture } from "./homes";
 import { buildHome, buildLondon } from "./london";
 import { buildHighlands } from "./regions";
 import { UNIVERSITIES, universityById } from "./universities";
@@ -30,6 +30,7 @@ export interface Rect {
 
 export type PortalTarget =
   | { kind: "study-room" }
+  | { kind: "home-use"; key: string }
   | { kind: "awards" }
   | {kind:"university"; university:string; topic:"courses"|"events"|"networking"}
   | { kind: "prison"; action: "study" | "escape" | "talk"; name?: string }
@@ -39,6 +40,7 @@ export type PortalTarget =
   | { kind: "link"; href: string }
   | { kind: "tube"; station: string }
   | { kind: "work"; workplace: string }
+  | { kind: "workstation"; workplace: string; station: "reception" | "terminal" }
   | { kind: "bus"; stop: string }
   | { kind: "act"; activity: "sleep" | "eat" | "study" | "hike" }
   | { kind: "bike"; dock: string }
@@ -156,6 +158,32 @@ function finish(
       for (let tx = p.rect.x / TILE; tx < (p.rect.x + p.rect.w) / TILE; tx++)
         if (SOLID.has(g.get(tx, ty) ?? "")) g.set(tx, ty, base.kind === "office" ? "." : "-");
   return { ...base, cols: g.cols, rows: g.rows, width: g.cols * TILE, height: g.rows * TILE, tiles: g.rows_() };
+}
+
+/** Walk-in game workplaces, separate from verified employers' advice offices. */
+export function workplaceMap(id: string): WorldMap | null {
+  const w = WORKPLACES.find(workplace => workplace.id === id);
+  if (!w) return null;
+  const g = new Grid(26, 20, ".");
+  g.border("#");
+  for (let x = 2; x < 24; x++) g.set(x, 0, "W");
+  g.fill(3, 14, 5, 1, "r");
+  g.fill(18, 14, 5, 1, "s");
+  g.set(20, 12, "o");
+  g.set(2, 2, "p"); g.set(23, 2, "p");
+  const practical = ["pizzazz", "tescow"].includes(id);
+  for (const x of [4, 11, 18]) {
+    g.fill(x, 5, 3, 1, practical ? "k" : "d");
+    g.set(x + 1, 4, practical ? "b" : "v");
+    g.set(x + 1, 7, "c");
+  }
+  return finish({id:`workplace-${id}`,kind:"office",name:w.name,structures:[],accent:w.accent,
+    spawn:centre(13,17),sign:{x:13,y:10,text:`${w.name} · walk to a work station`},rooms:[],
+    portals:[
+      {id:"exit",rect:px(12,18,2,1),label:"Leave workplace",to:{kind:"map",mapId:"city",label:"London"}},
+      {id:"recruitment",rect:px(4,15,3,1),label:"Reception · apply for a role",to:{kind:"workstation",workplace:id,station:"reception"}},
+      ...[4,11,18].map((x,i):Portal=>({id:`terminal-${i}`,rect:px(x,6,3,1),label:practical?"Use work counter · start shift":"Use computer · start shift",to:{kind:"workstation",workplace:id,station:"terminal"}})),
+    ]},g);
 }
 
 function scatterTrees(g: Grid, x: number, y: number, w: number, h: number, seed: number, density = 0.16) {
@@ -691,10 +719,9 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): World
   for (const p of layout) {
     const f = furnitureById(p.item);
     if (!f) continue;
-    if (f.id !== "rug" && f.id !== "petbed" && f.id !== "beanbag")
+    if (!isFloorFurniture(f.id))
       for (let y = p.y; y < p.y + f.h; y++) for (let x = p.x; x < p.x + f.w; x++) if (t[y]?.[x] !== undefined) t[y][x] = "X";
-    if (f.link) links.push({ id: `f-${p.key}`, rect: px(p.x, p.y + f.h, f.w, 1), label: f.link.label, to: { kind: "link", href: f.link.href } });
-    else if (f.act) links.push({ id: `f-${p.key}`, rect: px(p.x, p.y + f.h, f.w, 1), label: f.act.label, to: { kind: "act", activity: f.act.activity } });
+    links.push({ id: `f-${p.key}`, rect: px(p.x, Math.min(12, p.y + f.h), f.w, 1), label: `${f.name}: ${homeUse(f.id).label.toLowerCase()}`, to: { kind: "home-use", key: p.key } });
   }
   return {
     id: "home",

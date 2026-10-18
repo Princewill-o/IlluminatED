@@ -13,6 +13,9 @@ import { premiumEnabled, stripeLive } from "@/lib/stripe";
 export const metadata = { title: "Free & Premium" };
 export const dynamic = "force-dynamic";
 const features = [
+  ["Illumship: contextual game adverts", "Shown", "Removed"],
+  ["Illumship: exotic companion cards", "Not included", "Unlock with earned Clout"],
+  ["Illumship: companion style previews and interactions", "Not included", "Unlimited local previews"],
   ["Courses, quizzes, flashcards and resources", "Included", "Included"],
   ["Study planner, exam practice progress and careers", "Included", "Included"],
   ["Ask Tiggy messages", "15 free credits, once per account", "Up to 200 a day"],

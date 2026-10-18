@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 
 import { DeletedNotice } from "@/components/deleted-notice";
 import { LearningEvidence } from "@/components/landing/learning-evidence";
+import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { Reveal } from "@/components/landing/reveal";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 
@@ -57,7 +58,7 @@ const FEATURES = [
 const FAQ = [
   ["Can I sign up on my own?", "Not directly. Every account is set up after a short call, so learners get the right courses and schools get the right classes. Book a demo and we'll take it from there."],
   ["How much does it cost?", "Individual students pay a monthly subscription. Schools, colleges and sixth forms get bundle pricing per learner, which works out cheaper. We agree the details on the call."],
-  ["Is it safe for under-18s?", "Yes. There's no open chat between players, only set phrases. Teachers see usernames and homework scores, nothing else. No real-money purchases in the game."],
+  ["How does communication work?", "Public city interactions use preset phrases. Mutual friends can exchange encrypted private messages, with block and report controls. Private messages cannot be routinely read by moderators; reporting shares the selected message. See our safeguarding page for details."],
   ["Which courses does it cover?", "GCSEs, A levels, BTECs and T Levels across the main exam boards (AQA, Edexcel, OCR and more), plus employability skills."],
 ];
 
@@ -103,7 +104,7 @@ export default function Home() {
           </Reveal>
           <Reveal className="relative">
             <div className="overflow-hidden rounded-[2rem] border-[6px] border-white bg-white shadow-2xl shadow-[#13203a]/15 ring-1 ring-border dark:border-[#1b2c48]">
-              <Image src="/landing/game-city-life.webp" alt="A student's character in IlluminatED's London, with today's tasks, needs and the weather on screen" width={1440} height={960} priority className="h-auto w-full" />
+              <Image src="/landing/game-city-october.jpg" alt="Actual IlluminatED game capture: a character exploring London with city streets, ambient residents and learning controls" width={1440} height={960} priority className="h-auto w-full" />
             </div>
             <div className="absolute -bottom-6 -left-4 hidden rounded-2xl border bg-card p-4 shadow-xl sm:block">
               <p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Homework quest</p>
@@ -119,6 +120,10 @@ export default function Home() {
       </section>
 
       <LearningEvidence />
+
+      <section className="border-y bg-[#13203a] text-white" aria-labelledby="gameplay-title"><div className="container grid items-center gap-8 py-14 lg:grid-cols-[0.8fr_1.2fr]"><div><p className="text-xs font-bold tracking-widest text-[#f2d9a6] uppercase">See the actual game</p><h2 id="gameplay-title" className="mt-3 text-3xl tracking-tight sm:text-4xl">Your next chapter has a city around it.</h2><p className="mt-4 leading-7 text-white/75">Walk through London, find the Study Quarter and take a break between questions. Earn Clout through learning, build your collection and return for weekly study challenges.</p><p className="mt-3 text-xs leading-5 text-white/60">Recorded in the real game using an offline preview. Ambient residents are computer controlled. Silent clip; no student conversations or personal accounts are shown.</p><a href="#study-circle" className="mt-5 inline-block min-h-11 font-bold text-[#f2d9a6] underline">See the social side ↓</a></div><figure><video controls playsInline preload="none" poster="/landing/game-city-october.jpg" className="aspect-[3/2] w-full rounded-3xl border border-white/20 bg-black"><source src="/landing/gameplay.webm" type="video/webm" /><p>Your browser cannot play this clip. <a href="/landing/gameplay.webm">Download the gameplay video</a>.</p></video><figcaption className="mt-3 text-xs text-white/60">IlluminatED London · actual game footage · 12-second preview</figcaption></figure></div></section>
+
+      <section id="study-circle" aria-labelledby="study-circle-title" className="container grid items-center gap-10 py-16 lg:grid-cols-2"><div><p className="text-xs font-bold tracking-widest text-primary uppercase">A place to connect</p><h2 id="study-circle-title" className="mt-3 text-3xl tracking-tight sm:text-4xl">The world is shared.<br />Your conversations are yours.</h2><p className="mt-5 max-w-lg leading-7 text-muted-foreground">Meet up in the city, compare ideas and encourage each other to keep learning. Add people you know by username, accept their request and build a circle of up to 30 friends.</p><ul className="mt-5 space-y-3 text-sm">{["Mutual requests before private messaging", "Browser encryption with a security code to compare", "Block players and report a selected message"].map(t => <li key={t} className="flex gap-2"><ShieldCheck className="size-5 shrink-0 text-primary" />{t}</li>)}</ul><p className="mt-4 text-xs leading-5 text-muted-foreground">Messaging keys currently belong to one browser. Keep your original device to read your history. Encrypted conversations cannot be routinely monitored by moderators.</p></div><ConversationPreview /></section>
 
       <section className="relative overflow-hidden border-y bg-[#dde8fd] dark:bg-[#14223a]" aria-labelledby="city-life-title">
         <div aria-hidden className="pointer-events-none absolute -right-20 -bottom-32 size-96 rounded-full border-[35px] border-white/30" />
@@ -234,7 +239,7 @@ export default function Home() {
               [ClipboardCheck, "Auto-marked", "Answers are marked instantly, with explanations, and students earn Clout for a first go."],
               [Sparkles, "Knowledge gaps", "See the topics your class gets wrong most, across every piece of homework."],
               [ShieldCheck, "GDPR by design", "Teachers see usernames and scores only. Leaving a class deletes a student's answers."],
-              [Check, "Safe social", "Preset phrases and reactions only: no open chat, no real-money purchases."],
+              [Check, "Social controls", "Public preset phrases, mutual friend requests, encrypted messages, blocking and selected-message reports."],
             ].map(([Icon, t, d]) => {
               const I = Icon as typeof Check;
               return (
@@ -269,7 +274,7 @@ export default function Home() {
               <span className="text-4xl font-bold tracking-tight">£5.99</span> <span className="text-muted-foreground">a month</span>
             </p>
             <ul className="mt-6 space-y-2.5 text-[15px]">
-              {["London, Study Quarter, career simulations and games", "Every course and exam board", "Cancel any time"].map((t) => (
+              {["London, Study Quarter, career simulations and games", "Supported subjects and linked official resources", "Cancel any time"].map((t) => (
                 <li key={t} className="flex gap-2">
                   <Check className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden /> {t}
                 </li>

@@ -10,13 +10,16 @@ export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
+import { homeFurniture } from "./home-furniture";
+import { makeNameplate } from "./nameplate";
+import type { WorldAffiliation } from "@/game/core/affiliation";
 import { TRAIN_CALL } from "./train-state";
 
 import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
-import { furnitureById } from "@/game/core/homes";
+import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
@@ -39,6 +42,9 @@ import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
  */
 
 export interface Mover3D {
+  badge?: string | null;
+  username?: string;
+  affiliation?: WorldAffiliation | null;
   id: string;
   x: number;
   y: number;
@@ -439,6 +445,52 @@ function architecturalPlanter(g: THREE.Group, x: number, z: number) {
   box(g, ARCH.brass, x - 0.36, 0.5, z - 0.23, x + 0.36, 0.56, z + 0.23);
   box(g, "#476f59", x - 0.28, 0.56, z - 0.17, x + 0.28, 0.86, z + 0.17);
   box(g, "#719579", x - 0.2, 0.86, z - 0.13, x + 0.2, 1.02, z + 0.13);
+}
+
+let telephoneHeader: THREE.Mesh | null = null;
+const TELEPHONE_ROOF = new THREE.SphereGeometry(1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2);
+/** Classic red street kiosk. Opaque glazing avoids costly transparent layers. */
+function telephoneBox(g: THREE.Group, x: number, z: number) {
+  const red = "#d52b32", trim = "#a71824", glass = "#344d51";
+  const kiosk = new THREE.Group();
+  kiosk.position.set(x, 0, z);
+  g.add(kiosk);
+  box(kiosk, "#676a65", 0.1, 0.02, 0.1, 0.9, 0.15, 0.9);
+  box(kiosk, red, 0.14, 0.15, 0.14, 0.86, 0.43, 0.86);
+  // Dark interior, with recessed window panes on the front and both sides.
+  box(kiosk, glass, 0.17, 0.43, 0.17, 0.83, 1.94, 0.83);
+  for (const side of [0.14, 0.8]) {
+    box(kiosk, red, side, 0.15, 0.14, side + 0.06, 2.15, 0.2);
+    box(kiosk, red, side, 0.15, 0.8, side + 0.06, 2.15, 0.86);
+  }
+  // Six rows and three columns of narrow red glazing bars.
+  for (let row = 0; row <= 6; row++) {
+    const y = 0.43 + row * 0.25;
+    box(kiosk, red, 0.18, y, 0.835, 0.82, y + 0.025, 0.86);
+    for (const side of [0.14, 0.835]) box(kiosk, red, side, y, 0.18, side + 0.025, y + 0.025, 0.82);
+  }
+  for (let column = 1; column < 3; column++) {
+    const p = 0.18 + column * 0.64 / 3;
+    box(kiosk, red, p, 0.43, 0.835, p + 0.022, 1.96, 0.86);
+    for (const side of [0.14, 0.835]) box(kiosk, red, side, 0.43, p, side + 0.025, 1.96, p + 0.022);
+  }
+  box(kiosk, trim, 0.12, 1.98, 0.12, 0.88, 2.22, 0.88);
+  box(kiosk, red, 0.1, 2.22, 0.1, 0.9, 2.28, 0.9);
+  const roof = new THREE.Mesh(TELEPHONE_ROOF, mat(red));
+  roof.position.set(0.5, 2.28, 0.5); roof.scale.set(0.4, 0.2, 0.4);
+  kiosk.add(roof);
+  telephoneHeader ??= sign("TELEPHONE", { bg: "#f5ead0", fg: "#332c29", w: 0.61, h: 0.14, font: "700 42px Georgia, serif" });
+  for (const side of [0, -1, 1]) {
+    const header = telephoneHeader.clone();
+    header.position.set(side === 0 ? 0.5 : side < 0 ? 0.115 : 0.885, 2.11, side === 0 ? 0.885 : 0.5);
+    header.rotation.y = side * Math.PI / 2;
+    kiosk.add(header);
+  }
+  // Brass latch, little crest, and a visible phone silhouette behind the glass.
+  box(kiosk, ARCH.brass, 0.74, 0.99, 0.867, 0.77, 1.16, 0.9);
+  box(kiosk, ARCH.brass, 0.47, 2.3, 0.855, 0.53, 2.37, 0.88);
+  box(kiosk, "#b7bab2", 0.28, 1.04, 0.84, 0.44, 1.4, 0.845);
+  box(kiosk, "#172328", 0.3, 1.16, 0.846, 0.34, 1.37, 0.855);
 }
 
 /** Framed glazing reads clearly from the street without transparent materials. */
@@ -1018,28 +1070,6 @@ function busModel(route: string) {
 }
 
 // ── Indoors: rooms built from the tile map (walls, floors, furniture), cut away at the front ──
-const FURNITURE_MODEL: Record<string, string[]> = {
-  bed: ["bedDouble"],
-  wardrobe: ["bookcaseClosedDoors"],
-  shelf: ["bookcaseOpen"],
-  desk: ["desk", "computerScreen"],
-  tv: ["cabinetTelevision", "televisionModern"],
-  sofa: ["loungeSofa"],
-  table: ["tableCoffee"],
-  petbed: ["rugRound"],
-  plant: ["plantSmall1"],
-  lamp: ["lampRoundFloor"],
-  armchair: ["loungeChair"],
-  beanbag: ["loungeChairRelax"],
-  rug: ["rugRound"],
-  fridge: ["kitchenFridge"],
-  fishtank: ["tableGlass"],
-  gaming: ["desk", "computerScreen"],
-  telescope: ["lampSquareFloor"],
-  trophies: ["bookcaseClosedWide"],
-  piano: ["kitchenBar"],
-  arcade: ["kitchenFridgeLarge"],
-};
 const TILE_MODEL: Record<string, string> = { d: "desk", c: "chairDesk", t: "table", o: "table", s: "loungeSofa", v: "kitchenFridgeLarge", k: "kitchenCabinet", F: "kitchenFridge", A: "desk", r: "kitchenBar", b: "bookcaseOpen", p: "plantSmall2", L: "lampSquareFloor" };
 const FLOOR: Record<string, string> = { ".": "#ead9bb", m: "#dfe7f2", l: "#8e7ae0", ",": "#f2f1ee", e: "#b9ad96", X: "#ead9bb", "-": "#e9e1d0", _: "#ecd8a4" };
 
@@ -1084,7 +1114,8 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         continue;
       }
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
-      box(g, FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
+      const homeFloor = x < 5 && y >= 7 && y <= 10 ? ((x + y) % 2 ? "#a6b9b3" : "#c8d4ca") : x >= 14 && y < 6 ? "#d5d1c3" : x % 2 ? "#c5a37c" : "#b99772";
+      box(g, home ? homeFloor : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
     }
   // Office / station furniture from tile runs.
   if (!home)
@@ -1132,12 +1163,10 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   if (home && map.layout)
     for (const p of map.layout) {
       const f = furnitureById(p.item);
-      const models = f ? FURNITURE_MODEL[f.id] : null;
-      if (!f || !models) continue;
-      models.forEach((m, i) => {
-        if (i === 0) jobs.push(place(g, `/world3d/furniture/${m}.glb`, p.x + 0.05, p.y + 0.05, f.w - 0.1, f.h - 0.1));
-        else jobs.push(place(g, `/world3d/furniture/${m}.glb`, p.x + f.w * 0.3, p.y + 0.1, f.w * 0.4, Math.min(0.6, f.h * 0.4), m === "televisionModern" ? 0.55 : 0.78));
-      });
+      if (!f) continue;
+      const furniture = homeFurniture(p, Number(map.art?.split("-")[1] ?? 0));
+      bendAll(furniture);
+      g.add(furniture);
     }
   return g;
 }
@@ -1182,6 +1211,9 @@ export function World3D({
   getMe,
   getOthers,
   avatar,
+  badge = null,
+  username = "player",
+  affiliation = null,
   car,
   bike = null,
   ads = [],
@@ -1189,17 +1221,24 @@ export function World3D({
   getPolice,
   onGround,
   onUnavailable,
+  getHomeAction,
+  overview = false,
 }: {
   map: WorldMap;
   getMe: () => { x: number; y: number; walking: boolean; heading?: number };
   getOthers: () => Mover3D[];
   avatar: Avatar;
+  badge?: string | null;
+  username?: string;
+  affiliation?: WorldAffiliation | null;
   car: string | null;
   /** Colour of the hire bike you're riding, if any. */
   bike?: string | null;
   /** Real hackathons and tech events for the billboards. */
   ads?: TechEvent[];
   onUnavailable?:()=>void;
+  getHomeAction?: () => HomeAction | null;
+  overview?: boolean;
   getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
   onGround: (x: number, y: number) => void;
@@ -1211,6 +1250,7 @@ export function World3D({
   const bikeRef = useRef(bike);
   bikeRef.current = bike;
   const avatarKey = JSON.stringify(avatar);
+  const identityKey = JSON.stringify({ badge, username, affiliation });
 
   useEffect(() => {
     const el = host.current;
@@ -1256,7 +1296,7 @@ export function World3D({
     if (phase === "night" && !indoors) scene.background = new THREE.Color("#33407a");
     if (phase === "night" && !indoors) scene.fog = new THREE.Fog("#33407a", 32, 66);
     if (indoors) {
-      scene.background = new THREE.Color("#1d1a2b");
+      scene.background = new THREE.Color(map.kind === "home" ? "#e7dfd0" : "#1d1a2b");
       scene.fog = null;
       hemi.intensity = 1.9;
       sun.intensity = 1.2;
@@ -1281,6 +1321,18 @@ export function World3D({
     const jobs: Promise<unknown>[] = [];
     if (indoors) {
       interior(world, map, jobs, station);
+      if (map.kind === "home") {
+        const style = Number(map.art?.split("-")[1] ?? 0);
+        const wall = ["#e5dac9", "#b7c8bb", "#b49c8a", "#a9bda4", "#4c6063"][style % 5];
+        box(world, wall, 1, 0.25, 1.92, 19, 3.1, 2.0);
+        box(world, "#d9c5a1", 1, 2.96, 1.96, 19, 3.08, 2.06);
+        for (const x of [3, 10, 16]) {
+          box(world, "#29444a", x, 1.2, 2.03, x + 2, 2.65, 2.1);
+          box(world, "#a9cfce", x + 0.08, 1.28, 2.1, x + 1.92, 2.57, 2.12);
+          box(world, "#f2e6d0", x + 0.97, 1.2, 2.13, x + 1.03, 2.65, 2.17);
+          box(world, "#f2e6d0", x, 1.88, 2.13, x + 2, 1.94, 2.17);
+        }
+      }
       if (station) {
         const ty = STATION_PLATFORM_Y + 3;
         box(world, "#2a2733", 1, -0.45, ty, map.cols - 1, -0.05, map.rows - 1);
@@ -1422,8 +1474,7 @@ export function World3D({
           jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.12));
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "phonebox") {
-          box(g, "#c8322d", t.x + 0.2, 0.1, t.y + 0.2, t.x + 0.8, 2, t.y + 0.8);
-          box(g, "#cfe6ef", t.x + 0.28, 0.5, t.y + 0.79, t.x + 0.72, 1.7, t.y + 0.82);
+          telephoneBox(g, t.x, t.y);
         } else if (t.kind === "postbox") cyl(g, "#c8322d", t.x + 0.5, t.y + 0.5, 0.1, 1.15, 0.24, 14);
         else if (t.kind === "bench") {
           for (let slat = 0; slat < 3; slat++) box(g, "#b18b60", t.x + 0.05, 0.35, t.y + 0.4 + slat * 0.1, t.x + 0.95, 0.43, t.y + 0.48 + slat * 0.1);
@@ -1498,7 +1549,7 @@ export function World3D({
       char: Character3D | null;
       walking: boolean;
     }
-    const makeBody = (a: Avatar): Body => {
+    const makeBody = (a: Avatar, logo: string | null = null): Body => {
       const root = new THREE.Group();
       const b: Body = { root, char: null, walking: false };
       const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
@@ -1506,7 +1557,7 @@ export function World3D({
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = 0.14;
       root.add(shadow);
-      void buildCharacter(a).then((c) => {
+      void buildCharacter(a, 1.15, logo).then((c) => {
         if (disposed) return;
         bendAll(c.object);
         c.object.position.y = 0.12;
@@ -1524,15 +1575,12 @@ export function World3D({
     };
 
     let disposed = false;
-    const me = makeBody(JSON.parse(avatarKey) as Avatar);
+    const me = makeBody(JSON.parse(avatarKey) as Avatar, badge);
     // Keep your character recognisable in crowds and behind tall buildings.
     const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.47, 32), new THREE.MeshBasicMaterial({ color: "#62e5ff", transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
     playerRing.rotation.x = -Math.PI / 2;
     playerRing.renderOrder = 1000;
-    const playerLabel = document.createElement("div");
-    playerLabel.className = "pointer-events-none absolute z-10 rounded-full bg-[#164bc3] px-2 py-1 text-[10px] font-black tracking-wide text-white shadow-md";
-    playerLabel.setAttribute("aria-hidden", "true");
-    playerLabel.textContent = "YOU ↓";
+    const playerLabel = makeNameplate(username, affiliation, true);
     el.appendChild(playerLabel);
     scene.add(playerRing);
     scene.add(me.root);
@@ -1560,7 +1608,18 @@ export function World3D({
     let carLoaded: string | null = null;
     let rideBike: THREE.Group | null = null;
 
-    const others = new Map<string, Body & { x: number; z: number }>();
+    const others = new Map<string, Body & { x: number; z: number; lookKey: string; label: HTMLDivElement }>();
+    const homeScreens: THREE.Mesh[] = [];
+    world.traverse(object => { if (object.userData.homeScreen) homeScreens.push(object as THREE.Mesh); });
+    const homeProps = new THREE.Group();
+    scene.add(homeProps);
+    const held = box(homeProps, "#e2c598", -0.12, 0.75, 0.3, 0.12, 0.86, 0.54);
+    const droplets = Array.from({ length: 12 }, () => {
+      const drop = new THREE.Mesh(new THREE.SphereGeometry(0.035, 5, 4), mat("#93d1e0"));
+      homeProps.add(drop); return drop;
+    });
+    homeProps.visible = false;
+    const otherCars = new Map<string, { model: string; root: THREE.Group }>();
 
     // Traffic: buses and Kenney cars driving the road loops on the left.
     const L = london ? buildLondon() : null;
@@ -1774,6 +1833,7 @@ export function World3D({
       else if (Math.hypot(dx, dz) > 0.002) carHolder.rotation.y = Math.atan2(-dz, dx);
       lastMe.set(mx, 0, mz);
       me.root.position.set(mx, 0, mz);
+      me.root.rotation.x = 0;
       carHolder.position.set(mx, 0.08, mz);
       if (performance.now() > swingUntil) {
         if (swingUntil) {
@@ -1823,6 +1883,16 @@ export function World3D({
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
+      if (overview) {
+        const fit = Math.max(1, 1.25 / camera.aspect);
+        camera.fov = 35;
+        camera.updateProjectionMatrix();
+        camera.position.set(map.cols / 2 + 8 * fit, 22 * fit, map.rows / 2 + 20 * fit);
+        camera.lookAt(map.cols / 2, 0, map.rows / 2);
+        me.root.visible = !!getHomeAction?.();
+        playerRing.visible = false;
+        rings.forEach(ring => { ring.visible = false; });
+      }
       playerRing.position.set(mx, 0.18, mz);
       playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
@@ -1832,7 +1902,7 @@ export function World3D({
       playerLabel.style.left = `${Math.max(42, Math.min(el.clientWidth - 42, sx))}px`;
       playerLabel.style.top = `${Math.max(120, Math.min(el.clientHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
-      playerLabel.textContent = sx < 42 ? "← YOU" : sx > el.clientWidth - 42 ? "YOU →" : "YOU ↓";
+      playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
       sun.position.set(focus.x - 10, 22, focus.z + 12);
       sun.target.position.copy(focus);
 
@@ -1841,8 +1911,12 @@ export function World3D({
       for (const o of getOthers()) {
         seen.add(o.id);
         let b = others.get(o.id);
+        const lookKey = JSON.stringify([o.avatar,o.badge,o.username,o.affiliation]);
+        if (b && b.lookKey !== lookKey) { scene.remove(b.root); b.label.remove(); others.delete(o.id); b = undefined; }
         if (!b) {
-          b = Object.assign(makeBody(o.avatar), { x: o.x / TILE, z: o.y / TILE });
+          const label = makeNameplate(o.username ?? "player", o.affiliation);
+          el.appendChild(label);
+          b = Object.assign(makeBody(o.avatar, o.badge ?? null), { x: o.x / TILE, z: o.y / TILE, lookKey, label });
           others.set(o.id, b);
           scene.add(b.root);
         }
@@ -1854,11 +1928,38 @@ export function World3D({
         b.x += ddx * Math.min(1, dt * 10);
         b.z += ddz * Math.min(1, dt * 10);
         b.root.position.set(b.x, 0, b.z);
+        b.root.visible = !o.car;
+        const labelPoint = new THREE.Vector3(b.x, 2.15, b.z).project(camera);
+        const labelX = (labelPoint.x + 1) * el.clientWidth / 2;
+        const labelY = (1 - labelPoint.y) * el.clientHeight / 2;
+        b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;
+        b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < el.clientWidth && labelY > 0 && labelY < el.clientHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
+        let vehicle = otherCars.get(o.id);
+        if (vehicle && vehicle.model !== o.car) {
+          scene.remove(vehicle.root);
+          otherCars.delete(o.id);
+          vehicle = undefined;
+        }
+        if (o.car && !vehicle) {
+          const root = new THREE.Group();
+          vehicle = { model: o.car, root };
+          otherCars.set(o.id, vehicle);
+          scene.add(root);
+          void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
+        }
+        if (vehicle) {
+          vehicle.root.position.set(b.x, 0.08, b.z);
+          vehicle.root.rotation.y = -(o.heading ?? 0);
+        }
         setWalking(b, o.walking || Math.hypot(ddx, ddz) > 0.05);
       }
       for (const [id, b] of others)
         if (!seen.has(id)) {
           scene.remove(b.root);
+          b.label.remove();
+          const vehicle = otherCars.get(id);
+          if (vehicle) scene.remove(vehicle.root);
+          otherCars.delete(id);
           others.delete(id);
         }
 
@@ -1990,7 +2091,43 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
-      else if (me.char && now > swingUntil) me.char.play(p.walking ? "walk" : "idle");
+      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? "walk" : "idle");
+      const homeAction = getHomeAction?.();
+      playerRing.visible = !overview && !homeAction;
+      for (const screen of homeScreens) {
+        const watching = homeAction?.animation === "watch" || homeAction?.animation === "play";
+        (screen.material as THREE.MeshLambertMaterial).color.set(watching ? ["#5d9ca9", "#92b870", "#bb9169", "#997ab7"][Math.floor(now / 1200) % 4] : "#609ca4");
+      }
+      homeProps.visible = !!homeAction;
+      if (homeAction) {
+        const a = homeAction;
+        const time = reduce ? 0 : (now - a.started) / 1000;
+        const seated = ["sit", "watch", "read", "play", "eat"].includes(a.animation);
+        const sleeping = a.animation === "sleep";
+        const washing = a.animation === "shower" || a.animation === "wash";
+        const seat = a.seat;
+        me.char?.play(seated ? "drive" : "idle");
+        me.root.position.set(a.x + a.w / 2, sleeping ? 1.0 : seated ? 0.3 : 0, a.y + (sleeping ? a.h * 0.45 : washing ? a.h * 0.55 : a.h + 0.25));
+        if (a.animation === "sit" || seat) {
+          const s = seat ?? a;
+          me.root.position.set(s.x + s.w / 2, 0.45, s.y + s.h * 0.65);
+        }
+        me.root.rotation.set(sleeping ? -Math.PI / 2 : 0, sleeping ? Math.PI / 2 : Math.PI, 0);
+        homeProps.position.copy(me.root.position);
+        homeProps.rotation.y = Math.PI;
+        held.visible = ["eat", "read", "play", "water"].includes(a.animation);
+        held.position.y = 0.9 + Math.sin(time * 4) * 0.12;
+        for (const [i, drop] of droplets.entries()) {
+          drop.visible = washing || sleeping || a.animation === "water";
+          drop.position.set(Math.sin(i * 2.4) * 0.4, washing ? 2.1 - (time * 1.5 + i * 0.13) % 1.8 : 0.5 + (time * 0.3 + i * 0.1) % 0.8, Math.cos(i * 2.4) * 0.35);
+        }
+        if (me.char && ["eat", "wash", "water", "play", "read"].includes(a.animation)) {
+          for (const name of ["arm-left", "arm-right"]) {
+            const arm = me.char.object.getObjectByName(name);
+            if (arm) arm.rotation.x = -0.7 + Math.sin(time * 4) * 0.3;
+          }
+        }
+      }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(frame);
@@ -2004,7 +2141,7 @@ export function World3D({
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
-        if (!m.isMesh || m === water || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
+        if (!m.isMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
@@ -2050,11 +2187,12 @@ export function World3D({
         if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
       });
       playerLabel.remove();
+      for (const other of others.values()) other.label.remove();
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, avatarKey]);
+  }, [map, avatarKey, overview, identityKey]);
 
   // Billboards: real upcoming hackathons and tech events on big boards around town.
   const adKey = ads.map((a) => a.id).join(",");

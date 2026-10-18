@@ -6,15 +6,14 @@ import { useRouter } from "next/navigation";
 
 import { Check, Copy } from "lucide-react";
 
-import { type ActiveJob, Ladder, WorkplaceDoor } from "./work";
+import { type ActiveJob, Ladder } from "./work";
 
 import { quitJob } from "@/app/games/careers/actions";
 import { CompanyLogo } from "@/components/game/company-logo";
-import { WORKPLACES, type Workplace } from "@/game/core/careers";
+import { WORKPLACES } from "@/game/core/careers";
 import type { Avatar } from "@/game/core/cosmetics";
 
-export function JobCentre({ job, avatar }: { job: ActiveJob | null; avatar: Avatar }) {
-  const [open, setOpen] = useState<Workplace | null>(null);
+export function JobCentre({ job }: { job: ActiveJob | null; avatar: Avatar }) {
   return (
     <>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -22,7 +21,7 @@ export function JobCentre({ job, avatar }: { job: ActiveJob | null; avatar: Avat
           <button
             key={w.id}
             type="button"
-            onClick={() => setOpen(w)}
+            onClick={() => { window.location.href = `/games/world?map=workplace-${w.id}`; }}
             className="rounded-3xl border border-border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:bg-hover"
           >
             <div className="flex items-center gap-3">
@@ -48,21 +47,19 @@ export function JobCentre({ job, avatar }: { job: ActiveJob | null; avatar: Avat
           </button>
         ))}
       </div>
-      {open && <WorkplaceDoor workplace={open} job={job} avatar={avatar} onClose={() => setOpen(null)} />}
     </>
   );
 }
 
-export function MyJob({ job, avatar }: { job: ActiveJob; avatar: Avatar }) {
+export function MyJob({ job }: { job: ActiveJob; avatar: Avatar }) {
   const w = WORKPLACES.find((x) => x.id === job.workplace)!;
-  const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const router = useRouter();
   return (
     <div className="rounded-3xl border border-border bg-card p-5">
       <Ladder workplace={w} job={job} />
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => setOpen(true)} className="rounded-full bg-[#f2d9a6] px-5 py-3 font-black text-[#0d1726]">
+        <button type="button" onClick={() => router.push(`/games/world?map=workplace-${w.id}`)} className="rounded-full bg-[#f2d9a6] px-5 py-3 font-black text-[#0d1726]">
           Go to work
         </button>
         <button
@@ -80,7 +77,6 @@ export function MyJob({ job, avatar }: { job: ActiveJob; avatar: Avatar }) {
           Hand in notice
         </button>
       </div>
-      {open && <WorkplaceDoor workplace={w} job={job} avatar={avatar} onClose={() => setOpen(false)} />}
     </div>
   );
 }

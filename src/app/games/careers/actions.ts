@@ -9,6 +9,9 @@ import { FURNITURE, HOMES, validLayout } from "@/game/core/homes";
 import { getSupabase } from "@/lib/social/server";
 
 const FRIENDLY: Record<string, string> = {
+  overlap: "That furniture overlaps another item.",
+  door_blocked: "Keep the front door clear.",
+  unreachable: "Leave a clear walking path to the front of every item.",
   not_allowed: "Sign in with your IlluminatED account to work and save.",
   cooldown: "They've just interviewed you. Brush up and try again in 10 minutes.",
   already_hired: "You already work here.",
@@ -74,6 +77,8 @@ export async function buyFurniture(item: string) {
 }
 
 export async function saveLayout(layout: { key: string; item: string; x: number; y: number }[]) {
+  const parsed = z.array(z.object({ key: z.string().min(1).max(40), item: z.string().max(60), x: z.number().int(), y: z.number().int() })).max(40).safeParse(layout);
+  if (!parsed.success) return { ok: false as const, error: FRIENDLY.invalid };
   const problem = validLayout(layout);
   if (problem) return { ok: false as const, error: problem };
   return rpc("home_save_layout", { p_layout: layout.map(({ key, item, x, y }) => ({ key: key.slice(0, 40), item, x, y })) }, ["/games/home", "/games/world"]);

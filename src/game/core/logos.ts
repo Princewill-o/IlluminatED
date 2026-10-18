@@ -167,6 +167,7 @@ export const logoFor = (companyId: string): Logo | null => LOGOS[companyId] ?? n
 // Hand-drawn, playful brand-inspired badges for unofficial learning simulations.
 // Paths are shared by uniforms, building signs and the phone, keeping them consistent.
 Object.assign(LOGOS, {
+  pizzazz: { bg: "#ff7a6b", shapes: [{ d: "M14 14Q32 4 50 14L32 54Z", fill: "#ffd166" }, { d: "M14 14Q32 4 50 14L47 21Q32 13 17 21Z", fill: "#9c4f20" }, { d: circle(27, 26, 4), fill: "#c8322d" }, { d: circle(36, 34, 4), fill: "#c8322d" }] },
   goggle: { bg: "#fff8dc", shapes: [
     {d:circle(32,32,23),fill:"#4285f4"},{d:circle(32,32,14),fill:W},
     {d:rect(32,9,23,19),fill:"#ea4335"},{d:rect(9,27,11,15),fill:"#fbbc05"},

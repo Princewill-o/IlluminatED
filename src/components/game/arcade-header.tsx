@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { href: "/games/world", label: "Enter the city" },
   { href: "/games/locker", label: "Character" },
+  { href: "/games/wealth", label: "Assets & wealth" },
+  { href: "/games/weekly", label: "Weekly challenges" },
+  { href: "/games/expansions", label: "Expansions" },
+  { href: "/games/friends", label: "Friends" },
+  { href: "/games/illumship", label: "Illumship" },
 ];
 
 /** Sub-tabs inside the Play tab of the app. Stats live in the app's top bar and side rail. */

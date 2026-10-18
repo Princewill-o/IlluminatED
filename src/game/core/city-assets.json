@@ -1,0 +1,92 @@
+[
+  {
+    "id": "prop-plane",
+    "name": "Cloudhopper",
+    "kind": "aircraft",
+    "price": 1800,
+    "description": "Your first light aircraft. A collectible ownership asset; flight controls are not included."
+  },
+  {
+    "id": "jet",
+    "name": "Stratos Jet",
+    "kind": "aircraft",
+    "price": 6500,
+    "description": "A long-term savings goal for your hangar. Collectible, not currently flyable."
+  },
+  {
+    "id": "sailboat",
+    "name": "Harbour Sailboat",
+    "kind": "watercraft",
+    "price": 950,
+    "description": "Start your marina collection. Sailing controls are not included."
+  },
+  {
+    "id": "yacht",
+    "name": "City Voyager",
+    "kind": "watercraft",
+    "price": 4200,
+    "description": "A weekend dream for your collection. Collectible, not currently drivable."
+  },
+  {
+    "id": "index-fund",
+    "name": "City Mix Fund",
+    "kind": "investment",
+    "price": 100,
+    "description": "A fictional diversified fund. Its simulated quote can rise or fall."
+  },
+  {
+    "id": "green-energy",
+    "name": "Green Energy",
+    "kind": "investment",
+    "price": 80,
+    "description": "A fictional clean-energy company with a changing simulated quote."
+  },
+  {
+    "id": "tech-labs",
+    "name": "Tech Labs",
+    "kind": "investment",
+    "price": 140,
+    "description": "A fictional technology holding with a changing simulated quote."
+  },
+  {
+    "id": "moon-fox",
+    "name": "Moon Fox",
+    "kind": "pet",
+    "price": 250,
+    "vip": true,
+    "description": "An exotic companion for your Illumship pet card."
+  },
+  {
+    "id": "cloud-dragon",
+    "name": "Cloud Dragon",
+    "kind": "pet",
+    "price": 500,
+    "vip": true,
+    "description": "A pocket-sized original dragon for your Illumship pet card."
+  },
+  {
+    "id": "neon-pioneers",
+    "name": "Neon Pioneers",
+    "kind": "pack",
+    "price": 400,
+    "unlockClout": 800,
+    "description": "Original cartoon explorers, three finance practice questions and a collectible expedition badge."
+  },
+  {
+    "id": "ocean-futures",
+    "name": "Ocean Futures",
+    "kind": "pack",
+    "price": 600,
+    "unlockClout": 1200,
+    "description": "Original ocean adventurers, three sustainability practice questions and a collectible reef badge."
+  },
+  {
+    "id": "autumn-makers",
+    "name": "Autumn Makers",
+    "kind": "pack",
+    "price": 350,
+    "unlockClout": 600,
+    "availableUntil": "2026-11-01T00:00:00Z",
+    "description": "Limited October drop: an original cartoon owl, community-project questions and a Makers badge. Keep access after the purchase window ends."
+  }
+]

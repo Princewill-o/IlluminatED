@@ -28,6 +28,7 @@ const csp = [
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "media-src 'self'",
+  "frame-src https://www.youtube-nocookie.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self' https://checkout.stripe.com",
@@ -50,6 +51,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  distDir: process.env.ILLUMINATED_PREVIEW === "1" ? ".next-city-preview" : ".next",
   pageExtensions: ["js", "jsx", "mdx", "ts", "tsx"],
   images: {
     unoptimized: true,
