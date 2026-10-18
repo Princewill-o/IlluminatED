@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
 
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { finishArchitecture } from "./architecture-finish3d";
 import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+import { applyGroundStyle } from "./ground-style3d";
+import { addStreetscape } from "./streetscape3d";
 export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
@@ -14,6 +18,7 @@ import { ukPhase } from "./fx";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
 import { TRAIN_CALL } from "./train-state";
+import { riverGeometry, riverSurface } from "./water-style3d";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
@@ -29,6 +34,7 @@ import { buildLondon } from "@/game/core/london";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { trainFrame } from "@/game/core/train";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
@@ -266,7 +272,7 @@ const GROUND: Record<string, [string, number]> = {
   k: ["#8fd16f", 0.05],
 };
 
-function groundMesh(tiles: string[], highland: boolean) {
+function groundMesh(tiles: string[], highland: boolean, holes = new Set<string>()) {
   const pos: number[] = [];
   const col: number[] = [];
   const c = new THREE.Color();
@@ -282,7 +288,7 @@ function groundMesh(tiles: string[], highland: boolean) {
   };
   tiles.forEach((row, y) =>
     [...row].forEach((ch, x) => {
-      if (ch === "w") return;
+      if (ch === "w" || holes.has(`${x},${y}`)) return;
       const [hex0, h] = GROUND[ch] ?? (highland ? GROUND.g : ["#e9e1d0", 0.12]);
       let hex = hex0;
       // A soft checker on grass and paving, like hand-laid tiles.
@@ -763,7 +769,7 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   const w = t.w - 0.16;
   const d = t.h - 0.16;
   const wall = highland ? ["#f2ead8", "#e6dcc6", "#efe6d4"][seed % 3] : ["#b9634a", "#a65840", "#d8be92", "#ead9bd", "#c26b4f"][seed % 5];
-  const roofC = highland || seed % 3 ? "#5d6070" : "#7a5446";
+  const roofC = highland || seed % 3 ? "#4d5862" : "#65534f";
   const floors = highland ? 2 : Math.max(2, Math.min(4, Math.round(t.height ?? 3)));
   const top = 0.15 + floors * 0.95;
   box(g, wall, x0, 0, z0 + 0.25, x0 + w, top, z0 + d);
@@ -774,7 +780,13 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
     for (const x of [x0, x0 + w - 0.12])
       for (let y = 0.28; y < top - 0.2; y += 0.35) box(g, "#e8d5ba", x, y, z0 + d - 0.015, x + 0.12, y + 0.2, z0 + d + 0.045);
   }
-  roof(g, roofC, x0 - 0.05, z0 + 0.2, x0 + w + 0.05, z0 + d + 0.05, top, 0.9);
+  roof(g, roofC, x0 - 0.05, z0 + 0.2, x0 + w + 0.05, z0 + d + 0.05, top, 0.48);
+  // Slate courses break up the broad, flat roof surface from the game camera.
+  for (let course=1;course<5;course++) {
+    const z=z0+d/2+(d/2)*course/5;
+    const height=top+0.48*(1-course/5);
+    box(g,"#778087",x0,height,z,x0+w,height+0.018,z+0.025);
+  }
   const bays = Math.max(2, Math.round(w / 1.3));
   const bw = w / bays;
   const door = ["#1b3a6b", "#2d6a4f", "#2a2730", "#c8322d"][seed % 4];
@@ -799,10 +811,14 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
         continue;
       }
       box(g, "#f6f2ea", wx0 - 0.05, y0 + 0.18, zf - 0.02, wx1 + 0.05, y0 + 0.78, zf + 0.02);
-      box(g, "#3e4a60", wx0, y0 + 0.23, zf - 0.01, wx1, y0 + 0.73, zf + 0.03);
+      box(g, (seed+b+f)%3===0?"#c4b284":"#465967", wx0, y0 + 0.23, zf - 0.01, wx1, y0 + 0.73, zf + 0.03);
       box(g, "#f6f2ea", wx0, y0 + 0.47, zf - 0.01, wx1, y0 + 0.49, zf + 0.04);
       box(g, "#f6f2ea", (wx0 + wx1) / 2 - 0.015, y0 + 0.23, zf + 0.025, (wx0 + wx1) / 2 + 0.015, y0 + 0.73, zf + 0.045);
       box(g, "#d4c5ac", wx0 - 0.08, y0 + 0.14, zf - 0.02, wx1 + 0.08, y0 + 0.2, zf + 0.12);
+      if (!highland && f===1) {
+        box(g,"#4b6254",wx0-0.04,y0+0.09,zf+0.04,wx1+0.04,y0+0.23,zf+0.2);
+        box(g,"#79916a",wx0,y0+0.23,zf+0.06,wx1,y0+0.31,zf+0.17);
+      }
     }
   }
 }
@@ -1384,6 +1400,9 @@ export function World3D({
   onGround: (x: number, y: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+  zoomRef.current = zoom;
   const sceneRef = useRef<THREE.Scene | null>(null);
   const carRef = useRef(car);
   carRef.current = car;
@@ -1417,7 +1436,7 @@ export function World3D({
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    const sky = highland ? "#bfe3ff" : "#cfe6f7";
+    const sky = highland ? "#bfe3ff" : "#d6e4df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
     // Outdoor fog is fully opaque by 70 units; don't draw hidden city blocks
@@ -1427,17 +1446,20 @@ export function World3D({
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
     const phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
-    const hemi = new THREE.HemisphereLight(phase === "night" ? "#b9c9ed" : "#fff9ef", phase === "night" ? "#63766b" : "#b7c99a", phase === "night" ? 1.85 : 1.7);
+    const hemi = new THREE.HemisphereLight(phase === "night" ? "#b2c5e0" : phase === "dusk" ? "#f5d3b0" : "#fff4db", phase === "night" ? "#455a57" : "#8e9d7d", phase === "night" ? 1.45 : 1.7);
     scene.add(hemi);
-    const sun = new THREE.DirectionalLight(phase === "night" ? "#9fb0ff" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.55 : 1.6);
+    const sun = new THREE.DirectionalLight(phase === "night" ? "#a7b9d2" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.45 : 1.25);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
     Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 80 });
     sun.shadow.bias = -0.0008;
     sun.shadow.radius = 4;
     scene.add(sun, sun.target);
-    if (phase === "night" && !indoors) scene.background = new THREE.Color("#33407a");
-    if (phase === "night" && !indoors) scene.fog = new THREE.Fog("#33407a", 32, 66);
+    if (phase !== "day" && !indoors) {
+      const atmosphere=phase==="night"?"#17293f":"#d6b1a0";
+      scene.background = new THREE.Color(atmosphere);
+      scene.fog = new THREE.Fog(atmosphere, 32, 66);
+    }
     if (indoors) {
       scene.background = new THREE.Color(map.kind === "home" ? "#e7dfd0" : "#1d1a2b");
       scene.fog = null;
@@ -1453,14 +1475,24 @@ export function World3D({
     const world = new THREE.Group();
     scene.add(world);
     const tiles = map.tiles;
-    if (!indoors) world.add(groundMesh(tiles, highland));
+    let disposeGroundStyle=()=>{};
+    let disposeArchitecture=()=>{};
+    const stationHoles=new Set<string>();
+    if(london) for(const thing of buildLondon().things) if(thing.kind==="station")
+      for(let y=thing.y;y<thing.y+thing.h;y++) for(let x=thing.x;x<thing.x+thing.w;x++) stationHoles.add(`${x},${y}`);
+    if (!indoors) {
+      const ground=groundMesh(tiles, highland,stationHoles);
+      const disposeTexture=london?applyGroundStyle(ground):()=>{};
+      disposeGroundStyle=()=>{disposeTexture();ground.material.dispose();};
+      world.add(ground);
+    }
     const signals = london ? streetSignals(world) : [];
     if (london) world.add(roadMarkings(map));
     updateStreetSignals(signals, Date.now());
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(map.cols, map.rows), new THREE.MeshLambertMaterial({ color: "#5fb8d9", transparent: true, opacity: 0.92 }));
+    const river=riverSurface(phase,map.cols,map.rows);
+    const water = new THREE.Mesh(riverGeometry(tiles), river.material);
     bend(water.material);
-    water.rotation.x = -Math.PI / 2;
-    water.position.set(map.cols / 2, -0.3, map.rows / 2);
+    water.position.set(0, -0.3, 0);
     world.add(water);
 
     const spinners: THREE.Object3D[] = [];
@@ -1617,10 +1649,7 @@ export function World3D({
           landmark(g, t);
           g.traverse((c) => c.userData.spin && spinners.push(c));
         } else if (t.kind === "tree") {
-          jobs.push(place(g, `/world3d/suburban/${(t.x + t.y) % 3 === 1 ? "tree-small" : "tree-large"}.glb`, t.x - 0.4, t.y - 0.4, 1.8, 1.8));
-          // Formal tree beds give the streets a deliberate landscape rhythm.
-          box(g, "#a99a80", t.x + 0.04, 0.04, t.y + 0.04, t.x + 0.96, 0.22, t.y + 0.96);
-          box(g, "#665b45", t.x + 0.13, 0.22, t.y + 0.13, t.x + 0.87, 0.24, t.y + 0.87);
+          // Rounded planted trees are supplied in one shared scenery batch below.
         }
         else if (t.kind === "lamp") {
           heritageLamp(g, t.x, t.y);
@@ -1643,12 +1672,18 @@ export function World3D({
           box(g, "#2a2730", t.x - 0.1, 0.1, t.y + 0.25, t.x - 0.05, 1.9, t.y + 0.75);
           box(g, "#2a2730", t.x + 1.05, 0.1, t.y + 0.25, t.x + 1.1, 1.9, t.y + 0.75);
         } else if (t.kind === "station") {
-          box(g, "#b5463a", t.x + 0.05, 0, t.y + 0.05, t.x + t.w - 0.05, 2.6, t.y + t.h - 0.05);
-          box(g, "#2a2730", t.x + 0.6, 0.12, t.y + t.h - 0.08, t.x + t.w - 0.6, 1.7, t.y + t.h - 0.02);
-          box(g, "#2d1b69", t.x - 0.02, 2, t.y + t.h - 0.1, t.x + t.w + 0.02, 2.35, t.y + t.h + 0.02);
+          box(g,"#273735",t.x+0.12,-1.4,t.y+0.12,t.x+t.w-0.12,-1.2,t.y+t.h);
+          for(let tread=0;tread<8;tread++) {
+            const z=t.y+0.18+tread*(t.h-0.18)/8;
+            const top=-1.1+tread*0.17;
+            box(g,tread%2?"#c8bca5":"#d4c7af",t.x+0.35,-1.35,z,t.x+t.w-0.35,top,z+(t.h-0.18)/8);
+            box(g,"#e6d9bf",t.x+0.35,top-0.035,z+(t.h-0.18)/8-0.035,t.x+t.w-0.35,top,z+(t.h-0.18)/8);
+          }
+          for(const side of [t.x+0.05,t.x+t.w-0.25]) box(g,"#b6a68a",side,-1.4,t.y,side+0.2,0.2,t.y+t.h);
+          box(g,"#b6a68a",t.x,-1.4,t.y,t.x+t.w,0.2,t.y+0.2);
           const st = L.stations.find((x) => x.id === t.id);
           const nm = sign(st?.name ?? t.name, { bg: "#ffffff", fg: "#13203a", w: t.w + 0.4, h: 0.5, badge: true });
-          nm.position.set(t.x + t.w / 2, 2.18, t.y + t.h + 0.04);
+          nm.position.set(t.x + t.w / 2, 1.15, t.y + 0.22);
           g.add(nm);
           const hex = cyl(g, "#2b5fd9", t.x + t.w + 0.35, t.y + t.h + 0.3, 2.6, 2.66, 0.42, 6);
           hex.rotation.x = Math.PI / 2;
@@ -1659,11 +1694,14 @@ export function World3D({
             box(g, "#d6c9af", edge - 0.09, 0.1, t.y + 0.3, edge + 0.29, 0.32, t.y + t.h - 0.08);
             for (let dz = 0.5; dz < t.h - 0.1; dz += 0.4) box(g, "#293d3c", edge + 0.06, 0.3, t.y + dz, edge + 0.12, 1.12, t.y + dz + 0.06);
             box(g, "#293d3c", edge + 0.03, 1.08, t.y + 0.3, edge + 0.15, 1.17, t.y + t.h - 0.08);
-            box(g, "#e8ddc7", edge - 0.13, 0.1, t.y + t.h - 0.42, edge + 0.33, 1.35, t.y + t.h - 0.03);
-            box(g, "#c3b49a", edge - 0.18, 1.35, t.y + t.h - 0.47, edge + 0.38, 1.44, t.y + t.h + 0.01);
           }
         }
       }
+    }
+    const streetscape=london?addStreetscape(world,map,phase):null;
+    if(streetscape) {
+      bendAll(streetscape);
+      streetscape.traverse(object=>{if((object as THREE.Mesh).isMesh){object.castShadow=false;object.receiveShadow=false;}});
     }
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
@@ -1804,7 +1842,7 @@ export function World3D({
 
     // Traffic: buses and Kenney cars driving the road loops on the left.
     const L = london ? buildLondon() : null;
-    const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; commuter?: { body: Body; offset: number } }[] = [];
+    const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; velocity?: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
       const kinds = ["bus", "sedan", "taxi", "van", "bus", "suv", "delivery", "taxi", "bus", "police", "sedan", "hatchback-sports", "bus", "ambulance", "van", "taxi"];
       kinds.forEach((k, i) => {
@@ -1959,6 +1997,12 @@ export function World3D({
       if (ray.ray.intersectPlane(plane, hit) && hit.x >= 0 && hit.z >= 0 && hit.x <= map.cols && hit.z <= map.rows) onGround(hit.x * TILE, hit.z * TILE);
     };
     renderer.domElement.addEventListener("click", onClick);
+    const onWheel = (event:WheelEvent) => {
+      if(overview || event.ctrlKey) return;
+      event.preventDefault();
+      setZoom(value=>Math.max(0.75,Math.min(1.65,value*Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*0.0018))));
+    };
+    renderer.domElement.addEventListener("wheel",onWheel,{passive:false});
 
     let viewportWidth = el.clientWidth, viewportHeight = el.clientHeight;
     const fit = () => {
@@ -1977,6 +2021,7 @@ export function World3D({
     const focus = new THREE.Vector3();
     const lastMe = new THREE.Vector3();
     let first = true;
+    let cameraZoom = zoomRef.current;
     let raf = 0;
     let last = performance.now();
     const start = last;
@@ -2067,7 +2112,8 @@ export function World3D({
       const shot=cinematicOffset(now-CAMERA_SHOT.at,reduce);
       const followed = followPlayerCamera(focus, { x: mx+shot.x, z: mz+shot.z }, dt);
       focus.set(followed.x, 0, followed.z);
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz });
+      cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz }, cameraZoom);
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
@@ -2192,7 +2238,9 @@ export function World3D({
         const commuter = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
         const own = currentTraffic[i];
         const step = reduce || commuter?.out ? 0 : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic.filter(other => other.id !== own.id), pedestrians);
-        v.distance += step;
+        const advance=trafficAdvance(v.velocity??0,v.speed,dt,step);
+        v.velocity=advance.speed;
+        v.distance += advance.distance;
         const q = trafficPose(v), len = Math.hypot(q.dx, q.dz) || 1;
         v.obj.position.set(q.x, .02, q.z);
         own.x = q.x; own.y = q.z; own.heading = Math.atan2(q.dz, q.dx);
@@ -2262,6 +2310,7 @@ export function World3D({
         r.scale.setScalar(on ? 1.5 + Math.sin(secs * 6) * 0.08 : 1 + Math.sin(secs * 2 + r.position.x) * 0.06);
       }
       water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
+      if(!reduce) river.texture.offset.x=secs*0.002;
       // Animate nearby visible bodies only; distant residents still follow their routes.
       for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.mixer.update(dt);
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
@@ -2326,6 +2375,7 @@ export function World3D({
     // Spatial batches retain useful frustum culling across the city.
     void Promise.allSettled(jobs).then(async () => {
       if (disposed) return;
+      if(london) disposeArchitecture=finishArchitecture(world,phase);
       world.updateMatrixWorld(true);
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
@@ -2368,9 +2418,14 @@ export function World3D({
       NPC_SPOTS.length = 0;
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
+      renderer.domElement.removeEventListener("wheel",onWheel);
       window.removeEventListener("illuminated:fight", onFight);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
       renderer.dispose();
+      river.dispose();
+      disposeGroundStyle();
+      disposeArchitecture();
+      streetscape?.userData.dispose?.();
       renderer.forceContextLoss();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -2418,5 +2473,9 @@ export function World3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adKey, map]);
 
-  return <div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />;
+  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<div className="absolute right-3 bottom-36 z-[100002] flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
+    <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
+    <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
+    <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>
+  </div>}</>;
 }

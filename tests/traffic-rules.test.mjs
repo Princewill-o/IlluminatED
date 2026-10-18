@@ -197,6 +197,7 @@ test("nineteen city vehicles keep progressing through turns and queues across se
   for (const baseTime of [0, 30000, 38000]) {
     const { buildLondon } = projectData("src/game/core/london.ts");
     const { commuterPhase } = projectData("src/game/core/residents.ts");
+    const {trafficAdvance}=projectData("src/game/core/traffic-flow.ts");
     const routes = buildLondon().routes.map(route => route[0][0] === route.at(-1)[0] && route[0][1] === route.at(-1)[1] ? route : [...route, route[0]]);
     const lengths = routes.map(route => route.slice(1).reduce((sum, p, i) => sum + Math.hypot(p[0] - route[i][0], p[1] - route[i][1]), 0));
     const kinds = ["bus", "sedan", "taxi", "van", "bus", "suv", "delivery", "taxi", "bus", "police", "sedan", "hatchback-sports", "bus", "ambulance", "van", "taxi"];
@@ -229,7 +230,9 @@ test("nineteen city vehicles keep progressing through turns and queues across se
       for (let i = 0; i < cars.length; i++) {
         const car = cars[i];
         const parked = car.commuter !== undefined && commuterPhase(seconds, car.commuter).out;
-        car.distance += parked ? 0 : R.trafficMoveDistance(poses[i], dt * car.speed, timeMs, poses.filter(other => other.id !== car.id), pedestrians);
+        const clearance=parked ? 0 : R.trafficMoveDistance(poses[i], dt * car.speed, timeMs, poses.filter(other => other.id !== car.id), pedestrians);
+        const move=trafficAdvance(car.velocity??0,car.speed,dt,clearance);
+        car.velocity=move.speed;car.distance+=move.distance;
         Object.assign(poses[i], position(car));
       }
       if (tick === 120 / dt) checkpoint = cars.map(car => car.distance);

@@ -80,6 +80,11 @@ function recolourHead(mesh: THREE.SkinnedMesh, cols: ReturnType<typeof avatarCol
       read(uv.getX(i), uv.getY(i)).getHSL(hsl, THREE.SRGBColorSpace);
       target.offsetHSL(0, 0, (hsl.l - 0.47) * 0.2);
     }
+    // Baked soft modelling: retains the inexpensive Lambert shader and mesh.
+    const normal=g.attributes.normal;
+    const illumination=0.88+Math.max(0,normal.getY(i))*0.09+Math.max(0,normal.getZ(i))*0.045;
+    target.multiplyScalar(illumination);
+    if(!skin && !inFace) target.multiplyScalar(0.94+f*0.09);
     target.toArray(out, i * 3);
   }
   g.setAttribute("color", new THREE.BufferAttribute(out, 3));
@@ -171,6 +176,8 @@ function dress(object: THREE.Object3D, headMesh: THREE.SkinnedMesh | null, bodyM
     // The face: the same drawn eyes, brows and mouth as the 2D character, on the front of the head.
     const tex = new THREE.CanvasTexture(faceCanvas(a));
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.magFilter = THREE.LinearFilter;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
     const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, w * 0.86), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
     face.position.set(cx, hb.min.y + h * 0.36, hb.max.z + 0.004);
     headBone.attach(face);

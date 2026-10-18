@@ -173,6 +173,7 @@ export function worldHarness({
             }),
         };
       if (name.includes("world-network")) return network;
+      if (name.includes("room-chat")) return projectData("src/game/core/room-chat.ts");
       if (name.includes("core/world"))
         return { ...W, SERVER_CAPACITY: capacity };
       if (name.includes("careers"))

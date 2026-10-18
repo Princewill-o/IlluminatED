@@ -12,15 +12,16 @@ import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
 import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
+import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
+import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 import { TRAIN_CALL } from "./train-state";
-import MOVERS from "../../../../public/world/movers.json";
 
 import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -710,6 +711,7 @@ export function WorldView({
       {/* The 3D renderer supplies its own lighting. Hide the retained 2D night
           tint when switching renderers so its last frame cannot cover the world. */}
       <canvas ref={fxCanvas} className={cn("pointer-events-none absolute inset-0", is3d && "hidden")} aria-hidden />
+      {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}

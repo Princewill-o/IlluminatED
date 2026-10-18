@@ -42,6 +42,7 @@ export function frameMapCamera(
   aspect: number,
   indoors: boolean,
   subject = { x, z },
+  zoom = 1,
 ) {
   const padding = 0.2;
   const height = indoors ? 12.5 : 19;
@@ -55,7 +56,7 @@ export function frameMapCamera(
       indoors ? 0 : 0.0055,
       indoors ? 0 : 0.0012,
     );
-  let scale = 1;
+  let scale = 1 / Math.max(0.75, Math.min(1.65, Number.isFinite(zoom) ? zoom : 1));
   let footprint = footprintAt(scale);
   for (let i = 0; i < 8; i++) {
     const fit = Math.min(

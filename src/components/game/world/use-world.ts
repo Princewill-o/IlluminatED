@@ -10,6 +10,7 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { uniformFor } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import type { Avatar } from "@/game/core/cosmetics";
+import { CHAT_INTERVAL, roomChatText, type RoomMessage } from "@/game/core/room-chat";
 import { SERVER_CAPACITY, chatText } from "@/game/core/world";
 import {
   MOVE_INTERVAL_MS,
@@ -105,6 +106,9 @@ export function useWorld({
   const [status, setStatus] = useState<Connection>("connecting");
   const [ping, setPing] = useState<number | null>(null);
   const [roster, setRoster] = useState(0);
+  const [messages, setMessages] = useState<RoomMessage[]>([]);
+  const lastChat = useRef(0);
+  const sendingChat = useRef(false);
   const players = useRef(new Map<string, RemotePlayer>());
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pos = useRef({
@@ -117,6 +121,8 @@ export function useWorld({
   const bump = useCallback(() => setRoster((n) => n + 1), []);
 
   useEffect(() => {
+    setMessages([]);
+    lastChat.current = 0;
     // Private places (your home) are single player: no channel at all.
     if (serverId === "solo") {
       setStatus("solo");
@@ -302,6 +308,15 @@ export function useWorld({
             : null;
         p.heading = Number.isFinite(payload.heading) ? payload.heading : 0;
         p.heardAt = Date.now();
+      });
+      const heardChat = new Map<string, number>();
+      channel.on("broadcast", { event: "chat" }, ({ payload }) => {
+        if (cancelled() || !payload || typeof payload.i !== "string" || typeof payload.id !== "string" || payload.id.length>80) return;
+        const player = map.get(payload.i), text = roomChatText(payload.text), now = Date.now();
+        if (!player || !text || now-(heardChat.get(player.id) ?? 0)<CHAT_INTERVAL) return;
+        heardChat.set(player.id,now);
+        setMessages(old=>old.some(m=>m.id===payload.id)?old:[...old,{id:payload.id,userId:player.id,username:player.username,text,at:now}].slice(-60));
+        player.chat={text,until:now+6000}; bump();
       });
       channel.on("broadcast", { event: "c" }, ({ payload }) => {
         if (cancelled() || !payload || typeof payload.i !== "string") return;
@@ -503,7 +518,24 @@ export function useWorld({
     [me.id],
   );
 
+  const sendChat = useCallback(async (value: string) => {
+    const text=roomChatText(value), channel=channelRef.current;
+    if(!text || !channel || channel.state!=="joined") return "Chat is disconnected. Reconnect before sending.";
+    if(sendingChat.current || Date.now()-lastChat.current<CHAT_INTERVAL) return "Wait a moment before sending another message.";
+    sendingChat.current=true; lastChat.current=Date.now();
+    const id=crypto.randomUUID();
+    try {
+      const result=await channel.send({type:"broadcast",event:"chat",payload:{i:me.id,id,text}});
+      if(result!=="ok" || channelRef.current!==channel) return "Message was not confirmed. Please try again.";
+      setMessages(old=>[...old,{id,userId:me.id,username:me.username,text,at:Date.now()}].slice(-60));
+      return null;
+    } catch { return "Message could not be sent. Please try again."; }
+    finally { sendingChat.current=false; }
+  },[me.id,me.username]);
+
   return {
+    messages,
+    sendChat,
     status,
     ping,
     players,

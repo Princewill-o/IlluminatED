@@ -1,5 +1,21 @@
 import { buildLondon } from "./london";
 import { TILE, safeSpot, blocked, type Portal, type WorldMap } from "./world";
+
+/** Group nearby screen pins without moving their actual navigation targets. */
+export function mapPinGroups(places: Place[], scale: number, selectedId?: string) {
+  const groups: { places: Place[]; x: number; y: number }[] = [];
+  for (const place of places) {
+    const x = place.x / TILE * scale, y = place.y / TILE * scale;
+    const group = place.id === selectedId ? undefined : groups.find(g =>
+      !g.places.some(p => p.id === selectedId) && Math.hypot(g.x-x,g.y-y)<40);
+    if (group) {
+      const count=group.places.length;
+      group.x=(group.x*count+x)/(count+1); group.y=(group.y*count+y)/(count+1);
+      group.places.push(place);
+    } else groups.push({places:[place],x,y});
+  }
+  return groups;
+}
 const LANDMARK_NAMES: Record<string, string> = {
   "big-ben": "Big Ben",
   parliament: "Houses of Parliament",
@@ -92,7 +108,8 @@ export type PlaceKind =
   | "hospital"
   | "court"
   | "study"
-  | "landmark";
+  | "landmark"
+  | "hotel";
 export interface Place {
   id: string;
   name: string;
@@ -102,6 +119,7 @@ export interface Place {
 }
 
 export const KIND: Record<PlaceKind, { label: string; colour: string }> = {
+  hotel: { label: "Hotels", colour: "#456c60" },
   landmark: { label: "Landmarks", colour: "#9b496a" },
   university: { label: "Universities", colour: "#7153b9" },
   station: { label: "Underground", colour: "#2b5fd9" },
@@ -120,6 +138,7 @@ export const KIND: Record<PlaceKind, { label: string; colour: string }> = {
 
 function kindOf(p: Portal): PlaceKind | null {
   const t = p.to;
+  if (t.kind === "map" && t.mapId.startsWith("hotel-")) return "hotel";
   if ((t.kind === "map" && t.mapId.startsWith("station-")) || t.kind === "tube")
     return "station";
   if (t.kind === "act" && t.activity === "hike") return "view";

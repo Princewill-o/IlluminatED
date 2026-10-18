@@ -2,7 +2,18 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const W = projectData("src/game/core/world.ts");
-const { placesFor, walkingRoute } = projectData("src/game/core/map-guide.ts");
+const { placesFor, walkingRoute, mapPinGroups } = projectData("src/game/core/map-guide.ts");
+
+test("map clusters preserve destinations and keep a selected route pin visible", () => {
+  const places = placesFor(W.CITY);
+  const groups = mapPinGroups(places,7);
+  assert.ok(groups.length < places.length);
+  assert.deepEqual(groups.flatMap(g=>g.places.map(p=>p.id)).sort(),places.map(p=>p.id).sort());
+  const selected=groups.find(g=>g.places.length>1).places[0];
+  assert.equal(mapPinGroups(places,7,selected.id).find(g=>g.places.some(p=>p.id===selected.id)).places.length,1);
+  assert.ok(mapPinGroups(places,21).length>=groups.length);
+  assert.equal(places.filter(p=>p.kind==='hotel').length,2);
+});
 test("the location guide includes every workplace entrance, study space and named landmark", () => {
   const places = placesFor(W.CITY);
   assert.equal(new Set(places.map((p) => p.id)).size, places.length);

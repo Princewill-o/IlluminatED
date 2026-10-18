@@ -11,6 +11,7 @@ import {
   KIND,
   placesFor,
   walkingRoute,
+  mapPinGroups,
   type Place,
   type PlaceKind,
 } from "@/game/core/map-guide";
@@ -48,8 +49,11 @@ export function LocationMap({
   const [zoom, setZoom] = useState(1);
   const S = (map.cols > 100 ? 7 : 9) * zoom;
   const [query, setQuery] = useState("");
-  const [show, setShow] = useState(new Set(Object.keys(KIND) as PlaceKind[]));
+  const [area, setArea] = useState<string[] | null>(null);
+  const [show, setShow] = useState<Set<PlaceKind>>(new Set((Object.keys(KIND) as PlaceKind[]).filter(k=>k!=="bike"&&k!=="bus")));
+  const category = show.size === Object.keys(KIND).length ? "All" : [...show].every(k=>["bike","bus","station"].includes(k)) ? "Transport" : "Explore";
   const [position, setPosition] = useState({ x: PLAYER.x, y: PLAYER.y });
+  const focus = useRef({ x: PLAYER.x, y: PLAYER.y });
   const canvas = useRef<HTMLCanvasElement>(null),
     viewport = useRef<HTMLDivElement>(null),
     dialog = useRef<HTMLDivElement>(null),
@@ -57,7 +61,8 @@ export function LocationMap({
   const places = useMemo(() => placesFor(map), [map]);
   const filtered = places.filter(
     (p) =>
-      show.has(p.kind) &&
+      (query.trim() || show.has(p.kind)) &&
+      (!area || area.includes(p.id)) &&
       `${p.name} ${KIND[p.kind].label}`
         .toLowerCase()
         .includes(query.toLowerCase().trim()),
@@ -65,6 +70,8 @@ export function LocationMap({
   const kinds = (Object.keys(KIND) as PlaceKind[]).filter((k) =>
     places.some((p) => p.kind === k),
   );
+  const pinGroups = mapPinGroups(waypoint && !filtered.some(p=>p.id===waypoint.id) ? [...filtered,waypoint] : filtered, S, waypoint?.id);
+  const nearby = [...filtered].sort((a,b)=>Math.hypot(a.x-position.x,a.y-position.y)-Math.hypot(b.x-position.x,b.y-position.y));
   const tileX = Math.floor(position.x / TILE),
     tileY = Math.floor(position.y / TILE);
   const route = useMemo(
@@ -79,6 +86,7 @@ export function LocationMap({
     [map, tileX, tileY, waypoint],
   );
   const centre = (x: number, y: number) => {
+    focus.current = {x,y};
     if (viewport.current) {
       viewport.current.scrollLeft =
         (x / TILE) * S - viewport.current.clientWidth / 2;
@@ -102,15 +110,15 @@ export function LocationMap({
       [...row].forEach((tile, x) => {
         ctx.fillStyle = COLOURS[tile] ?? "#c7b9a3";
         ctx.fillRect(x * S, y * S, Math.ceil(S), Math.ceil(S));
-        if (tile === "X" || tile === "#") {
+        if (tile === "#") {
           ctx.strokeStyle = "#a2927e";
           ctx.lineWidth = 0.4;
           ctx.strokeRect(x * S, y * S, S, S);
         }
       }),
     );
-    // A ten-tile grid makes distances and neighbourhood positions readable.
-    ctx.strokeStyle = "rgba(19,32,58,.15)";
+    // Quiet grid lines keep streets and destinations visually dominant.
+    ctx.strokeStyle = "rgba(19,32,58,.035)";
     ctx.lineWidth = 1;
     for (let x = 0; x < map.cols; x += 10) {
       ctx.beginPath();
@@ -125,6 +133,14 @@ export function LocationMap({
       ctx.stroke();
     }
     if (map.id === "city") {
+      // Draw complete building footprints instead of a checker of solid tiles.
+      for (const building of buildLondon().things) {
+        if (building.kind !== "building") continue;
+        ctx.fillStyle = building.id.startsWith("hotel-") ? "#879d90" : "#b5a795";
+        ctx.fillRect((building.x+.12)*S,(building.y+.12)*S,(building.w-.24)*S,(building.h-.24)*S);
+        ctx.strokeStyle = "#968c7f"; ctx.lineWidth = 1;
+        ctx.strokeRect((building.x+.12)*S,(building.y+.12)*S,(building.w-.24)*S,(building.h-.24)*S);
+      }
       ctx.font = `bold ${Math.max(12, S * 1.6)}px sans-serif`;
       ctx.fillStyle = "#295a79";
       const river = buildLondon().river,
@@ -137,9 +153,9 @@ export function LocationMap({
     }
     if (viewport.current) {
       viewport.current.scrollLeft =
-        (PLAYER.x / TILE) * S - viewport.current.clientWidth / 2;
+        (focus.current.x / TILE) * S - viewport.current.clientWidth / 2;
       viewport.current.scrollTop =
-        (PLAYER.y / TILE) * S - viewport.current.clientHeight / 2;
+        (focus.current.y / TILE) * S - viewport.current.clientHeight / 2;
     }
   }, [map, S]);
   useEffect(() => {
@@ -228,7 +244,7 @@ export function LocationMap({
             className="h-full w-full overflow-auto overscroll-contain bg-[#d9cfbd]"
           >
             <div
-              className="relative"
+              className="relative mx-auto"
               style={{ width: map.cols * S, height: map.rows * S }}
             >
               <canvas ref={canvas} className="absolute inset-0" aria-hidden />
@@ -271,7 +287,15 @@ export function LocationMap({
                   />
                 </svg>
               )}
-              {filtered.map((p) => (
+              {pinGroups.filter(g=>g.places.length>1).map((group) => (
+                <button key={`cluster-${group.places[0].id}`} type="button"
+                  aria-label={`Zoom to ${group.places.length} nearby locations`}
+                  title={group.places.map(p=>p.name).join(" · ")}
+                  onClick={()=>{centre(group.x/S*TILE,group.y/S*TILE);setZoom(z=>Math.min(3,z+0.5));setArea(group.places.map(p=>p.id));}}
+                  className="absolute z-20 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white bg-[#263e47] text-xs font-black text-white shadow-md ring-4 ring-[#263e47]/15"
+                  style={{left:group.x,top:group.y}}>{group.places.length}</button>
+              ))}
+              {pinGroups.filter(g=>g.places.length===1).map(({places:[p]}) => (
                 <button
                   key={p.id}
                   type="button"
@@ -280,7 +304,7 @@ export function LocationMap({
                   aria-pressed={waypoint?.id === p.id}
                   onClick={() => pick(p)}
                   className={cn(
-                    "group absolute z-20 grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl border-2 border-white text-[11px] font-black text-white shadow-md focus-visible:z-40 focus-visible:outline-2 focus-visible:outline-[#13203a]",
+                    "group absolute z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white text-[10px] font-black text-white shadow-md focus-visible:z-40 focus-visible:outline-2 focus-visible:outline-[#13203a]",
                     waypoint?.id === p.id && "z-30 ring-4 ring-[#f2a03a]",
                   )}
                   style={{
@@ -293,7 +317,7 @@ export function LocationMap({
                   <span
                     className={cn(
                       "pointer-events-none absolute top-full left-1/2 mt-1 max-w-36 -translate-x-1/2 rounded-md border border-[#d5c5ad] bg-white px-1.5 py-1 text-center text-[10px] leading-tight font-bold whitespace-nowrap text-[#13203a] shadow-sm",
-                      waypoint?.id === p.id || zoom >= 2
+                      waypoint?.id === p.id
                         ? "block"
                         : "hidden group-hover:block group-focus-visible:block",
                     )}
@@ -314,7 +338,7 @@ export function LocationMap({
             </div>
           </div>
           <div className="pointer-events-none absolute bottom-3 left-3 z-30 rounded-lg bg-white/95 px-3 py-2 text-[10px] font-bold shadow">
-            Orange: you · Blue: walking route · Zoom in for names
+            Orange: you · Blue: route · Dark circles: nearby locations
             <br />
             Grid: 10 tiles ≈ 80 game metres
           </div>
@@ -332,8 +356,7 @@ export function LocationMap({
             </button>
           </div>
           <p className="mt-1 text-xs text-[#13203a]/70">
-            Find a location, then follow its blue walking route. Numbers match
-            the map pins.
+            Choose a destination to see its walking route. Tap a dark cluster to explore nearby places.
           </p>
           <label className="mt-3 flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#c7b9a3] bg-white px-3">
             <Search className="size-4 shrink-0" aria-hidden />
@@ -342,10 +365,17 @@ export function LocationMap({
               aria-label="Search locations"
               placeholder="Jobs, study, stations…"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {setQuery(e.target.value);setArea(null);}}
               className="w-full min-w-0 bg-transparent text-sm outline-none"
             />
           </label>
+          <div className="mt-2 flex gap-1 rounded-xl bg-[#e8e1d3] p-1" aria-label="Map categories">
+            {(["Explore","Transport","All"] as const).map(label=><button type="button" key={label}
+              aria-pressed={category===label}
+              onClick={()=>{setArea(null);setQuery("");setShow(new Set((Object.keys(KIND) as PlaceKind[]).filter(k=>label==="All"|| (label==="Transport"?["bike","bus","station"].includes(k):k!=="bike"&&k!=="bus"))));}}
+              className={cn("min-h-9 flex-1 rounded-lg px-2 text-xs font-bold focus-visible:outline-2",category===label?"bg-[#263e47] text-white":"bg-white hover:bg-[#dce8dd]")}>{label}</button>)}
+          </div>
+          {area && <button type="button" onClick={()=>setArea(null)} className="mt-2 min-h-10 rounded-xl bg-[#e5eadd] px-3 text-left text-xs font-bold">Showing this area · Show all locations</button>}
           <div className="mt-2 overflow-y-auto overscroll-contain">
             <details className="rounded-xl bg-white p-2">
               <summary className="min-h-8 cursor-pointer text-xs font-black">
@@ -405,10 +435,10 @@ export function LocationMap({
               </div>
             )}
             <p role="status" className="mt-3 text-[11px] font-bold">
-              {filtered.length} location{filtered.length === 1 ? "" : "s"}
+              {filtered.length} location{filtered.length === 1 ? "" : "s"} · nearest first
             </p>
             <ul className="mt-1 space-y-1">
-              {filtered.map((p) => (
+              {nearby.map((p) => (
                 <li key={p.id}>
                   <button
                     type="button"
