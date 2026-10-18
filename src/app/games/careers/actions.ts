@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { z } from "zod";
 
-import { SKILLS, WORKPLACES } from "@/game/core/careers";
+import { WORKPLACES, buildInterview, buildShift, checkAnswer, roleOf } from "@/game/core/careers";
 import { FURNITURE, HOMES, validLayout } from "@/game/core/homes";
+import { newSeed } from "@/game/core/rng";
+import { issueCareerReceipt, readCareerReceipt } from "@/lib/game/career-receipt";
 import { getSupabase } from "@/lib/social/server";
 
 const FRIENDLY: Record<string, string> = {
@@ -37,29 +39,48 @@ async function rpc<T>(fn: string, args: Record<string, unknown>, paths: string[]
   return { ok: true, data: data as T };
 }
 
-const workplaceId = z.string().refine((id) => WORKPLACES.some((w) => w.id === id));
-
-export async function sitInterview(workplace: string, correct: number, durationMs: number) {
-  const p = z.object({ workplace: workplaceId, correct: z.number().int().min(0).max(3), durationMs: z.number().int().min(0).max(3_600_000) }).safeParse({ workplace, correct, durationMs });
-  if (!p.success) return { ok: false as const, error: FRIENDLY.invalid };
-  return rpc<{ passed: boolean; role: string }>("career_interview", { p_workplace: workplace, p_correct: correct, p_duration_ms: durationMs }, ["/games/careers", "/games/world"]);
+/** Sessions are signed by the server; scores and elapsed time never come from the browser. */
+export async function startCareerSession(workplace: string, mode: "shift" | "interview") {
+  const secret = process.env.BILLING_CALLBACK_SECRET?.trim() ?? "";
+  if (secret.length < 32 || !WORKPLACES.some(w => w.id === workplace) || !["shift","interview"].includes(mode))
+    return {ok:false as const,error:"Verified career sessions are unavailable. Please use subject practice while setup is completed."};
+  const sb = await getSupabase();
+  const {data:auth} = sb ? await sb.auth.getUser() : {data:null};
+  if (!sb || !auth?.user) return {ok:false as const,error:FRIENDLY.not_allowed};
+  const readiness = await sb.rpc("career_verified_ready", {p_secret:secret});
+  if (readiness.error || readiness.data !== true) return {ok:false as const,error:"Verified career rewards are being prepared. Subject practice is still available."};
+  let role = WORKPLACES.find(w => w.id === workplace)!.roles[0].id;
+  if (mode === "shift") {
+    const {data:job,error} = await sb.from("career_jobs").select("role,workplace").eq("user_id",auth.user.id).eq("status","active").maybeSingle();
+    if (error || !job || job.workplace !== workplace) return {ok:false as const,error:FRIENDLY.no_job};
+    role = job.role;
+  }
+  const seed = newSeed();
+  return {ok:true as const,seed,token:issueCareerReceipt({user:auth.user.id,workplace,role,mode,seed},secret)};
 }
 
-export async function finishWorkShift(seed: number, correct: number, durationMs: number, skills: Record<string, [number, number]>) {
-  const p = z
-    .object({
-      seed: z.number().int().min(1).max(2_147_483_647),
-      correct: z.number().int().min(0).max(5),
-      durationMs: z.number().int().min(0).max(3_600_000),
-      skills: z.record(z.string().refine((k) => k in SKILLS), z.tuple([z.number().int().min(0).max(5), z.number().int().min(1).max(5)])),
-    })
-    .safeParse({ seed, correct, durationMs, skills });
-  if (!p.success) return { ok: false as const, error: FRIENDLY.invalid };
-  return rpc<{ pay: number; promoted: boolean; role: string; shifts: number }>(
-    "career_finish_shift",
-    { p_seed: seed, p_correct: correct, p_total: 5, p_duration_ms: durationMs, p_skills: skills },
-    ["/games/careers", "/games/world", "/me"],
-  );
+export async function completeCareerSession(token: string, answers: (number|string)[]) {
+  const parsed = z.object({token:z.string().max(2048),answers:z.array(z.union([z.number().finite(),z.string().max(80)])).min(3).max(5)}).safeParse({token,answers});
+  if (!parsed.success) return {ok:false as const,error:FRIENDLY.invalid};
+  const secret = process.env.BILLING_CALLBACK_SECRET?.trim() ?? "";
+  const sb = await getSupabase();
+  const {data:auth} = sb ? await sb.auth.getUser() : {data:null};
+  if (!sb || !auth?.user) return {ok:false as const,error:FRIENDLY.not_allowed};
+  const receipt = readCareerReceipt(token,auth.user.id,secret);
+  const role = receipt ? roleOf(receipt.workplace,receipt.role) : null;
+  if (!receipt || !role) return {ok:false as const,error:"This work session expired or is invalid. Start a new session."};
+  if (receipt.mode === "shift") {
+    const {data:job} = await sb.from("career_jobs").select("role,workplace").eq("user_id",auth.user.id).eq("status","active").maybeSingle();
+    if (!job || job.role !== role.id || job.workplace !== receipt.workplace) return {ok:false as const,error:"Your role changed. Start a new shift."};
+  }
+  const tasks = receipt.mode === "shift" ? buildShift(role,receipt.seed) : buildInterview(role,receipt.seed);
+  if (answers.length !== tasks.length) return {ok:false as const,error:FRIENDLY.invalid};
+  const skills: Record<string,[number,number]> = {};
+  let correct = 0;
+  tasks.forEach((task,i) => { const ok = checkAnswer(task,answers[i]); correct += Number(ok); const skill = skills[task.skill] ??= [0,0]; skill[0] += Number(ok); skill[1]++; });
+  const duration = Date.now()-receipt.started;
+  if (duration < (receipt.mode === "shift" ? 15000 : 6000)) return {ok:false as const,error:FRIENDLY.too_fast};
+  return rpc<{passed:boolean;role:string;pay:number;promoted:boolean}>("career_complete_verified",{p_secret:secret,p_claim:receipt.id,p_mode:receipt.mode,p_workplace:receipt.workplace,p_role:receipt.role,p_seed:receipt.seed,p_correct:correct,p_duration_ms:duration,p_skills:skills},["/games/careers","/games/world","/me"]);
 }
 
 export async function quitJob() {

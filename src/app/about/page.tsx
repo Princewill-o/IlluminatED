@@ -34,7 +34,7 @@ const HOW = [
   },
   {
     t: "Accounts",
-    d: "Accounts are set up after a short demo call, for individual students (a monthly subscription) or for a whole school, college or sixth form (bundle pricing). It's for ages 13 and over. See our privacy policy for what we store.",
+    d: "Beta access is by invitation for ages 13+. Core study is free for invited individual learners; Premium is optional. Schools and colleges agree licences separately. See our access and pricing page for details.",
   },
 ];
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About IlluminatED"
-        intro="A revision game for students, schools, colleges and sixth forms in the UK. Book a demo to get started. Illumship removes contextual game adverts."
+        intro="A learning game connecting subject practice, workplace simulations and saved progress. Request an invitation or discuss a school pilot."
         crumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
       />
       <Section rule={false}>

@@ -10,7 +10,8 @@ import { SKILLS, type Task, checkAnswer } from "@/game/core/careers";
 import { cn } from "@/lib/utils";
 
 /** One work task: the material, the question, and what you learn from it. */
-export function TaskCard({ task, index, total, onDone }: { task: Task; index: number; total: number; onDone: (correct: boolean) => void }) {
+export function TaskCard({ task, index, total, onDone }: { task: Task; index: number; total: number; onDone: (correct: boolean, answer: number | string) => void }) {
+  const [submitted, setSubmitted] = useState<number | string>("");
   const [picked, setPicked] = useState<number | null>(null);
   const [typed, setTyped] = useState("");
   const [result, setResult] = useState<boolean | null>(null);
@@ -18,6 +19,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
   const answer = (value: number | string) => {
     if (result !== null) return;
     const ok = checkAnswer(task, value);
+    setSubmitted(value);
     setResult(ok);
   };
 
@@ -127,7 +129,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
         <div className={cn("mt-4 rounded-2xl p-4", result ? "bg-[#5fd3a5]/15" : "bg-[#ff7a6b]/12")} role="status">
           <p className="font-black">{result ? "Spot on." : task.numeric ? `Not quite. The answer is ${task.numeric.prefix ?? ""}${task.answer}${task.numeric.unit ? ` ${task.numeric.unit}` : ""}.` : "Not quite."}</p>
           <p className="mt-1 text-sm leading-6">{task.explain}</p>
-          <button type="button" onClick={() => onDone(result)} className="mt-3 rounded-full bg-brand px-5 py-2.5 font-black text-white">
+          <button type="button" onClick={() => onDone(result, submitted)} className="mt-3 rounded-full bg-brand px-5 py-2.5 font-black text-white">
             {index + 1 === total ? "Finish" : "Next task"}
           </button>
         </div>

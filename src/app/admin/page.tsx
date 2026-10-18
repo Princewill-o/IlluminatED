@@ -32,7 +32,8 @@ export default async function AdminPage() {
   const { data: allowed, error: allowedError } = await sb.rpc("platform_admin_status");
   if (allowedError || allowed !== true) redirect("/dashboard");
   const { data, error } = await sb.rpc("platform_admin_overview", { p_page: 0, p_search: "" });
-  if (error) return <><PageHeader title="Platform admin" intro="The admin overview is temporarily unavailable."/><Section rule={false}><Note>Refresh this page. If the problem continues, use billing support to report it.</Note></Section></>;
+  if (error) return <><PageHeader title="Platform admin" intro="The admin overview is temporarily unavailable."/><Section rule={false}>
+      <Link href="/admin/launch" className="mb-6 inline-block rounded-full border px-5 py-3 font-bold">Review launch readiness</Link><Note>Refresh this page. If the problem continues, use billing support to report it.</Note></Section></>;
   const o = data as Overview;
   const {data:schools}=await sb.from("school_licences").select("id,name,seats,status,expires_at,agreement_reference").order("created_at",{ascending:false});
   const [{ data: demos }, { data: invites }] = await Promise.all([

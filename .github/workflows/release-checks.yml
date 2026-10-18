@@ -1,0 +1,22 @@
+name: Release checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check:secrets
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: node --test tests/launch-readiness.test.mjs tests/career-server-marking.test.mjs tests/workplace-learning.test.mjs tests/homes-living.test.mjs tests/multiplayer.test.mjs tests/music.test.mjs tests/city-identity-crypto.test.mjs
+      - run: npm run build

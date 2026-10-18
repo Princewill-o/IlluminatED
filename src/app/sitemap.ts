@@ -8,6 +8,8 @@ const PUBLIC_PAGES = [
   "/about",
   "/book",
   "/schools",
+  "/pricing",
+  "/investors",
   "/revision-games",
   "/faq",
   "/accessibility",

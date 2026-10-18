@@ -38,6 +38,8 @@ const PUBLIC_PATHS = [
   "/creators",
   "/book",
   "/schools",
+  "/pricing",
+  "/investors",
   "/revision-games",
 ];
 
@@ -61,9 +63,6 @@ const isPublic = (path: string) =>
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   if (process.env.NODE_ENV === "development" && process.env.ILLUMINATED_PREVIEW === "1" && path === "/games/city-showcase") return NextResponse.next();
-  // Accounts are set up after a demo call: send would-be sign-ups to book one.
-  if ((path === "/sign-in" || path === "/sign-in/") && ["sign-up", "signup", "register"].includes(request.nextUrl.searchParams.get("mode") ?? ""))
-    return NextResponse.redirect(new URL("/book", request.url));
   // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();
   // Public pages don't need a verified session. Referral links and the landing
@@ -135,6 +134,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Refresh sessions and protect account pages while allowing public assets.
-    "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
+    "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|ico|webmanifest)$).*)",
   ],
 };

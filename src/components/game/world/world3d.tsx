@@ -1225,6 +1225,7 @@ export function World3D({
   onUnavailable,
   getHomeAction,
   overview = false,
+  quality = "auto",
 }: {
   map: WorldMap;
   getMe: () => { x: number; y: number; walking: boolean; heading?: number };
@@ -1241,6 +1242,7 @@ export function World3D({
   onUnavailable?:()=>void;
   getHomeAction?: () => HomeAction | null;
   overview?: boolean;
+  quality?: "auto" | "low";
   getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
   onGround: (x: number, y: number) => void;
@@ -1263,12 +1265,12 @@ export function World3D({
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
-    try{renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
+    try{renderer = new THREE.WebGLRenderer({ antialias: quality !== "low", powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
     renderer.domElement.addEventListener("webglcontextlost",contextLost);
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
-    let pixelRatio = Math.min(window.devicePixelRatio || 1, 1.25);
+    let pixelRatio = quality === "low" ? 0.75 : Math.min(window.devicePixelRatio || 1, 1);
     renderer.setPixelRatio(pixelRatio);
     // Characters already have inexpensive contact shadows.
     renderer.shadowMap.enabled = false;
@@ -2211,7 +2213,7 @@ export function World3D({
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, avatarKey, overview, identityKey]);
+  }, [map, avatarKey, overview, identityKey, quality]);
 
   // Billboards: real upcoming hackathons and tech events on big boards around town.
   const adKey = ads.map((a) => a.id).join(",");

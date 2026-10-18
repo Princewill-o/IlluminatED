@@ -9,14 +9,13 @@ import { Briefcase, GraduationCap, Sparkles, Trophy, X } from "lucide-react";
 
 import { TaskCard } from "./task-card";
 
-import { finishWorkShift, sitInterview } from "@/app/games/careers/actions";
+import { startCareerSession, completeCareerSession } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { AvatarFigure } from "@/components/game/avatar";
 import { CompanyLogo } from "@/components/game/company-logo";
 import { doActivity } from "@/components/game/world/use-needs";
 import { INTERVIEW_PASS, PROMOTION, SKILLS, type Role, type Workplace, buildInterview, buildShift, roleOf, workplaceById } from "@/game/core/careers";
 import type { Avatar } from "@/game/core/cosmetics";
-import { newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
 
 export interface ActiveJob {
@@ -32,17 +31,24 @@ export interface ActiveJob {
 /** Interview: three questions, then the employer decides. */
 export function Interview({ workplace, onHired, onClose }: { workplace: Workplace; onHired: () => void; onClose: () => void }) {
   const role = workplace.roles[0];
-  const seed = useRef(newSeed());
-  const tasks = useMemo(() => buildInterview(role, seed.current), [role]);
-  const started = useRef(Date.now());
+  const [seed, setSeed] = useState(1);
+  const token = useRef("");
+  const answers = useRef<(number|string)[]>([]);
+  const [sessionError, setSessionError] = useState("");
+  const tasks = useMemo(() => buildInterview(role, seed), [role, seed]);
   const [i, setI] = useState(-1);
   const [correct, setCorrect] = useState(0);
   const [outcome, setOutcome] = useState<{ passed: boolean; error?: string } | null>(null);
   const [pending, start] = useTransition();
 
-  const finish = (c: number) =>
+  const begin = () => start(async () => {
+    const session = await startCareerSession(workplace.id,"interview");
+    if (!session.ok) {setSessionError(session.error);return;}
+    token.current = session.token; setSeed(session.seed); setI(0);
+  });
+  const finish = () =>
     start(async () => {
-      const r = await sitInterview(workplace.id, c, Date.now() - started.current);
+      const r = await completeCareerSession(token.current, answers.current);
       if (!r.ok) setOutcome({ passed: false, error: r.error });
       else {
         setOutcome({ passed: r.data.passed });
@@ -62,9 +68,10 @@ export function Interview({ workplace, onHired, onClose }: { workplace: Workplac
             Get {INTERVIEW_PASS} right to be hired. Starting pay: <strong className="text-foreground">{role.pay} Clout a shift</strong>.
           </li>
         </ul>
-        <button type="button" onClick={() => setI(0)} className="mt-5 w-full rounded-full bg-brand py-3 font-black text-white">
-          Start the interview
+        <button type="button" disabled={pending} onClick={begin} className="mt-5 w-full rounded-full bg-brand py-3 font-black text-white">
+          {pending ? "Starting…" : "Start the interview"}
         </button>
+        {sessionError && <p role="alert" className="mt-3 text-sm">{sessionError}</p>}
       </Panel>
     );
 
@@ -76,10 +83,11 @@ export function Interview({ workplace, onHired, onClose }: { workplace: Workplac
           task={tasks[i]}
           index={i}
           total={tasks.length}
-          onDone={(ok) => {
+          onDone={(ok, answer) => {
+            answers.current[i] = answer;
             const c = correct + (ok ? 1 : 0);
             setCorrect(c);
-            if (i + 1 === tasks.length) finish(c);
+            if (i + 1 === tasks.length) finish();
             setI(i + 1);
           }}
         />
@@ -114,25 +122,25 @@ export function Interview({ workplace, onHired, onClose }: { workplace: Workplac
 export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar; onClose: () => void }) {
   const workplace = workplaceById(job.workplace)!;
   const role = roleOf(job.workplace, job.role)!;
-  const seed = useRef(newSeed());
-  const tasks = useMemo(() => buildShift(role, seed.current), [role]);
-  const started = useRef(Date.now());
+  const [seed, setSeed] = useState(1);
+  const token = useRef("");
+  const answers = useRef<(number|string)[]>([]);
+  const [sessionError, setSessionError] = useState("");
+  const tasks = useMemo(() => buildShift(role, seed), [role, seed]);
   const results = useRef<boolean[]>([]);
   const [i, setI] = useState(-1);
   const [summary, setSummary] = useState<{ pay: number; promoted: boolean; role: string; error?: string } | null>(null);
   const [pending, start] = useTransition();
   const router = useRouter();
 
+  const begin = () => start(async () => {
+    const session = await startCareerSession(workplace.id,"shift");
+    if (!session.ok) {setSessionError(session.error);return;}
+    token.current = session.token; setSeed(session.seed); setI(0);
+  });
   const finish = () =>
     start(async () => {
-      const skills: Record<string, [number, number]> = {};
-      tasks.forEach((t, k) => {
-        const s = (skills[t.skill] ??= [0, 0]);
-        s[1] += 1;
-        if (results.current[k]) s[0] += 1;
-      });
-      const correct = results.current.filter(Boolean).length;
-      const r = await finishWorkShift(seed.current, correct, Date.now() - started.current, skills);
+      const r = await completeCareerSession(token.current, answers.current);
       if (!r.ok) setSummary({ pay: 0, promoted: false, role: role.id, error: r.error });
       else {
         setSummary(r.data);
@@ -156,9 +164,10 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
             </p>
           </div>
         </div>
-        <button type="button" onClick={() => setI(0)} className="mt-5 w-full rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
-          Clock in
+        <button type="button" disabled={pending} onClick={begin} className="mt-5 w-full rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
+          {pending ? "Clocking in…" : "Clock in"}
         </button>
+        {sessionError && <p role="alert" className="mt-3 text-sm">{sessionError}</p>}
       </Panel>
     );
 
@@ -170,7 +179,8 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
           task={tasks[i]}
           index={i}
           total={tasks.length}
-          onDone={(ok) => {
+          onDone={(ok, answer) => {
+            answers.current[i] = answer;
             results.current[i] = ok;
             if (i + 1 === tasks.length) finish();
             setI(i + 1);

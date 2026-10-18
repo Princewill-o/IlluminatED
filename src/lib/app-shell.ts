@@ -44,6 +44,8 @@ const WEBSITE_PATHS = new Set([
   "/creators",
   "/book",
   "/schools",
+  "/pricing",
+  "/investors",
   "/revision-games",
   "/teacher",
   "/school-access",

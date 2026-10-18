@@ -46,8 +46,7 @@ export default function PrivacyPage() {
             Game screens can show contextual event adverts. We do not use behavioural advertising trackers or sell your data. Illumship removes game adverts.
           </li>
           <li>
-            Your data is stored in London. The companies that help us run the
-            site only use it to do that job for us.
+            Our primary database is hosted in London. Hosting, email, payments, AI and optional video providers may process data elsewhere; see the provider information below.
           </li>
           <li>
             You can see, change or delete your data. You can delete your whole
@@ -263,12 +262,12 @@ export default function PrivacyPage() {
 
       <h2 id="children">Children and young people</h2>
       <p>
-        IlluminatED is built for learners aged about 13 to 19, so we follow the
+        IlluminatED is built for learners aged about 13 to 19. Our privacy and safety design must be assessed against the
         ICO's{" "}
         <ExternalLink href="https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/childrens-information/childrens-code-guidance-and-resources/">
           Children's Code
         </ExternalLink>{" "}
-        (the Age Appropriate Design Code). In practice:
+        (the Age Appropriate Design Code). The following describes product controls; it is not independent certification of compliance:
       </p>
       <ul>
         <li>
@@ -443,6 +442,8 @@ export default function PrivacyPage() {
         children's services).
       </p>
 
+      <h3>Optional lesson videos</h3>
+      <p>When you choose Watch lesson on a supported workplace task, a video can load from YouTube’s privacy-enhanced player. YouTube receives a network request, including your IP address and browser information. The player is not loaded before you choose the video. Read lesson remains available without loading YouTube. Other captioned workplace lessons use local slides and your browser’s speech service when you request narration.</p>
       <h2 id="keep">How long we keep it</h2>
       <table>
         <thead>

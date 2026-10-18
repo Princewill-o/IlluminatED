@@ -251,8 +251,10 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
   /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
+  const [quality, setQuality] = useState<"auto" | "low" | "2d">("auto");
+  useEffect(() => { try { const saved = localStorage.getItem("world-graphics"); if (saved === "low" || saved === "2d") setQuality(saved); } catch { /* Storage is optional. */ } }, []);
   const [webgl,setWebgl] = useState(false);
-  const is3d = webgl;
+  const is3d = webgl && quality !== "2d";
   // Paint the lighter 2D city first so slow devices have a usable scene while
   // the separately bundled Three.js engine is fetched and prepared.
   useEffect(() => {
@@ -621,6 +623,9 @@ export function WorldView({
         target.current = { x: (e.clientX - r.left) / activeZoom.current + camRef.current.x, y: (e.clientY - r.top) / activeZoom.current + camRef.current.y };
       }}
     >
+      <label className="absolute bottom-14 left-3 z-[100000] rounded-xl border border-white/20 bg-[#13203a] px-3 py-2 text-xs text-white" onPointerDown={e => e.stopPropagation()}>
+        Graphics <select aria-label="Graphics quality" value={quality} onChange={e => { const next = e.target.value as "auto" | "low" | "2d"; setQuality(next); try { localStorage.setItem("world-graphics", next); } catch { /* Storage is optional. */ } }} className="ml-1 rounded bg-[#13203a] py-1 font-bold text-white"><option value="auto">Auto 3D</option><option value="low">Low 3D</option><option value="2d">2D · fastest</option></select>
+      </label>
       <div
         ref={layer}
         data-world
@@ -681,6 +686,7 @@ export function WorldView({
 
       {is3d && (
         <World3D
+          quality={quality === "low" ? "low" : "auto"}
           map={map}
           avatar={me.avatar}
           car={car}

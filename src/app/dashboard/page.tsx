@@ -103,6 +103,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+      <section className="container pt-6" aria-label="Start a learning session"><div className="rounded-2xl border bg-primary/5 p-5"><p className="text-xs font-bold uppercase tracking-widest text-primary">Your next step</p><h2 className="mt-2 text-xl font-bold">Complete one short practice session.</h2><p className="mt-2 text-sm leading-7 text-muted-foreground">Head straight to the Study Quarter for five questions and feedback, or use the lighter study pages. Review what you missed before your next session.</p><div className="mt-4 flex flex-wrap gap-3"><Link href="/games/world?map=study-lobby" className="rounded-full bg-primary px-5 py-3 font-bold text-primary-foreground">Start in the Study Quarter</Link><Link href="/learn" className="rounded-full border px-5 py-3 font-bold">Study without the game</Link></div></div></section>
       <TiggyTour name={profile.username} />
       {(await cookies()).has("ref") && <ClaimReferral />}
       <header className="container pt-6 pb-8 lg:pt-10">

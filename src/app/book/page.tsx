@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { BookForm } from "@/components/book/book-form";
 
 export const metadata: Metadata = {
-  title: "Book a demo",
+  title: "Request access or a school demo",
   description: "See IlluminatED, the revision game for GCSE, A level, BTEC and T Level students, and set up access for your school, college or sixth form.",
 };
 
@@ -18,17 +18,16 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
     <div className="container max-w-6xl pt-10 pb-20 lg:pt-16">
       <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div>
-          <p className="text-sm font-bold tracking-widest text-primary uppercase">Book a demo</p>
-          <h1 className="mt-3 text-4xl leading-[1.05] tracking-tight text-balance md:text-5xl">See IlluminatED in action</h1>
+          <p className="text-sm font-bold tracking-widest text-primary uppercase">Invited beta access</p>
+          <h1 className="mt-3 text-4xl leading-[1.05] tracking-tight text-balance md:text-5xl">Request access. See how learning fits.</h1>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            IlluminatED is built for students, schools, colleges and sixth forms. Access is set up after a short call, so we can match it to your learners and your
-            courses.
+            Request a learner invitation or arrange a school demo. We review beta requests before providing access. Invited individual learners can use core study for free; school licences and optional Premium are separate.
           </p>
           <ul className="mt-8 space-y-4">
             {[
               ["A 20-minute video call", "We walk you through London, jobs, homework and the teacher view."],
               ["Set up for your learners", "Courses, exam boards and classes ready from day one."],
-              ["Pricing that fits", "Schools and colleges get bundle pricing, cheaper per learner than individual plans."],
+              ["Pricing that fits", "School pricing, seats and pilot scope are agreed in writing. No payment is collected by this form."],
             ].map(([t, d]) => (
               <li key={t} className="flex gap-3">
                 <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">

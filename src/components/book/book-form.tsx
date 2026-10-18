@@ -36,7 +36,7 @@ export function BookForm({ initialOrg }: { initialOrg?: Org }) {
         </span>
         <h2 className="mt-5 text-3xl font-bold tracking-tight">Request received</h2>
         <p className="mx-auto mt-3 max-w-md text-lg leading-relaxed text-muted-foreground">
-          Thanks, {f.name.split(" ")[0]}. We&apos;ll email {f.email} within one working day to find a time, show you the platform and set up your access.
+          Thanks, {f.name.split(" ")[0]}. Your request has been received for review. We will use {f.email} to follow up. Access is not confirmed until you receive an invitation.
         </p>
         {state.mailto && (
           <a href={state.mailto} className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">
@@ -148,10 +148,10 @@ export function BookForm({ initialOrg }: { initialOrg?: Org }) {
 
       <div className="mt-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <button type="submit" disabled={pending} className="shrink-0 whitespace-nowrap rounded-full bg-primary px-8 py-3.5 text-base font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
-          {pending ? "Sending…" : "Book my demo"}
+          {pending ? "Sending…" : individual ? "Request an invitation" : "Request a school demo"}
         </button>
         <p className="text-sm text-muted-foreground">
-          {individual ? "Individual access is a monthly subscription. We'll go through it on the call." : "School and college bundles are priced per learner and agreed on the call."}
+          {individual ? "Core study is free for invited individual learners. Premium is optional at £5.99/month when available. No payment is collected here." : "School seats, price and pilot scope are agreed in writing. No payment is collected here."}
         </p>
       </div>
       {state && !state.ok && (

@@ -143,7 +143,7 @@ export async function signUpWithPassword(
           ? "Choose a stronger password: at least 8 characters, not a common one."
           : error.status === 429
             ? "Too many attempts. Wait a few minutes and try again."
-            : "We couldn't create your account. Please try again.",
+            : "We couldn't activate this account. Beta accounts need an invitation for this email address. Request access on the Book a demo page, or contact support if you were already invited.",
     };
   }
   // If email confirmation is switched on, there's no session until they click the link.

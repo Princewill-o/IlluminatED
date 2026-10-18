@@ -145,7 +145,7 @@ const FAQ: { group: string; items: { q: string; a: React.ReactNode }[] }[] = [
     items: [
       {
         q: "Do I need an account?",
-        a: "Yes. Accounts are set up after a short demo call: individual students pay a monthly subscription, and schools, colleges and sixth forms get cheaper bundle pricing. Book a demo at illumed.co.uk/book. You need to be 13 or over.",
+        a: "Beta accounts are invitation only, for learners aged 13+. Request access at illumed.co.uk/book. Invited individual learners have free core study access, with optional Premium at £5.99/month when available. School licences are agreed separately.",
       },
       {
         q: "Will my progress sync to my phone?",

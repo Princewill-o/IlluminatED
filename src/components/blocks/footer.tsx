@@ -8,6 +8,8 @@ import { LEGAL_LINKS } from "@/lib/site";
 import { useSignedIn } from "@/lib/use-signed-in";
 
 const PUBLIC_LINKS = [
+  { href: "/pricing", title: "Access and pricing" },
+  { href: "/investors", title: "Business overview" },
   { href: "/about", title: "About IlluminatED" },
   { href: "/faq", title: "FAQ" },
   { href: "/your-data", title: "Your data" },

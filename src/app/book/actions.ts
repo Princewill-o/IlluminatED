@@ -59,5 +59,6 @@ export async function requestDemo(input: z.input<typeof Booking>) {
     .filter(Boolean)
     .join("\n\n");
   const emailed = await sendEmail({ to: "okubep@gmail.com", subject: `Demo request: ${d.name} (${LABEL[d.organisationType]})`, text: body });
+  if (!sb && !emailed) return { ok: false as const, error: "Access requests are temporarily unavailable. Please try again later or use the contact page." };
   return { ok: true as const, mailto: emailed || sb ? null : `mailto:okubep@gmail.com?subject=${encodeURIComponent(`Demo request: ${d.name}`)}&body=${encodeURIComponent(body)}` };
 }
