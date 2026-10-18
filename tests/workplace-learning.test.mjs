@@ -16,7 +16,7 @@ test("every workplace has reachable reception, terminals and exit", () => {
       seen.add(key);
       queue.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
     }
-    assert.equal(map.portals.filter(p=>p.to.kind === "workstation").length,4);
+    assert.equal(map.portals.filter(p=>p.to.kind === "workstation").length,["pizzazz","tescow"].includes(workplace.id)?4:6);
     for (const p of map.portals) assert.ok(seen.has(`${p.rect.x/W.TILE},${p.rect.y/W.TILE}`), `${workplace.id}: ${p.id}`);
   }
   assert.equal(W.workplaceMap("missing"), null);

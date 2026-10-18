@@ -15,27 +15,27 @@ import "@/styles/globals.css";
 const dmSans = localFont({
   src: [
     {
-      path: "../../fonts/dm-sans/DMSans-Regular.ttf",
+      path: "../../fonts/dm-sans/DMSans-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../fonts/dm-sans/DMSans-Italic.ttf",
+      path: "../../fonts/dm-sans/DMSans-Italic.woff2",
       weight: "400",
       style: "italic",
     },
     {
-      path: "../../fonts/dm-sans/DMSans-Medium.ttf",
+      path: "../../fonts/dm-sans/DMSans-Medium.woff2",
       weight: "500",
       style: "normal",
     },
     {
-      path: "../../fonts/dm-sans/DMSans-SemiBold.ttf",
+      path: "../../fonts/dm-sans/DMSans-SemiBold.woff2",
       weight: "600",
       style: "normal",
     },
     {
-      path: "../../fonts/dm-sans/DMSans-Bold.ttf",
+      path: "../../fonts/dm-sans/DMSans-Bold.woff2",
       weight: "700",
       style: "normal",
     },

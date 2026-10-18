@@ -18,5 +18,5 @@ jobs:
       - run: npm run check:secrets
       - run: npm run typecheck
       - run: npm run lint
-      - run: node --test tests/launch-readiness.test.mjs tests/career-server-marking.test.mjs tests/workplace-learning.test.mjs tests/homes-living.test.mjs tests/multiplayer.test.mjs tests/music.test.mjs tests/city-identity-crypto.test.mjs
+      - run: node --test tests/frame-budget.test.mjs tests/launch-readiness.test.mjs tests/career-server-marking.test.mjs tests/workplace-learning.test.mjs tests/homes-living.test.mjs tests/multiplayer.test.mjs tests/music.test.mjs tests/city-identity-crypto.test.mjs
       - run: npm run build

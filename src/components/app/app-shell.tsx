@@ -112,7 +112,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="App"
           className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-border bg-background px-3 py-4 md:flex 2xl:w-[224px]"
         >
-          <Link href="/dashboard" className="mb-5 flex items-center gap-3 px-2" aria-label="IlluminatED home">
+          <Link prefetch={false} href="/dashboard" className="mb-5 flex items-center gap-3 px-2" aria-label="IlluminatED home">
             <Image src="/brand/lion-head.webp" alt="" width={36} height={36} className="size-9 rounded-full bg-brand" priority />
             <span className="hidden text-lg font-extrabold tracking-tight 2xl:block">IlluminatED</span>
           </Link>
@@ -122,7 +122,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               const Icon = tab.icon;
               return (
                 <li key={tab.id}>
-                  <Link
+                  <Link prefetch={false}
                     href={tab.href}
                     aria-current={on ? "page" : undefined}
                     aria-label={tab.label}
@@ -144,7 +144,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </ul>
-          <Link
+          <Link prefetch={false}
             href="/messages"
             aria-label="Messages"
             title="Messages"
@@ -155,7 +155,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="hidden text-[15px] font-medium 2xl:block">Messages</span>
           </Link>
           <AppearanceSwitch compact className="mb-3 hidden 2xl:grid" />
-          <Link href="/me" className="hidden rounded-2xl bg-foreground/[0.05] p-3 2xl:block">
+          <Link prefetch={false} href="/me" className="hidden rounded-2xl bg-foreground/[0.05] p-3 2xl:block">
             <span className="block text-xs font-bold text-muted-foreground">
               {player.username ? `@${player.username}` : "You"} · Level {player.level}
             </span>
@@ -168,13 +168,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Top bar: phones */}
         <header className="sticky top-0 z-40 border-b border-border bg-chrome pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
           <div className="flex h-14 items-center gap-2 px-3">
-            <Link href="/dashboard" aria-label="IlluminatED home" className="flex min-h-11 min-w-0 items-center gap-2">
+            <Link prefetch={false} href="/dashboard" aria-label="IlluminatED home" className="flex min-h-11 min-w-0 items-center gap-2">
               <Image src="/brand/lion-head.webp" alt="" width={30} height={30} className="size-7 rounded-full bg-brand" priority />
               <span className="truncate text-base font-extrabold tracking-tight">{title ?? "IlluminatED"}</span>
             </Link>
             <span className="ml-auto flex shrink-0 items-center gap-2">
               <Stats player={player} compact />
-              <Link href="/messages" aria-label="Messages" className="grid size-11 place-items-center rounded-full bg-foreground/[0.05] active:scale-90">
+              <Link prefetch={false} href="/messages" aria-label="Messages" className="grid size-11 place-items-center rounded-full bg-foreground/[0.05] active:scale-90">
                 <Send className="size-[18px]" aria-hidden />
               </Link>
             </span>
@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               if (tab.id === "play")
                 return (
                   <li key={tab.id} className="grid place-items-center">
-                    <Link
+                    <Link prefetch={false}
                       href={tab.href}
                       aria-current={on ? "page" : undefined}
                       aria-label="Play"
@@ -212,7 +212,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 );
               return (
                 <li key={tab.id}>
-                  <Link
+                  <Link prefetch={false}
                     href={tab.href}
                     aria-current={on ? "page" : undefined}
                     className={cn(

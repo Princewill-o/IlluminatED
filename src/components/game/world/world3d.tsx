@@ -21,6 +21,7 @@ import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
+import { frameBudget, graphicsBudget } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
@@ -288,6 +289,14 @@ function groundMesh(tiles: string[], highland: boolean) {
       if ((x + y) % 2 && (ch === "-" || ch === "X" || ch === "L")) hex = "#e2d9c6";
       if ((x * 7 + y * 3) % 5 === 0 && (ch === "g" || ch === "T" || ch === "k")) hex = "#93d473";
       quad(x, y, x + 1, y + 1, h, hex);
+      if (!highland && ["-", "X", "L"].includes(ch)) {
+        // Staggered sandstone flags, baked into the existing ground mesh.
+        const joint = "#c6bba7";
+        quad(x, y + 0.49, x + 1, y + 0.51, h + 0.002, joint);
+        const seam = x + (y % 2 ? 0.3 : 0.7);
+        quad(seam, y, seam + 0.018, y + 0.49, h + 0.002, joint);
+        quad(x + 0.49, y + 0.51, x + 0.51, y + 1, h + 0.002, joint);
+      }
       // Kerb on the south edge where paving meets road.
       const below = tiles[y + 1]?.[x];
       if (below && (GROUND[below]?.[1] ?? 0.12) < h) wall(x, y + 1, x + 1, y + 1, (GROUND[below]?.[1] ?? 0), h, "#c7bda8");
@@ -747,7 +756,7 @@ function learningLobby(g: THREE.Group, map: WorldMap) {
   }
 }
 
-function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number; id: string }, highland: boolean) {
+function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number; id: string; height?: number }, highland: boolean) {
   const seed = t.x * 7 + t.y * 13;
   const x0 = t.x + 0.08;
   const z0 = t.y + 0.08;
@@ -755,13 +764,13 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   const d = t.h - 0.16;
   const wall = highland ? ["#f2ead8", "#e6dcc6", "#efe6d4"][seed % 3] : ["#b9634a", "#a65840", "#d8be92", "#ead9bd", "#c26b4f"][seed % 5];
   const roofC = highland || seed % 3 ? "#5d6070" : "#7a5446";
-  const floors = highland ? 2 : 3;
+  const floors = highland ? 2 : Math.max(2, Math.min(4, Math.round(t.height ?? 3)));
   const top = 0.15 + floors * 0.95;
   box(g, wall, x0, 0, z0 + 0.25, x0 + w, top, z0 + d);
   box(g, "#877e77", x0, 0.12, z0 + d - 0.03, x0 + w, 0.27, z0 + d + 0.04);
   box(g, "#f6f2ea", x0 - 0.04, top - 0.12, z0 + d - 0.06, x0 + w + 0.04, top, z0 + d + 0.04);
   if (!highland) {
-    for (const y of [1.06, 2.01]) box(g, "#e8d5ba", x0, y, z0 + d - 0.02, x0 + w, y + 0.07, z0 + d + 0.04);
+    for (let floor = 1; floor < floors; floor++) box(g, "#e8d5ba", x0, 0.11 + floor * 0.95, z0 + d - 0.02, x0 + w, 0.18 + floor * 0.95, z0 + d + 0.04);
     for (const x of [x0, x0 + w - 0.12])
       for (let y = 0.28; y < top - 0.2; y += 0.35) box(g, "#e8d5ba", x, y, z0 + d - 0.015, x + 0.12, y + 0.2, z0 + d + 0.045);
   }
@@ -854,6 +863,30 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const d = t.h - 0.16;
   const seed = t.x * 7 + t.y * 13;
   box(g, "#e9e1d0", x0 - 0.05, 0, z0 - 0.05, x0 + w + 0.05, 0.13, z0 + d + 0.05);
+  if (t.id.startsWith("hotel-")) {
+    const front = z0 + d - 0.65;
+    const accent = t.accent ?? "#315b50";
+    const top = t.height;
+    box(g, "#aa715a", x0, 0.15, z0, x0+w, top, front);
+    for (const edge of [x0, x0+w-0.22]) box(g, "#dbc8a8", edge, 0.15, z0, edge+0.22, top, front+0.04);
+    for (let level = 0; level < 4; level++) {
+      const height = 0.65+level*1.25;
+      box(g, "#dccbac", x0-0.04, height-0.25, front, x0+w+0.04, height-0.16, front+0.13);
+      for (let bay = 0; bay < 4; bay++) {
+        if (level===0 && (bay===1 || bay===2)) continue;
+        facadeWindow(g,x0+0.38+bay*1.3,height,front+0.05,0.75,0.85);
+      }
+    }
+    box(g, "#e3d3b7", x0-0.08, top, z0-0.04, x0+w+0.08, top+0.18, front+0.12);
+    roof(g,"#46535b",x0-0.1,z0-0.1,x0+w+0.1,front+0.1,top+0.18,0.8);
+    entrance(g,x0+w/2,front+0.07,accent,1.4);
+    // Shallow, ascending stone treads sit within the reserved building plot.
+    for(let step=0;step<4;step++) box(g,"#cfbba0",x0+w/2-1,0.03,front+0.13+step*0.12,x0+w/2+1,0.19-step*0.035,front+0.25+step*0.12);
+    const board=sign(t.label ?? "Hotel",{bg:accent,fg:"#f8e6b4",w:w-0.6,h:0.55});
+    board.position.set(x0+w/2,2.1,front+0.16);g.add(board);
+    for(const edge of [x0+0.28,x0+w-0.28]) architecturalPlanter(g,edge,front+0.1);
+    return;
+  }
   if (restaurantShop(g, t)) return;
   if (t.style === "terrace") return terrace(g, t, false);
   const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
@@ -1075,6 +1108,47 @@ function busModel(route: string) {
 const TILE_MODEL: Record<string, string> = { d: "desk", c: "chairDesk", t: "table", o: "table", s: "loungeSofa", v: "kitchenFridgeLarge", k: "kitchenCabinet", F: "kitchenFridge", A: "desk", r: "kitchenBar", b: "bookcaseOpen", p: "plantSmall2", L: "lampSquareFloor" };
 const FLOOR: Record<string, string> = { ".": "#ead9bb", m: "#dfe7f2", l: "#8e7ae0", ",": "#f2f1ee", e: "#b9ad96", X: "#ead9bb", "-": "#e9e1d0", _: "#ecd8a4" };
 
+/** Compact office props share box geometry and are instanced with the scenery. */
+function officeDesk(g: THREE.Group, x: number, z: number, width: number, accent: string) {
+  box(g, "#eeeae0", x, 0.86, z, x + width, 0.98, z + 0.9);
+  for (const leg of [x + 0.1, x + width - 0.18]) box(g, "#d2d7d8", leg, 0.08, z + 0.08, leg + 0.08, 0.86, z + 0.8);
+  box(g, "#bdc6c7", x + 0.12, 0.1, z + 0.1, x + 0.65, 0.83, z + 0.77);
+  for (const h of [0.35, 0.62]) box(g, "#687776", x + 0.3, h, z + 0.775, x + 0.48, h + 0.025, z + 0.795);
+  const cx = x + width * 0.57;
+  box(g, "#353e49", cx - 0.13, 0.98, z + 0.25, cx + 0.13, 1.02, z + 0.49);
+  box(g, "#353e49", cx - 0.04, 1.02, z + 0.3, cx + 0.04, 1.25, z + 0.36);
+  box(g, "#263441", cx - 0.38, 1.18, z + 0.27, cx + 0.38, 1.72, z + 0.35);
+  box(g, "#8ac6d4", cx - 0.34, 1.22, z + 0.355, cx + 0.34, 1.68, z + 0.365);
+  box(g, "#edf3ea", cx - 0.27, 1.28, z + 0.37, cx + 0.1, 1.58, z + 0.38);
+  box(g, accent, cx - 0.27, 1.52, z + 0.385, cx + 0.1, 1.58, z + 0.39);
+  box(g, "#35414b", cx - 0.3, 0.985, z + 0.58, cx + 0.3, 1.02, z + 0.77);
+  box(g, "#35414b", x + width - 0.37, 0.98, z + 0.08, x + width - 0.13, 1.52, z + 0.51);
+  // Notebook and a ceramic mug keep the desk recognisably lived in.
+  box(g, accent, x + width * 0.25, 0.98, z + 0.55, x + width * 0.25 + 0.22, 1.025, z + 0.78);
+  box(g, "#faf5e7", x + width * 0.25 + 0.01, 1.025, z + 0.56, x + width * 0.25 + 0.21, 1.035, z + 0.77);
+  cyl(g, "#d6aa70", x + width - 0.18, z + 0.7, 0.98, 1.16, 0.075, 8);
+}
+
+function officeCabinet(g: THREE.Group, x: number, z: number) {
+  box(g, "#99a9ad", x + 0.06, 0.08, z + 0.08, x + 0.94, 2.2, z + 0.86);
+  box(g, "#becacc", x + 0.11, 0.18, z + 0.87, x + 0.89, 2.12, z + 0.91);
+  for (const h of [1.68, 1.78, 1.88]) box(g, "#7b8d92", x + 0.24, h, z + 0.915, x + 0.76, h + 0.025, z + 0.925);
+  box(g, "#e9e8d9", x + 0.4, 1.43, z + 0.915, x + 0.62, 1.55, z + 0.93);
+  box(g, "#506369", x + 0.7, 0.9, z + 0.92, x + 0.74, 1.17, z + 0.96);
+}
+
+function heritageLamp(g: THREE.Group, x: number, z: number) {
+  const iron = "#293d3c";
+  box(g, iron, x + 0.34, 0.12, z + 0.34, x + 0.66, 0.38, z + 0.66);
+  box(g, iron, x + 0.45, 0.38, z + 0.45, x + 0.55, 2.55, z + 0.55);
+  box(g, iron, x + 0.27, 2.5, z + 0.27, x + 0.73, 2.58, z + 0.73);
+  box(g, "#f3d99d", x + 0.32, 2.58, z + 0.32, x + 0.68, 3.05, z + 0.68);
+  for (const dx of [0.28, 0.68]) for (const dz of [0.28, 0.68]) box(g, iron, x + dx, 2.57, z + dz, x + dx + 0.04, 3.08, z + dz + 0.04);
+  box(g, iron, x + 0.23, 3.05, z + 0.23, x + 0.77, 3.15, z + 0.77);
+  box(g, iron, x + 0.35, 3.15, z + 0.35, x + 0.65, 3.26, z + 0.65);
+  box(g, iron, x + 0.47, 3.26, z + 0.47, x + 0.53, 3.42, z + 0.53);
+}
+
 function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], station: boolean) {
   const g = new THREE.Group();
   world.add(g);
@@ -1083,6 +1157,9 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   const Wd = rows[0].length;
   const furn = "dctosvkFArbpL";
   const home = map.kind === "home";
+  const office = map.kind === "office";
+  const hotel = map.id.startsWith("hotel-");
+  const deskOffice = office && !["workplace-pizzazz", "workplace-tescow"].includes(map.id);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < Wd; x++) {
       const ch = rows[y][x];
@@ -1110,14 +1187,18 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         // Back and side walls full height; the front wall is cut low so you can see in.
         const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
         const h = front ? 0.35 : ch === "G" ? 2.4 : 3;
-        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
+        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? "#e9e5dc" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
         if (ch === "W") box(g, "#9fd2ef", x + 0.15, 1.1, y + 0.98, x + 0.85, 2.3, y + 1.02);
         if (!front) box(g, home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
+        if (office && !front) {
+          box(g, "#b4b2a9", x, 2.72, y + 0.98, x + 1, 2.8, y + 1.035);
+          if (x % 3 === 0) box(g, "#c4c0b5", x + 0.04, 0.25, y + 0.99, x + 0.1, 2.72, y + 1.04);
+        }
         continue;
       }
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
       const homeFloor = x < 5 && y >= 7 && y <= 10 ? ((x + y) % 2 ? "#a6b9b3" : "#c8d4ca") : x >= 14 && y < 6 ? "#d5d1c3" : x % 2 ? "#c5a37c" : "#b99772";
-      box(g, home ? homeFloor : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
+      box(g, home ? homeFloor : hotel ? (x>=8&&x<=12?"#95715b":(x+y)%2?"#d1c0a4":"#d9cbb5") : office ? ((x + y) % 2 ? "#555b60" : "#5c6267") : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
     }
   // Office / station furniture from tile runs.
   if (!home)
@@ -1131,10 +1212,54 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         }
         let w = 1;
         while (rows[y][x + w] === ch) w++;
-        if (map.kind === "hospital" && ch === "d") {
+        if (hotel && map.id.endsWith("floor-1") && ch === "d" && x < 8) {
+          jobs.push(place(g,"/world3d/furniture/bedDouble.glb",x+0.05,y+0.05,w-0.1,1.9));
+        } else if (deskOffice && ch === "d") {
+          for (let i = 0; i < w; i += 3) officeDesk(g, x + i + 0.05, y + 0.05, Math.min(3, w - i) - 0.1, map.accent ?? "#587e76");
+        } else if (deskOffice && map.id.startsWith("workplace-") && ch === "v") {
+          officeCabinet(g, x, y);
+        } else if (deskOffice && ch === "F") {
+          box(g, "#e5e5db", x + 0.15, 0.08, y + 0.12, x + 0.85, 1.4, y + 0.85);
+          box(g, "#56626c", x + 0.29, 0.65, y + 0.855, x + 0.71, 1.13, y + 0.87);
+          cyl(g, "#78b8d2", x + 0.5, y + 0.46, 1.4, 1.98, 0.25, 12);
+          box(g, "#bc5954", x + 0.34, 1.1, y + 0.87, x + 0.42, 1.19, y + 0.94);
+          box(g, "#598daf", x + 0.58, 1.1, y + 0.87, x + 0.66, 1.19, y + 0.94);
+        } else if (deskOffice && ch === "k") {
+          box(g, "#b8c3c3", x + 0.06, 0.1, y + 0.1, x + 0.94, 0.85, y + 0.88);
+          box(g, "#eeeae0", x + 0.02, 0.85, y + 0.08, x + 0.98, 1.25, y + 0.92);
+          box(g, "#35414a", x + 0.15, 1.08, y + 0.925, x + 0.85, 1.17, y + 0.94);
+          box(g, "#59666e", x + 0.1, 1.25, y + 0.15, x + 0.9, 1.3, y + 0.8);
+          box(g, "#faf8ee", x + 0.23, 1.3, y + 0.27, x + 0.77, 1.34, y + 0.7);
+        } else if (deskOffice && ch === "c") {
+          for (let i = 0; i < w; i++) {
+            box(g, "#869394", x + i + 0.1, 0.55, y + 0.1, x + i + 0.9, 0.7, y + 0.86);
+            box(g, "#647479", x + i + 0.1, 0.7, y + 0.72, x + i + 0.9, 1.48, y + 0.88);
+            box(g, "#aab5b5", x + i + 0.45, 0.17, y + 0.42, x + i + 0.55, 0.55, y + 0.52);
+            box(g, "#687779", x + i + 0.09, 0.13, y + 0.42, x + i + 0.91, 0.2, y + 0.52);
+            box(g, "#687779", x + i + 0.45, 0.13, y + 0.08, x + i + 0.55, 0.2, y + 0.88);
+            for (const edge of [0.06, 0.86]) box(g, "#536267", x + i + edge, 0.7, y + 0.25, x + i + edge + 0.08, 0.95, y + 0.7);
+          }
+        } else if (deskOffice && ch === "s") {
+          box(g, "#40685f", x + 0.04, 0.3, y + 0.12, x + w - 0.04, 0.72, y + 0.86);
+          box(g, "#32574f", x + 0.04, 0.65, y + 0.74, x + w - 0.04, 1.25, y + 0.94);
+          for (const edge of [x + 0.04, x + w - 0.2]) box(g, "#32574f", edge, 0.6, y + 0.12, edge + 0.16, 1, y + 0.9);
+          for (let i = 0; i < w; i++) box(g, "#6c9383", x + i + 0.22, 0.72, y + 0.19, x + i + 0.8, 0.78, y + 0.7);
+        } else if (deskOffice && ch === "L") {
+          box(g, "#6b746c", x + 0.25, 0.05, y + 0.25, x + 0.75, 0.12, y + 0.75);
+          box(g, "#a28a63", x + 0.47, 0.12, y + 0.47, x + 0.53, 1.65, y + 0.53);
+          box(g, "#e6d9ba", x + 0.2, 1.65, y + 0.2, x + 0.8, 2.08, y + 0.8);
+        } else if (map.kind === "hospital" && ch === "d") {
           jobs.push(place(g, "/world3d/furniture/bedSingle.glb", x + 0.1, y + 0.05, w - 0.2, 1.9));
         } else if (map.kind === "prison" && ch === "b") {
           jobs.push(place(g, "/world3d/furniture/bedBunk.glb", x - 0.3, y - 1.5, 1.6, 2.4));
+        } else if (deskOffice && ch === "b") {
+          for (let i = 0; i < w; i++) {
+            box(g, "#8a9b9e", x + i + 0.06, 0.08, y + 0.1, x + i + 0.94, 2.1, y + 0.83);
+            for (const shelf of [0.55, 1.25]) {
+              box(g, "#34474c", x + i + 0.13, shelf, y + 0.83, x + i + 0.87, shelf + 0.59, y + 0.84);
+              for (let binder = 0; binder < 5; binder++) box(g, ["#749d91", "#d8bb7d", "#9699bb", "#c78572", "#c7cdb6"][binder], x + i + 0.17 + binder * 0.13, shelf + 0.04, y + 0.84, x + i + 0.27 + binder * 0.13, shelf + 0.52, y + 0.9);
+            }
+          }
         } else if (station && ch === "r") {
           for (let i = 0; i < w; i++) box(g, "#c9ced8", x + i, 0, y + 0.3, x + i + 1, 0.9, y + 0.7);
         } else if (station && ch === "v") {
@@ -1170,6 +1295,17 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       bendAll(furniture);
       g.add(furniture);
     }
+  if (hotel) {
+    for (const portal of map.portals.filter(p=>p.id.startsWith("stairs-"))) {
+      const x=portal.rect.x/TILE, z=portal.rect.y/TILE;
+      for(let step=0;step<6;step++) box(g,"#c7b69a",x,0.03,z-2+step/3,x+2,1.05-step*0.15,z-2+(step+1)/3);
+      for(const edge of [x,x+1.95]) {
+        for(let step=0;step<6;step++) box(g,"#354b46",edge,0.1,z-2+step/3,edge+0.05,1.75-step*0.15,z-1.95+step/3);
+      }
+      const board=sign(portal.label,{bg:map.accent,fg:"#f6ead0",w:2.3,h:0.32});
+      board.position.set(x+1,2.1,z-1.8);g.add(board);
+    }
+  }
   return g;
 }
 
@@ -1265,12 +1401,13 @@ export function World3D({
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
-    try{renderer = new THREE.WebGLRenderer({ antialias: quality !== "low", powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
+    try{renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
     renderer.domElement.addEventListener("webglcontextlost",contextLost);
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
-    let pixelRatio = quality === "low" ? 0.75 : Math.min(window.devicePixelRatio || 1, 1);
+    const budget = graphicsBudget(quality === "low", mobile);
+    let pixelRatio = budget.pixelRatio;
     renderer.setPixelRatio(pixelRatio);
     // Characters already have inexpensive contact shadows.
     renderer.shadowMap.enabled = false;
@@ -1283,7 +1420,9 @@ export function World3D({
     const sky = highland ? "#bfe3ff" : "#cfe6f7";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 200);
+    // Outdoor fog is fully opaque by 70 units; don't draw hidden city blocks
+    // out to 200 units behind it. Interiors have no fog and retain more range.
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.5, indoors ? 120 : 80);
 
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
@@ -1302,6 +1441,10 @@ export function World3D({
     if (indoors) {
       scene.background = new THREE.Color(map.kind === "home" ? "#e7dfd0" : "#1d1a2b");
       scene.fog = null;
+      // Electric indoor lighting stays warm and legible after sunset.
+      hemi.color.set("#fff8ec");
+      hemi.groundColor.set("#b8b5ab");
+      sun.color.set("#fff5df");
       hemi.intensity = 1.9;
       sun.intensity = 1.2;
     }
@@ -1460,7 +1603,7 @@ export function World3D({
         world.add(g);
         if (t.kind === "building") {
           jobs.push(building(g, t));
-          if (!t.companyId && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
+          if (!t.companyId && !t.id.startsWith("hotel-") && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
             artFrontage(g, t.x, t.y + t.h + 0.1, t.w, Math.floor((t.x + t.y) / 3) % 3);
           }
           const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
@@ -1473,9 +1616,14 @@ export function World3D({
         else if (t.kind === "landmark") {
           landmark(g, t);
           g.traverse((c) => c.userData.spin && spinners.push(c));
-        } else if (t.kind === "tree") jobs.push(place(g, `/world3d/suburban/${(t.x + t.y) % 3 === 1 ? "tree-small" : "tree-large"}.glb`, t.x - 0.4, t.y - 0.4, 1.8, 1.8));
+        } else if (t.kind === "tree") {
+          jobs.push(place(g, `/world3d/suburban/${(t.x + t.y) % 3 === 1 ? "tree-small" : "tree-large"}.glb`, t.x - 0.4, t.y - 0.4, 1.8, 1.8));
+          // Formal tree beds give the streets a deliberate landscape rhythm.
+          box(g, "#a99a80", t.x + 0.04, 0.04, t.y + 0.04, t.x + 0.96, 0.22, t.y + 0.96);
+          box(g, "#665b45", t.x + 0.13, 0.22, t.y + 0.13, t.x + 0.87, 0.24, t.y + 0.87);
+        }
         else if (t.kind === "lamp") {
-          jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.12));
+          heritageLamp(g, t.x, t.y);
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "phonebox") {
           telephoneBox(g, t.x, t.y);
@@ -1484,6 +1632,10 @@ export function World3D({
           for (let slat = 0; slat < 3; slat++) box(g, "#b18b60", t.x + 0.05, 0.35, t.y + 0.4 + slat * 0.1, t.x + 0.95, 0.43, t.y + 0.48 + slat * 0.1);
           box(g, "#b18b60", t.x + 0.05, 0.43, t.y + 0.35, t.x + 0.95, 0.75, t.y + 0.4);
           for (const leg of [0.15, 0.8]) box(g, "#263e3b", t.x + leg, 0.1, t.y + 0.36, t.x + leg + 0.06, 0.6, t.y + 0.7);
+          for (const edge of [0.07, 0.87]) {
+            box(g, "#263e3b", t.x + edge, 0.4, t.y + 0.45, t.x + edge + 0.05, 0.69, t.y + 0.51);
+            box(g, "#263e3b", t.x + edge, 0.65, t.y + 0.38, t.x + edge + 0.05, 0.71, t.y + 0.73);
+          }
         } else if (t.kind === "busstop") {
           box(g, "#263e3b", t.x - 0.1, 1.9, t.y + 0.25, t.x + 1.1, 2, t.y + 0.75);
           box(g, ARCH.brass, t.x - 0.1, 1.86, t.y + 0.73, t.x + 1.1, 1.91, t.y + 0.77);
@@ -1501,6 +1653,15 @@ export function World3D({
           const hex = cyl(g, "#2b5fd9", t.x + t.w + 0.35, t.y + t.h + 0.3, 2.6, 2.66, 0.42, 6);
           hex.rotation.x = Math.PI / 2;
           cyl(g, "#2a2730", t.x + t.w + 0.35, t.y + t.h + 0.3, 0.1, 2.6, 0.05, 8);
+          // Stone piers and iron railings frame the existing walk-in entrance.
+          // Everything stays inside the station footprint, away from the portal.
+          for (const edge of [t.x + 0.15, t.x + t.w - 0.35]) {
+            box(g, "#d6c9af", edge - 0.09, 0.1, t.y + 0.3, edge + 0.29, 0.32, t.y + t.h - 0.08);
+            for (let dz = 0.5; dz < t.h - 0.1; dz += 0.4) box(g, "#293d3c", edge + 0.06, 0.3, t.y + dz, edge + 0.12, 1.12, t.y + dz + 0.06);
+            box(g, "#293d3c", edge + 0.03, 1.08, t.y + 0.3, edge + 0.15, 1.17, t.y + t.h - 0.08);
+            box(g, "#e8ddc7", edge - 0.13, 0.1, t.y + t.h - 0.42, edge + 0.33, 1.35, t.y + t.h - 0.03);
+            box(g, "#c3b49a", edge - 0.18, 1.35, t.y + t.h - 0.47, edge + 0.38, 1.44, t.y + t.h + 0.01);
+          }
         }
       }
     }
@@ -1515,7 +1676,7 @@ export function World3D({
       }
     // A fixed pool lights nearby lamps without adding a shader light for every
     // street in the city. The visible lamp models remain in the scenery.
-    const lampLights = phase === "day" ? [] : lamps.slice(0, 4).map(() => {
+    const lampLights = phase === "day" ? [] : lamps.slice(0, budget.lights).map(() => {
       const light = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
       scene.add(light);
       return light;
@@ -1547,7 +1708,7 @@ export function World3D({
     }
 
     // ── Characters ──
-    const mixers: THREE.AnimationMixer[] = [];
+    let ambientBuilds: Promise<void> = Promise.resolve();
     const bodies = new Set<Body>();
     interface Body {
       root: THREE.Group;
@@ -1555,7 +1716,7 @@ export function World3D({
       walking: boolean;
       dispose: () => void;
     }
-    const makeBody = (a: Avatar, logo: string | null = null): Body => {
+    const makeBody = (a: Avatar, logo: string | null = null, ambient = false): Body => {
       const root = new THREE.Group();
       let removed = false;
       const b: Body = { root, char: null, walking: false, dispose: () => {
@@ -1563,7 +1724,7 @@ export function World3D({
         removed = true;
         bodies.delete(b);
         root.removeFromParent();
-        if (b.char) { const index = mixers.indexOf(b.char.mixer); if (index >= 0) mixers.splice(index, 1); b.char.dispose(); b.char = null; }
+        if (b.char) { b.char.dispose(); b.char = null; }
         shadow.geometry.dispose(); shadow.material.dispose(); root.clear();
       } };
       const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
@@ -1572,15 +1733,20 @@ export function World3D({
       shadow.position.y = 0.14;
       root.add(shadow);
       bodies.add(b);
-      void buildCharacter(a, 1.15, logo).then((c) => {
+      const loadBody = async () => {
+        if (disposed || removed) return;
+        const c = await buildCharacter(a, 1.15, logo);
         if (disposed || removed) { c.dispose(); return; }
         bendAll(c.object);
         c.object.position.y = 0.12;
         root.add(c.object);
         b.char = c;
-        mixers.push(c.mixer);
         c.play(b.walking ? "walk" : "idle");
-      }).catch(() => { /* Keep the shadow if a character asset fails. */ });
+      };
+      // Player/remote models load immediately. Decorative residents build one
+      // at a time between input/paint opportunities instead of freezing one frame.
+      if (ambient) ambientBuilds = ambientBuilds.then(() => new Promise<void>(resolve => setTimeout(resolve, 8))).then(loadBody).catch(() => {});
+      else void loadBody().catch(() => { /* Keep the shadow if an asset fails. */ });
       return b;
     };
     const setWalking = (b: Body, on: boolean) => {
@@ -1674,9 +1840,9 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = london ? (mobile ? 16 : 24) : highland ? 12 : map.kind === "home" ? 0 : map.kind === "station" ? 12 : map.id === "study-lobby" ? 16 : 8;
+    const residentLimit = map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 12 : 8);
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
-      const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i));
+      const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i), null, true);
       scene.add(body.root);
       return { body, path, offset: i * 3.71, knockedUntil: 0 };
     });
@@ -1684,8 +1850,8 @@ export function World3D({
       const body = makeBody(npcLook(90 + i)); scene.add(body.root);
       return { id: pose.id, body };
     }) : [];
-    const cyclists = L ? Array.from({ length: mobile ? 4 : 8 }, (_, i) => {
-      const body = makeBody(npcLook(i + 30));
+    const cyclists = L ? Array.from({ length: budget.cyclists }, (_, i) => {
+      const body = makeBody(npcLook(i + 30), null, true);
       const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
       bendAll(bike);
       scene.add(body.root, bike);
@@ -1694,7 +1860,7 @@ export function World3D({
     if (L) for (let i = 0; i < 3; i++) {
       const obj = new THREE.Group();
       void placeCar(obj, ["sedan", "suv", "taxi"][i]);
-      const body = makeBody(npcLook(40 + i));
+      const body = makeBody(npcLook(40 + i), null, true);
       scene.add(obj, body.root);
       traffic.push({ obj, route: i, at: 0.12 + i * 0.19, distance: 0, speed: 2.1, commuter: { body, offset: i * 13 } });
     }
@@ -1794,9 +1960,10 @@ export function World3D({
     };
     renderer.domElement.addEventListener("click", onClick);
 
+    let viewportWidth = el.clientWidth, viewportHeight = el.clientHeight;
     const fit = () => {
-      const w = el.clientWidth;
-      const h = el.clientHeight;
+      const w = viewportWidth = el.clientWidth;
+      const h = viewportHeight = el.clientHeight;
       renderer.setSize(w, h, false);
       renderer.domElement.style.width = `${w}px`;
       renderer.domElement.style.height = `${h}px`;
@@ -1815,16 +1982,18 @@ export function World3D({
     const start = last;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let slowFrames = 0;
+    const renderDue = frameBudget(60);
     const frame = (now: number) => {
       if (document.hidden) {
         last = now;
         raf = requestAnimationFrame(frame);
         return;
       }
+      if (!renderDue(now)) { raf = requestAnimationFrame(frame); return; }
       // Reduce resolution when sustained frame times exceed the 60fps budget.
       slowFrames = now - last > 22 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
-      if (slowFrames >= 90 && pixelRatio > 0.75) {
-        pixelRatio = Math.max(0.75, pixelRatio - 0.25);
+      if (slowFrames >= 90 && pixelRatio > 0.5) {
+        pixelRatio = Math.max(0.5, pixelRatio - 0.1);
         renderer.setPixelRatio(pixelRatio);
         slowFrames = 0;
       }
@@ -1916,10 +2085,10 @@ export function World3D({
       playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
       const screen = new THREE.Vector3(mx, want ? 2.3 : 1.5, mz).project(camera);
-      const sx = (screen.x + 1) * el.clientWidth / 2;
-      const sy = (1 - screen.y) * el.clientHeight / 2;
-      playerLabel.style.left = `${Math.max(42, Math.min(el.clientWidth - 42, sx))}px`;
-      playerLabel.style.top = `${Math.max(120, Math.min(el.clientHeight - 170, sy))}px`;
+      const sx = (screen.x + 1) * viewportWidth / 2;
+      const sy = (1 - screen.y) * viewportHeight / 2;
+      playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
+      playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
       playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
       sun.position.set(focus.x - 10, 22, focus.z + 12);
@@ -1949,10 +2118,10 @@ export function World3D({
         b.root.position.set(b.x, 0, b.z);
         b.root.visible = !o.car;
         const labelPoint = new THREE.Vector3(b.x, 1.5, b.z).project(camera);
-        const labelX = (labelPoint.x + 1) * el.clientWidth / 2;
-        const labelY = (1 - labelPoint.y) * el.clientHeight / 2;
+        const labelX = (labelPoint.x + 1) * viewportWidth / 2;
+        const labelY = (1 - labelPoint.y) * viewportHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;
-        b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < el.clientWidth && labelY > 0 && labelY < el.clientHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
+        b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < viewportWidth && labelY > 0 && labelY < viewportHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
         let vehicle = otherCars.get(o.id);
         if (vehicle && vehicle.model !== o.car) {
           scene.remove(vehicle.root);
@@ -2093,7 +2262,8 @@ export function World3D({
         r.scale.setScalar(on ? 1.5 + Math.sin(secs * 6) * 0.08 : 1 + Math.sin(secs * 2 + r.position.x) * 0.06);
       }
       water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
-      for (const m of mixers) m.update(dt);
+      // Animate nearby visible bodies only; distant residents still follow their routes.
+      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.mixer.update(dt);
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;
         body.char.play("drive");

@@ -129,7 +129,7 @@ export function Navbar1({
       <div className="pointer-events-none sticky top-0 z-50 flex w-full justify-center px-3 pt-3 pb-2 sm:px-4 sm:pt-4">
         <div
           ref={barRef}
-          className="bg-background/90 supports-[backdrop-filter]:bg-background/75 pointer-events-auto relative flex w-full max-w-5xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.25)] backdrop-blur sm:pl-4"
+          className="bg-background pointer-events-auto relative flex w-full max-w-5xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.25)] sm:pl-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -137,7 +137,7 @@ export function Navbar1({
             transition={{ duration: 0.3 }}
             className="flex shrink-0 items-center"
           >
-            <Link
+            <Link prefetch={false}
               href="/"
               aria-label="IlluminatED home"
               className="flex items-center rounded-full"
@@ -194,7 +194,7 @@ export function Navbar1({
                           <ul className="grid grid-cols-2 gap-1">
                             {group.items.map((item) => (
                               <li key={item.href}>
-                                <Link
+                                <Link prefetch={false}
                                   href={item.href}
                                   aria-current={
                                     isActive(item.href) ? "page" : undefined
@@ -296,7 +296,7 @@ export function Navbar1({
                   <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
                     {group.items.map((item) => (
                       <li key={item.href}>
-                        <Link
+                        <Link prefetch={false}
                           href={item.href}
                           onClick={toggleMenu}
                           aria-current={

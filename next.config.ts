@@ -73,7 +73,12 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Public model files can be reused across visits without refetching every
+      // building, vehicle and character. HTML and account data are not cached.
+      { source: "/world3d/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=3600, stale-while-revalidate=86400" }] },
+    ];
   },
 };
 const withMDX = createMDX({

@@ -39,7 +39,7 @@ export function Footer() {
                 <ul className="mt-3 space-y-2">
                   {g.items.map((i) => (
                     <li key={i.href}>
-                      <Link
+                      <Link prefetch={false}
                         href={i.href}
                         className="text-muted-foreground hover:text-foreground text-sm"
                       >
@@ -56,7 +56,7 @@ export function Footer() {
             <ul className="flex flex-wrap gap-x-6 gap-y-2">
               {PUBLIC_LINKS.map((l) => (
                 <li key={l.href}>
-                  <Link
+                  <Link prefetch={false}
                     href={l.href}
                     className="text-muted-foreground hover:text-foreground text-sm"
                   >
@@ -73,7 +73,7 @@ export function Footer() {
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {LEGAL_LINKS.map((l) => (
               <li key={l.href}>
-                <Link
+                <Link prefetch={false}
                   href={l.href}
                   className="text-muted-foreground hover:text-foreground text-sm"
                 >

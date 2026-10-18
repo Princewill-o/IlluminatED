@@ -5,9 +5,30 @@ import { projectData } from "../scripts/lib/project-data.mjs";
 const { buildLondon } = projectData("src/game/core/london.ts");
 const { COMPANIES } = projectData("src/game/core/companies.ts");
 const { BUS_WIDTH, CAR_WIDTH } = projectData("src/game/core/vehicles.ts");
-const { londonMap, SOLID, TILE, blocked } = projectData(
+const { londonMap, hotelMap, SOLID, TILE, blocked } = projectData(
   "src/game/core/world.ts",
 );
+
+test("both hotels have accessible lobbies, linked upper floors and a route back outside", () => {
+  const city = londonMap();
+  const hotels = buildLondon().things.filter(t=>t.kind === "building" && /^hotel-[01]$/.test(t.id));
+  assert.equal(hotels.length,2);
+  for(const hotel of hotels) {
+    assert.ok(city.portals.some(p=>p.to.kind === "map" && p.to.mapId === hotel.id));
+    for(const id of [hotel.id,`${hotel.id}-floor-1`,`${hotel.id}-floor-2`]) {
+      const map=hotelMap(id), reachable=reachableTiles(map);
+      for(const portal of map.portals) {
+        assert.ok(reachable.has(`${portal.rect.x/TILE},${portal.rect.y/TILE}`),`${id}: ${portal.id}`);
+        if(portal.to.kind === "map" && portal.to.mapId !== "city") {
+          const next=hotelMap(portal.to.mapId);
+          assert.ok(next);
+          assert.ok(next.portals.some(p=>p.to.kind === "map" && p.to.mapId===id));
+        }
+      }
+    }
+  }
+  assert.equal(hotelMap("hotel-8-floor-99"),null);
+});
 
 function reachableTiles(map) {
   const start = [

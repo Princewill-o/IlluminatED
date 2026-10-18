@@ -254,9 +254,10 @@ function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: numb
         return;
       }
       const big = kind === "eyes-sparkle" || kind === "wide" ? 1.25 : kind === "eyes-dots" ? 0.6 : kind === "eyes-focused" ? 0.85 : 1;
-      ellipse(g, x, eyeY, 0.1 * u * big, 0.13 * u * big, INK);
+      if (kind !== "eyes-dots") ellipse(g, x, eyeY, 0.105 * u * big, 0.13 * u * big, "#fffaf1");
+      ellipse(g, x, eyeY + 0.006 * u, 0.078 * u * big, 0.108 * u * big, INK);
       if (kind !== "eyes-dots") {
-        ellipse(g, x + 0.035 * u * big, eyeY - 0.045 * u * big, 0.035 * u * big, 0.035 * u * big, "#fff");
+        ellipse(g, x + 0.026 * u * big, eyeY - 0.035 * u * big, 0.025 * u * big, 0.025 * u * big, "#fff");
         if (kind === "eyes-sparkle") ellipse(g, x - 0.04 * u, eyeY + 0.05 * u, 0.02 * u, 0.02 * u, "#fff");
       }
       if (kind === "eyes-focused") line(g, x - 0.12 * u, eyeY - 0.12 * u, x + 0.12 * u, eyeY - 0.1 * u, 2);
@@ -268,11 +269,22 @@ function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: numb
     eyesX.forEach((x, i) => {
       const dir = side ? 1 : i === 0 ? -1 : 1; // outer side
       const y = eyeY - 0.27 * u - (brows === "brows-raised" ? 0.08 * u : 0);
-      const w = brows === "brows-bold" ? 3.4 : 2.2;
+      const w = brows === "brows-bold" ? 2.7 : 1.6;
       if (brows === "brows-fierce") line(g, x + dir * 0.13 * u, y - 0.05 * u, x - dir * 0.1 * u, y + 0.05 * u, 2.8);
       else if (brows === "sad") line(g, x + dir * 0.13 * u, y + 0.05 * u, x - dir * 0.1 * u, y - 0.04 * u, 2.4);
       else arc(g, x, y + 0.12 * u, 0.13 * u, 1.2 * Math.PI, 1.8 * Math.PI, w);
     });
+
+  // A small nose contour reads at Locker scale without extra 3D geometry.
+  if (!robot && !animalMuzzle && !side) {
+    g.beginPath();
+    g.moveTo(fx + 0.012 * u, fy + 0.025 * u);
+    g.quadraticCurveTo(fx + 0.07 * u, fy + 0.11 * u, fx - 0.018 * u, fy + 0.11 * u);
+    g.strokeStyle = "rgba(72,39,28,0.32)";
+    g.lineWidth = 0.9;
+    g.lineCap = "round";
+    g.stroke();
+  }
 
   // Mouth
   if (!robot) {
@@ -303,7 +315,7 @@ function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: numb
       g.stroke();
       if (m === "mouth-laugh") ellipse(g, mx, my + 0.13 * u, 0.06 * u, 0.04 * u, "#ff7a6b");
     } else {
-      arc(g, mx, my - 0.06 * u, w * 0.85, 0.2 * Math.PI, 0.8 * Math.PI, 2.4);
+      arc(g, mx, my - 0.06 * u, w * 0.85, 0.2 * Math.PI, 0.8 * Math.PI, 1.6);
       if (m === "mouth-cheeky") ellipse(g, mx + 0.04 * u, my + 0.1 * u, 0.045 * u, 0.04 * u, "#ff7a6b");
     }
   }

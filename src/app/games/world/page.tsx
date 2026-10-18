@@ -21,7 +21,15 @@ export const metadata: Metadata = { title: "Worlds" };
 export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string }> }) {
   const { map, server, build } = await searchParams;
   const account = await requireAccount("/games/world");
-  const [player, orgs, membership, career, home, homework, learning] = await Promise.all([loadPlayer(account.id), listOrgs(), myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id)]);
+  const organisations = listOrgs();
+  const staffRequest = organisations.then(orgs => staffFor(orgs.map(org => org.id)));
+  const carsRequest = (async () => {
+    const sb = await getSupabase();
+    if (!sb) return [] as string[];
+    const result = await sb.from("player_cars").select("car").eq("user_id", account.id);
+    return ((result.data ?? []) as {car:string}[]).map(row => row.car);
+  })();
+  const [player, orgs, membership, career, home, homework, learning, staff, cars] = await Promise.all([loadPlayer(account.id), organisations, myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id), staffRequest, carsRequest]);
   const preferred = new Set(account.details.subjects.map((subject) => subject.courseId));
   const studyCourses = COURSES.filter((course) => QUESTION_BANK.filter((question) => question.courseId === course.id).length >= 5)
     .sort((a, b) => Number(preferred.has(b.id)) - Number(preferred.has(a.id)) || a.title.localeCompare(b.title))
@@ -33,8 +41,6 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
     careerTotal: career.history.reduce((sum, record) => sum + record.total, 0),
     careerWorkplaces: new Set(career.history.filter((record) => record.shifts > 0).map((record) => record.workplace)).size,
   });
-  const [sbCars, staff] = await Promise.all([getSupabase(), staffFor(orgs.map((o) => o.id))]);
-  const cars = sbCars ? (((await sbCars.from("player_cars").select("car").eq("user_id", account.id)).data ?? []) as { car: string }[]).map((r) => r.car) : [];
   const a = career.active;
   const job = a ? { workplace: a.workplace, role: a.role, rank: a.rank, shifts: a.shifts, rankShifts: a.rankShifts, rankCorrect: a.rankCorrect, rankTotal: a.rankTotal } : null;
   const bySlug = Object.fromEntries(orgs.map((o) => [o.slug, (staff[o.id] ?? []).map(({ userId, username, title }) => ({ userId, username, title }))]));

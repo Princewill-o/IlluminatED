@@ -83,6 +83,12 @@ function recolourHead(mesh: THREE.SkinnedMesh, cols: ReturnType<typeof avatarCol
     target.toArray(out, i * 3);
   }
   g.setAttribute("color", new THREE.BufferAttribute(out, 3));
+  // Refine the oversized source head without changing its rig or hairstyle.
+  g.computeBoundingBox();
+  const centre = g.boundingBox!.getCenter(new THREE.Vector3());
+  g.translate(-centre.x, -centre.y, -centre.z);
+  g.scale(0.93, 0.96, 0.95);
+  g.translate(centre.x, centre.y, centre.z);
   mesh.geometry = g;
   mesh.material = new THREE.MeshLambertMaterial({ vertexColors: true });
 }
@@ -114,6 +120,14 @@ function garmentGeometry(source: THREE.SkinnedMesh, piece: OutfitPiece, cols: Re
       for (let c = 0; c < 3; c++) positions.push(blend.reduce((sum, w, j) => sum + w * component(pos, i + j, c), 0));
       norm.set(...[0, 1, 2].map((c) => blend.reduce((sum, w, j) => sum + w * component(normal, i + j, c), 0)) as [number, number, number]).normalize();
       normals.push(norm.x, norm.y, norm.z);
+      // Sewn hems and directional colour shading add definition using the
+      // existing vertices: no additional meshes, textures or draw calls.
+      const surface = garmentSurface(piece, bone, sourceSkin, avatar[piece], y);
+      if (surface !== "skin") {
+        let shade = 0.86 + Math.max(0, norm.y) * 0.12 + Math.max(0, norm.z) * 0.04;
+        if (piece === "top" && y < 0.188 || piece === "bottom" && y > 0.164 || piece === "shoes" && y < 0.008) shade *= 0.8;
+        target.multiplyScalar(shade);
+      }
       colours.push(target.r, target.g, target.b);
       const boneWeights = new Map<number, number>();
       for (let j = 0; j < 3; j++) for (let c = 0; c < 4; c++) {

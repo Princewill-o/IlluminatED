@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 
 export const metadata: Metadata = {
-  title: { absolute: "IlluminatED | Turn revision into a learning habit" },
+  title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
   description:
     "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress. Request invited beta access or a school demo.",
   alternates: { canonical: "/" },
@@ -39,38 +39,39 @@ export default function Home() {
   return (
     <>
       <SiteStructuredData />
-      <section className="border-b bg-[#f3f6fc] text-[#13203a]">
+      <section className="border-b bg-background text-foreground">
         <div className="container grid items-center gap-10 py-14 lg:grid-cols-2 lg:py-20">
           <div>
-            <p className="text-xs font-bold tracking-widest text-[#2b5fd9] uppercase">
+            <p className="text-xs font-bold tracking-widest text-primary uppercase">
               Invited beta · UK learners aged 13+
             </p>
             <h1 className="mt-5 text-4xl leading-tight font-bold tracking-tight sm:text-6xl">
-              Turn revision into a learning habit.
+              Revision and career practice in one learning game.
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-[#526078]">
-              IlluminatED connects subject practice and workplace challenges
-              inside a playable city. Students get a reason to practise.
-              Teachers get a clearer view of completed work and topic gaps.
+            <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
+              IlluminatED is a learning platform for UK students aged 13+.
+              Answer subject questions with explanations, complete simulated
+              workplace tasks and see what to practise next—all inside a playable
+              city. Teachers can set homework and review their classes’ results.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Link
+              <Link prefetch={false}
                 href="/book?for=individual"
-                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#2b5fd9] px-6 py-3 font-bold text-white"
+                className="inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-6 py-3 font-bold text-primary-foreground"
               >
                 Request beta access <ArrowRight className="size-4" />
               </Link>
-              <Link
+              <Link prefetch={false}
                 href="/schools"
-                className="inline-flex min-h-12 items-center rounded-full border border-[#a9b7d0] bg-white px-6 py-3 font-bold"
+                className="inline-flex min-h-12 items-center rounded-full border border-border bg-card px-6 py-3 font-bold"
               >
                 For schools
               </Link>
             </div>
-            <p className="mt-4 text-sm leading-6 text-[#526078]">
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">
               Access is by invitation while we test reliability and learning
               outcomes. Already invited?{" "}
-              <Link href="/sign-in" className="font-bold underline">
+              <Link prefetch={false} href="/sign-in" className="font-bold underline">
                 Sign in
               </Link>
               .
@@ -83,9 +84,9 @@ export default function Home() {
               width={1440}
               height={960}
               priority
-              className="w-full rounded-3xl border-4 border-white shadow-xl"
+              className="w-full rounded-3xl border-4 border-border shadow-xl"
             />
-            <figcaption className="mt-3 text-xs text-[#526078]">
+            <figcaption className="mt-3 text-xs text-muted-foreground">
               Actual game capture. Ambient residents are computer controlled;
               this is not a live player count.
             </figcaption>
@@ -122,21 +123,21 @@ export default function Home() {
           ))}
         </div>
       </section>
-      <section className="border-y bg-[#13203a] text-white">
+      <section className="border-y bg-secondary text-foreground">
         <div className="container grid items-center gap-8 py-14 lg:grid-cols-2">
           <div>
-            <p className="text-xs font-bold tracking-widest text-[#f2d9a6] uppercase">
+            <p className="text-xs font-bold tracking-widest text-primary uppercase">
               See the product
             </p>
             <h2 className="mt-3 text-3xl font-bold">
-              The game gives practice a place.
+              Learn by answering questions and solving workplace challenges.
             </h2>
-            <p className="mt-4 leading-8 text-white/80">
+            <p className="mt-4 leading-8 text-muted-foreground">
               Visit the Study Quarter, complete a session and use earned Clout
               to personalise your character and home. Workplace tasks connect
               classroom knowledge with simulated decisions.
             </p>
-            <p className="mt-4 text-sm leading-7 text-white/65">
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
               Clout is an in-game reward with no cash value. Career records
               describe simulated practice, not employment or accredited
               qualifications.
@@ -147,15 +148,15 @@ export default function Home() {
             aria-label="IlluminatED gameplay preview"
               controls
               playsInline
-              preload="metadata"
+              preload="none"
               poster="/landing/gameplay-poster.jpg"
-              className="aspect-[3/2] w-full rounded-3xl border border-white/20"
+              className="aspect-[3/2] w-full rounded-3xl border border-border"
             >
               <source src="/landing/gameplay.mp4" type="video/mp4" />
               <source src="/landing/gameplay.webm" type="video/webm" />
               <a href="/landing/gameplay.mp4">Download the gameplay clip</a>
             </video>
-            <figcaption className="mt-3 text-xs text-white/65">
+            <figcaption className="mt-3 text-xs text-muted-foreground">
               Recorded offline preview · silent clip · no real student accounts
               or conversations
             </figcaption>
@@ -190,7 +191,7 @@ export default function Home() {
             <article key={title} className="rounded-3xl border p-6">
               <h3 className="text-xl font-bold">{title}</h3>
               <p className="text-muted-foreground mt-3 leading-7">{text}</p>
-              <Link
+              <Link prefetch={false}
                 href={href}
                 className="text-primary mt-5 inline-flex min-h-11 items-center font-bold underline"
               >
@@ -223,14 +224,14 @@ export default function Home() {
               </li>
               <li>
                 Review the{" "}
-                <Link href="/safeguarding" className="underline">
+                <Link prefetch={false} href="/safeguarding" className="underline">
                   safeguarding information
                 </Link>
                 , including messaging limitations.
               </li>
               <li>
                 Report problems through{" "}
-                <Link href="/contact" className="underline">
+                <Link prefetch={false} href="/contact" className="underline">
                   support
                 </Link>
                 . AI and practice questions can contain mistakes.

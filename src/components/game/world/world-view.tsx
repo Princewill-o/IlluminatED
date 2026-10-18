@@ -25,6 +25,7 @@ import MOVERS from "../../../../public/world/movers.json";
 import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
+import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
@@ -376,6 +377,7 @@ export function WorldView({
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
+    const simulationDue = frameBudget(60);
     const fx = createFx(map);
     const cam = { x: NaN, y: NaN };
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -390,6 +392,7 @@ export function WorldView({
         raf = requestAnimationFrame(frame);
         return;
       }
+      if (!simulationDue(now)) { raf = requestAnimationFrame(frame); return; }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (pausedRef.current) {

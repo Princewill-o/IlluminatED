@@ -26,13 +26,13 @@ export const Navbar = () => {
       cta={
         signedIn === false ? (
           <div className="flex items-center gap-2">
-            <Link
+            <Link prefetch={false}
               href="/sign-in"
               className="hover:bg-muted inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold"
             >
               Log in
             </Link>
-            <Link
+            <Link prefetch={false}
               href="/book"
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold"
             >

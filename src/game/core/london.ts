@@ -691,6 +691,17 @@ export function buildLondon(): Built {
 
   // Terraced neighbourhoods occupy complete street blocks, with front paths
   // and small garden strips between rows. Never consume a door or park plot.
+  // Hotels occupy real reserved plots before the smaller neighbourhood homes.
+  let hotels = 0;
+  for (const y of [25, 31, 49, 65, 71]) {
+    for (const x of [19, 38, 56, 74, 92]) {
+      if (hotels >= 2) break;
+      if (building(x, y, 6, 4, 5.8 + hotels, "stone", {
+        id: `hotel-${hotels}`, label: hotels === 0 ? "The Lantern Hotel" : "The Garden House Hotel",
+        accent: hotels === 0 ? "#315b50" : "#704c47",
+      })) hotels++;
+    }
+  }
   const blocks: [number, number][] = [
     [1, 13],
     [19, 32],
@@ -706,7 +717,7 @@ export function buildLondon(): Built {
       for (let x = left; x + 3 <= right; x += 3) {
         const h = y === 85 ? 2 : 3;
         if (
-          !building(x, y, 3, h, 2.6 + (homes % 3) * 0.3, "terrace", {
+          !building(x, y, 3, h, 2 + (homes % 3), "terrace", {
             id: `neighbourhood-${homes}`,
             colour: COLOURS[homes % COLOURS.length],
           })
@@ -717,6 +728,13 @@ export function buildLondon(): Built {
         homes++;
       }
     }
+  // Small mews fill leftover buildable pockets; reserved parks, doorways,
+  // rivers and the full road width are still excluded by the plot builder.
+  let mews = 0;
+  for (const y of [6, 12, 28, 52, 68, 78])
+    for (const [left, right] of blocks)
+      for (let x = left; x + 3 <= right && mews < 10; x += 4)
+        if (building(x,y,3,2,2,"terrace",{id:`mews-${mews}`})) mews++;
   // Public footpaths connect the fronts and divide remaining green land into
   // gardens and landscaped verges, instead of leaving uninterrupted fields.
   for (const y of [

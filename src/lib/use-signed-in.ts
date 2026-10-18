@@ -20,9 +20,8 @@ export function useSignedIn(): boolean | null {
     sb.auth.getSession().then(({ data: sessionData }) =>
       setSignedIn(Boolean(sessionData.session)),
     );
-    sb.auth.getUser().then(({ data: userData }) =>
-      setSignedIn(Boolean(userData.user)),
-    );
+    // Display state only: protected pages/actions still verify the user on the server.
+    // getSession uses the shared local auth cache; no remote identity lookup per control.
     return () => data.subscription.unsubscribe();
   }, []);
   return signedIn;

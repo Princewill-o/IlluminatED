@@ -162,6 +162,39 @@ function finish(
 }
 
 /** Walk-in game workplaces, separate from verified employers' advice offices. */
+export function hotelMap(id: string): WorldMap | null {
+  const match = /^hotel-([01])(?:-floor-([12]))?$/.exec(id);
+  if (!match) return null;
+  const hotel = buildLondon().things.find(t => t.kind === "building" && t.id === `hotel-${match[1]}`);
+  if (!hotel || hotel.kind !== "building") return null;
+  const floor = Number(match[2] ?? 0);
+  const base = `hotel-${match[1]}`;
+  const g = new Grid(20, 16, ".");
+  g.border("#");
+  for (let x = 2; x < 18; x++) g.set(x, 0, "W");
+  g.set(2, 2, "p"); g.set(17, 12, "p");
+  g.fill(3, 6, 4, 1, floor === 0 ? "r" : "b");
+  g.fill(3, 10, 4, 1, "s"); g.set(5, 12, "o");
+  if (floor > 0) {
+    g.fill(10, 5, 2, 1, "d");
+    g.fill(10, 10, 3, 1, "s");
+    g.set(12, 7, "c");
+  }
+  if (floor === 1) {
+    g.fill(8,1,1,6,"#");
+    g.fill(3,3,2,1,"d");
+    g.fill(3,4,2,1,"X");
+  }
+  // The stair landing remains walkable; each floor is a real destination.
+  g.fill(15, 2, 2, 2, "e");
+  const portals: Portal[] = [];
+  if (floor === 1) portals.push({id:"guest-bed",rect:px(3,5,2,1),label:"Rest in the guest room",to:{kind:"act",activity:"sleep"}});
+  if (floor < 2) portals.push({id:"stairs-up",rect:px(15,4,2,1),label:`Take stairs to floor ${floor+1}`,to:{kind:"map",mapId:`${base}-floor-${floor+1}`,label:`${hotel.label} · Floor ${floor+1}`}});
+  if (floor > 0) portals.push({id:"stairs-down",rect:px(15,7,2,1),label:floor===1?"Stairs to lobby":"Stairs to floor 1",to:{kind:"map",mapId:floor===1?base:`${base}-floor-1`,label:floor===1?"Hotel lobby":"First floor"}});
+  if (floor === 0) portals.push({id:"exit",rect:px(9,14,2,1),label:"Leave hotel",to:{kind:"map",mapId:"city",label:"London"}});
+  return finish({id,kind:"office",name:`${hotel.label} · ${floor === 0 ? "Lobby" : `Floor ${floor}`}`,structures:[],rooms:[],portals,spawn:centre(10,13),accent:hotel.accent ?? "#315b50",sign:{x:10,y:8,text:floor===0?"Reception · lounge · upstairs":floor===1?"Guest lounge · reading room":"Sky lounge · quiet workspace"}},g);
+}
+
 export function workplaceMap(id: string): WorldMap | null {
   const w = WORKPLACES.find(workplace => workplace.id === id);
   if (!w) return null;
@@ -173,6 +206,19 @@ export function workplaceMap(id: string): WorldMap | null {
   g.set(20, 12, "o");
   g.set(2, 2, "p"); g.set(23, 2, "p");
   const practical = ["pizzazz", "tescow"].includes(id);
+  if (!practical) {
+    // Perimeter storage and a planted break corner leave the work aisles clear.
+    g.fill(4, 1, 3, 1, "b");
+    g.fill(18, 1, 3, 1, "b");
+    g.set(23, 11, "p");
+    g.set(17, 14, "L");
+    g.set(2, 10, "F");
+    g.set(22, 10, "k");
+    for (const x of [4, 18]) {
+      g.fill(x, 10, 3, 1, "d");
+      g.set(x + 1, 12, "c");
+    }
+  }
   for (const x of [4, 11, 18]) {
     g.fill(x, 5, 3, 1, practical ? "k" : "d");
     g.set(x + 1, 4, practical ? "b" : "v");
@@ -184,6 +230,7 @@ export function workplaceMap(id: string): WorldMap | null {
       {id:"exit",rect:px(12,18,2,1),label:"Leave workplace",to:{kind:"map",mapId:"city",label:"London"}},
       {id:"recruitment",rect:px(4,15,3,1),label:"Reception · apply for a role",to:{kind:"workstation",workplace:id,station:"reception"}},
       ...[4,11,18].map((x,i):Portal=>({id:`terminal-${i}`,rect:px(x,6,3,1),label:practical?"Use work counter · start shift":"Use computer · start shift",to:{kind:"workstation",workplace:id,station:"terminal"}})),
+      ...(!practical ? [4,18].map((x,i):Portal=>({id:`terminal-south-${i}`,rect:px(x,11,3,1),label:"Use computer · start shift",to:{kind:"workstation",workplace:id,station:"terminal"}})) : []),
     ]},g);
 }
 
@@ -452,6 +499,7 @@ export function londonMap(): WorldMap {
   const L = buildLondon();
   const portals: Portal[] = [];
   for (const th of L.things) {
+    if (th.kind === "building" && /^hotel-[01]$/.test(th.id)) portals.push({id:th.id,rect:px(th.x+2,th.y+th.h,2,1),label:`Enter ${th.label}`,to:{kind:"map",mapId:th.id,label:th.label ?? "Hotel"}});
     if (th.kind === "building" && th.companyId) {
       const c = COMPANIES.find((k) => k.id === th.companyId)!;
       const w = WORKPLACES.find((k) => k.companyId === c.id);

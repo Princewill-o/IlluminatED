@@ -78,6 +78,7 @@ import {
   isRegion,
   officeMap,
   workplaceMap,
+  hotelMap,
   pickServer,
   safeSpot,
   serverById,
@@ -93,6 +94,7 @@ const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
+  if (id.startsWith("hotel-")) return hotelMap(id);
   if (id.startsWith("workplace-")) return workplaceMap(id.slice(10));
   if (id === "city") return CITY;
   if (id === "universities") return universityDistrictMap();
