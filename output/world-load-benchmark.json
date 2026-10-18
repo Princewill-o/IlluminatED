@@ -1,0 +1,261 @@
+{
+  "generatedAt": "2026-10-18T11:30:20.890Z",
+  "applicationCommit": "9cf275b79fe28f82d65b069bbb07c995bf209d97",
+  "environment": {
+    "node": "v24.19.0",
+    "os": "win32 10.0.26200",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor              ",
+    "logicalCPUs": 12
+  },
+  "method": "Accelerated local hook with synthetic presence and JSON movement, real production callbacks, mocked React/Supabase transport; no cloud traffic or GPU/DOM rendering. Office path deliberately bypasses current admission to stress handlers. 12 samples per steady scenario, p95 includes warm-up. WebSocket envelope is representative, not packet capture. Movement model uses conservative 1000/120 Hz ceiling, all players moving. Nine ticks timed, not claimed as frame time or end-to-end latency.",
+  "configuredCapacity": 40,
+  "movementCeilingHz": 8.333333333333334,
+  "rows": [
+    {
+      "players": 5,
+      "movementSendsPerSecond": 41.667,
+      "movementDeliveriesPerSecond": 166.667,
+      "movementEventsPerSecond": 208.333,
+      "pingEventsPerSecond": 5,
+      "receiveKBPerSecondPerClient": 7.133,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.239,
+      "nineMovementTicksP95Ms": 0.184
+    },
+    {
+      "players": 6,
+      "movementSendsPerSecond": 50,
+      "movementDeliveriesPerSecond": 250,
+      "movementEventsPerSecond": 300,
+      "pingEventsPerSecond": 7.2,
+      "receiveKBPerSecondPerClient": 8.917,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.066,
+      "nineMovementTicksP95Ms": 0.115
+    },
+    {
+      "players": 10,
+      "movementSendsPerSecond": 83.333,
+      "movementDeliveriesPerSecond": 750,
+      "movementEventsPerSecond": 833.333,
+      "pingEventsPerSecond": 20,
+      "receiveKBPerSecondPerClient": 16.05,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.092,
+      "nineMovementTicksP95Ms": 0.427
+    },
+    {
+      "players": 12,
+      "movementSendsPerSecond": 100,
+      "movementDeliveriesPerSecond": 1100,
+      "movementEventsPerSecond": 1200,
+      "pingEventsPerSecond": 28.8,
+      "receiveKBPerSecondPerClient": 19.617,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.071,
+      "nineMovementTicksP95Ms": 0.242
+    },
+    {
+      "players": 16,
+      "movementSendsPerSecond": 133.333,
+      "movementDeliveriesPerSecond": 2000,
+      "movementEventsPerSecond": 2133.333,
+      "pingEventsPerSecond": 51.2,
+      "receiveKBPerSecondPerClient": 26.75,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.085,
+      "nineMovementTicksP95Ms": 0.318
+    },
+    {
+      "players": 20,
+      "movementSendsPerSecond": 166.667,
+      "movementDeliveriesPerSecond": 3166.667,
+      "movementEventsPerSecond": 3333.333,
+      "pingEventsPerSecond": 80,
+      "receiveKBPerSecondPerClient": 33.883,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.074,
+      "nineMovementTicksP95Ms": 0.541
+    },
+    {
+      "players": 30,
+      "movementSendsPerSecond": 250,
+      "movementDeliveriesPerSecond": 7250,
+      "movementEventsPerSecond": 7500,
+      "pingEventsPerSecond": 180,
+      "receiveKBPerSecondPerClient": 51.717,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.102,
+      "nineMovementTicksP95Ms": 0.59
+    },
+    {
+      "players": 40,
+      "movementSendsPerSecond": 333.333,
+      "movementDeliveriesPerSecond": 13000,
+      "movementEventsPerSecond": 13333.333,
+      "pingEventsPerSecond": 320,
+      "receiveKBPerSecondPerClient": 69.55,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.118,
+      "nineMovementTicksP95Ms": 1.087
+    },
+    {
+      "players": 50,
+      "movementSendsPerSecond": 416.667,
+      "movementDeliveriesPerSecond": 20416.667,
+      "movementEventsPerSecond": 20833.333,
+      "pingEventsPerSecond": 500,
+      "receiveKBPerSecondPerClient": 87.383,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.126,
+      "nineMovementTicksP95Ms": 0.939
+    },
+    {
+      "players": 100,
+      "movementSendsPerSecond": 833.333,
+      "movementDeliveriesPerSecond": 82500,
+      "movementEventsPerSecond": 83333.333,
+      "pingEventsPerSecond": 2000,
+      "receiveKBPerSecondPerClient": 176.55,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 2.133,
+      "nineMovementTicksP95Ms": 3.448
+    },
+    {
+      "players": 200,
+      "movementSendsPerSecond": 1666.667,
+      "movementDeliveriesPerSecond": 331666.667,
+      "movementEventsPerSecond": 333333.333,
+      "pingEventsPerSecond": 8000,
+      "receiveKBPerSecondPerClient": 354.883,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.41,
+      "nineMovementTicksP95Ms": 4.365
+    },
+    {
+      "players": 500,
+      "movementSendsPerSecond": 4166.667,
+      "movementDeliveriesPerSecond": 2079166.667,
+      "movementEventsPerSecond": 2083333.333,
+      "pingEventsPerSecond": 50000,
+      "receiveKBPerSecondPerClient": 889.883,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 0.779,
+      "nineMovementTicksP95Ms": 10.773
+    },
+    {
+      "players": 1000,
+      "movementSendsPerSecond": 8333.333,
+      "movementDeliveriesPerSecond": 8325000,
+      "movementEventsPerSecond": 8333333.333,
+      "pingEventsPerSecond": 200000,
+      "receiveKBPerSecondPerClient": 1781.55,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 1.595,
+      "nineMovementTicksP95Ms": 19.945
+    },
+    {
+      "players": 2000,
+      "movementSendsPerSecond": 16666.667,
+      "movementDeliveriesPerSecond": 33316666.667,
+      "movementEventsPerSecond": 33333333.333,
+      "pingEventsPerSecond": 800000,
+      "receiveKBPerSecondPerClient": 3564.883,
+      "sampleEnvelopeBytes": 214,
+      "presenceSyncP95Ms": 2.102,
+      "nineMovementTicksP95Ms": 38.202
+    }
+  ],
+  "joinRows": [
+    {
+      "players": 40,
+      "asyncIdentityReconciliationMs": 2.606
+    },
+    {
+      "players": 200,
+      "asyncIdentityReconciliationMs": 14.031
+    },
+    {
+      "players": 500,
+      "asyncIdentityReconciliationMs": 91.074
+    },
+    {
+      "players": 2000,
+      "asyncIdentityReconciliationMs": 1456.674
+    }
+  ],
+  "populationScenarios": [
+    {
+      "totalPlayers": 2000,
+      "roomSize": 5,
+      "rooms": 400,
+      "movementEventsPerSecondAllMoving": 83333.333,
+      "movementEventsPerSecondHalfMovingExpected": 41666.667,
+      "note": "Movement only; sharding does not remove the project-wide event quota or global lobby fanout."
+    },
+    {
+      "totalPlayers": 2000,
+      "roomSize": 10,
+      "rooms": 200,
+      "movementEventsPerSecondAllMoving": 166666.667,
+      "movementEventsPerSecondHalfMovingExpected": 83333.333,
+      "note": "Movement only; sharding does not remove the project-wide event quota or global lobby fanout."
+    },
+    {
+      "totalPlayers": 2000,
+      "roomSize": 20,
+      "rooms": 100,
+      "movementEventsPerSecondAllMoving": 333333.333,
+      "movementEventsPerSecondHalfMovingExpected": 166666.667,
+      "note": "Movement only; sharding does not remove the project-wide event quota or global lobby fanout."
+    },
+    {
+      "totalPlayers": 2000,
+      "roomSize": 40,
+      "rooms": 50,
+      "movementEventsPerSecondAllMoving": 666666.667,
+      "movementEventsPerSecondHalfMovingExpected": 333333.333,
+      "note": "Movement only; sharding does not remove the project-wide event quota or global lobby fanout."
+    },
+    {
+      "totalPlayers": 2000,
+      "roomSize": 2000,
+      "rooms": 1,
+      "movementEventsPerSecondAllMoving": 33333333.333,
+      "movementEventsPerSecondHalfMovingExpected": 16666666.667,
+      "note": "Movement only; sharding does not remove the project-wide event quota or global lobby fanout."
+    }
+  ],
+  "documentedQuotaScenarios": [
+    {
+      "eventsPerSecond": 100,
+      "oneRoomPlayersAt60PercentBudget": 2,
+      "note": "Planning estimate includes movement, ping broadcast and one presence fanout every three seconds; excludes initial snapshots/lobby/acks/chat. Not a tested deployment guarantee."
+    },
+    {
+      "eventsPerSecond": 500,
+      "oneRoomPlayersAt60PercentBudget": 5,
+      "note": "Planning estimate includes movement, ping broadcast and one presence fanout every three seconds; excludes initial snapshots/lobby/acks/chat. Not a tested deployment guarantee."
+    },
+    {
+      "eventsPerSecond": 2500,
+      "oneRoomPlayersAt60PercentBudget": 13,
+      "note": "Planning estimate includes movement, ping broadcast and one presence fanout every three seconds; excludes initial snapshots/lobby/acks/chat. Not a tested deployment guarantee."
+    }
+  ],
+  "findings": {
+    "rejectedClientUntracks": 1,
+    "rejectedClientLeavesChannel": false,
+    "rejectedClientStillSendsMovement": true,
+    "admittedCityRemotePlayersAt2000": 1999,
+    "officeRemotePlayersAt2000": 1999,
+    "presenceTrackIntervalMs": 3000,
+    "actualMovementSendsAt60FPSOver60SimulatedSeconds": 450,
+    "stationaryMovementSendsOver60SimulatedSeconds": 0,
+    "steadyPresenceTracksPerClientPer30Seconds": 10,
+    "signedJoinNote": "Signature result is stubbed only in joinRows to isolate per-resolution full-snapshot reconciliation. Real crypto measured separately, not added to reconciliation time.",
+    "realEd25519Verifications": 2000,
+    "realEd25519BatchMs": 86.939
+  },
+  "exclusions": "No real 2000-user service test; no measured cloud RTT/loss/reconnect, database load, AI/study workload, GPU FPS, mobile memory, avatar assets or browser layout. No production plan/settings assumed or changed. Presence fanout, lobby traffic, acknowledgements, reconnects, TLS and chat are excluded from movement estimates."
+}

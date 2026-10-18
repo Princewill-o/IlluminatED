@@ -15,6 +15,7 @@
     "test:education": "node --test tests/education.test.mjs",
     "test:study": "node --test tests/study-room.test.mjs tests/learning-awards.test.mjs && node scripts/build-study-bank.mjs --check",
     "test:study:db": "node tests/run-study-database.mjs",
+    "test:world:load": "node scripts/benchmark-world.mjs",
     "publish:education": "node --env-file-if-exists=.env.local scripts/publish-education.mjs"
   },
   "dependencies": {
