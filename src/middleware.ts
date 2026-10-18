@@ -134,6 +134,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Refresh sessions and protect account pages while allowing public assets.
-    "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|ico|webmanifest)$).*)",
+    "/((?!_next/static|_next/image|brand/|favicon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webm|mp4|ico|webmanifest)$).*)",
   ],
 };
