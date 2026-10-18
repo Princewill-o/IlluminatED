@@ -499,6 +499,9 @@ export function londonMap(): WorldMap {
   const L = buildLondon();
   const portals: Portal[] = [];
   for (const th of L.things) {
+    if (th.kind === "building" && ["district-campus-library", "district-campus-studios", "district-campus-labs", "district-wharf-gallery", "district-wharf-cafe", "district-conservatory"].includes(th.id)) {
+      portals.push({id:th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.label ?? "Explore district",to:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
+    }
     if (th.kind === "building" && /^hotel-[01]$/.test(th.id)) portals.push({id:th.id,rect:px(th.x+2,th.y+th.h,2,1),label:`Enter ${th.label}`,to:{kind:"map",mapId:th.id,label:th.label ?? "Hotel"}});
     if (th.kind === "building" && th.companyId) {
       const c = COMPANIES.find((k) => k.id === th.companyId)!;

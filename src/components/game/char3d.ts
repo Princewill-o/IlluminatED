@@ -179,6 +179,17 @@ function dress(object: THREE.Object3D, headMesh: THREE.SkinnedMesh | null, bodyM
     tex.magFilter = THREE.LinearFilter;
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, w * 0.86), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    face.name = "animated-face";
+    const expressions = [tex, ...[
+      { ...a, eyes: "eyes-sleepy" },
+      { ...a, brows: "brows-raised", mouth: "mouth-grin" },
+      { ...a, eyes: "eyes-focused", mouth: "mouth-small" },
+    ].map(avatar => {
+      const texture = new THREE.CanvasTexture(faceCanvas(avatar));
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    })];
+    face.userData.expressions = expressions;
     face.position.set(cx, hb.min.y + h * 0.36, hb.max.z + 0.004);
     headBone.attach(face);
     const hatItem = cosmeticById(a.hat ?? "");
@@ -215,6 +226,7 @@ export interface Character3D {
   object: THREE.Group;
   mixer: THREE.AnimationMixer;
   play: (clip: string) => void;
+  update: (dt: number, reducedMotion?: boolean) => void;
   dispose: () => void;
 }
 
@@ -292,9 +304,11 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
   holder.add(object);
   const mixer = new THREE.AnimationMixer(object);
   let current: THREE.AnimationAction | null = null;
+  let currentName = "idle";
   const play: Character3D["play"] = (name) => {
     const clip = bodyG.animations.find((c) => c.name === name);
     if (!clip) return;
+    currentName = name;
     const next = mixer.clipAction(clip);
     if (next === current) return;
     next.reset().play();
@@ -302,6 +316,31 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     current = next;
   };
   play("idle");
+  const face = object.getObjectByName("animated-face") as THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | undefined;
+  const head = object.getObjectByName("head");
+  const headPose = new THREE.Quaternion();
+  const restingScale = object.scale.clone();
+  let posed = false, expressionTime = Math.random() * 4;
+  const update = (dt: number, reducedMotion = false) => {
+    if (head && posed) head.quaternion.copy(headPose);
+    mixer.update(dt);
+    expressionTime += Math.max(0, dt);
+    object.scale.copy(restingScale);
+    if (!reducedMotion && currentName === "idle") object.scale.y *= 1 + Math.sin(expressionTime * 2) * 0.003;
+    if (head) {
+      headPose.copy(head.quaternion); posed = true;
+      if (!reducedMotion && currentName === "idle") {
+        head.rotateY(Math.sin(expressionTime * 0.65) * 0.07);
+        head.rotateZ(Math.sin(expressionTime * 1.3) * 0.018);
+      }
+      if (!reducedMotion && /walk|run/.test(currentName)) head.rotateZ(Math.sin(expressionTime * 8) * 0.025);
+    }
+    if (face) {
+      const blink = !reducedMotion && expressionTime % 4.3 < 0.14;
+      const expression = blink ? 1 : /wave|dance|cheer/.test(currentName) ? 2 : /run/.test(currentName) ? 3 : 0;
+      face.material.map = face.userData.expressions[expression];
+    }
+  };
   // A pet trots along beside you.
   const pet = pet3d(a.pet ?? "");
   if (pet) {
@@ -325,6 +364,7 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     mixer.stopAllAction(); mixer.uncacheRoot(object);
     const geometry = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>(), skeletons = new Set<THREE.Skeleton>();
     holder.traverse(o => {
+      for (const texture of o.userData.expressions ?? []) textures.add(texture);
       const mesh = o as THREE.SkinnedMesh;
       if (!mesh.isMesh) return;
       if (!sharedGeometry.has(mesh.geometry)) geometry.add(mesh.geometry);
@@ -339,7 +379,7 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
     holder.removeFromParent(); holder.clear();
   };
-  return { object: holder, mixer, play, dispose };
+  return { object: holder, mixer, play, update, dispose };
 }
 
 /** Londoners: varied looks for people in the street, on trains and in buildings. */

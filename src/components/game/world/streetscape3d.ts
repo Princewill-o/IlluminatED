@@ -17,13 +17,14 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
 
   const cube = new THREE.BoxGeometry(1, 1, 1);
   const crown = new THREE.IcosahedronGeometry(1, 1);
+  const smallLeaf = new THREE.IcosahedronGeometry(1, 0);
   const column = new THREE.CylinderGeometry(1, 1, 1, 7);
   const materials = new Map<string, THREE.MeshLambertMaterial>();
   let disposed = false;
   scenery.userData.dispose = () => {
     if (disposed) return;
     disposed = true;
-    for (const geometry of [cube, crown, column]) geometry.dispose();
+    for (const geometry of [cube, crown, smallLeaf, column]) geometry.dispose();
     const textures = new Set<THREE.Texture>();
     for (const value of materials.values()) {
       for (const property of Object.values(value))
@@ -53,7 +54,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   const box = (colour: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) =>
     mesh(cube, colour, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0);
   const leaf = (colour: string, x: number, y: number, z: number, w: number, h: number, d = w) =>
-    mesh(crown, colour, x, y, z, w, h, d);
+    mesh(w < .4 ? smallLeaf : crown, colour, x, y, z, w, h, d);
 
   const iron = "#34443d";
   const brick = "#9e5c46";
@@ -85,6 +86,9 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
     leaf(leaves[0], cx + 0.38, height + 0.09, cz + 0.02, 0.76, 0.75, 0.76);
     leaf(leaves[1], cx, height + 0.53, cz - 0.12, 0.83, 0.72, 0.77);
 
+    // Outer groves grow directly from lawns; keep ornate beds for city streets.
+    if (tree.id.startsWith("district-")) continue;
+
     // Cream coping and a planted understorey make each existing tree into a
     // deliberate garden bed rather than scattering new obstacles in the road.
     box(brick, x + 0.035, 0.13, z + 0.035, x + 0.965, 0.3, z + 0.965);
@@ -109,6 +113,15 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   // Ivy dresses a few blank terrace ends without
   // protruding into the reserved, walkable front-door row.
   for (const building of source.things) {
+    if(building.kind==="building" && ["district-campus-studios","district-conservatory"].includes(building.id)) {
+      const {x,y:z,w,h,height}=building;
+      // Repeated pale roof ribs give the glass halls a conservatory silhouette.
+      for(let dx=0.5;dx<w;dx+=2) {
+        box(stone,x+dx,height,z+0.3,x+dx+0.1,height+0.4,z+h-0.3);
+      }
+      box(iron,x+0.3,height,z+0.4,x+w-0.3,height+0.12,z+0.5);
+      box(iron,x+0.3,height,z+h-0.5,x+w-0.3,height+0.12,z+h-0.4);
+    }
     if (building.kind !== "building" || building.style !== "terrace") continue;
     const seed = building.x * 7 + building.y * 13;
     if (seed % 5 !== 0) continue;

@@ -5,6 +5,20 @@ const { frameMapCamera, groundFootprint } = projectData("src/game/core/view-fram
 const { residentPaths, residentPose, commuterPhase } = projectData("src/game/core/residents.ts");
 const { homeMap, londonMap, officeMap, highlandsMap, stationMap, tubeStations, blocked, TILE } = projectData("src/game/core/world.ts");
 
+test("locked outdoor camera follows exactly through all edges and zoom levels", () => {
+  const map = londonMap();
+  for (const aspect of [0.46, 1, 2.4, 3.5]) for (const zoom of [0.75, 1, 1.65])
+    for (const x of [0, map.cols / 2, map.cols]) for (const z of [0, map.rows / 2, map.rows]) {
+      const frame = frameMapCamera(30, 30, map.cols, map.rows, aspect, false, {x,z}, zoom, true);
+      assert.equal(frame.x, x); assert.equal(frame.z, z);
+      assert.ok(frame.height > 0 && frame.distance > 0);
+    }
+  for (const radius of [8, 20, 40]) {
+    for (const [x,y] of [[-1, map.height/2], [map.width+1,map.height/2], [map.width/2,-1], [map.width/2,map.height+1]])
+      assert.equal(blocked(map,x,y,radius),true);
+  }
+});
+
 test("Camera keeps the entire ground footprint inside every map at all four edges and screen shapes", () => {
   const maps = [homeMap(0), londonMap(), highlandsMap(), officeMap({ slug: "demo", name: "Demo", sector: "Technology", accent: "#2457cb" }), stationMap(tubeStations()[0].id)];
   for (const map of maps) {

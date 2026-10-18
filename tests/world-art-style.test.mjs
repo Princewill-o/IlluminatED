@@ -18,6 +18,28 @@ const {riverGeometry,riverSurface}=load("src/components/game/world/water-style3d
 const {addStreetscape}=load("src/components/game/world/streetscape3d.ts");
 const {finishArchitecture}=load("src/components/game/world/architecture-finish3d.ts");
 const {applyGroundStyle}=load("src/components/game/world/ground-style3d.ts");
+const {londonEye}=load("src/components/game/world/london-eye3d.ts");
+
+test("London Eye capsules remain upright, supports stay fixed and geometry stays bounded",()=>{
+  const eye=londonEye(10,20,6,4), pods=eye.getObjectByName("capsule-glass"), supports=eye.getObjectByName("fixed-a-frame-supports");
+  assert.equal(pods.count,32);
+  const supportRotation=supports.quaternion.clone();
+  let draws=0,triangles=0;const geometries=new Set();
+  eye.traverse(o=>{if(!o.isMesh)return;draws++;geometries.add(o.geometry);triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3*(o.isInstancedMesh?o.count:1);});
+  assert.ok(draws<=18);assert.ok(triangles<18000,`${triangles} triangles`);
+  for(const seconds of [0,13,90,180]) {
+    eye.userData.update(seconds);eye.updateMatrixWorld(true);
+    assert.ok(supports.quaternion.equals(supportRotation));
+    const instance=new THREE.Matrix4();pods.getMatrixAt(0,instance);
+    const world=new THREE.Matrix4().multiplyMatrices(pods.matrixWorld,instance);
+    const vertical=new THREE.Vector3(0,1,0).transformDirection(world);
+    assert.ok(vertical.distanceTo(new THREE.Vector3(0,1,0))<1e-6);
+    const bounds=new THREE.Box3().setFromObject(eye, true);
+    if(seconds===0) assert.ok(bounds.min.x>=10&&bounds.max.x<=16&&bounds.min.z>=20&&bounds.max.z<=24);
+  }
+  let disposals=0;for(const geometry of geometries)geometry.addEventListener("dispose",()=>disposals++);
+  eye.userData.dispose();eye.userData.dispose();assert.equal(disposals,geometries.size);
+});
 test("water covers only river tiles and leaves sunken entrances dry",()=>{
   const geometry=riverGeometry(["wXX","-ww"]),p=geometry.getAttribute("position");
   assert.equal(p.count,18);
@@ -30,7 +52,7 @@ test("landscaping stays within a fixed geometry budget without changing navigati
   const group=addStreetscape(new THREE.Group(),CITY,"dusk"),geometries=new Set(),materials=new Set();let triangles=0;
   group.traverse(o=>{if(!o.isMesh)return;geometries.add(o.geometry);materials.add(o.material);triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});
   assert.equal(JSON.stringify([CITY.tiles,CITY.portals]),before);
-  assert.ok(group.userData.treeCount>=10);assert.ok(geometries.size<=3);assert.ok(materials.size<=16);assert.ok(triangles<24000);
+  assert.ok(group.userData.treeCount>=100);assert.ok(geometries.size<=4);assert.ok(materials.size<=16);assert.ok(triangles<60000, `triangle count: ${triangles}`);
   let disposals=0;for(const geometry of geometries)geometry.addEventListener("dispose",()=>disposals++);
   group.userData.dispose();group.userData.dispose();assert.equal(disposals,geometries.size);
 });

@@ -1,4 +1,5 @@
 import { COMPANIES } from "./companies";
+import { expandLondon } from "./london-districts";
 
 /**
  * London: the main IlluminatED world. A stylised map of central London with the
@@ -12,8 +13,8 @@ import { COMPANIES } from "./companies";
  * and the collisions always line up. Units are tiles (32px). North is up.
  */
 
-export const LONDON_COLS = 112;
-export const LONDON_ROWS = 88;
+export const LONDON_COLS = 176;
+export const LONDON_ROWS = 136;
 
 export type Thing =
   | {
@@ -85,7 +86,7 @@ export const LINES: Record<string, { name: string; colour: string }> = {
   city: { name: "City line", colour: "#ff7a6b" },
 };
 
-interface Built {
+export interface Built {
   tiles: string[];
   things: Thing[];
   stations: Station[];
@@ -123,8 +124,8 @@ let cache: Built | null = null;
 
 export function buildLondon(): Built {
   if (cache) return cache;
-  const W = LONDON_COLS;
-  const H = LONDON_ROWS;
+  const W = 112;
+  const H = 88;
   const t = Array.from({ length: H }, () =>
     Array.from({ length: W }, () => "g"),
   );
@@ -781,6 +782,43 @@ export function buildLondon(): Built {
     }
   }
 
+  // Planted pocket gardens spread throughout the city rather than concentrating
+  // every tree in Hyde Park. Keep all reserved approaches and paved paths open.
+  for (const thing of things) {
+    if (thing.kind === "landmark" && thing.name === "battersea") reserve(thing.x + 4, thing.y + thing.h, 2, 1);
+  }
+  let planted = 0, gardenSeats = 0, gardenLamps = 0;
+  const grassSpot = (x:number,y:number) =>
+    ["g","f"].includes(get(x,y)??"") && !entrances.has(`${x},${y}`) &&
+    Math.hypot(x-34,y-26)>4 &&
+    !things.some(thing=>Math.hypot(thing.x-x,thing.y-y)<2);
+  for(let cy=1;cy<H-2;cy+=11) for(let cx=1;cx<W-2;cx+=14) {
+    if(planted>=36) break;
+    const candidates:{x:number;y:number;score:number}[]=[];
+    for(let y=cy;y<Math.min(cy+11,H-2);y++) for(let x=cx;x<Math.min(cx+14,W-2);x++) {
+      if(!grassSpot(x,y)) continue;
+      const path=[get(x-1,y),get(x+1,y),get(x,y-1),get(x,y+1)].some(tile=>tile==="_"||tile==="-");
+      if(!path) continue;
+      candidates.push({x,y,score:Math.hypot(x-(cx+7),y-(cy+5))});
+    }
+    candidates.sort((a,b)=>a.score-b.score||a.y-b.y||a.x-b.x);
+    for(const {x,y} of candidates.slice(0,1)) {
+      set(x,y,"T");things.push({kind:"tree",id:id("garden-tree"),x,y});planted++;
+      // Nearby seats and lanterns occupy spare grass, never the public path.
+      for(const [dx,dy] of [[2,0],[-2,0],[0,2],[0,-2]]) {
+        const px=x+dx,py=y+dy;
+        if(!grassSpot(px,py)) continue;
+        const besidePath=[get(px-1,py),get(px+1,py),get(px,py-1),get(px,py+1)].some(tile=>tile==="_"||tile==="-");
+        if(!besidePath) continue;
+        const kind=gardenSeats<=gardenLamps?"bench":"lamp";
+        if(kind==="bench"&&gardenSeats>=8||kind==="lamp"&&gardenLamps>=8) break;
+        set(px,py,kind==="bench"?"B":"L");things.push({kind,id:id("garden-furniture"),x:px,y:py});
+        if(kind==="bench")gardenSeats++;else gardenLamps++;
+        break;
+      }
+    }
+  }
+
   // Walkways to every door: make sure the tile in front of each building is walkable.
   for (const th of things) {
     if (th.kind === "building" || th.kind === "station") {
@@ -801,6 +839,7 @@ export function buildLondon(): Built {
     ),
     routes,
   };
+  cache = expandLondon(cache, LONDON_COLS, LONDON_ROWS);
   return cache;
 }
 

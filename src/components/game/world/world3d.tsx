@@ -9,6 +9,7 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { finishArchitecture } from "./architecture-finish3d";
 import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
 import { applyGroundStyle } from "./ground-style3d";
+import { londonEye } from "./london-eye3d";
 import { addStreetscape } from "./streetscape3d";
 export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
@@ -21,7 +22,6 @@ import { TRAIN_CALL } from "./train-state";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
-import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
@@ -979,17 +979,9 @@ function landmark(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["thi
       box(g, GOLDEN, x + w - 2, 0, z, x + w, 5, z + d);
       break;
     case "eye": {
-      const wheel = new THREE.Mesh(new THREE.TorusGeometry(4.4, 0.12, 8, 64), mat("#f2f4f8"));
-      wheel.position.set(cx, 5.2, cz);
-      wheel.userData.spin = true;
-      g.add(wheel);
-      for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2;
-        const pod = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), mat("#ffffff"));
-        pod.position.set(Math.cos(a) * 4.5, Math.sin(a) * 4.5, 0);
-        wheel.add(pod);
-      }
-      box(g, "#d8dde6", cx - 0.1, 0, cz - 0.1, cx + 0.1, 5.2, cz + 0.1);
+      const eye = londonEye(x, z, w, d);
+      bendAll(eye);
+      g.add(eye);
       break;
     }
     case "st-pauls":
@@ -1487,6 +1479,16 @@ export function World3D({
       world.add(ground);
     }
     const signals = london ? streetSignals(world) : [];
+    if (!indoors) {
+      // A landscaped apron keeps the following camera above scenery at the edge.
+      box(world, "#63765b", -40, -0.7, -40, map.cols + 40, -0.35, map.rows + 40);
+      // Align the low perimeter wall with the existing impassable world bounds.
+      const edges = [[-0.18, -0.18, map.cols + 0.18, 0], [-0.18, map.rows, map.cols + 0.18, map.rows + 0.18], [-0.18, 0, 0, map.rows], [map.cols, 0, map.cols + 0.18, map.rows]];
+      for (const [x0, z0, x1, z1] of edges) {
+        box(world, "#776b60", x0, 0, z0, x1, 0.65, z1);
+        box(world, "#c9bea5", x0 - 0.03, 0.65, z0 - 0.03, x1 + 0.03, 0.74, z1 + 0.03);
+      }
+    }
     if (london) world.add(roadMarkings(map));
     updateStreetSignals(signals, Date.now());
     const river=riverSurface(phase,map.cols,map.rows);
@@ -2104,16 +2106,15 @@ export function World3D({
         me.root.position.y = 0.42;
       }
 
-      // Camera: follows you from the south, tilted down, with a little lag.
+      // Keep outdoor gameplay centred on the player, including at map edges.
       if (first) {
         focus.set(mx, 0, mz);
         first = false;
       }
-      const shot=cinematicOffset(now-CAMERA_SHOT.at,reduce);
-      const followed = followPlayerCamera(focus, { x: mx+shot.x, z: mz+shot.z }, dt);
+      const followed = followPlayerCamera(focus, { x: mx, z: mz }, dt);
       focus.set(followed.x, 0, followed.z);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz }, cameraZoom);
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
@@ -2302,7 +2303,8 @@ export function World3D({
           for (const door of s.children.filter(child => child.userData.slidingDoor)) {
             door.position.x = door.userData.restX + door.userData.direction * train.doorOpen * 0.48;
           }
-        } else s.rotation.z += dt * 0.05;
+        } else if (typeof s.userData.update === "function") s.userData.update(reduce ? 0 : secs);
+        else s.rotation.z += dt * 0.05;
       }
       const near = nearPortal();
       for (const r of rings) {
@@ -2312,7 +2314,7 @@ export function World3D({
       water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
       if(!reduce) river.texture.offset.x=secs*0.002;
       // Animate nearby visible bodies only; distant residents still follow their routes.
-      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.mixer.update(dt);
+      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.update(dt, reduce);
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;
         body.char.play("drive");
@@ -2426,6 +2428,7 @@ export function World3D({
       disposeGroundStyle();
       disposeArchitecture();
       streetscape?.userData.dispose?.();
+      for (const spinner of spinners) spinner.userData.dispose?.();
       renderer.forceContextLoss();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;

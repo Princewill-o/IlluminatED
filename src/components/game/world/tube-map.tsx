@@ -31,12 +31,16 @@ function TubeSchematic({ stations, here, onGo }: { stations: { id: string; name:
     "tower-hill": { x: 470, y: 150 },
     canary: { x: 470, y: 300 },
     brixton: { x: 300, y: 310 },
+    "study-quarter": { x: 430, y: 370 },
+    "riverside-campus": { x: 610, y: 60 },
+    "conservatory": { x: 610, y: 240 },
+    "orchard-commons": { x: 180, y: 410 },
   };
   const ORDER: Record<string, string[]> = {
-    revision: ["brixton", "waterloo", "westminster", "oxford", "bank"],
-    careers: ["westminster", "waterloo", "london-bridge", "tower-hill", "canary"],
+    revision: ["study-quarter", "brixton", "waterloo", "westminster", "oxford", "bank"],
+    careers: ["westminster", "waterloo", "london-bridge", "tower-hill", "canary", "study-quarter"],
     homeward: ["oxford", "waterloo", "london-bridge", "brixton"],
-    city: ["bank", "london-bridge", "tower-hill"],
+    city: ["orchard-commons", "london-bridge", "bank", "tower-hill", "riverside-campus", "conservatory"],
   };
   const pos = (s: (typeof stations)[number]) => SPOT[s.id] ?? { x: 30 + (s.exit?.x ?? 0) * 5, y: 30 + (s.exit?.y ?? 0) * 4 };
   const elbow = (a: { x: number; y: number }, b: { x: number; y: number }) => {
@@ -48,7 +52,7 @@ function TubeSchematic({ stations, here, onGo }: { stations: { id: string; name:
   };
   const lineIds = Object.keys(LINES);
   return (
-    <svg viewBox="0 0 540 340" className="mt-2 w-full rounded-2xl border-2 border-[#13203a]/10 bg-white" role="group" aria-label="Underground map">
+    <svg viewBox="0 0 660 450" className="mt-2 w-full rounded-2xl border-2 border-[#13203a]/10 bg-white" role="group" aria-label="Underground map">
       <path d="M 0 200 L 160 200 L 200 180 L 420 180 L 450 210 L 540 210" fill="none" stroke="#bfe3ff" strokeWidth="14" strokeLinejoin="round" />
       {lineIds.map((l, li) => {
         const on = (ORDER[l] ?? []).map((id) => stations.find((s) => s.id === id && s.lines.includes(l))).filter((s): s is (typeof stations)[number] => Boolean(s));

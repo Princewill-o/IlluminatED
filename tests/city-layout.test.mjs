@@ -4,10 +4,49 @@ import { projectData } from "../scripts/lib/project-data.mjs";
 
 const { buildLondon } = projectData("src/game/core/london.ts");
 const { COMPANIES } = projectData("src/game/core/companies.ts");
+const { LONDON_DISTRICTS } = projectData("src/game/core/london-districts.ts");
 const { BUS_WIDTH, CAR_WIDTH } = projectData("src/game/core/vehicles.ts");
 const { londonMap, hotelMap, SOLID, TILE, blocked } = projectData(
   "src/game/core/world.ts",
 );
+
+test("new pocket gardens leave every portal clear before collision normalization", () => {
+  const raw = buildLondon(), city = londonMap();
+  const additions = raw.things.filter(t => /^garden-/.test(t.id));
+  assert.ok(additions.filter(t => t.kind === "tree").length >= 30);
+  for (const thing of additions) {
+    assert.equal(raw.tiles[thing.y][thing.x], city.tiles[thing.y][thing.x], thing.id);
+    for (const portal of city.portals) {
+      const r = portal.rect, x = thing.x * TILE, y = thing.y * TILE;
+      assert.ok(!(x < r.x + r.w && x + TILE > r.x && y < r.y + r.h && y + TILE > r.y), `${thing.id} overlaps ${portal.id}`);
+    }
+  }
+});
+
+test("expanded districts have destinations, connected gardens and a minority of road space", () => {
+  const city=londonMap(), raw=buildLondon(), reachable=reachableTiles(city);
+  assert.ok(city.cols*city.rows>=112*88*2.4);
+  for(const district of LONDON_DISTRICTS) {
+    const [x,y]=district.focus;
+    assert.ok(reachable.has(`${x},${y}`),`${district.name}: reachable square`);
+    let roads=0,greens=0;
+    for(let yy=district.y;yy<district.y+district.h;yy++) for(let xx=district.x;xx<district.x+district.w;xx++) {
+      const tile=city.tiles[yy][xx];
+      if("=:".includes(tile)) roads++;
+      if("gfT".includes(tile)) greens++;
+    }
+    assert.ok(roads/(district.w*district.h)<0.3,`${district.name}: roads subordinate to public space`);
+    assert.ok(greens/(district.w*district.h)>0.15,`${district.name}: planted landscape`);
+    assert.ok(raw.things.some(t=>t.kind==="building"&&t.x>=district.x&&t.x<district.x+district.w&&t.y>=district.y&&t.y<district.y+district.h));
+  }
+  for(const thing of raw.things.filter(t=>t.id.startsWith("district-")&&["tree","bench","lamp"].includes(t.kind))) {
+    assert.equal(city.tiles[thing.y][thing.x],raw.tiles[thing.y][thing.x],`${thing.id}: no hidden portal overlap`);
+  }
+  for(const id of ["riverside-campus","orchard-commons","conservatory"]) {
+    assert.ok(city.portals.some(p=>p.id===`tube-${id}`));
+    assert.ok(city.portals.some(p=>p.id===`bike-${id}`));
+  }
+});
 
 test("both hotels have accessible lobbies, linked upper floors and a route back outside", () => {
   const city = londonMap();
@@ -65,11 +104,11 @@ function reachableTiles(map) {
 test("Every main road and bridge has four clear driving tiles across", () => {
   const { tiles } = buildLondon();
   for (const y of [20, 60, 76])
-    for (let x = 0; x < tiles[0].length; x++)
+    for (let x = 0; x < (y===76?112:tiles[0].length); x++)
       for (let dy = -1; dy <= 2; dy++)
         assert.ok("=:".includes(tiles[y + dy][x]), `road ${x},${y + dy}`);
   for (const x of [15, 34, 52, 70, 100])
-    for (let y = 0; y < tiles.length; y++)
+    for (let y = 0; y < 106; y++)
       for (let dx = -1; dx <= 2; dx++)
         assert.ok("=:".includes(tiles[y][x + dx]), `road ${x + dx},${y}`);
 });
@@ -207,8 +246,9 @@ test("Neighbourhoods contain many homes and remaining green land is divided by p
   );
   const visited = new Set();
   let largest = 0;
-  for (let y = 0; y < tiles.length; y++)
-    for (let x = 0; x < tiles[0].length; x++) {
+  // The original dense centre retains small gardens; outer districts have parks.
+  for (let y = 0; y < 88; y++)
+    for (let x = 0; x < 112; x++) {
       if (!"gf".includes(tiles[y][x]) || visited.has(`${x},${y}`)) continue;
       const queue = [[x, y]];
       visited.add(`${x},${y}`);
@@ -220,7 +260,7 @@ test("Neighbourhoods contain many homes and remaining green land is divided by p
           [queue[at][0], queue[at][1] + 1],
         ]) {
           const key = `${nx},${ny}`;
-          if (visited.has(key) || !"gf".includes(tiles[ny]?.[nx] ?? " "))
+          if (nx>=112 || ny>=88 || visited.has(key) || !"gf".includes(tiles[ny]?.[nx] ?? " "))
             continue;
           visited.add(key);
           queue.push([nx, ny]);

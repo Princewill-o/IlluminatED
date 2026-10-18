@@ -7,6 +7,7 @@ import { LocateFixed, Minus, Plus, Search, X } from "lucide-react";
 import { PLAYER } from "./art";
 
 import { buildLondon } from "@/game/core/london";
+import { LONDON_DISTRICTS } from "@/game/core/london-districts";
 import {
   KIND,
   placesFor,
@@ -150,6 +151,18 @@ export function LocationMap({
       ctx.rotate(0.1);
       ctx.fillText("RIVER THAMES", 0, 0);
       ctx.restore();
+      for (const district of LONDON_DISTRICTS) {
+        const x=(district.x+district.w/2)*S,y=(district.y+district.h-2)*S;
+        ctx.save();
+        ctx.font=`600 ${Math.max(10,S*1.25)}px sans-serif`;
+        ctx.textAlign="center";
+        const width=ctx.measureText(district.name).width+12;
+        ctx.fillStyle="rgba(255,250,235,0.92)";
+        ctx.fillRect(x-width/2,y-12,width,18);
+        ctx.fillStyle="#385448";
+        ctx.fillText(district.name,x,y);
+        ctx.restore();
+      }
     }
     if (viewport.current) {
       viewport.current.scrollLeft =
