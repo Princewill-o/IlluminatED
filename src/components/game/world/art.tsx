@@ -9,6 +9,7 @@ import HOME_ART from "../../../../public/world/home.json";
 import MOVERS from "../../../../public/world/movers.json";
 import { WorldFigure, poseWorldFigure } from "../character";
 
+import { COACHES, COACH_LENGTH, COACH_WIDTH, coachById, type CoachId } from "@/game/core/coaches";
 import { look } from "@/game/core/cosmetics";
 import { cityFallbackPlan } from "@/game/core/fallback-city";
 import { CATALOGUE_LAYOUT, STARTER_LAYOUT } from "@/game/core/homes";
@@ -329,7 +330,7 @@ type Mover = keyof typeof MOVERS;
 const M = MOVERS as Record<string, { frames: number; w: number; h: number; ax: number; ay: number }>;
 
 /** The London Eye turning, buses and cabs doing their rounds, boats on the Thames. */
-type VehicleKind = "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | "police" | "ambulance" | "delivery" | "hatchback-sports";
+type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | "police" | "ambulance" | "delivery" | "hatchback-sports";
 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
 /** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
@@ -343,6 +344,7 @@ export const NPC_SPOTS: { x: number; y: number }[] = [];
 export const BUS_ROUTE_CODES = ["SL6", "BL1", "SL8"];
 const ROUTE_SPEED = [2.6, 2.8, 2.5];
 const TRAFFIC: { kind: VehicleKind; route: number; at: number }[] = [
+  ...COACHES.map(coach=>({kind:coach.id,route:coach.route,at:coach.at})),
   { kind: "bus", route: 0, at: 0.0 },
   { kind: "sedan", route: 0, at: 0.12 },
   { kind: "cab", route: 0, at: 0.24 },
@@ -447,7 +449,7 @@ function LondonLife({ map }: { map: WorldMap }) {
     vehicles.current.forEach((v, i) => {
       if (v.kind === "boat") return;
       for (let attempt = 0; attempt < 100; attempt++) {
-        const p = poseAt(v, i), length = v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH;
+        const p = poseAt(v, i), length = coachById(v.kind) ? COACH_LENGTH : v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH;
         if (!placed.some(other => Math.hypot(other.x - p.x, other.y - p.y) < (length + (other.length ?? CAR_LENGTH)) / 2 + .8)) {
           placed.push({ id: `ambient-${i}`, x: p.x, y: p.y, heading: Math.atan2(p.dy, p.dx), length }); break;
         }
@@ -465,7 +467,7 @@ function LondonLife({ map }: { map: WorldMap }) {
       const currentTraffic: TrafficVehicle[] = vehicles.current.flatMap((v, i) => {
         if (v.kind === "boat") return [];
         const p = poseAt(v, i);
-        return [{ id: `ambient-${i}`, x: p.x, y: p.y, heading: Math.atan2(p.dy, p.dx), length: v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH, width: v.kind === "bus" ? BUS_WIDTH : CAR_WIDTH }];
+        return [{ id: `ambient-${i}`, x: p.x, y: p.y, heading: Math.atan2(p.dy, p.dx), length: coachById(v.kind) ? COACH_LENGTH : v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH, width: coachById(v.kind) ? COACH_WIDTH : v.kind === "bus" ? BUS_WIDTH : CAR_WIDTH }];
       });
       if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE });
       const pedestrians = [...NPC_SPOTS.map(p => ({ x: p.x / TILE, y: p.y / TILE })), ...crossingWalkers.map(p => ({ x: p.x, y: p.y }))];
@@ -481,9 +483,14 @@ function LondonLife({ map }: { map: WorldMap }) {
         const dir = v.kind === "boat" ? (p.dx >= 0 ? "E" : "W") : Math.abs(p.dx) > Math.abs(p.dy) ? (p.dx > 0 ? "E" : "W") : p.dy > 0 ? "S" : "N";
         const sprite = `${v.kind}-${dir}` as Mover;
         const m = M[sprite];
-        if (!m) return;
+        const coach=coachById(v.kind);
+        if (!m && !coach) return;
         const x = p.x * TILE, y = p.y * TILE;
         if (own) { own.x = p.x; own.y = p.y; own.heading = Math.atan2(p.dy, p.dx); }
+        if(coach) {
+          el.style.width=`${COACH_LENGTH*TILE}px`;el.style.height=`${COACH_WIDTH*TILE}px`;
+          el.style.transformOrigin="center";el.style.transform=`translate3d(${x-COACH_LENGTH*TILE/2}px,${y-COACH_WIDTH*TILE/2}px,0) rotate(${Math.atan2(p.dy,p.dx)}rad)`;
+        } else if(m) {
         if (el.dataset.sprite !== sprite) {
           el.dataset.sprite = sprite;
           el.style.backgroundImage = `url(/world/movers/${sprite}.webp)`;
@@ -493,11 +500,12 @@ function LondonLife({ map }: { map: WorldMap }) {
         const scale = v.kind === "boat" ? 1 : v.kind === "bus" ? BUS_LENGTH / 2.8 : CAR_LENGTH / 1.8;
         el.style.transformOrigin = "0 0";
         el.style.transform = `translate3d(${Math.round(x - m.ax * scale)}px, ${Math.round(y - m.ay * scale)}px, 0) scale(${scale})`;
+        }
         el.style.zIndex = String(Math.round(y));
         // Footprint on the road (for bumping into people), and see-through when you're beside it.
         if (v.kind !== "boat") {
-          const long = (v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH) * TILE;
-          const wide = (v.kind === "bus" ? BUS_WIDTH : CAR_WIDTH) * TILE;
+          const long = (coachById(v.kind) ? COACH_LENGTH : v.kind === "bus" ? BUS_LENGTH : CAR_LENGTH) * TILE;
+          const wide = (coachById(v.kind) ? COACH_WIDTH : v.kind === "bus" ? BUS_WIDTH : CAR_WIDTH) * TILE;
           const horiz = dir === "E" || dir === "W";
           TRAFFIC_BOXES[i] = { x, y, hw: (horiz ? long : wide) / 2, hh: (horiz ? wide : long) / 2, dx: Math.sign(p.dx), dy: Math.sign(p.dy), speed: dt ? Math.hypot(p.x - before.x, p.y - before.y) * TILE / dt : 0 };
           const near = Math.abs(PLAYER.x - x) < (horiz ? long : wide) / 2 + 30 && PLAYER.y < y + 20 && PLAYER.y > y - 110;
@@ -599,7 +607,12 @@ function LondonLife({ map }: { map: WorldMap }) {
           }}
           className="pointer-events-none absolute top-0 left-0 transition-opacity duration-200"
         >
-          {v.kind !== "boat" && (
+          {coachById(v.kind) && <span className="absolute inset-0 rounded-xl border-2 border-[#253441] shadow-lg" style={{background:coachById(v.kind)!.body}}>
+            <span className="absolute inset-x-3 top-2 h-2 rounded bg-[#17303f]"/><span className="absolute inset-x-3 bottom-2 h-2 rounded bg-[#17303f]"/>
+            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[16px] font-black whitespace-nowrap" style={{color:coachById(v.kind)!.ink}}>{coachById(v.kind)!.name}</span>
+            <span className="absolute top-2 right-2 bottom-2 w-4 rounded bg-[#17303f]"/>
+          </span>}
+          {v.kind !== "boat" && !coachById(v.kind) && (
             // Drivers and passengers, seen through the glass when the vehicle goes see-through.
             <span className="absolute inset-x-[30%] top-[38%] flex justify-center gap-1">
               {Array.from({ length: v.kind === "bus" ? 4 : 1 }, (_, k) => (

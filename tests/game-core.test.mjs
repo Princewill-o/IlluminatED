@@ -241,6 +241,19 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
   const maps = [W.CITY, W.campusMap([]), W.campusMap(orgs), W.officeMap(orgs[0])];
   for (const map of maps) {
     assert.ok(!W.blocked(map, map.spawn.x, map.spawn.y), `${map.id}: spawn is free`);
+    // One flood-fill per map verifies the same door coverage without repeating it per door.
+    const G = 16, key = (x,y) => `${x},${y}`;
+    const start = [Math.round(map.spawn.x/G),Math.round(map.spawn.y/G)];
+    const queue = [start], visited = new Set([key(...start)]), reachable = new Set();
+    for(let head=0;head<queue.length;head++) {
+      const [gx,gy]=queue[head], portal=W.portalAt(map,gx*G,gy*G);
+      if(portal)reachable.add(portal.id);
+      for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+        const nx=gx+dx,ny=gy+dy,k=key(nx,ny);
+        if(visited.has(k)||W.blocked(map,nx*G,ny*G))continue;
+        visited.add(k);queue.push([nx,ny]);
+      }
+    }
     for (const p of map.portals) {
       let cx = p.rect.x + p.rect.w / 2;
       let cy = p.rect.y + p.rect.h / 2;
@@ -251,25 +264,7 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
             if (W.blocked(map, cx, cy) && !W.blocked(map, x, y) && W.portalAt(map, x, y)?.id === p.id) [cx, cy] = [x, y];
       assert.ok(!W.blocked(map, cx, cy), `${map.id}: portal ${p.id} is standable`);
       assert.equal(W.portalAt(map, cx, cy)?.id, p.id, `${map.id}: portal ${p.id} triggers`);
-      // Breadth-first search over a 16px grid: is there a free path from spawn to the door?
-      const G = 16;
-      const key = (x, y) => `${x},${y}`;
-      const start = [Math.round(map.spawn.x / G), Math.round(map.spawn.y / G)];
-      const queue = [start];
-      const seen = new Set([key(...start)]);
-      let found = false;
-      while (queue.length && !found) {
-        const [gx, gy] = queue.shift();
-        for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-          const nx = gx + ax;
-          const ny = gy + ay;
-          if (seen.has(key(nx, ny)) || W.blocked(map, nx * G, ny * G)) continue;
-          seen.add(key(nx, ny));
-          if (W.portalAt(map, nx * G, ny * G)?.id === p.id) found = true;
-          queue.push([nx, ny]);
-        }
-      }
-      assert.ok(found, `${map.id}: can walk to ${p.id}`);
+      assert.ok(reachable.has(p.id), `${map.id}: can walk to ${p.id}`);
     }
   }
   const office = W.officeMap(orgs[0]);
@@ -285,10 +280,10 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
 
   const empty = {};
   assert.equal(W.pickServer("lse", empty).id, "lse-1");
-  assert.equal(W.pickServer("lse", { "lse-1": 10, "lse-2": 20 }).id, "lse-2", "busiest with room");
-  assert.equal(W.pickServer("lse", { "lse-1": 39, "lse-2": 38, "lse-3": 38 }).id, "sw-1", "falls back when region full");
-  assert.equal(W.channelFor("city", "lse-1"), "world:city:lse-1");
-  assert.equal(W.channelFor("office-acme", "lse-1"), "world:office-acme");
+  assert.equal(W.pickServer("lse", { "lse-1": 1, "lse-2": W.SERVER_CAPACITY - 1 }).id, "lse-2", "busiest with room");
+  assert.equal(W.pickServer("lse", { "lse-1": W.SERVER_CAPACITY, "lse-2": W.SERVER_CAPACITY, "lse-3": W.SERVER_CAPACITY }).id, "sw-1", "falls back when region full");
+  assert.equal(W.channelFor("city", "lse-1"), "world:room:city:lse-1");
+  assert.equal(W.channelFor("office-acme", "lse-1"), "world:room:office-acme:lse-1");
   assert.equal(W.guessRegion("Europe/London"), "lse");
   assert.equal(W.guessRegion("America/New_York"), "intl");
 });

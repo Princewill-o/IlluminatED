@@ -301,7 +301,7 @@ export function WorldApp({
   useEffect(()=>{const scene=(e:Event)=>{const d=(e as CustomEvent<{title?:string;subtitle?:string}>).detail;if(d?.title)say(d.title.slice(0,100));};window.addEventListener("illuminated:scene",scene);return()=>window.removeEventListener("illuminated:scene",scene);},[say]);
 
   const atHome = mapId === "home";
-  const lobby = useLobby(server && !atHome ? { map: mapId, server: inOffice ? "main" : server } : null, me.id);
+  const lobby = useLobby(server && !atHome ? { map: mapId, server } : null, me.id);
 
   useEffect(() => {
     if (TRAIN_CALL.at < 0) TRAIN_CALL.at = performance.now() - 6500;
@@ -736,7 +736,7 @@ export function WorldApp({
         homeAction={homeAction}
         police={pursuit}
         map={map}
-        serverId={atHome ? "solo" : inOffice ? "main" : server}
+        serverId={atHome ? "solo" : server}
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
@@ -926,7 +926,7 @@ export function WorldApp({
           return true;
         }}
       />
-      {map.art && (mapId === "city" || mapId === "highlands") && <MiniMap map={map} searchArea={pursuit} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
+      {!atHome && <MiniMap map={map} searchArea={pursuit} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
       {mapOpen && <CityMap map={map} searchArea={pursuit} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (

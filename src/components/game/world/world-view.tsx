@@ -31,6 +31,7 @@ import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadV
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { CAR_LENGTH } from "@/game/core/vehicles";
 import { EMOTES, PHRASES, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
 
 const SPRITE_H = 64;
@@ -182,6 +183,8 @@ const STATUS: Record<Connection, { text: string; dot: string }> = {
   reconnecting: { text: "Reconnecting…", dot: "#ffd166" },
   offline: { text: "Offline: check your Wi-Fi", dot: "#ff7a6b" },
   full: { text: "Server full", dot: "#ff7a6b" },
+  busy: { text: "Service busy · try again shortly", dot: "#ff7a6b" },
+  elsewhere: { text: "Already connected in another tab", dot: "#ff7a6b" },
   error: { text: "Can't connect", dot: "#ff7a6b" },
   solo: { text: "Just you", dot: "#8fb4ff" },
 };
@@ -324,7 +327,7 @@ export function WorldView({
   const unavailable3d=useCallback(()=>setWebgl(false),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
-    () => [...players.current.values()].filter((rp) => !hidden.has(rp.id)).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
+    () => nearbyPlayers(players.current.values(), pos.current, hidden).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
@@ -604,7 +607,8 @@ export function WorldView({
   };
 
   const status = STATUS[world.status];
-  const others = [...players.current.values()];
+  // Retain bounded 2D sprites while moving; positions update outside React.
+  const others = [...players.current.values()].filter(p => !hidden.has(p.id)).slice(0,VISIBLE_PLAYERS);
 
   return (
     <div
@@ -708,11 +712,11 @@ export function WorldView({
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
             {world.status === "live" && world.ping !== null && <span className="text-[#8d85a0]">· {world.ping} ms</span>}
-            {!map.id.startsWith("office-") && <span className="text-[#8d85a0]">· {serverById(serverId)?.name}</span>}
+            <span className="text-[#8d85a0]">· {serverById(serverId)?.name}</span>
           </span>
         </button>
         <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur" aria-live="polite">
-          {others.length + 1} here
+          {world.count} here
         </div>
       </div>
 

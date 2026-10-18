@@ -1,0 +1,93 @@
+{
+  "generatedAt": "2026-10-18T12:04:18.480Z",
+  "applicationBaseCommit": "dfcaedd7777dc0f944ef062984e5848499e6c966",
+  "environment": {
+    "node": "v24.19.0",
+    "os": "win32",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor              "
+  },
+  "roomCapacity": 5,
+  "presenceIntervalMs": 16000,
+  "method": "Accelerated real hook callbacks with synthetic React/Supabase transport and mocked signature outcomes. Raw rows deliberately override only the client roster cap to compare algorithm costs up to 2000; these are NOT admitted production room sizes. No GPU, browser, cloud RTT, database load, throughput or 2000-user capacity certification. Separate default-cap and refused-admission assertions use production limits. Nine movement ticks are an accelerated batch, not frame time. 12 samples per raw steady scenario including warmup.",
+  "rows": [
+    {
+      "players": 5,
+      "rawPresenceSyncP95Ms": 0.363,
+      "nineRawMovementTicksP95Ms": 0.233,
+      "batchedIdentityReconciliationMs": 0.252,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 208.333
+    },
+    {
+      "players": 10,
+      "rawPresenceSyncP95Ms": 0.089,
+      "nineRawMovementTicksP95Ms": 0.185,
+      "batchedIdentityReconciliationMs": 0.577,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 833.333
+    },
+    {
+      "players": 20,
+      "rawPresenceSyncP95Ms": 1.388,
+      "nineRawMovementTicksP95Ms": 0.442,
+      "batchedIdentityReconciliationMs": 0.166,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 3333.333
+    },
+    {
+      "players": 40,
+      "rawPresenceSyncP95Ms": 0.125,
+      "nineRawMovementTicksP95Ms": 0.604,
+      "batchedIdentityReconciliationMs": 0.225,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 13333.333
+    },
+    {
+      "players": 100,
+      "rawPresenceSyncP95Ms": 0.221,
+      "nineRawMovementTicksP95Ms": 1.432,
+      "batchedIdentityReconciliationMs": 0.388,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 83333.333
+    },
+    {
+      "players": 200,
+      "rawPresenceSyncP95Ms": 0.354,
+      "nineRawMovementTicksP95Ms": 2.606,
+      "batchedIdentityReconciliationMs": 0.678,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 333333.333
+    },
+    {
+      "players": 500,
+      "rawPresenceSyncP95Ms": 1.168,
+      "nineRawMovementTicksP95Ms": 6.728,
+      "batchedIdentityReconciliationMs": 1.603,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 2083333.333
+    },
+    {
+      "players": 1000,
+      "rawPresenceSyncP95Ms": 2.084,
+      "nineRawMovementTicksP95Ms": 12.26,
+      "batchedIdentityReconciliationMs": 3.132,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 8333333.333
+    },
+    {
+      "players": 2000,
+      "rawPresenceSyncP95Ms": 3.738,
+      "nineRawMovementTicksP95Ms": 23.971,
+      "batchedIdentityReconciliationMs": 6.159,
+      "identityFullScans": 2,
+      "hypotheticalMovementEventsPerSecond": 33333333.333
+    }
+  ],
+  "guardChecks": {
+    "officeOverflowChannelRemoved": true,
+    "overflowMovementSends": 0,
+    "remoteRosterAt2000": 4,
+    "refusedAdmissionSubscriptions": 0
+  },
+  "budget": "Database claim serializes project admission and reserves 9*N*(N+1) events/s per room, including acknowledgement allowance. Default event budget 60/s; default per-room ceiling five. Default budget allows two simultaneous moving players in one room; larger verified allowances require an operator change, never a client override. This is an estimate with headroom, not a provider-level abuse limiter."
+}

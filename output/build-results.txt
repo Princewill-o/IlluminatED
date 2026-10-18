@@ -1,0 +1,168 @@
+   ▲ Next.js 15.5.28
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 17.2s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/162) ...
+   Generating static pages (40/162)
+   Generating static pages (80/162)
+   Generating static pages (121/162)
+ ✓ Generating static pages (162/162)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                                             Size  First Load JS  Revalidate  Expire
+┌ ○ /                                                                1.41 kB         114 kB
+├ ○ /_not-found                                                        216 B         104 kB
+├ ○ /a-level                                                         7.33 kB         181 kB
+├ ○ /about                                                           5.29 kB         121 kB
+├ ○ /accessibility                                                     204 B         107 kB
+├ ƒ /account/password                                                3.67 kB         119 kB
+├ ƒ /admin                                                             204 B         107 kB
+├ ƒ /api/apprenticeshipstandards                                       216 B         104 kB
+├ ƒ /api/apprenticeshipstandards/[ref]                                 216 B         104 kB
+├ ƒ /api/books                                                         216 B         104 kB
+├ ƒ /api/downloads                                                     216 B         104 kB
+├ ƒ /api/education/catalogue                                           216 B         104 kB
+├ ƒ /api/education/lessons/[slug]                                      216 B         104 kB
+├ ƒ /api/education/state                                               216 B         104 kB
+├ ƒ /api/education/store                                               216 B         104 kB
+├ ƒ /api/ees/data-sets                                                 216 B         104 kB
+├ ƒ /api/ees/publications                                              216 B         104 kB
+├ ○ /api/events                                                        216 B         104 kB          3h      1y
+├ ƒ /api/govuk/search                                                  216 B         104 kB
+├ ƒ /api/jobs                                                          216 B         104 kB
+├ ƒ /api/ofqual/organisations                                          216 B         104 kB
+├ ƒ /api/ofqual/qualifications                                         216 B         104 kB
+├ ƒ /api/opportunities                                                 216 B         104 kB
+├ ƒ /api/preview-access                                                216 B         104 kB
+├ ƒ /api/set-texts                                                     216 B         104 kB
+├ ƒ /api/social/export                                                 216 B         104 kB
+├ ƒ /api/stripe/webhook                                                216 B         104 kB
+├ ƒ /api/tiggy                                                         216 B         104 kB
+├ ○ /api/university-events                                             216 B         104 kB          3h      1y
+├ ƒ /auth/callback                                                     216 B         104 kB
+├ ƒ /billing                                                           204 B         107 kB
+├ ƒ /book                                                            3.76 kB         116 kB
+├ ○ /btec                                                              202 B         107 kB
+├ ƒ /calculator                                                      7.49 kB         169 kB
+├ ○ /careers                                                         5.04 kB         125 kB
+├ ƒ /careers/[ref]                                                     204 B         107 kB
+├ ○ /companies                                                         202 B         107 kB
+├ ƒ /companies/[slug]                                                  202 B         107 kB
+├ ƒ /contact                                                         4.64 kB         120 kB
+├ ○ /cookies                                                           204 B         107 kB
+├ ƒ /courses                                                           208 B         144 kB
+├ ● /courses/[courseId]                                               8.2 kB         261 kB          1h      1y
+├   ├ /courses/gcse-maths                                                                            1h      1y
+├   ├ /courses/gcse-english-language                                                                 1h      1y
+├   ├ /courses/gcse-english-literature                                                               1h      1y
+├   └ [+40 more paths]
+├ ● /courses/[courseId]/[topicId]                                    2.69 kB         257 kB
+├   ├ /courses/gcse-maths/gcse-maths-percentages
+├   ├ /courses/gcse-maths/gcse-maths-linear-equations
+├   ├ /courses/gcse-english-language/gcse-englang-language-analysis
+├   └ [+47 more paths]
+├ ○ /creators                                                        2.98 kB         110 kB
+├ ƒ /dashboard                                                         12 kB         269 kB
+├ ƒ /dashboard/settings                                              1.51 kB         126 kB
+├ ○ /data                                                               6 kB         126 kB
+├ ○ /employers                                                         202 B         107 kB
+├ ○ /employers/join                                                  1.96 kB         109 kB
+├ ○ /employers/office                                                1.84 kB         109 kB
+├ ƒ /exam-mode                                                       2.92 kB         110 kB
+├ ○ /faq                                                               204 B         107 kB
+├ ○ /flashcards                                                      7.95 kB         182 kB
+├ ƒ /games                                                             189 B         126 kB
+├ ƒ /games/arcade                                                    8.54 kB         218 kB
+├ ƒ /games/careers                                                   3.79 kB         234 kB
+├ ƒ /games/careers/sources                                           3.68 kB         136 kB
+├ ƒ /games/challenge/[code]                                            182 B         120 kB
+├ ƒ /games/city-showcase                                             4.53 kB         514 kB
+├ ƒ /games/expansions                                                1.33 kB         115 kB
+├ ƒ /games/friends                                                   2.28 kB         190 kB
+├ ƒ /games/friends/reports                                           1.33 kB         115 kB
+├ ƒ /games/home                                                        216 B         104 kB
+├ ƒ /games/hub                                                       16.4 kB         197 kB
+├ ƒ /games/illumship                                                 1.33 kB         115 kB
+├ ƒ /games/locker                                                    9.51 kB         383 kB
+├ ƒ /games/promotion-panic/[company]                                 21.5 kB         235 kB
+├ ƒ /games/sources                                                   6.98 kB         121 kB
+├ ƒ /games/study                                                     13.2 kB         219 kB
+├ ƒ /games/wealth                                                    1.34 kB         115 kB
+├ ƒ /games/weekly                                                    1.34 kB         115 kB
+├ ƒ /games/world                                                       203 B         337 kB
+├ ○ /gcse                                                            7.33 kB         181 kB
+├ ƒ /getting-started                                                 6.61 kB         165 kB
+├ ƒ /guardian/confirm                                                  202 B         107 kB
+├ ƒ /guardian/messages                                                 216 B         104 kB
+├ ○ /homework                                                          203 B         217 kB
+├ ƒ /homework/[id]                                                     204 B         217 kB
+├ ƒ /homework/class/[id]                                             1.67 kB         219 kB
+├ ○ /jobs                                                            4.54 kB         194 kB
+├ ○ /learn                                                             191 B         112 kB
+├ ƒ /learn/[slug]                                                    3.76 kB         119 kB
+├ ○ /level-2-3                                                         208 B         144 kB
+├ ○ /library                                                         4.29 kB         137 kB
+├ ○ /me                                                              4.27 kB         201 kB
+├ ○ /messages                                                          202 B         107 kB
+├ ƒ /messages/[id]                                                   4.72 kB         189 kB
+├ ƒ /messages/new                                                    1.28 kB         108 kB
+├ ○ /next-steps                                                      2.42 kB         196 kB
+├ ƒ /onboarding                                                      3.58 kB         239 kB
+├ ○ /opengraph-image.png                                                 0 B            0 B
+├ ƒ /personalising                                                   3.89 kB         162 kB
+├ ƒ /premium                                                         2.26 kB         164 kB
+├ ƒ /premium/success                                                   557 B         107 kB
+├ ○ /privacy                                                           204 B         107 kB
+├ ƒ /qualifications                                                    189 B         126 kB
+├ ƒ /quizzes                                                           199 B         254 kB
+├ ƒ /r/[code]                                                          216 B         104 kB
+├ ○ /reading                                                         5.37 kB         126 kB
+├ ○ /resources                                                        4.4 kB         143 kB
+├ ○ /revision                                                        9.62 kB         183 kB
+├ ○ /revision-games                                                    191 B         112 kB
+├ ○ /robots.txt                                                        216 B         104 kB
+├ ○ /safeguarding                                                      204 B         107 kB
+├ ○ /school-access                                                     202 B         107 kB
+├ ○ /schools                                                           191 B         112 kB
+├ ƒ /sign-in                                                         5.51 kB         167 kB
+├ ○ /sitemap.xml                                                       216 B         104 kB
+├ ƒ /social                                                            204 B         107 kB
+├ ƒ /social/account                                                    182 B         119 kB
+├ ƒ /social/auth/callback                                              216 B         104 kB
+├ ƒ /social/c/[slug]                                                   204 B         107 kB
+├ ƒ /social/friends                                                    202 B         107 kB
+├ ƒ /social/guidelines                                                 216 B         104 kB
+├ ƒ /social/moderation                                                 202 B         107 kB
+├ ƒ /social/new                                                        182 B         119 kB
+├ ƒ /social/sign-in                                                    216 B         104 kB
+├ ƒ /social/t/[id]                                                     183 B         119 kB
+├ ƒ /social/u/[username]                                               202 B         107 kB
+├ ƒ /social/universities                                               876 B         108 kB
+├ ƒ /social/welcome                                                    216 B         104 kB
+├ ƒ /study/[courseId]                                                  204 B         107 kB
+├ ○ /t-levels                                                          202 B         107 kB
+├ ○ /teacher                                                           203 B         217 kB
+├ ○ /terms                                                             204 B         107 kB
+├ ƒ /tiggy                                                           51.6 kB         213 kB
+├ ƒ /tutors                                                          2.26 kB         164 kB
+├ ƒ /tutors/applications                                               202 B         107 kB
+├ ƒ /tutors/apply                                                    3.71 kB         119 kB
+├ ƒ /tutors/desk                                                       204 B         107 kB
+├ ƒ /tutors/request                                                  4.96 kB         120 kB
+├ ƒ /tutors/requests/[id]                                            2.96 kB         118 kB
+├ ○ /twitter-image.png                                                   0 B            0 B
+└ ○ /your-data                                                        8.8 kB         251 kB
++ First Load JS shared by all                                         103 kB
+  ├ chunks/2361-5d812805fe6326ab.js                                  46.8 kB
+  ├ chunks/f8df2737-7478c1c532b0f8a0.js                              54.2 kB
+  └ other shared chunks (total)                                      2.43 kB
+
+
+ƒ Middleware                                                         95.3 kB
+
+○  (Static)   prerendered as static content
+●  (SSG)      prerendered as static HTML (uses generateStaticParams)
+ƒ  (Dynamic)  server-rendered on demand

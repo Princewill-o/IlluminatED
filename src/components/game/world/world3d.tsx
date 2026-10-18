@@ -9,6 +9,7 @@ import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, city
 export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
+import { coachModel } from "./coach3d";
 import { ukPhase } from "./fx";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
@@ -16,6 +17,7 @@ import { TRAIN_CALL } from "./train-state";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
+import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
@@ -1544,28 +1546,39 @@ export function World3D({
 
     // ── Characters ──
     const mixers: THREE.AnimationMixer[] = [];
+    const bodies = new Set<Body>();
     interface Body {
       root: THREE.Group;
       char: Character3D | null;
       walking: boolean;
+      dispose: () => void;
     }
     const makeBody = (a: Avatar, logo: string | null = null): Body => {
       const root = new THREE.Group();
-      const b: Body = { root, char: null, walking: false };
+      let removed = false;
+      const b: Body = { root, char: null, walking: false, dispose: () => {
+        if (removed) return;
+        removed = true;
+        bodies.delete(b);
+        root.removeFromParent();
+        if (b.char) { const index = mixers.indexOf(b.char.mixer); if (index >= 0) mixers.splice(index, 1); b.char.dispose(); b.char = null; }
+        shadow.geometry.dispose(); shadow.material.dispose(); root.clear();
+      } };
       const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
       bend(shadow.material);
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = 0.14;
       root.add(shadow);
+      bodies.add(b);
       void buildCharacter(a, 1.15, logo).then((c) => {
-        if (disposed) return;
+        if (disposed || removed) { c.dispose(); return; }
         bendAll(c.object);
         c.object.position.y = 0.12;
         root.add(c.object);
         b.char = c;
         mixers.push(c.mixer);
         c.play(b.walking ? "walk" : "idle");
-      });
+      }).catch(() => { /* Keep the shadow if a character asset fails. */ });
       return b;
     };
     const setWalking = (b: Body, on: boolean) => {
@@ -1637,6 +1650,10 @@ export function World3D({
         scene.add(g);
         traffic.push({ obj: g, route, at: (i * 0.173) % 1, distance: 0, speed: [2.6, 2.8, 2.5][route] });
       });
+      for (const coach of COACHES) {
+        const obj=coachModel(coach.id);bendAll(obj);scene.add(obj);
+        traffic.push({obj,route:coach.route,at:coach.at,distance:0,speed:2.4});
+      }
     }
     const paths = L ? L.routes.map(route => { const first = route[0], last = route[route.length - 1]; return first[0] === last[0] && first[1] === last[1] ? route : [...route, first]; }) : [];
     const lengths = paths.map((pts) => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0));
@@ -1693,7 +1710,7 @@ export function World3D({
     traffic.forEach((v, i) => {
       v.distance = v.at * lengths[v.route];
       for (let attempt = 0; attempt < 100; attempt++) {
-        const q = trafficPose(v), length = v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH;
+        const q = trafficPose(v), length = v.obj.userData.coach ? COACH_LENGTH : v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH;
         if (!parked.some(other => Math.hypot(other.x - q.x, other.y - q.z) < (length + (other.length ?? CAR_LENGTH)) / 2 + .8)) {
           parked.push({ id: `ambient-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length }); break;
         }
@@ -1912,7 +1929,7 @@ export function World3D({
         seen.add(o.id);
         let b = others.get(o.id);
         const lookKey = JSON.stringify([o.avatar,o.badge,o.username,o.affiliation]);
-        if (b && b.lookKey !== lookKey) { scene.remove(b.root); b.label.remove(); others.delete(o.id); b = undefined; }
+        if (b && b.lookKey !== lookKey) { b.dispose(); b.label.remove(); others.delete(o.id); b = undefined; }
         if (!b) {
           const label = makeNameplate(o.username ?? "player", o.affiliation);
           el.appendChild(label);
@@ -1955,7 +1972,7 @@ export function World3D({
       }
       for (const [id, b] of others)
         if (!seen.has(id)) {
-          scene.remove(b.root);
+          b.dispose();
           b.label.remove();
           const vehicle = otherCars.get(id);
           if (vehicle) scene.remove(vehicle.root);
@@ -1990,7 +2007,7 @@ export function World3D({
       const crossingWalkers = london ? crossingPedestrianPoses(roadTime) : [];
       const currentTraffic: TrafficVehicle[] = traffic.map((v, i) => {
         const q = trafficPose(v);
-        return { id: `ambient-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH, width: v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH };
+        return { id: `ambient-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: v.obj.userData.coach ? COACH_LENGTH : v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH, width: v.obj.userData.coach ? COACH_WIDTH : v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH };
       });
       cyclists.forEach((c, i) => {
         const q = cyclistPose(c);
@@ -2019,8 +2036,8 @@ export function World3D({
         }
         v.obj.rotation.y = Math.atan2(-q.dz, q.dx);
         const horiz = Math.abs(q.dx) > Math.abs(q.dz);
-        const long = (v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH) * TILE;
-        const wide = (v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH) * TILE;
+        const long = (v.obj.userData.coach ? COACH_LENGTH : v.obj.userData.label ? BUS_LENGTH : CAR_LENGTH) * TILE;
+        const wide = (v.obj.userData.coach ? COACH_WIDTH : v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH) * TILE;
         TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horiz ? long : wide) / 2, hh: (horiz ? wide : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
       }
       NPC_SPOTS.length = 0;
@@ -2173,6 +2190,8 @@ export function World3D({
     return () => {
       cancelAnimationFrame(raf);
       disposed = true;
+      for (const body of bodies) body.dispose();
+      for (const vehicle of traffic) if (vehicle.obj.userData.coach) vehicle.obj.userData.dispose();
       TRAFFIC_BOXES.length = 0;
       NPC_SPOTS.length = 0;
       ro.disconnect();
@@ -2187,7 +2206,7 @@ export function World3D({
         if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
       });
       playerLabel.remove();
-      for (const other of others.values()) other.label.remove();
+      for (const other of others.values()) { other.label.remove(); other.dispose(); }
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.

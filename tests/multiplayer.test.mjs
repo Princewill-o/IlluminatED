@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import test from "node:test";
-import vm from "node:vm";
-import ts from "typescript";
+import { worldHarness, flush } from "./helpers/world-harness.mjs";
 import { projectData } from "../scripts/lib/project-data.mjs";
 
 const { joinGameChannel } = projectData("src/lib/realtime.ts");
@@ -32,34 +30,12 @@ test("a room removed during authentication cannot subscribe late", async () => {
 });
 
 test("world movement broadcasts tiny high-frame-rate steps and vehicle changes", async () => {
-  const effects = [], sent = [];
-  let now = 0;
-  const channel = {
-    state: "joined", on() { return this; }, subscribe(fn) { void fn("SUBSCRIBED"); },
-    track: async () => "ok", send: async message => { sent.push(message); return "ok"; },
-  };
-  const client = { channel: () => channel, auth: { getSession: async () => ({ data: { session: { user: { id: "player" }, access_token: "test-token" } } }) }, realtime: { setAuth: async () => {} } };
-  const exports = {};
-  const js = ts.transpileModule(fs.readFileSync("src/components/game/world/use-world.ts", "utf8"), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  vm.runInNewContext(js, {
-    exports, performance: { now: () => now }, navigator: { onLine: true },
-    window: { setInterval() {}, addEventListener() {} },
-    require(name) {
-      if (name === "react") return { useState: value => [value, () => {}], useRef: current => ({ current }), useCallback: fn => fn, useEffect: fn => effects.push(fn) };
-      if (name.includes("supabase-browser")) return { browserSupabase: () => client };
-      if (name.includes("realtime")) return { joinGameChannel };
-      if (name.includes("cars")) return { carById: () => true };
-      return { channelFor: () => "world:city:lse-1", chatText: () => null, SERVER_CAPACITY: 40 };
-    },
-  });
-  const world = exports.useWorld({ mapId: "city", serverId: "lse-1", me: { id: "player" }, start: { x: 10, y: 10 } });
-  effects.forEach(fn => fn());
-  await Promise.resolve(); await Promise.resolve();
+  const h = worldHarness();
+  await flush();
+  const { world, sent } = h;
   // 0.2px per frame previously never exceeded the old 0.5px per-frame threshold.
   for (let frame = 1; frame <= 100; frame++) {
-    now = frame * 5;
+    h.setNow(frame * 5);
     world.reportMove(10 + frame * 0.2, 10, 1, true);
   }
   assert.ok(sent.length >= 3 && sent.length <= 5, "movement stays visible and rate limited");
@@ -69,4 +45,5 @@ test("world movement broadcasts tiny high-frame-rate steps and vehicle changes",
   world.stopped();
   assert.equal(sent.at(-1).payload.w, 0);
   assert.equal(sent.at(-1).payload.car, "sedan");
+  h.dispose();
 });

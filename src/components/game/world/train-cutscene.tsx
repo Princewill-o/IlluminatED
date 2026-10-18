@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import {TrainFront} from "lucide-react";
 import * as THREE from "three";
 
-import { buildCharacter, npcLook } from "../char3d";
+import { buildCharacter, npcLook, type Character3D } from "../char3d";
 
 import type { Avatar } from "@/game/core/cosmetics";
 
@@ -145,15 +145,16 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     // ── Passengers ──
     const passengers: Promise<void>[] = [];
     const mixers: THREE.AnimationMixer[] = [];
+    const characters: Character3D[] = [];
     let alive = true;
     const seat = (i: number, x: number, side: number, clip: string, standing = false) =>
       passengers.push(buildCharacter(npcLook(i + 3), 1.05).then((c) => {
-        if (!alive) return;
+        if (!alive) { c.dispose(); return; }
         c.object.position.set(x, standing ? 0 : 0.28, standing ? side * 0.35 : side * 0.95);
         c.object.rotation.y = standing ? (side > 0 ? Math.PI : 0) + 0.4 : side > 0 ? Math.PI : 0;
         car.add(c.object);
         c.play(clip);
-        mixers.push(c.mixer);
+        mixers.push(c.mixer); characters.push(c);
       }).catch(() => {}));
     seat(0, -3.2, -1, "sit");
     seat(1, -2.4, -1, "sit");
@@ -167,12 +168,12 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     seat(9, 4.2, -1, "emote-yes", true);
     // You, standing by the pole holding on.
     passengers.push(buildCharacter(avatar, 1.1).then((c) => {
-      if (!alive) return;
+      if (!alive) { c.dispose(); return; }
       c.object.position.set(1.15, 0, 0.05);
       c.object.rotation.y = -0.5;
       car.add(c.object);
       c.play("holding-right");
-      mixers.push(c.mixer);
+      mixers.push(c.mixer); characters.push(c);
     }).catch(() => {}));
     let departAt: number | null = null;
     const begin = () => { if (alive && departAt === null) { departAt = performance.now(); setReady(true); } };
@@ -217,7 +218,7 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     };
     raf = requestAnimationFrame(frame);
     return () => {
-      alive = false;
+      alive = false; characters.forEach(c=>c.dispose());
       clearTimeout(loadFallback);
       cancelAnimationFrame(raf);
       ro.disconnect();

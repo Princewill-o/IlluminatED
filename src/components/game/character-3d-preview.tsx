@@ -68,10 +68,14 @@ export function Character3DPreview({
     const turntable = new THREE.Group();
     scene.add(turntable);
     let alive = true;
+    const previewState = state.current;
+    previewState.char = null;
+    let loadedCharacter: Character3D | null = null;
     void buildCharacter(JSON.parse(key) as Avatar, 1.25, workplaceLogo).then(
       (c) => {
-        if (!alive) return;
+        if (!alive) { c.dispose(); return; }
         turntable.add(c.object);
+        loadedCharacter = c;
         state.current.char = c;
         state.current.clip = "";
       },
@@ -127,6 +131,9 @@ export function Character3DPreview({
     raf = requestAnimationFrame(frame);
     return () => {
       alive = false;
+      loadedCharacter?.dispose();
+      if (previewState.char === loadedCharacter) previewState.char = null;
+      floor.geometry.dispose(); floor.material.dispose();
       cancelAnimationFrame(raf);
       ro.disconnect();
       el.removeEventListener("pointerdown", down);

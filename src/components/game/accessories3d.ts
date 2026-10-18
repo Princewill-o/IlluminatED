@@ -12,6 +12,7 @@ const mat = (c: string, emissive = false) => {
   let m = M.get(k);
   if (!m) {
     m = new THREE.MeshLambertMaterial({ color: c, emissive: emissive ? c : "#000000", emissiveIntensity: emissive ? 0.6 : 0 });
+    m.userData.sharedAccessory = true;
     M.set(k, m);
   }
   return m;

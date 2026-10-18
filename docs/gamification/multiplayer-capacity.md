@@ -1,5 +1,7 @@
 # Multiplayer capacity assessment
 
+**Historical baseline.** The findings below led to the fixes in [multiplayer-fixes.md](multiplayer-fixes.md). The former 40-player configuration and provisional staging recommendation below are superseded by the new five-player ceiling and conservative shared database budget. See that document for deployment requirements and after-fix measurements.
+
 Tested locally on 18 October 2026 against application commit `9cf275b79fe28f82d65b069bbb07c995bf209d97`. This is an accelerated client-handler simulation and traffic model, **not a live 2,000-user service or browser/GPU test**. No cloud connections, accounts, purchases or production settings were created or changed.
 
 ## Recommendation

@@ -4,6 +4,7 @@ import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture }
 import { buildHome, buildLondon } from "./london";
 import { buildHighlands } from "./regions";
 import { UNIVERSITIES, universityById } from "./universities";
+import { ROOM_CAPACITY } from "./world-network";
 
 /**
  * The walkable multiplayer worlds: clean top-down pixel art in the spirit of
@@ -844,9 +845,9 @@ export function safeSpot(map: WorldMap, x: number, y: number) {
 /**
  * Public maps are split into servers grouped by region, so you meet people
  * near you. Every server runs on IlluminatED's realtime service in London
- * (eu-west-2), so ping stays low across the UK. Offices are one shared room.
+ * (eu-west-2). Offices use the same regional room instances and admission limits.
  */
-export const SERVER_CAPACITY = 40;
+export const SERVER_CAPACITY = ROOM_CAPACITY;
 
 export const REGIONS = [
   { id: "lse", name: "London & South East", servers: 3 },
@@ -883,14 +884,14 @@ export function guessRegion(timeZone: string | undefined): RegionId {
 /** Busiest server in the region that still has room (so players meet), else the emptiest anywhere. */
 export function pickServer(region: RegionId, counts: Record<string, number>): ServerInfo {
   const n = (s: ServerInfo) => counts[s.id] ?? 0;
-  const open = SERVERS.filter((s) => s.region === region && n(s) < SERVER_CAPACITY - 2);
+  const open = SERVERS.filter((s) => s.region === region && n(s) < SERVER_CAPACITY);
   if (open.length) return open.sort((a, b) => n(b) - n(a) || a.id.localeCompare(b.id))[0];
   return [...SERVERS].sort((a, b) => n(a) - n(b))[0];
 }
 
-/** Realtime channel name for a map on a server. Offices are one room each. */
+/** Room namespace. The admission RPC supplies its authorized epoch suffix. */
 export const channelFor = (mapId: string, serverId: string) =>
-  mapId.startsWith("office-") ? `world:${mapId}` : `world:${mapId}:${serverId}`;
+  `world:room:${mapId}:${serverId}`;
 
 // ─────────────────────────────────────────────────────────
 // Safe chat in the world: emotes and preset phrases only (no typing)

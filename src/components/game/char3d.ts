@@ -194,6 +194,7 @@ export interface Character3D {
   object: THREE.Group;
   mixer: THREE.AnimationMixer;
   play: (clip: string) => void;
+  dispose: () => void;
 }
 
 /** Builds your dressed 3D character at about `height` units tall. */
@@ -288,7 +289,36 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     pet.userData.pet = true;
     holder.add(pet);
   }
-  return { object: holder, mixer, play };
+  const sharedGeometry = new Set<THREE.BufferGeometry>();
+  const sharedMaterials = new Set<THREE.Material>();
+  for (const asset of [bodyG, headG, bottomG, shoesG]) asset.scene.traverse(o => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    sharedGeometry.add(mesh.geometry);
+    for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) sharedMaterials.add(material);
+  });
+  let released = false;
+  const dispose = () => {
+    if (released) return;
+    released = true;
+    mixer.stopAllAction(); mixer.uncacheRoot(object);
+    const geometry = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>(), skeletons = new Set<THREE.Skeleton>();
+    holder.traverse(o => {
+      const mesh = o as THREE.SkinnedMesh;
+      if (!mesh.isMesh) return;
+      if (!sharedGeometry.has(mesh.geometry)) geometry.add(mesh.geometry);
+      if (mesh.isSkinnedMesh) skeletons.add(mesh.skeleton);
+      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+        if (sharedMaterials.has(m) || m.userData.sharedAccessory) continue;
+        materials.add(m);
+        for (const value of Object.values(m)) if (value instanceof THREE.CanvasTexture) textures.add(value);
+      }
+    });
+    skeletons.forEach(s => s.dispose()); geometry.forEach(g => g.dispose());
+    materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
+    holder.removeFromParent(); holder.clear();
+  };
+  return { object: holder, mixer, play, dispose };
 }
 
 /** Londoners: varied looks for people in the street, on trains and in buildings. */
