@@ -45,6 +45,7 @@ export function OakLessonQuiz({ slug }: { slug: string }) {
       )}
       {quiz && (
         <>
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">Lesson quiz by <a href={`https://www.thenational.academy/teachers/lessons/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer" className="underline">Oak National Academy</a>, licensed under the <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener noreferrer" className="underline">Open Government Licence v3.0</a>, except where otherwise stated.</p>
           <p className="text-muted-foreground mt-4 text-sm">
             {quiz.questions.length} text multiple-choice questions. Select all
             correct answers. Practice results stay on this page and don&apos;t

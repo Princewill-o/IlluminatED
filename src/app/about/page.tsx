@@ -43,7 +43,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About IlluminatED"
-        intro="A revision game for students, schools, colleges and sixth forms in the UK. Book a demo to get started. No adverts."
+        intro="A revision game for students, schools, colleges and sixth forms in the UK. Book a demo to get started. Illumship removes contextual game adverts."
         crumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
       />
       <Section rule={false}>

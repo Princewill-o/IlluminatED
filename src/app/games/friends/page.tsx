@@ -11,10 +11,27 @@ export const metadata = { title: "Friends & private messages" };
 export default async function FriendsPage() {
   const account = await requireAccount("/games/friends");
   const sb = await getSupabase();
-  const select = "id,low_id,high_id,requested_by,state,blocked_by,low:profiles!city_friends_low_id_fkey(username),high:profiles!city_friends_high_id_fkey(username)";
-  const active = sb ? await sb.from("city_friends").select(select).or(`low_id.eq.${account.id},high_id.eq.${account.id}`).in("state",["accepted","pending"]).order("updated_at",{ascending:false}).limit(100) : { data: [], error: true };
-  const blocked = sb ? await sb.from("city_friends").select(select).or(`low_id.eq.${account.id},high_id.eq.${account.id}`).eq("state","blocked").order("updated_at",{ascending:false}).limit(30) : { data: [], error: true };
-  const data = [...(active.data ?? []),...(blocked.data ?? [])];
+  const select =
+    "id,low_id,high_id,requested_by,state,blocked_by,low:profiles!city_friends_low_id_fkey(username),high:profiles!city_friends_high_id_fkey(username)";
+  const active = sb
+    ? await sb
+        .from("city_friends")
+        .select(select)
+        .or(`low_id.eq.${account.id},high_id.eq.${account.id}`)
+        .in("state", ["accepted", "pending"])
+        .order("updated_at", { ascending: false })
+        .limit(100)
+    : { data: [], error: true };
+  const blocked = sb
+    ? await sb
+        .from("city_friends")
+        .select(select)
+        .or(`low_id.eq.${account.id},high_id.eq.${account.id}`)
+        .eq("state", "blocked")
+        .order("updated_at", { ascending: false })
+        .limit(30)
+    : { data: [], error: true };
+  const data = [...(active.data ?? []), ...(blocked.data ?? [])];
   const error = active.error || blocked.error;
   const one = (v: unknown) =>
     (Array.isArray(v) ? v[0] : v) as { username: string } | null;

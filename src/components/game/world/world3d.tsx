@@ -12,9 +12,9 @@ import type { TechEvent } from "../event-ads";
 import { ukPhase } from "./fx";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
-import type { WorldAffiliation } from "@/game/core/affiliation";
 import { TRAIN_CALL } from "./train-state";
 
+import type { WorldAffiliation } from "@/game/core/affiliation";
 import { CAMERA_SHOT, cinematicOffset } from "@/game/core/cinematics";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
@@ -1896,7 +1896,7 @@ export function World3D({
       playerRing.position.set(mx, 0.18, mz);
       playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
-      const screen = new THREE.Vector3(mx, want ? 2.3 : 2.6, mz).project(camera);
+      const screen = new THREE.Vector3(mx, want ? 2.3 : 1.5, mz).project(camera);
       const sx = (screen.x + 1) * el.clientWidth / 2;
       const sy = (1 - screen.y) * el.clientHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(el.clientWidth - 42, sx))}px`;
@@ -1929,7 +1929,7 @@ export function World3D({
         b.z += ddz * Math.min(1, dt * 10);
         b.root.position.set(b.x, 0, b.z);
         b.root.visible = !o.car;
-        const labelPoint = new THREE.Vector3(b.x, 2.15, b.z).project(camera);
+        const labelPoint = new THREE.Vector3(b.x, 1.5, b.z).project(camera);
         const labelX = (labelPoint.x + 1) * el.clientWidth / 2;
         const labelY = (1 - labelPoint.y) * el.clientHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;

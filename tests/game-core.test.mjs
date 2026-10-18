@@ -383,9 +383,12 @@ test("Careers and homes: database seeds match the game code", () => {
   const C = projectData("src/game/core/careers.ts");
   const H = projectData("src/game/core/homes.ts");
   const sql = fs.readFileSync("supabase/migrations/20261016100000_careers_and_homes.sql", "utf8");
+  const latest = sql + "\n" + fs.readFileSync("supabase/migrations/20261018090959_home_living_and_furnishings.sql", "utf8");
   for (const w of C.WORKPLACES) for (const r of w.roles) assert.ok(sql.includes(`('${w.id}', '${r.id}', ${r.rank}, ${r.pay})`), `${w.id}/${r.id} seeded`);
-  for (const h of H.HOMES) assert.ok(sql.includes(`('${h.id}', ${h.price})`), `${h.id} seeded`);
-  for (const f of H.FURNITURE) assert.ok(sql.includes(`('${f.id}', ${f.price}, ${f.w}, ${f.h}, ${f.starter ? "true" : "false"})`), `${f.id} seeded`);
+  const homes = new Map([...latest.matchAll(/\('([^']+)',\s*(\d+)\)/g)].map(m=>[m[1],Number(m[2])]));
+  const furnishings = new Map([...latest.matchAll(/\('([^']+)',\s*(\d+),\s*(\d+),\s*(\d+),\s*(true|false)\)/g)].map(m=>[m[1],[Number(m[2]),Number(m[3]),Number(m[4]),m[5]==="true"]]));
+  for (const h of H.HOMES) assert.equal(homes.get(h.id),h.price,`${h.id} effective server price`);
+  for (const f of H.FURNITURE) assert.deepEqual(furnishings.get(f.id),[f.price,f.w,f.h,Boolean(f.starter)],`${f.id} effective server catalogue`);
   assert.equal(H.validLayout(H.STARTER_LAYOUT), null, "starter layout is valid");
 });
 
@@ -411,7 +414,10 @@ test("Needs drift down, activities refill them, and bus stops are boardable", ()
     assert.ok(Math.hypot(spot.x - s.exitPx.x, spot.y - s.exitPx.y) < 64, `${s.id} drop-off is next to the stop`);
   }
   const home = W.homeMap(0);
-  assert.ok(home.portals.some((p) => p.to.kind === "act" && p.to.activity === "sleep"), "you can sleep at home");
+  const H = projectData("src/game/core/homes.ts");
+  const beds = H.STARTER_LAYOUT.filter(item=>H.homeUse(item.item).effect === "sleep");
+  assert.ok(beds.length > 0,"starter home has sleeping furniture");
+  for (const bed of beds) assert.ok(home.portals.some(p=>p.to.kind === "home-use" && p.to.key === bed.key),"sleeping furniture has an interaction portal");
 });
 
 test("Highlands: spawn is walkable, the station, cafe, lodge and viewpoints all have reachable doors", () => {

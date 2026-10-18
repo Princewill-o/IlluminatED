@@ -4,6 +4,10 @@ import { COURSES } from "@/lib/data/courses";
 import health from "@/lib/data/education/source-health.json";
 import { QUESTION_BANK } from "@/lib/data/topics";
 import {
+  providersForBoard,
+  PROVIDERS_REVIEWED_AT,
+} from "@/lib/education/providers";
+import {
   LEARNING_SOURCES,
   sourceFreshness,
 } from "@/lib/education/source-registry";
@@ -33,6 +37,11 @@ export async function GET(req: Request) {
       generatedAt: health.generatedAt,
       year,
       oakQuizEnabled: oakEnabled,
+      providersReviewedAt: PROVIDERS_REVIEWED_AT,
+      providers: providersForBoard(params.get("board")),
+      groundingStatus: oakEnabled
+        ? "Oak API configured; retrieval depends on matching year, subject, board and available pathways."
+        : "Oak API key not configured. External lesson grounding is disabled; original reviewed practice and publisher links remain available.",
       sources: LEARNING_SOURCES.map((s) => {
         const check = checks.find((c) => c.id === s.id);
         return {

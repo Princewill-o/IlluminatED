@@ -9,21 +9,21 @@ import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, Train
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
-import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { AffiliationBadge } from "./affiliation-badge";
-import type { WorldAffiliation } from "@/game/core/affiliation";
+import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
+import { TrainTimes } from "./train-times";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
-import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 import { TRAIN_CALL } from "./train-state";
-import { TrainTimes } from "./train-times";
+import MOVERS from "../../../../public/world/movers.json";
 
 import { doActivity } from "@/components/game/world/use-needs";
+import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";

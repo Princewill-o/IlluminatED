@@ -3,10 +3,15 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
+import {
+  providersForBoard,
+  PROVIDERS_REVIEWED_AT,
+} from "@/lib/education/providers";
 import { LEARNING_SOURCES } from "@/lib/education/source-registry";
 interface StoreData {
   notice: string;
   oakQuizEnabled: boolean;
+  groundingStatus: string;
   sources: {
     id: string;
     freshness: string;
@@ -52,6 +57,7 @@ export function SourceStore({
 }) {
   const [course, setCourse] = useState(courses[0]?.id ?? "gcse-maths");
   const [year, setYear] = useState("11");
+  const [board, setBoard] = useState("");
   const [data, setData] = useState<StoreData | null>(null);
   const [error, setError] = useState(false);
   const [choices, setChoices] = useState<Record<string, number>>({});
@@ -176,6 +182,87 @@ export function SourceStore({
           </section>
         </>
       )}
+      <section className="my-8" aria-labelledby="provider-coverage">
+        <h2 id="provider-coverage" className="text-2xl font-black">
+          UK board & provider coverage
+        </h2>
+        <p className="text-muted-foreground mt-3 text-sm leading-6">
+          Reviewed {PROVIDERS_REVIEWED_AT}. No single provider here covers every
+          UK board and qualification. These are verified services and source
+          links; a link does not mean its questions have been imported or
+          licensed for this platform.
+        </p>
+        {data && (
+          <p role="status" className="mt-3 rounded-xl border p-4 text-sm">
+            {data.groundingStatus}
+          </p>
+        )}
+        <label className="mt-5 block max-w-md text-sm font-bold">
+          Show providers for
+          <select
+            value={board}
+            onChange={(e) => setBoard(e.target.value)}
+            className="bg-background mt-2 block min-h-11 w-full rounded-xl border px-3"
+          >
+            {[
+              ["", "All listed boards"],
+              ["aqa", "AQA"],
+              ["pearson", "Pearson Edexcel / BTEC"],
+              ["ocr", "Cambridge OCR"],
+              ["wjec", "WJEC / Eduqas"],
+              ["ccea", "CCEA"],
+              ["qualifications-scotland", "Qualifications Scotland"],
+              ["ncfe", "NCFE / CACHE"],
+              ["cityguilds", "City & Guilds"],
+              ["aat", "AAT"],
+              ["cilex", "CILEX"],
+            ].map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {providersForBoard(board || null).map((p) => (
+            <article key={p.id} className="bg-card rounded-2xl border p-5">
+              <p className="text-primary text-xs font-bold">
+                {p.mode === "api"
+                  ? "Documented curriculum API"
+                  : "Publisher service · link only"}
+              </p>
+              <h3 className="mt-2 text-xl font-black">{p.name}</h3>
+              <p className="mt-2 text-xs font-bold">
+                {p.regions.join(" · ")} · {p.access}
+              </p>
+              <p className="text-muted-foreground mt-3 text-sm leading-6">
+                {p.coverage}
+              </p>
+              <p className="text-muted-foreground mt-3 text-xs leading-5">
+                {p.reuse}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-4 text-sm font-bold">
+                <a
+                  className="inline-flex min-h-11 items-center underline"
+                  href={p.resources}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Official materials ↗
+                </a>
+                <a
+                  className="inline-flex min-h-11 items-center underline"
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Provider details ↗
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
       <h2 className="mb-4 text-2xl font-black">
         Reference library & official papers
       </h2>

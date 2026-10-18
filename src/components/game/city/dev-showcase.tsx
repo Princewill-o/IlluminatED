@@ -12,6 +12,8 @@ import {
 } from "./city-panels";
 import { FriendsPanel } from "./friends-panel";
 
+import { Character3DPreview } from "@/components/game/character-3d-preview";
+import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
@@ -32,14 +34,33 @@ const state: CitySnapshot = {
   quotes: { "index-fund": 108 },
   ledger: [],
 };
-export function DevShowcase({ view, map, workplace }: { view: string; map: string; workplace?: string }) {
+export function DevShowcase({
+  view,
+  map,
+  workplace,
+}: {
+  view: string;
+  map: string;
+  workplace?: string;
+}) {
   const company = workplace ? workplaceById(workplace) : null;
-  const job = company ? { workplace: company.id, role: company.roles[0].id, rank: 1, shifts: 2, rankShifts: 2, rankCorrect: 8, rankTotal: 10 } : null;
+  const job = company
+    ? {
+        workplace: company.id,
+        role: company.roles[0].id,
+        rank: 1,
+        shifts: 2,
+        rankShifts: 2,
+        rankCorrect: 8,
+        rankTotal: 10,
+      }
+    : null;
   const affiliation = affiliationFor(job, "Biology");
   const [mounted, setMounted] = useState(false);
   const [recording, setRecording] = useState(false);
   const [video, setVideo] = useState<string | null>(null);
   const [status, setStatus] = useState("");
+  const [clean, setClean] = useState(false);
   useEffect(() => {
     localStorage.setItem(TUTORIAL_KEY, "seen");
     setMounted(true);
@@ -131,25 +152,58 @@ export function DevShowcase({ view, map, workplace }: { view: string; map: strin
         )}
         <div className="absolute bottom-3 left-1/2 z-[100020] flex max-w-[90vw] -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl bg-[#13203a]/95 px-4 py-2 text-xs text-white">
           <span>Actual game · offline preview · ambient residents</span>
-          <button
-            onClick={record}
-            disabled={recording}
-            className="min-h-9 rounded-lg bg-white px-3 font-bold text-[#13203a]"
-          >
-            {recording ? "Recording…" : "Record gameplay"}
-          </button>
-          {video && (
-            <a
-              href={video}
-              download="illuminated-gameplay.webm"
-              className="font-bold underline"
+          {!clean && (
+            <button
+              className="min-h-9 rounded-lg border px-3"
+              onClick={() => setClean(true)}
             >
-              Download gameplay clip
-            </a>
+              Hide capture controls
+            </button>
           )}
-          {status && <span role="status">{status}</span>}
+          <div className={clean ? "hidden" : "contents"}>
+            <button
+              onClick={record}
+              disabled={recording}
+              className="min-h-9 rounded-lg bg-white px-3 font-bold text-[#13203a]"
+            >
+              {recording ? "Recording…" : "Record gameplay"}
+            </button>
+            {video && (
+              <a
+                href={video}
+                download="illuminated-gameplay.webm"
+                className="font-bold underline"
+              >
+                Download gameplay clip
+              </a>
+            )}
+            {status && <span role="status">{status}</span>}
+          </div>
         </div>
       </div>
+    );
+  if (view === "uniform")
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <CityHeading
+          eyebrow="Uniform fitting · local preview"
+          title={company?.name ?? "Student identity"}
+        >
+          Actual 3D character with the same uniform and torso logo used in the
+          city.
+        </CityHeading>
+        <div className="mx-auto max-w-lg rounded-3xl bg-[#e6edf4] p-6 text-center text-[#13203a]">
+          <AffiliationBadge value={affiliation} />
+          <p className="font-black">@Preview player</p>
+          <Character3DPreview
+            avatar={uniformFor(job, DEFAULT_AVATAR)}
+            workplaceLogo={affiliation?.logo}
+            clip="idle"
+            facing="S"
+            className="h-[500px] w-full"
+          />
+        </div>
+      </main>
     );
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">

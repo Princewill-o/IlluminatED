@@ -12,14 +12,33 @@ import type { Avatar } from "@/game/core/cosmetics";
  * The Locker stage: your exact 3D character (same model as in the world),
  * on a turntable. Drag to spin; walk and wave play the real animations.
  */
-export function Character3DPreview({ avatar, clip, facing, className }: { avatar: Avatar; clip: "idle" | "walk" | "wave"; facing: "S" | "N" | "E" | "W"; className?: string }) {
+export function Character3DPreview({
+  avatar,
+  clip,
+  facing,
+  className,
+  workplaceLogo = null,
+}: {
+  avatar: Avatar;
+  clip: "idle" | "walk" | "wave";
+  facing: "S" | "N" | "E" | "W";
+  className?: string;
+  workplaceLogo?: string | null;
+}) {
   const host = useRef<HTMLDivElement>(null);
-  const state = useRef<{ char: Character3D | null; spin: number; drag: number | null; clip: string }>({ char: null, spin: 0, drag: null, clip });
+  const state = useRef<{
+    char: Character3D | null;
+    spin: number;
+    drag: number | null;
+    clip: string;
+  }>({ char: null, spin: 0, drag: null, clip });
   state.current.clip = clip;
   const key = JSON.stringify(avatar);
 
   useEffect(() => {
-    state.current.spin = { S: 0, E: Math.PI / 2, N: Math.PI, W: -Math.PI / 2 }[facing];
+    state.current.spin = { S: 0, E: Math.PI / 2, N: Math.PI, W: -Math.PI / 2 }[
+      facing
+    ];
   }, [facing]);
 
   useEffect(() => {
@@ -39,19 +58,24 @@ export function Character3DPreview({ avatar, clip, facing, className }: { avatar
     lamp.position.set(2, 4, 3);
     lamp.castShadow = true;
     scene.add(lamp);
-    const floor = new THREE.Mesh(new THREE.CircleGeometry(0.75, 40), new THREE.ShadowMaterial({ opacity: 0.22 }));
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(0.75, 40),
+      new THREE.ShadowMaterial({ opacity: 0.22 }),
+    );
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
     const turntable = new THREE.Group();
     scene.add(turntable);
     let alive = true;
-    void buildCharacter(JSON.parse(key) as Avatar, 1.25).then((c) => {
-      if (!alive) return;
-      turntable.add(c.object);
-      state.current.char = c;
-      state.current.clip = "";
-    });
+    void buildCharacter(JSON.parse(key) as Avatar, 1.25, workplaceLogo).then(
+      (c) => {
+        if (!alive) return;
+        turntable.add(c.object);
+        state.current.char = c;
+        state.current.clip = "";
+      },
+    );
     const fit = () => {
       const w = el.clientWidth;
       const h = el.clientHeight;
@@ -83,14 +107,20 @@ export function Character3DPreview({ avatar, clip, facing, className }: { avatar
       last = now;
       const st = state.current;
       if (st.char) {
-        const want = st.clip === "wave" ? "emote-yes" : st.clip === "walk" ? "walk" : "idle";
+        const want =
+          st.clip === "wave"
+            ? "emote-yes"
+            : st.clip === "walk"
+              ? "walk"
+              : "idle";
         if (want !== played) {
           st.char.play(want as "idle" | "walk" | "emote-yes");
           played = want;
         }
         st.char.mixer.update(dt);
       }
-      turntable.rotation.y += (st.spin - turntable.rotation.y) * Math.min(1, dt * 8);
+      turntable.rotation.y +=
+        (st.spin - turntable.rotation.y) * Math.min(1, dt * 8);
       renderer.render(scene, camera);
       raf = requestAnimationFrame(frame);
     };
@@ -105,7 +135,15 @@ export function Character3DPreview({ avatar, clip, facing, className }: { avatar
       renderer.dispose();
       el.removeChild(renderer.domElement);
     };
-  }, [key]);
+  }, [key, workplaceLogo]);
 
-  return <div ref={host} className={className} style={{ touchAction: "pan-y", cursor: "grab" }} aria-label="Your character in 3D. Drag to turn." role="img" />;
+  return (
+    <div
+      ref={host}
+      className={className}
+      style={{ touchAction: "pan-y", cursor: "grab" }}
+      aria-label="Your character in 3D. Drag to turn."
+      role="img"
+    />
+  );
 }

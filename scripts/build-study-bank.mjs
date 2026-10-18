@@ -13,6 +13,6 @@ const path = "supabase/migrations/20261017134206_learning_study_room.sql";
 const source = fs.readFileSync(path, "utf8");
 const next = source.replace(/-- BEGIN STUDY BANK[\s\S]*?-- END STUDY BANK/, `-- BEGIN STUDY BANK\n${seed}\n-- END STUDY BANK`);
 if (process.argv.includes("--check")) {
-  if (source !== next) throw new Error("Study bank seed does not match the reviewed question bank");
+  if (source.replaceAll("\r\n", "\n") !== next.replaceAll("\r\n", "\n")) throw new Error("Study bank seed does not match the reviewed question bank");
 } else fs.writeFileSync(path, next);
 console.log(`${QUESTION_BANK.length} study questions ${process.argv.includes("--check") ? "verified" : "seeded"}.`);

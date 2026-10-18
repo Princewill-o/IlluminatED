@@ -168,9 +168,6 @@ export function FriendsPanel({
                 )}
                 {f.state === "blocked" && (
                   <>
-                    <button className={btn} onClick={() => setOpen(f)}>
-                      View message history
-                    </button>
                     {f.blockedBy === meId && (
                       <button
                         className={btn}

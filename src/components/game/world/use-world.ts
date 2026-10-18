@@ -6,9 +6,9 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
-import { carById } from "@/game/core/cars";
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { uniformFor } from "@/game/core/careers";
+import { carById } from "@/game/core/cars";
 import type { Avatar } from "@/game/core/cosmetics";
 import { SERVER_CAPACITY, channelFor, chatText } from "@/game/core/world";
 import { joinGameChannel } from "@/lib/realtime";

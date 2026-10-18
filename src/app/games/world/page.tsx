@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 import { WorldApp } from "@/components/game/world/world-app";
-import { awardsFor } from "@/game/core/awards";
 import { affiliationFor } from "@/game/core/affiliation";
+import { awardsFor } from "@/game/core/awards";
 import { uniformFor, workplaceById } from "@/game/core/careers";
 import { homeById } from "@/game/core/homes";
 import { requireAccount } from "@/lib/account/server";

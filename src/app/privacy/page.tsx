@@ -79,7 +79,7 @@ export default function PrivacyPage() {
       </p>
 
       <h2 id="collect">What we collect</h2>
-<p><strong>City friends and portfolio.</strong> We store mutual friend requests, blocks, asset holdings, Clout transactions and weekly reward claims. Friend message content is encrypted in the browser; we store ciphertext, sender, relationship and timing. Private messaging keys remain in your browser’s IndexedDB. Security-code pins are stored locally. A report discloses only the message text you select to our safety team. The current messaging version uses one browser per account, without key recovery or forward secrecy.</p>
+<p><strong>City friends and portfolio.</strong> We store mutual friend requests, blocks, asset holdings, Clout transactions and weekly reward claims. Your active simulated workplace or primary subject can appear as an icon above your game name; grades and study scores are not shown. Friend message content is encrypted in the browser; we store ciphertext, sender, relationship and timing. Private messaging keys remain in your browser’s IndexedDB. Security-code pins are stored locally. A report discloses only the message text you select to our safety team. The current messaging version uses one browser per account, without key recovery or forward secrecy.</p>
       <h3>When you create an account</h3>
       <ul>
         <li>

@@ -11,6 +11,7 @@ import {
   type ChatMessage,
 } from "@/lib/ai";
 import { notifyModerators } from "@/lib/email";
+import { findLearningGrounding } from "@/lib/server/education-grounding";
 import { getSupabase } from "@/lib/social/server";
 import { TIGGY_PLANS, type TiggyPlan } from "@/lib/tiggy";
 import {
@@ -181,6 +182,9 @@ export async function POST(req: NextRequest) {
   const fullSolution =
     body.fullSolution === true && TIGGY_PLANS[plan].fullSolutions;
   const model = plan === "premium" ? TIGGY_MODEL : TIGGY_MODEL_FREE;
+  const [officialSources, learningGrounding] = await Promise.all([
+    findOfficialSources(question), findLearningGrounding(question, account.details),
+  ]);
   const system =
     reasoningHint(model) +
     buildSystemPrompt({
@@ -188,7 +192,8 @@ export async function POST(req: NextRequest) {
       fullSolution,
       details: account.details,
       snippets: findTopics(question, account.details),
-      officialSources: await findOfficialSources(question),
+      officialSources,
+      learningGrounding,
     });
 
   let stream: ReadableStream<Uint8Array>;
