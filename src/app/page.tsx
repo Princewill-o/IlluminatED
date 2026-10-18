@@ -1,19 +1,339 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { ArrowRight, BookOpen, BriefcaseBusiness, ChartNoAxesCombined, ShieldCheck } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  BookOpen,
+  BriefcaseBusiness,
+  ChartNoAxesCombined,
+  Check,
+  Gamepad2,
+  GraduationCap,
+  Play,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import type { Metadata } from "next";
+
+import styles from "./home.module.css";
 
 import { SiteStructuredData } from "@/components/seo/structured-data";
 
-export const metadata: Metadata = {title:{absolute:"IlluminatED | Turn revision into a learning habit"},description:"A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress. Request invited beta access or a school demo.",alternates:{canonical:"/"}};
+export const metadata: Metadata = {
+  title: { absolute: "IlluminatED | Turn revision into a learning habit" },
+  description:
+    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress. Request invited beta access or a school demo.",
+  alternates: { canonical: "/" },
+};
+
 const steps = [
-{icon:BookOpen,title:"Practise a topic",text:"Choose your subject and complete a short question session. Read feedback and revisit what you missed."},
-{icon:BriefcaseBusiness,title:"Apply what you know",text:"Walk into a simulated workplace. Use a computer or counter to tackle practical numeracy, reading and problem-solving tasks."},
-{icon:ChartNoAxesCombined,title:"See your next step",text:"Review saved answers and skill practice. Teachers can assign homework and review their own classes’ results."},
+  {
+    icon: BookOpen,
+    title: "A little practice.",
+    text: "Choose a subject. Try a short question session and understand the answers with clear feedback.",
+    label: "Build your knowledge",
+    colour: "#dce9dd",
+  },
+  {
+    icon: BriefcaseBusiness,
+    title: "A bigger picture.",
+    text: "Step into a simulated workplace and apply your knowledge to practical, everyday decisions.",
+    label: "Explore your possibilities",
+    colour: "#f7dfd0",
+  },
+  {
+    icon: ChartNoAxesCombined,
+    title: "Your next step.",
+    text: "See what you have practised and where to focus next. Teachers can review their classes’ homework.",
+    label: "See your progress",
+    colour: "#e4dff0",
+  },
 ];
-export default function Home(){return <><SiteStructuredData/><section className="border-b bg-[#f3f6fc] text-[#13203a]"><div className="container grid items-center gap-10 py-14 lg:grid-cols-2 lg:py-20"><div><p className="text-xs font-bold uppercase tracking-widest text-[#2b5fd9]">Invited beta · UK learners aged 13+</p><h1 className="mt-5 text-4xl font-bold leading-tight tracking-tight sm:text-6xl">Turn revision into a learning habit.</h1><p className="mt-5 max-w-xl text-lg leading-8 text-[#526078]">IlluminatED connects subject practice and workplace challenges inside a playable city. Students get a reason to practise. Teachers get a clearer view of completed work and topic gaps.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/book?for=individual" className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#2b5fd9] px-6 py-3 font-bold text-white">Request beta access <ArrowRight className="size-4"/></Link><Link href="/schools" className="inline-flex min-h-12 items-center rounded-full border border-[#a9b7d0] bg-white px-6 py-3 font-bold">For schools</Link></div><p className="mt-4 text-sm leading-6 text-[#526078]">Access is by invitation while we test reliability and learning outcomes. Already invited? <Link href="/sign-in" className="font-bold underline">Sign in</Link>.</p></div><figure><Image src="/landing/game-study-october.jpg" alt="IlluminatED’s actual Study Quarter game scene" width={1440} height={960} priority className="w-full rounded-3xl border-4 border-white shadow-xl"/><figcaption className="mt-3 text-xs text-[#526078]">Actual game capture. Ambient residents are computer controlled; this is not a live player count.</figcaption></figure></div></section><section className="container py-14" aria-labelledby="problem-title"><p className="text-xs font-bold uppercase tracking-widest text-primary">The problem we are solving</p><h2 id="problem-title" className="mt-3 max-w-3xl text-3xl font-bold tracking-tight">Starting revision is hard. Knowing what to practise next should be easier.</h2><p className="mt-4 max-w-3xl leading-8 text-muted-foreground">Students can move between notes, questions and games without a consistent practice routine. IlluminatED brings short practice sessions, explanations and practical applications into one learning journey.</p><div className="mt-8 grid gap-5 md:grid-cols-3">{steps.map(({icon:Icon,title,text},i)=><article key={title} className="rounded-3xl border bg-card p-6"><Icon className="size-6 text-primary" aria-hidden/><p className="mt-5 text-xs font-bold text-muted-foreground">STEP {i+1}</p><h3 className="mt-2 text-xl font-bold">{title}</h3><p className="mt-3 leading-7 text-muted-foreground">{text}</p></article>)}</div></section><section className="border-y bg-[#13203a] text-white"><div className="container grid items-center gap-8 py-14 lg:grid-cols-2"><div><p className="text-xs font-bold uppercase tracking-widest text-[#f2d9a6]">See the product</p><h2 className="mt-3 text-3xl font-bold">The game gives practice a place.</h2><p className="mt-4 leading-8 text-white/80">Visit the Study Quarter, complete a session and use earned Clout to personalise your character and home. Workplace tasks connect classroom knowledge with simulated decisions.</p><p className="mt-4 text-sm leading-7 text-white/65">Clout is an in-game reward with no cash value. Career records describe simulated practice, not employment or accredited qualifications.</p></div><figure><video controls playsInline preload="none" poster="/landing/game-city-life.webp" className="aspect-[3/2] w-full rounded-3xl border border-white/20"><source src="/landing/gameplay.webm" type="video/webm"/><a href="/landing/gameplay.webm">Download the gameplay clip</a></video><figcaption className="mt-3 text-xs text-white/65">Recorded offline preview · silent clip · no real student accounts or conversations</figcaption></figure></div></section><section className="container py-14" aria-labelledby="access-title"><h2 id="access-title" className="text-3xl font-bold">One product. Clear ways to access it.</h2><div className="mt-7 grid gap-5 md:grid-cols-3">{[
-["Learners","Invited learners can use the core study tools for free. Optional Premium is £5.99/month when live checkout is available; it is not required for core revision.","/book?for=individual","Request an invitation"],
-["Schools and colleges","School licences cover agreed learner seats, teacher workflows and onboarding. Seat pricing and pilot scope are agreed in writing before purchase.","/book?for=school","Discuss a school pilot"],
-["Investors and partners","Understand the product, revenue model and pilot questions. We distinguish built features from evidence we still need to collect.","/investors","Read the business overview"],
-].map(([title,text,href,label])=><article key={title} className="rounded-3xl border p-6"><h3 className="text-xl font-bold">{title}</h3><p className="mt-3 leading-7 text-muted-foreground">{text}</p><Link href={href} className="mt-5 inline-flex min-h-11 items-center font-bold text-primary underline">{label}</Link></article>)}</div></section><section className="border-t bg-card"><div className="container grid gap-8 py-12 md:grid-cols-2"><div><ShieldCheck className="size-6 text-primary" aria-hidden/><h2 className="mt-3 text-2xl font-bold">A measured beta, with honest expectations.</h2><p className="mt-4 leading-7 text-muted-foreground">We are testing usability, device performance and learning engagement. We have not independently demonstrated improved exam grades. Course and resource availability varies: check the subject, board and source before revising.</p></div><div><h3 className="text-lg font-bold">Before you join</h3><ul className="mt-4 space-y-3 leading-7 text-muted-foreground"><li>For ages 13+. Use a username and keep personal information private.</li><li>Review the <Link href="/safeguarding" className="underline">safeguarding information</Link>, including messaging limitations.</li><li>Report problems through <Link href="/contact" className="underline">support</Link>. AI and practice questions can contain mistakes.</li><li>Schools can review access and data requirements before agreeing a pilot.</li></ul></div></div></section></>;}
+
+export default function Home() {
+  return (
+    <div className={styles.home}>
+      <SiteStructuredData />
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <div className={styles.heroGrid}>
+          <div className={styles.heroCopy}>
+            <div className={styles.eyebrow}>
+              <span className={styles.dot} /> A learning game. A world of
+              possibility.
+            </div>
+            <h1 id="hero-title">
+              Make learning
+              <br />
+              part of your
+              <br />
+              <em>next adventure.</em>
+            </h1>
+            <p className={styles.intro}>
+              Practise your subjects. Try a future career. Build a learning
+              habit in a city that feels like your own.
+            </p>
+            <div className={styles.actions}>
+              <Link href="/book?for=individual" className={styles.primary}>
+                Request beta access <ArrowRight size={18} aria-hidden />
+              </Link>
+              <a href="#gameplay" className={styles.watch}>
+                <span>
+                  <Play size={13} fill="currentColor" aria-hidden />
+                </span>{" "}
+                See the game
+              </a>
+            </div>
+            <p className={styles.accessNote}>
+              Invited beta · Ages 13+ · Free core study
+            </p>
+          </div>
+          <figure className={styles.heroVisual}>
+            <div className={styles.imageFrame}>
+              <div className={styles.frameBar}>
+                <span>
+                  <i /> IlluminatED City
+                </span>
+                <span>YOUR NEXT CHAPTER</span>
+              </div>
+              <Image
+                src="/landing/game-city-life.webp"
+                alt="Actual IlluminatED City gameplay with streets, characters and learning controls"
+                width={1440}
+                height={960}
+                priority
+                sizes="(max-width: 800px) 95vw, 55vw"
+                className={styles.mainImage}
+              />
+            </div>
+            <div className={styles.questCard}>
+              <span className={styles.questIcon}>
+                <BookOpen size={20} aria-hidden />
+              </span>
+              <div>
+                <small>YOUR NEXT QUEST</small>
+                <strong>A little progress, every day.</strong>
+                <span>Study · Explore · Grow</span>
+              </div>
+              <Sparkles size={17} aria-hidden />
+            </div>
+            <div className={styles.studyInset}>
+              <Image
+                src="/landing/game-study-october.jpg"
+                alt="The Study Quarter inside IlluminatED"
+                width={1440}
+                height={960}
+                sizes="220px"
+              />
+              <span>
+                <span className={styles.dot} /> Your study spot awaits.
+              </span>
+            </div>
+            <figcaption>
+              Actual game captures · ambient residents are computer controlled
+            </figcaption>
+          </figure>
+        </div>
+        <div className={styles.heroFoot}>
+          <span>
+            <Gamepad2 size={17} aria-hidden /> Made for curious minds.
+          </span>
+          <a href="#learning">
+            Explore the possibilities <ArrowDown size={15} aria-hidden />
+          </a>
+        </div>
+      </section>
+
+      <div className={styles.subjectStrip} aria-label="What you can practise">
+        <span>Small steps. Real practice.</span>
+        {[
+          "Subject knowledge",
+          "Problem solving",
+          "Workplace skills",
+          "Independent learning",
+        ].map((text) => (
+          <span key={text}>
+            <span aria-hidden>✦</span>
+            {text}
+          </span>
+        ))}
+      </div>
+
+      <section
+        id="learning"
+        className={styles.section}
+        aria-labelledby="learning-title"
+      >
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.kicker}>PLAY WITH PURPOSE</p>
+            <h2 id="learning-title">
+              More than a place to play.
+              <br />
+              <em>A reason to keep learning.</em>
+            </h2>
+          </div>
+          <p>
+            One connected journey from “let me try” to “now I understand”. Short
+            practice, useful feedback and a clear next step.
+          </p>
+        </div>
+        <div className={styles.steps}>
+          {steps.map(({ icon: Icon, title, text, label, colour }, i) => (
+            <article key={title} className={styles.step}>
+              <div className={styles.stepTop}>
+                <span style={{ background: colour }}>
+                  <Icon size={24} strokeWidth={1.6} aria-hidden />
+                </span>
+                <small>0{i + 1}</small>
+              </div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <div className={styles.stepLabel}>
+                <span>{label}</span>
+                <ArrowRight size={17} aria-hidden />
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        id="gameplay"
+        className={styles.gameSection}
+        aria-labelledby="gameplay-title"
+      >
+        <div className={styles.gameGrid}>
+          <div>
+            <p className={styles.kicker}>WELCOME TO YOUR WORLD</p>
+            <h2 id="gameplay-title">
+              Your subjects.
+              <br />
+              Your ambitions.
+              <br />
+              <em>Your city.</em>
+            </h2>
+            <p>
+              Take a seat in the Study Quarter. Walk into a workplace and use a
+              computer to start a challenge. Make space for what comes next.
+            </p>
+            <ul>
+              {[
+                "Short question sessions with explanations",
+                "Simulated roles that put knowledge into practice",
+                "Earned Clout to personalise your character and home",
+              ].map((text) => (
+                <li key={text}>
+                  <Check size={17} aria-hidden />
+                  {text}
+                </li>
+              ))}
+            </ul>
+            <Link href="/revision-games" className={styles.textLink}>
+              Get to know the game <ArrowRight size={17} aria-hidden />
+            </Link>
+          </div>
+          <figure className={styles.videoFrame}>
+            <div className={styles.videoHeading}>
+              <span>
+                <span className={styles.dot} /> A LOOK INSIDE
+              </span>
+              <span>00:12</span>
+            </div>
+            <video
+              controls
+              playsInline
+              preload="none"
+              poster="/landing/game-city-life.webp"
+            >
+              <source src="/landing/gameplay.webm" type="video/webm" />
+              <a href="/landing/gameplay.webm">Download the gameplay clip</a>
+            </video>
+            <figcaption>
+              Actual offline preview · silent clip · no real student
+              conversations
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section className={styles.section} aria-labelledby="access-title">
+        <div className={styles.sectionHeading}>
+          <div>
+            <p className={styles.kicker}>FIND YOUR WAY IN</p>
+            <h2 id="access-title">
+              A place for learners.
+              <br />
+              <em>A partner for schools.</em>
+            </h2>
+          </div>
+          <p>
+            We are opening through an invited beta, with clear access options
+            and a focused school pilot.
+          </p>
+        </div>
+        <div className={styles.accessGrid}>
+          <article className={styles.learnerCard}>
+            <span className={styles.pill}>
+              <Gamepad2 size={14} aria-hidden /> FOR LEARNERS
+            </span>
+            <h3>Start with curiosity.</h3>
+            <p>
+              Invited individual learners get free core study. Explore your
+              subjects and track your progress, with optional Premium at
+              £5.99/month when available.
+            </p>
+            <Link href="/book?for=individual" className={styles.primary}>
+              Request beta access <ArrowRight size={18} aria-hidden />
+            </Link>
+            <Link href="/pricing" className={styles.smallLink}>
+              See access and pricing
+            </Link>
+          </article>
+          <article className={styles.schoolCard}>
+            <span className={styles.pill}>
+              <GraduationCap size={16} aria-hidden /> FOR SCHOOLS & COLLEGES
+            </span>
+            <h3>Give practice a purpose.</h3>
+            <p>
+              Connect teacher-set homework with a world students can explore.
+              Review class submissions and topic gaps. Licence seats, price and
+              pilot scope are agreed in writing.
+            </p>
+            <Link href="/book?for=school" className={styles.lightButton}>
+              Let’s talk about your learners{" "}
+              <ArrowRight size={18} aria-hidden />
+            </Link>
+            <Link href="/schools" className={styles.smallLink}>
+              Explore the school workspace
+            </Link>
+          </article>
+        </div>
+        <div className={styles.partnerLine}>
+          <span>Interested in the business behind the world?</span>
+          <Link href="/investors">
+            Read the investor overview <ArrowRight size={16} aria-hidden />
+          </Link>
+        </div>
+      </section>
+
+      <section className={styles.trust} aria-label="Beta information">
+        <ShieldCheck size={25} strokeWidth={1.5} aria-hidden />
+        <div>
+          <h2>Built with care. Growing through feedback.</h2>
+          <p>
+            For ages 13+. Beta access is by invitation. We are testing
+            reliability, engagement and learning outcomes; improved exam grades
+            have not been independently demonstrated. Workplace activities are
+            simulations, and Clout has no cash value.
+          </p>
+          <div>
+            <Link href="/safeguarding">Safeguarding</Link>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/contact">Get in touch</Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
