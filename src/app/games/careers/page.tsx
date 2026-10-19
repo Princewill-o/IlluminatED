@@ -27,8 +27,7 @@ export default async function CareersPage() {
       <p className="text-xs font-black tracking-[0.3em] text-ink-lilac uppercase">Careers</p>
       <h1 className="arcade-display mt-2 text-4xl md:text-5xl">Get a job. Learn the job.</h1>
       <p className="mt-2 max-w-2xl text-muted-foreground">
-        Every shift is five real tasks from that line of work: giving change, fixing code, triaging patients, checking contracts. Do them well to earn Clout,
-        get promoted and build experience you can honestly describe on a CV.
+        Every shift is five simulated, role-based tasks: giving change, fixing code, triaging scenarios, or checking contract clauses. Activities reference relevant UK occupational standards, but do not count as accredited training or work experience. Practise skills, earn Clout and get promoted.
       </p>
 
       <Link href="/games/careers/sources" className="mt-4 inline-block min-h-11 text-sm font-bold text-primary underline">Question answers, explanations and source references →</Link>

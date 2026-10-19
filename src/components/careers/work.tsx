@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { Briefcase, GraduationCap, Sparkles, Trophy, X } from "lucide-react";
 
 import { TaskCard } from "./task-card";
+import { ShiftStage } from "./shift-stage";
 
 import { startCareerSession, completeCareerSession } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
@@ -174,6 +175,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
   if (i < tasks.length)
     return (
       <Panel onClose={onClose} title={`${role.title} shift`} workplace={workplace}>
+        <ShiftStage workplace={workplace} avatar={uniformed} progress={i} />
         <TaskCard
           key={i}
           task={tasks[i]}

@@ -31,9 +31,9 @@ $$;
 revoke all on function public.career_complete_verified(text,uuid,text,text,text,integer,integer,integer,jsonb) from public, anon;
 grant execute on function public.career_complete_verified(text,uuid,text,text,text,integer,integer,integer,jsonb) to authenticated;
 create function public.career_verified_ready(p_secret text) returns boolean
-language sql stable security definer set search_path = '' as $
+language sql stable security definer set search_path = '' as $$
   select auth.uid() is not null and private.is_active_member() and coalesce(private.billing_secret_ok(p_secret),false);
-$;
+$$;
 revoke all on function public.career_verified_ready(text) from public,anon;
 grant execute on function public.career_verified_ready(text) to authenticated;
 commit;

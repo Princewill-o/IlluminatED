@@ -914,3 +914,6 @@ html.dark body:has(.app-theme) {
 @keyframes gavel { 0%, 100% { transform: rotate(0); } 40% { transform: rotate(-35deg); } 60% { transform: rotate(10deg); } }
 .gavel { animation: gavel .7s ease-in-out infinite; transform-origin: 80% 80%; }
 @media (prefers-reduced-motion: reduce) { .wanted-on, .arrest-flash, .gavel { animation: none; } }
+@keyframes shift-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.shift-bob { animation: shift-bob 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .shift-bob { animation: none; } }

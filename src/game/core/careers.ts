@@ -6,12 +6,11 @@ import { type Rng, createRng, pick, randInt, shuffle } from "./rng";
  * Careers: real jobs inside IlluminatED London.
  *
  * Every workplace has roles on a ladder (entry → senior → manager). You get
- * hired through a short interview, work shifts in uniform, and each shift is
- * five tasks that are genuine pieces of that job: giving change, booking
- * appointments, fixing a failing function, writing SQL, triaging patients,
- * spotting fraud, checking a contract. Each task is tagged with the real-world
- * skill it practises, so your record of shifts becomes honest, specific
- * simulated work experience you can describe on a CV.
+ * hired through a short interview, work simulated shifts in uniform, and each
+ * shift is five role-based practice tasks: giving change, booking appointments,
+ * fixing a failing function, writing SQL, or spotting issues in a scenario.
+ * Tasks practise skills, but do not represent real employment or accredited
+ * assessment; CV wording identifies the experience as simulated.
  *
  * Pure and seeded: the same seed always produces the same shift.
  */
