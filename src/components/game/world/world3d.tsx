@@ -100,6 +100,35 @@ const bendAll = (o: THREE.Object3D) =>
     (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(bend);
   });
 
+let speechTextures: THREE.CanvasTexture[] | null = null;
+function speechMark() {
+  if (!speechTextures) {
+    speechTextures = [0, 1, 2].map(frame => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 128; canvas.height = 88;
+      const ctx = canvas.getContext("2d")!;
+      ctx.fillStyle = "rgba(12, 26, 45, .16)";
+      ctx.beginPath(); ctx.roundRect(13, 7, 102, 61, 23); ctx.fill();
+      ctx.fillStyle = "#fffdf7";
+      ctx.beginPath(); ctx.roundRect(10, 4, 102, 61, 23); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(34, 59); ctx.lineTo(28, 77); ctx.lineTo(51, 63); ctx.closePath(); ctx.fill();
+      for (let dot = 0; dot < 3; dot++) {
+        const x = 38 + dot * 23, y = 35 + (frame === dot ? -2 : 0);
+        ctx.fillStyle = frame === dot ? "#4389dc" : "#92a1b4";
+        ctx.beginPath(); ctx.arc(x, y, frame === dot ? 6.5 : 5.5, 0, Math.PI * 2); ctx.fill();
+      }
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      return texture;
+    });
+  }
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: speechTextures[0], transparent: true, depthWrite: false, toneMapped: false }));
+  sprite.scale.set(0.88, 0.6, 1);
+  sprite.position.set(0, 1.85, 0);
+  sprite.visible = false;
+  return sprite;
+}
+
 // ── Shared materials (soft, matte, Animal Crossing-ish) ──
 const MATS = new Map<string, THREE.MeshLambertMaterial>();
 const mat = (c: string) => {
@@ -2059,7 +2088,7 @@ export function World3D({
     const L = london ? buildLondon() : null;
     const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; velocity?: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
-      const kinds = ["bus", "sedan", "taxi", "van", "bus", "suv", "delivery", "taxi", "bus", "police", "sedan", "hatchback-sports", "bus", "ambulance", "van", "taxi"];
+      const kinds = ["bus", "taxi", "sedan", "bus", "van", "delivery"];
       kinds.forEach((k, i) => {
         const route = i % 3;
         const g = new THREE.Group();
@@ -2071,7 +2100,7 @@ export function World3D({
         scene.add(g);
         traffic.push({ obj: g, route, at: (i * 0.173) % 1, distance: 0, speed: [2.6, 2.8, 2.5][route] });
       });
-      for (const coach of COACHES) {
+      for (const coach of COACHES.slice(0, 1)) {
         const obj=coachModel(coach.id);bendAll(obj);scene.add(obj);
         traffic.push({obj,route:coach.route,at:coach.at,distance:0,speed:2.4});
       }
@@ -2093,11 +2122,27 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 12 : 8);
+    const residentLimit = map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 14 : 10);
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i), null, true);
+      const speech = speechMark(); body.root.add(speech);
       scene.add(body.root);
-      return { body, path, offset: i * 3.71, knockedUntil: 0 };
+      return {
+        body,
+        speech,
+        path,
+        offset: i * 3.71,
+        knockedUntil: 0,
+        greetUntil: 0,
+        nextGreeting: 10_000 + ((i * 7919) % 24_000),
+        greetingPoint: new THREE.Vector3(),
+        greeting: false,
+        talkUntil: 0,
+        nextConversation: 8_000 + ((i * 6073) % 18_000),
+        talkPoint: new THREE.Vector3(),
+        talkTarget: new THREE.Vector3(),
+        talkingAnimation: false,
+      };
     });
     const crossingNpcs = london ? crossingPedestrianPoses(Date.now()).map((pose, i) => {
       const body = makeBody(npcLook(90 + i)); scene.add(body.root);
@@ -2110,7 +2155,7 @@ export function World3D({
       scene.add(body.root, bike);
       return { body, bike, route: i % paths.length, at: i * 0.217, distance: 0, moving: false };
     }) : [];
-    if (L) for (let i = 0; i < 3; i++) {
+    if (L) for (let i = 0; i < 2; i++) {
       const obj = new THREE.Group();
       void placeCar(obj, ["sedan", "suv", "taxi"][i]);
       const body = makeBody(npcLook(40 + i), null, true);
@@ -2229,7 +2274,9 @@ export function World3D({
     };
     renderer.domElement.addEventListener("click", onClick);
     const onWheel = (event:WheelEvent) => {
-      if(overview || event.ctrlKey) return;
+      if(overview) return;
+      // Chrome sends trackpad pinch gestures as Ctrl+wheel. Keep browser-page
+      // zoom from shrinking the HUD; pinch and wheel both zoom only the scene.
       event.preventDefault();
       setZoom(value=>Math.max(0.75,Math.min(1.65,value*Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*0.0018))));
     };
@@ -2489,13 +2536,86 @@ export function World3D({
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE });
-        if (n.knockedUntil > now) return;
+        if (n.knockedUntil > now) { n.speech.visible = false; return; }
         if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; }
         const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
         n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
+        if (!n.body.root.visible) { n.speech.visible = false; return; }
+
+        // Local crowd AI: greet a nearby player at a natural pause, face them,
+        // and then return to the resident's route. It is deterministic and runs
+        // in the existing frame loop, so it adds no network or model latency.
+        if (n.greetUntil > now) {
+          n.body.root.position.copy(n.greetingPoint);
+          let target = me.root.position;
+          let closest = n.body.root.position.distanceToSquared(target);
+          for (const player of others.values()) {
+            const distance = n.body.root.position.distanceToSquared(player.root.position);
+            if (distance < closest) { closest = distance; target = player.root.position; }
+          }
+          n.body.root.rotation.y = Math.atan2(target.x - n.greetingPoint.x, target.z - n.greetingPoint.z);
+          n.speech.visible = true;
+          const frame = Math.floor(now / 300) % 3;
+          n.speech.material.map = speechTextures?.[frame] ?? null;
+          n.speech.position.y = 1.85 + Math.sin(secs * 5 + i) * 0.035;
+          setWalking(n.body, false);
+          if (!n.greeting) { n.greeting = true; n.body.char?.play("emote-yes"); }
+          return;
+        }
+        if (n.greeting) {
+          n.greeting = false;
+          n.body.char?.play("idle");
+        }
+        n.speech.visible = false;
         n.body.root.position.set(pose.x, 0, pose.z);
         n.body.root.rotation.y = pose.angle;
         setWalking(n.body, pose.walking && !reduce);
+        if (n.talkUntil > now) {
+          n.body.root.position.copy(n.talkPoint);
+          n.body.root.rotation.y = Math.atan2(n.talkTarget.x - n.talkPoint.x, n.talkTarget.z - n.talkPoint.z);
+          n.speech.visible = true;
+          const frame = Math.floor(now / 300) % 3;
+          n.speech.material.map = speechTextures?.[frame] ?? null;
+          n.speech.position.y = 1.85 + Math.sin(secs * 5 + i) * 0.035;
+          setWalking(n.body, false);
+          const gesture = Math.floor(now / 1150 + i) % 3 === 0;
+          if (gesture !== n.talkingAnimation) {
+            n.talkingAnimation = gesture;
+            n.body.char?.play(gesture ? "emote-yes" : "idle");
+          }
+          return;
+        } else if (n.talkingAnimation) {
+          n.talkingAnimation = false;
+          n.body.char?.play("idle");
+        }
+        if (!pose.walking && now >= n.nextConversation) {
+          const partnerIndex = npcs.findIndex((other, otherIndex) => otherIndex > i && other.body.root.visible && other.talkUntil <= now && other.greetUntil <= now && other.body.root.position.distanceToSquared(n.body.root.position) < 5.2 * 5.2);
+          if (partnerIndex >= 0) {
+            const partner = npcs[partnerIndex];
+            const duration = 3_200 + ((i * 337 + partnerIndex * 131) % 2_600);
+            n.talkPoint.copy(n.body.root.position); n.talkTarget.copy(partner.body.root.position);
+            partner.talkPoint.copy(partner.body.root.position); partner.talkTarget.copy(n.body.root.position);
+            n.talkUntil = partner.talkUntil = now + duration;
+            n.nextConversation = partner.nextConversation = now + 18_000 + ((i * 941 + partnerIndex * 283) % 16_000);
+            n.body.root.position.copy(n.talkPoint); partner.body.root.position.copy(partner.talkPoint);
+          } else n.nextConversation = now + 3_000 + ((i * 271) % 3_500);
+        }
+        if (!pose.walking && now >= n.nextGreeting) {
+          let target = me.root.position;
+          let closest = n.body.root.position.distanceToSquared(target);
+          for (const player of others.values()) {
+            const distance = n.body.root.position.distanceToSquared(player.root.position);
+            if (distance < closest) { closest = distance; target = player.root.position; }
+          }
+          if (closest < 3.8 * 3.8) {
+            n.greetingPoint.copy(n.body.root.position);
+            n.greetUntil = now + 1_700;
+            n.nextGreeting = now + 18_000 + ((i * 421) % 12_000);
+            n.greeting = false;
+          } else {
+            n.nextGreeting = now + 4_000;
+          }
+        }
       });
       crossingNpcs.forEach((n, i) => {
         const pose = crossingWalkers[i];
@@ -2701,7 +2821,7 @@ export function World3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adKey, map]);
 
-  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<div className="absolute right-3 bottom-36 z-[100002] flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
+  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<div className="absolute right-3 top-20 z-[100002] flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
     <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
     <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
     <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>

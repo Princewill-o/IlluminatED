@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { projectData } from "../scripts/lib/project-data.mjs";
 
 const { CAR_LENGTH, CAR_WIDTH } = projectData("src/game/core/vehicles.ts");
-const { driveStep, vehicleFits, nearestDrivingSpot, nearestParkingSpot } = projectData("src/game/core/driving.ts");
+const { driveStep, vehicleFits, nearestDrivingSpot, nearestParkingSpot, nudgePedestrianFromTraffic } = projectData("src/game/core/driving.ts");
 const TILE = 32;
 const street = () => {
   const tiles = Array.from({ length: 24 }, (_, y) => Array.from({ length: 32 }, (_, x) =>
@@ -18,6 +18,23 @@ const simulate = (map, state, input, seconds) => {
 test("cars are several times wider and longer than a walking avatar", () => {
   assert.ok(CAR_LENGTH >= 3.8);
   assert.ok(CAR_WIDTH >= 1.65);
+});
+
+test("walking collision pushes the player to a clear road edge without teleporting", () => {
+  const map = street();
+  const car = { x: 11 * TILE, y: 10 * TILE, hw: CAR_LENGTH * TILE / 2, hh: CAR_WIDTH * TILE / 2, dx: 1, dy: 0 };
+  const result = nudgePedestrianFromTraffic(map, { x: car.x, y: car.y }, [car]);
+  assert.equal(result.collided, true);
+  assert.ok(Math.abs(result.x - car.x) < 1);
+  assert.ok(Math.abs(result.y - car.y) >= car.hh + 11);
+  assert.ok(result.y < 13 * TILE, "the shove should leave the player beside the road, not several blocks away");
+});
+
+test("walking collision separates pedestrians instead of stacking them", () => {
+  const map = street();
+  const result = nudgePedestrianFromTraffic(map, { x: 15 * TILE, y: 10 * TILE }, [], [{ x: 15 * TILE, y: 10 * TILE }]);
+  assert.equal(result.collided, true);
+  assert.ok(Math.hypot(result.x - 15 * TILE, result.y - 10 * TILE) >= 18);
 });
 
 test("accelerating builds speed and releasing the pedal coasts to a stop", () => {

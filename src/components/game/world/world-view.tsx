@@ -25,7 +25,7 @@ import { TRAIN_CALL } from "./train-state";
 
 import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
-import { driveStep, nearestDrivingSpot, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
+import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
@@ -449,6 +449,21 @@ export function WorldView({
           next = { x: p.x, y: 14.5 * TILE };
         }
       }
+      if (map.art === "london" && !driving) {
+        const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
+        const people = NPC_SPOTS.map(person => ({ x: person.x, y: person.y }));
+        const corrected = nudgePedestrianFromTraffic(map, next, traffic, people);
+        if (corrected.collided) {
+          next = { x: corrected.x, y: corrected.y };
+          target.current = null;
+          if (now > bumpUntil) {
+            bumpUntil = now + 1_500;
+            myChat.current = { text: "Oof! Watch the road.", until: Date.now() + 1_800 };
+            meEl.current?.animate([{ translate: "0 0" }, { translate: "0 -14px" }, { translate: "0 0" }, { translate: "0 -5px" }, { translate: "0 0" }], { duration: 450, easing: "ease-out", composite: "add" });
+            play("door", soundOn());
+          }
+        }
+      }
       const moved = next.x !== p.x || next.y !== p.y;
       if ((dx || dy) && !moved) target.current = null;
       if (dx) p.d = dx > 0 ? 1 : -1;
@@ -463,28 +478,6 @@ export function WorldView({
       PLAYER.x = p.x;
       PLAYER.y = p.y;
       Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
-      if (map.art === "london" && !driving) {
-        for (const b of TRAFFIC_BOXES) {
-          if (!b) continue;
-          const ox = b.hw + 10 - Math.abs(p.x - b.x);
-          const oy = b.hh + 6 - Math.abs(p.y - b.y);
-          if (ox <= 0 || oy <= 0) continue;
-          // Push out the short way, plus a shove in the direction the vehicle is going.
-          const push = ox < oy ? { x: Math.sign(p.x - b.x || 1) * ox, y: 0 } : { x: 0, y: Math.sign(p.y - b.y || 1) * oy };
-          const tryX = p.x + push.x + b.dx * 18;
-          const tryY = p.y + push.y + b.dy * 18;
-          const spot = safeSpot(map, tryX, tryY);
-          p.x = spot.x;
-          p.y = spot.y;
-          target.current = null;
-          if (now > bumpUntil) {
-            bumpUntil = now + 1500;
-            myChat.current = { text: "Oof! Watch the road.", until: Date.now() + 1800 };
-            meEl.current?.animate([{ translate: "0 0" }, { translate: "0 -14px" }, { translate: "0 0" }, { translate: "0 -5px" }, { translate: "0 0" }], { duration: 450, easing: "ease-out", composite: "add" });
-            play("door", soundOn());
-          }
-        }
-      }
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
       const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");

@@ -1,5 +1,5 @@
 import { CAR_LENGTH, CAR_WIDTH } from "./vehicles";
-import { TILE, blocked, safeSpot, type WorldMap } from "./world";
+import { PLAYER_RADIUS, TILE, blocked, safeSpot, type WorldMap } from "./world";
 
 export interface DrivingState {
   x: number;
@@ -18,8 +18,67 @@ export interface DrivingInput {
   maxSpeed?: number;
 }
 
-export interface VehicleObstacle { id?: string; kind?: "traffic" | "pedestrian"; x: number; y: number; hw: number; hh: number }
+export interface VehicleObstacle { id?: string; kind?: "traffic" | "pedestrian"; x: number; y: number; hw: number; hh: number; dx?: number; dy?: number }
 export interface DrivingCollision { kind: "traffic" | "pedestrian" | "obstacle"; speed: number; obstacle?: VehicleObstacle }
+
+/**
+ * Resolve foot traffic against the same road footprints used for car-to-car
+ * collisions. Push to the nearest clear edge instead of teleporting through a
+ * nearby wall with safeSpot. Pedestrians share this path as small circles.
+ */
+export function nudgePedestrianFromTraffic(
+  map: WorldMap,
+  position: { x: number; y: number },
+  vehicles: readonly VehicleObstacle[] = [],
+  pedestrians: readonly { x: number; y: number }[] = [],
+  radius = PLAYER_RADIUS,
+) {
+  let x = position.x, y = position.y, collided = false;
+  const clear = (px: number, py: number, skipVehicle?: VehicleObstacle, skipPerson?: { x: number; y: number }) =>
+    !blocked(map, px, py, radius) &&
+    !vehicles.some(vehicle => vehicle !== skipVehicle && Math.abs(px - vehicle.x) < vehicle.hw + radius && Math.abs(py - vehicle.y) < vehicle.hh + radius) &&
+    !pedestrians.some(person => person !== skipPerson && Math.hypot(px - person.x, py - person.y) < radius + 7);
+
+  // Four passes handle dense crossings where the first safe edge meets a
+  // second body, while keeping this small and predictable per movement tick.
+  for (let pass = 0; pass < 4; pass++) {
+    let moved = false;
+    for (const vehicle of vehicles) {
+      const horizontal = Math.abs(vehicle.dx ?? 1) >= Math.abs(vehicle.dy ?? 0);
+      const along = horizontal ? x - vehicle.x : y - vehicle.y;
+      const across = horizontal ? y - vehicle.y : x - vehicle.x;
+      const longHalf = horizontal ? vehicle.hw : vehicle.hh;
+      const wideHalf = horizontal ? vehicle.hh : vehicle.hw;
+      const pushLong = longHalf + radius - Math.abs(along);
+      const pushWide = wideHalf + radius - Math.abs(across);
+      if (pushLong <= 0 || pushWide <= 0) continue;
+      collided = true;
+      const side = Math.sign(across || ((vehicle.dx ?? 1) >= 0 ? 1 : -1));
+      const forward = Math.sign(along || 1);
+      const candidates = pushWide <= pushLong
+        ? horizontal
+          ? [[x, vehicle.y + side * (wideHalf + radius + 0.5)], [vehicle.x + forward * (longHalf + radius + 0.5), y]]
+          : [[vehicle.x + side * (wideHalf + radius + 0.5), y], [x, vehicle.y + forward * (longHalf + radius + 0.5)]]
+        : horizontal
+          ? [[vehicle.x + forward * (longHalf + radius + 0.5), y], [x, vehicle.y + side * (wideHalf + radius + 0.5)]]
+          : [[x, vehicle.y + forward * (longHalf + radius + 0.5)], [vehicle.x + side * (wideHalf + radius + 0.5), y]];
+      const spot = candidates.find(([px, py]) => clear(px, py, vehicle));
+      if (spot) { [x, y] = spot; moved = true; }
+    }
+    for (const person of pedestrians) {
+      const dx = x - person.x, dy = y - person.y;
+      const distance = Math.hypot(dx, dy), minDistance = radius + 7;
+      if (distance >= minDistance) continue;
+      collided = true;
+      const nx = distance > 0.01 ? dx / distance : 1;
+      const ny = distance > 0.01 ? dy / distance : 0;
+      const px = person.x + nx * (minDistance + 0.5), py = person.y + ny * (minDistance + 0.5);
+      if (clear(px, py, undefined, person)) { x = px; y = py; moved = true; }
+    }
+    if (!moved) break;
+  }
+  return { x, y, collided };
+}
 
 const ROAD = new Set(["=", ":"]);
 const PAVEMENT = new Set(["-", "_"]);
