@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { PromotionPanic } from "@/components/game/promotion-panic";
-import { companyById } from "@/game/core/companies";
 import { WORKPLACES } from "@/game/core/careers";
+import { companyById } from "@/game/core/companies";
 import { requireAccount } from "@/lib/account/server";
-import { gameSources, loadChallenge, loadPlayer } from "@/lib/game/server";
 import { loadCareer } from "@/lib/game/careers-server";
+import { gameSources, loadChallenge, loadPlayer } from "@/lib/game/server";
 
 type Params = { company: string };
 type Search = { challenge?: string; returnTo?: string };

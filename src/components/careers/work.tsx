@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 
 import { Briefcase, GraduationCap, Sparkles, Trophy, X } from "lucide-react";
 
-import { TaskCard } from "./task-card";
 import { ShiftStage } from "./shift-stage";
+import { TaskCard } from "./task-card";
 
 import { startCareerSession, completeCareerSession } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";

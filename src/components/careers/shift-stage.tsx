@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 
 import { AvatarFigure } from "@/components/game/avatar";
-import type { Avatar } from "@/game/core/cosmetics";
 import type { Workplace } from "@/game/core/careers";
+import type { Avatar } from "@/game/core/cosmetics";
 
 const STANDARDS: Record<string, { code: string; title: string; url: string }> = {
   pizzazz: { code: "ST1488", title: "Food and beverage team member", url: "https://skillsengland.education.gov.uk/apprenticeships/st1488" },
