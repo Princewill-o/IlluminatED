@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
 
@@ -29,7 +29,7 @@ const STEPS = [
   {
     icon: Footprints,
     title: "You're one student in a big city",
-    body: "Walk with WASD or the arrow keys, drag the joystick on a phone, or tap where you want to go. Walking is slow on purpose: London is big, so plan how you travel.",
+    body: "Use ↑ ↓ ← → to walk. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
     hint: "Press E (or tap the glowing marker) to go through a door.",
   },
   {
@@ -53,7 +53,7 @@ const STEPS = [
   {
     icon: CarFront,
     title: "Drive safely through London",
-    body: "Take an owned car from Garage. W / ↑ accelerates, S / ↓ brakes then reverses, A D / ← → steer and Space brakes. On a phone, push the driving joystick up, down or sideways for the same controls.",
+    body: "Take an owned car from Garage. ↑ accelerates, ↓ brakes then reverses, ← → steer and Space brakes. On a phone, push the driving joystick up, down or sideways for the same controls.",
     hint: "Keep left. Brake before the stop line on amber and wait on red. Give way at zebra crossings. Collisions and road violations earn wanted stars.",
   },
   {
@@ -71,8 +71,8 @@ const STEPS = [
   {
     icon: Briefcase,
     title: "Practise work skills, earn Clout",
-    body: "Visit company HQs and shops for simulated interviews and workplace tasks. Clout buys bikes, arcade games, furniture and new homes.",
-    hint: "Look for the door markers on company buildings.",
+    body: "Walk into a workplace and approach its reception or computer to start an activity. Read the learning material, try the role’s tasks and questions, then use the feedback to improve. Practise decision-making, communication and subject knowledge while earning Clout.",
+    hint: "Describe completed activities as simulated workplace practice. Real work experience comes from applying for and taking part in an employer placement.",
   },
   {
     icon: Smartphone,
@@ -94,20 +94,13 @@ const STEPS = [
   },
 ];
 
-export const TUTORIAL_KEY = "world-tutorial-v1";
+export const TUTORIAL_KEY = "world-tutorial-v2";
 
 /** First-visit walkthrough of how London works (reopen any time with "How to play"). */
 export function Tutorial({ onClose }: { onClose: () => void }) {
   const [i, setI] = useState(0);
   const s = STEPS[i];
   const Icon = s.icon;
-  useEffect(() => {
-    try {
-      localStorage.setItem(TUTORIAL_KEY, "seen");
-    } catch {
-      // Shown again next time; fine.
-    }
-  }, []);
   return (
     <div className="absolute inset-0 z-[100000] grid place-items-center bg-black/55 p-2 sm:p-3">
       <div role="dialog" aria-modal="true" aria-label="How to play" className="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[#f7f1e6] text-[#13203a]">

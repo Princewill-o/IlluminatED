@@ -67,7 +67,6 @@ import {
   REGIONS,
   type RegionId,
   SERVERS,
-  SERVER_CAPACITY,
   type WorldMap,
   campusMap,
   courtMap,
@@ -84,7 +83,6 @@ import {
   hotelMap,
   pickServer,
   safeSpot,
-  serverById,
 } from "@/game/core/world";
 import type { HomeState } from "@/lib/game/careers-server";
 import { cn } from "@/lib/utils";
@@ -177,7 +175,8 @@ export function WorldApp({
   const [tube, setTube] = useState<string | null>(null);
   const [trip, setTrip] = useState(0);
   const [mindGap, setMindGap] = useState(false);
-  const [server, setServer] = useState<string | null>(initialServer && serverById(initialServer) ? initialServer : null);
+  void initialServer;
+  const [server, setServer] = useState<string | null>(null);
   const [region, setRegion] = useState<RegionId>("lse");
   const [arrive, setArrive] = useState<{ x: number; y: number; heading?: number } | undefined>();
   const [desk, setDesk] = useState(false);
@@ -197,11 +196,11 @@ export function WorldApp({
   useEffect(() => setWaypoint(null), [mapId]);
   useEffect(() => {
     try {
-      if (!localStorage.getItem(TUTORIAL_KEY)) setTutorial(true);
+      if (!localStorage.getItem(`${TUTORIAL_KEY}:${me.id}`)) setTutorial(true);
     } catch {
       setTutorial(true);
     }
-  }, []);
+  }, [me.id]);
   const [dock, setDock] = useState(false);
   const [games, setGames] = useState(false);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
@@ -723,96 +722,15 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   if (!server) {
-    const counts = Object.fromEntries(SERVERS.map((s) => [s.id, countFor(mapId, s.id)]));
-    const best = pickServer(region, counts);
-    return (
-      <div className="mx-auto max-w-3xl px-4 pt-5 pb-10 md:pt-10">
-        <p className="text-xs font-black tracking-[0.3em] text-ink-lilac uppercase">Worlds</p>
-        <h1 className="arcade-display mt-2 text-4xl md:text-5xl">Join a server</h1>
-        <p className="mt-2 text-muted-foreground">
-          Walk around {map.name} with other learners, step into companies and meet verified employers. Servers are grouped by
-          region so you meet people near you, and they all run in London for a fast connection across the UK.
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-2" role="tablist" aria-label="Maps">
-          {[
-            { id: "city", name: "IlluminatED City" },
-            { id: "campus", name: "Careers Campus" },
-          ].map((m) => (
-            <button
-              key={m.id}
-              role="tab"
-              aria-selected={mapId === m.id}
-              onClick={() => setMapId(m.id)}
-              className={cn(
-                "rounded-full px-4 py-2 text-sm font-extrabold",
-                mapId === m.id ? "bg-foreground text-background" : "bg-secondary",
-              )}
-            >
-              {m.name}
-            </button>
-          ))}
-        </div>
-
-        <label className="mt-6 block text-sm font-bold" htmlFor="region">
-          Your region
-        </label>
-        <select
-          id="region"
-          value={region}
-          onChange={(e) => chooseRegion(e.target.value as RegionId)}
-          className="mt-2 w-full rounded-2xl border border-border bg-card px-4 py-3 font-bold sm:w-80"
-        >
-          {REGIONS.map((r) => (
-            <option key={r.id} value={r.id}>
-              {r.name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          onClick={() => setServer(best.id)}
-          className="arcade-btn mt-6 w-full rounded-full bg-[#f2d9a6] py-4 text-lg font-black text-[#0d1726] sm:w-auto sm:px-10"
-        >
-          Quick join: {best.name} →
-        </button>
-
-        <h2 className="mt-8 text-lg font-extrabold">All servers</h2>
-        {!lobby.ready && <p className="mt-2 text-sm text-muted-foreground">Checking who&apos;s online…</p>}
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {SERVERS.filter((s) => s.region === region)
-            .concat(SERVERS.filter((s) => s.region !== region))
-            .map((s) => {
-              const n = countFor(mapId, s.id);
-              const full = n >= SERVER_CAPACITY;
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    disabled={full}
-                    onClick={() => setServer(s.id)}
-                    className={cn(
-                      "flex w-full items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left transition active:scale-[0.98] disabled:opacity-40",
-                      s.region === region ? "border-primary/50" : "border-border",
-                    )}
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate font-bold">{s.name}</span>
-                      <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-foreground/[0.08]">
-                        <span className="block h-full bg-[#5fd3a5]" style={{ width: `${(n / SERVER_CAPACITY) * 100}%` }} />
-                      </span>
-                    </span>
-                    <span className="text-sm font-black tabular-nums">
-                      {full ? "Full" : `${n}/${SERVER_CAPACITY}`}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-        </ul>
-      </div>
-    );
+    return <div className="mx-auto max-w-md p-6">
+      <h1 className="text-2xl font-black">Join your regional community</h1>
+      <p className="mt-2 text-sm text-muted-foreground">Choose your region. We connect you automatically; individual servers are managed in the background.</p>
+      <label className="mt-5 block text-sm font-bold" htmlFor="region">Your region</label>
+      <select id="region" value={region} onChange={e => chooseRegion(e.target.value as RegionId)} className="mt-2 w-full rounded-xl border bg-card p-3">
+        {REGIONS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+      </select>
+      <button type="button" onClick={() => setServer(pickServer(region, Object.fromEntries(SERVERS.filter(s => s.region === region).map(s => [s.id, countFor(mapId, s.id)]))).id)} className="mt-5 min-h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground">Join region</button>
+    </div>;
   }
 
   return (
@@ -1021,7 +939,10 @@ export function WorldApp({
       >
         How to play
       </button>
-      {tutorial && <Tutorial onClose={() => setTutorial(false)} />}
+      {tutorial && <Tutorial onClose={() => {
+        try { localStorage.setItem(`${TUTORIAL_KEY}:${me.id}`, "seen"); } catch { /* Show again when storage is unavailable. */ }
+        setTutorial(false);
+      }} />}
       {mindGap && (
         <div className="pointer-events-none absolute inset-0 z-[100001] grid place-items-center" aria-live="polite">
           <p className="rounded-2xl bg-[#f6f2e8] px-5 py-3 text-lg font-black tracking-wide text-[#13203a]">Please mind the gap</p>
@@ -1099,4 +1020,4 @@ export function WorldApp({
       )}
     </div>
   );
-}
+}

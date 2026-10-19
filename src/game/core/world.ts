@@ -942,7 +942,7 @@ export function pickServer(region: RegionId, counts: Record<string, number>): Se
   const n = (s: ServerInfo) => counts[s.id] ?? 0;
   const open = SERVERS.filter((s) => s.region === region && n(s) < SERVER_CAPACITY);
   if (open.length) return open.sort((a, b) => n(b) - n(a) || a.id.localeCompare(b.id))[0];
-  return [...SERVERS].sort((a, b) => n(a) - n(b))[0];
+  return SERVERS.filter(s => s.region === region).sort((a, b) => n(a) - n(b) || a.id.localeCompare(b.id))[0];
 }
 
 /** Room namespace. The admission RPC supplies its authorized epoch suffix. */

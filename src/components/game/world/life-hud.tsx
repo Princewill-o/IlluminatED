@@ -10,7 +10,7 @@ import { useNeeds } from "./use-needs";
 
 import { AvatarFigure } from "@/components/game/avatar";
 import type { Avatar } from "@/game/core/cosmetics";
-import { ACTIVITIES, NEEDS, moodWord, nextHint, weatherAt } from "@/game/core/needs";
+import { ACTIVITIES, NEEDS, moodWord, nextHint, weatherAt, weatherForecast } from "@/game/core/needs";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { cn } from "@/lib/utils";
 
@@ -94,13 +94,19 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 
       {/* Weather, time, money */}
       <div className="pointer-events-none absolute top-[68px] right-[140px] z-[50] hidden gap-1.5 xl:flex [@media(max-height:719px)]:!hidden">
-        <div className={cn(card, "flex items-center gap-1.5 px-2.5 py-1.5")}>
+        <details className={cn(card, "relative px-2.5 py-1.5")}>
+          <summary className="flex cursor-pointer list-none items-center gap-1.5" aria-label="Open game weather forecast">
           <WIcon className="size-5 text-[#e98a1f]" aria-hidden />
           <div>
             <p className="text-sm leading-4 font-black">{w.temp}°C</p>
             <p className="text-[10px] font-bold text-[#5a6272]">{w.kind}</p>
+          </div></summary>
+          <div className="absolute top-full right-0 mt-2 w-56 rounded-2xl border border-[#d4c7ad] bg-[#faf6ed] p-3 shadow-xl">
+            <p className="mb-2 text-xs font-black">Game forecast</p>
+            {weatherForecast(now).map(item => <p key={item.at} className="flex justify-between py-1 text-[11px]"><span>{item.label}</span><span>{item.kind} · {item.temp}°C</span></p>)}
+            <p className="mt-2 text-[10px] text-[#5a6272]">Shared simulated weather · changes every 3 minutes</p>
           </div>
-        </div>
+        </details>
         <div className={cn(card, "px-3 py-1.5")}>
           <p className="text-sm leading-4 font-black">{now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}</p>
           <p className="text-[10px] font-bold text-[#5a6272]">{now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" })}</p>

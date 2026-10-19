@@ -88,11 +88,20 @@ export function nextHint(n: Needs) {
 /** London weather that changes through the day but is the same for everyone. */
 export function weatherAt(d: Date) {
   const day = Math.floor(d.getTime() / 86_400_000);
-  const kinds = ["Sunny", "Cloudy", "Light rain", "Sunny", "Cloudy", "Drizzle", "Bright"] as const;
-  const kind = kinds[(day * 7 + Math.floor(d.getHours() / 6)) % kinds.length];
+  const kinds = ["Sunny", "Cloudy", "Light rain", "Fog", "Windy", "Drizzle", "Bright", "Snow"] as const;
+  const slot = Math.floor(d.getTime() / 180_000);
+  const kind = kinds[((slot * 5 + Math.floor(slot / 8)) % kinds.length + kinds.length) % kinds.length];
   const month = d.getMonth();
   const base = [6, 7, 9, 12, 15, 18, 20, 20, 17, 13, 9, 7][month];
   const hour = d.getHours();
   const temp = Math.round(base + (hour > 11 && hour < 18 ? 3 : hour < 7 ? -3 : 0) + ((day % 5) - 2));
-  return { kind, temp };
+  return { kind, temp: kind === "Snow" ? Math.min(1, temp) : temp };
+}
+
+/** A shared game forecast: three real minutes per weather period. */
+export function weatherForecast(d: Date) {
+  return Array.from({ length: 4 }, (_, index) => {
+    const at = new Date((Math.floor(d.getTime() / 180_000) + index) * 180_000);
+    return { ...weatherAt(at), at: at.getTime(), label: index ? `In ${index * 3} min` : "Now" };
+  });
 }

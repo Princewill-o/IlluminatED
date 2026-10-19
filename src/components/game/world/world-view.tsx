@@ -32,7 +32,8 @@ import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { CAR_LENGTH } from "@/game/core/vehicles";
-import { EMOTES, PHRASES, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
+import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
 
@@ -253,8 +254,9 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
   /** Every playable map uses the same fully modelled 3D scene. */
-  const [quality, setQuality] = useState<"auto" | "low">("auto");
-  useEffect(() => { try { if (localStorage.getItem("world-graphics") === "low") setQuality("low"); else localStorage.removeItem("world-graphics"); } catch { /* Storage is optional. */ } }, []);
+  const [quality, setQuality] = useState<VisualQuality>("auto");
+  const [immersive, setImmersive] = useState(false);
+  useEffect(() => { try {setQuality(readVisualQuality(localStorage.getItem("world-graphics")));setImmersive(localStorage.getItem("world-immersive-motion")==="on");} catch { /* Storage is optional. */ } }, []);
   const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
   const is3d = graphicsState === "ready";
   // Start the 3D renderer directly; the world never flashes a flat-map view.
@@ -335,10 +337,6 @@ export function WorldView({
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
-  const walkTo3d = useCallback((x: number, y: number) => {
-    if (carRef.current) return;
-    target.current = { x, y };
-  }, []);
   const enter = useCallback(() => {
     if (pausedRef.current) return;
     // Station trains are boarded by walking through an open doorway.
@@ -348,13 +346,13 @@ export function WorldView({
   const portalCallback = useRef(onPortal);
   portalCallback.current = onPortal;
 
-  // Keyboard: WASD / arrows to walk, E or Enter to go through a door.
+  // Keyboard: Arrow keys to walk, E or Enter to go through a door.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (pausedRef.current || e.target instanceof HTMLElement && e.target.closest("button, a, [role=dialog], [contenteditable=true]")) return;
       const k = e.key.toLowerCase();
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || k === " " && carRef.current) {
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || k === " " && carRef.current) {
         e.preventDefault();
         keys.current.add(k);
         target.current = null;
@@ -403,19 +401,11 @@ export function WorldView({
         pos.current.speed = 0;
       }
       const k = keys.current;
-      let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
-      let dy = (k.has("s") || k.has("arrowdown") ? 1 : 0) - (k.has("w") || k.has("arrowup") ? 1 : 0);
+      let dx = (k.has("arrowright") ? 1 : 0) - (k.has("arrowleft") ? 1 : 0);
+      let dy = (k.has("arrowdown") ? 1 : 0) - (k.has("arrowup") ? 1 : 0);
       if (!dx && !dy && (stick.current.x || stick.current.y)) {
         dx = stick.current.x;
         dy = stick.current.y;
-      }
-      if (!carRef.current && !dx && !dy && target.current) {
-        dx = target.current.x - pos.current.x;
-        dy = target.current.y - pos.current.y;
-        if (Math.hypot(dx, dy) < 8) {
-          target.current = null;
-          dx = dy = 0;
-        }
       }
       const p = pos.current;
       const driving = Boolean(carRef.current);
@@ -613,16 +603,11 @@ export function WorldView({
     <div
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
-      onPointerDown={(e) => {
-        if (carRef.current) return;
-        if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest("[data-world]")) return;
-        const r = viewport.current!.getBoundingClientRect();
-        target.current = { x: (e.clientX - r.left) / activeZoom.current + camRef.current.x, y: (e.clientY - r.top) / activeZoom.current + camRef.current.y };
-      }}
     >
-      <label className="absolute bottom-14 left-3 z-[100000] rounded-xl border border-white/20 bg-[#13203a] px-3 py-2 text-xs text-white" onPointerDown={e => e.stopPropagation()}>
-        Graphics <select aria-label="3D graphics quality" value={quality} onChange={e => { const next = e.target.value as "auto" | "low"; setQuality(next); try { localStorage.setItem("world-graphics", next); } catch { /* Storage is optional. */ } }} className="ml-1 rounded bg-[#13203a] py-1 font-bold text-white"><option value="auto">High detail 3D</option><option value="low">Performance 3D</option></select>
-      </label>
+      <div role="group" aria-label="Graphics settings" className="absolute bottom-14 left-3 z-[100000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
+        <label>Graphics <select aria-label="3D graphics quality" value={quality} onChange={e=>{const next=readVisualQuality(e.target.value);setQuality(next);try{localStorage.setItem("world-graphics",next);}catch{/* Optional. */}}} className="ml-1 min-h-9 rounded bg-[#243c4b] px-1 font-bold text-white"><option value="auto">Balanced</option><option value="cinematic">Cinematic · more GPU</option><option value="low">Performance</option></select></label>
+        <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
+      </div>
       <div
         ref={layer}
         data-world
@@ -683,7 +668,8 @@ export function WorldView({
 
       {is3d && (
         <World3D
-          quality={quality === "low" ? "low" : "auto"}
+          quality={quality}
+          immersive={immersive}
           map={map}
           avatar={me.avatar}
           car={car}
@@ -697,7 +683,6 @@ export function WorldView({
           getOthers={getOthers3d}
           getPolice={getPolice}
           nearPortal={nearPortal3d}
-          onGround={walkTo3d}
           getHomeAction={getHomeAction}
         />
       )}
@@ -722,7 +707,7 @@ export function WorldView({
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
             {world.status === "live" && world.ping !== null && <span className="text-[#8d85a0]">· {world.ping} ms</span>}
-            <span className="text-[#8d85a0]">· {serverById(serverId)?.name}</span>
+            <span className="text-[#8d85a0]">· {REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
           </span>
         </button>
         <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur" aria-live="polite">
@@ -768,7 +753,7 @@ export function WorldView({
           stick.current = { x, y };
           if (x || y) target.current = null;
         }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}</div> : (
-          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ brake & reverse · A D / ← → steer · Space brake" : "WASD or arrows to walk · click to walk there · E to enter"}</p>
+          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "↑ accelerate · ↓ brake & reverse · ← → steer · Space brake" : "Arrow keys to walk · E to interact / enter"}</p>
         )}
         <div className="pointer-events-auto relative">
           {sheet && (

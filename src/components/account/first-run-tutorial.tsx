@@ -12,8 +12,8 @@ import { completeFirstRunTutorial } from "@/lib/account/actions";
 const slides = [
   {
     eyebrow: "01 / Your home base",
-    title: "Your dashboard has a plan for you",
-    body: "Your subjects, exam date and the topics you find hard shape what you see first. Practice updates your progress and helps you decide what to revise next.",
+    title: "Learn, practise and explore your future",
+    body: "IlluminatED brings study, homework, career exploration and a shared game city together. Learn a topic, practise it through quizzes or workplace scenarios, review your feedback, then explore real courses and opportunities. Your dashboard uses your subjects and exam date to help you choose a starting point.",
     action: "wave" as TiggyAction,
     colour: "from-sky-100 via-white to-blue-100",
     tags: ["Dashboard", "Readiness", "Study plan"],
@@ -50,6 +50,22 @@ const slides = [
     colour: "from-rose-100 via-white to-yellow-100",
     tags: ["Careers", "Opportunities", "Social"],
   },
+  {
+    eyebrow: "06 / Your game city",
+    title: "Step into a role and practise doing the work",
+    body: "Open Play to explore the city with other players. Use the arrow keys to walk and E to enter or interact; on mobile, use the joystick. Visit a workplace, walk to reception or a computer, and start its learning activities. Read the material, answer role-based questions and learn from the feedback. Study, travel and meet others around the city between activities.",
+    action: "wave" as TiggyAction,
+    colour: "from-sky-100 via-white to-teal-100",
+    tags: ["Play", "Workplaces", "Arrow keys + E"],
+  },
+  {
+    eyebrow: "07 / Turn practice into a next step",
+    title: "Build skills you can explain",
+    body: "After a workplace activity, write down the task, the decision you made, what the feedback taught you and what you would improve. Use that reflection to prepare for interviews and choose roles to explore. Call these activities simulated workplace practice when discussing them; employer placements provide real work experience. Next Steps helps you find opportunities to apply those skills.",
+    action: "graduate" as TiggyAction,
+    colour: "from-amber-100 via-white to-emerald-100",
+    tags: ["Practise", "Reflect", "Apply"],
+  },
 ] as const;
 
 function FinishButton() {
@@ -81,8 +97,8 @@ export function FirstRunTutorial({ name, subjects, careerRoute, next, saveError 
         <div className="rounded-full border border-blue-200 bg-white px-4 py-2 text-xs font-bold text-blue-800">Step {index + 1} of {slides.length}</div>
       </div>
 
-      <div className="mb-6 grid grid-cols-5 gap-2" aria-label="Tour progress">
-        {slides.map((item, i) => <div key={item.eyebrow} className={`h-2 rounded-full ${i <= index ? "bg-blue-700" : "bg-blue-200"}`} />)}
+      <div className="mb-6 flex gap-2" aria-label="Tour progress">
+        {slides.map((item, i) => <div key={item.eyebrow} className={`h-2 flex-1 rounded-full ${i <= index ? "bg-blue-700" : "bg-blue-200"}`} />)}
       </div>
 
       <section key={slide.title} aria-live="polite" className={`relative overflow-hidden rounded-[2rem] border border-blue-100 bg-gradient-to-br ${slide.colour} shadow-[0_22px_70px_-38px_rgba(35,65,120,.45)]`}>
@@ -106,6 +122,7 @@ export function FirstRunTutorial({ name, subjects, careerRoute, next, saveError 
             <div className="overflow-hidden rounded-[1.7rem] border-[5px] border-[#173b86] bg-white shadow-2xl shadow-blue-900/20">
               <div className="flex items-center gap-2 border-b border-blue-100 bg-[#173b86] px-4 py-3 text-[11px] font-bold text-white"><span className="size-2 rounded-full bg-amber-300" /><span className="size-2 rounded-full bg-sky-300" /><span className="size-2 rounded-full bg-emerald-300" /><span className="ml-2">IlluminatED / {slide.tags[0]}</span></div>
               <div className="p-5 sm:p-6">
+                {index >= 5 && <><div className="flex items-center gap-3"><BriefcaseBusiness className="size-7 text-blue-700" /><p className="font-black">{index === 5 ? "Your first workplace visit" : "Your experience reflection"}</p></div><ol className="mt-5 list-decimal space-y-3 pl-5 text-sm leading-6">{(index === 5 ? ["Open Play and move with ↑ ↓ ← →.", "Walk up to a workplace entrance and press E.", "Approach reception or a terminal and choose an activity.", "Read, practise and review the feedback."] : ["What task did you practise?", "Which decision did you make, and why?", "What did you learn from the feedback?", "What would you improve in a real workplace?"]).map(text => <li key={text}>{text}</li>)}</ol><p className="mt-5 rounded-xl bg-blue-50 p-3 text-xs font-semibold">{index === 5 ? "Mobile: use the joystick and the on-screen interaction button." : "A useful interview example explains what you did and learned. Be clear that the activity was simulated."}</p></>}
                 {index === 0 && <><div className="flex items-center gap-3"><ChartNoAxesCombined className="size-7 text-blue-700" /><div><p className="text-xs text-slate-500">Your study space</p><p className="font-black">Made for {name}</p></div></div><div className="mt-5 space-y-3">{(subjects.length ? subjects : ["Your subjects"]).map((subject, i) => <div key={subject} className="rounded-xl bg-blue-50 p-3"><div className="flex justify-between text-xs font-bold"><span>{subject}</span><span>{i === 0 ? "Start here" : "On your plan"}</span></div><div className="mt-2 h-2 rounded-full bg-blue-100"><div className="h-2 rounded-full bg-blue-500" style={{ width: `${35 + i * 15}%` }} /></div></div>)}</div></>}
                 {index === 1 && <><div className="flex items-center gap-3"><BookOpen className="size-7 text-orange-600" /><p className="font-black">Learn a topic</p></div><div className="mt-5 rounded-xl bg-amber-50 p-4"><p className="text-xs font-bold text-amber-800">Topic checklist</p><p className="mt-1 text-sm font-semibold">Notes · Examples · Key terms</p></div><div className="mt-3 flex items-center gap-3 rounded-xl border border-amber-100 p-4"><FileText className="size-5 text-amber-700" /><span className="text-sm font-semibold">Official past papers and mark schemes</span></div></>}
                 {index === 2 && <><div className="flex items-center gap-3"><Clock3 className="size-7 text-violet-700" /><p className="font-black">Practice round</p></div><div className="mt-5 rounded-xl bg-violet-50 p-4"><p className="text-xs font-bold text-violet-700">QUESTION 1 OF 10</p><p className="mt-2 text-sm font-bold">What would you revise next?</p><div className="mt-4 space-y-2"><p className="rounded-lg border border-violet-200 bg-white px-3 py-2 text-xs">Try a quick quiz</p><p className="rounded-lg border border-violet-400 bg-violet-100 px-3 py-2 text-xs font-bold">Check the explanation ✓</p></div></div></>}

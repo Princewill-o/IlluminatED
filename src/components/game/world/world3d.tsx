@@ -8,14 +8,16 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 
 import { finishArchitecture } from "./architecture-finish3d";
 import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+import { cinematicRenderer } from "./cinematic-renderer";
+import { CityBroadcast, useCityNews } from "./city-broadcast";
+import { coachModel } from "./coach3d";
+import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
 import { londonEye } from "./london-eye3d";
 import { addStreetscape } from "./streetscape3d";
 export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
-import { coachModel } from "./coach3d";
-import { ukPhase } from "./fx";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
 import { TRAIN_CALL } from "./train-state";
@@ -31,6 +33,7 @@ import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
+import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
@@ -39,6 +42,7 @@ import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVeh
 import { trainFrame } from "@/game/core/train";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
+import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -73,29 +77,18 @@ function bend(m: THREE.Material) {
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
-    sh.vertexShader = sh.vertexShader
-      .replace("#include <common>", "#include <common>\nuniform vec3 uFocus;\nuniform vec2 uBend;")
-      .replace(
-        "#include <project_vertex>",
-        `vec4 mvPosition = vec4( transformed, 1.0 );
-#ifdef USE_INSTANCING
-  mvPosition = instanceMatrix * mvPosition;
-#endif
-vec4 bw = modelMatrix * mvPosition;
-float bz = bw.z - uFocus.z;
-float bx = bw.x - uFocus.x;
-bw.y -= bz * bz * uBend.x + bx * bx * uBend.y;
-mvPosition = viewMatrix * bw;
-gl_Position = projectionMatrix * mvPosition;`,
-      );
+    sh.vertexShader = curvedVertexShader(sh.vertexShader);
   };
   m.needsUpdate = true;
 }
+const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+bend(CURVED_DEPTH);
 const bendAll = (o: THREE.Object3D) =>
   o.traverse((c) => {
     const mesh = c as THREE.Mesh;
     if (!mesh.isMesh) return;
-    mesh.castShadow = true;
+    mesh.castShadow = !(Array.isArray(mesh.material)?mesh.material:[mesh.material]).some(m=>m.transparent||m instanceof THREE.MeshBasicMaterial);
+    mesh.customDepthMaterial = CURVED_DEPTH;
     mesh.receiveShadow = true;
     (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(bend);
   });
@@ -130,11 +123,11 @@ function speechMark() {
 }
 
 // ── Shared materials (soft, matte, Animal Crossing-ish) ──
-const MATS = new Map<string, THREE.MeshLambertMaterial>();
+const MATS = new Map<string, THREE.MeshStandardMaterial>();
 const mat = (c: string) => {
   let m = MATS.get(c);
   if (!m) {
-    m = new THREE.MeshLambertMaterial({ color: c });
+    m = new THREE.MeshStandardMaterial({ color: c, ...physicalSurface(c) });
     bend(m);
     MATS.set(c, m);
   }
@@ -1606,9 +1599,10 @@ export function World3D({
   getHomeAction,
   overview = false,
   quality = "auto",
+  immersive = false,
 }: {
   map: WorldMap;
-  getMe: () => { x: number; y: number; walking: boolean; heading?: number };
+  getMe: () => { x: number; y: number; walking: boolean; heading?: number; speed?: number };
   getOthers: () => Mover3D[];
   avatar: Avatar;
   badge?: string | null;
@@ -1622,12 +1616,16 @@ export function World3D({
   onUnavailable?:()=>void;
   getHomeAction?: () => HomeAction | null;
   overview?: boolean;
-  quality?: "auto" | "low";
+  quality?: VisualQuality;
+  immersive?: boolean;
   getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
-  onGround: (x: number, y: number) => void;
+  onGround?: (x: number, y: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const news = useCityNews();
+  const newsRef = useRef(news.headlines);
+  newsRef.current = news.headlines;
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(1);
   zoomRef.current = zoom;
@@ -1639,6 +1637,8 @@ export function World3D({
   const avatarKey = JSON.stringify(avatar);
   const identityKey = JSON.stringify({ badge, username, affiliation });
 
+  const immersiveRef = useRef(immersive);
+  immersiveRef.current = immersive;
   useEffect(() => {
     const el = host.current;
     if (!el) return;
@@ -1654,16 +1654,10 @@ export function World3D({
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = graphicsBudget(quality === "low", mobile);
-    // Keep a fixed drawing-buffer resolution across camera zoom changes. The
-    // old adaptive path silently lowered image quality during close-up play.
-    const pixelRatio = quality === "low"
-      ? budget.pixelRatio
-      : mobile
-        ? budget.pixelRatio
-        : Math.min(1.25, Math.max(1, window.devicePixelRatio || 1));
-    renderer.setPixelRatio(pixelRatio);
-    // Characters already have inexpensive contact shadows.
-    renderer.shadowMap.enabled = false;
+    const visual = visualProfile(quality,mobile,window.devicePixelRatio||1);
+    renderer.setPixelRatio(visual.pixelRatio);
+    renderer.shadowMap.enabled = visual.shadows;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     el.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
@@ -1683,10 +1677,11 @@ export function World3D({
     const hemi = new THREE.HemisphereLight(phase === "night" ? "#b2c5e0" : phase === "dusk" ? "#f5d3b0" : "#fff4db", phase === "night" ? "#455a57" : "#8e9d7d", phase === "night" ? 1.45 : 1.7);
     scene.add(hemi);
     const sun = new THREE.DirectionalLight(phase === "night" ? "#a7b9d2" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.45 : 1.25);
-    sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.castShadow = visual.shadows;
+    sun.shadow.mapSize.set(visual.shadowSize, visual.shadowSize);
     Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 80 });
-    sun.shadow.bias = -0.0008;
+    sun.shadow.bias = -0.00035;
+    sun.shadow.normalBias = .025;
     sun.shadow.radius = 4;
     scene.add(sun, sun.target);
     if (phase !== "day" && !indoors) {
@@ -1704,6 +1699,10 @@ export function World3D({
       hemi.intensity = 1.9;
       sun.intensity = 1.2;
     }
+
+    let presentation: ReturnType<typeof cinematicRenderer>;
+    try { presentation=cinematicRenderer(renderer,scene,camera,visual); }
+    catch { presentation={render:()=>renderer.render(scene,camera),resize:()=>{},dispose:()=>{}}; }
 
     // ── Build the world ──
     const world = new THREE.Group();
@@ -1942,6 +1941,27 @@ export function World3D({
         }
       }
     }
+    const newsroom = london ? buildLondon().things.find(t => t.kind === "building" && !t.companyId && t.w >= 6 && t.height >= 3) : null;
+    const broadcastCanvas = document.createElement("canvas");
+    broadcastCanvas.width = 768; broadcastCanvas.height = 384;
+    const broadcastTexture = new THREE.CanvasTexture(broadcastCanvas);
+    broadcastTexture.colorSpace = THREE.SRGBColorSpace;
+    const broadcastMaterial = new THREE.MeshBasicMaterial({ map: broadcastTexture, toneMapped: false });
+    if (newsroom && newsroom.kind === "building") {
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(6, newsroom.w - 0.4), 3), broadcastMaterial);
+      screen.position.set(newsroom.x + newsroom.w / 2, 3.2, newsroom.y + newsroom.h + 0.12);
+      bend(broadcastMaterial); world.add(screen);
+    }
+    let nextBroadcast = 0;
+    let nextWeather = 0;
+    const precipitationGeometry = new THREE.BufferGeometry();
+    const precipitationPositions = new Float32Array(180 * 3);
+    precipitationGeometry.setAttribute("position", new THREE.BufferAttribute(precipitationPositions, 3));
+    const precipitationMaterial = new THREE.PointsMaterial({ color: "#dce9ee", size: 0.055, transparent: true, opacity: 0.65, depthWrite: false });
+    const precipitation = new THREE.Points(precipitationGeometry, precipitationMaterial);
+    precipitation.frustumCulled = false; precipitation.visible = false;
+    scene.add(precipitation);
+    let weatherKind = "Sunny";
     const streetscape=london?addStreetscape(world,map,phase):null;
     if(streetscape) {
       bendAll(streetscape);
@@ -2263,10 +2283,11 @@ export function World3D({
       if(gate){const x=gate.rect.x/TILE,z=gate.rect.y/TILE;for(const dx of [-0.3,2.3])box(world,"#d6c8b3",x+dx,0,z-0.5,x+dx+0.2,2.6,z);
       const board=sign("University Quarter",{bg:"#7153b9",fg:"#ffffff",w:3.1,h:0.45});board.position.set(x+1.1,2.5,z);world.add(board);}
     }
-    // ── Clicks: walk to where you tap on the ground ──
+    // Ground selection belongs only to the furniture editor overview.
     const ray = new THREE.Raycaster();
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.1);
     const onClick = (e: MouseEvent) => {
+      if (!overview || !onGround) return;
       const r = renderer.domElement.getBoundingClientRect();
       ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
       const hit = new THREE.Vector3();
@@ -2287,6 +2308,7 @@ export function World3D({
       const w = viewportWidth = el.clientWidth;
       const h = viewportHeight = el.clientHeight;
       renderer.setSize(w, h, false);
+      presentation.resize(w,h);
       renderer.domElement.style.width = `${w}px`;
       renderer.domElement.style.height = `${h}px`;
       camera.aspect = w / Math.max(1, h);
@@ -2303,7 +2325,10 @@ export function World3D({
     let raf = 0;
     let last = performance.now();
     const start = last;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let reduce = motionPreference.matches;
+    const motionChanged = () => {reduce=motionPreference.matches;};
+    motionPreference.addEventListener("change",motionChanged);
     const renderDue = frameBudget(60);
     const frame = (now: number) => {
       if (document.hidden) {
@@ -2315,9 +2340,48 @@ export function World3D({
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
+      if (newsroom && now >= nextBroadcast) {
+        nextBroadcast = now + (reduce ? 8_000 : 250);
+        const ctx = broadcastCanvas.getContext("2d")!;
+        ctx.fillStyle = "#11283a"; ctx.fillRect(0, 0, 768, 384);
+        ctx.fillStyle = "#be343e"; ctx.fillRect(0, 0, 768, 68);
+        ctx.fillStyle = "#ffffff"; ctx.font = "bold 30px sans-serif";
+        ctx.fillText("ILLUMINATED CITY · NEWSROOM", 24, 45);
+        const headlines = newsRef.current;
+        const headline = headlines[Math.floor(now / 12_000) % Math.max(1, headlines.length)];
+        ctx.font = "bold 29px sans-serif";
+        const words = (headline?.title ?? "Welcome to IlluminatED City. Explore offices, learn skills and meet other players.").split(" ");
+        let line = "", y = 125;
+        for (const word of words) {
+          if (ctx.measureText(`${line} ${word}`).width > 710) { ctx.fillText(line, 24, y); y += 42; line = word; } else line += `${line ? " " : ""}${word}`;
+        }
+        ctx.fillText(line, 24, y);
+        ctx.fillStyle = "#f2d9a6"; ctx.font = "22px sans-serif";
+        ctx.fillText(headline ? "Source: GOV.UK · Open city broadcast for full story" : "CITY ANNOUNCEMENT", 24, 330);
+        ctx.fillStyle = "#55c3a2";
+        ctx.fillRect(0, 372, reduce ? 768 : (now % 12_000) / 12_000 * 768, 12);
+        broadcastTexture.needsUpdate = true;
+      }
       const p = getMe();
       const mx = p.x / TILE;
       const mz = p.y / TILE;
+      if (!indoors && now >= nextWeather) {
+        nextWeather = now + 10_000;
+        weatherKind = weatherAt(new Date()).kind;
+        precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
+        precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
+        sun.intensity = phase === "night" ? 0.45 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
+        if (scene.fog instanceof THREE.Fog) { scene.fog.near = weatherKind === "Fog" ? 18 : 34; scene.fog.far = weatherKind === "Fog" ? 46 : 70; }
+      }
+      if (precipitation.visible) {
+        const speed = weatherKind === "Snow" ? 1.2 : 8;
+        for (let i = 0; i < 180; i++) {
+          precipitationPositions[i * 3] = mx + ((i * 7.13 + secs * 0.4) % 24) - 12;
+          precipitationPositions[i * 3 + 1] = 12 - ((secs * speed + i * 0.37) % 12);
+          precipitationPositions[i * 3 + 2] = mz + ((i * 3.71) % 24) - 12;
+        }
+        precipitationGeometry.attributes.position.needsUpdate = true;
+      }
       if (lampLights.length && now >= nextLampUpdate) {
         nextLampUpdate = now + 500;
         const nearest = [...lamps].sort((a, b) =>
@@ -2386,6 +2450,8 @@ export function World3D({
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
+      const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
+      camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
       if (overview) {
         const fit = Math.max(1, 1.25 / camera.aspect);
         camera.fov = 35;
@@ -2714,7 +2780,7 @@ export function World3D({
         }
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
-      renderer.render(scene, camera);
+      presentation.render();
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -2727,6 +2793,7 @@ export function World3D({
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
+        if(m.isMesh&&m.castShadow)m.customDepthMaterial=CURVED_DEPTH;
         if (!m.isMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
@@ -2746,6 +2813,7 @@ export function World3D({
             mesh.setMatrixAt(i, source.matrixWorld);
             source.parent?.remove(source);
           });
+          mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=CURVED_DEPTH;
           mesh.computeBoundingSphere();
           scene.add(mesh);
         }
@@ -2768,7 +2836,12 @@ export function World3D({
       renderer.domElement.removeEventListener("wheel",onWheel);
       window.removeEventListener("illuminated:fight", onFight);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
+      presentation.dispose();
+      motionPreference.removeEventListener("change",motionChanged);
+      sun.shadow.map?.dispose();
       renderer.dispose();
+      broadcastTexture.dispose(); broadcastMaterial.dispose();
+      precipitationGeometry.dispose(); precipitationMaterial.dispose();
       river.dispose();
       disposeGroundStyle();
       disposeArchitecture();
@@ -2825,5 +2898,5 @@ export function World3D({
     <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
     <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
     <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>
-  </div>}</>;
+  </div>}{!overview && map.art === "london" && <CityBroadcast {...news} />}</>;
 }

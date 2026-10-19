@@ -410,7 +410,12 @@ export function useWorld({
           Math.max(250, Math.min(30000, lease.rotateAt! - Date.now() + 100)),
         );
       } catch {
-        stop(navigator.onLine ? "error" : "offline");
+        if (!navigator.onLine) { stop("offline"); return; }
+        // Network and admission timeouts are temporary. Keep retrying instead
+        // of permanently blocking the room until the whole view is remounted.
+        setStatus(navigator.onLine ? "reconnecting" : "offline");
+        clearTimeout(renewal);
+        renewal = setTimeout(() => void refresh(), 5_000);
       } finally {
         connecting = false;
       }

@@ -3,6 +3,27 @@ import test from "node:test";
 import { worldHarness, playerId, flush } from "./helpers/world-harness.mjs";
 import { projectData } from "../scripts/lib/project-data.mjs";
 
+test("temporary admission failure retries and joins without remounting", async () => {
+  let calls = 0;
+  const h = worldHarness({ claim: async () => {
+    if (++calls === 1) throw new Error("temporary timeout");
+    return { accepted: true, topic: "world:room:city:lse-1:retry", expiresAt: 1800000090000, rotateAt: 1800000060000 };
+  } });
+  await flush();
+  assert.ok(h.statuses.includes("reconnecting"));
+  await h.advance(5000);
+  assert.equal(h.channels.length, 1);
+  assert.equal(h.channels[0].state, "joined");
+  h.dispose();
+});
+
+test("regional matchmaking never spills players into a different region", () => {
+  const W = projectData("src/game/core/world.ts");
+  const full = Object.fromEntries(W.SERVERS.map(s => [s.id, W.SERVER_CAPACITY]));
+  assert.equal(W.pickServer("scot", full).region, "scot");
+  assert.equal(W.pickServer("north", {}).region, "north");
+});
+
 test("admission refusal never opens a channel or sends movement/chat", async () => {
   for (const reason of ["room_full", "service_busy", "already_connected"]) {
     const h = worldHarness({
@@ -35,7 +56,7 @@ test("missing admission service fails closed and late replies cannot resurrect a
   });
   await flush();
   assert.equal(h.channels.length, 0);
-  assert.ok(h.statuses.includes("error"));
+  assert.ok(h.statuses.includes("reconnecting"));
   h.dispose();
   let finish;
   const late = worldHarness({

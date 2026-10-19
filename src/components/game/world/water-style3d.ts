@@ -32,6 +32,6 @@ export function riverSurface(phase: "day" | "dusk" | "night", cols: number, rows
   texture.colorSpace=THREE.SRGBColorSpace;
   texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
   texture.repeat.set(cols/9,rows/9);
-  const material=new THREE.MeshLambertMaterial({color:phase==="night"?"#63848b":"#a3c7bf",map:texture});
+  const material=new THREE.MeshStandardMaterial({roughness:.3,metalness:.12,envMapIntensity:.65,color:phase==="night"?"#63848b":"#a3c7bf",map:texture});
   return {material,texture,dispose:()=>{texture.dispose();material.dispose();}};
 }
