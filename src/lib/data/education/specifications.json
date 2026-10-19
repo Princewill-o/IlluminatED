@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-18T09:56:42.109Z",
+  "generatedAt": "2026-10-19T10:54:22.652Z",
   "items": [
     {
       "courseId": "gcse-maths",
       "board": "AQA",
       "code": "8300",
       "url": "https://www.aqa.org.uk/subjects/mathematics/gcse/mathematics-8300/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 7,
       "sectionPagesExpected": 7,
       "sections": [
@@ -327,7 +327,7 @@
       "board": "AQA",
       "code": "8461",
       "url": "https://www.aqa.org.uk/subjects/biology/gcse/biology-8461/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 9,
       "sectionPagesExpected": 9,
       "sections": [
@@ -968,7 +968,7 @@
       "board": "AQA",
       "code": "8462",
       "url": "https://www.aqa.org.uk/subjects/chemistry/gcse/chemistry-8462/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 12,
       "sectionPagesExpected": 12,
       "sections": [
@@ -1804,7 +1804,7 @@
       "board": "AQA",
       "code": "8463",
       "url": "https://www.aqa.org.uk/subjects/physics/gcse/physics-8463/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 10,
       "sectionPagesExpected": 10,
       "sections": [
@@ -2455,7 +2455,7 @@
       "board": "AQA",
       "code": "8145",
       "url": "https://www.aqa.org.uk/subjects/history/gcse/history-8145/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -2866,7 +2866,7 @@
       "board": "AQA",
       "code": "8035",
       "url": "https://www.aqa.org.uk/subjects/geography/gcse/geography-8035/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 5,
       "sectionPagesExpected": 5,
       "sections": [
@@ -3052,7 +3052,7 @@
       "board": "AQA",
       "code": "7357",
       "url": "https://www.aqa.org.uk/subjects/mathematics/a-level/mathematics-7357/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 22,
       "sectionPagesExpected": 22,
       "sections": [
@@ -3188,7 +3188,7 @@
       "board": "AQA",
       "code": "7402",
       "url": "https://www.aqa.org.uk/subjects/biology/a-level/biology-7402/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 9,
       "sectionPagesExpected": 9,
       "sections": [
@@ -3549,7 +3549,7 @@
       "board": "AQA",
       "code": "7405",
       "url": "https://www.aqa.org.uk/subjects/chemistry/a-level/chemistry-7405/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -4150,7 +4150,7 @@
       "board": "AQA",
       "code": "7408",
       "url": "https://www.aqa.org.uk/subjects/physics/a-level/physics-7408/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 14,
       "sectionPagesExpected": 14,
       "sections": [
@@ -5131,7 +5131,7 @@
       "board": "AQA",
       "code": "7182",
       "url": "https://www.aqa.org.uk/subjects/psychology/a-level/psychology-7182/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -5257,7 +5257,7 @@
       "board": "AQA",
       "code": "7712 (A)",
       "url": "https://www.aqa.org.uk/subjects/english/a-level/english-7712/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -5378,7 +5378,7 @@
       "board": "AQA",
       "code": "7136",
       "url": "https://www.aqa.org.uk/subjects/economics/a-level/economics-7136/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 3,
       "sectionPagesExpected": 3,
       "sections": [
@@ -5864,7 +5864,7 @@
       "board": "AQA",
       "code": "8700",
       "url": "https://www.aqa.org.uk/subjects/english/gcse/english-8700/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 3,
       "sectionPagesExpected": 3,
       "sections": [
@@ -5895,7 +5895,7 @@
       "board": "AQA",
       "code": "8702",
       "url": "https://www.aqa.org.uk/subjects/english/gcse/english-8702/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -5966,7 +5966,7 @@
       "board": "AQA",
       "code": "8525",
       "url": "https://www.aqa.org.uk/subjects/computer-science/gcse/computer-science-8525/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 9,
       "sectionPagesExpected": 9,
       "sections": [
@@ -6192,7 +6192,7 @@
       "board": "AQA",
       "code": "7367",
       "url": "https://www.aqa.org.uk/subjects/mathematics/a-level/mathematics-7367/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 6,
       "sectionPagesExpected": 6,
       "sections": [
@@ -6393,7 +6393,7 @@
       "board": "AQA",
       "code": "7042",
       "url": "https://www.aqa.org.uk/subjects/history/a-level/history-7042/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 33,
       "sectionPagesExpected": 33,
       "sections": [
@@ -7724,7 +7724,7 @@
       "board": "AQA",
       "code": "8464",
       "url": "https://www.aqa.org.uk/subjects/science/gcse/science-8464/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
@@ -9275,7 +9275,7 @@
       "board": "AQA",
       "code": "7517",
       "url": "https://www.aqa.org.uk/subjects/computer-science/a-level/computer-science-7517/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 15,
       "sectionPagesExpected": 15,
       "sections": [
@@ -10461,7 +10461,7 @@
       "board": "AQA",
       "code": "7717",
       "url": "https://www.aqa.org.uk/subjects/english/a-level/english-7717/specification",
-      "checkedAt": "2026-10-18T09:56:42.109Z",
+      "checkedAt": "2026-10-19T10:54:22.652Z",
       "pagesChecked": 4,
       "sectionPagesExpected": 4,
       "sections": [
