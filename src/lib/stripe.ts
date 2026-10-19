@@ -34,4 +34,22 @@ export function getStripe(): Stripe | null {
 export const PREMIUM_PRICE_ID =
   process.env.STRIPE_PREMIUM_PRICE_ID?.trim() || "";
 
+export type PaidTier = "plus" | "plus_experience";
+export type BillingCadence = "month" | "year";
+const SUBSCRIPTION_PRICES: Record<PaidTier, Record<BillingCadence, string>> = {
+  plus: {
+    month: PREMIUM_PRICE_ID,
+    year: process.env.STRIPE_PLUS_ANNUAL_PRICE_ID?.trim() || "",
+  },
+  plus_experience: {
+    month: process.env.STRIPE_PLUS_EXPERIENCE_PRICE_ID?.trim() || "",
+    year: process.env.STRIPE_PLUS_EXPERIENCE_ANNUAL_PRICE_ID?.trim() || "",
+  },
+};
+export const subscriptionPriceId = (tier: PaidTier, cadence: BillingCadence) => SUBSCRIPTION_PRICES[tier][cadence];
+export const subscriptionPriceTier = (priceId: string) => (Object.entries(SUBSCRIPTION_PRICES).flatMap(([tier, prices]) => Object.values(prices).map(id => [id, tier] as const)).find(([id]) => id && id === priceId)?.[1] as PaidTier | undefined);
+export const subscriptionCheckoutReady = (tier: PaidTier, cadence: BillingCadence) => Boolean(
+  SECRET_KEY && SUBSCRIPTION_PRICES[tier][cadence] && process.env.BILLING_CALLBACK_SECRET && process.env.STRIPE_WEBHOOK_SECRET && (!stripeLive || process.env.HF_TOKEN),
+);
+
 export const premiumEnabled = Boolean(SECRET_KEY && PREMIUM_PRICE_ID && process.env.BILLING_CALLBACK_SECRET && process.env.STRIPE_WEBHOOK_SECRET && (!stripeLive || process.env.HF_TOKEN));

@@ -1418,7 +1418,13 @@ export function World3D({
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = graphicsBudget(quality === "low", mobile);
-    let pixelRatio = budget.pixelRatio;
+    // Keep a fixed drawing-buffer resolution across camera zoom changes. The
+    // old adaptive path silently lowered image quality during close-up play.
+    const pixelRatio = quality === "low"
+      ? budget.pixelRatio
+      : mobile
+        ? budget.pixelRatio
+        : Math.min(1.25, Math.max(1, window.devicePixelRatio || 1));
     renderer.setPixelRatio(pixelRatio);
     // Characters already have inexpensive contact shadows.
     renderer.shadowMap.enabled = false;
@@ -1960,6 +1966,7 @@ export function World3D({
 
     // A responding car and its officers are tied to the actual pursuit simulation.
     const responseCar = new THREE.Group();
+    let wasTased = false;
     const responders = london || highland ? [makeBody({...npcLook(51),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(52),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
     if (london || highland) {
       void placeCar(responseCar, "police");
@@ -1983,6 +1990,21 @@ export function World3D({
       const caption=sign(["Subject guide","Events ambassador","Networking mentor"][i%3],{bg:"#ffffff",fg:"#13203a",w:2.5,h:0.35});
       caption.position.set(x,1.9,z);world.add(caption);
       box(world,["#b7d8f1","#d8c7f2","#bce0bd"][i%3],x-1,0,z-1.3,x+1,0.65,z-0.7);
+    }
+    let guideIndex = 0;
+    for (const portal of map.portals) {
+      if (portal.to.kind !== "guide" && portal.to.kind !== "bank") continue;
+      const role = portal.to.kind === "bank" ? "Bank adviser" : portal.to.guide === "careers" ? "Careers adviser" : portal.to.guide === "study" ? "Study mentor" : "Station staff";
+      const body = makeBody(npcLook(72 + guideIndex), null, true);
+      const x = (portal.rect.x + portal.rect.w / 2) / TILE;
+      const z = portal.rect.y / TILE - 0.65;
+      body.root.position.set(x, 0, z);
+      body.char?.play("wave");
+      scene.add(body.root);
+      const caption = sign(role, { bg: "#f8f2e5", fg: "#17233a", w: 2.25, h: 0.34 });
+      caption.position.set(x, 1.95, z);
+      world.add(caption);
+      guideIndex++;
     }
     if(map.id === "city") {
       const gate=map.portals.find(p=>p.id === "universities");
@@ -2028,7 +2050,6 @@ export function World3D({
     let last = performance.now();
     const start = last;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    let slowFrames = 0;
     const renderDue = frameBudget(60);
     const frame = (now: number) => {
       if (document.hidden) {
@@ -2037,13 +2058,6 @@ export function World3D({
         return;
       }
       if (!renderDue(now)) { raf = requestAnimationFrame(frame); return; }
-      // Reduce resolution when sustained frame times exceed the 60fps budget.
-      slowFrames = now - last > 22 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
-      if (slowFrames >= 90 && pixelRatio > 0.5) {
-        pixelRatio = Math.max(0.5, pixelRatio - 0.1);
-        renderer.setPixelRatio(pixelRatio);
-        slowFrames = 0;
-      }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
@@ -2199,6 +2213,10 @@ export function World3D({
         }
 
       const pursuit = getPolice?.();
+      const tased = pursuit?.stage === "tased";
+      if (tased && !wasTased) me.char?.play("die");
+      if (!tased && wasTased) me.char?.play("idle");
+      wasTased = Boolean(tased);
       responseCar.visible = !!pursuit && (london || highland);
       if (pursuit && (london || highland)) {
         const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;

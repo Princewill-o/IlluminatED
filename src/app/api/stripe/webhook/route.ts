@@ -4,7 +4,7 @@ import { type SupabaseClient, createClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 
 import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/social/config";
-import { PREMIUM_PRICE_ID, getStripe, stripeLive } from "@/lib/stripe";
+import { getStripe, stripeLive, subscriptionPriceTier, type PaidTier } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,8 +30,8 @@ async function syncSubscription(
     return false;
   }
   const items = sub.items?.data ?? [];
-  const isPremiumPrice = items.some((i) => i.price?.id === PREMIUM_PRICE_ID);
-  if (!isPremiumPrice) return true; // Some other product: leave the plan alone.
+  const tier = items.map((item) => item.price?.id ? subscriptionPriceTier(item.price.id) : undefined).find((candidate): candidate is PaidTier => Boolean(candidate));
+  if (!tier) return true; // A different Stripe product never grants learner access.
 
   const periodEnd = items
     .map((i) => i.current_period_end)
@@ -50,6 +50,7 @@ async function syncSubscription(
     p_trial_end: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null,
     p_cancel: sub.cancel_at_period_end,
     p_paid_at: paidAt ? new Date(paidAt * 1000).toISOString() : null,
+    p_tier: tier,
     p_secret: callbackSecret,
   });
   if (error || recorded !== true) {

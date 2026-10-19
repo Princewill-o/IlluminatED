@@ -9,6 +9,7 @@ import { FURNITURE, HOMES, validLayout } from "@/game/core/homes";
 import { newSeed } from "@/game/core/rng";
 import { issueCareerReceipt, readCareerReceipt } from "@/lib/game/career-receipt";
 import { getSupabase } from "@/lib/social/server";
+import { stripeLive } from "@/lib/stripe";
 
 const FRIENDLY: Record<string, string> = {
   overlap: "That furniture overlaps another item.",
@@ -21,6 +22,7 @@ const FRIENDLY: Record<string, string> = {
   too_fast: "That shift was a bit quick to be real. Take your time on each task.",
   rate_limited: "Take a short break between shifts (45 seconds).",
   not_enough_clout: "Not enough Clout yet. Work a few shifts to earn more!",
+  career_subscription_required: "Plus+ Experience is required to complete simulated workplace activities. Explore workplaces for free and compare plans at /pricing.",
   unknown_item: "That item isn't for sale.",
   too_many: "You've got plenty of those already.",
   not_owned: "You need to buy that first.",
@@ -47,6 +49,9 @@ export async function startCareerSession(workplace: string, mode: "shift" | "int
   const sb = await getSupabase();
   const {data:auth} = sb ? await sb.auth.getUser() : {data:null};
   if (!sb || !auth?.user) return {ok:false as const,error:FRIENDLY.not_allowed};
+  const { data: subscription } = await sb.from("billing_accounts").select("tier,status,period_end").eq("user_id", auth.user.id).eq("livemode", stripeLive).maybeSingle();
+  if (subscription?.tier !== "plus_experience" || !["active", "trialing", "past_due"].includes(subscription.status) || subscription.period_end && Date.parse(subscription.period_end) <= Date.now())
+    return {ok:false as const,error:FRIENDLY.career_subscription_required};
   const readiness = await sb.rpc("career_verified_ready", {p_secret:secret});
   if (readiness.error || readiness.data !== true) return {ok:false as const,error:"Verified career rewards are being prepared. Subject practice is still available."};
   let role = WORKPLACES.find(w => w.id === workplace)!.roles[0].id;

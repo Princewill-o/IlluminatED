@@ -11,7 +11,7 @@ export interface Pursuit {
   car: Point;
   route: Point[];
   officers: Point[];
-  stage: "arriving" | "chasing" | "challenge";
+  stage: "arriving" | "chasing" | "tased" | "challenge";
   outsideSince: number | null;
   escaped: boolean;
 }
@@ -114,7 +114,7 @@ export function tickPursuit(
   now: number,
   dt: number,
 ): Pursuit {
-  if (state.stage === "challenge" || state.escaped) return state;
+  if (state.stage === "tased" || state.stage === "challenge" || state.escaped) return state;
   const outside =
     Math.hypot(player.x - state.origin.x, player.y - state.origin.y) >
     state.radius;
@@ -170,15 +170,14 @@ export function tickPursuit(
       );
     return at;
   });
+  const caught = officers.some(
+    (p) => Math.hypot(p.x - player.x, p.y - player.y) < TILE * 0.8,
+  );
   return {
     ...state,
     officers,
     outsideSince,
-    stage: officers.some(
-      (p) => Math.hypot(p.x - player.x, p.y - player.y) < TILE * 0.8,
-    )
-      ? "challenge"
-      : "chasing",
+    stage: caught ? "tased" : "chasing",
   };
 }
 export const POLICE_QUESTIONS = [

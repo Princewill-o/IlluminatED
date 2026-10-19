@@ -48,7 +48,9 @@ export type PortalTarget =
   | { kind: "games" }
   | { kind: "dealer" }
   | { kind: "shop"; shop: "tescow" | "bootz" }
-  | { kind: "doctor" };
+  | { kind: "doctor" }
+  | { kind: "bank" }
+  | { kind: "guide"; guide: "careers" | "study" | "transport" };
 
 export interface Portal {
   id: string;
@@ -377,6 +379,7 @@ export function campusMap(orgs: OfficeOrg[]): WorldMap {
   portals.push(
     { id: "to-city", rect: px(0, 17, 2, 2), label: "Back to London", to: { kind: "map", mapId: "city", label: "London" } },
     { id: "employers", rect: px(cols - 2, 17, 2, 2), label: "Employers: get your own office", to: { kind: "link", href: "/employers" } },
+    { id: "career-adviser", rect: px(mid - 1, 19, 2, 1), label: "Talk to the careers adviser", to: { kind: "guide", guide: "careers" } },
   );
   return finish(
     {
@@ -503,6 +506,7 @@ export function londonMap(): WorldMap {
       portals.push({id:th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.label ?? "Explore district",to:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
     }
     if (th.kind === "building" && /^hotel-[01]$/.test(th.id)) portals.push({id:th.id,rect:px(th.x+2,th.y+th.h,2,1),label:`Enter ${th.label}`,to:{kind:"map",mapId:th.id,label:th.label ?? "Hotel"}});
+    if (th.kind === "building" && th.id === "district-bank") portals.push({id:"city-bank",rect:px(th.x+Math.floor(th.w/2)-1,th.y+th.h,2,1),label:"Thames & Co Bank: loans and repayments",to:{kind:"bank"}});
     if (th.kind === "building" && th.companyId) {
       const c = COMPANIES.find((k) => k.id === th.companyId)!;
       const w = WORKPLACES.find((k) => k.companyId === c.id);
@@ -644,6 +648,7 @@ export function stationMap(stationId: string): WorldMap | null {
       structures: [],
       portals: [
         { id: "way-out", rect: px(13, 1, 4, 1), label: "Way out to the street", to: { kind: "map", mapId: "city", label: "London" } },
+        { id: "station-assistant", rect: px(6, 4, 2, 1), label: "Ask station staff about trains", to: { kind: "guide", guide: "transport" } },
         { id: "board", rect: px(3, 14, 24, 1), label: "Board the train", to: { kind: "tube", station: st.id } },
       ],
       rooms: [],
@@ -755,8 +760,8 @@ export function studyLobbyMap(): WorldMap {
   for(const [x,y] of [[1,1],[24,1],[1,20],[24,20]])g.set(x,y,"p");
   return finish({id:"study-lobby",kind:"office",name:"Study Quarter",structures:[],portals:[
     {id:"lobby-games",rect:px(11,3,4,2),label:"Games table: play with friends",to:{kind:"games"}},
-    {id:"lobby-study",rect:px(3,17,3,2),label:"Study desks: choose a subject",to:{kind:"study-room"}},
-    {id:"lobby-careers",rect:px(20,17,3,2),label:"Careers desk: simulated work experience",to:{kind:"link",href:"/games/careers"}},
+    {id:"lobby-study",rect:px(3,17,3,2),label:"Ask the study mentor: choose a subject",to:{kind:"guide",guide:"study"}},
+    {id:"lobby-careers",rect:px(20,17,3,2),label:"Ask the careers adviser about simulations",to:{kind:"guide",guide:"careers"}},
     {id:"lobby-awards",rect:px(4,5,2,2),label:"Awards cabinet: your learning milestones",to:{kind:"awards"}},
     {id:"lobby-exit",rect:px(11,20,4,1),label:"Back to Study Quarter",to:{kind:"map",mapId:"city",label:"London"}},
   ],rooms:[{name:"Study desks · choose a subject and earn XP",rect:px(1,15,7,5)},{name:"Careers desk · practise workplace skills",rect:px(18,15,7,5)}],spawn:centre(13,14),accent:"#2b5fd9",sign:{x:13,y:6,text:"Study Quarter · learn, work, grow"}},g);

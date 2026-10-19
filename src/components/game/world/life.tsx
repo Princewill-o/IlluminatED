@@ -4,6 +4,8 @@ import { useState, useTransition } from "react";
 
 import { BookOpenCheck, Gavel, Pill, ShoppingBasket, Siren, Star, X } from "lucide-react";
 
+import { CutsceneBrand } from "./cutscene-brand";
+
 import { buyWorldItem } from "@/app/games/world/actions";
 import { SHOP, type ShopItem, acquittalChance, sentenceMs } from "@/game/core/law";
 import { cn } from "@/lib/utils";
@@ -80,11 +82,12 @@ export function WantedStars({ stars }: { stars: number }) {
 /** Blue lights: the police have caught up with you. */
 export function ArrestOverlay() {
   return (
-    <div className="arrest-flash pointer-events-none absolute inset-0 z-[100006] grid place-items-center" role="alert">
-      <div className="rounded-3xl bg-[#13203a] px-6 py-4 text-center text-white shadow-2xl">
-        <Siren className="mx-auto size-10 text-[#6bc6ff]" aria-hidden />
-        <p className="mt-2 text-2xl font-black">Police! You&apos;re under arrest.</p>
-        <p className="text-sm text-white/70">You&apos;re being taken to the Crown Court for a hearing.</p>
+    <div className="arrest-flash pointer-events-none absolute inset-0 z-[100006] grid place-items-center bg-[#142235]/20" role="alert">
+      <div className="rounded-3xl border border-white/30 bg-[#13203a] px-7 py-6 text-center text-white shadow-2xl">
+        <div className="flex justify-center"><CutsceneBrand kind="police"/></div>
+        <div className="relative mx-auto mt-5 grid size-16 place-items-center rounded-full bg-[#154d91] text-white"><Siren className="size-9" aria-hidden/><span className="absolute -inset-1 animate-ping rounded-full border-2 border-[#6bc6ff]/70"/></div>
+        <p className="mt-4 text-2xl font-black">Taser stop. You&apos;re under arrest.</p>
+        <p className="mt-2 text-sm text-white/75">You are stunned briefly while officers secure the scene.</p>
       </div>
     </div>
   );

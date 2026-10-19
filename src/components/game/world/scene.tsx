@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
 
-import { TubeBadge } from "./tube-map";
+import { CutsceneBrand, sceneBrandFor } from "./cutscene-brand";
 
 /**
  * Motion-graphic scene change: two blue panels sweep in, the hexagon badge spins
@@ -17,9 +17,7 @@ export function SceneWipe({ show, label }: { show: boolean; label: string }) {
       <div className={`scene-panel scene-panel-b ${show ? "scene-in" : ""}`} />
       <div className={`scene-title absolute inset-0 grid place-items-center ${show ? "scene-title-in" : ""}`}>
         <div className="flex items-center gap-3 rounded-2xl bg-[#f6f2e8] px-5 py-3 shadow-xl">
-          <span className="scene-badge">
-            <TubeBadge size={34} />
-          </span>
+          <span className="scene-badge"><CutsceneBrand kind={sceneBrandFor(label)} compact /></span>
           <span className="text-xl font-black text-[#13203a]">{label}</span>
         </div>
       </div>
@@ -85,7 +83,7 @@ const STEPS = [
   {
     icon: Siren,
     title: "Actions have game consequences",
-    body: "Road violations, collisions and scuffles earn wanted stars, and police may respond. Leave the red search area for six seconds to escape; if caught, a knowledge challenge gives you a chance to avoid court.",
+    body: "Road violations, collisions and scuffles earn wanted stars. Police can stop you with a taser; serious offences may bring a direct trip to prison. Lower wanted levels get a knowledge challenge.",
     hint: "In prison, cells are open: study, use completed homework, talk to inmates or find the service-maze exit. Guards add time if they catch you.",
   },
   {

@@ -10,11 +10,14 @@ import { BookOpen, CarFront, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
+import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
+import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
+import { PoliceTransportCutscene } from "./police-transport-cutscene";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import { SceneMusic } from "./scene-music";
 import { TRAIN_CALL } from "./train-state";
@@ -37,7 +40,7 @@ const HomeEditor = dynamic(() => import("../../careers/home-editor").then(module
 
 const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
 
-import { earnWorldXp } from "@/app/games/world/actions";
+import { earnWorldXp, worldBankStatus } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import type { LearningAward } from "@/game/core/awards";
@@ -139,8 +142,10 @@ export function WorldApp({
   awards = [],
   wantedResetToken,
   initialBuild = false,
+  developerTeleport = false,
 }: {
   initialBuild?: boolean;
+  developerTeleport?: boolean;
   studyCourses?: { id: string; title: string; level: string }[];
   awards?: LearningAward[];
   /** Homework you've handed in: each one is a get-out-of-jail-free card. */
@@ -201,6 +206,23 @@ export function WorldApp({
   const [games, setGames] = useState(false);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
+  const [bankOpen, setBankOpen] = useState(false);
+  const [bankLoan, setBankLoan] = useState<BankLoan>({ balance: 0, status: "none" });
+  const [gameDate, setGameDate] = useState(() => new Date());
+  const bankCourtSeen = useRef(false);
+  useEffect(() => {
+    const key = `illuminated:game-clock:${me.id}`;
+    let anchorReal = Date.now(), anchorGame = anchorReal;
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) ?? "null");
+      if (Number.isFinite(saved?.real) && Number.isFinite(saved?.game)) { anchorReal = saved.real; anchorGame = saved.game; }
+      else localStorage.setItem(key, JSON.stringify({ real: anchorReal, game: anchorGame }));
+    } catch { /* Keep the accelerated clock running for this session. */ }
+    const updateClock = () => setGameDate(new Date(anchorGame + (Date.now() - anchorReal) * 96));
+    updateClock();
+    const timer = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(timer);
+  }, [me.id]);
   const [dealer, setDealer] = useState(false);
   const boardedStation = useRef<string | null>(null);
   const [homeAction, setHomeAction] = useState<HomeAction | null>(null);
@@ -242,6 +264,8 @@ export function WorldApp({
   useEffect(() => () => { if (arrestTimer.current) clearTimeout(arrestTimer.current); }, []);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("phone") === "1") setPhone(true); }, []);
   const [arrest, setArrest] = useState(false);
+  const [policeTransport, setPoliceTransport] = useState(false);
+  const transportStars = useRef(4);
   const { life, update: updateLife } = useLife(me.id,wantedResetToken);
   const { needs } = useNeeds();
   const [nearPerson, setNearPerson] = useState(false);
@@ -350,7 +374,7 @@ export function WorldApp({
     setDriving(null);
     setGames(false); setPhone(false); setStudy(false); setInmate(null); setLearning(false); setAwardsOpen(false);
     setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false);
-    setDealer(false); setDock(false); setDesk(false);
+    setDealer(false); setDock(false); setDesk(false); setBankOpen(false);
     setSceneName(label);
     setFading(true);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
@@ -361,6 +385,56 @@ export function WorldApp({
       fadeTimer.current = setTimeout(() => setFading(false), 550);
     }, 430);
   }, [offices, me.id]);
+
+  const teleportDestinations: TeleportDestination[] = useMemo(() => {
+    const places: TeleportDestination[] = [
+      { id: "westminster", label: "London · Westminster", mapId: "city", x: 23, y: 31 },
+      { id: "city", label: "London · City centre", mapId: "city", x: 34, y: 26 },
+      { id: "eye", label: "London · South Bank", mapId: "city", x: 33, y: 43 },
+      { id: "careers", label: "London · Career District", mapId: "city", x: 70, y: 18 },
+      { id: "bank", label: "London · Thames & Co Bank", mapId: "city", x: 169, y: 36 },
+      { id: "riverside", label: "London · Riverside Campus", mapId: "city", x: 146, y: 23 },
+      { id: "wharf", label: "London · Wharf Gardens", mapId: "city", x: 146, y: 80 },
+      { id: "mews", label: "London · Primrose Mews", mapId: "city", x: 30, y: 119 },
+      { id: "orchard", label: "London · Orchard Commons", mapId: "city", x: 93, y: 97 },
+      { id: "conservatory", label: "London · Conservatory Quarter", mapId: "city", x: 151, y: 128 },
+      { id: "campus", label: "Careers Campus", mapId: "campus", x: 10, y: 10 },
+      { id: "universities", label: "University Quarter", mapId: "universities", x: 15, y: 9 },
+      { id: "study", label: "Study Quarter", mapId: "study-lobby", x: 10, y: 10 },
+      { id: "home", label: "Your home", mapId: "home", x: 10, y: 10 },
+      { id: "hospital", label: "St Tomas’ Hospital", mapId: "hospital", x: 13, y: 8 },
+      { id: "court", label: "Crown Court", mapId: "court", x: 11, y: 8 },
+      { id: "prison", label: "HMP Thames", mapId: "prison", x: 15, y: 12 },
+      ...offices.map(office => ({ id: `office-${office.slug}`, label: `${office.name} · Office`, mapId: `office-${office.slug}`, x: 10, y: 10 })),
+      ...WORKPLACES.map(workplace => ({ id: `workplace-${workplace.id}`, label: `${workplace.name} · Workplace`, mapId: `workplace-${workplace.id}`, x: 10, y: 10 })),
+      ...CITY.portals.filter(portal => portal.to.kind === "map" && portal.to.mapId.startsWith("station-")).map(portal => portal.to.kind === "map" ? ({ id: portal.to.mapId, label: `${portal.label} · Station`, mapId: portal.to.mapId, x: 14, y: 3 }) : null).filter((place): place is TeleportDestination => place !== null),
+    ];
+    return places;
+  }, [offices]);
+
+  useEffect(() => {
+    if (life.hearing && mapId !== "court" && !fading) goTo("court", "Crown Court");
+  }, [life.hearing, mapId, fading, goTo]);
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const loan = await worldBankStatus();
+      if (!loan || !active) return;
+      setBankLoan(loan);
+      if (loan.status === "court" && !bankCourtSeen.current && !life.bankCourtSeen && !life.hearing) {
+        bankCourtSeen.current = true;
+        const charge = `Failure to repay a ${loan.principal ?? loan.balance} Clout bank loan`;
+        updateLife(current => ({ ...current, bankCourtSeen: true, hearing: { stars: 1, charge } }));
+        setBankOpen(false);
+        goTo("court", "Crown Court");
+        say("The bank has referred your overdue loan to Crown Court.", true);
+      }
+    };
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 10_000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [life.bankCourtSeen, life.hearing, updateLife, goTo, say]);
 
   const onPortal = useCallback(
     (portal: Portal) => {
@@ -377,6 +451,13 @@ export function WorldApp({
         return;
       }
       if (jailed && to.kind !== "prison") { say("Find the study desk or explore the prison first."); return; }
+      if (to.kind === "guide") {
+        if (to.guide === "study") setLearning(true);
+        else if (to.guide === "transport") setTube(map.id.slice("station-".length));
+        else router.push("/games/careers");
+        return;
+      }
+      if (to.kind === "bank") { setBankOpen(true); return; }
       if (to.kind === "study-room") { setLearning(true); return; }
       if (to.kind === "awards") { setAwardsOpen(true); return; }
       if (to.kind === "prison") {
@@ -458,11 +539,12 @@ export function WorldApp({
     }
   }, [needs, life.sick, updateLife, say]);
 
-  // Spatial pursuit: actual car arrival, foot chase, a search area and a knowledge challenge.
+  // Police catch the player with a brief taser stop before the challenge or escort.
   useEffect(() => {
-    if (life.stars < 1 || jailed || life.hearing || !outdoors || arrest) {
+    if (life.stars < 1 || jailed || life.hearing || !outdoors) {
       pursuitRef.current = null; setPursuit(null); return;
     }
+    if (arrest || policeTransport) return;
     const timer = setInterval(() => {
       const current = pursuitRef.current ?? startPursuit(map, PLAYER);
       const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2);
@@ -470,10 +552,26 @@ export function WorldApp({
         pursuitRef.current = null; setPursuit(null);
         updateLife(clearWanted);
         say("You left the search area and lost the police. Wanted stars cleared.", true);
-      } else { pursuitRef.current = next; setPursuit(next); }
+      } else {
+        pursuitRef.current = next; setPursuit(next);
+        if (next.stage === "tased") {
+          setArrest(true);
+          arrestTimer.current = setTimeout(() => {
+            setArrest(false);
+            if (life.stars >= 4) {
+              transportStars.current = life.stars;
+              pursuitRef.current = null; setPursuit(null);
+              setPoliceTransport(true);
+            } else {
+              const challenged = { ...next, stage: "challenge" as const };
+              pursuitRef.current = challenged; setPursuit(challenged);
+            }
+          }, 1700);
+        }
+      }
     }, 200);
     return () => clearInterval(timer);
-  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, updateLife, say]);
+  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, updateLife, say]);
 
   useEffect(() => {
     if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
@@ -734,7 +832,7 @@ export function WorldApp({
       } />
       {!(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || arrest || pursuit?.stage === "challenge")}
+        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
         homeAction={homeAction}
         police={pursuit}
         map={map}
@@ -750,6 +848,13 @@ export function WorldApp({
         car={driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
       />}
+      {developerTeleport && <DeveloperTeleport destinations={teleportDestinations} onTeleport={destination => {
+        const targetMap = loadMap(destination.mapId, offices, me.id);
+        if (!targetMap) return;
+        const spot = safeSpot(targetMap, destination.x * TILE + TILE / 2, destination.y * TILE + TILE / 2);
+        setBankOpen(false);
+        goTo(destination.mapId, destination.label, spot);
+      }} />}
       {building && mapId === "home" && <HomeEditor embedded onClose={() => setBuilding(false)} claimed={home.claimed} avatar={me.avatar} owned={home.owned} current={home.current} layout={home.layout} bought={home.furniture} clout={wallet} />}
       {mapId === "home" && !building && !homeAction && <button type="button" onClick={() => { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }} className="absolute top-28 right-3 z-[70] rounded-full border border-[#c8b182] bg-[#fff3d8] px-4 py-3 text-xs font-bold text-[#183b35] shadow-lg">Build & buy · arrange your home</button>}
       {homeAction && <div role="status" className="absolute bottom-24 left-1/2 z-[100002] w-64 -translate-x-1/2 rounded-2xl border border-[#c8b182] bg-[#faf6ed] p-4 text-center text-[#183b35] shadow-xl">
@@ -832,7 +937,7 @@ export function WorldApp({
           Shove (F)
         </button>
       )}
-      {pursuit && pursuit.stage !== "challenge" && <div role="status" className="pointer-events-none absolute top-40 left-1/2 z-[65] max-w-[60%] -translate-x-1/2 rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div>}
+      {pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <div role="status" className="pointer-events-none absolute top-40 left-1/2 z-[65] max-w-[60%] -translate-x-1/2 rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div>}
       {pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
         pursuitRef.current = null; setPursuit(null);
         if(correct) { updateLife(clearWanted); say("Correct. The officers let you go with a warning.",true); }
@@ -889,12 +994,25 @@ export function WorldApp({
           onClose={() => setShop(null)}
         />
       )}
+      {bankOpen && <BankDialog loan={bankLoan} clout={wallet} gameDate={gameDate} onClose={() => setBankOpen(false)} onUpdate={(loan, balance) => {
+        setBankLoan(loan);
+        if (balance !== undefined) setWallet(balance);
+        if (loan.status === "active") updateLife(current => ({ ...current, bankCourtSeen: false }));
+        if (loan.status === "paid") { updateLife(current => ({ ...current, bankCourtSeen: true })); say("Loan repaid in full. Your account is clear.", true); }
+      }} />}
       {toast && (
         <div className={cn("xp-toast pointer-events-none absolute top-20 left-1/2 z-[100002] -translate-x-1/2 rounded-full px-5 py-2 font-black shadow-xl", toast.big ? "bg-[#f2d9a6] text-xl text-[#13203a]" : "bg-[#2b5fd9] text-white")} role="status">
           {toast.text}
         </div>
       )}
       {journey && <TrainCutscene to={journey.to} line="Revision" avatar={me.avatar} onArrive={journey.go} />}
+      {policeTransport && <PoliceTransportCutscene onArrive={() => {
+        const stars = transportStars.current;
+        updateLife(life => ({ ...clearWanted(life), jailUntil: Date.now() + sentenceMs(stars), hearing: null, prisonWork: 0 }));
+        setPoliceTransport(false); setArrest(false);
+        say("The police escort has arrived at HMP Thames. Your sentence has started.", true);
+        goTo("prison", "HMP Thames");
+      }} />}
 <SceneWipe show={fading} label={sceneName} />
       <button
         type="button"

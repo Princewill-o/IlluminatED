@@ -6,6 +6,7 @@ import {TrainFront} from "lucide-react";
 import * as THREE from "three";
 
 import { buildCharacter, npcLook, type Character3D } from "../char3d";
+import { CutsceneBrand } from "./cutscene-brand";
 
 import type { Avatar } from "@/game/core/cosmetics";
 
@@ -233,8 +234,9 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
   return (
     <div className="absolute inset-0 z-[100005] bg-[#0c0b10]" role="status" aria-live="polite">
       <div ref={host} className="absolute inset-0" aria-hidden />
+      <div className="pointer-events-none absolute left-4 top-12 z-10 rounded-2xl bg-[#f6f2e8] px-4 py-3 text-[#13203a] shadow-xl"><CutsceneBrand kind="underground"/></div>
       <button type="button" className="absolute right-3 bottom-14 z-20 min-h-11 rounded-full border border-white/40 bg-black/60 px-4 py-2 text-xs font-bold text-white" onClick={()=>done.current()}>Skip journey</button>
-      {fallback&&<div className="absolute inset-0 grid place-items-center bg-[#13203a] text-white"><div className="text-center"><TrainFront className="mx-auto size-20 text-[#a8c6ff]"/><p className="mt-5 text-xl font-bold">Travelling to {to}</p><p className="mt-2 text-sm">Your journey continues in 2D mode.</p></div></div>}
+      {fallback&&<div className="absolute inset-0 grid place-items-center bg-[#13203a] text-white"><div className="text-center"><CutsceneBrand kind="underground"/><TrainFront className="mx-auto mt-8 size-20 text-[#a8c6ff]"/><p className="mt-5 text-xl font-bold">Travelling to {to}</p><p className="mt-2 text-sm">Your journey continues in 2D mode.</p></div></div>}
       <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex justify-center px-3">
         <p className="rounded-lg bg-black/80 px-4 py-2 font-mono text-sm font-black tracking-wide text-[#ffb020]">
           {!ready ? "Getting the carriage ready…" : stage === 0 ? `This train is for ${to}` : `Next station: ${to}. Please mind the gap.`}

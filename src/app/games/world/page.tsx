@@ -17,6 +17,7 @@ import { loadMyHomework } from "@/lib/school/server";
 import { getSupabase } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Worlds" };
+const OWNER_DEVELOPER_ID = "f418310b-07f5-4865-aa4c-38cf126a3ef1";
 
 export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string }> }) {
   const { map, server, build } = await searchParams;
@@ -73,7 +74,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   return (
     <WorldApp
-      wantedResetToken={account.id === "f418310b-07f5-4865-aa4c-38cf126a3ef1" ? "developer-20261017" : undefined}
+      wantedResetToken={account.id === OWNER_DEVELOPER_ID ? "developer-20261017" : undefined}
+      developerTeleport={account.id === OWNER_DEVELOPER_ID}
       me={{ id: account.id, username: account.profile.username, avatar: uniformFor(job, player.avatar), org, badge, pass, publicKey, affiliation }}
       offices={orgs.map(({ slug, name, sector, accent }) => ({ slug, name, sector, accent }))}
       staff={bySlug}
