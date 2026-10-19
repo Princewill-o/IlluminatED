@@ -24,6 +24,12 @@ test("quality costs stay bounded on high DPI displays", () => {
   assert.equal(readVisualQuality("obsolete"), "auto");
   assert.equal(visualProfile("auto", true).shadows, false);
   assert.equal(visualProfile("auto", false).bloom, false);
+  const balanced = visualProfile("auto", false, 2);
+  assert.equal(balanced.shadows, false);
+  assert.equal(balanced.postProcessing, false);
+  assert.equal(balanced.environment, false);
+  assert.equal(balanced.samples, 0);
+  assert.equal(visualProfile("cinematic", false).postProcessing, true);
 });
 test("optional motion respects accessibility and cannot grow with vehicle speed", () => {
   for (const t of [0, 1, 100])

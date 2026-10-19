@@ -2320,6 +2320,8 @@ export function World3D({
 
     const focus = new THREE.Vector3();
     const lastMe = new THREE.Vector3();
+    const projectedPoint = new THREE.Vector3();
+    const lightingColour = new THREE.Color();
     let first = true;
     let cameraZoom = zoomRef.current;
     let raf = 0;
@@ -2370,15 +2372,15 @@ export function World3D({
         const blend = 1 - Math.exp(-dt * 1.5);
         const night = phase === "night", dusk = phase === "dusk";
         const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
-        (scene.background as THREE.Color).lerp(new THREE.Color(atmosphere), blend);
+        (scene.background as THREE.Color).lerp(lightingColour.set(atmosphere), blend);
         if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
-        hemi.color.lerp(new THREE.Color(night ? "#b2c5e0" : dusk ? "#f5d3b0" : "#fff4db"), blend);
-        hemi.groundColor.lerp(new THREE.Color(night ? "#455a57" : "#8e9d7d"), blend);
-        sun.color.lerp(new THREE.Color(night ? "#a7b9d2" : dusk ? "#ffc89a" : "#fff6e6"), blend);
+        hemi.color.lerp(lightingColour.set(night ? "#b2c5e0" : dusk ? "#f5d3b0" : "#fff4db"), blend);
+        hemi.groundColor.lerp(lightingColour.set(night ? "#455a57" : "#8e9d7d"), blend);
+        sun.color.lerp(lightingColour.set(night ? "#a7b9d2" : dusk ? "#ffc89a" : "#fff6e6"), blend);
         const strength = night ? 0.45 : dusk ? 0.8 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
         sun.intensity += (strength - sun.intensity) * blend;
         lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
-        river.material.color.lerp(new THREE.Color(night ? "#63848b" : "#a3c7bf"), blend);
+        river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
       }
       if (!indoors && now >= nextWeather) {
         nextWeather = now + 10_000;
@@ -2481,7 +2483,7 @@ export function World3D({
       playerRing.position.set(mx, 0.18, mz);
       playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
-      const screen = new THREE.Vector3(mx, want ? 2.3 : 1.5, mz).project(camera);
+      const screen = projectedPoint.set(mx, want ? 2.3 : 1.5, mz).project(camera);
       const sx = (screen.x + 1) * viewportWidth / 2;
       const sy = (1 - screen.y) * viewportHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
@@ -2514,7 +2516,7 @@ export function World3D({
         b.z += ddz * Math.min(1, dt * 10);
         b.root.position.set(b.x, 0, b.z);
         b.root.visible = !o.car;
-        const labelPoint = new THREE.Vector3(b.x, 1.5, b.z).project(camera);
+        const labelPoint = projectedPoint.set(b.x, 1.5, b.z).project(camera);
         const labelX = (labelPoint.x + 1) * viewportWidth / 2;
         const labelY = (1 - labelPoint.y) * viewportHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;
@@ -2592,7 +2594,7 @@ export function World3D({
       for (const [i, v] of traffic.entries()) {
         const commuter = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
         const own = currentTraffic[i];
-        const step = reduce || commuter?.out ? 0 : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic.filter(other => other.id !== own.id), pedestrians);
+        const step = reduce || commuter?.out ? 0 : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic, pedestrians);
         const advance=trafficAdvance(v.velocity??0,v.speed,dt,step);
         v.velocity=advance.speed;
         v.distance += advance.distance;
@@ -2708,7 +2710,7 @@ export function World3D({
       });
       for (const [i, c] of cyclists.entries()) {
         const own = currentTraffic[traffic.length + i];
-        const step = reduce ? 0 : trafficMoveDistance(own, dt * 1.8, roadTime, currentTraffic.filter(other => other.id !== own.id), pedestrians);
+        const step = reduce ? 0 : trafficMoveDistance(own, dt * 1.8, roadTime, currentTraffic, pedestrians);
         c.distance += step;
         c.moving = step > .0001;
         const q = cyclistPose(c);
@@ -2814,6 +2816,11 @@ export function World3D({
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
+        // These scenery meshes never move. Keep their baked world transforms
+        // instead of rebuilding thousands of matrices on every render.
+        m.updateMatrixWorld(true);
+        m.matrixAutoUpdate = false;
+        m.matrixWorldAutoUpdate = false;
         const position = new THREE.Vector3().setFromMatrixPosition(m.matrixWorld);
         const key = `${m.geometry.uuid}:${m.material.uuid}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
         const list = groups.get(key) ?? [];
@@ -2831,6 +2838,8 @@ export function World3D({
           });
           mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=CURVED_DEPTH;
           mesh.computeBoundingSphere();
+          mesh.matrixAutoUpdate = false;
+          mesh.matrixWorldAutoUpdate = false;
           scene.add(mesh);
         }
         if (performance.now() - batchStart > 4) {
