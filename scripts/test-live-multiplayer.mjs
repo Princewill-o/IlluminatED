@@ -47,11 +47,12 @@ try {
   for (let i = 0; i < 2; i++) rooms.push(await join(clients[i], `world:hub:${code}`, users[i]));
   await waitFor(() => rooms.every(c => Object.keys(c.presenceState()).length === 2), 'mini-game lobby');
   const S = projectData('src/game/core/hub/simple.ts');
+  const received = [[], []];
+  rooms.forEach((room, i) => room.on('broadcast', { event: 's' }, ({ payload }) => received[i].push(payload)));
   async function exchange(state, turn = 0) {
-    let got; const event = `test-${randomUUID()}`;
-    rooms[1-turn].on('broadcast', { event }, ({payload}) => { got=payload; });
-    assert.equal(await rooms[turn].send({type:'broadcast',event,payload:state}), 'ok');
-    await waitFor(() => got !== undefined, event); assert.deepEqual(got, JSON.parse(JSON.stringify(state)));
+    const inbox = received[1-turn], before = inbox.length;
+    assert.equal(await rooms[turn].send({type:'broadcast',event:'s',payload:state}), 'ok');
+    await waitFor(() => inbox.length > before, 'mini-game state'); assert.deepEqual(inbox.at(-1), JSON.parse(JSON.stringify(state)));
   }
   let t = S.tttNew(); for (const [i, move] of [0,3,1,4,2].entries()) { t=S.tttMove(t,move); await exchange(t,i%2); } assert.equal(t.winner,0);
   console.log('PASS: Noughts & Crosses complete two-player win synchronizes');
@@ -59,14 +60,17 @@ try {
   console.log('PASS: Connect Four complete two-player win synchronizes');
   let d = S.draughtsNew(); for(let i=0;i<6;i++){ const move=S.draughtsMoves(d)[0]; d=S.draughtsMove(d,move); await exchange(d,i%2); }
   console.log('PASS: Draughts alternating legal moves synchronize');
-  const T=projectData('src/game/core/hub/tycoon.ts'); let tycoon=T.tycoonNew(users.map((id,i)=>({id,name:`Tester ${i+1}`,cpu:false})),123); await exchange(tycoon); tycoon=T.tycoonRoll(tycoon); await exchange(tycoon);
+  const T=projectData('src/game/core/hub/tycoon.ts'); let tycoon=T.tycoonNew(users.map((id,i)=>({id,name:`Tester ${i+1}`,cpu:false}))); await exchange(tycoon); tycoon=T.tycoonRoll(tycoon,1,2); await exchange(tycoon);
   console.log('PASS: Tycoon initial state and dice turn synchronize');
   const quiz=[]; for(let i=0;i<2;i++) quiz.push(await join(clients[i],'world:games:lse-1',users[i]));
-  let question,score; quiz[1].on('broadcast',{event:'q'},({payload})=>{question=payload;}); quiz[0].on('broadcast',{event:'s'},({payload})=>{score=payload;});
-  await quiz[0].send({type:'broadcast',event:'q',payload:{n:1,idx:0,endsAt:Date.now()+12000}}); await waitFor(()=>question?.n===1,'quiz question');
-  await quiz[1].send({type:'broadcast',event:'s',payload:{i:users[1],u:'Tester 2',s:180}}); await waitFor(()=>score?.s===180,'quiz score');
-  console.log('PASS: Quiz Battle question and leaderboard score reach the other player');
+  let question,score,ended=false; quiz[1].on('broadcast',{event:'q'},({payload})=>{question=payload;}); quiz[0].on('broadcast',{event:'s'},({payload})=>{score=payload;}); quiz[1].on('broadcast',{event:'end'},()=>{ended=true;});
+  for(let n=1;n<=8;n++) {
+    await quiz[0].send({type:'broadcast',event:'q',payload:{n,idx:n-1,endsAt:Date.now()+12000}}); await waitFor(()=>question?.n===n,'quiz question');
+    await quiz[1].send({type:'broadcast',event:'s',payload:{i:users[1],u:'Tester 2',s:180*n}}); await waitFor(()=>score?.s===180*n,'quiz score');
+  }
+  await quiz[0].send({type:'broadcast',event:'end',payload:{}}); await waitFor(()=>ended,'quiz ending');
+  console.log('PASS: Quiz Battle all 8 question/score messages and ending synchronize');
 } finally {
-  for (const [client,ch] of channels) await client.removeChannel(ch);
-  for(let i=0;i<2;i++) { await clients[i].rpc('world_release',{p_client:ids[i]}); await clients[i].auth.signOut(); }
+  await Promise.all(clients.map(client => client.removeAllChannels()));
+  for(let i=0;i<2;i++) { await clients[i].rpc('world_release',{p_client:ids[i]}); await clients[i].auth.signOut({scope:'local'}); clients[i].realtime.disconnect(); }
 }

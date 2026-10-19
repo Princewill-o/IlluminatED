@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CarFront, Gamepad2, Smartphone, Trophy } from "lucide-react";
+import { BookOpen, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
@@ -27,7 +27,7 @@ import { useLife } from "./use-life";
 import { useNeeds, doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
 import { WorldView } from "./world-view";
-import { EventAdPopup, useTechEvents } from "../event-ads";
+import { useTechEvents } from "../event-ads";
 const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
 const StudyRoom = dynamic(() => import("../study/study-room").then((module) => module.StudyRoom), { ssr: false, loading: () => null });
 const GamePhone = dynamic(() => import("./game-phone").then((module) => module.GamePhone), { ssr: false, loading: () => null });
@@ -49,6 +49,7 @@ import { WORKPLACES, workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import { COMPANIES } from "@/game/core/companies";
 import { nearestDrivingSpot, nearestParkingSpot } from "@/game/core/driving";
+import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, releaseFromPrison, addStar, cardsLeft, clearWanted, wantedCharge, sentenceMs } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
@@ -86,6 +87,7 @@ import {
 } from "@/game/core/world";
 import type { HomeState } from "@/lib/game/careers-server";
 import { cn } from "@/lib/utils";
+
 
 const REGION_KEY = "world-region";
 
@@ -210,14 +212,7 @@ export function WorldApp({
   const [gameDate, setGameDate] = useState(() => new Date());
   const bankCourtSeen = useRef(false);
   useEffect(() => {
-    const key = `illuminated:game-clock:${me.id}`;
-    let anchorReal = Date.now(), anchorGame = anchorReal;
-    try {
-      const saved = JSON.parse(localStorage.getItem(key) ?? "null");
-      if (Number.isFinite(saved?.real) && Number.isFinite(saved?.game)) { anchorReal = saved.real; anchorGame = saved.game; }
-      else localStorage.setItem(key, JSON.stringify({ real: anchorReal, game: anchorGame }));
-    } catch { /* Keep the accelerated clock running for this session. */ }
-    const updateClock = () => setGameDate(new Date(anchorGame + (Date.now() - anchorReal) * 96));
+    const updateClock = () => setGameDate(gameDateAt());
     updateClock();
     const timer = window.setInterval(updateClock, 1000);
     return () => window.clearInterval(timer);
@@ -831,7 +826,6 @@ export function WorldApp({
           Park {carById(driving)?.name}
         </button>
       )}
-      {!driving && !nearPerson && outdoors && <button type="button" onClick={() => setDealer(true)} className="absolute right-3 bottom-52 z-[100001] flex min-h-11 items-center gap-2 rounded-2xl bg-[#f7f1e6] px-3 text-xs font-bold text-[#13203a] shadow-lg"><CarFront className="size-4" aria-hidden /> Garage</button>}
       <LevelBadge xp={xpNow} />
       {mapId === "study-lobby" && <div className="absolute top-14 left-1/2 z-[60] flex -translate-x-1/2 gap-2 rounded-2xl bg-[#f7f1e6]/95 p-2 text-[#13203a] shadow-lg">
         <button type="button" onClick={() => setLearning(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#2b5fd9] px-4 text-sm font-bold text-white"><BookOpen className="size-4" aria-hidden /> Study</button>
@@ -840,7 +834,6 @@ export function WorldApp({
       <button type="button" onClick={() => { if(jailed || life.stars >= 2) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex min-h-11 items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Gamepad2 className="size-4" aria-hidden /> Games
       </button>
-      {!learning && !awardsOpen && <EventAdPopup events={events} />}
       <WantedStars stars={life.stars} />
       {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>

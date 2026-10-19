@@ -547,7 +547,7 @@ export function londonMap(): WorldMap {
   if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
   if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "shop", shop: "bootz" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
-  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && (t.style === "office" || t.style === "stone") ? [t] : []));
+  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
   const hosp = near(30, 52);
   const court = near(44, 28, hosp);

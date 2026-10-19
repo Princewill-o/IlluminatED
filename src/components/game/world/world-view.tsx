@@ -256,7 +256,7 @@ export function WorldView({
   /** Every playable map uses the same fully modelled 3D scene. */
   const [quality, setQuality] = useState<VisualQuality>("auto");
   const [immersive, setImmersive] = useState(false);
-  useEffect(() => { try {setQuality(readVisualQuality(localStorage.getItem("world-graphics")));setImmersive(localStorage.getItem("world-immersive-motion")==="on");} catch { /* Storage is optional. */ } }, []);
+  useEffect(() => { try {setQuality(readVisualQuality(localStorage.getItem("world-graphics")));} catch { /* Storage is optional. */ } }, []);
   const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
   const is3d = graphicsState === "ready";
   // Start the 3D renderer directly; the world never flashes a flat-map view.
@@ -304,7 +304,7 @@ export function WorldView({
       setPhase(phaseRef.current);
     };
     update();
-    const id = window.setInterval(update, 60_000);
+    const id = window.setInterval(update, 1000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -346,13 +346,13 @@ export function WorldView({
   const portalCallback = useRef(onPortal);
   portalCallback.current = onPortal;
 
-  // Keyboard: Arrow keys to walk, E or Enter to go through a door.
+  // Keyboard: WASD / arrow keys to walk, E or Enter to go through a door.
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
       if (pausedRef.current || e.target instanceof HTMLElement && e.target.closest("button, a, [role=dialog], [contenteditable=true]")) return;
       const k = e.key.toLowerCase();
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || k === " " && carRef.current) {
+      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k) || k === " " && carRef.current) {
         e.preventDefault();
         keys.current.add(k);
         target.current = null;
@@ -361,7 +361,7 @@ export function WorldView({
       }
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
-    const blur = () => keys.current.clear();
+    const blur = () => { keys.current.clear(); stick.current = { x: 0, y: 0 }; };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", blur);
@@ -401,8 +401,8 @@ export function WorldView({
         pos.current.speed = 0;
       }
       const k = keys.current;
-      let dx = (k.has("arrowright") ? 1 : 0) - (k.has("arrowleft") ? 1 : 0);
-      let dy = (k.has("arrowdown") ? 1 : 0) - (k.has("arrowup") ? 1 : 0);
+      let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
+      let dy = (k.has("s") || k.has("arrowdown") ? 1 : 0) - (k.has("w") || k.has("arrowup") ? 1 : 0);
       if (!dx && !dy && (stick.current.x || stick.current.y)) {
         dx = stick.current.x;
         dy = stick.current.y;
@@ -441,7 +441,7 @@ export function WorldView({
       }
       if (map.art === "london" && !driving) {
         const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
-        const people = NPC_SPOTS.map(person => ({ x: person.x, y: person.y }));
+        const people = dx || dy ? NPC_SPOTS.map(person => ({ x: person.x, y: person.y })) : [];
         const corrected = nudgePedestrianFromTraffic(map, next, traffic, people);
         if (corrected.collided) {
           next = { x: corrected.x, y: corrected.y };
@@ -604,10 +604,11 @@ export function WorldView({
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
     >
-      <div role="group" aria-label="Graphics settings" className="absolute bottom-14 left-3 z-[100000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
+      <details aria-label="Graphics settings" className="absolute bottom-14 left-3 z-[100000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
+        <summary className="cursor-pointer py-1 font-bold">Settings</summary>
         <label>Graphics <select aria-label="3D graphics quality" value={quality} onChange={e=>{const next=readVisualQuality(e.target.value);setQuality(next);try{localStorage.setItem("world-graphics",next);}catch{/* Optional. */}}} className="ml-1 min-h-9 rounded bg-[#243c4b] px-1 font-bold text-white"><option value="auto">Balanced</option><option value="cinematic">Cinematic · more GPU</option><option value="low">Performance</option></select></label>
         <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
-      </div>
+      </details>
       <div
         ref={layer}
         data-world
@@ -753,7 +754,7 @@ export function WorldView({
           stick.current = { x, y };
           if (x || y) target.current = null;
         }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}</div> : (
-          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "↑ accelerate · ↓ brake & reverse · ← → steer · Space brake" : "Arrow keys to walk · E to interact / enter"}</p>
+          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ reverse · A D steer · Space brake" : "WASD / arrows · E to interact"}</p>
         )}
         <div className="pointer-events-auto relative">
           {sheet && (

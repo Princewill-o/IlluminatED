@@ -2,6 +2,7 @@
 
 import { treeTiles, waterTiles, lightsFor } from "./tiles";
 
+import { gamePhaseAt } from "@/game/core/game-clock";
 import { TILE, type WorldMap, hash } from "@/game/core/world";
 
 /**
@@ -13,10 +14,7 @@ export type Phase = "day" | "dusk" | "night";
 
 /** Day, dusk or night right now in the UK. */
 export function ukPhase(date = new Date()): Phase {
-  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hourCycle: "h23" }).format(date));
-  if (hour >= 20 || hour < 6) return "night";
-  if (hour >= 18 || hour < 7) return "dusk";
-  return "day";
+  return gamePhaseAt(date.getTime());
 }
 
 interface Leaf {

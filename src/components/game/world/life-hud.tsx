@@ -10,6 +10,7 @@ import { useNeeds } from "./use-needs";
 
 import { AvatarFigure } from "@/components/game/avatar";
 import type { Avatar } from "@/game/core/cosmetics";
+import { gameDateAt } from "@/game/core/game-clock";
 import { ACTIVITIES, NEEDS, moodWord, nextHint, weatherAt, weatherForecast } from "@/game/core/needs";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { cn } from "@/lib/utils";
@@ -32,15 +33,8 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   const [now, setNow] = useState<Date | null>(null);
   const [open, setOpen] = useState(false);
   useEffect(() => {
-    const roomy = window.matchMedia("(min-width: 1280px) and (min-height: 720px)");
-    const resize = () => setOpen(roomy.matches);
-    resize();
-    roomy.addEventListener("change", resize);
-    return () => roomy.removeEventListener("change", resize);
-  }, []);
-  useEffect(() => {
     setNow(new Date());
-    const t = setInterval(() => setNow(new Date()), 20_000);
+    const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
   if (!now || !needs) return null;
@@ -108,8 +102,8 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
           </div>
         </details>
         <div className={cn(card, "px-3 py-1.5")}>
-          <p className="text-sm leading-4 font-black">{now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" })}</p>
-          <p className="text-[10px] font-bold text-[#5a6272]">{now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" })}</p>
+          <p className="text-sm leading-4 font-black">{gameDateAt(now.getTime()).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}</p>
+          <p className="text-[10px] font-bold text-[#5a6272]">{gameDateAt(now.getTime()).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}</p>
         </div>
         <div className={cn(card, "px-3 py-1.5")}>
           <p className="text-sm leading-4 font-black">{clout.toLocaleString("en-GB")}</p>

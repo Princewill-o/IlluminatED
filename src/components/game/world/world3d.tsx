@@ -1673,7 +1673,7 @@ export function World3D({
 
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
-    const phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+    let phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
     const hemi = new THREE.HemisphereLight(phase === "night" ? "#b2c5e0" : phase === "dusk" ? "#f5d3b0" : "#fff4db", phase === "night" ? "#455a57" : "#8e9d7d", phase === "night" ? 1.45 : 1.7);
     scene.add(hemi);
     const sun = new THREE.DirectionalLight(phase === "night" ? "#a7b9d2" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.45 : 1.25);
@@ -1978,7 +1978,7 @@ export function World3D({
       }
     // A fixed pool lights nearby lamps without adding a shader light for every
     // street in the city. The visible lamp models remain in the scenery.
-    const lampLights = phase === "day" ? [] : lamps.slice(0, budget.lights).map(() => {
+    const lampLights = lamps.slice(0, budget.lights).map(() => {
       const light = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
       scene.add(light);
       return light;
@@ -2365,6 +2365,21 @@ export function World3D({
       const p = getMe();
       const mx = p.x / TILE;
       const mz = p.y / TILE;
+      if (!indoors) {
+        phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+        const blend = 1 - Math.exp(-dt * 1.5);
+        const night = phase === "night", dusk = phase === "dusk";
+        const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
+        (scene.background as THREE.Color).lerp(new THREE.Color(atmosphere), blend);
+        if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
+        hemi.color.lerp(new THREE.Color(night ? "#b2c5e0" : dusk ? "#f5d3b0" : "#fff4db"), blend);
+        hemi.groundColor.lerp(new THREE.Color(night ? "#455a57" : "#8e9d7d"), blend);
+        sun.color.lerp(new THREE.Color(night ? "#a7b9d2" : dusk ? "#ffc89a" : "#fff6e6"), blend);
+        const strength = night ? 0.45 : dusk ? 0.8 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
+        sun.intensity += (strength - sun.intensity) * blend;
+        lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
+        river.material.color.lerp(new THREE.Color(night ? "#63848b" : "#a3c7bf"), blend);
+      }
       if (!indoors && now >= nextWeather) {
         nextWeather = now + 10_000;
         weatherKind = weatherAt(new Date()).kind;
@@ -2393,7 +2408,8 @@ export function World3D({
       const dz = mz - lastMe.z;
       if (Math.hypot(dx, dz) > 0.002) {
         const ang = Math.atan2(dx, dz);
-        me.root.rotation.y = ang;
+        const difference = Math.atan2(Math.sin(ang - me.root.rotation.y), Math.cos(ang - me.root.rotation.y));
+        me.root.rotation.y += difference * (1 - Math.exp(-dt * 18));
       }
       // Heading belongs to the car, so reversing never makes its body flip around.
       if (p.heading !== undefined) carHolder.rotation.y = -p.heading;

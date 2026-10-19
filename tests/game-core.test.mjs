@@ -281,7 +281,7 @@ test("Worlds: every map is walkable, doors are reachable, servers fill sensibly"
   const empty = {};
   assert.equal(W.pickServer("lse", empty).id, "lse-1");
   assert.equal(W.pickServer("lse", { "lse-1": 1, "lse-2": W.SERVER_CAPACITY - 1 }).id, "lse-2", "busiest with room");
-  assert.equal(W.pickServer("lse", { "lse-1": W.SERVER_CAPACITY, "lse-2": W.SERVER_CAPACITY, "lse-3": W.SERVER_CAPACITY }).id, "sw-1", "falls back when region full");
+  assert.equal(W.pickServer("lse", { "lse-1": W.SERVER_CAPACITY, "lse-2": W.SERVER_CAPACITY, "lse-3": W.SERVER_CAPACITY }).id, "lse-1", "stays within region when full; admission remains authoritative");
   assert.equal(W.channelFor("city", "lse-1"), "world:room:city:lse-1");
   assert.equal(W.channelFor("office-acme", "lse-1"), "world:room:office-acme:lse-1");
   assert.equal(W.guessRegion("Europe/London"), "lse");

@@ -29,7 +29,7 @@ const STEPS = [
   {
     icon: Footprints,
     title: "You're one student in a big city",
-    body: "Use ↑ ↓ ← → to walk. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
+    body: "Use W A S D or ↑ ↓ ← → to walk. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
     hint: "Press E (or tap the glowing marker) to go through a door.",
   },
   {
