@@ -19,8 +19,8 @@ import { getSupabase } from "@/lib/social/server";
 export const metadata: Metadata = { title: "Worlds" };
 const OWNER_DEVELOPER_ID = "f418310b-07f5-4865-aa4c-38cf126a3ef1";
 
-export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string }> }) {
-  const { map, server, build } = await searchParams;
+export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string; x?: string; y?: string }> }) {
+  const { map, server, build, x, y } = await searchParams;
   const account = await requireAccount("/games/world");
   const organisations = listOrgs();
   const staffRequest = organisations.then(orgs => staffFor(orgs.map(org => org.id)));
@@ -81,7 +81,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       staff={bySlug}
       initialMap={map ?? "city"}
       initialBuild={build === "1"}
-      initialServer={server ?? null}
+      initialServer={server || null}
+      initialArrival={Number.isFinite(Number(x)) && Number.isFinite(Number(y)) && x !== undefined && y !== undefined ? { x: Number(x), y: Number(y) } : undefined}
       job={job}
       clout={player.clout}
       quests={quests}

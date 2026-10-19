@@ -130,6 +130,7 @@ export function WorldApp({
   staff,
   initialMap,
   initialServer,
+  initialArrival,
   job,
   home,
   clout,
@@ -163,6 +164,7 @@ export function WorldApp({
   staff: Record<string, OfficeStaff[]>;
   initialMap: string;
   initialServer: string | null;
+  initialArrival?: { x: number; y: number };
   /** Your current job (for workplace doors and your uniform). */
   job: ActiveJob | null;
   /** Your home's colourway and furniture layout. */
@@ -177,10 +179,9 @@ export function WorldApp({
   const [tube, setTube] = useState<string | null>(null);
   const [trip, setTrip] = useState(0);
   const [mindGap, setMindGap] = useState(false);
-  void initialServer;
-  const [server, setServer] = useState<string | null>(null);
+  const [server, setServer] = useState<string | null>(() => initialServer);
   const [region, setRegion] = useState<RegionId>("lse");
-  const [arrive, setArrive] = useState<{ x: number; y: number; heading?: number } | undefined>();
+  const [arrive, setArrive] = useState<{ x: number; y: number; heading?: number } | undefined>(initialArrival);
   const [desk, setDesk] = useState(false);
   const [work, setWork] = useState<string | null>(null);
   const [workStation, setWorkStation] = useState<"reception" | "terminal">("reception");
@@ -460,7 +461,17 @@ export function WorldApp({
         else { releaseReason.current = "escaped"; updateLife(l=>releaseFromPrison(l)); }
         return;
       }
-      if (to.kind === "game") router.push(`/games/promotion-panic/${to.companyId}`);
+      if (to.kind === "game") {
+        const outside = safeSpot(
+          map,
+          portal.rect.x + portal.rect.w / 2,
+          portal.rect.y + portal.rect.h / 2 + (portal.rect.y < map.height / 2 ? TILE * 2 : -TILE * 2),
+        );
+        const returnParams = new URLSearchParams({ map: mapId, x: String(Math.round(outside.x)), y: String(Math.round(outside.y)) });
+        if (server) returnParams.set("server", server);
+        const params = new URLSearchParams({ returnTo: `/games/world?${returnParams}` });
+        router.push(`/games/promotion-panic/${to.companyId}?${params}`);
+      }
       else if (to.kind === "link") {
         if (to.href === "/learn") doActivity("study");
         // Games open as a pop-up right here instead of leaving the world.

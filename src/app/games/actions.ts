@@ -38,6 +38,8 @@ const RunInput = z.object({
   bestStreak: z.number().int().min(0).max(12),
   durationMs: z.number().int().min(1).max(900_000),
   fired: z.boolean(),
+  workplace: z.string().regex(/^[a-z0-9-]{2,40}$/).nullable().optional(),
+  currentlyEmployed: z.boolean().optional(),
   challenge: z
     .string()
     .regex(/^[A-Z0-9]{6}$/)
@@ -58,6 +60,7 @@ export interface RunResult {
   previousBest: number;
   newBest: boolean;
   unlocked: string[];
+  employment: "fired" | "unemployed" | "still_employed" | null;
 }
 
 export async function finishShift(
@@ -80,6 +83,19 @@ export async function finishShift(
     p_challenge: r.challenge,
   });
   if (error || !data) return { ok: false, error: friendly(error?.message) };
+  let employment: RunResult["employment"] = null;
+  if (r.fired) {
+    employment = r.currentlyEmployed ? "still_employed" : "unemployed";
+    if (r.workplace) {
+      const { data: wasFired, error: fireError } = await sb.rpc("career_fire", {
+        p_workplace: r.workplace,
+      });
+      if (fireError) return { ok: false, error: friendly(fireError.message) };
+      if (wasFired) employment = "fired";
+    }
+    revalidatePath("/games/careers");
+    revalidatePath("/games/world");
+  }
   const d = data as Record<string, unknown>;
   revalidatePath("/games");
   return {
@@ -98,6 +114,7 @@ export async function finishShift(
       previousBest: Number(d.previous_best),
       newBest: Boolean(d.new_best),
       unlocked: Array.isArray(d.unlocked) ? (d.unlocked as string[]) : [],
+      employment,
     },
   };
 }

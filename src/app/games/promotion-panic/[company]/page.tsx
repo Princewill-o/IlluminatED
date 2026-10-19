@@ -4,11 +4,13 @@ import type { Metadata } from "next";
 
 import { PromotionPanic } from "@/components/game/promotion-panic";
 import { companyById } from "@/game/core/companies";
+import { WORKPLACES } from "@/game/core/careers";
 import { requireAccount } from "@/lib/account/server";
 import { gameSources, loadChallenge, loadPlayer } from "@/lib/game/server";
+import { loadCareer } from "@/lib/game/careers-server";
 
 type Params = { company: string };
-type Search = { challenge?: string };
+type Search = { challenge?: string; returnTo?: string };
 
 export async function generateMetadata({
   params,
@@ -27,15 +29,16 @@ export default async function PromotionPanicPage({
   searchParams: Promise<Search>;
 }) {
   const { company: id } = await params;
-  const { challenge: code } = await searchParams;
+  const { challenge: code, returnTo } = await searchParams;
   const company = companyById(id);
   if (!company) notFound();
   const account = await requireAccount(
     `/games/promotion-panic/${id}${code ? `?challenge=${encodeURIComponent(code)}` : ""}`,
   );
-  const [player, challenge] = await Promise.all([
+  const [player, challenge, career] = await Promise.all([
     loadPlayer(account.id),
     code ? loadChallenge(code) : Promise.resolve(null),
+    loadCareer(account.id),
   ]);
   const matched =
     challenge && challenge.company === company.id ? challenge : null;
@@ -52,6 +55,9 @@ export default async function PromotionPanicPage({
       <PromotionPanic
         key={matched?.code ?? company.id}
         companyId={company.id}
+        workplace={career.active && WORKPLACES.some((job) => job.id === career.active!.workplace && job.companyId === company.id) ? career.active.workplace : null}
+        currentlyEmployed={Boolean(career.active)}
+        returnTo={returnTo && /^\/games\/world(?:\?[a-zA-Z0-9%=&._-]*)?$/.test(returnTo) ? returnTo : "/games/world?map=city"}
         sources={sources}
         avatar={player.avatar}
         dailyBonusReady={player.dailyBonusReady}

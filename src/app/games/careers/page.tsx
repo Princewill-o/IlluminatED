@@ -44,6 +44,16 @@ export default async function CareersPage() {
           </div>
         </section>
       )}
+      {!job && (
+        <section className="mt-8 rounded-3xl border border-[#ffd166]/60 bg-[#ffd166]/10 p-5" aria-live="polite">
+          <h2 className="text-xl font-black">You’re currently unemployed</h2>
+          <p className="mt-2 text-muted-foreground">You can study, explore the city, or choose a new role below. Your completed shifts remain on your record.</p>
+          <div className="mt-3 flex flex-wrap gap-4 font-bold">
+            <Link href="/learn" className="underline">Keep studying</Link>
+            <Link href="/games/world?map=city" className="underline">Return to the city</Link>
+          </div>
+        </section>
+      )}
 
       <section className="mt-10">
         <h2 className="text-2xl font-black">Job centre</h2>

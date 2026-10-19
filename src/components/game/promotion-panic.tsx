@@ -57,6 +57,9 @@ export interface ChallengeInfo {
 
 interface Props {
   companyId: string;
+  workplace: string | null;
+  currentlyEmployed: boolean;
+  returnTo: string;
   sources: DeckSources;
   avatar: Avatar;
   dailyBonusReady: boolean;
@@ -273,6 +276,8 @@ export function PromotionPanic(props: Props) {
     setSave({ status: "saving" });
     finishShift({
       company: company.id,
+      workplace: props.workplace,
+      currentlyEmployed: props.currentlyEmployed,
       seed,
       score: state.score,
       correct: state.correct,
@@ -295,6 +300,8 @@ export function PromotionPanic(props: Props) {
     props.canSave,
     props.challenge,
     company.id,
+    props.workplace,
+    props.currentlyEmployed,
     seed,
     startedAt,
   ]);
@@ -333,6 +340,7 @@ export function PromotionPanic(props: Props) {
           props.challenge ? () => begin(props.challenge!.seed) : undefined
         }
         durationMs={Date.now() - startedAt}
+        returnTo={props.returnTo}
       />
     );
   }
@@ -831,6 +839,7 @@ function Results({
   onReplay,
   onRetryChallenge,
   durationMs,
+  returnTo,
 }: {
   company: NonNullable<ReturnType<typeof companyById>>;
   avatar: Avatar;
@@ -843,6 +852,7 @@ function Results({
   onReplay: () => void;
   onRetryChallenge?: () => void;
   durationMs: number;
+  returnTo: string;
 }) {
   const [share, setShare] = useState<{
     status: "idle" | "busy" | "done" | "error";
@@ -913,6 +923,17 @@ function Results({
                 accuracy: acc,
               })}
             </p>
+            {state.fired && (
+              <p className="mt-3 rounded-2xl bg-[#ff7a6b]/15 p-4 font-bold" role="status">
+                {res?.employment === "fired"
+                  ? `You have been fired from ${company.name}. You’re unemployed now. Head to the Job Centre for another role, or keep studying in the city.`
+                  : res?.employment === "unemployed"
+                    ? `You weren’t employed at ${company.name}, so you’re still unemployed. Head to the Job Centre for a role, or keep studying in the city.`
+                    : res?.employment === "still_employed"
+                      ? `You weren’t employed at ${company.name}, so your current job is unchanged. You can keep working, study, or explore the city.`
+                      : "Your employment status is being updated…"}
+              </p>
+            )}
             {challenge && (
               <p
                 className={cn(
@@ -1033,7 +1054,7 @@ function Results({
             Challenge a friend
           </button>
           <Link
-            href="/games"
+            href={returnTo}
             className="arcade-btn rounded-full border border-border bg-secondary px-6 py-3 font-black"
           >
             Back to the city
