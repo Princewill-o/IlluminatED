@@ -252,15 +252,15 @@ export function WorldView({
   /** Pre-rendered 3D maps are viewed closer up, so people are small next to buildings and cars. */
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
-  /** London and the Highlands are live 3D (Animal Crossing-style camera); rooms stay 2D. */
-  const [quality, setQuality] = useState<"auto" | "low" | "2d">("auto");
-  useEffect(() => { try { const saved = localStorage.getItem("world-graphics"); if (saved === "low" || saved === "2d") setQuality(saved); } catch { /* Storage is optional. */ } }, []);
-  const [webgl,setWebgl] = useState(false);
-  const is3d = webgl && quality !== "2d";
-  // Paint the lighter 2D city first so slow devices have a usable scene while
-  // the separately bundled Three.js engine is fetched and prepared.
+  /** Every playable map uses the same fully modelled 3D scene. */
+  const [quality, setQuality] = useState<"auto" | "low">("auto");
+  useEffect(() => { try { if (localStorage.getItem("world-graphics") === "low") setQuality("low"); else localStorage.removeItem("world-graphics"); } catch { /* Storage is optional. */ } }, []);
+  const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
+  const is3d = graphicsState === "ready";
+  // Start the 3D renderer directly; the world never flashes a flat-map view.
   useEffect(() => {
-    const timer = window.setTimeout(() => setWebgl(true), 180);
+    setGraphicsState("loading");
+    const timer = window.setTimeout(() => setGraphicsState("ready"), 180);
     return () => window.clearTimeout(timer);
   }, [map.id]);
   const speedRef = useRef(speed);
@@ -328,7 +328,7 @@ export function WorldView({
     return () => query.removeEventListener("change", changed);
   }, []);
 
-  const unavailable3d=useCallback(()=>setWebgl(false),[]);
+  const unavailable3d=useCallback(()=>setGraphicsState("unavailable"),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
     () => nearbyPlayers(players.current.values(), pos.current, hidden).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
@@ -628,12 +628,12 @@ export function WorldView({
       }}
     >
       <label className="absolute bottom-14 left-3 z-[100000] rounded-xl border border-white/20 bg-[#13203a] px-3 py-2 text-xs text-white" onPointerDown={e => e.stopPropagation()}>
-        Graphics <select aria-label="Graphics quality" value={quality} onChange={e => { const next = e.target.value as "auto" | "low" | "2d"; setQuality(next); try { localStorage.setItem("world-graphics", next); } catch { /* Storage is optional. */ } }} className="ml-1 rounded bg-[#13203a] py-1 font-bold text-white"><option value="auto">Auto 3D</option><option value="low">Low 3D</option><option value="2d">2D · fastest</option></select>
+        Graphics <select aria-label="3D graphics quality" value={quality} onChange={e => { const next = e.target.value as "auto" | "low"; setQuality(next); try { localStorage.setItem("world-graphics", next); } catch { /* Storage is optional. */ } }} className="ml-1 rounded bg-[#13203a] py-1 font-bold text-white"><option value="auto">High detail 3D</option><option value="low">Performance 3D</option></select>
       </label>
       <div
         ref={layer}
         data-world
-        className={`absolute top-0 left-0 origin-top-left will-change-transform ${is3d ? "pointer-events-none hidden" : ""}`}
+        className="pointer-events-none absolute top-0 left-0 hidden origin-top-left will-change-transform"
         style={{ width: map.width, height: map.height }}
       >
         {!is3d && (map.kind === "home" ? <HomeFloorPlan map={map} /> : map.art ? <ArtScenery map={map} night={phase === "night"} /> : <Scenery map={map} night={phase === "night" && map.kind !== "office" && map.kind !== "station"} />)}
@@ -708,9 +708,15 @@ export function WorldView({
           getHomeAction={getHomeAction}
         />
       )}
-      {/* The 3D renderer supplies its own lighting. Hide the retained 2D night
-          tint when switching renderers so its last frame cannot cover the world. */}
-      <canvas ref={fxCanvas} className={cn("pointer-events-none absolute inset-0", is3d && "hidden")} aria-hidden />
+      {graphicsState !== "ready" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
+        <div className="max-w-sm rounded-3xl border border-[#c8b182]/50 bg-[#f7f1e6]/95 px-6 py-5 shadow-xl">
+          <p className="text-sm font-black uppercase tracking-[0.18em]">{graphicsState === "loading" ? "Building the 3D world" : "3D graphics unavailable"}</p>
+          <p className="mt-2 text-sm">{graphicsState === "loading" ? "Loading the detailed city and interiors…" : "This browser or device could not start WebGL. Enable hardware acceleration and reload to play."}</p>
+        </div>
+      </div>}
+      {/* The old flat-map lighting overlay is kept mounted for the movement
+          adapter, but never painted over the live 3D scene. */}
+      <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
       {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
 
       {/* HUD */}

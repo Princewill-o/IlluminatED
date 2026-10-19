@@ -926,109 +926,279 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
 
 function landmark(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "landmark" }>) {
   const { x, y: z, w, h: d, name } = t;
-  const STONE = "#e8dcc0";
   const GOLDEN = "#d9b45a";
   const cx = x + w / 2;
   const cz = z + d / 2;
   switch (name) {
     case "big-ben": {
-      // Elizabeth Tower: stone shaft with ribs, four clock faces, belfry, slate spire and gold pinnacles.
+      // Elizabeth Tower: stepped Portland-stone shaft, ornate clock stage,
+      // open belfry, slate roof and gold corner pinnacles.
       const x0 = x + 0.25;
       const z0 = z + 0.25;
       const x1 = x + w - 0.25;
       const z1 = z + d - 0.25;
-      box(g, GOLDEN, x0, 0, z0, x1, 6.4, z1);
-      for (let i = 0; i <= 4; i++) {
-        const t = x0 + ((x1 - x0) * i) / 4;
-        box(g, "#c9a24a", t - 0.04, 0.3, z1 - 0.02, t + 0.04, 6.2, z1 + 0.04);
+      const stone = "#c6b59a", paleStone = "#e0d2b7", shadow = "#958671", gilt = "#c6a460";
+      const side = x1 - x0;
+      box(g, shadow, x0 - 0.12, 0, z0 - 0.12, x1 + 0.12, 0.32, z1 + 0.12);
+      box(g, paleStone, x0 - 0.06, 0.32, z0 - 0.06, x1 + 0.06, 0.48, z1 + 0.06);
+      box(g, stone, x0, 0.48, z0, x1, 6.3, z1);
+      // Vertical corner piers and narrow inset panels break up the plain shaft.
+      for (const [px, pz] of [[x0, z0], [x1 - 0.14, z0], [x0, z1 - 0.14], [x1 - 0.14, z1 - 0.14]]) {
+        box(g, paleStone, px, 0.52, pz, px + 0.14, 6.22, pz + 0.14);
+        box(g, shadow, px + 0.045, 0.72, pz + 0.045, px + 0.095, 5.96, pz + 0.095);
       }
-      for (const yy of [1.6, 3.2, 4.8]) box(g, "#c9a24a", x0 - 0.04, yy, z0 - 0.04, x1 + 0.04, yy + 0.1, z1 + 0.04);
-      box(g, "#e3c26a", x0 - 0.12, 6.4, z0 - 0.12, x1 + 0.12, 8.2, z1 + 0.12);
-      // Clock faces on all four sides.
-      const r = (x1 - x0) * 0.4;
+      for (const yy of [1.55, 3.08, 4.61, 6.18]) {
+        box(g, paleStone, x0 - 0.06, yy, z0 - 0.06, x1 + 0.06, yy + 0.13, z1 + 0.06);
+        box(g, shadow, x0 + 0.15, yy - 0.1, z1 + 0.015, x1 - 0.15, yy - 0.055, z1 + 0.045);
+      }
+      // Tall louvred windows repeat up the tower on each visible face.
+      for (const yy of [0.9, 2.4, 3.93, 5.18]) {
+        for (const [px, pz, ry] of [[cx, z1 + 0.03, 0], [cx, z0 - 0.03, Math.PI], [x1 + 0.03, cz, Math.PI / 2], [x0 - 0.03, cz, -Math.PI / 2]] as const) {
+          const window = box(g, "#344653", px - 0.16, yy, pz - 0.015, px + 0.16, yy + 0.48, pz + 0.015);
+          window.rotation.y = ry;
+          const lintel = box(g, paleStone, px - 0.21, yy + 0.48, pz - 0.04, px + 0.21, yy + 0.55, pz + 0.04);
+          lintel.rotation.y = ry;
+        }
+      }
+      // Clock stage has a deep moulded surround and a readable ivory dial.
+      box(g, shadow, x0 - 0.13, 6.32, z0 - 0.13, x1 + 0.13, 8.16, z1 + 0.13);
+      box(g, paleStone, x0 - 0.07, 6.38, z0 - 0.07, x1 + 0.07, 8.1, z1 + 0.07);
+      box(g, gilt, x0 - 0.035, 6.48, z0 - 0.035, x1 + 0.035, 8.02, z1 + 0.035);
+      const r = Math.max(0.32, side * 0.34);
       const face = (px: number, pz: number, ry: number) => {
         const f = new THREE.Group();
         f.position.set(px, 7.3, pz);
         f.rotation.y = ry;
-        const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 32), mat("#f6f2ea"));
+        const outer = new THREE.Mesh(new THREE.CircleGeometry(r * 1.12, 32), mat("#263b3f"));
+        f.add(outer);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(r * 1.02, r * 1.12, 32), mat("#d7bd7d"));
+        ring.position.z = 0.015;
+        f.add(ring);
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 32), mat("#f2e8cc"));
+        disc.position.z = 0.025;
         f.add(disc);
-        const rim = new THREE.Mesh(new THREE.RingGeometry(r, r * 1.12, 32), mat("#2f3644"));
-        f.add(rim);
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const tick = box(f, "#27353b", Math.cos(a) * r * 0.82 - 0.025, Math.sin(a) * r * 0.82 - 0.04, 0.04, Math.cos(a) * r * 0.82 + 0.025, Math.sin(a) * r * 0.82 + 0.04, 0.055);
+          tick.rotation.z = a;
+        }
         const hand1 = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.08, r * 0.75), mat("#1b1622"));
-        hand1.position.set(0, r * 0.32, 0.01);
+        hand1.position.set(0, r * 0.32, 0.065);
         f.add(hand1);
         const hand2 = new THREE.Mesh(new THREE.PlaneGeometry(r * 0.55, r * 0.08), mat("#1b1622"));
-        hand2.position.set(r * 0.25, 0, 0.012);
+        hand2.position.set(r * 0.25, 0, 0.07);
         f.add(hand2);
+        const pin = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), mat("#c6a460"));
+        pin.position.z = 0.08;
+        f.add(pin);
         g.add(f);
       };
-      face(cx, z1 + 0.13, 0);
-      face(cx, z0 - 0.13, Math.PI);
-      face(x1 + 0.13, cz, Math.PI / 2);
-      face(x0 - 0.13, cz, -Math.PI / 2);
-      box(g, "#d9b45a", x0 - 0.05, 8.2, z0 - 0.05, x1 + 0.05, 9.1, z1 + 0.05);
-      for (const [px, pz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) cyl(g, "#d9b45a", px, pz, 8.2, 10.2, 0.01, 6, 0.12);
-      const sp = cyl(g, "#3e4a60", cx, cz, 9.1, 11.6, 0.01, 4, (x1 - x0) * 0.62);
+      face(cx, z1 + 0.095, 0);
+      face(cx, z0 - 0.095, Math.PI);
+      face(x1 + 0.095, cz, Math.PI / 2);
+      face(x0 - 0.095, cz, -Math.PI / 2);
+      // Belfry: a pierced arcade, louvres, roof cornice and steep slate spire.
+      box(g, paleStone, x0 - 0.1, 8.16, z0 - 0.1, x1 + 0.1, 8.35, z1 + 0.1);
+      box(g, "#3d4542", x0 + 0.1, 8.42, z0 + 0.1, x1 - 0.1, 9.2, z1 - 0.1);
+      for (const [px, pz, ry] of [[cx, z1 + 0.13, 0], [cx, z0 - 0.13, Math.PI], [x1 + 0.13, cz, Math.PI / 2], [x0 - 0.13, cz, -Math.PI / 2]] as const) {
+        const face = new THREE.Group(); face.position.set(px, 8.48, pz); face.rotation.y = ry; g.add(face);
+        box(face, "#b9aa8c", -0.32, 0, -0.035, -0.22, 0.56, 0.035);
+        box(face, "#b9aa8c", 0.22, 0, -0.035, 0.32, 0.56, 0.035);
+        box(face, "#b9aa8c", -0.32, 0.52, -0.035, 0.32, 0.62, 0.035);
+        for (const px2 of [-0.24, -0.08, 0.08, 0.24]) box(face, "#d5c9ad", px2, 0.06, -0.04, px2 + 0.035, 0.48, 0.04);
+      }
+      box(g, gilt, x0 - 0.18, 9.2, z0 - 0.18, x1 + 0.18, 9.38, z1 + 0.18);
+      const sp = cyl(g, "#3e4a60", cx, cz, 9.38, 12.05, 0.01, 4, side * 0.7);
       sp.rotation.y = Math.PI / 4;
-      cyl(g, "#ffd166", cx, cz, 11.6, 12.1, 0.01, 6, 0.06);
+      for (const [px, pz] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) {
+        cyl(g, gilt, px, pz, 8.14, 9.72, 0.015, 6, 0.1);
+        const finial = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 6), mat("#d9b45a"));
+        finial.position.set(px, 9.78, pz); g.add(finial);
+      }
+      cyl(g, "#ffd166", cx, cz, 12.05, 12.55, 0.01, 8, 0.055);
+      const weatherVane = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.4, 6), mat("#d9b45a"));
+      weatherVane.position.set(cx, 12.72, cz); g.add(weatherVane);
       break;
     }
-    case "parliament":
-      box(g, GOLDEN, x, 0, z, x + w, 2.6, z + d);
-      for (let i = 0; i <= w; i += 2) cyl(g, GOLDEN, x + i, z + d - 0.2, 2.6, 3.6, 0.01, 4, 0.18);
-      box(g, GOLDEN, x + w - 2, 0, z, x + w, 5, z + d);
+    case "parliament": {
+      const stone = "#c8b99f", trim = "#e2d3b5", roofColor = "#46515a";
+      box(g, stone, x, 0, z, x + w, 2.8, z + d);
+      box(g, trim, x - 0.12, 2.75, z - 0.12, x + w + 0.12, 2.9, z + d + 0.12);
+      for (let i = 0; i <= w; i += 1) {
+        const px = x + i;
+        box(g, trim, px - 0.035, 0.3, z + d - 0.08, px + 0.035, 2.78, z + d + 0.03);
+        if (i % 2 === 1) {
+          box(g, "#34434b", px - 0.25, 1.25, z + d + 0.02, px + 0.25, 2.38, z + d + 0.035);
+          box(g, trim, px - 0.3, 2.37, z + d - 0.04, px + 0.3, 2.47, z + d + 0.05);
+        }
+      }
+      // Repeated gables and slate roof give the riverfront a readable Gothic silhouette.
+      for (let px = x + 0.5; px < x + w; px += 2.2) {
+        const gable = new THREE.Mesh(new THREE.ConeGeometry(0.9, 1.05, 4), mat(trim));
+        gable.position.set(px, 3.38, z + d - 0.02); gable.rotation.y = Math.PI / 4; g.add(gable);
+      }
+      roof(g, roofColor, x - 0.08, z - 0.08, x + w + 0.08, z + d + 0.08, 2.9, 0.65);
+      for (const px of [x + 0.25, x + w - 0.65]) {
+        box(g, stone, px, 0, z + 0.25, px + 0.65, 5.2, z + d - 0.25);
+        for (let yy = 0.55; yy < 4.9; yy += 0.8) box(g, "#34434b", px + 0.2, yy, z + d + 0.025, px + 0.45, yy + 0.5, z + d + 0.04);
+        box(g, trim, px - 0.12, 5.1, z + 0.12, px + 0.77, 5.3, z + d - 0.12);
+        const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(0.48, 1.1, 4), mat(roofColor));
+        pinnacle.position.set(px + 0.32, 5.82, z + d / 2); pinnacle.rotation.y = Math.PI / 4; g.add(pinnacle);
+      }
       break;
+    }
     case "eye": {
       const eye = londonEye(x, z, w, d);
       bendAll(eye);
       g.add(eye);
       break;
     }
-    case "st-pauls":
-      box(g, STONE, x + 1, 0, z + 2, x + w - 1, 2.4, z + d - 1);
-      cyl(g, STONE, cx, cz, 2.4, 3.8, 2.4, 24);
-      {
-        const dome = new THREE.Mesh(new THREE.SphereGeometry(2.3, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), mat("#7aa39a"));
-        dome.position.set(cx, 3.8, cz);
-        dome.castShadow = true;
-        g.add(dome);
+    case "st-pauls": {
+      const limestone = "#d6c9b0", domeColor = "#617b76";
+      box(g, limestone, x + 0.9, 0, z + 1.5, x + w - 0.9, 2.3, z + d - 1.4);
+      box(g, "#eee4d0", x + 0.55, 0.15, z + d - 1.25, x + w - 0.55, 0.4, z + d - 0.85);
+      // West portico with a full pediment and a proper colonnade.
+      box(g, limestone, x + 1.6, 2.3, z + d - 1.5, x + w - 1.6, 3.1, z + d - 0.65);
+      for (let px = x + 1.9; px <= x + w - 1.9; px += 0.72) cyl(g, "#e5dac5", px, z + d - 0.82, 0.4, 2.72, 0.18, 12);
+      const pediment = new THREE.Mesh(new THREE.ConeGeometry(2.55, 1.1, 4), mat(limestone));
+      pediment.position.set(cx, 3.62, z + d - 0.72); pediment.rotation.y = Math.PI / 4; pediment.scale.z = 0.32; g.add(pediment);
+      // Broad lead-clad dome, segmented ribs and lantern drum.
+      cyl(g, limestone, cx, cz, 2.3, 3.35, 2.45, 24);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(2.35, 32, 20, 0, Math.PI * 2, 0, Math.PI / 2), mat(domeColor));
+      dome.position.set(cx, 3.35, cz); dome.castShadow = true; g.add(dome);
+      for (let i = 0; i < 12; i++) {
+        const angle = i * Math.PI / 6;
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.055, 2.0, 6), mat("#aabbb0"));
+        rib.position.set(cx + Math.cos(angle) * 1.65, 4.28, cz + Math.sin(angle) * 1.65);
+        rib.rotation.z = -Math.cos(angle) * 0.48; rib.rotation.x = Math.sin(angle) * 0.48; g.add(rib);
       }
-      cyl(g, GOLDEN, cx, cz, 6.1, 7, 0.01, 8, 0.2);
-      break;
-    case "shard":
-      cyl(g, "#9fc2dc", cx, cz, 0, 13, 0.15, 4, 2.2).rotation.y = Math.PI / 4;
-      break;
-    case "gherkin": {
-      const gk = new THREE.Mesh(new THREE.SphereGeometry(1.6, 18, 16), mat("#5a8fb0"));
-      gk.scale.set(1, 3.2, 1);
-      gk.position.set(cx, 4.4, cz);
-      gk.castShadow = true;
-      g.add(gk);
+      cyl(g, limestone, cx, cz, 5.55, 6.45, 0.75, 16);
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        box(g, "#34434b", cx + Math.cos(a) * 0.58 - 0.05, 5.72, cz + Math.sin(a) * 0.58 - 0.04, cx + Math.cos(a) * 0.58 + 0.05, 6.25, cz + Math.sin(a) * 0.58 + 0.04);
+      }
+      cyl(g, GOLDEN, cx, cz, 6.45, 6.75, 0.01, 8, 0.23);
+      const cross = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.65, 6), mat(GOLDEN));
+      cross.position.set(cx, 7.1, cz); g.add(cross);
       break;
     }
-    case "tower-bridge":
-      for (const zz of [z + 1, z + d - 1]) {
-        box(g, STONE, cx - 1, 0, zz - 0.6, cx + 1, 5, zz + 0.6);
-        for (const [dx, dz] of [[-0.8, -0.4], [0.8, -0.4], [-0.8, 0.4], [0.8, 0.4]]) cyl(g, "#2f5b4a", cx + dx, zz + dz, 5, 6, 0.01, 4, 0.3);
+    case "shard": {
+      // Faceted, tapering glass profile with a distinct crown and pale vertical mullions.
+      const profile = new THREE.LatheGeometry([
+        new THREE.Vector2(1.9, 0), new THREE.Vector2(1.65, 2.2), new THREE.Vector2(1.28, 5.1),
+        new THREE.Vector2(0.92, 8.1), new THREE.Vector2(0.52, 10.8), new THREE.Vector2(0.14, 13.8), new THREE.Vector2(0.025, 15.2),
+      ], 8);
+      const glass = new THREE.Mesh(profile, mat("#78a8ba")); glass.position.set(cx, 0, cz); glass.rotation.y = Math.PI / 8; glass.castShadow = true; g.add(glass);
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        const mullion = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.09, 14.8, 5), mat("#c7d8d8"));
+        mullion.position.set(cx + Math.cos(a) * 0.92, 7.4, cz + Math.sin(a) * 0.92);
+        mullion.scale.set(0.55, 1, 0.55); g.add(mullion);
       }
-      box(g, "#6aa3c9", cx - 0.6, 4.2, z + 1, cx + 0.6, 4.6, z + d - 1);
+      cyl(g, "#c8a869", cx, cz, 0, 0.5, 1.95, 8, 1.85);
       break;
-    case "tower":
-      box(g, "#d9cfb8", x + 0.5, 0, z + 0.5, x + w - 0.5, 3, z + d - 0.5);
-      for (const [dx, dz] of [[0.5, 0.5], [w - 0.5, 0.5], [0.5, d - 0.5], [w - 0.5, d - 0.5]]) cyl(g, "#d9cfb8", x + dx, z + dz, 0, 4, 0.5, 10);
+    }
+    case "gherkin": {
+      const profile = new THREE.LatheGeometry([
+        new THREE.Vector2(0.48, 0), new THREE.Vector2(0.9, 0.65), new THREE.Vector2(1.25, 1.7),
+        new THREE.Vector2(1.5, 3.1), new THREE.Vector2(1.42, 4.25), new THREE.Vector2(1.05, 5.3), new THREE.Vector2(0.44, 6.1), new THREE.Vector2(0.08, 6.6),
+      ], 24);
+      const gk = new THREE.Mesh(profile, mat("#55839a")); gk.position.set(cx, 0, cz); gk.scale.set(1, 1, 0.86); gk.castShadow = true; g.add(gk);
+      for (let level = 1; level < 8; level++) {
+        const y = level * 0.73;
+        const radius = Math.min(1.48, 0.6 + Math.sin((y / 6.6) * Math.PI) * 0.86);
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.025, 5, 32), mat("#b6c8c6"));
+        ring.rotation.x = Math.PI / 2; ring.position.set(cx, y, cz); ring.scale.z = 0.86; g.add(ring);
+      }
+      for (let i = 0; i < 6; i++) {
+        const fin = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.035, 6.4, 5), mat("#bfd0cd"));
+        const a = i * Math.PI / 3; fin.position.set(cx + Math.cos(a) * 0.72, 3.2, cz + Math.sin(a) * 0.62); g.add(fin);
+      }
       break;
-    case "battersea":
-      box(g, "#b0624a", x + 1, 0, z + 1, x + w - 1, 3.5, z + d - 1);
-      for (const [dx, dz] of [[1, 1], [w - 1, 1], [1, d - 1], [w - 1, d - 1]]) cyl(g, "#f2ece0", x + dx, z + dz, 0, 7, 0.45, 14, 0.38);
+    }
+    case "tower-bridge": {
+      const stone = "#c9b99c", slate = "#52616b", waterBlue = "#7197a0";
+      // Twin Gothic towers frame the road and keep the central span open.
+      for (const zz of [z + 1, z + d - 1]) {
+        box(g, stone, cx - 1.18, 0, zz - 0.58, cx + 1.18, 5.05, zz + 0.58);
+        box(g, "#293a42", cx - 0.66, 0.1, zz + 0.59, cx + 0.66, 3.05, zz + 0.63);
+        box(g, stone, cx - 0.82, 0, zz + 0.62, cx - 0.7, 3.2, zz + 0.69);
+        box(g, stone, cx + 0.7, 0, zz + 0.62, cx + 0.82, 3.2, zz + 0.69);
+        box(g, "#e0d3bc", cx - 1.3, 4.9, zz - 0.7, cx + 1.3, 5.15, zz + 0.7);
+        box(g, slate, cx - 1.06, 5.15, zz - 0.62, cx + 1.06, 5.45, zz + 0.62);
+        for (const px of [cx - 0.86, cx + 0.86]) {
+          box(g, stone, px - 0.17, 5.35, zz - 0.16, px + 0.17, 6.2, zz + 0.16);
+          const turret = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.62, 4), mat(slate));
+          turret.position.set(px, 6.55, zz); turret.rotation.y = Math.PI / 4; g.add(turret);
+        }
+        for (const yy of [3.45, 4.05]) box(g, "#34434b", cx - 0.25, yy, zz + 0.62, cx + 0.25, yy + 0.38, zz + 0.68);
+        box(g, "#e6d8bd", cx - 0.12, 0.5, zz + 0.65, cx + 0.12, 2.7, zz + 0.7);
+      }
+      box(g, slate, cx - 1.25, 4.52, z + 0.7, cx + 1.25, 4.86, z + d - 0.7);
+      box(g, waterBlue, cx - 0.95, 4.22, z + 0.9, cx + 0.95, 4.42, z + d - 0.9);
+      // Suspended approach beams and paired cables join the bridge towers.
+      for (const side of [-1, 1]) {
+        const rail = box(g, "#344d50", side < 0 ? x + 0.35 : x + w - 0.55, 3.4, z + 0.8, side < 0 ? x + 0.55 : x + w - 0.35, 3.55, z + d - 0.8);
+        rail.rotation.x = 0;
+        for (let zz = z + 1.2; zz < z + d - 0.8; zz += 0.7) box(g, "#687a78", side < 0 ? x + 0.4 : x + w - 0.5, 3.05, zz, side < 0 ? x + 0.48 : x + w - 0.42, 3.45, zz + 0.06);
+      }
       break;
-    case "tate":
-      box(g, "#8c4a3a", x, 0, z, x + w, 3, z + d);
-      box(g, "#8c4a3a", cx - 0.4, 3, cz - 0.4, cx + 0.4, 7, cz + 0.4);
+    }
+    case "tower": {
+      const stone = "#b49d7d", trim = "#ddc9a7";
+      box(g, stone, x + 0.5, 0, z + 0.5, x + w - 0.5, 4.4, z + d - 0.5);
+      for (const [dx, dz] of [[0.8, 0.8], [w - 0.8, 0.8], [0.8, d - 0.8], [w - 0.8, d - 0.8]]) {
+        cyl(g, trim, x + dx, z + dz, 0, 4.75, 0.46, 12, 0.38);
+        box(g, "#3a3431", x + dx - 0.14, 1.5, z + dz + 0.37, x + dx + 0.14, 2.55, z + dz + 0.42);
+        box(g, "#3a3431", x + dx - 0.14, 3.1, z + dz + 0.37, x + dx + 0.14, 4.0, z + dz + 0.42);
+      }
+      for (const yy of [0.85, 2, 3.2, 4.45]) box(g, trim, x + 0.25, yy, z + 0.22, x + w - 0.25, yy + 0.12, z + d - 0.22);
+      box(g, "#594d3d", x + 0.6, 4.55, z + 0.6, x + w - 0.6, 4.85, z + d - 0.6);
+      for (let px = x + 0.65; px < x + w - 0.4; px += 0.55) box(g, trim, px, 4.8, z + 0.65, px + 0.16, 5.35, z + d - 0.65);
       break;
-    case "palace":
-      box(g, "#efe7d4", x + 0.5, 0, z + 1, x + w - 0.5, 2.6, z + d - 1);
-      box(g, "#d9cfb8", x, 0, z + d - 1, x + w, 0.6, z + d);
+    }
+    case "battersea": {
+      box(g, "#a95e4b", x + 0.55, 0, z + 0.65, x + w - 0.55, 4.0, z + d - 0.65);
+      box(g, "#d3b49b", x + 0.35, 0.25, z + 0.4, x + w - 0.35, 0.45, z + d - 0.4);
+      for (const [dx, dz] of [[1, 1], [w - 1, 1], [1, d - 1], [w - 1, d - 1]]) {
+        cyl(g, "#e6dfcf", x + dx, z + dz, 0, 7.2, 0.45, 16, 0.35);
+        cyl(g, "#a95e4b", x + dx, z + dz, 6.75, 7.15, 0.48, 16, 0.38);
+        cyl(g, "#69777a", x + dx, z + dz, 7.15, 7.45, 0.38, 12, 0.08);
+        for (let yy = 1; yy < 4; yy += 0.8) box(g, "#34434b", x + dx - 0.16, yy, z + dz + 0.35, x + dx + 0.16, yy + 0.48, z + dz + 0.39);
+      }
+      for (const yy of [0.9, 2.1, 3.3]) box(g, "#d49b7e", x + 0.5, yy, z + d - 0.4, x + w - 0.5, yy + 0.09, z + d - 0.28);
       break;
+    }
+    case "tate": {
+      box(g, "#8c4a3a", x, 0, z, x + w, 3.8, z + d);
+      box(g, "#aa6652", x - 0.12, 3.75, z - 0.1, x + w + 0.12, 4.05, z + d + 0.1);
+      for (let px = x + 0.5; px < x + w; px += 0.85) {
+        box(g, "#34434b", px, 0.7, z + d + 0.015, px + 0.42, 1.6, z + d + 0.03);
+        box(g, "#d6c7ae", px - 0.08, 1.62, z + d - 0.04, px + 0.5, 1.71, z + d + 0.05);
+      }
+      box(g, "#8c4a3a", cx - 0.65, 4.05, cz - 0.65, cx + 0.65, 8.2, cz + 0.65);
+      box(g, "#34434b", cx - 0.25, 5, cz + 0.66, cx + 0.25, 6.2, cz + 0.7);
+      box(g, "#aa6652", cx - 0.85, 8.1, cz - 0.85, cx + 0.85, 8.35, cz + 0.85);
+      break;
+    }
+    case "palace": {
+      const facade = "#e4d9c7", dark = "#34434b", trim = "#c5aa7d";
+      box(g, facade, x + 0.5, 0, z + 0.7, x + w - 0.5, 3.3, z + d - 0.7);
+      box(g, "#d3c5ae", x, 0, z + d - 0.75, x + w, 0.75, z + d);
+      box(g, trim, x + 0.25, 0.52, z + d + 0.015, x + w - 0.25, 0.67, z + d + 0.05);
+      for (let px = x + 0.65; px < x + w - 0.3; px += 0.8) {
+        box(g, dark, px, 1.1, z + d + 0.025, px + 0.34, 2.25, z + d + 0.04);
+        box(g, trim, px - 0.08, 2.23, z + d - 0.04, px + 0.42, 2.34, z + d + 0.05);
+        box(g, "#e9e1d0", px + 0.15, 1.1, z + d + 0.045, px + 0.19, 2.25, z + d + 0.06);
+      }
+      box(g, "#b73236", cx - 0.35, 0.05, z + d + 0.035, cx + 0.35, 1.1, z + d + 0.05);
+      box(g, trim, x + 0.25, 3.25, z + 0.45, x + w - 0.25, 3.45, z + d - 0.45);
+      for (let px = x + 0.6; px < x + w - 0.4; px += 0.8) {
+        const finial = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), mat(trim));
+        finial.position.set(px, 3.67, cz); g.add(finial);
+      }
+      break;
+    }
     case "canary":
       for (let i = 0; i < 3; i++) {
         const xx = x + 1 + i * (w / 3);
@@ -1083,31 +1253,68 @@ export function lymeBike(green = "#4cd137") {
 
 function busModel(route: string) {
   const g = new THREE.Group();
-  // Route number and destination on the front and both sides.
-  const blind = sign(`${route}  London`, { bg: "#15151c", fg: "#ffb020", w: 0.9, h: 0.18, font: "bold 64px monospace" });
-  blind.position.set(1.41, 1.2, 0);
-  blind.rotation.y = Math.PI / 2;
-  g.add(blind);
-  for (const side of [-1, 1]) {
-    const s = sign(route, { bg: "#15151c", fg: "#ffb020", w: 0.5, h: 0.2, font: "bold 80px monospace" });
-    s.position.set(-0.9, 1.2, side * 0.49);
-    s.rotation.y = side > 0 ? 0 : Math.PI;
-    g.add(s);
-  }
-  box(g, "#d72a22", -1.35, 0.25, -0.48, 1.35, 2.05, 0.48);
-  box(g, "#1c2430", -1.15, 1.4, -0.5, 1.2, 1.82, 0.5);
-  box(g, "#1c2430", -0.9, 0.62, -0.5, 0.6, 1.0, 0.5);
-  box(g, "#1c2430", 1.33, 0.5, -0.42, 1.37, 1.85, 0.42);
-  box(g, "#15151c", 1.3, 0.2, -0.45, 1.38, 0.5, 0.45);
-  box(g, "#15151c", 1.36, 1.1, -0.36, 1.4, 1.3, 0.36);
-  box(g, "#b81f19", -1.3, 2.05, -0.44, 1.3, 2.12, 0.44);
-  for (const xx of [-0.9, 0.9])
-    for (const zz of [-0.48, 0.48]) {
-      const wh = cyl(g, "#2a2730", xx, zz, 0, 0, 0.25, 14);
-      wh.geometry = new THREE.CylinderGeometry(0.25, 0.25, 0.14, 14);
-      wh.rotation.x = Math.PI / 2;
-      wh.position.y = 0.25;
+  const red = "#c52e32", deepRed = "#8f2027", cream = "#e9d8b6", glass = "#243b49", rubber = "#20252a";
+  // Modern London double-decker silhouette with softly stepped front and rear.
+  box(g, rubber, -1.37, 0.12, -0.5, 1.38, 0.38, 0.5);
+  box(g, deepRed, -1.34, 0.3, -0.49, 1.31, 2.03, 0.49);
+  box(g, red, -1.29, 0.42, -0.51, 1.3, 1.98, 0.51);
+  box(g, red, -1.22, 1.98, -0.48, 1.18, 2.72, 0.48);
+  box(g, cream, -1.29, 1.28, -0.525, 1.31, 1.4, 0.525);
+  box(g, deepRed, -1.28, 1.37, -0.53, 1.31, 1.43, 0.53);
+  // Continuous upper and lower deck glazing, framed by fine pillar lines.
+  box(g, glass, -1.16, 1.56, -0.514, 1.02, 1.92, 0.514);
+  box(g, glass, -1.14, 2.1, -0.49, 0.98, 2.56, 0.49);
+  for (const zSide of [-0.53, 0.53]) {
+    for (const px of [-1.1, -0.76, -0.42, -0.08, 0.26, 0.6, 0.94]) {
+      box(g, red, px, 1.53, zSide - 0.018, px + 0.035, 1.95, zSide + 0.018);
+      box(g, red, px, 2.07, zSide - 0.018, px + 0.035, 2.59, zSide + 0.018);
     }
+    box(g, red, -1.22, 1.94, zSide - 0.026, 1.12, 2.04, zSide + 0.026);
+    box(g, red, -1.2, 2.58, zSide - 0.026, 1.08, 2.68, zSide + 0.026);
+    // Passenger doors, handle and lower body moulding.
+    box(g, deepRed, 0.79, 0.48, zSide - 0.035, 1.13, 1.29, zSide + 0.035);
+    box(g, glass, 0.83, 0.92, zSide - 0.05, 1.09, 1.2, zSide + 0.05);
+    box(g, cream, 0.76, 0.4, zSide - 0.04, 1.16, 0.46, zSide + 0.04);
+    box(g, red, -1.27, 0.36, zSide - 0.018, 1.28, 0.43, zSide + 0.018);
+  }
+  // Panoramic front glass, split windscreen, destination blinds and lower grille.
+  box(g, glass, 1.3, 1.58, -0.39, 1.36, 2.43, 0.39);
+  box(g, red, 1.35, 1.58, -0.018, 1.39, 2.43, 0.018);
+  box(g, red, 1.31, 1.47, -0.45, 1.38, 1.55, 0.45);
+  box(g, rubber, 1.37, 0.39, -0.42, 1.42, 0.86, 0.42);
+  for (let i = 0; i < 5; i++) box(g, "#718087", 1.425, 0.47 + i * 0.065, -0.28, 1.44, 0.49 + i * 0.065, 0.28);
+  const blind = sign(`${route}  CITY`, { bg: "#101923", fg: "#ffd176", w: 0.82, h: 0.2, font: "bold 56px monospace" });
+  blind.position.set(1.39, 2.48, 0); blind.rotation.y = Math.PI / 2; g.add(blind);
+  // Wraparound destination/route cards at both sides, plus small fleet crests.
+  for (const side of [-1, 1]) {
+    const s = sign(`${route}  LONDON`, { bg: "#101923", fg: "#ffd176", w: 0.94, h: 0.15, font: "bold 46px monospace" });
+    s.position.set(-0.38, 2.74, side * 0.49); s.rotation.y = side > 0 ? 0 : Math.PI; g.add(s);
+    box(g, cream, -1.22, 1.46, side * 0.531 - 0.012, 1.2, 1.5, side * 0.531 + 0.012);
+    box(g, "#d9b45a", -1.16, 1.46, side * 0.548 - 0.012, -0.99, 1.5, side * 0.548 + 0.012);
+    // Side mirrors on slim arms.
+    box(g, deepRed, 1.05, 1.43, side * 0.49, 1.3, 1.47, side * 0.66);
+    box(g, glass, 1.27, 1.38, side * 0.63, 1.42, 1.57, side * 0.78);
+  }
+  // Roof equipment and an illuminated cream safety band around the roofline.
+  box(g, cream, -1.23, 2.7, -0.43, 1.12, 2.75, 0.43);
+  box(g, "#8f9898", -0.75, 2.75, -0.25, -0.2, 2.9, 0.25);
+  box(g, "#667579", -0.68, 2.9, -0.18, -0.27, 2.94, 0.18);
+  // Headlights and tail lights: small high-contrast glass lenses.
+  for (const zz of [-0.34, 0.34]) {
+    box(g, "#f3e6bf", 1.405, 0.92, zz - 0.08, 1.45, 1.1, zz + 0.08);
+    box(g, "#d64c40", -1.4, 0.73, zz - 0.08, -1.36, 1.05, zz + 0.08);
+    box(g, "#f4b55b", -1.4, 0.55, zz - 0.08, -1.36, 0.66, zz + 0.08);
+  }
+  // Four detailed wheels with hubs and raised arches.
+  for (const xx of [-0.95, 0.98]) for (const zz of [-0.49, 0.49]) {
+    const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 16), mat(rubber));
+    wh.rotation.x = Math.PI / 2; wh.position.set(xx, 0.34, zz); wh.castShadow = true; g.add(wh);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.17, 12), mat("#a8a69a"));
+    hub.rotation.x = Math.PI / 2; hub.position.set(xx, 0.34, zz * 1.025); g.add(hub);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.18, 10), mat("#e4d3ad"));
+    cap.rotation.x = Math.PI / 2; cap.position.set(xx, 0.34, zz * 1.04); g.add(cap);
+    box(g, deepRed, xx - 0.36, 0.57, zz > 0 ? 0.48 : -0.51, xx + 0.36, 0.63, zz > 0 ? 0.52 : -0.48);
+  }
   g.scale.set(BUS_LENGTH / 2.8, 1.35, BUS_WIDTH / 1.0);
   return g;
 }
