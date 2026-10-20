@@ -28,13 +28,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y blender
-      - name: Install NumPy into Blender Python
-        run: blender -b --python-expr "import sys, subprocess; print('Blender Python:', sys.version); subprocess.check_call([sys.executable, '-m', 'ensurepip']); subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'numpy'])"
       - name: Render and post-process movers
         run: |
-          blender -b --python scripts/world/build_movers.py -- /tmp/movers-raw
           python3 -m venv /tmp/movers-env --system-site-packages
           /tmp/movers-env/bin/pip install pillow numpy
+          /tmp/movers-env/bin/pip install --target /tmp/blender-site numpy
+          PYTHONPATH=/tmp/blender-site blender -b --python scripts/world/build_movers.py -- /tmp/movers-raw
           /tmp/movers-env/bin/python scripts/world/post_movers.py /tmp/movers-raw /tmp/movers-out
           cp /tmp/movers-out/bus-*.webp public/world/
       - name: Commit bus sprites
