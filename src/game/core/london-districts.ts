@@ -78,6 +78,45 @@ export function expandLondon(core: Built, width: number, height: number): Built 
   building("conservatory","The Conservatory",139,112,16,9,3.5,"glass","#cfdfd1");
   building("garden-house","Garden House",162,112,10,9,4.2,"stone","#dcd0b8");
   path(137,123,37,8);
+  // A compact southern high street links the mews to the road network.
+  road(0,117,132);
+  road(34,104,18,true);
+  road(91,104,18,true);
+  routes.push([[35,105],[92,105],[92,118],[35,118],[35,105]]);
+
+  // Complete spare street edges without consuming gardens or front doors.
+  const infillLots: [string,number,number,number,number,Building["style"],string][] = [
+    ["primrose-corner",3,109,4,5,"brick","#c48770"],
+    ["primrose-shop",24,109,3,5,"shop","#dfc39a"],
+    ["primrose-house",31,123,5,5,"terrace","#baaa9d"],
+    ["primrose-office",47,109,5,5,"stone","#d9c8b1"],
+    ["mews-cafe",63,109,5,5,"shop","#d9ae89"],
+    ["orchard-row",84,109,5,5,"terrace","#afbaa8"],
+    ["orchard-studio",95,109,5,5,"brick","#bd8c7e"],
+    ["commons-house",26,123,5,5,"terrace","#ceb9a1"],
+    ["commons-workshop",46,123,5,5,"brick","#b57b6b"],
+    ["commons-terrace",61,123,6,5,"terrace","#d4bda3"],
+    ["commons-cafe",83,123,5,5,"shop","#c9b394"],
+    ["commons-library",96,123,6,5,"stone","#d8cdb5"],
+    ["wharf-homes",155,66,3,5,"terrace","#c3a391"],
+    ["wharf-offices",155,75,3,5,"brick","#c68f78"],
+    ["campus-shop",134,7,3,5,"shop","#d1b796"],
+    ["campus-court",155,8,3,5,"stone","#d6c8ac"],
+  ];
+  for(const [id,x,y,w,h,style,colour] of infillLots) {
+    let clear=true;
+    for(let yy=y;yy<y+h;yy++) for(let xx=x;xx<x+w;xx++)
+      if(!outside(xx,yy)||get(xx,yy)!=="g") clear=false;
+    if(!clear) continue;
+    building(id,id.replaceAll("-"," "),x,y,w,h,2.6+(x%4)*0.55,style,colour);
+    path(x-1,y+h,w+2,1);
+  }
+  for(const [id,x] of [["primrose",42],["orchard",110]] as const) {
+    if(!["g","-"].includes(get(x,121)??"")) continue;
+    set(x,121,"X");
+    things.push({kind:"busstop",id:"district-"+id+"-busstop",x,y:121});
+  }
+
   // Planted islands break up the pedestrian courts. Stone walks curve around
   // the beds, leaving a clear central route and every doorway unobstructed.
   for(const [cx,cy,rx,ry] of [[141,31,3,3],[151,36,3,2],[123,81,3,4],[141,81,3,4],[153,82,3,4],[169,85,3,3],[153,125,3,2]]) {

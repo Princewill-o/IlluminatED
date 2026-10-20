@@ -6,6 +6,8 @@ in four directions, and a riverboat in two.
   blender -b --python build_movers.py -- out_dir
 """
 import bpy, bmesh, math, os, sys, json
+# Cloud CI sprite regeneration workflow is tracked alongside this generator.
+
 import numpy as np
 from mathutils import Vector
 
@@ -150,44 +152,57 @@ def bevel(o, w=0.08):
 
 bus_root = empty("bus")
 def busbody(parent):
-    """A New Routemaster-style double-decker: rounded roof, wraparound upper glass,
-    diagonal glazed staircases front and back, sloping lower windscreen, black nose."""
-    red, glass, ink, white = "#d72a22", "#1c2430", "#15151c", "#eef0f4"
+    """Rounded London double-decker with two full decks and kerbside doors."""
+    red, dark, glass, ink, cream = "#c9182c", "#a91224", "#162834", "#20272c", "#e7d9bd"
     parts = [
-        bevel(box(red, (0, 0, 1.15), (2.8, 0.98, 1.98), parent), 0.3),            # body, very rounded roof edges
-        box(glass, (-0.1, 0, 1.62), (2.3, 1.0, 0.42), parent),                     # upper deck band
-        box(glass, (1.25, 0, 1.62), (0.34, 0.99, 0.42), parent),                   # wraparound front corner glass
-        bevel(box(glass, (1.39, 0, 1.62), (0.04, 0.84, 0.46), parent), 0.02),      # upper windscreen
-        box(glass, (-0.4, 0, 0.82), (1.4, 1.0, 0.38), parent),                     # lower deck windows
-        box(red, (-0.45, 0, 0.82), (0.06, 1.01, 0.38), parent),                    # pillar
-        box(red, (0.35, 0, 1.62), (0.06, 1.01, 0.42), parent),
-        box(red, (-0.65, 0, 1.62), (0.06, 1.01, 0.42), parent),
+        bevel(box(red, (0, 0, 1.48), (3.05, 1.06, 2.65), parent), 0.22),
+        box(ink, (0, 0, 0.29), (3.07, 1.07, 0.18), parent),
+        box(dark, (0, 0, 1.46), (3.06, 1.08, 0.15), parent),
+        box(cream, (0, 0, 1.54), (3.07, 1.09, 0.045), parent),
+        bevel(box(dark, (0, 0, 2.81), (2.7, 0.95, 0.13), parent), 0.06),
+        box("#a6afb0", (-0.35, 0, 2.9), (0.52, 0.42, 0.12), parent),
     ]
-    # The swoosh: diagonal glazed staircases at the front and the back.
-    for x0, tilt in ((0.75, 0.62), (-1.15, -0.62)):
-        parts.append(box(glass, (x0, 0, 1.2), (0.26, 1.0, 1.15), parent, rot=(0, tilt, 0)))
-    parts += [
-        box(glass, (1.31, 0, 0.75), (0.16, 0.86, 0.7), parent, rot=(0, -0.28, 0)),   # sloping lower windscreen
-        box(ink, (1.33, 0, 0.3), (0.12, 0.9, 0.3), parent),                           # black nose
-        box(ink, (1.38, 0, 1.2), (0.05, 0.72, 0.2), parent),                          # dot-matrix destination
-        box(white, (1.41, 0.12, 1.2), (0.02, 0.36, 0.08), parent),                    # destination text
-        box("#ffb020", (1.41, -0.26, 1.2), (0.02, 0.12, 0.1), parent),               # route number
-        box(glass, (0.98, 0.5, 0.62), (0.36, 0.02, 0.9), parent),                     # doors (kerb side)
-        box(glass, (-0.1, 0.5, 0.62), (0.4, 0.02, 0.9), parent),
-        box(glass, (-1.25, 0.5, 0.62), (0.3, 0.02, 0.9), parent),
-        box(ink, (0, 0, 0.17), (2.82, 1.0, 0.12), parent),                            # skirt
-        box(white, (-0.2, -0.5, 1.2), (0.5, 0.02, 0.05), parent),                     # fleet stripe detail
-    ]
+    # Full-length upper and lower windows, with a regular red frame.
+    for side in (-1, 1):
+        y = side * 0.55
+        for z, height in ((1.03, 0.48), (2.1, 0.63)):
+            parts.append(box(ink, (-0.08, y, z), (2.63, 0.035, height + 0.07), parent))
+            parts.append(box(glass, (-0.08, y + side * 0.026, z), (2.55, 0.025, height), parent))
+            for x in (-1.17, -0.8, -0.43, -0.06, 0.31, 0.68, 1.05):
+                parts.append(box(red, (x, y + side * 0.035, z), (0.05, 0.06, height), parent))
+        parts.append(box(red, (0, y, 1.69), (2.75, 0.09, 0.15), parent))
+        parts.append(box(cream, (0, y + side * 0.05, 1.58), (2.75, 0.035, 0.04), parent))
+    # Two double doors on the +Y kerb side, each with a central stile.
+    for x in (-0.22, 0.92):
+        parts.append(box(ink, (x, 0.59, 0.96), (0.45, 0.055, 1.15), parent))
+        parts.append(box(glass, (x, 0.625, 1.01), (0.38, 0.025, 0.94), parent))
+        parts.append(box(cream, (x, 0.655, 1.01), (0.035, 0.035, 0.94), parent))
+        parts.append(box(cream, (x, 0.66, 0.78), (0.4, 0.035, 0.04), parent))
+        parts.append(box(cream, (x, 0.66, 0.42), (0.46, 0.035, 0.05), parent))
+    # Front destination display, twin windscreens and the dark curved nose.
+    parts.extend([
+        box(ink, (1.55, 0, 2.56), (0.08, 0.88, 0.25), parent),
+        box("#ffce78", (1.6, -0.24, 2.58), (0.025, 0.18, 0.09), parent),
+        box(cream, (1.6, 0.13, 2.58), (0.025, 0.4, 0.065), parent),
+        box(glass, (1.57, 0, 1.97), (0.07, 0.89, 0.76), parent),
+        box(red, (1.61, 0, 1.61), (0.05, 0.95, 0.13), parent),
+        box(glass, (1.58, 0, 1.12), (0.07, 0.87, 0.74), parent),
+        box(cream, (1.63, 0, 1.12), (0.035, 0.035, 0.74), parent),
+        box(ink, (1.59, 0, 0.54), (0.11, 0.89, 0.36), parent),
+    ])
     for y in (-0.36, 0.36):
-        parts.append(cyl(white, (1.4, y, 0.36), 0.1, 0.04, parent, rot=(0, math.radians(90), 0)))   # round headlights
-    for x in (-0.95, 0.85):
-        for y in (-0.47, 0.47):
-            parts.append(cyl("#2a2730", (x, y, 0.22), 0.25, 0.14, parent, rot=(math.radians(90), 0, 0)))
-            parts.append(cyl("#9aa0ab", (x, y * 1.03, 0.22), 0.12, 0.15, parent, rot=(math.radians(90), 0, 0)))
+        parts.append(cyl("#fff0ca", (1.67, y, 0.86), 0.11, 0.04, parent, rot=(0, math.radians(90), 0)))
+        parts.append(box("#e34b47", (-1.58, y, 0.82), (0.035, 0.17, 0.3), parent))
+    for x in (-1.0, 0.94):
+        for side in (-1, 1):
+            y = side * 0.55
+            parts.append(cyl(ink, (x, y, 0.35), 0.29, 0.15, parent, rot=(math.radians(90), 0, 0)))
+            parts.append(cyl("#aeb7b5", (x, side * 0.64, 0.35), 0.13, 0.16, parent, rot=(math.radians(90), 0, 0)))
     return parts
+
 bus = busbody(bus_root)
 for d, rz in (("E", 0), ("W", math.pi), ("N", math.pi / 2), ("S", -math.pi / 2)):
-    shoot(f"bus-{d}", bus, 3.4, 3.4, 1.4, 1, lambda f, rz=rz: setattr(bus_root, "rotation_euler", (0, 0, rz)))
+    shoot(f"bus-{d}", bus, 3.8, 3.7, 1.4, 1, lambda f, rz=rz: setattr(bus_root, "rotation_euler", (0, 0, rz)))
 
 # ── Black cab ────────────────────────────────────────────────────────────────
 cab_root = empty("cab")

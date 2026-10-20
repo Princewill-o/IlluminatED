@@ -1,0 +1,31 @@
+name: City model checks
+on:
+  push:
+    paths:
+      - 'src/components/game/world/world3d.tsx'
+      - 'src/game/core/london-districts.ts'
+      - 'scripts/world/build_movers.py'
+      - '.github/workflows/city-check.yml'
+  pull_request:
+    paths:
+      - 'src/components/game/world/world3d.tsx'
+      - 'src/game/core/london-districts.ts'
+      - 'scripts/world/build_movers.py'
+      - '.github/workflows/city-check.yml'
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: python3 -m py_compile scripts/world/build_movers.py
+      - name: Check city layout and bus routes
+        run: |
+          npx --yes tsx@4.20.6 -e "import { buildLondon } from './src/game/core/london.ts'; const m=buildLondon(); if(m.tiles.length!==136||m.tiles.some(r=>r.length!==176)) throw Error('City dimensions'); for(const route of m.routes) for(const [x,y] of route) if(!['=',':'].includes(m.tiles[Math.floor(y)]?.[Math.floor(x)]??'')) throw Error('Route off road '+x+','+y); console.log(m.things.length+' city objects, '+m.routes.length+' routes');"
