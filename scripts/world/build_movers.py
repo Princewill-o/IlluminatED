@@ -6,6 +6,8 @@ in four directions, and a riverboat in two.
   blender -b --python build_movers.py -- out_dir
 """
 import bpy, bmesh, math, os, sys, json
+# Cloud CI sprite regeneration workflow is tracked alongside this generator.
+
 import numpy as np
 from mathutils import Vector
 
