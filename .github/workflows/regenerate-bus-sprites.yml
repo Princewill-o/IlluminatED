@@ -27,7 +27,7 @@ jobs:
       - name: Install Blender
         run: |
           sudo apt-get update
-          sudo apt-get install -y blender
+          sudo apt-get install -y blender libegl1 libgl1 libxrender1 libxkbcommon0
       - name: Render and post-process movers
         run: |
           python3 -m venv /tmp/movers-env --system-site-packages
