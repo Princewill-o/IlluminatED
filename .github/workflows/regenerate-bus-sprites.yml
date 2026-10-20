@@ -15,7 +15,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: regenerate-bus-sprites-\${{ github.ref }}
+  group: regenerate-bus-sprites-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   render:
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: \${{ inputs.ref || github.ref_name }}
+          ref: ${{ inputs.ref || github.ref_name }}
       - name: Install Blender
         run: |
           sudo apt-get update
@@ -44,5 +44,5 @@ jobs:
             echo "Bus sprites are already current."
           else
             git commit -m "Regenerate redesigned London bus sprites"
-            git push origin HEAD:\${{ inputs.ref || github.ref_name }}
+            git push origin HEAD:${{ inputs.ref || github.ref_name }}
           fi
