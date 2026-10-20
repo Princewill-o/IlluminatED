@@ -1276,11 +1276,24 @@ export function lymeBike(green = "#4cd137") {
 function busModel(route: string) {
   const g = new THREE.Group();
   const red = "#c52e32", deepRed = "#8f2027", cream = "#e9d8b6", glass = "#243b49", rubber = "#20252a";
-  // Modern London double-decker silhouette with softly stepped front and rear.
-  box(g, rubber, -1.37, 0.12, -0.5, 1.38, 0.38, 0.5);
-  box(g, deepRed, -1.34, 0.3, -0.49, 1.31, 2.03, 0.49);
-  box(g, red, -1.29, 0.42, -0.51, 1.3, 1.98, 0.51);
-  box(g, red, -1.22, 1.98, -0.48, 1.18, 2.72, 0.48);
+  // One continuous rounded shell gives both decks the right silhouette.
+  const outline = new THREE.Shape();
+  outline.moveTo(-1.39, 0.29);
+  outline.lineTo(1.29, 0.29);
+  outline.quadraticCurveTo(1.43, 0.32, 1.43, 0.53);
+  outline.lineTo(1.43, 2.43);
+  outline.quadraticCurveTo(1.4, 2.74, 1.08, 2.78);
+  outline.lineTo(-1.16, 2.78);
+  outline.quadraticCurveTo(-1.4, 2.73, -1.4, 2.48);
+  outline.closePath();
+  const shell = new THREE.Mesh(new THREE.ExtrudeGeometry(outline, {
+    depth: 0.92, bevelEnabled: true, bevelSize: 0.025,
+    bevelThickness: 0.025, bevelSegments: 2, curveSegments: 5,
+  }), mat(red));
+  shell.position.z = -0.46;
+  shell.castShadow = true;
+  g.add(shell);
+  box(g, rubber, -1.39, 0.12, -0.48, 1.43, 0.38, 0.48);
   box(g, cream, -1.29, 1.28, -0.525, 1.31, 1.4, 0.525);
   box(g, deepRed, -1.28, 1.37, -0.53, 1.31, 1.43, 0.53);
   // Continuous upper and lower deck glazing, framed by fine pillar lines.
@@ -1293,20 +1306,25 @@ function busModel(route: string) {
     }
     box(g, red, -1.22, 1.94, zSide - 0.026, 1.12, 2.04, zSide + 0.026);
     box(g, red, -1.2, 2.58, zSide - 0.026, 1.08, 2.68, zSide + 0.026);
-    // Passenger doors, handle and lower body moulding.
-    box(g, deepRed, 0.79, 0.48, zSide - 0.035, 1.13, 1.29, zSide + 0.035);
-    box(g, glass, 0.83, 0.92, zSide - 0.05, 1.09, 1.2, zSide + 0.05);
-    box(g, cream, 0.76, 0.4, zSide - 0.04, 1.16, 0.46, zSide + 0.04);
     box(g, red, -1.27, 0.36, zSide - 0.018, 1.28, 0.43, zSide + 0.018);
   }
+  // The front and centre glazed door pairs are only on the kerb side.
+  for (const [x0, x1] of [[-0.42, -0.03], [0.72, 1.14]]) {
+    box(g, rubber, x0 - 0.04, 0.4, 0.54, x1 + 0.04, 1.48, 0.6);
+    box(g, glass, x0, 0.48, 0.61, x1, 1.43, 0.625);
+    const middle = (x0 + x1) / 2;
+    box(g, cream, middle - 0.018, 0.46, 0.63, middle + 0.018, 1.44, 0.645);
+    box(g, cream, x0, 0.78, 0.63, x1, 0.82, 0.645);
+    box(g, cream, x0 - 0.05, 0.4, 0.625, x1 + 0.05, 0.46, 0.65);
+  }
   // Panoramic front glass, split windscreen, destination blinds and lower grille.
-  box(g, glass, 1.3, 1.58, -0.39, 1.36, 2.43, 0.39);
-  box(g, red, 1.35, 1.58, -0.018, 1.39, 2.43, 0.018);
-  box(g, red, 1.31, 1.47, -0.45, 1.38, 1.55, 0.45);
-  box(g, rubber, 1.37, 0.39, -0.42, 1.42, 0.86, 0.42);
-  for (let i = 0; i < 5; i++) box(g, "#718087", 1.425, 0.47 + i * 0.065, -0.28, 1.44, 0.49 + i * 0.065, 0.28);
+  box(g, glass, 1.44, 1.58, -0.39, 1.51, 2.43, 0.39);
+  box(g, cream, 1.515, 1.58, -0.018, 1.53, 2.43, 0.018);
+  box(g, red, 1.5, 1.47, -0.45, 1.54, 1.58, 0.45);
+  box(g, rubber, 1.51, 0.39, -0.42, 1.57, 0.86, 0.42);
+  for (let i = 0; i < 5; i++) box(g, "#718087", 1.575, 0.47 + i * 0.065, -0.28, 1.59, 0.49 + i * 0.065, 0.28);
   const blind = sign(`${route}  CITY`, { bg: "#101923", fg: "#ffd176", w: 0.82, h: 0.2, font: "bold 56px monospace" });
-  blind.position.set(1.39, 2.48, 0); blind.rotation.y = Math.PI / 2; g.add(blind);
+  blind.position.set(1.57, 2.49, 0); blind.rotation.y = Math.PI / 2; g.add(blind);
   // Wraparound destination/route cards at both sides, plus small fleet crests.
   for (const side of [-1, 1]) {
     const s = sign(`${route}  LONDON`, { bg: "#101923", fg: "#ffd176", w: 0.94, h: 0.15, font: "bold 46px monospace" });
@@ -1323,7 +1341,7 @@ function busModel(route: string) {
   box(g, "#667579", -0.68, 2.9, -0.18, -0.27, 2.94, 0.18);
   // Headlights and tail lights: small high-contrast glass lenses.
   for (const zz of [-0.34, 0.34]) {
-    box(g, "#f3e6bf", 1.405, 0.92, zz - 0.08, 1.45, 1.1, zz + 0.08);
+    box(g, "#f3e6bf", 1.565, 0.92, zz - 0.08, 1.6, 1.1, zz + 0.08);
     box(g, "#d64c40", -1.4, 0.73, zz - 0.08, -1.36, 1.05, zz + 0.08);
     box(g, "#f4b55b", -1.4, 0.55, zz - 0.08, -1.36, 0.66, zz + 0.08);
   }
@@ -1337,7 +1355,7 @@ function busModel(route: string) {
     cap.rotation.x = Math.PI / 2; cap.position.set(xx, 0.34, zz * 1.04); g.add(cap);
     box(g, deepRed, xx - 0.36, 0.57, zz > 0 ? 0.48 : -0.51, xx + 0.36, 0.63, zz > 0 ? 0.52 : -0.48);
   }
-  g.scale.set(BUS_LENGTH / 2.8, 1.35, BUS_WIDTH / 1.0);
+  g.scale.set(BUS_LENGTH / 3.2, 1.28, BUS_WIDTH / 1.56);
   return g;
 }
 
