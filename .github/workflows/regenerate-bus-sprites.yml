@@ -1,0 +1,48 @@
+name: Regenerate bus sprites
+on:
+  push:
+    branches: [codex/bus-city-redesign]
+    paths:
+      - 'scripts/world/build_movers.py'
+      - '.github/workflows/regenerate-bus-sprites.yml'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Branch to regenerate and update
+        required: true
+        default: codex/bus-city-redesign
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: regenerate-bus-sprites-\${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: \${{ inputs.ref || github.ref_name }}
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+      - name: Render and post-process movers
+        run: |
+          blender -b --python scripts/world/build_movers.py -- /tmp/movers-raw
+          python3 -m venv /tmp/movers-env --system-site-packages
+          /tmp/movers-env/bin/pip install pillow numpy
+          /tmp/movers-env/bin/python scripts/world/post_movers.py /tmp/movers-raw /tmp/movers-out
+          cp /tmp/movers-out/bus-*.webp public/world/
+      - name: Commit bus sprites
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add public/world/bus-*.webp
+          if git diff --cached --quiet; then
+            echo "Bus sprites are already current."
+          else
+            git commit -m "Regenerate redesigned London bus sprites"
+            git push origin HEAD:\${{ inputs.ref || github.ref_name }}
+          fi
