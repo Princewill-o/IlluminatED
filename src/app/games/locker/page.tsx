@@ -27,6 +27,7 @@ export default async function LockerPage() {
           initialOwned={player.owned}
           initialClout={player.clout}
           canSave={player.ready}
+          userId={account.id}
         />
       </div>
     </div>

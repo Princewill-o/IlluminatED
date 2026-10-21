@@ -6,7 +6,10 @@ export const HAIR: Record<string, string | null> = {
   "hair-buns": "buns", "hair-buzz": "buzz", "hair-bald": null, "hair-quiff": "quiff", "hair-braids": "braids",
   "hair-afro": "afro", "hair-spiky": "spiky", "hair-mohawk": "mohawk",
 };
-export const TOP: Record<string, { v: string; second?: string; cape?: boolean }> = {
+import { HEROES } from "./heroes";
+
+export interface TopLook { v: string; second?: string; cape?: boolean; accent?: string; extras?: string[] }
+export const TOP: Record<string, TopLook> = {
   "top-tee": { v: "tee" }, "top-hoodie": { v: "hoodie" }, "top-stripes": { v: "stripes", second: "#1d2a5c" },
   "top-polo": { v: "jersey", second: "#ffffff" }, "top-knit": { v: "long" }, "top-apron": { v: "apron", second: "#ffffff" },
   "top-denim": { v: "jacket", second: "#f3f3f3" }, "top-jersey": { v: "jersey", second: "#ffffff" },
@@ -14,6 +17,10 @@ export const TOP: Record<string, { v: string; second?: string; cape?: boolean }>
   "top-astronaut": { v: "suitspace", second: "#c9cbd6" }, "top-cape": { v: "tee", cape: true },
   "top-labcoat": { v: "coat", second: "#bfe3ff" }, "top-hivis": { v: "vest" }, "top-tracksuit": { v: "long" },
 };
+// Lumen League suits: suit colour comes from the Locker item, trim and accent from the hero.
+for (const h of HEROES)
+  TOP[`top-hero-${h.id}`] = { v: "herosuit", second: h.colours.trim, accent: h.colours.accent, cape: h.cape, extras: [h.gear, `emblem-${h.emblem}`] };
+
 export const BOTTOM: Record<string, string> = {
   "bottom-jeans": "trousers", "bottom-joggers": "joggers", "bottom-shorts": "shorts", "bottom-skirt": "skirt",
   "bottom-cargo": "cargo", "bottom-smart": "trousers", "bottom-tartan": "trousers",

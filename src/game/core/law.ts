@@ -35,10 +35,12 @@ export const freshLife = (): LifeState => ({ stars: 0, heatAt: 0, lastOffence: n
 
 export const STAR_FADE_MS = 60_000;
 export const MAX_STARS = 5;
+/** Police only respond from this many stars. Below it, witnesses report you and stars fade if you behave. */
+export const POLICE_STARS = 3;
 
-/** Stars fade one every minute you keep out of trouble. */
+/** Stars fade one every minute you keep out of trouble, until the police are involved. */
 export function cooled(s: LifeState, now: number): LifeState {
-  if (!s.stars || s.stars >= 2) return s;
+  if (!s.stars || s.stars >= POLICE_STARS) return s;
   const gone = Math.floor((now - s.heatAt) / STAR_FADE_MS);
   if (gone <= 0) return s;
   const stars = Math.max(0, s.stars - gone);
@@ -48,6 +50,41 @@ export function cooled(s: LifeState, now: number): LifeState {
 export function addStar(s: LifeState, now: number, offence?: string): LifeState {
   const c = cooled(s, now);
   return { ...c, stars: Math.min(MAX_STARS, c.stars + 1), heatAt: now, lastOffence: offence?.slice(0, 160) ?? null };
+}
+
+/**
+ * The rulebook. Every offence is fictional and has a clear consequence; nothing
+ * rewards hurting people. Stars stack, so a few small offences in a row bring
+ * the police at three stars.
+ */
+export const OFFENCES = {
+  scuffle: { stars: 1, charge: "Causing a scuffle in the street" },
+  "red-light": { stars: 1, charge: "Driving through a red light" },
+  "wrong-way": { stars: 1, charge: "Driving against traffic" },
+  collision: { stars: 1, charge: "Causing a road collision" },
+  "pavement-cycling": { stars: 1, charge: "Cycling on the pavement" },
+  "fare-dodging": { stars: 1, charge: "Fare dodging on the Underground" },
+  littering: { stars: 1, charge: "Littering in a public park" },
+  graffiti: { stars: 1, charge: "Spraying graffiti on a listed building" },
+  trespass: { stars: 2, charge: "Trespassing in a closed building site" },
+  shoplifting: { stars: 2, charge: "Shoplifting from a high-street shop" },
+  "car-theft": { stars: 3, charge: "Taking a car without the owner's consent" },
+  "resisting-arrest": { stars: 1, charge: "Resisting arrest" },
+} as const;
+export type Offence = keyof typeof OFFENCES;
+
+/** Commit an offence: adds its stars (capped) and remembers the charge for court. */
+export function commit(s: LifeState, now: number, offence: Offence): LifeState {
+  let next = s;
+  for (let i = 0; i < OFFENCES[offence].stars; i++) next = addStar(next, now, OFFENCES[offence].charge);
+  return next;
+}
+
+/** What the player sees after an offence below the police threshold. */
+export function warningFor(s: LifeState) {
+  if (s.stars >= POLICE_STARS) return "The police are responding.";
+  const left = POLICE_STARS - s.stars;
+  return `Witnesses reported you. ${left} more star${left === 1 ? "" : "s"} and the police respond. Stay out of trouble for a minute and a star fades.`;
 }
 
 export const clearWanted = (s: LifeState): LifeState => ({ ...s, stars: 0, heatAt: 0, lastOffence: null });

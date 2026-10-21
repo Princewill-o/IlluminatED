@@ -9,6 +9,7 @@ import { addUniformLogo } from "./uniform-logo3d";
 
 import { BOTTOM, BRANDS, HAIR, SHOES, TOP } from "@/game/core/chibi-looks";
 import { type Avatar, look } from "@/game/core/cosmetics";
+import { currentEvent } from "@/game/core/live-events";
 import { outfitColours } from "@/game/core/outfits";
 
 /**
@@ -52,7 +53,8 @@ const PI = Math.PI;
 const POSES: Record<string, { length: number; loop: boolean; at: (t: number) => Pose }> = {
   static: { length: 1, loop: true, at: () => ({}) },
   idle: { length: 3, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 3); return { "arm-left": [0, 0, -0.35 + s * 0.04], "arm-right": [0, 0, 0.35 - s * 0.04], torso: [s * 0.015, 0, 0], head: [-s * 0.02, 0, 0] }; } },
-  walk: { length: 0.7, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.7); return { "leg-left": [-s * 0.55, 0, 0], "leg-right": [s * 0.55, 0, 0], "arm-left": [s * 0.6, 0, -0.45], "arm-right": [-s * 0.6, 0, 0.45], torso: [0.05, s * 0.06, 0], lift: Math.abs(Math.cos(t * 2 * PI / 0.7)) * 0.012 }; } },
+  // A bouncy, waddling walk: a little hop on every step and a side-to-side sway.
+  walk: { length: 0.7, loop: true, at: (t) => { const w = t * 2 * PI / 0.7, s = Math.sin(w); return { "leg-left": [-s * 0.6, 0, 0], "leg-right": [s * 0.6, 0, 0], "arm-left": [s * 0.65, 0, -0.45], "arm-right": [-s * 0.65, 0, 0.45], torso: [0.06, s * 0.08, -s * 0.05], head: [0, 0, s * 0.06], root: [0, 0, s * 0.07], lift: Math.abs(Math.sin(w)) * 0.05 }; } },
   sprint: { length: 0.45, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.45); return { "leg-left": [-s * 0.9, 0, 0], "leg-right": [s * 0.9, 0, 0], "arm-left": [s * 1.0, 0, -0.6], "arm-right": [-s * 1.0, 0, 0.6], torso: [0.2, s * 0.1, 0], lift: Math.abs(Math.cos(t * 2 * PI / 0.45)) * 0.025 }; } },
   sit: { length: 1, loop: true, at: () => ({ "leg-left": [-1.5, 0, 0.05], "leg-right": [-1.5, 0, -0.05], "arm-left": [-0.5, 0, -0.6], "arm-right": [-0.5, 0, 0.6], lift: -0.12 }) },
   drive: { length: 1, loop: true, at: () => ({ "leg-left": [-1.4, 0, 0.1], "leg-right": [-1.4, 0, -0.1], "arm-left": [-1.0, 0, -0.35], "arm-right": [-1.0, 0, 0.35], lift: -0.12 }) },
@@ -60,7 +62,11 @@ const POSES: Record<string, { length: number; loop: boolean; at: (t: number) => 
   wave: { length: 0.8, loop: true, at: (t) => ({ "arm-right": [0, 0, -2.1 + Math.sin(t * 2 * PI / 0.8) * 0.35], "arm-left": [0, 0, -0.35], head: [0, 0, 0.1] }) },
   "emote-yes": { length: 0.8, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.8); return { head: [0.18 + s * 0.18, 0, 0], "arm-left": [0, 0, 1.6 + s * 0.2], "arm-right": [0, 0, -1.6 - s * 0.2], lift: Math.max(0, s) * 0.03 }; } },
   "emote-no": { length: 0.8, loop: true, at: (t) => ({ head: [0, Math.sin(t * 2 * PI / 0.8) * 0.4, 0], "arm-left": [0, 0, -0.5], "arm-right": [0, 0, 0.5] }) },
-  jump: { length: 0.6, loop: false, at: (t) => ({ "arm-left": [0, 0, 1.4], "arm-right": [0, 0, -1.4], "leg-left": [-0.4, 0, 0], "leg-right": [0.2, 0, 0], lift: Math.sin((t / 0.6) * PI) * 0.12 }) },
+  // Crouch, spring up with arms thrown high, tuck, land.
+  jump: { length: 0.7, loop: false, at: (t) => { const k = t / 0.7; const crouch = k < 0.15 ? k / 0.15 : k > 0.85 ? (1 - k) / 0.15 : 0; const air = k > 0.15 && k < 0.85 ? Math.sin(((k - 0.15) / 0.7) * PI) : 0; return { "arm-left": [0, 0, 0.3 + air * 1.4], "arm-right": [0, 0, -0.3 - air * 1.4], "leg-left": [-crouch * 0.6 - air * 0.5, 0, 0], "leg-right": [-crouch * 0.6 - air * 0.2, 0, 0], torso: [crouch * 0.25, 0, 0], lift: air * 0.4 - crouch * 0.05 }; } },
+  // Pedalling: legs turn alternate circles, hands on the bars, leaning in.
+  cycle: { length: 0.6, loop: true, at: (t) => { const w = t * 2 * PI / 0.6; return { "leg-left": [-1.25 + Math.sin(w) * 0.45, 0, 0.08], "leg-right": [-1.25 - Math.sin(w) * 0.45, 0, -0.08], "arm-left": [-1.15, 0, -0.25], "arm-right": [-1.15, 0, 0.25], torso: [0.28, Math.sin(w) * 0.04, 0], head: [-0.15, 0, 0], lift: -0.1 + Math.abs(Math.cos(w)) * 0.01 }; } },
+  "cycle-coast": { length: 1, loop: true, at: () => ({ "leg-left": [-1.0, 0, 0.08], "leg-right": [-1.5, 0, -0.08], "arm-left": [-1.15, 0, -0.25], "arm-right": [-1.15, 0, 0.25], torso: [0.25, 0, 0], head: [-0.12, 0, 0], lift: -0.1 }) },
   fall: { length: 1, loop: true, at: () => ({ "arm-left": [0, 0, 1.2], "arm-right": [0, 0, -1.2], "leg-left": [-0.3, 0, 0] }) },
   die: { length: 0.6, loop: false, at: (t) => { const k = Math.min(1, t / 0.5); return { root: [-k * PI / 2, 0, 0], "arm-left": [0, 0, k * 0.8], "arm-right": [0, 0, -k * 0.8], lift: k * 0.09 }; } },
   "pick-up": { length: 0.8, loop: false, at: (t) => { const k = Math.sin((t / 0.8) * PI); return { torso: [k * 0.6, 0, 0], "arm-right": [-k * 1.2, 0, 0.3], "arm-left": [-k * 1.2, 0, -0.3], "leg-left": [-k * 0.4, 0, 0], "leg-right": [-k * 0.4, 0, 0] }; } },
@@ -121,26 +127,28 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     top: top.v,
     bottom: BOTTOM[a.bottom] ?? "trousers",
     shoes: SHOES[a.shoes] ?? "trainers",
-    extra: top.cape ? "cape" : null,
+    extra: null,
   };
   const colour: Record<string, string> = {
     skin: cols.skin, hair: cols.hair, top: cols.top, top2: top.second ?? "#ffffff", bottom: cols.bottom,
     shoes: cols.shoes, sole: "#2b2b33", white: "#ffffff", dark: "#15151c",
-    accent: a.top === "top-hivis" ? "#d8dde3" : a.top === "top-cape" ? "#c4433a" : a.shoes === "shoes-rocket" ? "#ff9f1c" : a.shoes === "shoes-skates" ? "#ff8fd1" : "#ff9f1c",
+    lens: "#1d2a5c", gear: "#15151c",
+    accent: top.accent ? top.accent : a.top === "top-hivis" ? "#d8dde3" : a.top === "top-cape" ? "#c4433a" : a.shoes === "shoes-rocket" ? "#ff9f1c" : a.shoes === "shoes-skates" ? "#ff8fd1" : "#ff9f1c",
   };
   if (a.top === "top-hivis") colour.top = "#d7ff3a";
   // One material per fabric, shared by every piece of this character.
   const mats = new Map<string, THREE.MeshLambertMaterial>();
   const matFor = (name: string) => {
     let m = mats.get(name);
-    if (!m) { m = new THREE.MeshLambertMaterial({ color: colour[name] ?? "#cccccc", flatShading: true }); mats.set(name, m); }
+    if (!m) { m = new THREE.MeshLambertMaterial({ color: colour[name] ?? "#cccccc", flatShading: true, ...(name === "lens" ? { transparent: true, opacity: 0.55 } : {}) }); mats.set(name, m); }
     return m;
   };
   const drop: THREE.Object3D[] = [];
   object.traverse((o) => {
     const slot = o.userData.slot as string | undefined;
     if (!slot) return;
-    if (slot !== "body" && want[slot] !== o.userData.variant) { drop.push(o); return; }
+    const extras = new Set([...(top.extras ?? []), ...(top.cape ? ["cape"] : [])]);
+    if (slot === "extra" ? !extras.has(o.userData.variant) : slot !== "body" && want[slot] !== o.userData.variant) { drop.push(o); return; }
     o.traverse((m) => {
       const mesh = m as THREE.Mesh;
       if (!mesh.isMesh) return;
@@ -282,10 +290,13 @@ const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "
 const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo", "bottom-shorts"];
 const NPC_SHOES = ["shoes-trainers", "shoes-hightops", "shoes-boots", "shoes-smart", "shoes-sliders"];
 const NPC_BRAND = ["brand-none", "brand-volt", "brand-northwind", "brand-none", "brand-thamesline", "brand-peckham", "brand-orbit"];
+/** During Hero Week, one Londoner in four wears a Lumen League suit. */
+const NPC_HEROES = ["top-hero-quotient", "top-hero-photon", "top-hero-helix", "top-hero-catalyst", "top-hero-byte", "top-hero-quill"];
 export const npcLook = (i: number) =>
   look({
     skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 11], hairColor: NPC_HAIRCOL[(i * 5) % 6],
     top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 6], shoes: NPC_SHOES[(i * 3) % 5], brand: NPC_BRAND[(i * 5) % 7],
-    topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6],
+    ...(currentEvent().event.id === "hero-week" && i % 4 === 0 ? {} : { topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6] }),
     bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3],
+    ...(currentEvent().event.id === "hero-week" && i % 4 === 0 ? { top: NPC_HEROES[(i / 4) % 6 | 0], topColor: "topcol-auto" } : {}),
   });

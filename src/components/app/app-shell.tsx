@@ -10,6 +10,7 @@ import { Coins, Flame, Send } from "lucide-react";
 
 import { AppearanceSwitch } from "@/components/app/appearance-switch";
 import { AvatarFigure } from "@/components/game/avatar";
+import { SeasonXpToast } from "@/components/game/season/event-banner";
 import { type Avatar, DEFAULT_AVATAR, sanitiseAvatar } from "@/game/core/cosmetics";
 import { levelForXp } from "@/game/core/progression";
 import { APP_TABS, activeTab, screenTitle } from "@/lib/app-shell";
@@ -107,6 +108,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <PlayerContext.Provider value={player}>
       <div className="app-theme min-h-dvh bg-background text-foreground">
+      <SeasonXpToast />
         {/* Side rail: tablets and laptops (like Instagram on the web) */}
         <nav
           aria-label="App"

@@ -9,6 +9,8 @@ const TABS = [
   { href: "/games/world", label: "Enter the city" },
   { href: "/games/locker", label: "Character" },
   { href: "/games/wealth", label: "Assets & wealth" },
+  { href: "/games/heroes", label: "Live event" },
+  { href: "/games/pass", label: "Season Pass" },
   { href: "/games/weekly", label: "Weekly challenges" },
   { href: "/games/expansions", label: "Expansions" },
   { href: "/games/friends", label: "Friends" },

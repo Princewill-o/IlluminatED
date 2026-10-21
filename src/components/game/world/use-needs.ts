@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { earnSeasonXp } from "@/components/game/season/pass-store";
 import { type Activity, type Needs, apply, decay, fresh } from "@/game/core/needs";
 
 const KEY = "illuminated:needs";
@@ -32,6 +33,7 @@ export function doActivity(a: Activity) {
   const n = apply(read(), a, Date.now());
   write(n);
   window.dispatchEvent(new CustomEvent(EVENT, { detail: a }));
+  earnSeasonXp("activity");
 }
 
 /** Your needs, kept up to date as time passes and you do things. */

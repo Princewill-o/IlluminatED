@@ -149,6 +149,14 @@ export const COSMETICS: Cosmetic[] = [
   L("top-hivis", "top", "Hi-vis of honour", 0, { unlock: "ceo:bodge", color: "#f2d9a6", set: "bodge" }),
   L("top-tracksuit", "top", "Nike tracksuit", 0, { unlock: "ceo:psyke", color: "#6bc6ff", set: "psyke" }),
 
+  // ── Lumen League hero suits: Season Pass rewards (original heroes) ──
+  E("top-hero-photon", "top", "Photon suit", 0, { unlock: "pass:1", color: "#0f9a8a", set: "heroes" }),
+  E("top-hero-byte", "top", "Byte suit", 0, { unlock: "pass:3", color: "#6a4bd6", set: "heroes" }),
+  E("top-hero-helix", "top", "Helix suit", 0, { unlock: "pass:5", color: "#2e9d55", set: "heroes" }),
+  E("top-hero-catalyst", "top", "Catalyst suit", 0, { unlock: "pass:7", color: "#f07d1a", set: "heroes" }),
+  L("top-hero-quill", "top", "Quill suit", 0, { unlock: "pass:10", color: "#8c2f4a", set: "heroes" }),
+  L("top-hero-quotient", "top", "Captain Quotient suit", 0, { unlock: "pass:15", color: "#2b5fd9", set: "heroes" }),
+
   C("bottom-jeans", "bottom", "Jeans", 0, { color: "#3c5a9a" }),
   C("bottom-joggers", "bottom", "Joggers", 0, { color: "#3a2d58", set: "sporty" }),
   C("bottom-shorts", "bottom", "Shorts", 0, { color: "#c9a46b" }),
@@ -233,6 +241,7 @@ export const SETS: Record<string, string> = {
   bake: "Bake Off",
   party: "Party Animal",
   royal: "Royalty",
+  heroes: "Lumen League",
 };
 
 export const RARITY: Record<Rarity, { label: string; mark: string; color: string }> = {
@@ -340,5 +349,6 @@ export function unlockLabel(unlock: string, companyName: (id: string) => string)
   if (kind === "ceo") return `Become CEO at ${companyName(value)}`;
   if (kind === "level") return `Reach level ${value}`;
   if (kind === "streak") return `${value}-day streak`;
+  if (kind === "pass") return `Season Pass tier ${value}`;
   return "Secret";
 }

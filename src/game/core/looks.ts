@@ -39,6 +39,12 @@ export const TOP_LOOK: Record<string, string> = {
   "top-labcoat": "female-d",
   "top-hivis": "male-e",
   "top-tracksuit": "male-f",
+  "top-hero-photon": "male-e",
+  "top-hero-byte": "male-d",
+  "top-hero-helix": "female-a",
+  "top-hero-catalyst": "female-f",
+  "top-hero-quill": "female-d",
+  "top-hero-quotient": "male-a",
 };
 
 export const BOTTOM_LOOK: Record<string, string> = {

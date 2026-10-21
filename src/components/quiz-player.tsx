@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Check, Clock, RotateCcw, SkipForward, Trophy, X } from "lucide-react";
 
 import { SaveRound } from "@/components/account/save-round";
+import { earnSeasonXp } from "@/components/game/season/pass-store";
 import { Callout, fieldCls, labelCls } from "@/components/kit";
 import { Button } from "@/components/ui/button";
 import type { StudySubject } from "@/lib/account/details";
@@ -225,6 +226,7 @@ export function QuizPlayer({
           return { current: currentCount, best: Math.max(previous.best, currentCount) };
         });
         if (!correct) setFirstWrong(true);
+        if (correct) earnSeasonXp("correct");
       }
     },
     [current, answered, retried, record, setStreak],

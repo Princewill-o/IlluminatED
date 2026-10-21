@@ -2218,6 +2218,24 @@ export function World3D({
       }
     };
     window.addEventListener("illuminated:fight", onFight);
+    // ── Jumping: Space (or the on-screen jump button) for a springy hop ──
+    let jumpAt = 0;
+    const onJump = () => {
+      const now = performance.now();
+      if (now - jumpAt < 750 || bikeRef.current || carRef.current) return;
+      jumpAt = now;
+      swingUntil = now + 700;
+      me.char?.play("jump");
+    };
+    const onJumpKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const t = e.target as HTMLElement | null;
+      if (t?.closest("input, textarea, select, button, [contenteditable], [role=dialog]")) return;
+      e.preventDefault();
+      onJump();
+    };
+    window.addEventListener("keydown", onJumpKey);
+    window.addEventListener("illuminated:jump", onJump);
 
     // A responding car and its officers are tied to the actual pursuit simulation.
     const responseCar = new THREE.Group();
@@ -2403,7 +2421,8 @@ export function World3D({
       if (p.heading !== undefined) carHolder.rotation.y = -p.heading;
       else if (Math.hypot(dx, dz) > 0.002) carHolder.rotation.y = Math.atan2(-dz, dx);
       lastMe.set(mx, 0, mz);
-      me.root.position.set(mx, 0, mz);
+      const airborne = performance.now() - jumpAt;
+      me.root.position.set(mx, airborne < 700 ? Math.max(0, Math.sin(((airborne - 100) / 500) * Math.PI)) * 0.55 * (airborne > 100 && airborne < 600 ? 1 : 0) : 0, mz);
       me.root.rotation.x = 0;
       carHolder.position.set(mx, 0.08, mz);
       if (performance.now() > swingUntil) {
@@ -2732,12 +2751,9 @@ export function World3D({
       for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.update(dt, reduce);
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;
-        body.char.play("drive");
-        // Apply a gentle pedal motion over the seated driving pose after animation updates.
-        for (const [name, side] of [["leg-left", 1], ["leg-right", -1]] as const) {
-          const leg = body.char.object.getObjectByName(name);
-          if (leg && moving) leg.rotateX(Math.sin(phase) * 0.22 * side);
-        }
+        // A real pedalling clip while moving; feet resting on the pedals when coasting.
+        body.char.play(moving ? "cycle" : "cycle-coast");
+        void phase;
         body.root.rotation.y = heading;
         body.root.position.set(cycle.position.x - Math.sin(heading) * 0.19, 0, cycle.position.z - Math.cos(heading) * 0.19);
         body.root.updateMatrixWorld(true);
@@ -2846,6 +2862,8 @@ export function World3D({
       renderer.domElement.removeEventListener("click", onClick);
       renderer.domElement.removeEventListener("wheel",onWheel);
       window.removeEventListener("illuminated:fight", onFight);
+      window.removeEventListener("keydown", onJumpKey);
+      window.removeEventListener("illuminated:jump", onJump);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
       presentation.dispose();
       motionPreference.removeEventListener("change",motionChanged);

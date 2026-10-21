@@ -13,7 +13,7 @@ from mathutils import Vector
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 MATS = {}
-PALETTE = {"skin": (0.98, 0.86, 0.66), "hair": (0.16, 0.1, 0.07), "top": (0.36, 0.34, 0.78), "top2": (0.96, 0.96, 0.96),
+PALETTE = {"lens": (0.1, 0.12, 0.2), "gear": (0.15, 0.15, 0.2), "skin": (0.98, 0.86, 0.66), "hair": (0.16, 0.1, 0.07), "top": (0.36, 0.34, 0.78), "top2": (0.96, 0.96, 0.96),
            "bottom": (0.22, 0.3, 0.55), "shoes": (0.95, 0.95, 0.95), "sole": (0.25, 0.25, 0.28), "white": (1, 1, 1), "dark": (0.08, 0.08, 0.1),
            "accent": (1.0, 0.6, 0.1)}
 def mat(name):
@@ -136,6 +136,66 @@ top("jersey", extras=[(box((0.05, 0.02, 0.06), (0, -0.1, 0.36)), "top2")])
 cape = keep(solidify(cone(0.09, 0.2, 0.36, 16, (0, 0.03, 0.29)), 0.008), lambda c: c.y > 0.02)
 put(cape, "accent", TORSO, "extra", "cape")
 
+# ---------- Lumen League hero costumes (original designs) ----------
+# The suit: a close-fitting full-length top with a belt and big gloves.
+put(top_shell(0.008, 0.17), "top", TORSO, "top", "herosuit")
+sleeves("herosuit", True, r=0.032)
+put(box((0.2, 0.17, 0.028), (0, 0, 0.215)), "accent", TORSO, "top", "herosuit")              # belt
+put(box((0.05, 0.02, 0.04), (0, -0.088, 0.215)), "top2", TORSO, "top", "herosuit")          # buckle
+for sx in (1, -1):
+    put(sphere(0.042, 10, 8, ARM[sx].matrix_world.translation + arm_dir(sx) * (ARM_L + 0.015)), "accent", ARM[sx], "top", "herosuit")  # gloves
+    put(cone(0.04, 0.036, 0.05, 10, ARM[sx].matrix_world.translation + arm_dir(sx) * (ARM_L - 0.03), arm_dir(sx)), "accent", ARM[sx], "top", "herosuit")
+
+# Chest emblems (one per hero): a trim-coloured badge with a simple shape.
+EZ, EY = 0.37, -0.103
+def badge(variant, shapes):
+    put(cone(0.045, 0.045, 0.012, 20, (0, EY + 0.004, EZ), Vector((0, -1, 0))), "top2", TORSO, "extra", variant)
+    for o in shapes: put(o, "accent", TORSO, "extra", variant)
+badge("emblem-sigma", [box((0.05, 0.01, 0.01), (0, EY - 0.006, EZ + 0.022)), box((0.05, 0.01, 0.01), (0, EY - 0.006, EZ - 0.022)), box((0.034, 0.01, 0.01), (0.002, EY - 0.006, EZ + 0.009), (0, -0.8, 0)), box((0.034, 0.01, 0.01), (0.002, EY - 0.006, EZ - 0.009), (0, 0.8, 0))])
+badge("emblem-bolt", [box((0.012, 0.01, 0.034), (0.006, EY - 0.006, EZ + 0.014), (0, -0.5, 0)), box((0.03, 0.01, 0.01), (0, EY - 0.006, EZ)), box((0.012, 0.01, 0.034), (-0.006, EY - 0.006, EZ - 0.014), (0, -0.5, 0))])
+badge("emblem-leaf", [sphere(0.024, 10, 8, (0, EY - 0.008, EZ), (0.6, 0.25, 1.2)), box((0.004, 0.01, 0.05), (0, EY - 0.012, EZ))])
+badge("emblem-pixel", [box((0.014, 0.01, 0.014), (dx, EY - 0.006, EZ + dz)) for dx, dz in ((-0.016, 0.016), (0, 0), (0.016, -0.016), (0.016, 0.016), (-0.016, -0.016))])
+badge("emblem-quill", [sphere(0.026, 10, 8, (0.006, EY - 0.008, EZ + 0.006), (0.35, 0.25, 1.25)), box((0.003, 0.01, 0.04), (-0.008, EY - 0.012, EZ - 0.012), (0, 0.5, 0))])
+badge("emblem-flask", [cone(0.022, 0.008, 0.036, 10, (0, EY - 0.008, EZ - 0.004), Vector((0, 0, 1))), box((0.012, 0.01, 0.014), (0, EY - 0.008, EZ + 0.02))])
+
+# Headgear. Everything sits outside the face texture (radius x1.04) and leaves the eyes visible.
+def head_shell(scale, cond, res=(72, 54)):
+    h = head_mesh(HR * scale, *res)
+    return keep(h, cond)
+EYES = [(0.075, 0.67), (-0.075, 0.67)]
+def not_eye(c, r=0.032):
+    return all((c.x - ex) ** 2 + (c.z - ez) ** 2 > r * r for ex, ez in EYES)
+# Visor: a tinted band across the eyes (see-through in the game).
+put(head_shell(1.06, lambda c: c.y < -0.04 and 0.625 < c.z < 0.715), "lens", HEAD, "extra", "visor")
+put(head_shell(1.07, lambda c: abs(c.z - 0.668) < 0.012 and c.y > -0.12), "gear", HEAD, "extra", "visor")      # strap
+# Goggles: two rings over the eyes and a strap.
+for ex, ez in EYES:
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.034, minor_radius=0.009, location=(ex, -0.215, ez), rotation=(math.pi / 2, 0, 0))
+    put(bpy.context.object, "gear", HEAD, "extra", "goggles")
+put(head_shell(1.05, lambda c: abs(c.z - 0.69) < 0.014 and (c.y > -0.12 or abs(c.x) > 0.11)), "gear", HEAD, "extra", "goggles")
+# Domino mask: thick rings around each eye joined by a bridge.
+def domino(variant, material):
+    for ex, ez in EYES:
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.036, minor_radius=0.014, major_segments=24, minor_segments=8, location=(ex, -0.21, ez), rotation=(math.pi / 2, 0, 0))
+        o = bpy.context.object; o.scale = (1.25, 1, 0.85); put(o, material, HEAD, "extra", variant)
+    put(box((0.07, 0.02, 0.02), (0, -0.218, 0.672)), material, HEAD, "extra", variant)
+domino("mask", "accent")
+# Flask helmet: a rounded cap with a little flask on top.
+put(head_shell(1.08, lambda c: c.z > 0.77 or (c.y > 0.0 and c.z > 0.6)), "accent", HEAD, "extra", "flaskhelm")
+put(cone(0.035, 0.012, 0.07, 12, (0, 0, 0.95)), "lens", HEAD, "extra", "flaskhelm")
+put(cone(0.012, 0.012, 0.03, 8, (0, 0, 1.0)), "top2", HEAD, "extra", "flaskhelm")
+# Crest: a feathered fin over the top of the head and a mask band.
+for i, a in enumerate((-0.5, -0.2, 0.1, 0.4, 0.7)):
+    d = Vector((0, math.sin(a), math.cos(a)))
+    put(sphere(0.03, 8, 6, HC + d * 0.24, (0.3, 0.8, 1.5 - i * 0.12)), "top2", HEAD, "extra", "crest")
+domino("crest", "accent")
+# Pixel visor: blocky glasses.
+for ex, ez in EYES:
+    put(box((0.07, 0.02, 0.05), (ex, -0.212, ez)), "lens", HEAD, "extra", "pixelvisor")
+put(box((0.04, 0.02, 0.012), (0, -0.214, 0.68)), "gear", HEAD, "extra", "pixelvisor")
+for sx in (1, -1):
+    put(box((0.012, 0.16, 0.012), (sx * 0.2, -0.12, 0.68)), "gear", HEAD, "extra", "pixelvisor")
+
 # ---------- bottoms ----------
 def bottoms(variant, length, cuff=False, extras=()):
     seat = keep(torso_mesh(0.014, 14, 12), lambda c: c.z < 0.235)
@@ -207,7 +267,7 @@ for o, slot, variant, parent in pieces:
 
 def apply_look(look):
     for o, slot, variant, _ in pieces:
-        o.hide_render = not (slot == "body" or look.get(slot) == variant or (slot == "extra" and look.get("extra") == variant))
+        o.hide_render = not (slot == "body" or look.get(slot) == variant or (slot == "extra" and variant in look.get("extra", "").split(",")))
 
 if sys.argv[1] == "export":
     bpy.ops.export_scene.gltf(filepath="/home/claude/illuminated/public/world3d/chibi.glb", export_format="GLB", export_extras=True,

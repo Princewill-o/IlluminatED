@@ -49,3 +49,13 @@ end;
 $$;
 revoke all on function public.game_set_avatar(jsonb) from public, anon;
 grant execute on function public.game_set_avatar(jsonb) to authenticated;
+
+-- Lumen League hero suits (original characters), unlocked from the Season Pass.
+insert into public.cosmetic_items (id, slot, name, price, unlock, sort, rarity, set_id) values
+  ('top-hero-photon', 'top', 'Photon suit', 0, 'pass:1', 420, 'epic', 'heroes'),
+  ('top-hero-byte', 'top', 'Byte suit', 0, 'pass:3', 421, 'epic', 'heroes'),
+  ('top-hero-helix', 'top', 'Helix suit', 0, 'pass:5', 422, 'epic', 'heroes'),
+  ('top-hero-catalyst', 'top', 'Catalyst suit', 0, 'pass:7', 423, 'epic', 'heroes'),
+  ('top-hero-quill', 'top', 'Quill suit', 0, 'pass:10', 424, 'legendary', 'heroes'),
+  ('top-hero-quotient', 'top', 'Captain Quotient suit', 0, 'pass:15', 425, 'legendary', 'heroes')
+on conflict (id) do nothing;

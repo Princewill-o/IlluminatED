@@ -11,7 +11,7 @@ import { SHOP, type ShopItem, acquittalChance, sentenceMs } from "@/game/core/la
 import { cn } from "@/lib/utils";
 
 /** Tesco Express and Bootz Pharmacy: spend Clout to top up your needs. */
-export function ShopDialog({ shop, clout, onBought, onClose }: { shop: "tescow" | "bootz"; clout: number; onBought: (item: ShopItem, clout: number | null) => void; onClose: () => void }) {
+export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: "tescow" | "bootz"; clout: number; onBought: (item: ShopItem, clout: number | null) => void; onClose: () => void; onSteal?: () => void }) {
   const items: ShopItem[] = shop === "bootz" ? ["medicine"] : ["drink", "meal", "coffee"];
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -62,6 +62,11 @@ export function ShopDialog({ shop, clout, onBought, onClose }: { shop: "tescow" 
           })}
         </ul>
         {error && <p className="mt-3 text-sm font-bold text-[#c8322d]">{error}</p>}
+        {onSteal && (
+          <button type="button" onClick={onSteal} className="mt-3 w-full rounded-2xl border border-[#c8322d]/40 px-4 py-2 text-sm font-bold text-[#c8322d]">
+            Walk out without paying (shoplifting: +2 wanted stars)
+          </button>
+        )}
       </div>
     </div>
   );

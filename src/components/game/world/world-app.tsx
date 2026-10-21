@@ -43,6 +43,7 @@ const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => 
 import { earnWorldXp, worldBankStatus } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
+import { EventBanner } from "@/components/game/season/event-banner";
 import type { LearningAward } from "@/game/core/awards";
 import type { BikeBrand } from "@/game/core/bikes";
 import { WORKPLACES, workplaceById } from "@/game/core/careers";
@@ -51,7 +52,7 @@ import { COMPANIES } from "@/game/core/companies";
 import { nearestDrivingSpot, nearestParkingSpot } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
-import { PRISON_LOOK, SHOP, releaseFromPrison, addStar, cardsLeft, clearWanted, wantedCharge, sentenceMs } from "@/game/core/law";
+import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -299,8 +300,15 @@ export function WorldApp({
     };
     drivingOffenceAt.current = now;
     updateLife(l => addStar(l, now, charges[offence.reason]));
-    say(`${offence.message} +1 wanted star. Follow the road rules to keep out of trouble.`, true);
-  }, [driving, mapId, jailed, arrest, life.hearing, pursuit?.stage, updateLife, say]);
+    say(`${offence.message} +1 wanted star. ${warningFor({ ...life, stars: Math.min(5, life.stars + 1) })}`, true);
+  }, [driving, mapId, jailed, arrest, life, pursuit?.stage, updateLife, say]);
+  /** Commit an offence from the rulebook and tell the player where it leaves them. */
+  const offend = useCallback((offence: Offence, lead = "") => {
+    if (jailed) return;
+    updateLife(l => commit(l, Date.now(), offence));
+    const next = Math.min(5, life.stars + (offence === "shoplifting" || offence === "trespass" ? 2 : offence === "car-theft" ? 3 : 1));
+    say(`${lead ? lead + " " : ""}${warningFor({ ...life, stars: next })}`, true);
+  }, [jailed, life, updateLife, say]);
   const driveCar = (car: string | null) => {
     if (!outdoors) { say("Head outside to take a car from your garage."); return; }
     if (car) {
@@ -537,6 +545,24 @@ export function WorldApp({
   }, []);
 
   // Feeling unwell when you run yourself down: slower, until medicine or a doctor.
+  // Cycling on the pavement for more than a few seconds is an offence (once every 30s at most).
+  const pavementSince = useRef<number | null>(null);
+  const pavementCharged = useRef(0);
+  useEffect(() => {
+    if (!bike || mapId !== "city" || jailed) { pavementSince.current = null; return; }
+    const t = setInterval(() => {
+      const tile = map.tiles[Math.floor(PLAYER.y / TILE)]?.[Math.floor(PLAYER.x / TILE)];
+      const now = Date.now();
+      if (tile !== "-") { pavementSince.current = null; return; }
+      pavementSince.current ??= now;
+      if (now - pavementSince.current > 4000 && now - pavementCharged.current > 30000) {
+        pavementCharged.current = now; pavementSince.current = null;
+        offend("pavement-cycling", "Cycling on the pavement puts pedestrians at risk.");
+      }
+    }, 500);
+    return () => clearInterval(t);
+  }, [bike, mapId, jailed, map, offend]);
+
   useEffect(() => {
     if (needs && needs.energy < 12 && !life.sick) {
       updateLife((l) => ({ ...l, sick: true }));
@@ -546,7 +572,7 @@ export function WorldApp({
 
   // Police catch the player with a brief taser stop before the challenge or escort.
   useEffect(() => {
-    if (life.stars < 1 || jailed || life.hearing || !outdoors) {
+    if (life.stars < POLICE_STARS || jailed || life.hearing || !outdoors) {
       pursuitRef.current = null; setPursuit(null); return;
     }
     if (arrest || policeTransport) return;
@@ -764,7 +790,7 @@ export function WorldApp({
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
-        onChangeServer={() => { if (jailed || life.stars >= 2) say("Finish your current law activity before changing servers."); else setServer(null); }}
+        onChangeServer={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity before changing servers."); else setServer(null); }}
         onDrivingOffence={drivingOffence}
         ads={events}
         me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : me}
@@ -842,7 +868,8 @@ export function WorldApp({
         <button type="button" onClick={() => setLearning(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#2b5fd9] px-4 text-sm font-bold text-white"><BookOpen className="size-4" aria-hidden /> Study</button>
         <button type="button" onClick={() => setAwardsOpen(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#ffedbd] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div>}
-      <button type="button" onClick={() => { if(jailed || life.stars >= 2) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex min-h-11 items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+      {!driving && !bike && <button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="absolute right-3 bottom-[13.5rem] z-[100001] min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5 md:hidden">Jump</button>}
+      <button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex min-h-11 items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Gamepad2 className="size-4" aria-hidden /> Games
       </button>
       <WantedStars stars={life.stars} />
@@ -851,8 +878,9 @@ export function WorldApp({
         <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>
         <p className="mt-3 text-sm">In this fictional game, choosing to shove brings the police. There is no reward for hurting others.</p>
         <button type="button" className="mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
-        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));updateLife(l=>addStar(l,Date.now()));say("Someone was hurt. The police are responding. Think about how to put things right.",true);}}>Continue with consequences</button>
+        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));offend("scuffle","Someone was hurt.");}}>Continue with consequences</button>
       </section></div>}
+      {outdoors && !jailed && <EventBanner className="absolute top-[104px] right-3 z-[100001] hidden max-w-[220px] sm:flex" />}
       {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
       {nearPerson && !jailed && !driving && (
         <button type="button" onClick={fight} className="absolute right-3 bottom-52 z-[100001] min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
@@ -867,9 +895,9 @@ export function WorldApp({
       }}/ >}
       {arrest && <ArrestOverlay />}
       <button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="absolute right-3 bottom-24 z-[100001] grid size-12 place-items-center rounded-2xl border-2 border-white bg-[#13203a] text-white shadow-lg"><Smartphone className="size-6"/></button>
-      {phone && <GamePhone onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= 2) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=2)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<2)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+      {phone && <GamePhone onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
-        if(jailed||life.stars>=2){say("Finish your current law activity before calling companies.");return;}
+        if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
         if(workplace){goTo(`workplace-${workplace.id}`,workplace.name);say("Walk to reception to apply, or use a computer or counter to clock in.",true);}
         else { const company=COMPANIES.find(c=>c.id===id); setInmate(`Call: ${company?.name??id}`); }
@@ -914,6 +942,7 @@ export function WorldApp({
             setShop(null);
           }}
           onClose={() => setShop(null)}
+          onSteal={() => { setShop(null); doActivity("meal"); offend("shoplifting", "You walked out with a meal deal you didn't pay for."); }}
         />
       )}
       {bankOpen && <BankDialog loan={bankLoan} clout={wallet} gameDate={gameDate} onClose={() => setBankOpen(false)} onUpdate={(loan, balance) => {
@@ -1024,4 +1053,4 @@ export function WorldApp({
       )}
     </div>
   );
-}
+}

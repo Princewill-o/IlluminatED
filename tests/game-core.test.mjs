@@ -186,7 +186,9 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
   const brandSql = fs.readFileSync("supabase/migrations/20261017121000_cartoon_brand_labels.sql", "utf8");
   const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
-    if (c.slot === "brand") {
+    if (c.slot === "brand" || c.id.startsWith("top-hero-")) {
+      const sql = fs.readFileSync("supabase/migrations/20261021120000_chibi_brands.sql", "utf8");
+      if (c.id.startsWith("top-hero-")) { assert.ok(sql.includes(`('${c.id}', 'top', '${c.name}', 0, '${c.unlock}'`), `hero row for ${c.id}`); continue; }
       assert.ok(fs.readFileSync("supabase/migrations/20261021120000_chibi_brands.sql", "utf8").includes(`('${c.id}', 'brand', '${c.name}', 0, null`), `brand row for ${c.id}`);
       continue;
     }

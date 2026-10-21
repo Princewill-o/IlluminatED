@@ -11,6 +11,7 @@ import { play, soundOn } from "./sound";
 
 import { buyItem, saveAvatar } from "@/app/games/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { usePass } from "@/components/game/season/pass-store";
 import { BRANDS } from "@/game/core/chibi-looks";
 import { companyById } from "@/game/core/companies";
 import {
@@ -49,11 +50,13 @@ export function Locker({
   initialOwned,
   initialClout,
   canSave,
+  userId,
 }: {
   initialAvatar: Avatar;
   initialOwned: string[];
   initialClout: number;
   canSave: boolean;
+  userId?: string;
 }) {
   const [avatar, setAvatar] = useState(initialAvatar);
   const [facing, setFacing] = useState<Facing>("S");
@@ -67,7 +70,8 @@ export function Locker({
   const [message, setMessage] = useState<{ tone: "ok" | "bad"; text: string } | null>(null);
   const [pending, start] = useTransition();
   const dirty = SLOTS.some(({ slot: s }) => avatar[s] !== saved[s]);
-  const has = (item: Cosmetic) => isFree(item) || owned.has(item.id);
+  const { pass } = usePass(userId ?? "guest");
+  const has = (item: Cosmetic) => isFree(item) || owned.has(item.id) || pass.items.includes(item.id);
   const previewing = SLOTS.map(({ slot: s }) => COSMETICS.find((c) => c.id === avatar[s])!).filter(
     (item) => item && !has(item),
   );
@@ -78,11 +82,11 @@ export function Locker({
       if (!item.set || !SETS[item.set]) continue;
       const s = out.get(item.set) ?? { total: 0, mine: 0 };
       s.total++;
-      if (isFree(item) || owned.has(item.id)) s.mine++;
+      if (isFree(item) || owned.has(item.id) || pass.items.includes(item.id)) s.mine++;
       out.set(item.set, s);
     }
     return out;
-  }, [owned]);
+  }, [owned, pass.items]);
 
   const wear = (item: Cosmetic) => {
     setAvatar((a) => ({ ...a, [item.slot]: item.id }));

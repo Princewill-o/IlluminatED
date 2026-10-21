@@ -9,6 +9,7 @@ import { Check, Copy, X } from "lucide-react";
 
 import { createClass, deleteClass, deleteHomework, joinClass, leaveClass, removeStudent, setHomework, submitHomework } from "@/app/homework/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { earnSeasonXp } from "@/components/game/season/pass-store";
 import { doActivity } from "@/components/game/world/use-needs";
 import { cn } from "@/lib/utils";
 
@@ -239,6 +240,7 @@ export function HomeworkRunner({
                 setError(null);
                 setResult(r.data);
                 doActivity("homework");
+                earnSeasonXp("homework");
                 notifyPlayerChanged();
                 router.refresh();
               })
