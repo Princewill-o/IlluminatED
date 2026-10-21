@@ -157,7 +157,11 @@ export function BankPractice({ userId }: { userId: string }) {
           {!q.publish_ready && (
             <p className="mt-3 flex items-start gap-2 rounded-xl bg-[#fff3d6] p-3 text-sm text-[#6b3d00] dark:bg-[#3a2a10] dark:text-[#ffd9a3]">
               <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-              Draft question, not yet checked by a subject expert. If something looks wrong, report it below.
+              {q.review_status === "ai_verified"
+                ? "Answer checked automatically. Awaiting teacher sign-off: if something looks wrong, report it below."
+                : q.review_status === "ai_checked"
+                  ? "Checked by AI and awaiting teacher sign-off. If something looks wrong, report it below."
+                  : "Draft question, not yet checked by a subject expert. If something looks wrong, report it below."}
             </p>
           )}
           <p className="mt-4 text-xl font-bold">{q.question}</p>

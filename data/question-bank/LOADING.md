@@ -19,3 +19,15 @@ those decisions are kept.
   a random set, without answers.
 - `POST /api/questions/check` `{ id, answer }`: server-side marking, then the answer,
   explanation, source and licence.
+
+## Review (21 October 2026)
+`python3 scripts/review-question-bank.py` checked all 3,344 items; results are in
+`review-report.json` and decisions for hand-written items in `manual-review.json`.
+- 2,827 templated maths and science items: every answer re-solved from the question's
+  numbers (`ai_verified`). 2 answers were wrong and are corrected; 722 had their wording
+  or answer format tidied so they mark fairly.
+- 148 open questions: each read and checked (`ai_checked`); 1 reversed biology question
+  rewritten (and its Combined Science copy), 2 physics mark schemes completed, French
+  answers clarified, marks set to fit, 3 one-word items made auto-markable.
+- 369 "evaluate this claim" items: retired (malformed copies of the open questions).
+Nothing is `publish_ready` yet: that still needs a teacher's sign-off.

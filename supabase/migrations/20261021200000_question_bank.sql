@@ -1,5 +1,7 @@
 -- Illumed GCSE and A-level question bank (draft seed, 3,344 items).
--- Every item arrives as an unreviewed draft (review_status, publish_ready=false).
+-- review_status: ai_verified (answer re-solved by scripts/review-question-bank.py),
+-- ai_checked (read and corrected in review), retired (never served), or
+-- needs_subject_expert_review. publish_ready stays false until a teacher signs off.
 -- The app shows drafts with a clear "draft, not yet reviewed" label until a
 -- subject expert approves them by setting publish_ready = true.
 
@@ -53,8 +55,9 @@ language sql stable security invoker set search_path = '' as $$
     and (p_subject is null or q.subject = p_subject)
     and (p_topic is null or q.topic = p_topic)
     and q.question_type = any (p_types)
+    and q.review_status <> 'retired' and q.review_status <> 'flagged_needs_fix'
     and (not p_reviewed_only or q.publish_ready)
-  order by q.publish_ready desc, random()
+  order by q.publish_ready desc, (q.review_status = 'ai_verified') desc, random()
   limit least(greatest(p_limit, 1), 50);
 $$;
 revoke all on function public.bank_sample(text, text, text, text[], int, boolean) from public, anon;
@@ -63,5 +66,5 @@ grant execute on function public.bank_sample(text, text, text, text[], int, bool
 -- Subjects and topics with counts, for menus.
 create or replace view public.bank_topics with (security_invoker = true) as
   select level, subject, topic, count(*)::int as questions, count(*) filter (where publish_ready)::int as reviewed
-  from public.bank_questions group by level, subject, topic;
+  from public.bank_questions where review_status <> 'retired' group by level, subject, topic;
 grant select on public.bank_topics to authenticated;

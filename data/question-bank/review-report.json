@@ -1,0 +1,4606 @@
+{
+ "total": 3344,
+ "templated_recomputed": 2827,
+ "by_status": {
+  "ai_verified": 2827,
+  "ai_checked": 148,
+  "retired": 369
+ },
+ "changes": 769,
+ "flags": [
+  {
+   "id": "ILL26-000002",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000003",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000004",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000006",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000007",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000008",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000010",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000011",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000012",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000014",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000015",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000016",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000018",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000019",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000020",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000022",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000023",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000024",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000026",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000027",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000028",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000030",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000031",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000032",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000034",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000035",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000036",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000038",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000039",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000040",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000042",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000043",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000044",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000046",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000047",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000048",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000050",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000051",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000052",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000054",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000055",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000056",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000058",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000059",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000060",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000061",
+   "issue": "Question had cause and effect reversed (rewritten)."
+  },
+  {
+   "id": "ILL26-000062",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000063",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000064",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000066",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000067",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000068",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000070",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000071",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000072",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000074",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000075",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000076",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000078",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000079",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000080",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000082",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000083",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000084",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000086",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000087",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000088",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000090",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000091",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000092",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000094",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000095",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000096",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000098",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000099",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000100",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000102",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000103",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000104",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000106",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000107",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000108",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000110",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000111",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000112",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000114",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000115",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000116",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000117",
+   "issue": "One-word answer: made auto-markable and worth 1 mark."
+  },
+  {
+   "id": "ILL26-000118",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000119",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000120",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000122",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000123",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000124",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000126",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000127",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000128",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000130",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000131",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000132",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000134",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000135",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000136",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000138",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000139",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000140",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000142",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000143",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000144",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000146",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000147",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000148",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000150",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000151",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000152",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000154",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000155",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000156",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000158",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000159",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000160",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000162",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000163",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000164",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000166",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000167",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000168",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000170",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000171",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000172",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000174",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000175",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000176",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000178",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000179",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000180",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000182",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000183",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000184",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000186",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000187",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000188",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000190",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000191",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000192",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000194",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000195",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000196",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000198",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000199",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000200",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000202",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000203",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000204",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000205",
+   "issue": "One-word answer: made auto-markable and worth 1 mark."
+  },
+  {
+   "id": "ILL26-000206",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000207",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000208",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000210",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000211",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000212",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000214",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000215",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000216",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000218",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000219",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000220",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000222",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000223",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000224",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000226",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000227",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000228",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000230",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000231",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000232",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000234",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000235",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000236",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000238",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000239",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000240",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000241",
+   "issue": "Accepted answers clarified."
+  },
+  {
+   "id": "ILL26-000242",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000243",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000244",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000246",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000247",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000248",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000250",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000251",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000252",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000254",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000255",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000256",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000258",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000259",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000260",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000262",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000263",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000264",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000266",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000267",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000268",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000270",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000271",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000272",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000274",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000275",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000276",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000278",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000279",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000280",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000282",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000283",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000284",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000286",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000287",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000288",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000290",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000291",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000292",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000294",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000295",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000296",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000298",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000299",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000300",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000302",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000303",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000304",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000306",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000307",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000308",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000310",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000311",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000312",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000313",
+   "issue": "Mark scheme did not explain threshold frequency (completed)."
+  },
+  {
+   "id": "ILL26-000314",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000315",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000316",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000317",
+   "issue": "Mark scheme too thin to mark against (completed)."
+  },
+  {
+   "id": "ILL26-000318",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000319",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000320",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000322",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000323",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000324",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000326",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000327",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000328",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000330",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000331",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000332",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000334",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000335",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000336",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000338",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000339",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000340",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000342",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000343",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000344",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000346",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000347",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000348",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000350",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000351",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000352",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000354",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000355",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000356",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000358",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000359",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000360",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000362",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000363",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000364",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000366",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000367",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000368",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000370",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000371",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000372",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000374",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000375",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000376",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000378",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000379",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000380",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000382",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000383",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000384",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000386",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000387",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000388",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000390",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000391",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000392",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000394",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000395",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000396",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000398",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000399",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000400",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000402",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000403",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000404",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000406",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000407",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000408",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000410",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000411",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000412",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000414",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000415",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000416",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000418",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000419",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000420",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000422",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000423",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000424",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000426",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000427",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000428",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000430",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000431",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000432",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000434",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000435",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000436",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000438",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000439",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000440",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000442",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000443",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000444",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000446",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000447",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000448",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000450",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000451",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000452",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000454",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000455",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000456",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000458",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000459",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000460",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000462",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000463",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000464",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000466",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000467",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000468",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000470",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000471",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000472",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000474",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000475",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000476",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000478",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000479",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000480",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000482",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000483",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000484",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000486",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000487",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000488",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000490",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000491",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-000492",
+   "issue": "Malformed generated item: wraps an open question as a 'claim' and asks the learner how they would assess a response (a teacher instruction). Three near-identical copies per question. Retired."
+  },
+  {
+   "id": "ILL26-001867",
+   "issue": "Stored answer '6.2%' is wrong; correct answer is '6.3%'."
+  },
+  {
+   "id": "ILL26-001868",
+   "issue": "Stored answer '6.2%' is wrong; correct answer is '6.3%'."
+  },
+  {
+   "id": "ILL26-002194",
+   "issue": "Question had cause and effect reversed (rewritten)."
+  },
+  {
+   "id": "ILL26-002208",
+   "issue": "One-word answer: made auto-markable and worth 1 mark."
+  }
+ ],
+ "change_log": [
+  {
+   "id": "LEGACY-ILL-000010",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000011",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000026",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000027",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000042",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000043",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000058",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000059",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000074",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000075",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000090",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000091",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000104",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000105",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000119",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000120",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000134",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000135",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000148",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000149",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000163",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000164",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000179",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000180",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000195",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000196",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000210",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000211",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000225",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000226",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000241",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000242",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000256",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000257",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000272",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000273",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000286",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000287",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000301",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000302",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000317",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000318",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000331",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000332",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000346",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000347",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000360",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000361",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000372",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000373",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000386",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000387",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000402",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000403",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000416",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000417",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000432",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000433",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000447",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000448",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000462",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000463",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000476",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000477",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000491",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000492",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000506",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000507",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000521",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000522",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000536",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000537",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000551",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000552",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000565",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000566",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000579",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000580",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000593",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000594",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000605",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000606",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000618",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000630",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000631",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000643",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000644",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000657",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000658",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000671",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000672",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000685",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000686",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000699",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000700",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000713",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000714",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000725",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000726",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000739",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000740",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000753",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000764",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000765",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000777",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000778",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000792",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000793",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000806",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000807",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000819",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000820",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000833",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000834",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000846",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000847",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000859",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000860",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000873",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000874",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000887",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000888",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000899",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000912",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000913",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000926",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000937",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000938",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000953",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000967",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000979",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000980",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-000992",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001004",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001005",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001015",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001016",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001028",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001029",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001041",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001042",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001053",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001054",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001067",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001068",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001082",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001083",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001096",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001097",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001108",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001109",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001119",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001120",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001133",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001134",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001145",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001146",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001156",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001157",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001169",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001170",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001182",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001183",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001194",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001195",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001205",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001206",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001218",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001230",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001240",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001241",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001251",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001252",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001260",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001261",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001271",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001272",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001283",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001294",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001295",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001305",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001313",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001314",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001323",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001324",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001336",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001337",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001350",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001351",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001361",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001362",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001374",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001385",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001386",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001398",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001399",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001408",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001409",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001418",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001419",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001430",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001442",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001455",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001456",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001465",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001476",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001487",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001488",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001499",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001500",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001509",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001510",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001520",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001521",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001533",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001534",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001545",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001546",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001558",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001559",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001571",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001581",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001591",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001592",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001602",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001603",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001614",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001615",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001623",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001634",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001635",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001644",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001653",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001662",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001672",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001673",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001684",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001693",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001694",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001704",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001714",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001715",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001725",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001726",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001736",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001745",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001746",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001756",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001757",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001765",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001775",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001776",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001786",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001787",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001798",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001799",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001810",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001823",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001833",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001834",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001843",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001855",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001856",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001866",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001867",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001877",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001878",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001888",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001900",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001901",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001909",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001920",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001929",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001938",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001939",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001947",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001948",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001958",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001959",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001968",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001969",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001979",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001980",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001988",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-001999",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002010",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002019",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002020",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002031",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002032",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002040",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002050",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002051",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002062",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002073",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002074",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002084",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002094",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002104",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002105",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002117",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002118",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002128",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002129",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002140",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002141",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002152",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002153",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002163",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002164",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002175",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002185",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002193",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002194",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002205",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002215",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "LEGACY-ILL-002216",
+   "change": "question rewritten without double signs"
+  },
+  {
+   "id": "ILL26-000057",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000061",
+   "change": "question rewritten in review"
+  },
+  {
+   "id": "ILL26-000061",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000085",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000093",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000101",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000105",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000109",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000117",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000117",
+   "change": "question_type rewritten in review"
+  },
+  {
+   "id": "ILL26-000117",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000125",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000129",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000137",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000145",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000149",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000153",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000205",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000205",
+   "change": "question_type rewritten in review"
+  },
+  {
+   "id": "ILL26-000205",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000241",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000277",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000289",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000293",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000305",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000313",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000313",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000317",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-000321",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000365",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-000683",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000684",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000685",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000686",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000687",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000688",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000689",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000690",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000691",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000692",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000693",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000694",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000695",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000696",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000697",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000698",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000699",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000700",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000701",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000703",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000705",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000706",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000707",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000708",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000709",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000710",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000711",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000712",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000713",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000714",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000716",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000717",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000718",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000720",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000721",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000722",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000723",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000724",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000725",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000726",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000727",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000728",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000729",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000730",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000731",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000732",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000733",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000734",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000735",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000736",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000737",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000738",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000739",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000741",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000742",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000743",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000744",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000746",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000747",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000748",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000749",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000750",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000751",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000752",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000753",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000754",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000755",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000756",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000757",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000758",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000759",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000760",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000761",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000762",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000763",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000764",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000765",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000766",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000767",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000768",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000769",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000770",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000771",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000772",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000773",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000774",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000777",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000778",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000779",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000781",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000782",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-000783",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000784",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000785",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000786",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000787",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000788",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000789",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000790",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000791",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000792",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000793",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000794",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000795",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000796",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000797",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000798",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000799",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000800",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000801",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000802",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000803",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000804",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000805",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000806",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000807",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000808",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000809",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000810",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000811",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000812",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000813",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000814",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000815",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000816",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000817",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000818",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000819",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000820",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000821",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000822",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000823",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000824",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000825",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000827",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000828",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000829",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000830",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000831",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000832",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000833",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000834",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000835",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000836",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000837",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000838",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000839",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000840",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000841",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000842",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000843",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000844",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000846",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000847",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000848",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000849",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000850",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-000852",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001033",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001034",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001035",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001036",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001037",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001038",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001039",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001040",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001041",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001042",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001043",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001044",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001045",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001046",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001047",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001048",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001049",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001050",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001051",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001052",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001053",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001054",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001055",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001056",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001057",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001058",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001059",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001060",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001061",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001062",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001063",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001064",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001065",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001066",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001067",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001068",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001069",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001070",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001071",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001072",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001073",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001074",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001075",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001076",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001077",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001078",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001080",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001081",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001083",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001084",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001085",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001086",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001087",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001089",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001090",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001091",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001092",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001093",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001094",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001095",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001096",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001097",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001098",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001099",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001100",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001101",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001102",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001103",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001104",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001105",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001106",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001108",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001110",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001113",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001114",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001115",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001117",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001118",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001119",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001120",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001121",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001122",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001124",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001125",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001126",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001128",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001129",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001131",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001132",
+   "change": "any equivalent fraction or decimal is accepted"
+  },
+  {
+   "id": "ILL26-001133",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001134",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001135",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001136",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001137",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001138",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001139",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001140",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001141",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001142",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001143",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001144",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001145",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001146",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001147",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001148",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001149",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001150",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001151",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001152",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001153",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001154",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001155",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001156",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001157",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001158",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001159",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001160",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001161",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001163",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001164",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001165",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001166",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001167",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001168",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001169",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001170",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001171",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001172",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001173",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001174",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001175",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001176",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001177",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001178",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001179",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001180",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001181",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001182",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001183",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001184",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001185",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001186",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001187",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001188",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001189",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001190",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001191",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001192",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001193",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001194",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001195",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001196",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001197",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001198",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001199",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001200",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001201",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001202",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001203",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001204",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001205",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001206",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001207",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001208",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001209",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001210",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001211",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001212",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001213",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001214",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001215",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001216",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001217",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001218",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001220",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001221",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001222",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001223",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001224",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001225",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001226",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001227",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001228",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001231",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001232",
+   "change": "answer reduced to the number asked for; formula moved to the explanation"
+  },
+  {
+   "id": "ILL26-001333",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001334",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001335",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001336",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001337",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001338",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001339",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001340",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001341",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001342",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001345",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001346",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001347",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001348",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001349",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001352",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001353",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001354",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001356",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001357",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001358",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001359",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001360",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001361",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001363",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001366",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001367",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001368",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001369",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001370",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001371",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001372",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001374",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001375",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001376",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001379",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001381",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001386",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001387",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001389",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001392",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001393",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001394",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001397",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001399",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001400",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001402",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001403",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001404",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001413",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001414",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001423",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001433",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001436",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001438",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001440",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001446",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001447",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001454",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001469",
+   "change": "answer and question formatted as a + bi"
+  },
+  {
+   "id": "ILL26-001867",
+   "change": "answer corrected to 6.3%"
+  },
+  {
+   "id": "ILL26-001868",
+   "change": "answer corrected to 6.3%"
+  },
+  {
+   "id": "ILL26-002193",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002194",
+   "change": "question rewritten in review"
+  },
+  {
+   "id": "ILL26-002194",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-002200",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002202",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002204",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002205",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002206",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002208",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-002208",
+   "change": "question_type rewritten in review"
+  },
+  {
+   "id": "ILL26-002208",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002210",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002211",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002213",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002215",
+   "change": "marks rewritten in review"
+  },
+  {
+   "id": "ILL26-002216",
+   "change": "answer rewritten in review"
+  },
+  {
+   "id": "ILL26-002217",
+   "change": "marks rewritten in review"
+  }
+ ]
+}

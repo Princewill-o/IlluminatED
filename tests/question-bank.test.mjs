@@ -30,3 +30,11 @@ test("Auto-marked answers accept themselves, equivalent numbers, units and reord
   assert.ok(!markAnswer("16", "15"));
   assert.ok(!markAnswer("", "15"));
 });
+
+test("Every question has been reviewed: templated answers re-solved, open items read, broken items retired", () => {
+  const by = (s) => rows.filter((r) => r.review_status === s).length;
+  assert.equal(by("ai_verified") + by("ai_checked") + by("retired"), rows.length);
+  assert.equal(by("flagged_needs_fix"), 0);
+  assert.ok(rows.filter((r) => r.review_status === "retired").every((r) => r.question_type === "evaluation"));
+  assert.ok(!rows.some((r) => /\+ \(-|− \(-|\+-|unreduced/.test(r.question + r.answer) && r.review_status !== "retired"), "no double signs or unmarkable formats left");
+});
