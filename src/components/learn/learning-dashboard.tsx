@@ -41,6 +41,12 @@ import type { Course } from "@/lib/types";
 const TOOLS: { href: string; title: string; text: string; icon: LucideIcon }[] =
   [
     {
+      href: "/practice",
+      title: "Question bank",
+      text: "GCSE and A-level questions, marked as you type.",
+      icon: BookOpenCheck,
+    },
+    {
       href: "/quizzes",
       title: "Quiz centre",
       text: "Check what you know, one topic at a time.",

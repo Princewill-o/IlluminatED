@@ -1,0 +1,183 @@
+{
+  "created": "2026-10-21",
+  "count": 3344,
+  "target_stages": {
+    "GCSE": [
+      "Mathematics",
+      "English Language",
+      "English Literature",
+      "Combined Science",
+      "Biology",
+      "Chemistry",
+      "Physics",
+      "History",
+      "Geography",
+      "Computer Science",
+      "Religious Studies",
+      "French"
+    ],
+    "A-level": [
+      "Mathematics",
+      "Further Mathematics",
+      "English Language",
+      "English Literature",
+      "Biology",
+      "Chemistry",
+      "Physics",
+      "History",
+      "Geography",
+      "Computer Science",
+      "Psychology",
+      "Sociology",
+      "Economics",
+      "Business"
+    ]
+  },
+  "by_stage_subject": [
+    {
+      "stage": "GCSE",
+      "subject": "Mathematics",
+      "count": 1274
+    },
+    {
+      "stage": "GCSE",
+      "subject": "English Language",
+      "count": 28
+    },
+    {
+      "stage": "GCSE",
+      "subject": "English Literature",
+      "count": 28
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Combined Science",
+      "count": 279
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Biology",
+      "count": 121
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Chemistry",
+      "count": 116
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Physics",
+      "count": 117
+    },
+    {
+      "stage": "GCSE",
+      "subject": "History",
+      "count": 20
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Geography",
+      "count": 20
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Computer Science",
+      "count": 24
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Religious Studies",
+      "count": 12
+    },
+    {
+      "stage": "GCSE",
+      "subject": "French",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Mathematics",
+      "count": 775
+    },
+    {
+      "stage": "A-level",
+      "subject": "Further Mathematics",
+      "count": 60
+    },
+    {
+      "stage": "A-level",
+      "subject": "English Language",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "English Literature",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Biology",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "Chemistry",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "Physics",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "History",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Geography",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Computer Science",
+      "count": 24
+    },
+    {
+      "stage": "A-level",
+      "subject": "Psychology",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Sociology",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Economics",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Business",
+      "count": 20
+    }
+  ],
+  "provenance": "Original algorithmically generated drafts and previously generated Illumed mathematics starter questions. No exam board data downloaded.",
+  "qualification_board_targets": [
+    "AQA",
+    "Pearson Edexcel",
+    "OCR"
+  ],
+  "board_alignment_verified": false,
+  "ready_for_publication": false,
+  "quality_warning": "Mixed quality. All questions need subject-specialist review, accurate detailed mark schemes, assessment design, deduplication and board specification mapping. Multi-step and unseen-extract assessments are not sufficient. Do not claim grade outcomes.",
+  "commercial_branding": "Do not say AQA/Edexcel/OCR endorse, partner with, or officially support Illumed absent written permissions.",
+  "resources_reference_urls": [
+    "https://www.aqa.org.uk/",
+    "https://qualifications.pearson.com/",
+    "https://www.ocr.org.uk/qualifications/as-and-a-level/"
+  ]
+}

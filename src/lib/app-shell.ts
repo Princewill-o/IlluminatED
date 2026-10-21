@@ -81,6 +81,7 @@ export const APP_TABS: AppTab[] = [
       "/courses",
       "/study",
       "/quizzes",
+      "/practice",
       "/flashcards",
       "/revision",
       "/exam-mode",

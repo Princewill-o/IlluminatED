@@ -1,0 +1,139 @@
+{
+  "total": 3344,
+  "subject_counts": [
+    {
+      "stage": "GCSE",
+      "subject": "Mathematics",
+      "count": 1274
+    },
+    {
+      "stage": "GCSE",
+      "subject": "English Language",
+      "count": 28
+    },
+    {
+      "stage": "GCSE",
+      "subject": "English Literature",
+      "count": 28
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Combined Science",
+      "count": 279
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Biology",
+      "count": 121
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Chemistry",
+      "count": 116
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Physics",
+      "count": 117
+    },
+    {
+      "stage": "GCSE",
+      "subject": "History",
+      "count": 20
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Geography",
+      "count": 20
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Computer Science",
+      "count": 24
+    },
+    {
+      "stage": "GCSE",
+      "subject": "Religious Studies",
+      "count": 12
+    },
+    {
+      "stage": "GCSE",
+      "subject": "French",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Mathematics",
+      "count": 775
+    },
+    {
+      "stage": "A-level",
+      "subject": "Further Mathematics",
+      "count": 60
+    },
+    {
+      "stage": "A-level",
+      "subject": "English Language",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "English Literature",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Biology",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "Chemistry",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "Physics",
+      "count": 94
+    },
+    {
+      "stage": "A-level",
+      "subject": "History",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Geography",
+      "count": 16
+    },
+    {
+      "stage": "A-level",
+      "subject": "Computer Science",
+      "count": 24
+    },
+    {
+      "stage": "A-level",
+      "subject": "Psychology",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Sociology",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Economics",
+      "count": 20
+    },
+    {
+      "stage": "A-level",
+      "subject": "Business",
+      "count": 20
+    }
+  ],
+  "all_publish_ready_false": true,
+  "duplicates_removed": 248,
+  "records_with_missing_answer": 0,
+  "old_questions_carried_forward": 1255
+}
