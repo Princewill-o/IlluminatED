@@ -13,6 +13,7 @@ import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
+import { HudSlot } from "./hud";
 import { londonEye } from "./london-eye3d";
 import { addStreetscape } from "./streetscape3d";
 export { NPC_SPOTS } from "./art";
@@ -45,6 +46,7 @@ import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
+
 
 /**
  * The live 3D world (three.js), viewed like Animal Crossing: a tilted camera that
@@ -2923,9 +2925,9 @@ export function World3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adKey, map]);
 
-  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<div className="absolute right-3 top-20 z-[100002] flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
+  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<HudSlot area="tr-tools" order={1}><div className="flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
     <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
     <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
     <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>
-  </div>}{!overview && map.art === "london" && <CityBroadcast {...news} />}</>;
+  </div></HudSlot>}{!overview && map.art === "london" && <CityBroadcast {...news} />}</>;
 }

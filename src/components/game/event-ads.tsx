@@ -6,6 +6,8 @@ import { CalendarDays, ExternalLink, X } from "lucide-react";
 
 import { useIllumship } from "./city/membership";
 
+import { HudSlot } from "@/components/game/world/hud";
+
 export interface TechEvent {
   id: string;
   name: string;
@@ -90,9 +92,9 @@ export function EventAdPopup({ events, firstAfter = 40_000, every = 240_000 }: {
   }, [i]);
   if (vip || i < 0 || !events.length) return null;
   return (
-    <div className="absolute bottom-24 left-3 z-[100001] w-[min(330px,calc(100%-24px))]">
+    <HudSlot area="bl" order={40} className="w-[min(330px,100%)] [@media(max-height:700px)]:hidden">
       <AdCard e={events[i % events.length]} onClose={() => setI(-1 - i)} />
-    </div>
+    </HudSlot>
   );
 }
 

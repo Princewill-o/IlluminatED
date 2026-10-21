@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { HudSlot } from "./hud";
 import { TRAIN_CALL } from "./train-state";
 
 import { trainTimes } from "@/game/core/train";
@@ -28,7 +29,7 @@ export function TrainTimes() {
           : times.phase === "departing" ? "Train departing" : "Waiting for next train";
 
   return (
-    <section aria-label="Station train times" className="pointer-events-none absolute top-40 left-3 max-w-[calc(100%-1.5rem)] rounded-2xl border border-[#ffd400]/40 bg-[#13203a]/95 px-4 py-3 text-xs text-[#ffd400] shadow-lg sm:top-28">
+    <HudSlot area="tl" order={30}><section aria-label="Station train times" className="pointer-events-none max-w-full rounded-2xl border border-[#ffd400]/40 bg-[#13203a]/95 px-4 py-3 text-xs text-[#ffd400] shadow-lg sm:top-28">
       <h2 className="font-black tracking-wider uppercase">Platform 1 · Revision line</h2>
       <p className="mt-1 font-bold" role="status">{status}</p>
       <p className="mt-1 text-white/90">
@@ -38,6 +39,6 @@ export function TrainTimes() {
         {" · Every 24s"}
       </p>
       <p className="mt-1 max-w-64 text-[10px] text-white/75">Walk through an open red doorway to board.</p>
-    </section>
+    </section></HudSlot>
   );
 }

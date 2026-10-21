@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { Music2, VolumeX } from "lucide-react";
 
 import { createMusic, type MusicScene } from "../music";
+import { HudSlot } from "./hud";
 
 const KEY = "illuminated-music";
 const LABELS: Record<MusicScene, string> = { city: "City grooves", nature: "Highland air", home: "Home comforts", study: "Quiet focus", station: "Platform pulse", journey: "Window seat", arcade: "Playtime", quiet: "A moment of calm", university: "Next chapter", work: "Finding your rhythm", shop: "Afternoon browse" };
@@ -59,7 +60,7 @@ export function SceneMusic({ scene }: { scene: MusicScene }) {
     } catch { /* Controls remain usable without audio or storage access. */ }
   };
   return (
-    <div className="absolute top-20 right-3 z-[70] text-[#fff3d8]">
+    <HudSlot area="tr-tools" order={2}><div className="relative text-[#fff3d8]">
       <button type="button" onClick={() => setOpen(value => !value)} aria-label="Music settings" aria-expanded={open} aria-controls="scene-music-settings" className="flex min-h-11 items-center gap-2 rounded-full border border-[#c8b182]/40 bg-[#183b35]/95 px-3 text-xs font-bold shadow-lg">
         {enabled && volume > 0 ? <Music2 className="size-4" /> : <VolumeX className="size-4" />} Music
       </button>
@@ -71,6 +72,6 @@ export function SceneMusic({ scene }: { scene: MusicScene }) {
           <input type="range" min="0" max="1" step="0.05" value={volume} onChange={event => update(enabled, Number(event.target.value))} className="mt-2 min-h-6 w-full accent-[#c8b182]" />
         </label>
       </section>}
-    </div>
+    </div></HudSlot>
   );
 }

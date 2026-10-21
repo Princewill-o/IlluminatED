@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudRain, MapPin, Sun } from "lucide-react";
 
+import { HudSlot } from "./hud";
 import { useNeeds } from "./use-needs";
 
 import { AvatarFigure } from "@/components/game/avatar";
@@ -46,7 +47,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   return (
     <>
       {/* Today's tasks */}
-      <div className={cn(card, "absolute top-[68px] left-3 z-[50] w-[min(200px,calc(100%-120px))] px-2.5 py-1 sm:w-[248px] xl:w-[264px]")}>
+      <HudSlot area="tl" order={10}><div className={cn(card, "w-[min(248px,100%)] px-2.5 py-1 xl:w-[264px]")}>
         <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-h-11 w-full items-center gap-2 text-left text-xs font-black sm:text-sm" aria-expanded={open} aria-controls="city-quests">
           Today's tasks
           <span className="rounded-full bg-[#dde8fd] px-2 py-0.5 text-[10px] text-[#1f4fbf]">{todo} to do</span>
@@ -84,10 +85,10 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
             })}
           </ul>
         )}
-      </div>
+      </div></HudSlot>
 
       {/* Weather, time, money */}
-      <div className="pointer-events-none absolute top-[68px] right-[140px] z-[50] hidden gap-1.5 xl:flex [@media(max-height:719px)]:!hidden">
+      <HudSlot area="tr" order={20} className="hidden xl:block [@media(max-height:719px)]:!hidden"><div className="flex gap-1.5">
         <details className={cn(card, "relative px-2.5 py-1.5")}>
           <summary className="flex cursor-pointer list-none items-center gap-1.5" aria-label="Open game weather forecast">
           <WIcon className="size-5 text-[#e98a1f]" aria-hidden />
@@ -109,10 +110,10 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
           <p className="text-sm leading-4 font-black">{clout.toLocaleString("en-GB")}</p>
           <p className="text-[10px] font-bold text-[#5a6272]">Clout</p>
         </div>
-      </div>
+      </div></HudSlot>
 
       {/* You and your needs */}
-      <div className={cn(card, "absolute bottom-16 left-3 z-[50] hidden max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 lg:flex xl:max-w-[280px] [@media(max-height:650px)]:!hidden")}>
+      <HudSlot area="bl" order={20} className="hidden lg:block [@media(max-height:650px)]:!hidden"><div className={cn(card, "flex max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 xl:max-w-[280px]")}>
         <div className="flex size-12 shrink-0 justify-center overflow-hidden rounded-full border-4 border-white bg-[#8fb4ff]">
           <div className="-mt-1 shrink-0">
             <AvatarFigure avatar={avatar} size={76} showPet={false} />
@@ -133,15 +134,15 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
             ))}
           </div>
         </div>
-      </div>
+      </div></HudSlot>
 
       {(last || hint) && (
-        <p
-          className="pointer-events-none absolute inset-x-0 top-[130px] z-[50] mx-auto hidden w-fit max-w-[32%] text-center rounded-full bg-[#13203a] px-4 py-1.5 text-xs font-bold text-white xl:block [@media(max-height:719px)]:!hidden"
+        <HudSlot area="tc" order={50} className="pointer-events-none hidden xl:block [@media(max-height:719px)]:!hidden"><p
+          className="rounded-full bg-[#13203a] px-4 py-1.5 text-center text-xs font-bold text-white"
           role="status"
         >
           {last ? ACTIVITIES[last].label : hint}
-        </p>
+        </p></HudSlot>
       )}
     </>
   );
@@ -151,7 +152,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 export function LevelBadge({ xp }: { xp: number }) {
   const lp = levelProgress(xp);
   return (
-    <div className="pointer-events-none absolute top-3 left-1/2 z-[60] hidden -translate-x-1/2 items-center gap-2 rounded-full border border-[#d4c7ad] bg-[#faf6ed]/[0.98] py-1.5 pr-3 pl-1.5 text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16)] lg:flex">
+    <HudSlot area="tc" order={0} className="pointer-events-none hidden lg:block"><div className="flex items-center gap-2 rounded-full border border-[#d4c7ad] bg-[#faf6ed]/[0.98] py-1.5 pr-3 pl-1.5 text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16)]">
       <span className="grid size-7 place-items-center rounded-full bg-[#254e46] text-sm font-black text-[#f7e3b6] ring-1 ring-[#c8b182]">{lp.level}</span>
       <span className="text-xs leading-tight font-black">
         {levelTitle(lp.level)}
@@ -162,6 +163,6 @@ export function LevelBadge({ xp }: { xp: number }) {
       <span className="text-[10px] font-bold text-[#13203a]/60 tabular-nums">
         {lp.into}/{lp.needed} XP
       </span>
-    </div>
+    </div></HudSlot>
   );
 }

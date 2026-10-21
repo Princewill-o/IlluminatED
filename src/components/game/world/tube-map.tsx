@@ -102,7 +102,7 @@ export function TubeMap({
 }) {
   const current = stations.find((s) => s.id === here);
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+    <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-label="Underground"

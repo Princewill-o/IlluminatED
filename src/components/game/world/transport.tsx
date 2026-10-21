@@ -29,7 +29,7 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+    <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Bike dock" onClick={(e) => e.stopPropagation()} className="max-h-[calc(100%-16px)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl bg-[#f7f1e6] p-4 text-[#13203a] sm:p-5 md:rounded-3xl">
         <div className="flex items-start justify-between">
           <div>
@@ -378,7 +378,7 @@ export function Dealership({
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-center bg-black/60 p-2 sm:p-3" onClick={onClose}>
+    <div className="absolute inset-0 z-[100004] grid place-items-center bg-black/60 p-2 sm:p-3" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label="Car dealership" onClick={(e) => e.stopPropagation()} className="max-h-full w-full max-w-2xl overflow-y-auto overscroll-contain rounded-2xl bg-[#f7f1e6] text-[#13203a]">
         <div className="relative overflow-hidden bg-[#13203a] px-4 pt-4 pb-4 text-white">
           <div className="absolute inset-x-0 bottom-0 h-3 [background:repeating-linear-gradient(90deg,#ffd166_0_30px,transparent_30px_60px)] opacity-60" />

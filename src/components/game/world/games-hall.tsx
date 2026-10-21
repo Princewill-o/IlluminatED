@@ -135,7 +135,7 @@ export function GamesHall({ serverId, me, onClose }: { serverId: string; me: { i
   );
 
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+    <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
       <div
         role="dialog"
         aria-label="Games Hall"

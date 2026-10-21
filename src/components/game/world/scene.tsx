@@ -102,7 +102,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
   const s = STEPS[i];
   const Icon = s.icon;
   return (
-    <div className="absolute inset-0 z-[100000] grid place-items-center bg-black/55 p-2 sm:p-3">
+    <div className="absolute inset-0 z-[100004] grid place-items-center bg-black/55 p-2 sm:p-3">
       <div role="dialog" aria-modal="true" aria-label="How to play" className="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[#f7f1e6] text-[#13203a]">
         <div className="relative h-20 shrink-0 overflow-hidden bg-[#2b5fd9] sm:h-24 [@media(max-height:450px)]:h-14">
           <div className="tutorial-rings absolute inset-0" />
