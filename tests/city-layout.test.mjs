@@ -273,7 +273,11 @@ test("Neighbourhoods contain many homes and remaining green land is divided by p
     "landscaped public seating",
   );
   assert.ok(
-    things.filter((t) => t.kind === "tree").length < 200,
+    things.filter((t) => t.kind === "tree" && !t.id.startsWith("outskirts-")).length < 200,
     "parks use deliberate tree groups",
+  );
+  assert.ok(
+    things.filter((t) => t.kind === "tree" && t.id.startsWith("outskirts-")).length < 450,
+    "the open-world woods stay within a tree budget",
   );
 });

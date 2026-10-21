@@ -186,6 +186,10 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
   const brandSql = fs.readFileSync("supabase/migrations/20261017121000_cartoon_brand_labels.sql", "utf8");
   const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
+    if (c.slot === "brand") {
+      assert.ok(fs.readFileSync("supabase/migrations/20261021120000_chibi_brands.sql", "utf8").includes(`('${c.id}', 'brand', '${c.name}', 0, null`), `brand row for ${c.id}`);
+      continue;
+    }
     if (c.slot.endsWith("Color") && c.slot !== "hairColor") {
       assert.ok(DYES_SQL.includes(`'${c.id.split("-").slice(1).join("-")}', '${c.name}'`), `dye row for ${c.id}`);
       continue;
@@ -218,7 +222,7 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
 test("Every boss is a valid character from the catalogue", () => {
   const { SLOTS, RARITY, SETS } = projectData("src/game/core/cosmetics.ts");
   const slots = new Set(SLOTS.map((s) => s.slot));
-  assert.equal(slots.size, 18);
+  assert.equal(slots.size, 19);
   for (const c of COMPANIES) {
     for (const [slot, id] of Object.entries(c.boss.look)) {
       assert.ok(slots.has(slot), `${c.boss.name}: slot ${slot}`);

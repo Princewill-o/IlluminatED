@@ -163,7 +163,8 @@ test("taking out a car avoids occupied road footprints and fails safely when all
 });
 
 test("crossing residents walk only during pedestrian phases, clear before green and stay continuous", () => {
-  assert.equal(R.crossingPedestrianPoses(0).length, 8);
+  // Eight in the city, plus two on the country lane junction in the outskirts.
+  assert.equal(R.crossingPedestrianPoses(0).length, 10);
   for (let ms = 0; ms < 80000; ms += 83) {
     const poses = R.crossingPedestrianPoses(ms);
     const next = R.crossingPedestrianPoses(ms + 1);

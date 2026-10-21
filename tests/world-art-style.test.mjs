@@ -52,7 +52,7 @@ test("landscaping stays within a fixed geometry budget without changing navigati
   const group=addStreetscape(new THREE.Group(),CITY,"dusk"),geometries=new Set(),materials=new Set();let triangles=0;
   group.traverse(o=>{if(!o.isMesh)return;geometries.add(o.geometry);materials.add(o.material);triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});
   assert.equal(JSON.stringify([CITY.tiles,CITY.portals]),before);
-  assert.ok(group.userData.treeCount>=100);assert.ok(geometries.size<=4);assert.ok(materials.size<=16);assert.ok(triangles<60000, `triangle count: ${triangles}`);
+  assert.ok(group.userData.treeCount>=100);assert.ok(geometries.size<=4);assert.ok(materials.size<=16);assert.ok(triangles<80000, `triangle count: ${triangles}`);
   let disposals=0;for(const geometry of geometries)geometry.addEventListener("dispose",()=>disposals++);
   group.userData.dispose();group.userData.dispose();assert.equal(disposals,geometries.size);
 });

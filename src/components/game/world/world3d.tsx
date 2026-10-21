@@ -803,6 +803,24 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
       for (let y = 0.28; y < top - 0.2; y += 0.35) box(g, "#e8d5ba", x, y, z0 + d - 0.015, x + 0.12, y + 0.2, z0 + d + 0.045);
   }
   roof(g, roofC, x0 - 0.05, z0 + 0.2, x0 + w + 0.05, z0 + d + 0.05, top, 0.48);
+  // Clear definition from the close camera: each house in the row gets its own
+  // facade colour, divided by pale pilasters, with a white fascia and a dark
+  // gutter under the eaves and a dark plinth line at the base.
+  {
+    const units = Math.max(1, Math.round(w / 2.6));
+    const uw = w / units;
+    const palette = highland ? ["#f2ead8", "#e8dfcb", "#efe5d2"] : ["#b9634a", "#d8be92", "#ead9bd", "#c26b4f", "#9fb3a6", "#e3c6b0", "#a65840"];
+    for (let u = 0; u < units; u++) {
+      const ux = x0 + u * uw;
+      box(g, palette[(seed + u * 3) % palette.length], ux + 0.02, 0.27, z0 + d - 0.005, ux + uw - 0.02, top - 0.12, z0 + d + 0.012);
+      if (u > 0) box(g, "#efe4cf", ux - 0.05, 0.2, z0 + d - 0.01, ux + 0.05, top - 0.08, z0 + d + 0.06);
+    }
+    box(g, "#fbf8f2", x0 - 0.07, top - 0.06, z0 + d + 0.02, x0 + w + 0.07, top + 0.05, z0 + d + 0.11);
+    box(g, "#2e3338", x0 - 0.07, top - 0.1, z0 + d + 0.09, x0 + w + 0.07, top - 0.04, z0 + d + 0.15);
+    box(g, "#3d3530", x0, 0.24, z0 + d + 0.035, x0 + w, 0.29, z0 + d + 0.055);
+    // Ridge capping along the roof top.
+    box(g, "#2f3439", x0 - 0.05, top + 0.46, z0 + 0.2 + (d - 0.2) / 2 - 0.05, x0 + w + 0.05, top + 0.52, z0 + 0.2 + (d - 0.2) / 2 + 0.05);
+  }
   // Slate courses break up the broad, flat roof surface from the game camera.
   for (let course=1;course<5;course++) {
     const z=z0+d/2+(d/2)*course/5;
@@ -832,6 +850,15 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
         box(g, "#c9bba2", wx0 - 0.09, 0.12, zf, wx1 + 0.09, 0.18, zf + 0.19);
         continue;
       }
+      // Bay windows on alternate ground floors; a dark reveal around every frame.
+      if (!highland && f === 0 && seed % 2 === 0) {
+        box(g, "#efe4cf", wx0 - 0.12, 0.2, zf, wx1 + 0.12, y0 + 0.86, zf + 0.26);
+        box(g, "#3b4652", wx0 - 0.05, y0 + 0.22, zf + 0.25, wx1 + 0.05, y0 + 0.74, zf + 0.29);
+        box(g, "#f6f2ea", (wx0 + wx1) / 2 - 0.02, y0 + 0.22, zf + 0.28, (wx0 + wx1) / 2 + 0.02, y0 + 0.74, zf + 0.31);
+        box(g, roofC, wx0 - 0.15, y0 + 0.86, zf - 0.02, wx1 + 0.15, y0 + 0.93, zf + 0.32);
+        continue;
+      }
+      box(g, "#2a2622", wx0 - 0.09, y0 + 0.14, zf - 0.025, wx1 + 0.09, y0 + 0.82, zf + 0.017);
       box(g, "#f6f2ea", wx0 - 0.05, y0 + 0.18, zf - 0.02, wx1 + 0.05, y0 + 0.78, zf + 0.02);
       box(g, (seed+b+f)%3===0?"#c4b284":"#465967", wx0, y0 + 0.23, zf - 0.01, wx1, y0 + 0.73, zf + 0.03);
       box(g, "#f6f2ea", wx0, y0 + 0.47, zf - 0.01, wx1, y0 + 0.49, zf + 0.04);
@@ -1273,71 +1300,27 @@ export function lymeBike(green = "#4cd137") {
   return g;
 }
 
+/** London double-decker, modelled in Blender (art/blender/bus.py); route blinds drawn here. */
+let BUS_KIT: Promise<THREE.Object3D> | null = null;
 function busModel(route: string) {
   const g = new THREE.Group();
-  const red = "#c52e32", deepRed = "#8f2027", cream = "#e9d8b6", glass = "#243b49", rubber = "#20252a";
-  // Modern London double-decker silhouette with softly stepped front and rear.
-  box(g, rubber, -1.37, 0.12, -0.5, 1.38, 0.38, 0.5);
-  box(g, deepRed, -1.34, 0.3, -0.49, 1.31, 2.03, 0.49);
-  box(g, red, -1.29, 0.42, -0.51, 1.3, 1.98, 0.51);
-  box(g, red, -1.22, 1.98, -0.48, 1.18, 2.72, 0.48);
-  box(g, cream, -1.29, 1.28, -0.525, 1.31, 1.4, 0.525);
-  box(g, deepRed, -1.28, 1.37, -0.53, 1.31, 1.43, 0.53);
-  // Continuous upper and lower deck glazing, framed by fine pillar lines.
-  box(g, glass, -1.16, 1.56, -0.514, 1.02, 1.92, 0.514);
-  box(g, glass, -1.14, 2.1, -0.49, 0.98, 2.56, 0.49);
-  for (const zSide of [-0.53, 0.53]) {
-    for (const px of [-1.1, -0.76, -0.42, -0.08, 0.26, 0.6, 0.94]) {
-      box(g, red, px, 1.53, zSide - 0.018, px + 0.035, 1.95, zSide + 0.018);
-      box(g, red, px, 2.07, zSide - 0.018, px + 0.035, 2.59, zSide + 0.018);
-    }
-    box(g, red, -1.22, 1.94, zSide - 0.026, 1.12, 2.04, zSide + 0.026);
-    box(g, red, -1.2, 2.58, zSide - 0.026, 1.08, 2.68, zSide + 0.026);
-    // Passenger doors, handle and lower body moulding.
-    box(g, deepRed, 0.79, 0.48, zSide - 0.035, 1.13, 1.29, zSide + 0.035);
-    box(g, glass, 0.83, 0.92, zSide - 0.05, 1.09, 1.2, zSide + 0.05);
-    box(g, cream, 0.76, 0.4, zSide - 0.04, 1.16, 0.46, zSide + 0.04);
-    box(g, red, -1.27, 0.36, zSide - 0.018, 1.28, 0.43, zSide + 0.018);
-  }
-  // Panoramic front glass, split windscreen, destination blinds and lower grille.
-  box(g, glass, 1.3, 1.58, -0.39, 1.36, 2.43, 0.39);
-  box(g, red, 1.35, 1.58, -0.018, 1.39, 2.43, 0.018);
-  box(g, red, 1.31, 1.47, -0.45, 1.38, 1.55, 0.45);
-  box(g, rubber, 1.37, 0.39, -0.42, 1.42, 0.86, 0.42);
-  for (let i = 0; i < 5; i++) box(g, "#718087", 1.425, 0.47 + i * 0.065, -0.28, 1.44, 0.49 + i * 0.065, 0.28);
-  const blind = sign(`${route}  CITY`, { bg: "#101923", fg: "#ffd176", w: 0.82, h: 0.2, font: "bold 56px monospace" });
-  blind.position.set(1.39, 2.48, 0); blind.rotation.y = Math.PI / 2; g.add(blind);
-  // Wraparound destination/route cards at both sides, plus small fleet crests.
+  BUS_KIT ??= new GLTFLoader().loadAsync("/world3d/bus.glb").then((m) => m.scene);
+  void BUS_KIT.then((kit) => {
+    const body = kit.clone(true);
+    bendAll(body);
+    body.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    g.add(body);
+  });
+  // Model units: 2.8 long (front at +x), 0.66 wide, 1.14 tall.
+  const blind = sign(`${route}  CITY`, { bg: "#101923", fg: "#ffd176", w: 0.36, h: 0.065, font: "bold 56px monospace" });
+  blind.position.set(1.415, 0.63, 0); blind.rotation.y = Math.PI / 2; g.add(blind);
+  const rear = sign(route, { bg: "#101923", fg: "#ffffff", w: 0.12, h: 0.07, font: "bold 64px sans-serif" });
+  rear.position.set(-1.415, 0.66, -0.06); rear.rotation.y = -Math.PI / 2; g.add(rear);
   for (const side of [-1, 1]) {
-    const s = sign(`${route}  LONDON`, { bg: "#101923", fg: "#ffd176", w: 0.94, h: 0.15, font: "bold 46px monospace" });
-    s.position.set(-0.38, 2.74, side * 0.49); s.rotation.y = side > 0 ? 0 : Math.PI; g.add(s);
-    box(g, cream, -1.22, 1.46, side * 0.531 - 0.012, 1.2, 1.5, side * 0.531 + 0.012);
-    box(g, "#d9b45a", -1.16, 1.46, side * 0.548 - 0.012, -0.99, 1.5, side * 0.548 + 0.012);
-    // Side mirrors on slim arms.
-    box(g, deepRed, 1.05, 1.43, side * 0.49, 1.3, 1.47, side * 0.66);
-    box(g, glass, 1.27, 1.38, side * 0.63, 1.42, 1.57, side * 0.78);
+    const s = sign(`${route}  LONDON`, { bg: "#101923", fg: "#ffd176", w: 0.42, h: 0.05, font: "bold 46px monospace" });
+    s.position.set(0.7, 0.995, side * 0.337); s.rotation.y = side > 0 ? 0 : Math.PI; g.add(s);
   }
-  // Roof equipment and an illuminated cream safety band around the roofline.
-  box(g, cream, -1.23, 2.7, -0.43, 1.12, 2.75, 0.43);
-  box(g, "#8f9898", -0.75, 2.75, -0.25, -0.2, 2.9, 0.25);
-  box(g, "#667579", -0.68, 2.9, -0.18, -0.27, 2.94, 0.18);
-  // Headlights and tail lights: small high-contrast glass lenses.
-  for (const zz of [-0.34, 0.34]) {
-    box(g, "#f3e6bf", 1.405, 0.92, zz - 0.08, 1.45, 1.1, zz + 0.08);
-    box(g, "#d64c40", -1.4, 0.73, zz - 0.08, -1.36, 1.05, zz + 0.08);
-    box(g, "#f4b55b", -1.4, 0.55, zz - 0.08, -1.36, 0.66, zz + 0.08);
-  }
-  // Four detailed wheels with hubs and raised arches.
-  for (const xx of [-0.95, 0.98]) for (const zz of [-0.49, 0.49]) {
-    const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.16, 16), mat(rubber));
-    wh.rotation.x = Math.PI / 2; wh.position.set(xx, 0.34, zz); wh.castShadow = true; g.add(wh);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.17, 12), mat("#a8a69a"));
-    hub.rotation.x = Math.PI / 2; hub.position.set(xx, 0.34, zz * 1.025); g.add(hub);
-    const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.18, 10), mat("#e4d3ad"));
-    cap.rotation.x = Math.PI / 2; cap.position.set(xx, 0.34, zz * 1.04); g.add(cap);
-    box(g, deepRed, xx - 0.36, 0.57, zz > 0 ? 0.48 : -0.51, xx + 0.36, 0.63, zz > 0 ? 0.52 : -0.48);
-  }
-  g.scale.set(BUS_LENGTH / 2.8, 1.35, BUS_WIDTH / 1.0);
+  g.scale.set(BUS_LENGTH / 2.8, 2.4, BUS_WIDTH / 0.66);
   return g;
 }
 
@@ -2392,10 +2375,13 @@ export function World3D({
       }
       if (precipitation.visible) {
         const speed = weatherKind === "Snow" ? 1.2 : 8;
+        // Keep every drop well below and in front of the close camera: a drop
+        // next to the lens renders as a huge pale square that washes out the view.
+        const top = Math.max(2.5, Math.min(12, camera.position.y - 3));
         for (let i = 0; i < 180; i++) {
           precipitationPositions[i * 3] = mx + ((i * 7.13 + secs * 0.4) % 24) - 12;
-          precipitationPositions[i * 3 + 1] = 12 - ((secs * speed + i * 0.37) % 12);
-          precipitationPositions[i * 3 + 2] = mz + ((i * 3.71) % 24) - 12;
+          precipitationPositions[i * 3 + 1] = top - ((secs * speed + i * 0.37) % top);
+          precipitationPositions[i * 3 + 2] = mz + ((i * 3.71) % 18) - 13;
         }
         precipitationGeometry.attributes.position.needsUpdate = true;
       }

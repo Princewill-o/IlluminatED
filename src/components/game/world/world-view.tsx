@@ -2,9 +2,11 @@
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 
+
 import dynamic from "next/dynamic";
 
 import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
+import { createPortal } from "react-dom";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { drawMap } from "./tiles";
@@ -279,6 +281,7 @@ export function WorldView({
   const [touch, setTouch] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [picked, setPicked] = useState<RemotePlayer | null>(null);
+  const [roster, setRoster] = useState<RemotePlayer[] | null>(null);
   const nearRef = useRef<Portal | null>(null);
   const roomRef = useRef<string | null>(null);
   const { players, reportMove, stopped, say } = world;
@@ -711,8 +714,40 @@ export function WorldView({
             <span className="text-[#8d85a0]">· {REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
           </span>
         </button>
-        <div className="rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur" aria-live="polite">
-          {world.count} here
+        <div className="pointer-events-auto relative">
+          <button
+            type="button"
+            onClick={() => setRoster(r => (r ? null : [...players.current.values()]))}
+            aria-expanded={Boolean(roster)}
+            className="min-h-11 rounded-2xl bg-black/70 px-3 py-2 text-xs font-black text-white backdrop-blur focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            aria-live="polite"
+          >
+            {world.count} here
+          </button>
+          {roster && typeof document !== "undefined" && createPortal(
+            <div className="fixed right-3 top-16 z-[100020] w-64 overflow-hidden rounded-2xl bg-white text-[#1d1a4a] shadow-2xl ring-1 ring-black/10">
+              <p className="border-b px-4 py-3 text-xs font-black uppercase tracking-wider text-[#5b56c8]">In {map.name} now</p>
+              <ul className="max-h-72 overflow-y-auto py-1 text-sm">
+                <li className="flex items-center justify-between px-4 py-2 font-bold">
+                  @{me.username} <span className="rounded-full bg-[#5b56c8] px-2 py-0.5 text-[10px] text-white">You</span>
+                </li>
+                {roster.map(rp => {
+                  const tiles = Math.round(Math.hypot(rp.tx - pos.current.x, rp.ty - pos.current.y) / TILE);
+                  return (
+                    <li key={rp.id}>
+                      <button type="button" onClick={() => { setPicked(rp); setRoster(null); }} className="flex w-full items-center justify-between px-4 py-2 text-left hover:bg-[#f1f0ff]">
+                        <span className="truncate font-bold">@{rp.username}</span>
+                        <span className="shrink-0 text-xs text-[#1d1a4a]/60">{hidden.has(rp.id) ? "Hidden" : tiles < 2 ? "Next to you" : `${tiles} m away`}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+                {!roster.length && <li className="px-4 py-3 text-xs text-[#1d1a4a]/60">Nobody else is here right now. People walking around without a name tag are computer controlled.</li>}
+              </ul>
+            </div>
+,
+            document.body,
+          )}
         </div>
       </div>
 

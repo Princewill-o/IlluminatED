@@ -8,6 +8,7 @@ import { PLAYER } from "./art";
 
 import { buildLondon } from "@/game/core/london";
 import { LONDON_DISTRICTS } from "@/game/core/london-districts";
+import { OUTSKIRTS } from "@/game/core/london-outskirts";
 import {
   KIND,
   placesFor,
@@ -151,7 +152,7 @@ export function LocationMap({
       ctx.rotate(0.1);
       ctx.fillText("RIVER THAMES", 0, 0);
       ctx.restore();
-      for (const district of LONDON_DISTRICTS) {
+      for (const district of [...LONDON_DISTRICTS, ...OUTSKIRTS]) {
         const x=(district.x+district.w/2)*S,y=(district.y+district.h-2)*S;
         ctx.save();
         ctx.font=`600 ${Math.max(10,S*1.25)}px sans-serif`;

@@ -26,7 +26,8 @@ export type Slot =
   | "hat"
   | "face"
   | "held"
-  | "pet";
+  | "pet"
+  | "brand";
 
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
@@ -202,6 +203,17 @@ export const COSMETICS: Cosmetic[] = [
   L("held-trophy", "held", "Gold star trophy", 0, { unlock: "ceo:tiny-humans", set: "tiny-humans" }),
   E("held-compass", "held", "Golden compass", 0, { unlock: "level:15" }),
 
+  // ── Brands: the logo on your top. Fictional labels, all free.
+  C("brand-none", "brand", "No logo"),
+  C("brand-illuminated", "brand", "IlluminatED"),
+  C("brand-volt", "brand", "Volt"),
+  C("brand-northwind", "brand", "Northwind"),
+  C("brand-thamesline", "brand", "Thamesline"),
+  C("brand-peckham", "brand", "Peckham Supply"),
+  C("brand-camden", "brand", "Camden & Co"),
+  C("brand-kowloon", "brand", "Kowloon Club"),
+  C("brand-orbit", "brand", "Orbit"),
+
   C("pet-none", "pet", "No pet"),
   C("pet-hamster", "pet", "Hamster in charge", 150),
   R("pet-goldfish", "pet", "Office goldfish", 300, { set: "office" }),
@@ -255,6 +267,7 @@ export const DEFAULT_AVATAR: Avatar = {
   face: "face-none",
   held: "held-none",
   pet: "pet-none",
+  brand: "brand-none",
 };
 
 export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[] }[] = [
@@ -286,6 +299,7 @@ export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[
     slots: [
       { slot: "top", label: "Tops" },
       { slot: "topColor", label: "Top colour" },
+      { slot: "brand", label: "Brand" },
       { slot: "bottom", label: "Bottoms" },
       { slot: "bottomColor", label: "Bottoms colour" },
       { slot: "shoes", label: "Shoes" },

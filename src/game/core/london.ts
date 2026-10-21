@@ -1,5 +1,6 @@
 import { COMPANIES } from "./companies";
 import { expandLondon } from "./london-districts";
+import { expandOutskirts } from "./london-outskirts";
 
 /**
  * London: the main IlluminatED world. A stylised map of central London with the
@@ -13,8 +14,8 @@ import { expandLondon } from "./london-districts";
  * and the collisions always line up. Units are tiles (32px). North is up.
  */
 
-export const LONDON_COLS = 176;
-export const LONDON_ROWS = 136;
+export const LONDON_COLS = 256;
+export const LONDON_ROWS = 200;
 
 export type Thing =
   | {
@@ -839,7 +840,7 @@ export function buildLondon(): Built {
     ),
     routes,
   };
-  cache = expandLondon(cache, LONDON_COLS, LONDON_ROWS);
+  cache = expandOutskirts(expandLondon(cache, 176, 136), LONDON_COLS, LONDON_ROWS);
   return cache;
 }
 

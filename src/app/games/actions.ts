@@ -147,7 +147,14 @@ export async function saveAvatar(
   if (!sb) return { ok: false, error: friendly() };
   // "Original" dyes are the default: leave them out so outfits save the same way everywhere.
   const toSave = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => !String(v).endsWith("-auto")));
-  const { error } = await sb.rpc("game_set_avatar", { p_avatar: toSave });
+  let { error } = await sb.rpc("game_set_avatar", { p_avatar: toSave });
+  // Until the brands migration is applied the database doesn't know the brand
+  // slot: save everything else rather than failing the whole outfit.
+  if (error && "brand" in toSave && /invalid_avatar|not_owned/.test(error.message)) {
+    const { brand: _brand, ...rest } = toSave;
+    void _brand;
+    ({ error } = await sb.rpc("game_set_avatar", { p_avatar: rest }));
+  }
   if (error) return { ok: false, error: friendly(error.message) };
   revalidatePath("/games", "layout");
   return { ok: true };

@@ -46,8 +46,10 @@ export function frameMapCamera(
   lockToPlayer = false,
 ) {
   const padding = 0.2;
-  const height = indoors ? 12.5 : 19;
-  const distance = indoors ? 11.5 : 18;
+  // Close, tilted village camera: the player is big on screen and the street
+  // curls away over the horizon (the bend shader), like Animal Crossing.
+  const height = indoors ? 9.5 : 7.6;
+  const distance = indoors ? 10 : 10.8;
   const footprintAt = (scale: number) =>
     groundFootprint(
       height * scale,

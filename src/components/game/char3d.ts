@@ -1,225 +1,139 @@
 "use client";
 
 import * as THREE from "three";
-import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { clone as cloneSkinned } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
 import { faceCanvas } from "./character";
 import { addUniformLogo } from "./uniform-logo3d";
 
-import { type Avatar, cosmeticById, look } from "@/game/core/cosmetics";
-import { bodyBand, clipOutfitTriangle, garmentSurface, isSkinTexel, outfitColours, outfitVariants, paletteCell, type OutfitPiece } from "@/game/core/outfits";
+import { type Avatar, look } from "@/game/core/cosmetics";
+import { outfitColours } from "@/game/core/outfits";
 
 /**
- * Your character in 3D, built from the same Kenney mini-characters as the 2D
- * sprites and dressed from your Locker: the head (and hairstyle) comes from one
- * character, each garment from its selected variant, and skin, hair, top,
- * bottoms and shoes are recoloured to your choices. The same model is used in the world and the Locker,
- * so what you see when you dress up is what walks around London.
+ * Your character in 3D: IlluminatED's own chibi (big faceted head, small body),
+ * modelled in Blender (art/blender/chibi.py) as one rigid rig carrying every
+ * hairstyle, top, bottoms and shoe as a switchable mesh. We show one of each,
+ * recolour by material (skin, hair, top, bottom, shoes) and add the drawn face,
+ * the brand logo and accessories. Animations are generated here as ordinary
+ * clips on the rig's pivots, so callers keep using `play` and `mixer`.
  */
 
 const loader = new GLTFLoader();
-const CACHE = new Map<string, Promise<GLTF>>();
-const loadChar = (variant: string) => {
-  const url = `/world3d/chars/character-${variant}.glb`;
-  let p = CACHE.get(url);
-  if (!p) {
-    p = loader.loadAsync(url);
-    CACHE.set(url, p);
-  }
-  return p;
-};
+let kit: Promise<THREE.Group> | null = null;
+const loadKit = () => (kit ??= loader.loadAsync("/world3d/chibi.glb").then((g) => g.scene));
 
 export const avatarColours = outfitColours;
 
-/** Reads the colour each vertex shows from the palette texture. */
-function texelReader(tex: THREE.Texture | null) {
-  const img = tex?.image as (HTMLImageElement | ImageBitmap) | undefined;
-  if (!img) return () => new THREE.Color("#888");
-  const c = document.createElement("canvas");
-  c.width = img.width;
-  c.height = img.height;
-  const ctx = c.getContext("2d", { willReadFrequently: true })!;
-  ctx.drawImage(img as CanvasImageSource, 0, 0);
-  const data = ctx.getImageData(0, 0, c.width, c.height).data;
-  return (u: number, v: number) => {
-    const x = Math.min(c.width - 1, Math.max(0, Math.floor(u * c.width)));
-    const y = Math.min(c.height - 1, Math.max(0, Math.floor(v * c.height)));
-    const i = (y * c.width + x) * 4;
-    return new THREE.Color().setRGB(data[i] / 255, data[i + 1] / 255, data[i + 2] / 255, THREE.SRGBColorSpace);
-  };
-}
-
-/** Recolour the hairstyle and erase its original printed face. */
-function recolourHead(mesh: THREE.SkinnedMesh, cols: ReturnType<typeof avatarColours>) {
-  const src = mesh.material as THREE.MeshStandardMaterial;
-  const read = texelReader(src.map ?? null);
-  const g = mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone();
-  const uv = g.attributes.uv, pos = g.attributes.position;
-  const counts = new Map<string, number>();
-  for (let i = 0; i < pos.count; i++) {
-    if (!isSkinTexel(uv.getX(i), uv.getY(i))) continue;
-    const key = paletteCell(uv.getX(i), uv.getY(i)).join(":");
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  // The shared Kenney face contains 124 triangles. Hair may also use a brown
-  // swatch, so select the actual face's palette cell instead of its hue.
-  const skinCell = [...counts].sort((a, b) => Math.abs(a[1] - 372) - Math.abs(b[1] - 372))[0]?.[0];
-  let minY = Infinity, maxY = -Infinity;
-  for (let i = 0; i < pos.count; i++) { minY = Math.min(minY, pos.getY(i)); maxY = Math.max(maxY, pos.getY(i)); }
-  const out = new Float32Array(pos.count * 3);
-  const target = new THREE.Color();
-  const hsl = { h: 0, s: 0, l: 0 };
-  for (let i = 0; i < pos.count; i++) {
-    const f = (pos.getY(i) - minY) / Math.max(0.001, maxY - minY);
-    const inFace = (g.attributes.normal?.getZ(i) ?? 0) > 0.6 && f > 0.12 && f < 0.56;
-    const skin = paletteCell(uv.getX(i), uv.getY(i)).join(":") === skinCell;
-    target.set(skin || inFace ? cols.skin : cols.hair);
-    if (skin) {
-      read(uv.getX(i), uv.getY(i)).getHSL(hsl, THREE.SRGBColorSpace);
-      target.offsetHSL(0, 0, (hsl.l - 0.47) * 0.2);
-    }
-    // Baked soft modelling: retains the inexpensive Lambert shader and mesh.
-    const normal=g.attributes.normal;
-    const illumination=0.88+Math.max(0,normal.getY(i))*0.09+Math.max(0,normal.getZ(i))*0.045;
-    target.multiplyScalar(illumination);
-    if(!skin && !inFace) target.multiplyScalar(0.94+f*0.09);
-    target.toArray(out, i * 3);
-  }
-  g.setAttribute("color", new THREE.BufferAttribute(out, 3));
-  // Refine the oversized source head without changing its rig or hairstyle.
-  g.computeBoundingBox();
-  const centre = g.boundingBox!.getCenter(new THREE.Vector3());
-  g.translate(-centre.x, -centre.y, -centre.z);
-  g.scale(0.93, 0.96, 0.95);
-  g.translate(centre.x, centre.y, centre.z);
-  mesh.geometry = g;
-  mesh.material = new THREE.MeshLambertMaterial({ vertexColors: true });
-}
-
-/** One source garment, cut at shared seams and attached to the common rig. */
-function garmentGeometry(source: THREE.SkinnedMesh, piece: OutfitPiece, cols: ReturnType<typeof avatarColours>, skeleton: THREE.Skeleton, avatar: Avatar) {
-  const g = source.geometry.index ? source.geometry.toNonIndexed() : source.geometry.clone();
-  const pos = g.attributes.position, normal = g.attributes.normal, uv = g.attributes.uv;
-  const indices = g.attributes.skinIndex, weights = g.attributes.skinWeight;
-  const positions: number[] = [], normals: number[] = [], colours: number[] = [], joints: number[] = [], influences: number[] = [];
-  const target = new THREE.Color();
-  const norm = new THREE.Vector3();
-  const boneMap = source.skeleton.bones.map((bone) => Math.max(0, skeleton.bones.findIndex((b) => b.name === bone.name)));
-  const component = (attribute: THREE.BufferAttribute | THREE.InterleavedBufferAttribute, i: number, c: number) => attribute.getComponent(i, c);
-  for (let i = 0; i < pos.count; i += 3) {
-    const points = [0, 1, 2].map((j) => [pos.getX(i + j), pos.getY(i + j), pos.getZ(i + j)] as const);
-    const band = bodyBand(piece);
-    // A true skirt covers the thighs as one garment; keep just the exposed
-    // lower legs from the source model beneath the separately fitted hem.
-    if (piece === "bottom" && avatar.bottom === "bottom-skirt") band.max = 0.105;
-    const triangles = clipOutfitTriangle(points, band);
-    const bone = source.skeleton.bones[indices.getX(i)]?.name ?? "torso";
-    const sourceSkin = isSkinTexel(uv.getX(i), uv.getY(i));
-    // All garment surfaces, including imported prints, follow this slot's dye.
-    // Only explicit skin texels on hands/legs/necks keep the selected skin tone.
-    for (const triangle of triangles) for (const blend of triangle) {
-      const y = blend.reduce((sum, w, j) => sum + w * points[j][1], 0);
-      target.set(cols[garmentSurface(piece, bone, sourceSkin, avatar[piece], y)]);
-      for (let c = 0; c < 3; c++) positions.push(blend.reduce((sum, w, j) => sum + w * component(pos, i + j, c), 0));
-      norm.set(...[0, 1, 2].map((c) => blend.reduce((sum, w, j) => sum + w * component(normal, i + j, c), 0)) as [number, number, number]).normalize();
-      normals.push(norm.x, norm.y, norm.z);
-      // Sewn hems and directional colour shading add definition using the
-      // existing vertices: no additional meshes, textures or draw calls.
-      const surface = garmentSurface(piece, bone, sourceSkin, avatar[piece], y);
-      if (surface !== "skin") {
-        let shade = 0.86 + Math.max(0, norm.y) * 0.12 + Math.max(0, norm.z) * 0.04;
-        if (piece === "top" && y < 0.188 || piece === "bottom" && y > 0.164 || piece === "shoes" && y < 0.008) shade *= 0.8;
-        target.multiplyScalar(shade);
-      }
-      colours.push(target.r, target.g, target.b);
-      const boneWeights = new Map<number, number>();
-      for (let j = 0; j < 3; j++) for (let c = 0; c < 4; c++) {
-        const influence = blend[j] * component(weights, i + j, c);
-        if (influence <= 0) continue;
-        const bone = boneMap[component(indices, i + j, c)] ?? 0;
-        boneWeights.set(bone, (boneWeights.get(bone) ?? 0) + influence);
-      }
-      const strongest = [...boneWeights].sort((a, b) => b[1] - a[1]).slice(0, 4);
-      const sum = strongest.reduce((s, entry) => s + entry[1], 0) || 1;
-      for (let c = 0; c < 4; c++) { joints.push(strongest[c]?.[0] ?? 0); influences.push((strongest[c]?.[1] ?? 0) / sum); }
-    }
-  }
-  g.dispose();
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute("color", new THREE.Float32BufferAttribute(colours, 3));
-  geometry.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(joints, 4));
-  geometry.setAttribute("skinWeight", new THREE.Float32BufferAttribute(influences, 4));
-  return geometry;
-}
-
-const bodyIn = (scene: THREE.Object3D) => {
-  let mesh: THREE.SkinnedMesh | null = null;
-  scene.traverse((o) => { if ((o as THREE.SkinnedMesh).isSkinnedMesh && !o.name.startsWith("head")) mesh = o as THREE.SkinnedMesh; });
-  return mesh;
+/** Locker item -> Blender variant (and the colour of its second fabric). */
+const HAIR: Record<string, string | null> = {
+  "hair-short": "short", "hair-curly": "curly", "hair-long": "long", "hair-bob": "bob", "hair-ponytail": "ponytail",
+  "hair-buns": "buns", "hair-buzz": "buzz", "hair-bald": null, "hair-quiff": "quiff", "hair-braids": "braids",
+  "hair-afro": "afro", "hair-spiky": "spiky", "hair-mohawk": "mohawk",
+};
+const TOP: Record<string, { v: string; second?: string; cape?: boolean }> = {
+  "top-tee": { v: "tee" }, "top-hoodie": { v: "hoodie" }, "top-stripes": { v: "stripes", second: "#1d2a5c" },
+  "top-polo": { v: "jersey", second: "#ffffff" }, "top-knit": { v: "long" }, "top-apron": { v: "apron", second: "#ffffff" },
+  "top-denim": { v: "jacket", second: "#f3f3f3" }, "top-jersey": { v: "jersey", second: "#ffffff" },
+  "top-suit": { v: "jacket", second: "#ffffff" }, "top-tux": { v: "jacket", second: "#ffffff" },
+  "top-astronaut": { v: "suitspace", second: "#c9cbd6" }, "top-cape": { v: "tee", cape: true },
+  "top-labcoat": { v: "coat", second: "#bfe3ff" }, "top-hivis": { v: "vest" }, "top-tracksuit": { v: "long" },
+};
+const BOTTOM: Record<string, string> = {
+  "bottom-jeans": "trousers", "bottom-joggers": "joggers", "bottom-shorts": "shorts", "bottom-skirt": "skirt",
+  "bottom-cargo": "cargo", "bottom-smart": "trousers", "bottom-tartan": "trousers",
+};
+const SHOES: Record<string, string> = {
+  "shoes-trainers": "trainers", "shoes-hightops": "hightops", "shoes-boots": "boots", "shoes-sliders": "sliders",
+  "shoes-smart": "smart", "shoes-skates": "skates", "shoes-rocket": "rocket",
 };
 
-/** Face, hat, eyewear and held item, fixed to the head and hand bones so they move with you. */
-function dress(object: THREE.Object3D, headMesh: THREE.SkinnedMesh | null, bodyMesh: THREE.SkinnedMesh | null, a: Avatar) {
-  object.updateMatrixWorld(true);
-  const headBone = object.getObjectByName("head");
-  if (headMesh && headBone) {
-    headMesh.geometry.computeBoundingBox();
-    const hb = headMesh.geometry.boundingBox!.clone().applyMatrix4(headMesh.matrixWorld);
-    const w = hb.max.x - hb.min.x;
-    const h = hb.max.y - hb.min.y;
-    const cx = (hb.min.x + hb.max.x) / 2;
-    const cz = (hb.min.z + hb.max.z) / 2;
-    // The face: the same drawn eyes, brows and mouth as the 2D character, on the front of the head.
-    const tex = new THREE.CanvasTexture(faceCanvas(a));
-    tex.colorSpace = THREE.SRGBColorSpace;
-    tex.magFilter = THREE.LinearFilter;
-    tex.minFilter = THREE.LinearMipmapLinearFilter;
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.86, w * 0.86), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
-    face.name = "animated-face";
-    const expressions = [tex, ...[
-      { ...a, eyes: "eyes-sleepy" },
-      { ...a, brows: "brows-raised", mouth: "mouth-grin" },
-      { ...a, eyes: "eyes-focused", mouth: "mouth-small" },
-    ].map(avatar => {
-      const texture = new THREE.CanvasTexture(faceCanvas(avatar));
-      texture.colorSpace = THREE.SRGBColorSpace;
-      return texture;
-    })];
-    face.userData.expressions = expressions;
-    face.position.set(cx, hb.min.y + h * 0.36, hb.max.z + 0.004);
-    headBone.attach(face);
-    const hatItem = cosmeticById(a.hat ?? "");
-    const hat = hat3d(a.hat ?? "", hatItem?.color ?? "#8fb4ff");
-    if (hat) {
-      hat.scale.setScalar(w);
-      hat.position.set(cx, hb.max.y - h * 0.27, cz);
-      headBone.attach(hat);
+/** Fictional labels for the chest logo. */
+const BRANDS: Record<string, { text: string; bg: string; fg: string; shape: "pill" | "circle" | "square" }> = {
+  "brand-illuminated": { text: "iED", bg: "#5b56c8", fg: "#ffffff", shape: "circle" },
+  "brand-volt": { text: "VOLT", bg: "#ffd60a", fg: "#111111", shape: "pill" },
+  "brand-northwind": { text: "NW", bg: "#0f3d3e", fg: "#e9f5ef", shape: "square" },
+  "brand-thamesline": { text: "THAMES", bg: "#1b4dd8", fg: "#ffffff", shape: "pill" },
+  "brand-peckham": { text: "PS", bg: "#ff5d3a", fg: "#ffffff", shape: "circle" },
+  "brand-camden": { text: "C&Co", bg: "#111111", fg: "#ff8fd1", shape: "square" },
+  "brand-kowloon": { text: "KC", bg: "#c4433a", fg: "#ffd166", shape: "circle" },
+  "brand-orbit": { text: "ORBIT", bg: "#ffffff", fg: "#24215e", shape: "pill" },
+};
+
+function brandTexture(id: string) {
+  const b = BRANDS[id];
+  if (!b) return null;
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 128;
+  const x = c.getContext("2d")!;
+  x.fillStyle = b.bg;
+  x.beginPath();
+  if (b.shape === "circle") x.arc(128, 64, 60, 0, Math.PI * 2);
+  else x.roundRect(b.shape === "pill" ? 8 : 68, 8, b.shape === "pill" ? 240 : 120, 112, b.shape === "pill" ? 56 : 16);
+  x.fill();
+  x.fillStyle = b.fg;
+  x.textAlign = "center"; x.textBaseline = "middle";
+  x.font = `900 ${b.text.length > 4 ? 44 : 54}px system-ui, sans-serif`;
+  x.fillText(b.text, 128, 68);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+/* ---------------- animation: clips built from simple pose functions ---------------- */
+type Pose = Partial<Record<"torso" | "head" | "arm-left" | "arm-right" | "leg-left" | "leg-right" | "root", [number, number, number]>> & { lift?: number };
+const PI = Math.PI;
+const POSES: Record<string, { length: number; loop: boolean; at: (t: number) => Pose }> = {
+  static: { length: 1, loop: true, at: () => ({}) },
+  idle: { length: 3, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 3); return { "arm-left": [0, 0, -0.35 + s * 0.04], "arm-right": [0, 0, 0.35 - s * 0.04], torso: [s * 0.015, 0, 0], head: [-s * 0.02, 0, 0] }; } },
+  walk: { length: 0.7, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.7); return { "leg-left": [-s * 0.55, 0, 0], "leg-right": [s * 0.55, 0, 0], "arm-left": [s * 0.6, 0, -0.45], "arm-right": [-s * 0.6, 0, 0.45], torso: [0.05, s * 0.06, 0], lift: Math.abs(Math.cos(t * 2 * PI / 0.7)) * 0.012 }; } },
+  sprint: { length: 0.45, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.45); return { "leg-left": [-s * 0.9, 0, 0], "leg-right": [s * 0.9, 0, 0], "arm-left": [s * 1.0, 0, -0.6], "arm-right": [-s * 1.0, 0, 0.6], torso: [0.2, s * 0.1, 0], lift: Math.abs(Math.cos(t * 2 * PI / 0.45)) * 0.025 }; } },
+  sit: { length: 1, loop: true, at: () => ({ "leg-left": [-1.5, 0, 0.05], "leg-right": [-1.5, 0, -0.05], "arm-left": [-0.5, 0, -0.6], "arm-right": [-0.5, 0, 0.6], lift: -0.12 }) },
+  drive: { length: 1, loop: true, at: () => ({ "leg-left": [-1.4, 0, 0.1], "leg-right": [-1.4, 0, -0.1], "arm-left": [-1.0, 0, -0.35], "arm-right": [-1.0, 0, 0.35], lift: -0.12 }) },
+  crouch: { length: 1, loop: true, at: () => ({ "leg-left": [-0.6, 0, 0], "leg-right": [-0.6, 0, 0], torso: [0.35, 0, 0], lift: -0.05 }) },
+  wave: { length: 0.8, loop: true, at: (t) => ({ "arm-right": [0, 0, -2.1 + Math.sin(t * 2 * PI / 0.8) * 0.35], "arm-left": [0, 0, -0.35], head: [0, 0, 0.1] }) },
+  "emote-yes": { length: 0.8, loop: true, at: (t) => { const s = Math.sin(t * 2 * PI / 0.8); return { head: [0.18 + s * 0.18, 0, 0], "arm-left": [0, 0, 1.6 + s * 0.2], "arm-right": [0, 0, -1.6 - s * 0.2], lift: Math.max(0, s) * 0.03 }; } },
+  "emote-no": { length: 0.8, loop: true, at: (t) => ({ head: [0, Math.sin(t * 2 * PI / 0.8) * 0.4, 0], "arm-left": [0, 0, -0.5], "arm-right": [0, 0, 0.5] }) },
+  jump: { length: 0.6, loop: false, at: (t) => ({ "arm-left": [0, 0, 1.4], "arm-right": [0, 0, -1.4], "leg-left": [-0.4, 0, 0], "leg-right": [0.2, 0, 0], lift: Math.sin((t / 0.6) * PI) * 0.12 }) },
+  fall: { length: 1, loop: true, at: () => ({ "arm-left": [0, 0, 1.2], "arm-right": [0, 0, -1.2], "leg-left": [-0.3, 0, 0] }) },
+  die: { length: 0.6, loop: false, at: (t) => { const k = Math.min(1, t / 0.5); return { root: [-k * PI / 2, 0, 0], "arm-left": [0, 0, k * 0.8], "arm-right": [0, 0, -k * 0.8], lift: k * 0.09 }; } },
+  "pick-up": { length: 0.8, loop: false, at: (t) => { const k = Math.sin((t / 0.8) * PI); return { torso: [k * 0.6, 0, 0], "arm-right": [-k * 1.2, 0, 0.3], "arm-left": [-k * 1.2, 0, -0.3], "leg-left": [-k * 0.4, 0, 0], "leg-right": [-k * 0.4, 0, 0] }; } },
+  "holding-right": { length: 1, loop: true, at: () => ({ "arm-right": [-1.1, 0, 0.3], "arm-left": [0, 0, -0.35] }) },
+  "holding-left": { length: 1, loop: true, at: () => ({ "arm-left": [-1.1, 0, -0.3], "arm-right": [0, 0, 0.35] }) },
+  "holding-both": { length: 1, loop: true, at: () => ({ "arm-left": [-1.1, 0, -0.1], "arm-right": [-1.1, 0, 0.1] }) },
+  "attack-melee-right": { length: 0.5, loop: true, at: (t) => { const k = Math.sin((t / 0.5) * PI); return { "arm-right": [-0.4 - k * 1.4, 0, 0.6 - k * 0.6], torso: [0, -k * 0.35, 0], "arm-left": [-0.6, 0, -0.5] }; } },
+  "attack-melee-left": { length: 0.5, loop: true, at: (t) => { const k = Math.sin((t / 0.5) * PI); return { "arm-left": [-0.4 - k * 1.4, 0, -0.6 + k * 0.6], torso: [0, k * 0.35, 0], "arm-right": [-0.6, 0, 0.5] }; } },
+  "attack-kick-right": { length: 0.5, loop: true, at: (t) => ({ "leg-right": [-Math.sin((t / 0.5) * PI) * 1.3, 0, 0], torso: [-0.15, 0, 0] }) },
+  "interact-right": { length: 0.8, loop: true, at: (t) => ({ "arm-right": [-1.2 - Math.sin(t * 2 * PI / 0.8) * 0.15, 0, 0.2] }) },
+  "interact-left": { length: 0.8, loop: true, at: (t) => ({ "arm-left": [-1.2 - Math.sin(t * 2 * PI / 0.8) * 0.15, 0, -0.2] }) },
+};
+// Clips reached through other names elsewhere in the game.
+for (const [alias, to] of [["holding-right-shoot", "holding-right"], ["holding-left-shoot", "holding-left"], ["holding-both-shoot", "holding-both"], ["wheelchair-sit", "sit"], ["cheer", "emote-yes"], ["dance", "emote-yes"], ["run", "sprint"]] as const) POSES[alias] = POSES[to];
+
+const NODES = ["root", "torso", "head", "arm-left", "arm-right", "leg-left", "leg-right"] as const;
+let CLIPS: Map<string, THREE.AnimationClip> | null = null;
+function clips(rest: Record<string, THREE.Vector3>) {
+  if (CLIPS) return CLIPS;
+  CLIPS = new Map();
+  const q = new THREE.Quaternion(), e = new THREE.Euler();
+  for (const [name, def] of Object.entries(POSES)) {
+    const steps = def.loop ? 24 : 18;
+    const times = Array.from({ length: steps + 1 }, (_, i) => (i / steps) * def.length);
+    const tracks: THREE.KeyframeTrack[] = [];
+    for (const node of NODES) {
+      const values: number[] = [];
+      for (const t of times) {
+        const r = def.at(t)[node] ?? [0, 0, 0];
+        q.setFromEuler(e.set(r[0], r[1], r[2], "XYZ"));
+        values.push(q.x, q.y, q.z, q.w);
+      }
+      tracks.push(new THREE.QuaternionKeyframeTrack(`${node}.quaternion`, times, values));
     }
-    const eye = eyewear3d(a.face ?? "", cosmeticById(a.face ?? "")?.color ?? "#1b1622");
-    if (eye) {
-      eye.scale.setScalar(w);
-      eye.position.set(cx, hb.min.y + h * 0.42, hb.max.z + w * 0.06);
-      headBone.attach(eye);
-    }
+    const base = rest.root ?? new THREE.Vector3();
+    tracks.push(new THREE.VectorKeyframeTrack("root.position", times, times.flatMap((t) => [base.x, base.y + (def.at(t).lift ?? 0), base.z])));
+    CLIPS.set(name, new THREE.AnimationClip(name, def.length, tracks));
   }
-  const arm = object.getObjectByName("arm-right") ?? object.getObjectByName("arm-left");
-  const item = held3d(a.held ?? "");
-  if (item && arm && bodyMesh) {
-    bodyMesh.geometry.computeBoundingBox();
-    const bb = bodyMesh.geometry.boundingBox!.clone().applyMatrix4(bodyMesh.matrixWorld);
-    const s = (bb.max.y - Math.min(0, bb.min.y)) * 1.1;
-    const armPos = new THREE.Vector3();
-    arm.getWorldPosition(armPos);
-    // The hand is at the end of the arm (arms rest out to the side on Kenney's rig).
-    const handX = armPos.x < 0 ? bb.min.x + s * 0.12 : bb.max.x - s * 0.12;
-    item.scale.setScalar(s);
-    item.position.set(handX, armPos.y - s * 0.15, armPos.z + s * 0.1);
-    arm.attach(item);
-  }
+  return CLIPS;
 }
 
 export interface Character3D {
@@ -232,116 +146,141 @@ export interface Character3D {
 
 /** Builds your dressed 3D character at about `height` units tall. */
 export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: string | null = null): Promise<Character3D> {
-  const variants = outfitVariants(a);
-  const [bodyG, headG, bottomG, shoesG] = await Promise.all([
-    loadChar(variants.top), loadChar(variants.head), loadChar(variants.bottom), loadChar(variants.shoes),
-  ]);
-  const object = cloneSkinned(bodyG.scene) as THREE.Group;
-  let bodyMesh: THREE.SkinnedMesh | null = null;
-  let headMesh: THREE.SkinnedMesh | null = null;
-  object.traverse((o) => {
-    if ((o as THREE.SkinnedMesh).isSkinnedMesh) {
-      if (o.name.startsWith("head")) headMesh = o as THREE.SkinnedMesh;
-      else bodyMesh = o as THREE.SkinnedMesh;
-    }
-  });
-  // Swap in the head (hairstyle) from the other character: same rig, same bones.
-  let headSrc: THREE.SkinnedMesh | null = null;
-  headG.scene.traverse((o) => {
-    if ((o as THREE.SkinnedMesh).isSkinnedMesh && o.name.startsWith("head")) headSrc = o as THREE.SkinnedMesh;
-  });
-  if (headMesh && headSrc) {
-    (headMesh as THREE.SkinnedMesh).geometry = (headSrc as THREE.SkinnedMesh).geometry;
-    (headMesh as THREE.SkinnedMesh).material = (headSrc as THREE.SkinnedMesh).material;
-  }
+  const source = await loadKit();
+  const object = source.clone(true) as THREE.Group;
   const cols = avatarColours(a);
-  if (headMesh) recolourHead(headMesh, cols);
-  if (bodyMesh) {
-    const upper = bodyMesh as THREE.SkinnedMesh;
-    // Keep one rig and animation mixer; each selected item supplies its own
-    // disjoint geometry instead of stacking three complete character bodies.
-    for (const [piece, source] of [["bottom", bodyIn(bottomG.scene)], ["shoes", bodyIn(shoesG.scene)]] as const) {
-      if (!source) continue;
-      const mesh = new THREE.SkinnedMesh(garmentGeometry(source, piece, cols, upper.skeleton, a), new THREE.MeshLambertMaterial({ vertexColors: true }));
-      mesh.name = `outfit-${piece}`;
-      mesh.position.copy(upper.position);
-      mesh.quaternion.copy(upper.quaternion);
-      mesh.scale.copy(upper.scale);
-      mesh.bind(upper.skeleton, upper.bindMatrix);
-      upper.parent?.add(mesh);
-    }
-    upper.geometry = garmentGeometry(upper, "top", cols, upper.skeleton, a);
-    upper.material = new THREE.MeshLambertMaterial({ vertexColors: true });
-    if (a.bottom === "bottom-skirt") {
-      // Source models call two trouser legs a skirt. Give this Locker item a
-      // connected, flared silhouette on the pelvis, above the walking legs.
-      const skirt = new THREE.CylinderGeometry(0.14, 0.175, 0.085, 10, 1, false);
-      skirt.translate(0, 0.17625 - 0.085 / 2, -0.02875);
-      const count = skirt.attributes.position.count;
-      const joint = upper.skeleton.bones.findIndex((bone) => bone.name === "torso");
-      const jointIndices = new Uint16Array(count * 4), jointWeights = new Float32Array(count * 4);
-      for (let i = 0; i < count; i++) { jointIndices[i * 4] = Math.max(0, joint); jointWeights[i * 4] = 1; }
-      skirt.setAttribute("skinIndex", new THREE.BufferAttribute(jointIndices, 4));
-      skirt.setAttribute("skinWeight", new THREE.BufferAttribute(jointWeights, 4));
-      const mesh = new THREE.SkinnedMesh(skirt, new THREE.MeshLambertMaterial({ color: cols.bottom, flatShading: true }));
-      mesh.name = "outfit-skirt";
-      mesh.bind(upper.skeleton, upper.bindMatrix);
-      upper.parent?.add(mesh);
-    }
-  }
-  dress(object, headMesh, bodyMesh, a);
-  addUniformLogo(object, bodyMesh, workplaceLogo);
+  const top = TOP[a.top] ?? TOP["top-tee"];
+  const want: Record<string, string | null> = {
+    hair: HAIR[a.hair] === undefined ? "short" : HAIR[a.hair],
+    top: top.v,
+    bottom: BOTTOM[a.bottom] ?? "trousers",
+    shoes: SHOES[a.shoes] ?? "trainers",
+    extra: top.cape ? "cape" : null,
+  };
+  const colour: Record<string, string> = {
+    skin: cols.skin, hair: cols.hair, top: cols.top, top2: top.second ?? "#ffffff", bottom: cols.bottom,
+    shoes: cols.shoes, sole: "#2b2b33", white: "#ffffff", dark: "#15151c",
+    accent: a.top === "top-hivis" ? "#d8dde3" : a.top === "top-cape" ? "#c4433a" : a.shoes === "shoes-rocket" ? "#ff9f1c" : a.shoes === "shoes-skates" ? "#ff8fd1" : "#ff9f1c",
+  };
+  if (a.top === "top-hivis") colour.top = "#d7ff3a";
+  // One material per fabric, shared by every piece of this character.
+  const mats = new Map<string, THREE.MeshLambertMaterial>();
+  const matFor = (name: string) => {
+    let m = mats.get(name);
+    if (!m) { m = new THREE.MeshLambertMaterial({ color: colour[name] ?? "#cccccc", flatShading: true }); mats.set(name, m); }
+    return m;
+  };
+  const drop: THREE.Object3D[] = [];
   object.traverse((o) => {
-    if ((o as THREE.Mesh).isMesh) {
-      o.castShadow = true;
-      o.receiveShadow = true;
-      o.frustumCulled = false;
-    }
+    const slot = o.userData.slot as string | undefined;
+    if (!slot) return;
+    if (slot !== "body" && want[slot] !== o.userData.variant) { drop.push(o); return; }
+    o.traverse((m) => {
+      const mesh = m as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const name = (mesh.material as THREE.Material).name || "skin";
+      mesh.material = matFor(name);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+    });
   });
+  drop.forEach((o) => o.removeFromParent());
+  object.updateMatrixWorld(true);
+
+  // Face: the drawn eyes and mouth, wrapped onto the front of the head.
+  const head = object.getObjectByName("head")!;
+  let headMesh: THREE.Object3D | undefined;
+  head.traverse((o) => { if (o.userData.variant === "head" && o.userData.slot === "body") headMesh = o; });
+  const hb = new THREE.Box3().setFromObject(headMesh ?? head);
+  const hc = hb.getCenter(new THREE.Vector3());
+  const hw = hb.max.x - hb.min.x, hh = hb.max.y - hb.min.y, hd = hb.max.z - hb.min.z;
+  const faceGeo = new THREE.SphereGeometry(0.5, 24, 16, Math.PI * 0.18, Math.PI * 0.64, Math.PI * 0.3, Math.PI * 0.42);
+  faceGeo.scale(hw * 1.012, hh * 1.012, hd * 1.012);
+  {
+    const pos = faceGeo.attributes.position, uv = faceGeo.attributes.uv;
+    const size = hw * 0.78;
+    for (let i = 0; i < pos.count; i++) uv.setXY(i, -pos.getX(i) / size + 0.5, (pos.getY(i) + hh * 0.06) / size + 0.5);
+    for (let i = 0; i < pos.count; i++) uv.setX(i, pos.getX(i) / size + 0.5);
+  }
+  const faceTex = (av: Avatar) => { const t = new THREE.CanvasTexture(faceCanvas(av)); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const expressions = [faceTex(a), faceTex({ ...a, eyes: "eyes-sleepy" }), faceTex({ ...a, brows: "brows-raised", mouth: "mouth-grin" }), faceTex({ ...a, eyes: "eyes-focused", mouth: "mouth-small" })];
+  const face = new THREE.Mesh(faceGeo, new THREE.MeshBasicMaterial({ map: expressions[0], transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+  face.name = "animated-face";
+  face.userData.expressions = expressions;
+  face.position.copy(head.worldToLocal(hc.clone()));
+  head.add(face);
+
+  // Brand logo on the chest.
+  const torso = object.getObjectByName("torso")!;
+  const logo = brandTexture(a.brand ?? "");
+  if (logo && a.top !== "top-astronaut") {
+    const patch = new THREE.Mesh(new THREE.PlaneGeometry(hw * 0.32, hw * 0.16), new THREE.MeshBasicMaterial({ map: logo, transparent: true, polygonOffset: true, polygonOffsetFactor: -3 }));
+    let topPiece: THREE.Object3D = torso;
+    torso.traverse((o) => { if (o.userData.slot === "top" && o.parent === torso && topPiece === torso) topPiece = o; });
+    const tb = new THREE.Box3().setFromObject(topPiece);
+    patch.position.copy(torso.worldToLocal(new THREE.Vector3(hw * 0.12, tb.min.y + (tb.max.y - tb.min.y) * 0.62, tb.max.z - (tb.max.z - tb.min.z) * 0.07)));
+    patch.rotation.x = -0.18;
+    patch.name = "brand-logo";
+    torso.add(patch);
+  }
+
+  // Hat, eyewear and held item ride on the head and hand pivots.
+  const hat = hat3d(a.hat ?? "", "#8fb4ff");
+  if (hat) { hat.scale.setScalar(hw); hat.position.copy(head.worldToLocal(new THREE.Vector3(hc.x, hb.max.y - hh * 0.2, hc.z))); head.add(hat); }
+  const eye = eyewear3d(a.face ?? "", "#1b1622");
+  if (eye) { eye.scale.setScalar(hw * 0.85); eye.position.copy(head.worldToLocal(new THREE.Vector3(hc.x, hc.y - hh * 0.04, hb.max.z + hw * 0.02))); head.add(eye); }
+  const arm = object.getObjectByName("arm-right");
+  const item = held3d(a.held ?? "");
+  let hand: THREE.Object3D | null = null;
+  arm?.traverse((o) => { if (o.userData.variant === "hand") hand = o; });
+  if (item && arm) {
+    const hp = new THREE.Vector3();
+    (hand ?? arm).getWorldPosition(hp);
+    item.scale.setScalar(hh * 1.1);
+    item.position.copy(arm.worldToLocal(hp.add(new THREE.Vector3(0, -hh * 0.05, hh * 0.08))));
+    arm.add(item);
+  }
+  let torsoMesh: THREE.Object3D | null = null;
+  torso.traverse((o) => { if (o.userData.variant === "torso") torsoMesh = o; });
+  addUniformLogo(object, torsoMesh as THREE.SkinnedMesh | null, workplaceLogo);
+  object.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.frustumCulled = false; });
+
   const bb = new THREE.Box3().setFromObject(object);
   object.scale.setScalar(height / Math.max(0.01, bb.max.y - bb.min.y));
   const holder = new THREE.Group();
   holder.add(object);
+
+  const rest: Record<string, THREE.Vector3> = {};
+  for (const n of NODES) { const node = object.getObjectByName(n); if (node) rest[n] = node.position.clone(); }
+  const library = clips(rest);
   const mixer = new THREE.AnimationMixer(object);
   let current: THREE.AnimationAction | null = null;
   let currentName = "idle";
   const play: Character3D["play"] = (name) => {
-    const clip = bodyG.animations.find((c) => c.name === name);
+    const clip = library.get(name);
     if (!clip) return;
     currentName = name;
     const next = mixer.clipAction(clip);
     if (next === current) return;
-    next.reset().play();
-    if (current) current.crossFadeTo(next, 0.2, false);
+    const once = !POSES[name].loop;
+    next.reset();
+    next.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity);
+    next.clampWhenFinished = once;
+    next.play();
+    if (current) current.crossFadeTo(next, 0.18, false);
     current = next;
   };
   play("idle");
-  const face = object.getObjectByName("animated-face") as THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial> | undefined;
-  const head = object.getObjectByName("head");
-  const headPose = new THREE.Quaternion();
-  const restingScale = object.scale.clone();
-  let posed = false, expressionTime = Math.random() * 4;
+
+  let t = Math.random() * 4;
   const update = (dt: number, reducedMotion = false) => {
-    if (head && posed) head.quaternion.copy(headPose);
     mixer.update(dt);
-    expressionTime += Math.max(0, dt);
-    object.scale.copy(restingScale);
-    if (!reducedMotion && currentName === "idle") object.scale.y *= 1 + Math.sin(expressionTime * 2) * 0.003;
-    if (head) {
-      headPose.copy(head.quaternion); posed = true;
-      if (!reducedMotion && currentName === "idle") {
-        head.rotateY(Math.sin(expressionTime * 0.65) * 0.07);
-        head.rotateZ(Math.sin(expressionTime * 1.3) * 0.018);
-      }
-      if (!reducedMotion && /walk|run/.test(currentName)) head.rotateZ(Math.sin(expressionTime * 8) * 0.025);
-    }
-    if (face) {
-      const blink = !reducedMotion && expressionTime % 4.3 < 0.14;
-      const expression = blink ? 1 : /wave|dance|cheer/.test(currentName) ? 2 : /run/.test(currentName) ? 3 : 0;
-      face.material.map = face.userData.expressions[expression];
-    }
+    t += Math.max(0, dt);
+    const blink = !reducedMotion && t % 4.3 < 0.14;
+    const expression = blink ? 1 : /wave|dance|cheer|emote-yes/.test(currentName) ? 2 : /sprint|attack/.test(currentName) ? 3 : 0;
+    face.material.map = expressions[expression];
   };
-  // A pet trots along beside you.
+
   const pet = pet3d(a.pet ?? "");
   if (pet) {
     pet.scale.setScalar(height / 1.15);
@@ -349,34 +288,21 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     pet.userData.pet = true;
     holder.add(pet);
   }
-  const sharedGeometry = new Set<THREE.BufferGeometry>();
-  const sharedMaterials = new Set<THREE.Material>();
-  for (const asset of [bodyG, headG, bottomG, shoesG]) asset.scene.traverse(o => {
-    const mesh = o as THREE.Mesh;
-    if (!mesh.isMesh) return;
-    sharedGeometry.add(mesh.geometry);
-    for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) sharedMaterials.add(material);
-  });
+
   let released = false;
   const dispose = () => {
     if (released) return;
     released = true;
     mixer.stopAllAction(); mixer.uncacheRoot(object);
-    const geometry = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>(), textures = new Set<THREE.Texture>(), skeletons = new Set<THREE.Skeleton>();
-    holder.traverse(o => {
-      for (const texture of o.userData.expressions ?? []) textures.add(texture);
-      const mesh = o as THREE.SkinnedMesh;
-      if (!mesh.isMesh) return;
-      if (!sharedGeometry.has(mesh.geometry)) geometry.add(mesh.geometry);
-      if (mesh.isSkinnedMesh) skeletons.add(mesh.skeleton);
-      for (const m of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
-        if (sharedMaterials.has(m) || m.userData.sharedAccessory) continue;
-        materials.add(m);
-        for (const value of Object.values(m)) if (value instanceof THREE.CanvasTexture) textures.add(value);
-      }
+    expressions.forEach((x) => x.dispose());
+    logo?.dispose();
+    mats.forEach((m) => m.dispose());
+    faceGeo.dispose(); face.material.dispose();
+    holder.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh || mesh.material && (mesh.material as THREE.Material).userData?.sharedAccessory) return;
+      if (o.userData.pet || o.parent?.userData.pet) return;
     });
-    skeletons.forEach(s => s.dispose()); geometry.forEach(g => g.dispose());
-    materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
     holder.removeFromParent(); holder.clear();
   };
   return { object: holder, mixer, play, update, dispose };
@@ -384,9 +310,16 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
 
 /** Londoners: varied looks for people in the street, on trains and in buildings. */
 const NPC_SKIN = ["skin-1", "skin-2", "skin-3", "skin-4", "skin-5", "skin-6", "skin-7", "skin-8"];
-const NPC_HAIR = ["hair-short", "hair-bob", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff", "hair-spiky"];
+const NPC_HAIR = ["hair-short", "hair-bob", "hair-ponytail", "hair-curly", "hair-buzz", "hair-long", "hair-braids", "hair-buns", "hair-quiff", "hair-afro", "hair-spiky"];
 const NPC_HAIRCOL = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn", "haircol-ginger", "haircol-silver"];
 const NPC_TOP = ["top-hoodie", "top-suit", "top-tee", "top-denim", "top-knit", "top-hivis", "top-polo", "top-stripes", "top-tracksuit"];
-const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo"];
+const NPC_BOTTOM = ["bottom-jeans", "bottom-smart", "bottom-joggers", "bottom-skirt", "bottom-cargo", "bottom-shorts"];
+const NPC_SHOES = ["shoes-trainers", "shoes-hightops", "shoes-boots", "shoes-smart", "shoes-sliders"];
+const NPC_BRAND = ["brand-none", "brand-volt", "brand-northwind", "brand-none", "brand-thamesline", "brand-peckham", "brand-orbit"];
 export const npcLook = (i: number) =>
-  look({ skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 10], hairColor: NPC_HAIRCOL[(i * 5) % 6], top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 5], topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6], bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3] });
+  look({
+    skin: NPC_SKIN[(i * 3 + 1) % 8], hair: NPC_HAIR[(i * 7) % 11], hairColor: NPC_HAIRCOL[(i * 5) % 6],
+    top: NPC_TOP[(i * 2 + 1) % 9], bottom: NPC_BOTTOM[i % 6], shoes: NPC_SHOES[(i * 3) % 5], brand: NPC_BRAND[(i * 5) % 7],
+    topColor: ["topcol-purple", "topcol-teal", "topcol-yellow", "topcol-red", "topcol-green", "topcol-blue"][i % 6],
+    bottomColor: ["botcol-navy", "botcol-black", "botcol-beige"][i % 3],
+  });

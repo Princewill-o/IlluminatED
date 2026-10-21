@@ -79,6 +79,12 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
     const leaves = blossom ? ["#bd8f82", "#ddb39d"] : foliage;
     const height = 1.95 + (seed % 4) * 0.12;
     mesh(column, "#7a604a", cx, 0.97, cz, 0.12, 1.64, 0.12);
+    // Countryside woods are far from the player most of the time: one big
+    // rounded crown each keeps the open world inside the geometry budget.
+    if (tree.id.startsWith("outskirts-")) {
+      leaf(leaves[seed % 2], cx, height + 0.2, cz, 1.05, 1.0, 1.05);
+      continue;
+    }
     // A short fork joins the visible trunk to the broad crown.
     const branch = mesh(column, "#7a604a", cx + 0.15, 1.52, cz, 0.07, 0.68, 0.07);
     branch.rotation.z = -0.48;
