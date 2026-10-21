@@ -98,7 +98,7 @@ export function AgentWorkspace({ name }: { name: string }) {
   };
 
   return (
-    <div className="grid min-h-[calc(100dvh-120px)] overflow-hidden rounded-[2rem] border-2 border-white bg-[#f7f6fb] text-[#1d1a4a] shadow-[0_10px_0_rgba(36,33,94,0.12)] md:grid-cols-[230px_1fr]">
+    <div className="grid min-h-[calc(100dvh-120px)] overflow-hidden rounded-[2rem] border-[3px] border-[#1d1a4a] bg-[#f7f6fb] text-[#1d1a4a] shadow-[8px_8px_0_#1d1a4a] dark:border-white/80 dark:shadow-[8px_8px_0_rgba(179,175,255,0.45)] md:grid-cols-[230px_1fr]">
       <aside className="hidden flex-col gap-1 bg-[#24215e] p-4 text-white md:flex">
         <p className="flex items-center gap-2 text-sm font-black">
           <span className="grid size-8 place-items-center rounded-xl bg-white/15">
@@ -143,12 +143,12 @@ export function AgentWorkspace({ name }: { name: string }) {
               </p>
               <div className="mt-6 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s, i) => (
-                  <button key={s.text} type="button" onClick={() => void ask(s.text)} className="agent-rise flex items-center gap-2 rounded-full border-2 border-white bg-white px-4 py-2 text-sm font-bold shadow-sm hover:border-[#5b56c8]" style={{ animationDelay: `${240 + i * 60}ms` }}>
+                  <button key={s.text} type="button" onClick={() => void ask(s.text)} className="agent-rise flex items-center gap-2 rounded-full border-2 border-[#1d1a4a] px-4 py-2 text-sm font-bold shadow-[3px_3px_0_#1d1a4a] hover:-translate-y-0.5" style={{ animationDelay: `${240 + i * 60}ms`, background: "#fff", color: "#1d1a4a" }}>
                     <s.Icon className="size-4 text-[#5b56c8]" aria-hidden /> {s.text}
                   </button>
                 ))}
               </div>
-              <video className="agent-rise mt-8 w-full rounded-2xl shadow-lg" style={{ animationDelay: "500ms" }} src="/landing/illumed-film.mp4" poster="/landing/illumed-film-poster.jpg" autoPlay muted loop playsInline aria-label="Short film showing what the study agent can do" />
+              <video className="agent-rise mt-8 w-full rounded-2xl shadow-lg" style={{ animationDelay: "500ms" }} src="/landing/how-it-works.mp4" poster="/landing/how-it-works-poster.jpg" autoPlay muted loop playsInline aria-label="Short film showing how the AI revision game works" />
             </div>
           ) : (
             <ul className="mx-auto max-w-3xl space-y-5">

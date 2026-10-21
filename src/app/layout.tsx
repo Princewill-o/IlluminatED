@@ -1,5 +1,7 @@
 import localFont from "next/font/local";
 
+// eslint-disable-next-line import/no-unresolved -- resolved through the package "exports" map
+import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 
 import { SiteChrome } from "@/components/app/site-chrome";
@@ -95,7 +97,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en-GB" suppressHydrationWarning>
-      <body className={`${dmSans.variable} antialiased`}>
+      <body className={`${dmSans.variable} ${GeistSans.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

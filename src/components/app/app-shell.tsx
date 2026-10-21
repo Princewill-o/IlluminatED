@@ -110,7 +110,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Side rail: tablets and laptops (like Instagram on the web) */}
         <nav
           aria-label="App"
-          className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-border bg-background px-3 py-4 md:flex 2xl:w-[224px]"
+          className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-border bg-background/70 px-3 py-4 backdrop-blur-xl md:flex 2xl:w-[224px]"
         >
           <Link prefetch={false} href="/dashboard" className="mb-5 flex items-center gap-3 px-2" aria-label="IlluminatED home">
             <Image src="/brand/lion-head.webp" alt="" width={36} height={36} className="size-9 rounded-full bg-brand" priority />
@@ -129,8 +129,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     title={tab.label}
                     className={cn(
                       "group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-hover active:scale-[0.97]",
-                      on && "bg-selected",
-                      tab.id === "play" && "text-ink-lime",
+                      on && "border-2 border-[#1d1a4a] bg-[#5b56c8] text-white shadow-[3px_3px_0_#1d1a4a] dark:border-white/70 dark:bg-[#5b56c8] dark:shadow-[3px_3px_0_rgba(179,175,255,0.45)]",
+                      tab.id === "play" && !on && "text-ink-lime",
                     )}
                   >
                     {tab.id === "me" ? (
@@ -181,7 +181,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} className={cn("min-h-[70dvh] min-w-0 outline-none md:pl-[76px] 2xl:pl-[224px]", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
+        <main id="main" tabIndex={-1} data-world={inWorld ? "" : undefined} className={cn("min-h-[70dvh] min-w-0 outline-none md:pl-[76px] 2xl:pl-[224px]", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
           {children}
         </main>
 

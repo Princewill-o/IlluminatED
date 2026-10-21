@@ -624,20 +624,20 @@ html.dark body:has(.arcade) {
 /* ─── The app (signed in): purple accents, flat; light and dark follow the toggle ─── */
 .app-theme {
   color-scheme: light;
-  --background: #f6f0e4;
-  --foreground: #13203a;
+  --background: #eef5ff;
+  --foreground: #14123a;
   --card: #ffffff;
-  --card-foreground: #13203a;
+  --card-foreground: #14123a;
   --popover: #ffffff;
   --popover-foreground: #13203a;
-  --primary: #1f4fbf;
+  --primary: #5b56c8;
   --primary-foreground: #ffffff;
-  --secondary: #e8eefb;
-  --secondary-foreground: #1b3a6b;
-  --muted: #f1ece2;
+  --secondary: #ecebff;
+  --secondary-foreground: #2a2670;
+  --muted: #f1f0fb;
   --muted-foreground: #5a6272;
-  --accent: #dde8fd;
-  --accent-foreground: #1b3a6b;
+  --accent: #e4e2ff;
+  --accent-foreground: #2a2670;
   --destructive: #c8372a;
   --destructive-foreground: #ffffff;
   --success: #0f7a52;
@@ -645,23 +645,23 @@ html.dark body:has(.arcade) {
   --danger-soft: #fde8e6;
   --warm: #b26b00;
   --warm-text: #8a5200;
-  --glow: #e8eefb;
+  --glow: #ecebff;
   --border: rgb(19 32 58 / 9%);
   --input: rgb(19 32 58 / 16%);
-  --ring: #2b5fd9;
-  --chart-1: #1f4fbf;
+  --ring: #5b56c8;
+  --chart-1: #5b56c8;
   --chart-2: #d98a00;
   --chart-3: #0f9a6a;
   --chart-4: #1f8fd6;
   --chart-5: #e0533f;
   --sidebar: #ffffff;
   --sidebar-foreground: #13203a;
-  --sidebar-primary: #1f4fbf;
+  --sidebar-primary: #5b56c8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e8eefb;
+  --sidebar-accent: #ecebff;
   --sidebar-accent-foreground: #13203a;
   --sidebar-border: rgb(19 32 58 / 9%);
-  --sidebar-ring: #2b5fd9;
+  --sidebar-ring: #5b56c8;
   /* Accent inks: readable text versions of the bright game colours. */
   --brand: #2b5fd9;
   --ink-lime: #3f7a00;
@@ -681,19 +681,19 @@ html.dark body:has(.arcade) {
 }
 .dark .app-theme {
   color-scheme: dark;
-  --background: #0d1726;
+  --background: #0b0a2e;
   --foreground: #f3f6fb;
-  --card: #14223a;
+  --card: #16144a;
   --card-foreground: #f3f6fb;
-  --popover: #14223a;
+  --popover: #16144a;
   --popover-foreground: #f3f6fb;
-  --primary: #8fb4ff;
-  --primary-foreground: #0d1726;
-  --secondary: #1b2c48;
+  --primary: #b3afff;
+  --primary-foreground: #0b0a2e;
+  --secondary: #211e5c;
   --secondary-foreground: #e3ebf9;
-  --muted: #152238;
+  --muted: #17154a;
   --muted-foreground: #a3afc2;
-  --accent: #1f3354;
+  --accent: #26226a;
   --accent-foreground: #dbe7ff;
   --destructive: #ff8f85;
   --destructive-foreground: #0d1726;
@@ -702,24 +702,24 @@ html.dark body:has(.arcade) {
   --danger-soft: #36161a;
   --warm: #ffd166;
   --warm-text: #ffd166;
-  --glow: #1b2c48;
+  --glow: #211e5c;
   --border: rgb(255 255 255 / 10%);
   --input: rgb(255 255 255 / 16%);
   --ring: #f2d9a6;
-  --chart-1: #8fb4ff;
+  --chart-1: #b3afff;
   --chart-2: #ffd166;
   --chart-3: #5fd3a5;
   --chart-4: #6bc6ff;
   --chart-5: #ff7a6b;
-  --sidebar: #0d1726;
+  --sidebar: #0b0a2e;
   --sidebar-foreground: #f3f6fb;
-  --sidebar-primary: #8fb4ff;
+  --sidebar-primary: #b3afff;
   --sidebar-primary-foreground: #0d1726;
-  --sidebar-accent: #1b2c48;
+  --sidebar-accent: #211e5c;
   --sidebar-accent-foreground: #f3f6fb;
   --sidebar-border: rgb(255 255 255 / 10%);
   --sidebar-ring: #f2d9a6;
-  --brand: #2b5fd9;
+  --brand: #5b56c8;
   --ink-lime: #f2d9a6;
   --ink-sun: #ffd166;
   --ink-coral: #ff8a7a;
@@ -736,7 +736,7 @@ body:has(.app-theme) {
   overscroll-behavior-y: none;
 }
 html:not(.dark) body:has(.app-theme) {
-  background-color: #f6f0e4;
+  background-color: #eef5ff;
 }
 html.dark body:has(.app-theme) {
   background-color: #0d1726;
@@ -990,3 +990,39 @@ html.dark body:has(.app-theme) {
 @keyframes landing-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
 .landing-bob { animation: landing-bob 4s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .landing-drift, .landing-bob { animation: none; } }
+
+
+/* In-app look, matching the landing page: a pale day sky by day and the starry
+   night sky in dark mode, cartoon-outlined cards and Geist headings. */
+.app-theme {
+  background-image: linear-gradient(180deg, #dcecff 0%, #eef5ff 30%, #fbf8f1 100%);
+  background-attachment: fixed;
+}
+.dark .app-theme {
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 140px 80px, rgba(255,255,255,0.7) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 260px 160px, rgba(255,255,255,0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 380px 40px, rgba(255,255,255,0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 470px 220px, rgba(255,255,255,0.8) 50%, transparent 51%),
+    linear-gradient(180deg, #05051a 0%, #0b0a2e 40%, #16124f 100%);
+  background-size: 600px 340px, 600px 340px, 600px 340px, 600px 340px, 600px 340px, 100% 100%;
+  background-attachment: fixed;
+}
+.app-theme main :where(h1, h2) {
+  font-family: var(--font-geist-sans), var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+/* Cartoon cards: an ink outline and a flat offset shadow (not inside the 3D world). */
+.app-theme main :where(.bg-card):not(:where([data-world] *)) {
+  border: 2px solid #1d1a4a;
+  box-shadow: 4px 4px 0 #1d1a4a;
+}
+.dark .app-theme main :where(.bg-card):not(:where([data-world] *)) {
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 4px 4px 0 rgba(179, 175, 255, 0.45);
+}
+.app-theme main :where(a, button):where(.bg-primary, .bg-brand) {
+  border: 2px solid #1d1a4a;
+  box-shadow: 3px 3px 0 #1d1a4a;
+}

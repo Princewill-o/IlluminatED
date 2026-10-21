@@ -1,81 +1,204 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>How IlluminatED works</title>
+<html lang="en"><head><meta charset="utf-8"><title>IlluminatED: the AI revision game</title>
 <style>
 *{box-sizing:border-box;margin:0}
 html,body{width:1280px;height:720px;overflow:hidden;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d1a4a}
-body{background:linear-gradient(180deg,#7cc4ff 0%,#bfe3ff 55%,#fff4dc 100%)}
-.cloud{position:absolute;background:#fff;border:4px solid #1d1a4a;border-radius:999px;animation:drift 30s linear infinite}
-.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border:4px solid #1d1a4a;border-bottom:none;border-radius:999px 999px 0 0}
-.cloud:before{width:55%;height:120%;left:12%;top:-60%}.cloud:after{width:40%;height:90%;left:48%;top:-40%}
-@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-160px)}}
-.sun{position:absolute;right:90px;top:50px;width:90px;height:90px;border-radius:50%;background:#ffd23f;border:4px solid #1d1a4a;box-shadow:0 0 0 14px #ffd23f55}
-.s{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .45s}
-.s.on{opacity:1}
-.pop{transform:scale(.6) translateY(30px);opacity:0;transition:transform .6s cubic-bezier(.34,1.56,.64,1),opacity .4s}
-.on .pop{transform:none;opacity:1}
-.on .d1{transition-delay:.25s}.on .d2{transition-delay:.5s}.on .d3{transition-delay:.75s}.on .d4{transition-delay:1s}.on .d5{transition-delay:1.25s}.on .d6{transition-delay:1.5s}
+/* Looping gradient background */
+#bg{position:absolute;inset:-20%;background:conic-gradient(from 0deg at 50% 50%,#6fbcff,#a99bff,#ffb3d1,#ffd98a,#9be8c4,#6fbcff);filter:blur(80px) saturate(1.1);animation:spin 18s linear infinite;opacity:.85}
+@keyframes spin{to{transform:rotate(360deg)}}
+#grain{position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.55),rgba(255,255,255,.05) 60%)}
+.s{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;visibility:hidden}
+.s.on{visibility:visible}
 .card{background:#fff;border:4px solid #1d1a4a;border-radius:26px;box-shadow:8px 8px 0 #1d1a4a}
-.step{font-weight:900;font-size:20px;background:#ffd23f;border:3px solid #1d1a4a;border-radius:999px;padding:6px 18px;box-shadow:4px 4px 0 #1d1a4a}
-h1{font-size:84px;font-weight:900;letter-spacing:-2px;text-align:center;line-height:1}
-h2{font-size:56px;font-weight:900;letter-spacing:-1.5px;text-align:center;margin-top:18px}
-.chips{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center;max-width:1000px}
-.chip{font-size:26px;font-weight:800;padding:14px 26px;border:4px solid #1d1a4a;border-radius:999px;box-shadow:5px 5px 0 #1d1a4a}
-.shot{width:760px;height:430px;object-fit:cover;display:block;border-radius:22px}
-.coin{position:absolute;font-weight:900;font-size:30px;background:#ffd23f;border:4px solid #1d1a4a;border-radius:999px;padding:12px 22px;box-shadow:5px 5px 0 #1d1a4a}
-.opt{font-size:26px;font-weight:700;padding:16px 22px;border:3px solid #1d1a4a;border-radius:16px;margin-top:12px;background:#fff;transition:background .3s}
-.grid{display:grid;grid-template-columns:repeat(5,170px);gap:14px;margin-top:34px}
-.day{padding:16px;font-size:18px;line-height:1.35}
-.day b{display:block;font-size:22px;color:#5b56c8;margin-bottom:6px}
-.bars{display:flex;align-items:flex-end;gap:22px;height:220px;margin-top:20px}
-.bar{width:70px;border:4px solid #1d1a4a;border-radius:12px 12px 0 0;height:0;transition:height 1s cubic-bezier(.34,1.56,.64,1)}
-.row{display:flex;align-items:center;gap:14px;font-size:24px;font-weight:700;padding:12px 0;border-bottom:2px dashed #1d1a4a33}
-.tick{width:34px;height:34px;border-radius:50%;border:3px solid #1d1a4a;display:grid;place-items:center;font-weight:900;background:#fff}
-.confetti{position:absolute;width:14px;height:22px;border:2px solid #1d1a4a;border-radius:4px;opacity:0}
-.on .confetti{animation:fall 1.6s ease-in forwards}
-@keyframes fall{0%{opacity:1;transform:translateY(-40px) rotate(0)}100%{opacity:1;transform:translateY(520px) rotate(540deg)}}
-.bounce{animation:bounce 1.4s ease-in-out infinite}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
-.logo{width:120px;height:120px;border-radius:32px;background:#5b56c8;color:#fff;font-size:72px;font-weight:900;display:grid;place-items:center;border:5px solid #1d1a4a;box-shadow:8px 8px 0 #1d1a4a;margin-bottom:26px}
+.pill{font-weight:900;font-size:22px;background:#ffd23f;border:3px solid #1d1a4a;border-radius:999px;padding:8px 20px;box-shadow:4px 4px 0 #1d1a4a}
+.big{font-size:96px;font-weight:950;letter-spacing:-3px;line-height:.95;text-align:center}
+.mid{font-size:60px;font-weight:900;letter-spacing:-2px;text-align:center;line-height:1}
+.word{display:inline-block}
+.ring{position:absolute;border:5px solid #1d1a4a;border-radius:50%;opacity:0}
+.spark{position:absolute;width:18px;height:18px;background:#ffd23f;border:3px solid #1d1a4a;transform:rotate(45deg);border-radius:4px}
+.chat{font-size:26px;font-weight:700;padding:16px 22px;border:3px solid #1d1a4a;border-radius:20px;max-width:560px}
+.me{background:#5b56c8;color:#fff;align-self:flex-end;border-radius:20px 20px 4px 20px}
+.ai{background:#fff;border-radius:20px 20px 20px 4px}
+.orbit{position:absolute;left:50%;top:50%;width:0;height:0}
+.oc{position:absolute;width:210px;padding:16px;font-weight:800;font-size:22px;text-align:center;transform:translate(-50%,-50%)}
+.xpbar{width:640px;height:46px;border:4px solid #1d1a4a;border-radius:999px;background:#fff;overflow:hidden;box-shadow:5px 5px 0 #1d1a4a}
+.xpfill{height:100%;width:0;background:repeating-linear-gradient(-45deg,#5b56c8 0 18px,#7a75e8 18px 36px)}
+.coin{position:absolute;width:54px;height:54px;border-radius:50%;background:#ffd23f;border:4px solid #1d1a4a;display:grid;place-items:center;font-weight:950;font-size:24px}
+.flip{width:200px;height:240px;perspective:900px}
+.flip>div{position:relative;width:100%;height:100%;transform-style:preserve-3d}
+.face{position:absolute;inset:0;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;text-align:center;font-weight:800;font-size:22px}
+.back{transform:rotateY(180deg)}
+.shot{width:820px;height:460px;object-fit:cover;display:block;border-radius:20px}
+.hud{position:absolute;font-weight:900;font-size:22px;padding:10px 18px;border:3px solid #1d1a4a;border-radius:16px;box-shadow:4px 4px 0 #1d1a4a}
+.bar{width:76px;border:4px solid #1d1a4a;border-radius:14px 14px 0 0;height:0}
 </style></head><body>
-<div class="sun"></div>
-<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:200px;left:120px;top:90px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
-<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:150px;left:860px;top:180px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
-<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:240px;left:520px;top:600px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
+<div id="bg"></div><div id="grain"></div>
 
-<section class="s" id="s0"><div class="logo pop bounce">i</div><h1 class="pop d1">How IlluminatED works</h1><p class="pop d2" style="font-size:28px;margin-top:20px;font-weight:700">Revision that plays like a game, in six steps</p></section>
+<!-- 0 Logo reveal -->
+<section class="s" id="logo">
+  <div class="ring" id="r1" style="width:200px;height:200px"></div><div class="ring" id="r2" style="width:200px;height:200px"></div><div class="ring" id="r3" style="width:200px;height:200px"></div>
+  <img id="lion" src="../brand/lion-head.webp" style="width:220px;height:220px;filter:drop-shadow(8px 8px 0 #1d1a4a)">
+  <div style="overflow:hidden;margin-top:24px;height:110px"><img id="wm" src="../brand/wordmark-navy.webp" style="width:640px;display:block"></div>
+  <div id="sparks"></div>
+</section>
 
-<section class="s"><span class="step pop">Step 1</span><h2 class="pop d1">Pick your subjects</h2>
-<div class="chips"><span class="chip pop d2" style="background:#ffb3c7">Maths</span><span class="chip pop d3" style="background:#b9f0c9">Biology</span><span class="chip pop d4" style="background:#c9d7ff">Chemistry</span><span class="chip pop d5" style="background:#ffe08a">History</span><span class="chip pop d6" style="background:#e3c9ff">Computer Science</span></div></section>
+<!-- 1 Kinetic title -->
+<section class="s" id="title">
+  <p class="big"><span class="word">The</span> <span class="word" style="color:#5b56c8">AI</span> <span class="word">revision</span><br><span class="word" style="background:#ffd23f;border:5px solid #1d1a4a;border-radius:24px;padding:0 22px;box-shadow:8px 8px 0 #1d1a4a">game</span></p>
+</section>
 
-<section class="s"><span class="step pop">Step 2</span><h2 class="pop d1">Explore a 3D London</h2>
-<div class="card pop d2" style="margin-top:26px;padding:10px;position:relative"><img class="shot" src="game-chibi-street.webp"><span class="coin pop d4" style="right:-40px;top:-30px">+50 Clout</span></div></section>
+<!-- 2 AI x Game -->
+<section class="s" id="merge">
+  <div style="display:flex;gap:80px;align-items:center">
+    <div class="card" id="aiCard" style="width:340px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px"><div style="font-size:90px">✦</div><b style="font-size:36px">AI tutor</b><span style="font-size:20px">plans, quizzes, explains</span></div>
+    <div id="plus" style="font-size:90px;font-weight:950">+</div>
+    <div class="card" id="gameCard" style="width:340px;height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#ffd23f"><div style="font-size:90px">▶</div><b style="font-size:36px">3D game</b><span style="font-size:20px">XP, Clout, levels, quests</span></div>
+  </div>
+  <p class="mid" id="mergeTxt" style="margin-top:46px">One platform. Learning that levels you up.</p>
+</section>
 
-<section class="s"><span class="step pop">Step 3</span><h2 class="pop d1">Answer quick quizzes</h2>
-<div class="card pop d2" style="margin-top:30px;padding:30px;width:640px"><p style="font-size:28px;font-weight:900">Which organelle releases energy?</p>
-<div class="opt">Nucleus</div><div class="opt" id="right">Mitochondria</div><div class="opt">Cell wall</div></div>
-<div id="conf"></div></section>
+<!-- 3 Agent chat -->
+<section class="s" id="agent">
+  <span class="pill" id="agentPill">Step 1 · Ask the AI agent</span>
+  <div style="display:flex;flex-direction:column;gap:18px;margin-top:34px;width:860px">
+    <div class="chat me" id="c1">Plan my revision for this week</div>
+    <div class="chat ai card" id="c2" style="border-radius:20px 20px 20px 4px"><span id="typed"></span></div>
+  </div>
+  <div style="display:flex;gap:18px;margin-top:26px" id="flips">
+    <div class="flip"><div><div class="face card">Mon</div><div class="face card back" style="background:#c9d7ff">Hand in<br>Biology</div></div></div>
+    <div class="flip"><div><div class="face card">Tue</div><div class="face card back" style="background:#ffb3c7">Quiz:<br>Forces</div></div></div>
+    <div class="flip"><div><div class="face card">Wed</div><div class="face card back" style="background:#b9f0c9">Flashcards:<br>Quadratics</div></div></div>
+    <div class="flip"><div><div class="face card">Thu</div><div class="face card back" style="background:#ffe08a">Exam<br>practice</div></div></div>
+  </div>
+</section>
 
-<section class="s"><span class="step pop">Step 4</span><h2 class="pop d1">Your agent plans the week</h2>
-<div class="grid"><div class="card day pop d2"><b>Mon</b>Hand in Biology</div><div class="card day pop d3"><b>Tue</b>Quiz: forces</div><div class="card day pop d4"><b>Wed</b>Flashcards: quadratics</div><div class="card day pop d5"><b>Thu</b>Revise the heart</div><div class="card day pop d6"><b>Fri</b>Timed exam practice</div></div>
-<p class="pop d6" style="margin-top:30px;font-size:24px;font-weight:700">It asks before anything goes to your teacher.</p></section>
+<!-- 4 Quiz + XP -->
+<section class="s" id="quiz">
+  <span class="pill">Step 2 · Answer, earn XP</span>
+  <div class="card" style="margin-top:28px;padding:28px 34px;width:700px">
+    <p style="font-size:30px;font-weight:900">Which organelle releases energy?</p>
+    <div style="display:flex;gap:14px;margin-top:18px">
+      <div class="chat" style="flex:1;font-size:22px;background:#fff">Nucleus</div>
+      <div class="chat" id="right" style="flex:1;font-size:22px;background:#fff">Mitochondria</div>
+      <div class="chat" style="flex:1;font-size:22px;background:#fff">Ribosome</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:18px;margin-top:34px"><b style="font-size:28px">LV 4</b><div class="xpbar"><div class="xpfill" id="xp"></div></div><b style="font-size:28px">LV 5</b></div>
+  <div id="levelup" class="big" style="position:absolute;top:250px;color:#fff;-webkit-text-stroke:5px #1d1a4a;text-shadow:8px 8px 0 #1d1a4a;opacity:0">LEVEL UP!</div>
+  <div id="coins"></div>
+</section>
 
-<section class="s"><span class="step pop">Step 5</span><h2 class="pop d1">Spend Clout on your look</h2>
-<div class="card pop d2" style="margin-top:26px;padding:10px"><img class="shot" style="width:860px;height:360px" src="game-chibi-locker.webp"></div></section>
+<!-- 5 Game world with HUD -->
+<section class="s" id="world">
+  <span class="pill">Step 3 · Spend it in a 3D London</span>
+  <div class="card" id="worldCard" style="margin-top:24px;padding:10px;position:relative;overflow:visible">
+    <div style="overflow:hidden;border-radius:20px"><img class="shot" id="shot" src="game-chibi-street.webp"></div>
+    <div class="hud" id="h1" style="left:-50px;top:40px;background:#b9f0c9">Quest complete ✓</div>
+    <div class="hud" id="h2" style="right:-60px;top:120px;background:#ffd23f">+50 Clout</div>
+    <div class="hud" id="h3" style="right:-30px;bottom:40px;background:#ffb3c7">7-day streak</div>
+  </div>
+</section>
 
-<section class="s"><span class="step pop">Step 6</span><h2 class="pop d1">Teachers see the progress</h2>
-<div style="display:flex;gap:40px;margin-top:30px;align-items:flex-end">
-<div class="card pop d2" style="padding:24px 30px;width:440px"><div class="row"><span class="tick" style="background:#b9f0c9">✓</span>Cells homework</div><div class="row"><span class="tick" style="background:#b9f0c9">✓</span>Forces quiz</div><div class="row" style="border:none"><span class="tick">…</span>Algebra practice</div></div>
-<div class="card pop d3" style="padding:20px 30px"><div class="bars"><div class="bar" style="background:#ffb3c7" data-h="120"></div><div class="bar" style="background:#c9d7ff" data-h="170"></div><div class="bar" style="background:#b9f0c9" data-h="200"></div><div class="bar" style="background:#ffe08a" data-h="150"></div></div></div></div></section>
+<!-- 6 Orbit of features -->
+<section class="s" id="orbitS">
+  <img src="../brand/lion-head.webp" style="width:170px;filter:drop-shadow(6px 6px 0 #1d1a4a);z-index:2">
+  <div class="orbit" id="orbit">
+    <div class="oc card" style="background:#c9d7ff">AI study agent</div>
+    <div class="oc card" style="background:#ffd23f">Quests &amp; XP</div>
+    <div class="oc card" style="background:#b9f0c9">Homework</div>
+    <div class="oc card" style="background:#ffb3c7">Characters</div>
+    <div class="oc card" style="background:#e3c9ff">Careers</div>
+    <div class="oc card" style="background:#fff">Leaderboards</div>
+  </div>
+</section>
 
-<section class="s"><div class="logo pop bounce">i</div><h1 class="pop d1">Learn. Play. Get ahead.</h1><span class="step pop d2" style="margin-top:30px;font-size:28px;padding:12px 30px">Join the beta</span></section>
+<!-- 7 Teachers -->
+<section class="s" id="teach">
+  <span class="pill">Step 4 · Teachers see the progress</span>
+  <div style="display:flex;gap:40px;margin-top:34px;align-items:flex-end">
+    <div class="card" style="padding:22px 30px;width:440px;font-size:24px;font-weight:800;line-height:2.1" id="hw">
+      <div>✓ Cells homework</div><div>✓ Forces quiz</div><div style="opacity:.55">○ Algebra practice</div>
+    </div>
+    <div class="card" style="padding:22px 30px"><div style="display:flex;gap:22px;align-items:flex-end;height:230px">
+      <div class="bar" style="background:#ffb3c7" data-h="120"></div><div class="bar" style="background:#c9d7ff" data-h="175"></div><div class="bar" style="background:#b9f0c9" data-h="215"></div><div class="bar" style="background:#ffe08a" data-h="160"></div></div></div>
+  </div>
+</section>
+
+<!-- 8 Outro -->
+<section class="s" id="outro">
+  <img id="lion2" src="../brand/lion-head.webp" style="width:160px;filter:drop-shadow(6px 6px 0 #1d1a4a)">
+  <img id="wm2" src="../brand/wordmark-navy.webp" style="width:560px;margin-top:18px">
+  <p class="mid" id="tag" style="margin-top:24px;font-size:46px">Revision that plays like a game.</p>
+  <span class="pill" id="cta" style="margin-top:28px;font-size:28px;padding:12px 32px;background:#5b56c8;color:#fff">Join the beta</span>
+</section>
 
 <script>
-const S=[...document.querySelectorAll('.s')];const D=[3200,3800,4400,4600,4600,4200,4800,3600];
+const $=id=>document.getElementById(id);
+const bounce="cubic-bezier(.34,1.56,.64,1)",snap="cubic-bezier(.2,.9,.1,1)";
+const A=(el,k,o)=>el.animate(k,{fill:"both",easing:bounce,...o});
+const show=id=>{document.querySelectorAll(".s").forEach(s=>s.classList.remove("on"));$(id).classList.add("on")};
+const exit=(id,ms=380)=>A($(id),[{opacity:1,transform:"scale(1)",filter:"blur(0)"},{opacity:0,transform:"scale(1.08)",filter:"blur(12px)"}],{duration:ms,easing:"ease-in"});
+const enter=id=>{show(id);A($(id),[{opacity:0},{opacity:1}],{duration:250,easing:"linear"})};
+const scenes=[
+ ["logo",4200,()=>{
+   A($("lion"),[{transform:"scale(0) rotate(-200deg)"},{transform:"scale(1.15) rotate(10deg)",offset:.7},{transform:"scale(1) rotate(0)"}],{duration:1100});
+   ["r1","r2","r3"].forEach((r,i)=>A($(r),[{opacity:.9,transform:"scale(.6)"},{opacity:0,transform:"scale(3.4)"}],{duration:1300,delay:500+i*220,easing:"ease-out"}));
+   A($("wm"),[{transform:"translateY(120%)"},{transform:"translateY(0)"}],{duration:800,delay:900,easing:snap});
+   for(let i=0;i<14;i++){const s=document.createElement("span");s.className="spark";$("sparks").appendChild(s);const a=i/14*Math.PI*2,d=260+Math.random()*120;
+     A(s,[{transform:"translate(640px,300px) rotate(45deg) scale(0)",opacity:1},{transform:`translate(${640+Math.cos(a)*d}px,${300+Math.sin(a)*d}px) rotate(225deg) scale(1)`,opacity:1,offset:.7},{opacity:0}],{duration:1400,delay:600,easing:"ease-out"});s.style.position="absolute";s.style.left="0";s.style.top="0"}
+ }],
+ ["title",3400,()=>{
+   [...document.querySelectorAll("#title .word")].forEach((w,i)=>A(w,[{transform:"scaleY(0.1) scaleX(1.6)",opacity:0},{transform:"scaleY(1.25) scaleX(.85)",opacity:1,offset:.6},{transform:"none",opacity:1}],{duration:700,delay:i*180}));
+ }],
+ ["merge",4600,()=>{
+   A($("aiCard"),[{transform:"translateX(-600px) rotate(-20deg)"},{transform:"none"}],{duration:900});
+   A($("gameCard"),[{transform:"translateX(600px) rotate(20deg)"},{transform:"none"}],{duration:900,delay:150});
+   A($("plus"),[{transform:"scale(0) rotate(-180deg)"},{transform:"scale(1)"}],{duration:700,delay:700});
+   A($("aiCard"),[{transform:"none"},{transform:"translateX(210px) rotate(-4deg)"}],{duration:700,delay:2300,easing:snap});
+   A($("gameCard"),[{transform:"none"},{transform:"translateX(-210px) rotate(4deg)"}],{duration:700,delay:2300,easing:snap});
+   A($("plus"),[{opacity:1},{opacity:0}],{duration:300,delay:2300});
+   A($("mergeTxt"),[{opacity:0,transform:"translateY(40px)"},{opacity:1,transform:"none"}],{duration:700,delay:2700});
+ }],
+ ["agent",6000,()=>{
+   A($("agentPill"),[{transform:"translateY(-80px)",opacity:0},{transform:"none",opacity:1}],{duration:600});
+   A($("c1"),[{transform:"translateX(300px) scale(.6)",opacity:0},{transform:"none",opacity:1}],{duration:600,delay:300});
+   A($("c2"),[{transform:"scale(.6)",opacity:0},{transform:"none",opacity:1}],{duration:500,delay:900});
+   const t="On it! Homework first, then short sessions on your weakest topics:";let i=0;setTimeout(()=>{const iv=setInterval(()=>{$("typed").textContent=t.slice(0,++i);if(i>=t.length)clearInterval(iv)},28)},1200);
+   [...document.querySelectorAll(".flip>div")].forEach((f,k)=>{A(f.parentElement,[{transform:"translateY(80px)",opacity:0},{transform:"none",opacity:1}],{duration:500,delay:2900+k*120});A(f,[{transform:"rotateY(0)"},{transform:"rotateY(180deg)"}],{duration:700,delay:3500+k*180,easing:snap})});
+ }],
+ ["quiz",5600,()=>{
+   setTimeout(()=>{$("right").style.background="#b9f0c9";A($("right"),[{transform:"scale(1)"},{transform:"scale(1.12)"},{transform:"scale(1)"}],{duration:500})},1100);
+   A($("xp"),[{width:"0%"},{width:"100%"}],{duration:1400,delay:1500,easing:"ease-in-out"});
+   A($("levelup"),[{opacity:0,transform:"scale(.2) rotate(-10deg)"},{opacity:1,transform:"scale(1.15) rotate(3deg)",offset:.6},{opacity:1,transform:"scale(1) rotate(0)"}],{duration:800,delay:3000});
+   for(let i=0;i<16;i++){const c=document.createElement("div");c.className="coin";c.textContent="C";$("coins").appendChild(c);const x=80+Math.random()*1120;
+     A(c,[{transform:`translate(${x}px,-80px) rotate(0)`},{transform:`translate(${x}px,760px) rotate(${360+Math.random()*360}deg)`}],{duration:1500+Math.random()*600,delay:3000+Math.random()*700,easing:"ease-in"})}
+ }],
+ ["world",5000,()=>{
+   A($("worldCard"),[{transform:"perspective(900px) rotateX(25deg) translateY(200px)",opacity:0},{transform:"none",opacity:1}],{duration:900,easing:snap});
+   A($("shot"),[{transform:"scale(1.25)"},{transform:"scale(1)"}],{duration:4800,easing:"ease-out"});
+   ["h1","h2","h3"].forEach((h,i)=>A($(h),[{transform:"scale(0) rotate(-12deg)"},{transform:"scale(1) rotate(-3deg)"}],{duration:600,delay:1200+i*600}));
+ }],
+ ["orbitS",4600,()=>{
+   const cs=[...document.querySelectorAll(".oc")];const t0=performance.now();
+   const tick=()=>{const t=(performance.now()-t0)/1000;cs.forEach((c,i)=>{const a=t*0.9+i/cs.length*Math.PI*2;const r=Math.min(1,t*1.2);c.style.left=Math.cos(a)*420*r+"px";c.style.top=Math.sin(a)*200*r+"px";c.style.zIndex=Math.sin(a)>0?3:1;c.style.transform=`translate(-50%,-50%) scale(${0.8+0.25*(Math.sin(a)+1)/2})`});if(t<5)requestAnimationFrame(tick)};tick();
+ }],
+ ["teach",4400,()=>{
+   [...document.querySelectorAll("#hw div")].forEach((d,i)=>A(d,[{transform:"translateX(-60px)",opacity:0},{transform:"none",opacity:1}],{duration:500,delay:300+i*300}));
+   document.querySelectorAll(".bar").forEach((b,i)=>A(b,[{height:"0px"},{height:b.dataset.h+"px"}],{duration:900,delay:900+i*180}));
+ }],
+ ["outro",4400,()=>{
+   A($("lion2"),[{transform:"scale(0) rotate(180deg)"},{transform:"scale(1) rotate(0)"}],{duration:900});
+   A($("wm2"),[{clipPath:"inset(0 100% 0 0)"},{clipPath:"inset(0 0 0 0)"}],{duration:900,delay:400,easing:snap});
+   A($("tag"),[{opacity:0,transform:"translateY(30px)"},{opacity:1,transform:"none"}],{duration:700,delay:1100});
+   A($("cta"),[{transform:"scale(0)"},{transform:"scale(1)"}],{duration:700,delay:1600});
+   A($("cta"),[{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:900,delay:2400,iterations:2,easing:"ease-in-out"});
+ }],
+];
 let t=0;
-S.forEach((s,i)=>{setTimeout(()=>{S.forEach(x=>x.classList.remove('on'));s.classList.add('on');
-  if(i===3){setTimeout(()=>{document.getElementById('right').style.background='#b9f0c9';const c=document.getElementById('conf');const cols=['#ffb3c7','#ffd23f','#b9f0c9','#c9d7ff','#e3c9ff'];
-    for(let k=0;k<40;k++){const e=document.createElement('span');e.className='confetti';e.style.left=(200+Math.random()*880)+'px';e.style.top='60px';e.style.background=cols[k%5];e.style.animationDelay=(Math.random()*.5)+'s';c.appendChild(e)}},1700)}
-  if(i===6){setTimeout(()=>document.querySelectorAll('.bar').forEach(b=>b.style.height=b.dataset.h+'px'),900)}
-},t);t+=D[i]});
-setTimeout(()=>{document.title='done'},t);
+scenes.forEach(([id,dur,run],i)=>{
+  setTimeout(()=>{enter(id);run()},t);
+  if(i<scenes.length-1) setTimeout(()=>exit(id),t+dur-380);
+  t+=dur;
+});
+setTimeout(()=>{document.title="done"},t);
 </script></body></html>

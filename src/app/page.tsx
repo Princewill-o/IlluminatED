@@ -102,7 +102,7 @@ export default function Home() {
       <section className="relative container py-20" aria-labelledby="how-title">
         <div className="mx-auto max-w-2xl text-center">
           <p className={`text-sm font-bold ${accent}`}>How it works</p>
-          <h2 id="how-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>From first quiz to teacher feedback, in 30 seconds.</h2>
+          <h2 id="how-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>The AI revision game, in under a minute.</h2>
         </div>
         <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-3xl border-4 border-[#1d1a4a] bg-white shadow-[10px_10px_0_#1d1a4a] dark:border-white/85 dark:shadow-[10px_10px_0_rgba(179,175,255,0.45)]">
           <video
