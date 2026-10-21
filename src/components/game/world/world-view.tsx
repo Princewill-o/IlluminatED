@@ -760,7 +760,7 @@ export function WorldView({
         <div className="absolute inset-0 grid place-items-center bg-black/70 p-6 text-center">
           <div>
             <p className="text-xl font-black">This server is full</p>
-            <button type="button" onClick={onChangeServer} className="mt-4 rounded-full bg-[#f2d9a6] px-6 py-3 font-black text-[#0d1726]">
+            <button type="button" onClick={onChangeServer} className="jelly mt-4 rounded-full bg-[#f2d9a6] px-6 py-3 font-black text-[#0d1726]">
               Pick another server
             </button>
           </div>
@@ -796,14 +796,14 @@ export function WorldView({
             <div className="absolute right-0 bottom-16 w-64 rounded-3xl border border-white/10 bg-[#14223a] p-3 shadow-2xl">
               <div className="grid grid-cols-3 gap-1">
                 {EMOTES.map((e) => (
-                  <button key={e.id} type="button" onClick={() => sayIt(e.id)} className="rounded-xl bg-[#1b2c48] py-2 text-xs font-black hover:bg-[#2a2040]">
+                  <button key={e.id} type="button" onClick={() => sayIt(e.id)} className="jelly rounded-xl bg-[#1b2c48] py-2 text-xs font-black hover:bg-[#2a2040]">
                     {e.label}
                   </button>
                 ))}
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {PHRASES.map((p) => (
-                  <button key={p.id} type="button" onClick={() => sayIt(p.id)} className="rounded-full bg-[#1b2c48] px-3 py-1.5 text-xs font-bold hover:bg-[#2a2040]">
+                  <button key={p.id} type="button" onClick={() => sayIt(p.id)} className="jelly rounded-full bg-[#1b2c48] px-3 py-1.5 text-xs font-bold hover:bg-[#2a2040]">
                     {p.text}
                   </button>
                 ))}
@@ -816,7 +816,7 @@ export function WorldView({
             onClick={() => setSheet((s) => !s)}
             aria-expanded={sheet}
             aria-label="Emotes and phrases"
-            className="grid size-11 place-items-center rounded-full bg-[#2b5fd9] text-xl shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:scale-95 sm:size-12"
+            className="jelly grid size-11 place-items-center rounded-full bg-[#2b5fd9] text-xl shadow-[0_4px_0_0_rgba(0,0,0,0.5)] active:scale-95 sm:size-12"
           >
             <MessageCircle className="size-6 text-white" aria-hidden />
           </button>
@@ -831,7 +831,7 @@ export function WorldView({
             {picked.org && <p className="text-sm font-bold text-[#6bc6ff]">✓ Verified · {picked.org}</p>}
             <div className="mt-4 grid gap-2">
               {picked.org && (
-                <a href={`/messages/new?to=${encodeURIComponent(picked.id)}`} className="rounded-full bg-[#f2d9a6] py-2.5 font-black text-[#0d1726]">
+                <a href={`/messages/new?to=${encodeURIComponent(picked.id)}`} className="jelly rounded-full bg-[#f2d9a6] py-2.5 font-black text-[#0d1726]">
                   Ask for advice
                 </a>
               )}
@@ -846,7 +846,7 @@ export function WorldView({
                   });
                   setPicked(null);
                 }}
-                className="rounded-full bg-[#1b2c48] py-2.5 font-bold"
+                className="jelly rounded-full bg-[#1b2c48] py-2.5 font-bold"
               >
                 {hidden.has(picked.id) ? "Show this player" : "Hide this player"}
               </button>

@@ -152,13 +152,13 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
                 setGame(null);
                 setRoom(null);
               }}
-              className="rounded-full bg-white px-4 py-2 text-sm font-black"
+              className="jelly rounded-full bg-white px-4 py-2 text-sm font-black"
             >
               All games
             </button>
           )}
           {onClose && (
-            <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-white">
+            <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-9 place-items-center rounded-full bg-white">
               <X className="size-4" />
             </button>
           )}
@@ -205,11 +205,11 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
           ))}
           {mode === "online" && (
             <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={() => setRoom(Math.random().toString(36).slice(2, 7).toUpperCase())} className="rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">
+              <button type="button" onClick={() => setRoom(Math.random().toString(36).slice(2, 7).toUpperCase())} className="jelly rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">
                 New room
               </button>
               <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 5))} placeholder="Room code" className="w-28 rounded-full border-2 border-white bg-white px-3 py-2 text-sm font-black tracking-widest uppercase" />
-              <button type="button" disabled={joinCode.length !== 5} onClick={() => setRoom(joinCode)} className="rounded-full bg-white px-4 py-2 text-sm font-black disabled:opacity-40">
+              <button type="button" disabled={joinCode.length !== 5} onClick={() => setRoom(joinCode)} className="jelly rounded-full bg-white px-4 py-2 text-sm font-black disabled:opacity-40">
                 Join
               </button>
             </div>
@@ -246,7 +246,7 @@ function RoomBar({ code, seats, status, need, canStart, onStart }: { code: strin
       <span className="font-bold">{status === "live" ? `${seats.length} in the room: ${seats.map((s) => s.name).join(", ")}` : status === "error" ? "Couldn't connect to the room server." : "Joining..."}</span>
       <span className="text-[#13203a]/60">Share the code. {need}</span>
       {canStart && (
-        <button type="button" onClick={onStart} className="ml-auto rounded-full bg-[#2b5fd9] px-4 py-1.5 font-black text-white">
+        <button type="button" onClick={onStart} className="jelly ml-auto rounded-full bg-[#2b5fd9] px-4 py-1.5 font-black text-white">
           Start
         </button>
       )}
@@ -300,7 +300,7 @@ function TwoPlayer({ me, mode, room, kind }: { me: Me; mode: Mode; room: string 
           {winner !== null && <Trophy className="mr-1 inline size-4" aria-hidden />}
           {banner}
         </p>
-        <button type="button" onClick={() => set(freshTwo(kind, names))} className="rounded-full bg-white px-4 py-2 text-sm font-black">
+        <button type="button" onClick={() => set(freshTwo(kind, names))} className="jelly rounded-full bg-white px-4 py-2 text-sm font-black">
           New game
         </button>
       </div>
@@ -483,7 +483,7 @@ function TycoonGame({ me, mode, room }: { me: Me; mode: Mode; room: string | nul
                 </p>
               )}
               {myTurn && st.phase === "roll" && (
-                <button type="button" onClick={() => set(tycoonRoll(st))} className="rounded-full bg-[#2b5fd9] px-6 py-2.5 font-black text-white shadow-[0_4px_0_#1f3fa8] active:translate-y-0.5">
+                <button type="button" onClick={() => set(tycoonRoll(st))} className="jelly rounded-full bg-[#2b5fd9] px-6 py-2.5 font-black text-white shadow-[0_4px_0_#1f3fa8] active:translate-y-0.5">
                   <Dice5 className="mr-1 inline size-5" aria-hidden /> Roll
                 </button>
               )}
@@ -493,10 +493,10 @@ function TycoonGame({ me, mode, room }: { me: Me; mode: Mode; room: string | nul
                     Buy {here.name} for £{here.price}?
                   </p>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => set(tycoonBuy(st, true))} className="rounded-full bg-[#15987f] px-4 py-2 text-sm font-black text-white">
+                    <button type="button" onClick={() => set(tycoonBuy(st, true))} className="jelly rounded-full bg-[#15987f] px-4 py-2 text-sm font-black text-white">
                       Buy it
                     </button>
-                    <button type="button" onClick={() => set(tycoonBuy(st, false))} className="rounded-full bg-[#f7f1e6] px-4 py-2 text-sm font-black">
+                    <button type="button" onClick={() => set(tycoonBuy(st, false))} className="jelly rounded-full bg-[#f7f1e6] px-4 py-2 text-sm font-black">
                       No thanks
                     </button>
                   </div>
@@ -551,7 +551,7 @@ function TycoonGame({ me, mode, room }: { me: Me; mode: Mode; room: string | nul
             ))}
           </div>
           {!online && (
-            <button type="button" onClick={() => setLocal(null)} className="w-full rounded-full bg-white py-2 text-sm font-black">
+            <button type="button" onClick={() => setLocal(null)} className="jelly w-full rounded-full bg-white py-2 text-sm font-black">
               New game
             </button>
           )}

@@ -50,7 +50,7 @@ function AdCard({ e, onClose }: { e: TechEvent; onClose?: () => void }) {
           <span className="rounded-full bg-[#ffd166] px-2 py-0.5 text-[10px] font-black tracking-widest text-[#13203a] uppercase">{e.hackathon ? "Hackathon" : "Tech event"}</span>
           <span className="text-[10px] font-bold text-white/60">Ad · via {e.source}</span>
           {onClose && (
-            <button type="button" onClick={onClose} aria-label="Hide this advert" className="ml-auto grid size-7 place-items-center rounded-full bg-white/15">
+            <button type="button" onClick={onClose} aria-label="Hide this advert" className="jelly ml-auto grid size-7 place-items-center rounded-full bg-white/15">
               <X className="size-3.5" />
             </button>
           )}
@@ -61,7 +61,7 @@ function AdCard({ e, onClose }: { e: TechEvent; onClose?: () => void }) {
           {e.free ? " · Free" : ""}
         </p>
         {e.host && <p className="mt-0.5 truncate text-xs text-white/60">Hosted by {e.host}</p>}
-        <a href={e.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#f2d9a6] px-4 py-2 text-xs font-black text-[#13203a]">
+        <a href={e.url} target="_blank" rel="noopener noreferrer" className="jelly mt-3 inline-flex items-center gap-1 rounded-full bg-[#f2d9a6] px-4 py-2 text-xs font-black text-[#13203a]">
           See the event <ExternalLink className="size-3.5" aria-hidden />
         </a>
       </div>

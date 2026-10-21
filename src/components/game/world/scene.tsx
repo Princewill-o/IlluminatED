@@ -109,7 +109,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
           <span key={i} className="tutorial-pop absolute top-1/2 left-1/2 grid size-12 place-items-center rounded-2xl bg-[#f6f2e8] shadow-lg">
             <Icon className="size-6 text-[#2b5fd9]" aria-hidden />
           </span>
-          <button type="button" onClick={onClose} aria-label="Skip the tutorial" className="absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-white/90">
+          <button type="button" onClick={onClose} aria-label="Skip the tutorial" className="jelly absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-white/90">
             <X className="size-4" />
           </button>
         </div>
@@ -128,11 +128,11 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
         </div>
         <div className="flex shrink-0 gap-2 border-t border-[#13203a]/10 p-3 pt-2">
           {i > 0 && (
-            <button type="button" onClick={() => setI(i - 1)} className="min-h-11 flex-1 rounded-full bg-white px-3 py-2 text-sm font-black">
+            <button type="button" onClick={() => setI(i - 1)} className="jelly min-h-11 flex-1 rounded-full bg-white px-3 py-2 text-sm font-black">
               Back
             </button>
           )}
-          <button type="button" onClick={() => (i < STEPS.length - 1 ? setI(i + 1) : onClose())} className="min-h-11 flex-1 rounded-full bg-[#2b5fd9] px-3 py-2 text-sm font-black text-white">
+          <button type="button" onClick={() => (i < STEPS.length - 1 ? setI(i + 1) : onClose())} className="jelly min-h-11 flex-1 rounded-full bg-[#2b5fd9] px-3 py-2 text-sm font-black text-white">
             {i < STEPS.length - 1 ? "Next" : "Start playing"}
           </button>
         </div>

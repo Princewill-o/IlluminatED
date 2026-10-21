@@ -100,7 +100,7 @@ export function BusStop({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="grid size-9 place-items-center rounded-full bg-black/10"
+            className="jelly grid size-9 place-items-center rounded-full bg-black/10"
           >
             <X className="size-4" />
           </button>
@@ -320,7 +320,7 @@ export function Commute({
               <button
                 type="button"
                 onClick={() => onArrive(true)}
-                className="mt-4 w-full rounded-full bg-[#1f4fbf] py-3 font-black text-white"
+                className="jelly mt-4 w-full rounded-full bg-[#1f4fbf] py-3 font-black text-white"
               >
                 Get off at {name}
               </button>

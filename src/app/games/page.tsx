@@ -57,7 +57,7 @@ export default async function GamesHome() {
               <Link href="/games/world" className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]">
                 Play London →
               </Link>
-              <Link href="/games/locker" className="rounded-full bg-white/15 px-5 py-3 font-black backdrop-blur hover:bg-white/25">
+              <Link href="/games/locker" className="jelly rounded-full bg-white/15 px-5 py-3 font-black backdrop-blur hover:bg-white/25">
                 Edit your character
               </Link>
               {player.dailyBonusReady && <span className="rounded-full bg-[#0d1726] px-4 py-2 text-sm font-black text-[#ffd166]">Daily Grind ready: double Clout</span>}

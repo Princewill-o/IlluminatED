@@ -115,7 +115,7 @@ export function TubeMap({
             <p className="text-xs font-black tracking-[0.25em] text-[#1f4fbf] uppercase">Underground</p>
             <h2 className="truncate text-2xl font-black">{current ? current.name : here === "highlands" ? "Glen Lorne" : "Station"}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-black/10">
+          <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-9 place-items-center rounded-full bg-black/10">
             <X className="size-4" />
           </button>
         </div>

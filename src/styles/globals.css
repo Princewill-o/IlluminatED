@@ -583,14 +583,95 @@ html.dark body:has(.arcade) {
   letter-spacing: -0.02em;
   line-height: 1;
 }
-/* Chunky "press me" buttons: flat colour with a solid offset edge, no gradients. */
-.arcade-btn {
-  box-shadow: 0 5px 0 0 var(--btn-edge, rgb(0 0 0 / 55%));
-  transition: transform 80ms ease, box-shadow 80ms ease;
+/* ─── Jelly buttons (game UI only) ───────────────────────────────────────────
+   Glossy candy buttons: white outline, top shine, darker lip underneath and a
+   press-down on tap. Applied to .jelly and .arcade-btn inside .arcade. Each
+   button keeps its meaning through a colour family mapped from its old
+   background class: blue (primary), green (main "play/continue" actions),
+   red (danger), orange (rewards), navy (secondary dark), purple, and frosted
+   white (neutral / icon buttons). Add .gloss-off to opt a button out. */
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off) {
+  --jelly: #2f7df0;
+  --jelly-hi: #6fb0ff;
+  --jelly-edge: #1748a8;
+  --jelly-ink: #ffffff;
+  background-color: var(--jelly);
+  background-image:
+    radial-gradient(ellipse 34% 22% at 22% 22%, rgb(255 255 255 / 70%) 0 55%, transparent 60%),
+    linear-gradient(180deg, var(--jelly-hi) 0%, var(--jelly) 52%, var(--jelly) 78%, color-mix(in srgb, var(--jelly) 82%, #000) 100%);
+  border: 2.5px solid rgb(255 255 255 / 88%);
+  color: var(--jelly-ink);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1.5px 0 color-mix(in srgb, var(--jelly-edge) 75%, transparent);
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 45%),
+    inset 0 -3px 0 rgb(0 0 0 / 16%),
+    0 4px 0 0 var(--jelly-edge),
+    0 7px 12px -2px rgb(9 20 45 / 30%);
+  transition: transform 90ms ease, box-shadow 90ms ease, filter 120ms ease;
 }
-.arcade-btn:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 1px 0 0 var(--btn-edge, rgb(0 0 0 / 55%));
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off) :is(svg) {
+  filter: drop-shadow(0 1.5px 0 color-mix(in srgb, var(--jelly-edge) 75%, transparent));
+}
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off):hover:not(:disabled) {
+  filter: brightness(1.07) saturate(1.05);
+}
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off):active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgb(255 255 255 / 40%),
+    inset 0 -2px 0 rgb(0 0 0 / 16%),
+    0 1px 0 0 var(--jelly-edge),
+    0 2px 5px -1px rgb(9 20 45 / 30%);
+}
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off):disabled {
+  filter: grayscale(0.85) brightness(1.05);
+  opacity: 0.55;
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 35%), 0 2px 0 0 var(--jelly-edge);
+}
+.arcade :is(.jelly, .arcade-btn):not(.gloss-off):focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 3px;
+}
+
+/* Colour families, mapped from each button's original background. */
+/* Green: the main "go" actions (previously cream). */
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#f2d9a6]"], [class*="bg-[#efd2a0]"], [class*="bg-[#5fd3a5]"], [class*="bg-[#15987f]"], .jelly-green):not(.gloss-off) {
+  --jelly: #4cb82a; --jelly-hi: #9be35f; --jelly-edge: #2a7a12;
+}
+/* Red: danger, quit, coral. */
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#c8322d]"], [class*="bg-[#ff7a6b]"], .bg-destructive, .jelly-red):not(.gloss-off) {
+  --jelly: #ec4434; --jelly-hi: #ff8a72; --jelly-edge: #a11f14;
+}
+/* Orange: rewards and highlights. */
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#ffd23f]"], [class*="bg-[#ffd166]"], .jelly-orange):not(.gloss-off) {
+  --jelly: #ff9416; --jelly-hi: #ffc35a; --jelly-edge: #b85a00;
+}
+/* Navy: secondary dark actions. */
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#13203a]"], [class*="bg-[#1b2c48]"], [class*="bg-[#102434]"], [class*="bg-[#263e47]"], .bg-foreground, .jelly-navy):not(.gloss-off) {
+  --jelly: #2a4fa8; --jelly-hi: #5a83d8; --jelly-edge: #142b66;
+}
+/* Purple. */
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#5b56c8]"], [class*="bg-[#2a2040]"], [class*="bg-[#32205e]"], .jelly-purple):not(.gloss-off) {
+  --jelly: #6b55e0; --jelly-hi: #a493ff; --jelly-edge: #3b2a99;
+}
+/* Frosted white: neutral and icon buttons. */
+.arcade :is(.jelly, .arcade-btn):is(.bg-white, [class*="bg-white/"], .bg-secondary, .bg-muted, [class*="bg-black/"], [class*="bg-[#fff3d8]"], [class*="bg-[#f7f1e6]"], [class*="bg-[#f6f2e8]"], .jelly-white):not(.gloss-off) {
+  --jelly: #eef3fb; --jelly-hi: #ffffff; --jelly-edge: #9fb2cf; --jelly-ink: #1d3f86;
+  border-color: rgb(255 255 255 / 95%);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 80%);
+}
+.dark .arcade :is(.jelly, .arcade-btn):is(.bg-white, [class*="bg-white/"], .bg-secondary, .bg-muted, [class*="bg-black/"], [class*="bg-[#fff3d8]"], [class*="bg-[#f7f1e6]"], [class*="bg-[#f6f2e8]"], .jelly-white):not(.gloss-off) {
+  --jelly: #dfe8f7; --jelly-edge: #7d93b8;
+}
+/* Buttons switched to a transparent state (e.g. an answer removed by a power-up) stay plain. */
+.arcade :is(.jelly, .arcade-btn)[class*="bg-transparent"] {
+  background: none;
+  box-shadow: none;
+  text-shadow: none;
+  border-color: var(--border);
+  color: inherit;
 }
 @keyframes arcade-pop {
   0% { transform: scale(0.6); opacity: 0; }

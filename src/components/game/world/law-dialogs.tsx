@@ -61,7 +61,7 @@ export function PoliceChallenge({
             <button
               type="button"
               onClick={() => onResult(correct)}
-              className="mt-4 w-full rounded-full bg-[#2b5fd9] py-3 font-black text-white"
+              className="jelly mt-4 w-full rounded-full bg-[#2b5fd9] py-3 font-black text-white"
             >
               {correct ? "Accept the warning" : "Go to the hearing"}
             </button>

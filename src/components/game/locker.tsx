@@ -135,7 +135,7 @@ export function Locker({
           <span aria-hidden className="absolute inset-x-10 bottom-6 h-6 rounded-[50%] bg-black/15" />
           <Character3DPreview avatar={avatar} facing={facing} clip={clip} className="relative mx-auto h-[300px] w-full" />
           <div className="absolute bottom-3 left-3 flex gap-1.5">
-            <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="grid size-9 place-items-center rounded-full bg-white/90 text-[#0d1726] active:scale-95">
+            <button type="button" onClick={turn} aria-label="Turn around" title="Turn around" className="jelly grid size-9 place-items-center rounded-full bg-white/90 text-[#0d1726] active:scale-95">
               <RotateCw className="size-4" aria-hidden />
             </button>
             <button
@@ -341,7 +341,7 @@ export function Locker({
                       <button
                         type="button"
                         onClick={() => wear(item)}
-                        className="w-full rounded-full bg-brand py-1.5 text-xs font-black text-white transition active:scale-95"
+                        className="jelly w-full rounded-full bg-brand py-1.5 text-xs font-black text-white transition active:scale-95"
                       >
                         Try on
                       </button>
@@ -364,7 +364,7 @@ export function Locker({
                           type="button"
                           onClick={() => buy(item)}
                           disabled={pending || clout < item.price || !canSave}
-                          className="flex-1 rounded-full bg-[#ffd166] py-1.5 text-xs font-black text-[#0d1726] transition active:scale-95 disabled:opacity-40"
+                          className="jelly flex-1 rounded-full bg-[#ffd166] py-1.5 text-xs font-black text-[#0d1726] transition active:scale-95 disabled:opacity-40"
                         >
                           {fmt(item.price)}
                         </button>

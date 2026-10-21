@@ -148,7 +148,7 @@ export function GamesHall({ serverId, me, onClose }: { serverId: string; me: { i
             <h2 className="mt-1 text-2xl font-black">Quiz Battle</h2>
             <p className="text-sm text-[#13203a]/70">Live with everyone in the hall. Quickest right answers win.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Leave the Games Hall" className="grid size-9 place-items-center rounded-full bg-white">
+          <button type="button" onClick={onClose} aria-label="Leave the Games Hall" className="jelly grid size-9 place-items-center rounded-full bg-white">
             <X className="size-4" />
           </button>
         </div>
@@ -171,7 +171,7 @@ export function GamesHall({ serverId, me, onClose }: { serverId: string; me: { i
                       type="button"
                       disabled={status !== "live" || !bank}
                       onClick={start}
-                      className="mt-4 rounded-full bg-[#2b5fd9] px-6 py-3 font-black text-white disabled:opacity-40"
+                      className="jelly mt-4 rounded-full bg-[#2b5fd9] px-6 py-3 font-black text-white disabled:opacity-40"
                     >
                       Start the battle
                     </button>
@@ -188,7 +188,7 @@ export function GamesHall({ serverId, me, onClose }: { serverId: string; me: { i
                   <p className="mt-2 text-xl font-black">@{board[0]?.u} wins with {board[0]?.s ?? 0}</p>
                   <p className="text-sm">You scored {myScore.current}.</p>
                   {host && (
-                    <button type="button" onClick={start} className="mt-4 rounded-full bg-[#2b5fd9] px-6 py-3 font-black text-white">
+                    <button type="button" onClick={start} className="jelly mt-4 rounded-full bg-[#2b5fd9] px-6 py-3 font-black text-white">
                       Play again
                     </button>
                   )}
