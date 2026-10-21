@@ -9,6 +9,7 @@ import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, Train
 import { createPortal } from "react-dom";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
+import { HudSlot } from "./hud";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
@@ -38,6 +39,7 @@ import { readVisualQuality, type VisualQuality } from "@/game/core/visual-qualit
 import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
+
 
 const SPRITE_H = 64;
 const SPRITE_W = 64;
@@ -607,11 +609,13 @@ export function WorldView({
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
     >
-      <details aria-label="Graphics settings" className="absolute bottom-14 left-3 z-[100000] flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
-        <summary className="cursor-pointer py-1 font-bold">Settings</summary>
+      <HudSlot area="bl-row" order={2}><details aria-label="Graphics settings" className="group relative rounded-full border border-white/20 bg-[#13203a]/95 px-3 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
+        <summary className="flex min-h-10 cursor-pointer items-center font-bold">Settings</summary>
+        <div className="absolute bottom-full left-0 mb-2 flex w-max max-w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 shadow-xl">
         <label>Graphics <select aria-label="3D graphics quality" value={quality} onChange={e=>{const next=readVisualQuality(e.target.value);setQuality(next);try{localStorage.setItem("world-graphics",next);}catch{/* Optional. */}}} className="ml-1 min-h-9 rounded bg-[#243c4b] px-1 font-bold text-white"><option value="auto">Balanced</option><option value="cinematic">Cinematic · more GPU</option><option value="low">Performance</option></select></label>
         <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
-      </details>
+        </div>
+      </details></HudSlot>
       <div
         ref={layer}
         data-world
@@ -703,8 +707,8 @@ export function WorldView({
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
-      <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
-        <button type="button" onClick={onChangeServer} className="pointer-events-auto min-h-11 max-w-[calc(100%-4rem)] rounded-2xl border border-[#c8b182]/40 bg-[#183b35]/95 px-3 py-2 text-left text-xs text-[#fff3d8] shadow-[0_8px_24px_rgba(12,30,28,0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8b182]" aria-label={`Change server · ${map.name}`}>
+      <HudSlot area="tl" order={0}>
+        <button type="button" onClick={onChangeServer} className="min-h-11 max-w-full rounded-2xl border border-[#c8b182]/40 bg-[#183b35]/95 px-3 py-2 text-left text-xs text-[#fff3d8] shadow-[0_8px_24px_rgba(12,30,28,0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8b182]" aria-label={`Change server · ${map.name}`}>
           <span className="block truncate font-black">{map.name}</span>
           {map.kind !== "home" && <span className="mt-0.5 hidden text-[10px] text-white/70 sm:block">Ambient residents · computer controlled</span>}
           <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-[#d8d4e0] sm:text-xs">
@@ -714,7 +718,8 @@ export function WorldView({
             <span className="text-[#8d85a0]">· {REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
           </span>
         </button>
-        <div className="pointer-events-auto relative">
+      </HudSlot>
+      <HudSlot area="tr-tools" order={0}>
           <button
             type="button"
             onClick={() => setRoster(r => (r ? null : [...players.current.values()]))}
@@ -748,13 +753,12 @@ export function WorldView({
 ,
             document.body,
           )}
-        </div>
-      </div>
+      </HudSlot>
 
       {(world.status === "offline" || world.status === "reconnecting") && (
-        <div className="pointer-events-none absolute inset-x-0 top-20 mx-auto w-fit rounded-full bg-[#ffd166] px-4 py-2 text-sm font-black text-[#0d1726]" role="status">
+        <HudSlot area="tc" order={5} className="pointer-events-none"><div className="rounded-full bg-[#ffd166] px-4 py-2 text-sm font-black text-[#0d1726]" role="status">
           {world.status === "offline" ? "You're offline. Keep walking, we'll sync when you're back." : "Reconnecting…"}
-        </div>
+        </div></HudSlot>
       )}
       {world.status === "full" && (
         <div className="absolute inset-0 grid place-items-center bg-black/70 p-6 text-center">
@@ -768,30 +772,31 @@ export function WorldView({
       )}
 
       {near && map.kind === "station" && near.id === "board" && (
-        <p className="pointer-events-none absolute inset-x-0 bottom-28 mx-auto w-fit rounded-2xl bg-[#f2d9a6] px-4 py-3 text-center text-xs font-black text-[#0d1726] md:bottom-8">
+        <HudSlot area="bc" order={6}><p className="pointer-events-none rounded-2xl bg-[#f2d9a6] px-4 py-3 text-center text-xs font-black text-[#0d1726]">
           Wait for the train to stop, then walk through an open red doorway to board.
-        </p>
+        </p></HudSlot>
       )}
       {near && !(map.kind === "station" && near.id === "board") && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-28 flex justify-center md:bottom-8">
+        <HudSlot area="bc" order={5}>
           <button
             type="button"
             onClick={enter}
-            className="arcade-btn pointer-events-auto min-h-11 max-w-[calc(100%-7rem)] rounded-2xl bg-[#f2d9a6] px-4 py-2.5 text-center text-xs leading-snug font-black whitespace-normal text-[#0d1726] sm:max-w-md sm:rounded-full sm:px-6 sm:text-sm"
+            className="arcade-btn min-h-11 max-w-full rounded-2xl bg-[#f2d9a6] px-4 py-2.5 text-center text-xs leading-snug font-black whitespace-normal text-[#0d1726] sm:max-w-md sm:rounded-full sm:px-6 sm:text-sm"
           >
             {near.label} {touch ? "" : "(E)"}
           </button>
-        </div>
+        </HudSlot>
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <HudSlot area="bl" order={0}>
         {touch ? <div className="flex items-end gap-2"><Joystick driving={Boolean(car)} onMove={(x, y) => {
           stick.current = { x, y };
           if (x || y) target.current = null;
         }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}</div> : (
-          <p className="max-w-[min(78%,30rem)] rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ reverse · A D steer · Space brake" : "WASD / arrows · E to interact"}</p>
+          <p className="pointer-events-none rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ reverse · A D steer · Space brake" : "WASD / arrows · E to interact"}</p>
         )}
-        <div className="pointer-events-auto relative">
+      </HudSlot>
+      <HudSlot area="br" order={5}>
           {sheet && (
             <div className="absolute right-0 bottom-16 w-64 rounded-3xl border border-white/10 bg-[#14223a] p-3 shadow-2xl">
               <div className="grid grid-cols-3 gap-1">
@@ -820,8 +825,7 @@ export function WorldView({
           >
             <MessageCircle className="size-6 text-white" aria-hidden />
           </button>
-        </div>
-      </div>
+      </HudSlot>
 
       {picked && (
         <div className="absolute inset-0 grid place-items-center bg-black/60 p-6" onClick={() => setPicked(null)}>

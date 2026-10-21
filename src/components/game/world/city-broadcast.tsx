@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { HudSlot } from "./hud";
+
 export interface CityHeadline { title: string; url: string; published: string | null }
 export function useCityNews() {
   const [headlines, setHeadlines] = useState<CityHeadline[]>([]);
@@ -28,7 +30,7 @@ export function useCityNews() {
 }
 
 export function CityBroadcast({ headlines, updated, offline }: ReturnType<typeof useCityNews>) {
-  return <details className="pointer-events-auto absolute bottom-28 right-3 z-50 w-[min(320px,calc(100%-24px))] rounded-2xl border border-[#c8b182]/50 bg-[#152e35]/95 text-[#fff3d8] shadow-xl">
+  return <HudSlot area="br" order={40} narrowArea="tl"><details className="w-[min(320px,100%)] rounded-2xl border border-[#c8b182]/50 bg-[#152e35]/95 text-[#fff3d8] shadow-xl">
     <summary className="cursor-pointer px-4 py-3 text-xs font-black">City broadcast · News & announcements</summary>
     <div className="max-h-[40dvh] space-y-3 overflow-y-auto px-4 pb-4 text-xs">
       <p className="text-white/60">{offline ? "Feed unavailable · retrying automatically" : updated ? `Checked ${new Date(updated).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : "Connecting to the newsroom…"}</p>
@@ -36,5 +38,5 @@ export function CityBroadcast({ headlines, updated, offline }: ReturnType<typeof
       <p>Visit company offices to start a shift. Walk to a terminal to begin work.</p>
       <a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" target="_blank" rel="noopener noreferrer" className="block text-[10px] text-white/60 underline">Contains public sector information licensed under OGL v3.0</a>
     </div>
-  </details>;
+  </details></HudSlot>;
 }

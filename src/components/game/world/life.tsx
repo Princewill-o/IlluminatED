@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { BookOpenCheck, Gavel, Pill, ShoppingBasket, Siren, Star, X } from "lucide-react";
 
 import { CutsceneBrand } from "./cutscene-brand";
+import { HudSlot } from "./hud";
 
 import { buyWorldItem } from "@/app/games/world/actions";
 import { SHOP, type ShopItem, acquittalChance, sentenceMs } from "@/game/core/law";
@@ -76,11 +77,11 @@ export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: 
 export function WantedStars({ stars }: { stars: number }) {
   if (!stars) return null;
   return (
-    <div className="pointer-events-none absolute top-[60px] left-1/2 z-[60] flex -translate-x-1/2 gap-1 rounded-full bg-[#13203a]/85 px-3 py-1.5" role="status" aria-label={`Wanted level ${stars} of 5`}>
+    <HudSlot area="tc" order={10} className="pointer-events-none"><div className="flex gap-1 rounded-full bg-[#13203a]/85 px-3 py-1.5" role="status" aria-label={`Wanted level ${stars} of 5`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star key={i} className={cn("size-5", i < stars ? "wanted-on fill-[#ffd166] text-[#ffd166]" : "text-white/30")} aria-hidden />
       ))}
-    </div>
+    </div></HudSlot>
   );
 }
 

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { MessageCircle, Send, X } from "lucide-react";
 
+import { HudSlot } from "./hud";
+
 import { CHAT_LIMIT, type RoomMessage } from "@/game/core/room-chat";
 
 export function RoomChat({messages, connected, onSend, hidden, room}:{messages:RoomMessage[]; connected:boolean; onSend:(text:string)=>Promise<string|null>; hidden:Set<string>; room:string}) {
@@ -11,8 +13,8 @@ export function RoomChat({messages, connected, onSend, hidden, room}:{messages:R
   const visible=messages.filter(m=>!hidden.has(m.userId));
   useEffect(()=>{if(open){end.current?.scrollIntoView({block:"nearest"});seen.current=messages.length;}},[open,messages]);
   const unread=open?0:Math.max(0,messages.length-seen.current);
-  return <div className="absolute bottom-24 left-3 z-[100002] pointer-events-auto max-w-[calc(100%-1.5rem)]" onKeyDown={e=>e.stopPropagation()} onKeyUp={e=>e.stopPropagation()}>
-    {open && <section aria-label="In-game chat" className="mb-2 flex max-h-[55dvh] w-80 flex-col overflow-hidden rounded-2xl border border-white/20 bg-[#102434]/95 text-white shadow-xl">
+  return <HudSlot area="bl-row" order={1}><div className="relative" onKeyDown={e=>e.stopPropagation()} onKeyUp={e=>e.stopPropagation()}>
+    {open && <section aria-label="In-game chat" className="absolute bottom-full left-0 z-10 mb-2 flex max-h-[min(55dvh,26rem)] w-80 max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden rounded-2xl border border-white/20 bg-[#102434]/95 text-white shadow-xl">
       <header className="flex items-center justify-between gap-2 border-b border-white/15 px-3 py-2"><div><h2 className="text-sm font-bold">Room chat · {room}</h2><p className="text-[10px] text-white/70">{connected?"Live · players in this map and server":"Disconnected · sending unavailable"}</p></div><button type="button" aria-label="Close chat" onClick={()=>setOpen(false)} className="grid size-9 place-items-center"><X className="size-4"/></button></header>
       <div role="log" aria-label="Room messages" aria-live="polite" aria-relevant="additions" className="min-h-24 overflow-y-auto p-3 text-xs select-text">
         {!visible.length && <p className="text-white/60">No messages yet. Say hello to other players here.</p>}
@@ -25,5 +27,5 @@ export function RoomChat({messages, connected, onSend, hidden, room}:{messages:R
       </form>
     </section>}
     <button type="button" aria-label="Open room chat" aria-expanded={open} onClick={()=>setOpen(v=>!v)} className="jelly flex min-h-10 items-center gap-2 rounded-full border border-white/25 bg-[#102434] px-3 text-xs font-bold text-white shadow-lg"><MessageCircle className="size-4"/>Chat {unread>0&&<span className="rounded-full bg-[#efd2a0] px-1.5 text-[#102434]">{unread}</span>}</button>
-  </div>;
+  </div></HudSlot>;
 }

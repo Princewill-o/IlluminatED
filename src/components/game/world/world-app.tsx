@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, Gamepad2, Smartphone, Trophy } from "lucide-react";
+import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
@@ -14,6 +14,7 @@ import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
+import { HudLayout, HudSlot } from "./hud";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
@@ -767,6 +768,7 @@ export function WorldApp({
 
   return (
     <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
+    <HudLayout>
       <SceneMusic scene={
         journey || bus ? "journey"
           : games ? "arcade"
@@ -806,21 +808,21 @@ export function WorldApp({
         goTo(destination.mapId, destination.label, spot);
       }} />}
       {building && mapId === "home" && <HomeEditor embedded onClose={() => setBuilding(false)} claimed={home.claimed} avatar={me.avatar} owned={home.owned} current={home.current} layout={home.layout} bought={home.furniture} clout={wallet} />}
-      {mapId === "home" && !building && !homeAction && <button type="button" onClick={() => { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }} className="jelly absolute top-28 right-3 z-[70] rounded-full border border-[#c8b182] bg-[#fff3d8] px-4 py-3 text-xs font-bold text-[#183b35] shadow-lg">Build & buy · arrange your home</button>}
-      {homeAction && <div role="status" className="absolute bottom-24 left-1/2 z-[100002] w-64 -translate-x-1/2 rounded-2xl border border-[#c8b182] bg-[#faf6ed] p-4 text-center text-[#183b35] shadow-xl">
+      {mapId === "home" && !building && !homeAction && <HudSlot area="tr" order={70}><button type="button" onClick={() => { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }} className="jelly rounded-full border border-[#c8b182] bg-[#fff3d8] px-4 py-3 text-xs font-bold text-[#183b35] shadow-lg">Build & buy · arrange your home</button></HudSlot>}
+      {homeAction && <HudSlot area="bc" order={10}><div role="status" className="w-64 max-w-full rounded-2xl border border-[#c8b182] bg-[#faf6ed] p-4 text-center text-[#183b35] shadow-xl">
         <p className="font-bold">{homeAction.label}</p>
         <p className="mt-1 text-xs">{Math.round(homeAction.duration / 1000)} seconds · needs improve when you finish</p>
         <button type="button" onClick={() => setHomeAction(null)} className="mt-3 min-h-11 rounded-full bg-[#183b35] px-5 text-xs font-bold text-white">Stop activity</button>
-      </div>}
+      </div></HudSlot>}
       {bike && mapId === "city" && (
-        <button
+        <HudSlot area="bc" order={0}><button
           type="button"
           onClick={() => setBike(null)}
-          className="absolute bottom-3 left-1/2 z-[100001] -translate-x-1/2 rounded-full px-4 py-2 text-sm font-black text-white shadow-lg"
+          className="rounded-full px-4 py-2 text-sm font-black text-white shadow-lg"
           style={{ background: bike.brand.colour }}
         >
           Riding {bike.brand.name} · Get off
-        </button>
+        </button></HudSlot>
       )}
       {dock && (
         <BikeDock
@@ -859,19 +861,19 @@ export function WorldApp({
         />
       )}
       {driving && outdoors && (
-        <button type="button" onClick={() => driveCar(null)} className="absolute right-3 bottom-52 z-[100001] min-h-11 max-w-[55%] rounded-2xl bg-[#13203a] px-4 py-2 text-xs font-black text-white shadow-lg sm:bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2">
+        <HudSlot area="bc" order={1}><button type="button" onClick={() => driveCar(null)} className="jelly min-h-11 rounded-full bg-[#13203a] px-4 py-2 text-xs font-black text-white shadow-lg">
           Park {carById(driving)?.name}
-        </button>
+        </button></HudSlot>
       )}
       <LevelBadge xp={xpNow} />
-      {mapId === "study-lobby" && <div className="absolute top-14 left-1/2 z-[60] flex -translate-x-1/2 gap-2 rounded-2xl bg-[#f7f1e6]/95 p-2 text-[#13203a] shadow-lg">
-        <button type="button" onClick={() => setLearning(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#2b5fd9] px-4 text-sm font-bold text-white"><BookOpen className="size-4" aria-hidden /> Study</button>
-        <button type="button" onClick={() => setAwardsOpen(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#ffedbd] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
-      </div>}
-      {!driving && !bike && <button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly absolute right-3 bottom-[13.5rem] z-[100001] min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5 md:hidden">Jump</button>}
-      <button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex min-h-11 items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
-        <Gamepad2 className="size-4" aria-hidden /> Games
-      </button>
+      {mapId === "study-lobby" && <HudSlot area="tc" order={20}><div className="flex gap-2 rounded-2xl bg-[#f7f1e6]/95 p-2 text-[#13203a] shadow-lg">
+        <button type="button" onClick={() => setLearning(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#2b5fd9] px-4 text-sm font-bold text-white"><BookOpen className="size-4" aria-hidden /> Study</button>
+        <button type="button" onClick={() => setAwardsOpen(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#ffd166] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
+      </div></HudSlot>}
+      {!driving && !bike && <HudSlot area="br-act" order={2} className="md:hidden"><button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5">Jump</button></HudSlot>}
+      <HudSlot area="br-nav" order={3}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} aria-label="Games" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Gamepad2 className="size-4" aria-hidden /> <span className="hidden sm:inline">Games</span>
+      </button></HudSlot>
       <WantedStars stars={life.stars} />
       {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
@@ -880,21 +882,21 @@ export function WorldApp({
         <button type="button" className="jelly mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
         <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));offend("scuffle","Someone was hurt.");}}>Continue with consequences</button>
       </section></div>}
-      {outdoors && !jailed && <EventBanner className="absolute top-[104px] right-3 z-[100001] hidden max-w-[220px] sm:flex" />}
-      {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
+      {outdoors && !jailed && <HudSlot area="tr" order={50} className="hidden sm:block"><EventBanner className="flex max-w-[220px]" /></HudSlot>}
+      {life.sick && <HudSlot area="tc" order={30} className="pointer-events-none"><p className="rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p></HudSlot>}
       {nearPerson && !jailed && !driving && (
-        <button type="button" onClick={fight} className="jelly absolute right-3 bottom-52 z-[100001] min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
+        <HudSlot area="br-act" order={1}><button type="button" onClick={fight} className="jelly min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
           Shove (F)
-        </button>
+        </button></HudSlot>
       )}
-      {pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <div role="status" className="pointer-events-none absolute top-40 left-1/2 z-[65] max-w-[60%] -translate-x-1/2 rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div>}
+      {pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <HudSlot area="tc" order={15} className="pointer-events-none"><div role="status" className="rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div></HudSlot>}
       {pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
         pursuitRef.current = null; setPursuit(null);
         if(correct) { updateLife(clearWanted); say("Correct. The officers let you go with a warning.",true); }
         else { setArrest(true); arrestTimer.current=setTimeout(()=>{updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));setArrest(false);goTo("court","Crown Court");},2600); }
       }}/ >}
       {arrest && <ArrestOverlay />}
-      <button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="absolute right-3 bottom-24 z-[100001] grid size-12 place-items-center rounded-2xl border-2 border-white bg-[#13203a] text-white shadow-lg"><Smartphone className="size-6"/></button>
+      <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
       {phone && <GamePhone onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
@@ -965,13 +967,14 @@ export function WorldApp({
         goTo("prison", "HMP Thames");
       }} />}
 <SceneWipe show={fading} label={sceneName} />
-      <button
+      <HudSlot area="br-nav" order={4}><button
         type="button"
         onClick={() => setTutorial(true)}
-        className="jelly absolute right-3 bottom-11 z-[100001] min-h-11 rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
+        aria-label="How to play"
+        className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
       >
-        How to play
-      </button>
+        <CircleHelp className="size-4 sm:hidden" aria-hidden /><span className="hidden sm:inline">How to play</span>
+      </button></HudSlot>
       {tutorial && <Tutorial onClose={() => {
         try { localStorage.setItem(`${TUTORIAL_KEY}:${me.id}`, "seen"); } catch { /* Show again when storage is unavailable. */ }
         setTutorial(false);
@@ -982,9 +985,9 @@ export function WorldApp({
         </div>
       )}
       {atHome && (
-        <Link href="/games/home" className="jelly absolute right-3 bottom-3 z-[100001] rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] shadow-lg">
+        <HudSlot area="br-act" order={3}><Link href="/games/home" className="jelly rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] shadow-lg">
           Decorate
-        </Link>
+        </Link></HudSlot>
       )}
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
       {dailyJob&&map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")&&<DailyShift job={dailyJob} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
@@ -1004,14 +1007,14 @@ export function WorldApp({
       {mapOpen && <CityMap map={map} searchArea={pursuit} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
-        <div className="pointer-events-none absolute inset-x-0 top-16 mx-auto w-fit rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
+        <HudSlot area="tc" order={25}><div className="rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">
           {room}
           {officeSlug && (
             <Link href={`/messages?org=${officeSlug}`} className="pointer-events-auto ml-2 underline">
               Open my meetings
             </Link>
           )}
-        </div>
+        </div></HudSlot>
       )}
       {desk && officeSlug && (
         <div className="absolute inset-0 grid place-items-end bg-black/60 md:place-items-center" onClick={() => setDesk(false)}>
@@ -1051,6 +1054,7 @@ export function WorldApp({
           </div>
         </div>
       )}
+    </HudLayout>
     </div>
   );
 }

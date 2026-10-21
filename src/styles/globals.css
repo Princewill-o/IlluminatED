@@ -653,7 +653,7 @@ html.dark body:has(.arcade) {
   --jelly: #2a4fa8; --jelly-hi: #5a83d8; --jelly-edge: #142b66;
 }
 /* Purple. */
-.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#5b56c8]"], [class*="bg-[#2a2040]"], [class*="bg-[#32205e]"], .jelly-purple):not(.gloss-off) {
+.arcade :is(.jelly, .arcade-btn):is([class*="bg-[#5b56c8]"], [class*="bg-[#7a5ce6]"], [class*="bg-[#2a2040]"], [class*="bg-[#32205e]"], .jelly-purple):not(.gloss-off) {
   --jelly: #6b55e0; --jelly-hi: #a493ff; --jelly-edge: #3b2a99;
 }
 /* Frosted white: neutral and icon buttons. */
