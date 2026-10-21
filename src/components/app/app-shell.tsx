@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="App"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-chrome pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
-          <ul className="grid h-[64px] grid-cols-5">
+          <ul className="grid h-[64px] grid-cols-6">
             {APP_TABS.map((tab) => {
               const on = current === tab.id;
               const Icon = tab.icon;

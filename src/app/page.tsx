@@ -93,6 +93,39 @@ export default function Home() {
           </figure>
         </div>
       </section>
+      <section className="bg-[#24215e] text-white" aria-labelledby="agent-title">
+        <div className="container grid items-center gap-10 py-16 lg:grid-cols-[1fr_1.15fr]">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-[#c9c6ff]">New: the study agent</p>
+            <h2 id="agent-title" className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+              An AI that does the revision admin for you.
+            </h2>
+            <p className="mt-4 max-w-xl text-[#d9d7ff]">
+              Ask it to plan your week and it builds one around your homework deadlines and exam date. Ask it to test you and it
+              quizzes you on the topics your teacher set, explaining every answer. It can also find hackathons and tech events
+              worth applying to. It works on your own data, and the same safeguarding as Ask Tiggy applies.
+            </p>
+            <ul className="mt-6 grid gap-2 text-sm sm:grid-cols-2">
+              {["Plans your week", "Quizzes you on homework topics", "Knows what's due", "Finds opportunities"].map((f) => (
+                <li key={f} className="rounded-xl border border-white/15 bg-white/5 px-4 py-3">{f}</li>
+              ))}
+            </ul>
+            <Link href="/agent" className="mt-8 inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-[#24215e]">
+              Try the study agent <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+          <video
+            className="w-full rounded-2xl shadow-2xl ring-1 ring-white/10"
+            src="/landing/illumed-film.mp4"
+            poster="/landing/illumed-film-poster.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label="Short film showing the IlluminatED game world and the study agent planning a revision week"
+          />
+        </div>
+      </section>
       <section className="container py-14" aria-labelledby="problem-title">
         <p className="text-primary text-xs font-bold tracking-widest uppercase">
           The problem we are solving

@@ -3,6 +3,7 @@ import {
   ClipboardList,
   Gamepad2,
   House,
+  Sparkles,
   type LucideIcon,
   UserRound,
 } from "lucide-react";
@@ -60,7 +61,7 @@ export function isAppPath(path: string) {
 }
 
 export interface AppTab {
-  id: "home" | "learn" | "play" | "homework" | "me";
+  id: "home" | "learn" | "agent" | "play" | "homework" | "me";
   label: string;
   href: string;
   icon: LucideIcon;
@@ -96,6 +97,7 @@ export const APP_TABS: AppTab[] = [
       "/companies",
     ],
   },
+  { id: "agent", label: "Agent", href: "/agent", icon: Sparkles, match: ["/agent"] },
   { id: "play", label: "Play", href: "/games", icon: Gamepad2, match: ["/games"] },
   { id: "homework", label: "Homework", href: "/homework", icon: ClipboardList, match: ["/homework"] },
   {
