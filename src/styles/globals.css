@@ -6,19 +6,19 @@
 @variant dark (&:is(.dark *));
 
 :root {
-  --background: #f7f1e6;
-  --foreground: #121a2b;
+  --background: #eef5ff;
+  --foreground: #14123a;
   --card: #ffffff;
-  --card-foreground: #121a2b;
+  --card-foreground: #14123a;
   --popover: #ffffff;
-  --popover-foreground: #121a2b;
-  --primary: #1f4fbf;
+  --popover-foreground: #14123a;
+  --primary: #5b56c8;
   --primary-foreground: #ffffff;
-  --secondary: #eef1f6;
-  --secondary-foreground: #1b3a6b;
-  --muted: #efe7d8;
+  --secondary: #ecebff;
+  --secondary-foreground: #2a2670;
+  --muted: #eef0fb;
   --muted-foreground: #5a6272;
-  --accent: #fbf0dc;
+  --accent: #fff3d6;
   --accent-foreground: #6b3d00;
   --destructive: #b42318;
   --destructive-foreground: #ffffff;
@@ -27,12 +27,12 @@
   --danger-soft: #fdeceb;
   --warm: #e39b2d;
   --warm-text: #8a5200;
-  --glow: #f4ead8;
-  --border: #e5e0d5;
-  --input: #d6d0c3;
-  --ring: #2b62c4;
+  --glow: #ecebff;
+  --border: #dcdcf0;
+  --input: #cfcfe6;
+  --ring: #5b56c8;
 
-  --chart-1: #173c78;
+  --chart-1: #5b56c8;
   --chart-2: #e98a1f;
   --chart-3: #15987f;
   --chart-4: #7a5ce6;
@@ -40,12 +40,12 @@
 
   --sidebar: #ffffff;
   --sidebar-foreground: #0f1b33;
-  --sidebar-primary: #173c78;
+  --sidebar-primary: #5b56c8;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #eaf0fa;
-  --sidebar-accent-foreground: #173c78;
+  --sidebar-accent: #ecebff;
+  --sidebar-accent-foreground: #2a2670;
   --sidebar-border: #e3dfd4;
-  --sidebar-ring: #2f6fe0;
+  --sidebar-ring: #5b56c8;
 
   --radius: 10px;
 
@@ -72,17 +72,17 @@
 }
 
 .dark {
-  --background: #0e1420;
+  --background: #0b0a2e;
   --foreground: #e8ecf3;
-  --card: #151d2b;
+  --card: #16144a;
   --card-foreground: #e8ecf3;
-  --popover: #151d2b;
+  --popover: #16144a;
   --popover-foreground: #e8ecf3;
-  --primary: #aac2ec;
-  --primary-foreground: #0e1420;
-  --secondary: #1c2638;
+  --primary: #b3afff;
+  --primary-foreground: #0b0a2e;
+  --secondary: #211e5c;
   --secondary-foreground: #dfe6f2;
-  --muted: #182131;
+  --muted: #17154a;
   --muted-foreground: #9ba5b6;
   --accent: #2a2215;
   --accent-foreground: #ffd9a3;
@@ -93,20 +93,20 @@
   --danger-soft: #3a1714;
   --warm: #f0b45a;
   --warm-text: #f0b45a;
-  --glow: #1a2233;
+  --glow: #211e5c;
   --border: rgb(255 255 255 / 9%);
   --input: rgb(255 255 255 / 16%);
-  --ring: #aac2ec;
+  --ring: #b3afff;
 
-  --chart-1: #9dbcff;
+  --chart-1: #b3afff;
   --chart-2: #f5a54a;
   --chart-3: #5fd3a5;
   --chart-4: #b9a6ff;
   --chart-5: #ff9aac;
 
-  --sidebar: #101c35;
+  --sidebar: #0b0a2e;
   --sidebar-foreground: #eef2fa;
-  --sidebar-primary: #9dbcff;
+  --sidebar-primary: #b3afff;
   --sidebar-primary-foreground: #0a1326;
   --sidebar-accent: #182a4c;
   --sidebar-accent-foreground: #eef2fa;
@@ -1025,4 +1025,78 @@ html.dark body:has(.app-theme) {
 .app-theme main :where(a, button):where(.bg-primary, .bg-brand) {
   border: 2px solid #1d1a4a;
   box-shadow: 3px 3px 0 #1d1a4a;
+}
+
+
+/* Website pages share the landing look: a pale day sky in light mode and the
+   starry night sky in dark mode (the app shell and landing set their own). */
+body:not(:has(.social, .arcade)) {
+  background-image: linear-gradient(180deg, #dcecff 0%, #eef5ff 28%, #fbf8f1 100%);
+  background-attachment: fixed;
+}
+.dark body:not(:has(.social, .arcade)) {
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 140px 80px, rgba(255,255,255,0.7) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 260px 160px, rgba(255,255,255,0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 380px 40px, rgba(255,255,255,0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 470px 220px, rgba(255,255,255,0.8) 50%, transparent 51%),
+    linear-gradient(180deg, #05051a 0%, #0b0a2e 40%, #16124f 100%);
+  background-size: 600px 340px, 600px 340px, 600px 340px, 600px 340px, 600px 340px, 100% 100%;
+  background-attachment: fixed;
+}
+body :where(main h1, main h2) {
+  font-family: var(--font-geist-sans), var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+/* Scroll reveal, site-wide: sections rise and un-blur as they enter the view.
+   Browsers without scroll-driven animations simply show everything. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:not(:has(.app-theme)) main > :where(section, article, div) > :where(section, div, article, figure, ul, ol, h2, p):not(:first-child),
+    body:not(:has(.app-theme)) main > :where(section, article):not(:first-of-type) {
+      animation: site-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+@keyframes site-reveal {
+  from { opacity: 0; transform: translateY(28px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* Magic UI keyframes (marquee, shimmer button). */
+@theme inline {
+  --animate-marquee: marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
+  --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
+}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(calc(-100% - var(--gap))); } }
+@keyframes marquee-vertical { from { transform: translateY(0); } to { transform: translateY(calc(-100% - var(--gap))); } }
+@keyframes shimmer-slide { to { transform: translate(calc(100cqw - 100%), 0); } }
+@keyframes spin-around {
+  0% { transform: translateZ(0) rotate(0); }
+  15%, 35% { transform: translateZ(0) rotate(90deg); }
+  65%, 85% { transform: translateZ(0) rotate(270deg); }
+  100% { transform: translateZ(0) rotate(360deg); }
+}
+
+/* Landing extras: moving gradient word, a light sweep across the main button and collage pop-ins. */
+@keyframes landing-hue { to { background-position: 300% 0; } }
+.landing-shine::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.45) 50%, transparent 70%);
+  transform: translateX(-120%); animation: landing-sweep 3.2s ease-in-out infinite;
+}
+@keyframes landing-sweep { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes landing-pop-in { from { opacity: 0; transform: translateY(60px) scale(0.85); } to { opacity: 1; transform: none; } }
+.landing-pop { animation: landing-pop-in 0.8s cubic-bezier(.34,1.56,.64,1) both; }
+.landing-pop:nth-of-type(1) { animation-delay: 0.45s; }
+.landing-pop:nth-of-type(2) { animation-delay: 0.6s; }
+.landing-pop:nth-of-type(3) { animation-delay: 0.3s; }
+@media (prefers-reduced-motion: reduce) {
+  .landing-shine::after, .landing-pop { animation: none; }
 }

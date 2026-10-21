@@ -8,6 +8,9 @@ import type { Metadata } from "next";
 
 import { FeatureTabs } from "@/components/landing/feature-tabs";
 import { SiteStructuredData } from "@/components/seo/structured-data";
+import { BlurFade } from "@/components/ui/magic/blur-fade";
+import { Marquee } from "@/components/ui/magic/marquee";
+import { NumberTicker } from "@/components/ui/magic/number-ticker";
 
 export const metadata: Metadata = {
   title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
@@ -34,7 +37,7 @@ function Cloud({ className }: { className: string }) {
 /** A framed game screenshot, tilted like a sticker. */
 function Shot({ src, alt, className, w, h }: { src: string; alt: string; className: string; w: number; h: number }) {
   return (
-    <figure className={`absolute overflow-hidden rounded-2xl border-4 border-[#1d1a4a] bg-white shadow-[8px_8px_0_#1d1a4a] dark:border-white/85 dark:shadow-[8px_8px_0_rgba(179,175,255,0.45)] ${className}`}>
+    <figure className={`landing-pop absolute overflow-hidden rounded-2xl border-4 border-[#1d1a4a] bg-white shadow-[8px_8px_0_#1d1a4a] dark:border-white/85 dark:shadow-[8px_8px_0_rgba(179,175,255,0.45)] ${className}`}>
       <Image src={src} alt={alt} width={w} height={h} priority className="block h-full w-full object-cover" />
     </figure>
   );
@@ -62,24 +65,33 @@ export default function Home() {
         <Cloud className="top-28 left-[6%] w-40" />
         <Cloud className="top-60 right-[18%] w-28 [animation-duration:26s]" />
         <div className="relative container flex flex-col items-center pt-20 text-center sm:pt-24">
+          <BlurFade delay={0.05}>
           <p className="rounded-full border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-sm font-black text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
             Invited beta · UK learners aged 13+
           </p>
+          </BlurFade>
+          <BlurFade delay={0.15}>
           <h1 id="hero-title" className={`${display} mt-7 max-w-4xl text-5xl leading-[1.02] text-balance sm:text-7xl`}>
-            Revision that plays like a game
+            Revision that plays like a{" "}
+            <span className="relative inline-block bg-[linear-gradient(90deg,#5b56c8,#ff6fa9,#ffb02e,#5b56c8)] bg-[length:300%_100%] bg-clip-text text-transparent [animation:landing-hue_6s_linear_infinite] dark:bg-[linear-gradient(90deg,#b3afff,#ff9cc6,#ffd36b,#b3afff)]">game</span>
           </h1>
+          </BlurFade>
+          <BlurFade delay={0.25}>
           <p className={`mt-6 max-w-xl text-lg leading-8 ${soft}`}>
             Practise your subjects, take on simulated workplace challenges and explore a 3D London, with a study agent that
             plans your week and quizzes you on your homework.
           </p>
+          </BlurFade>
+          <BlurFade delay={0.35}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link prefetch={false} href="/book?for=individual" className="inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
+            <Link prefetch={false} href="/book?for=individual" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               Request beta access <ArrowRight className="size-4" aria-hidden />
             </Link>
             <Link prefetch={false} href="/schools" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-white px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               For schools
             </Link>
           </div>
+          </BlurFade>
           <p className={`mt-5 text-sm ${soft}`}>
             Already invited?{" "}
             <Link prefetch={false} href="/sign-in" className="font-bold underline underline-offset-4">Sign in</Link>
@@ -95,6 +107,29 @@ export default function Home() {
           <Sticker className="top-[42%] right-[12%] hidden bg-[#b9f0c9] [animation-delay:-1s] sm:inline">Quiz streak: 7 days</Sticker>
           <Sticker className="bottom-6 left-[14%] hidden bg-[#c9d7ff] [animation-delay:-2s] sm:inline">&ldquo;Plan my week&rdquo;</Sticker>
           <Sticker className="bottom-0 right-[30%] hidden bg-[#ffb3c7] [animation-delay:-3s] md:inline">New look unlocked</Sticker>
+        </div>
+      </section>
+
+      {/* Scrolling ribbon of what's inside, then a few real numbers. */}
+      <section className="relative mt-16" aria-label="What's inside">
+        <Marquee pauseOnHover className="[--duration:35s] [--gap:0.75rem]">
+          {["GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
+            <span key={t} className="rounded-full border-[3px] border-[#1d1a4a] px-4 py-2 text-sm font-black whitespace-nowrap text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]" style={{ background: ["#ffd23f", "#b9f0c9", "#c9d7ff", "#ffb3c7", "#e3c9ff"][i % 5] }}>
+              {t}
+            </span>
+          ))}
+        </Marquee>
+        <div className="container mt-12 grid gap-4 sm:grid-cols-3">
+          {[
+            [108, "questions in the quiz bank, each explained"],
+            [184, "Locker items to mix into your own look"],
+            [13, "company HQs with jobs to try in the city"],
+          ].map(([n, label]) => (
+            <div key={label as string} className={`${card} p-6 text-center`}>
+              <NumberTicker value={n as number} className={`${display} text-5xl text-[var(--sky-ink)] dark:text-[var(--sky-ink)]`} />
+              <p className={`mt-2 text-sm ${soft}`}>{label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
