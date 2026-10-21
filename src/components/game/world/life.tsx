@@ -166,12 +166,13 @@ export function HearingDialog({
 /** Inside HMP Thames: time left, and the homework card. */
 export function PrisonHud({ leftMs, cards, progress, onStudy, onCard }: { leftMs: number; cards: number; progress: number; onStudy: () => void; onCard: () => void }) {
   const seconds = Math.max(0, Math.ceil(leftMs / 1000));
-  return <div className="absolute top-24 left-1/2 z-[65] w-[min(360px,calc(100%-24px))] -translate-x-1/2 rounded-3xl bg-[#f2d9a6] p-4 text-[#13203a] shadow-xl">
+  return <HudSlot area="tl" order={20}><div className="w-[min(320px,100%)] rounded-3xl bg-[#f2d9a6] p-4 text-[#13203a] shadow-xl">
     <p className="text-xs font-black tracking-widest uppercase">HMP Thames · fictional game</p>
     <p className="mt-1 text-lg font-black">Time left {Math.floor(seconds/60)}:{String(seconds%60).padStart(2,"0")} · Study {progress}/3</p>
-    <p className="mt-1 text-xs">Serve your time or complete three study tasks to be released with no stars. Cell doors are open: talk, study or explore. Guards add 45 seconds if they catch an escape attempt.</p>
+    <p className="mt-1 text-xs">Serve your time or complete three study tasks to be released with a clean record.</p>
+    <p className="mt-1 text-xs"><span className="font-black">Or risk it:</span> slip past the guards to the service exit in the far corner. You&apos;ll be free, but at 5 wanted stars with the police chasing you. Lose them to clear your record; if they catch you, you&apos;re brought back for longer. Guards who spot you add 45 seconds.</p>
     <button type="button" onClick={onStudy} className="jelly mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
     <button type="button" disabled={!cards} onClick={onCard} className="jelly mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
     <a href="/homework" className="mt-2 block text-center text-xs font-bold underline">Complete assigned homework</a>
-  </div>;
+  </div></HudSlot>;
 }

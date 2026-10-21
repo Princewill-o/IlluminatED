@@ -53,7 +53,7 @@ import { COMPANIES } from "@/game/core/companies";
 import { nearestDrivingSpot, nearestParkingSpot } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
-import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
+import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { homeStyle } from "@/game/core/london";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -467,7 +467,7 @@ export function WorldApp({
       if (to.kind === "prison") {
         if (to.action === "study") setStudy(true);
         else if (to.action === "talk") setInmate(to.name ?? "Sam");
-        else { releaseReason.current = "escaped"; updateLife(l=>releaseFromPrison(l)); }
+        else { releaseReason.current = "escaped"; updateLife(l=>escapeFromPrison(l, Date.now())); }
         return;
       }
       if (to.kind === "game") {
@@ -610,9 +610,17 @@ export function WorldApp({
       updateLife(l=>releaseFromPrison(l)); return;
     }
     if (jailed && mapId !== "prison") goTo("prison", "HMP Thames");
+    if (!jailed && mapId === "prison" && releaseReason.current === "escaped") {
+      // Broke out: keep the wanted stars so the police chase starts outside.
+      say("You're out, but the alarm is raised. The police are coming: get out of the search area to lose them. If they catch you, it's back inside for longer.", true);
+      setStudy(false); setInmate(null);
+      goTo("city", "London", courtSteps);
+      releaseReason.current = "released";
+      return;
+    }
     if (!jailed && mapId === "prison") {
       if (life.stars || life.heatAt || life.hearing) updateLife(releaseFromPrison);
-      say(releaseReason.current === "escaped" ? "You found the service exit. Escape succeeded — your wanted stars are cleared." : life.prisonWork>=3?"Study complete. You have been released with no wanted stars.":"You have served your sentence. Your wanted stars are cleared.", true);
+      say(life.prisonWork>=3?"Study complete. You have been released with no wanted stars.":"You have served your sentence. Your wanted stars are cleared.", true);
       setStudy(false); setInmate(null);
       goTo("city", "London", courtSteps);
       releaseReason.current = "released";
