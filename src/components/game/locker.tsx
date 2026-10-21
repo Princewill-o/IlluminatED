@@ -11,6 +11,7 @@ import { play, soundOn } from "./sound";
 
 import { buyItem, saveAvatar } from "@/app/games/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { BRANDS } from "@/game/core/chibi-looks";
 import { companyById } from "@/game/core/companies";
 import {
   type Avatar,
@@ -302,7 +303,18 @@ export function Locker({
                     >
                       {r.mark} {r.label}
                     </span>
-                    {item.slot === "skin" || item.slot === "hairColor" ? (
+                    {["hair", "top", "bottom", "shoes"].includes(item.slot) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={`/characters/chibi/${item.id}.webp`} alt={item.name} width={128} height={152} loading="lazy" className="my-1 h-[152px] w-auto" />
+                    ) : item.slot === "brand" ? (
+                      BRANDS[item.id] ? (
+                        <span className="my-10 inline-flex min-w-24 items-center justify-center rounded-full px-4 py-3 text-lg font-black" style={{ background: BRANDS[item.id].bg, color: BRANDS[item.id].fg, borderRadius: BRANDS[item.id].shape === "square" ? 12 : 999 }}>
+                          {BRANDS[item.id].text}
+                        </span>
+                      ) : (
+                        <span className="my-10 text-sm font-bold text-muted-foreground">Plain top</span>
+                      )
+                    ) : item.slot === "skin" || item.slot === "hairColor" ? (
                       <span className="my-6 size-20 rounded-full border-4 border-[#13203a]" style={{ background: item.color }} aria-hidden />
                     ) : (
                       <AvatarFigure

@@ -220,7 +220,17 @@ else:
         c = tuple(int(hexv[i:i + 2], 16) / 255 for i in (0, 2, 4))
         mat(k).node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (*[x ** 2.2 for x in c], 1)
     apply_look(spec)
-    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = 32; sc.cycles.device = "CPU"
+    # Thumbnail-only face (in the game the drawn face texture is used instead).
+    face_mat = bpy.data.materials.new("face"); face_mat.use_nodes = True
+    face_mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.04, 0.03, 0.03, 1)
+    for sx in (1, -1):
+        e = sphere(0.026, 12, 8, (sx * 0.075, -0.195, 0.67), (0.8, 0.5, 1.25)); e.data.materials.append(face_mat)
+        hl = sphere(0.008, 8, 6, (sx * 0.075 + 0.006, -0.209, 0.684)); hl.data.materials.append(mat("white"))
+        ck = sphere(0.022, 10, 6, (sx * 0.12, -0.18, 0.61), (1, 0.4, 0.6)); ck.data.materials.append(mat("accent"))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.026, minor_radius=0.006, location=(0, -0.2, 0.6), rotation=(math.pi / 2, 0, 0))
+    m = bpy.context.object; m.data.materials.append(face_mat)
+    keep(m, lambda c: c.z < 0.6)
+    sc = bpy.context.scene; sc.render.engine = "CYCLES"; sc.cycles.samples = int(spec.get("samples", 32)); sc.render.film_transparent = spec.get("transparent") == "1"; sc.cycles.device = "CPU"
     sc.render.resolution_x = int(spec.get("w", 640)); sc.render.resolution_y = int(spec.get("h", 720))
     w = bpy.data.worlds.new("w"); sc.world = w; w.use_nodes = True
     w.node_tree.nodes["Background"].inputs[0].default_value = (0.55, 0.55, 0.58, 1)

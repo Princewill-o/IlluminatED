@@ -926,3 +926,24 @@ html.dark body:has(.app-theme) {
 .agent-dots span:nth-child(3) { animation-delay: .3s; }
 @keyframes agent-dot { 0%, 100% { opacity: .25; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .agent-rise, .agent-dots span { animation: none; } }
+
+/* Landing sky (plyxl-style hero): drifting mascots and a soft starfield. */
+@keyframes landing-float {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-14px) rotate(2deg); }
+}
+.landing-float { animation: landing-float 6s ease-in-out infinite; }
+.landing-stars {
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 8%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 46% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 63% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 81% 26%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 6%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 7% 40%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 38%, #fff 50%, transparent 51%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-float { animation: none; }
+}
