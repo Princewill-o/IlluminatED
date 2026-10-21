@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>How IlluminatED works</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1280px;height:720px;overflow:hidden;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#1d1a4a}
+body{background:linear-gradient(180deg,#7cc4ff 0%,#bfe3ff 55%,#fff4dc 100%)}
+.cloud{position:absolute;background:#fff;border:4px solid #1d1a4a;border-radius:999px;animation:drift 30s linear infinite}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border:4px solid #1d1a4a;border-bottom:none;border-radius:999px 999px 0 0}
+.cloud:before{width:55%;height:120%;left:12%;top:-60%}.cloud:after{width:40%;height:90%;left:48%;top:-40%}
+@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-160px)}}
+.sun{position:absolute;right:90px;top:50px;width:90px;height:90px;border-radius:50%;background:#ffd23f;border:4px solid #1d1a4a;box-shadow:0 0 0 14px #ffd23f55}
+.s{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .45s}
+.s.on{opacity:1}
+.pop{transform:scale(.6) translateY(30px);opacity:0;transition:transform .6s cubic-bezier(.34,1.56,.64,1),opacity .4s}
+.on .pop{transform:none;opacity:1}
+.on .d1{transition-delay:.25s}.on .d2{transition-delay:.5s}.on .d3{transition-delay:.75s}.on .d4{transition-delay:1s}.on .d5{transition-delay:1.25s}.on .d6{transition-delay:1.5s}
+.card{background:#fff;border:4px solid #1d1a4a;border-radius:26px;box-shadow:8px 8px 0 #1d1a4a}
+.step{font-weight:900;font-size:20px;background:#ffd23f;border:3px solid #1d1a4a;border-radius:999px;padding:6px 18px;box-shadow:4px 4px 0 #1d1a4a}
+h1{font-size:84px;font-weight:900;letter-spacing:-2px;text-align:center;line-height:1}
+h2{font-size:56px;font-weight:900;letter-spacing:-1.5px;text-align:center;margin-top:18px}
+.chips{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap;justify-content:center;max-width:1000px}
+.chip{font-size:26px;font-weight:800;padding:14px 26px;border:4px solid #1d1a4a;border-radius:999px;box-shadow:5px 5px 0 #1d1a4a}
+.shot{width:760px;height:430px;object-fit:cover;display:block;border-radius:22px}
+.coin{position:absolute;font-weight:900;font-size:30px;background:#ffd23f;border:4px solid #1d1a4a;border-radius:999px;padding:12px 22px;box-shadow:5px 5px 0 #1d1a4a}
+.opt{font-size:26px;font-weight:700;padding:16px 22px;border:3px solid #1d1a4a;border-radius:16px;margin-top:12px;background:#fff;transition:background .3s}
+.grid{display:grid;grid-template-columns:repeat(5,170px);gap:14px;margin-top:34px}
+.day{padding:16px;font-size:18px;line-height:1.35}
+.day b{display:block;font-size:22px;color:#5b56c8;margin-bottom:6px}
+.bars{display:flex;align-items:flex-end;gap:22px;height:220px;margin-top:20px}
+.bar{width:70px;border:4px solid #1d1a4a;border-radius:12px 12px 0 0;height:0;transition:height 1s cubic-bezier(.34,1.56,.64,1)}
+.row{display:flex;align-items:center;gap:14px;font-size:24px;font-weight:700;padding:12px 0;border-bottom:2px dashed #1d1a4a33}
+.tick{width:34px;height:34px;border-radius:50%;border:3px solid #1d1a4a;display:grid;place-items:center;font-weight:900;background:#fff}
+.confetti{position:absolute;width:14px;height:22px;border:2px solid #1d1a4a;border-radius:4px;opacity:0}
+.on .confetti{animation:fall 1.6s ease-in forwards}
+@keyframes fall{0%{opacity:1;transform:translateY(-40px) rotate(0)}100%{opacity:1;transform:translateY(520px) rotate(540deg)}}
+.bounce{animation:bounce 1.4s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+.logo{width:120px;height:120px;border-radius:32px;background:#5b56c8;color:#fff;font-size:72px;font-weight:900;display:grid;place-items:center;border:5px solid #1d1a4a;box-shadow:8px 8px 0 #1d1a4a;margin-bottom:26px}
+</style></head><body>
+<div class="sun"></div>
+<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:200px;left:120px;top:90px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
+<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:150px;left:860px;top:180px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
+<svg class="cl" viewBox="0 0 200 90" style="position:absolute;width:240px;left:520px;top:600px;animation:drift 30s linear infinite"><path d="M30 80 Q5 80 8 60 Q10 42 32 44 Q34 18 62 20 Q78 2 104 14 Q130 4 140 30 Q170 24 176 50 Q196 56 190 72 Q186 82 168 80 Z" fill="#fff" stroke="#1d1a4a" stroke-width="5" stroke-linejoin="round"/></svg>
+
+<section class="s" id="s0"><div class="logo pop bounce">i</div><h1 class="pop d1">How IlluminatED works</h1><p class="pop d2" style="font-size:28px;margin-top:20px;font-weight:700">Revision that plays like a game, in six steps</p></section>
+
+<section class="s"><span class="step pop">Step 1</span><h2 class="pop d1">Pick your subjects</h2>
+<div class="chips"><span class="chip pop d2" style="background:#ffb3c7">Maths</span><span class="chip pop d3" style="background:#b9f0c9">Biology</span><span class="chip pop d4" style="background:#c9d7ff">Chemistry</span><span class="chip pop d5" style="background:#ffe08a">History</span><span class="chip pop d6" style="background:#e3c9ff">Computer Science</span></div></section>
+
+<section class="s"><span class="step pop">Step 2</span><h2 class="pop d1">Explore a 3D London</h2>
+<div class="card pop d2" style="margin-top:26px;padding:10px;position:relative"><img class="shot" src="game-chibi-street.webp"><span class="coin pop d4" style="right:-40px;top:-30px">+50 Clout</span></div></section>
+
+<section class="s"><span class="step pop">Step 3</span><h2 class="pop d1">Answer quick quizzes</h2>
+<div class="card pop d2" style="margin-top:30px;padding:30px;width:640px"><p style="font-size:28px;font-weight:900">Which organelle releases energy?</p>
+<div class="opt">Nucleus</div><div class="opt" id="right">Mitochondria</div><div class="opt">Cell wall</div></div>
+<div id="conf"></div></section>
+
+<section class="s"><span class="step pop">Step 4</span><h2 class="pop d1">Your agent plans the week</h2>
+<div class="grid"><div class="card day pop d2"><b>Mon</b>Hand in Biology</div><div class="card day pop d3"><b>Tue</b>Quiz: forces</div><div class="card day pop d4"><b>Wed</b>Flashcards: quadratics</div><div class="card day pop d5"><b>Thu</b>Revise the heart</div><div class="card day pop d6"><b>Fri</b>Timed exam practice</div></div>
+<p class="pop d6" style="margin-top:30px;font-size:24px;font-weight:700">It asks before anything goes to your teacher.</p></section>
+
+<section class="s"><span class="step pop">Step 5</span><h2 class="pop d1">Spend Clout on your look</h2>
+<div class="card pop d2" style="margin-top:26px;padding:10px"><img class="shot" style="width:860px;height:360px" src="game-chibi-locker.webp"></div></section>
+
+<section class="s"><span class="step pop">Step 6</span><h2 class="pop d1">Teachers see the progress</h2>
+<div style="display:flex;gap:40px;margin-top:30px;align-items:flex-end">
+<div class="card pop d2" style="padding:24px 30px;width:440px"><div class="row"><span class="tick" style="background:#b9f0c9">✓</span>Cells homework</div><div class="row"><span class="tick" style="background:#b9f0c9">✓</span>Forces quiz</div><div class="row" style="border:none"><span class="tick">…</span>Algebra practice</div></div>
+<div class="card pop d3" style="padding:20px 30px"><div class="bars"><div class="bar" style="background:#ffb3c7" data-h="120"></div><div class="bar" style="background:#c9d7ff" data-h="170"></div><div class="bar" style="background:#b9f0c9" data-h="200"></div><div class="bar" style="background:#ffe08a" data-h="150"></div></div></div></div></section>
+
+<section class="s"><div class="logo pop bounce">i</div><h1 class="pop d1">Learn. Play. Get ahead.</h1><span class="step pop d2" style="margin-top:30px;font-size:28px;padding:12px 30px">Join the beta</span></section>
+
+<script>
+const S=[...document.querySelectorAll('.s')];const D=[3200,3800,4400,4600,4600,4200,4800,3600];
+let t=0;
+S.forEach((s,i)=>{setTimeout(()=>{S.forEach(x=>x.classList.remove('on'));s.classList.add('on');
+  if(i===3){setTimeout(()=>{document.getElementById('right').style.background='#b9f0c9';const c=document.getElementById('conf');const cols=['#ffb3c7','#ffd23f','#b9f0c9','#c9d7ff','#e3c9ff'];
+    for(let k=0;k<40;k++){const e=document.createElement('span');e.className='confetti';e.style.left=(200+Math.random()*880)+'px';e.style.top='60px';e.style.background=cols[k%5];e.style.animationDelay=(Math.random()*.5)+'s';c.appendChild(e)}},1700)}
+  if(i===6){setTimeout(()=>document.querySelectorAll('.bar').forEach(b=>b.style.height=b.dataset.h+'px'),900)}
+},t);t+=D[i]});
+setTimeout(()=>{document.title='done'},t);
+</script></body></html>

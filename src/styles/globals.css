@@ -947,3 +947,46 @@ html.dark body:has(.app-theme) {
 @media (prefers-reduced-motion: reduce) {
   .landing-float { animation: none; }
 }
+
+/* Night-sky landing page: deep navy with a tiled, gently twinkling starfield. */
+.landing-night {
+  background: linear-gradient(180deg, #05051a 0%, #0b0a2e 30%, #14114a 70%, #1d1863 100%);
+}
+.landing-stars-tile {
+  background-image:
+    radial-gradient(1.5px 1.5px at 20px 30px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 140px 80px, rgba(255,255,255,0.8) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 260px 160px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 380px 40px, rgba(255,255,255,0.7) 50%, transparent 51%),
+    radial-gradient(2px 2px at 470px 220px, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 90px 260px, rgba(255,255,255,0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 330px 300px, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 560px 110px, rgba(255,255,255,0.85) 50%, transparent 51%);
+  background-size: 600px 340px;
+  animation: landing-twinkle 7s ease-in-out infinite alternate;
+}
+@keyframes landing-twinkle { from { opacity: 0.55; } to { opacity: 0.95; } }
+@media (prefers-reduced-motion: reduce) { .landing-stars-tile { animation: none; } }
+
+/* Landing sky: a cartoon day sky in light mode, the night sky in dark mode. */
+.landing-sky {
+  --sky-ink: #14123a;
+  --sky-soft: rgba(20, 18, 58, 0.72);
+  --sky-card: rgba(255, 255, 255, 0.72);
+  --sky-ring: rgba(29, 26, 74, 0.14);
+  --sky-accent: #4b45c2;
+  background: linear-gradient(180deg, #6fbcff 0%, #a9dcff 22%, #d7efff 42%, #fff6e4 70%, #fff1d6 100%);
+}
+.dark .landing-sky {
+  --sky-ink: #ffffff;
+  --sky-soft: rgba(255, 255, 255, 0.72);
+  --sky-card: rgba(255, 255, 255, 0.06);
+  --sky-ring: rgba(255, 255, 255, 0.12);
+  --sky-accent: #b3afff;
+  background: linear-gradient(180deg, #05051a 0%, #0b0a2e 30%, #14114a 70%, #1d1863 100%);
+}
+@keyframes landing-drift { from { transform: translateX(0); } to { transform: translateX(-60px); } }
+.landing-drift { animation: landing-drift 20s ease-in-out infinite alternate; }
+@keyframes landing-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+.landing-bob { animation: landing-bob 4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .landing-drift, .landing-bob { animation: none; } }
