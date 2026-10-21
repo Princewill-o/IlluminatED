@@ -65,7 +65,7 @@ export function SeasonPass({ userId }: { userId: string }) {
             <p className="text-lg font-black">Unlock the premium track with Plus</p>
             <p className="text-sm">All six Lumen League hero suits, double-XP boosts, frames and titles. Core revision stays free.</p>
           </div>
-          <Link href="/pricing" className="rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-5 py-3 font-black text-white shadow-[3px_3px_0_#1d1a4a]">See Plus</Link>
+          <Link href="/pricing" className="jelly rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-5 py-3 font-black text-white shadow-[3px_3px_0_#1d1a4a]">See Plus</Link>
         </section>
       )}
 
@@ -108,7 +108,7 @@ export function SeasonPass({ userId }: { userId: string }) {
           <h2 className="font-black">Your titles</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {pass.titles.map((t) => (
-              <button key={t} type="button" onClick={() => setTitle(pass.title === t ? null : t)} className={`rounded-full border-2 px-3 py-1 text-sm font-bold ${pass.title === t ? "border-[#5b56c8] bg-[#5b56c8] text-white" : "border-border"}`}>
+              <button key={t} type="button" onClick={() => setTitle(pass.title === t ? null : t)} className={`jelly rounded-full border-2 px-3 py-1 text-sm font-bold ${pass.title === t ? "border-[#5b56c8] bg-[#5b56c8] text-white" : "border-border"}`}>
                 {t}
               </button>
             ))}

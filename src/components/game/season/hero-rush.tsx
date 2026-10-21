@@ -194,7 +194,7 @@ export function HeroRush({ userId, mode }: { userId: string; mode: Mode }) {
           {mode !== "hero" && <p className="text-sm"><Link href="/games/heroes?mode=hero" className="underline">Play Hero Rush instead</Link></p>}
           <p className="mt-1 text-muted-foreground">{skin.goal}. Correct answers charge your hero; your own subject hits 1.5x harder.</p>
         </div>
-        <Link href="/games/pass" className="rounded-xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-2 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">
+        <Link href="/games/pass" className="jelly rounded-xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-2 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">
           Season Pass
         </Link>
       </div>
@@ -212,7 +212,7 @@ export function HeroRush({ userId, mode }: { userId: string; mode: Mode }) {
         ) : outOfRuns ? (
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] p-4 text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">
             <p className="font-bold">You&apos;ve used today&apos;s {FREE_RUNS} free runs. They come back tomorrow, or get unlimited runs with Plus.</p>
-            <Link href="/pricing" className="rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-4 py-2 font-black text-white">See Plus</Link>
+            <Link href="/pricing" className="jelly rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-4 py-2 font-black text-white">See Plus</Link>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">{FREE_RUNS - runs} of {FREE_RUNS} free runs left today. Plus members play unlimited.</p>
@@ -283,9 +283,9 @@ export function HeroRush({ userId, mode }: { userId: string; mode: Mode }) {
           <h2 className="mt-2 text-2xl font-black">{won ? skin.win : skin.lose}</h2>
           <p className="mt-1 text-muted-foreground">You landed {hits} hit{hits === 1 ? "" : "s"}. Season XP earned for every correct answer{won ? ", plus the win bonus" : ""}.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <button type="button" disabled={outOfRuns} onClick={() => start(hero)} className="disabled:opacity-50 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-5 py-3 font-black text-white shadow-[3px_3px_0_#1d1a4a]">Play again</button>
-            <button type="button" onClick={() => setHero(null)} className="rounded-xl border-[3px] border-[#1d1a4a] bg-white px-5 py-3 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">Change hero</button>
-            <Link href="/games/pass" className="rounded-xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-5 py-3 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">Claim rewards</Link>
+            <button type="button" disabled={outOfRuns} onClick={() => start(hero)} className="jelly disabled:opacity-50 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-5 py-3 font-black text-white shadow-[3px_3px_0_#1d1a4a]">Play again</button>
+            <button type="button" onClick={() => setHero(null)} className="jelly rounded-xl border-[3px] border-[#1d1a4a] bg-white px-5 py-3 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">Change hero</button>
+            <Link href="/games/pass" className="jelly rounded-xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-5 py-3 font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]">Claim rewards</Link>
           </div>
         </section>
       ) : (

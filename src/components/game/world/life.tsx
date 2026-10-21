@@ -26,7 +26,7 @@ export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: 
             <h2 className="mt-1 text-2xl font-black">{shop === "bootz" ? "Feeling rough?" : "Grab something"}</h2>
             <p className="text-sm text-[#13203a]/70">You have {clout} Clout.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-white">
+          <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-9 place-items-center rounded-full bg-white">
             <X className="size-4" />
           </button>
         </div>
@@ -152,7 +152,7 @@ export function HearingDialog({
         {stage === "done" && result && (
           <div className="mt-4">
             <p className={cn("rounded-2xl p-3 text-lg font-black", result === "acquitted" ? "bg-[#e3f5ec] text-[#15987f]" : "bg-[#fdeceb] text-[#c8322d]")}>{result === "acquitted" ? "Not guilty. You're free to go." : "Guilty. Take them down."}</p>
-            <button type="button" onClick={() => onVerdict(result)} className="mt-3 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
+            <button type="button" onClick={() => onVerdict(result)} className="jelly mt-3 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
               {result === "acquitted" ? "Leave the court" : "Go to prison"}
             </button>
           </div>
@@ -169,8 +169,8 @@ export function PrisonHud({ leftMs, cards, progress, onStudy, onCard }: { leftMs
     <p className="text-xs font-black tracking-widest uppercase">HMP Thames · fictional game</p>
     <p className="mt-1 text-lg font-black">Time left {Math.floor(seconds/60)}:{String(seconds%60).padStart(2,"0")} · Study {progress}/3</p>
     <p className="mt-1 text-xs">Serve your time or complete three study tasks to be released with no stars. Cell doors are open: talk, study or explore. Guards add 45 seconds if they catch an escape attempt.</p>
-    <button type="button" onClick={onStudy} className="mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
-    <button type="button" disabled={!cards} onClick={onCard} className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
+    <button type="button" onClick={onStudy} className="jelly mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
+    <button type="button" disabled={!cards} onClick={onCard} className="jelly mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
     <a href="/homework" className="mt-2 block text-center text-xs font-bold underline">Complete assigned homework</a>
   </div>;
 }

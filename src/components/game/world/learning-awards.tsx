@@ -41,7 +41,7 @@ export function LearningAwards({ awards, onClose }: { awards: LearningAward[]; o
         <div className="flex items-start gap-3">
           <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#ffedbd] text-[#825d14]"><Trophy aria-hidden /></span>
           <div className="flex-1"><p className="text-xs font-bold tracking-widest text-muted-foreground uppercase">Study Quarter</p><h2 id={title} className="text-2xl font-black">Your awards cabinet</h2></div>
-          <button type="button" onClick={onClose} aria-label="Close awards cabinet" className="grid size-11 place-items-center rounded-full bg-muted focus-visible:outline-2"><X className="size-5" /></button>
+          <button type="button" onClick={onClose} aria-label="Close awards cabinet" className="jelly grid size-11 place-items-center rounded-full bg-muted focus-visible:outline-2"><X className="size-5" /></button>
         </div>
         <p className="mt-4 mb-5 text-sm leading-6 text-muted-foreground">{awards.filter((award) => award.earned).length} of {awards.length} milestones earned. Build your collection through subject study and simulated work shifts. These are game achievements, not accredited qualifications.</p>
         <AwardCollection awards={awards} />

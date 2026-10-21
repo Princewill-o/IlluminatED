@@ -761,7 +761,7 @@ export function WorldApp({
       <select id="region" value={region} onChange={e => chooseRegion(e.target.value as RegionId)} className="mt-2 w-full rounded-xl border bg-card p-3">
         {REGIONS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
       </select>
-      <button type="button" onClick={() => setServer(pickServer(region, Object.fromEntries(SERVERS.filter(s => s.region === region).map(s => [s.id, countFor(mapId, s.id)]))).id)} className="mt-5 min-h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground">Join region</button>
+      <button type="button" onClick={() => setServer(pickServer(region, Object.fromEntries(SERVERS.filter(s => s.region === region).map(s => [s.id, countFor(mapId, s.id)]))).id)} className="jelly mt-5 min-h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground">Join region</button>
     </div>;
   }
 
@@ -806,7 +806,7 @@ export function WorldApp({
         goTo(destination.mapId, destination.label, spot);
       }} />}
       {building && mapId === "home" && <HomeEditor embedded onClose={() => setBuilding(false)} claimed={home.claimed} avatar={me.avatar} owned={home.owned} current={home.current} layout={home.layout} bought={home.furniture} clout={wallet} />}
-      {mapId === "home" && !building && !homeAction && <button type="button" onClick={() => { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }} className="absolute top-28 right-3 z-[70] rounded-full border border-[#c8b182] bg-[#fff3d8] px-4 py-3 text-xs font-bold text-[#183b35] shadow-lg">Build & buy · arrange your home</button>}
+      {mapId === "home" && !building && !homeAction && <button type="button" onClick={() => { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }} className="jelly absolute top-28 right-3 z-[70] rounded-full border border-[#c8b182] bg-[#fff3d8] px-4 py-3 text-xs font-bold text-[#183b35] shadow-lg">Build & buy · arrange your home</button>}
       {homeAction && <div role="status" className="absolute bottom-24 left-1/2 z-[100002] w-64 -translate-x-1/2 rounded-2xl border border-[#c8b182] bg-[#faf6ed] p-4 text-center text-[#183b35] shadow-xl">
         <p className="font-bold">{homeAction.label}</p>
         <p className="mt-1 text-xs">{Math.round(homeAction.duration / 1000)} seconds · needs improve when you finish</p>
@@ -868,7 +868,7 @@ export function WorldApp({
         <button type="button" onClick={() => setLearning(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#2b5fd9] px-4 text-sm font-bold text-white"><BookOpen className="size-4" aria-hidden /> Study</button>
         <button type="button" onClick={() => setAwardsOpen(true)} className="flex min-h-11 items-center gap-2 rounded-xl bg-[#ffedbd] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div>}
-      {!driving && !bike && <button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="absolute right-3 bottom-[13.5rem] z-[100001] min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5 md:hidden">Jump</button>}
+      {!driving && !bike && <button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly absolute right-3 bottom-[13.5rem] z-[100001] min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5 md:hidden">Jump</button>}
       <button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} className="absolute right-3 bottom-40 z-[100001] flex min-h-11 items-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Gamepad2 className="size-4" aria-hidden /> Games
       </button>
@@ -877,13 +877,13 @@ export function WorldApp({
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
         <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>
         <p className="mt-3 text-sm">In this fictional game, choosing to shove brings the police. There is no reward for hurting others.</p>
-        <button type="button" className="mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
+        <button type="button" className="jelly mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
         <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));offend("scuffle","Someone was hurt.");}}>Continue with consequences</button>
       </section></div>}
       {outdoors && !jailed && <EventBanner className="absolute top-[104px] right-3 z-[100001] hidden max-w-[220px] sm:flex" />}
       {life.sick && <p className="pointer-events-none absolute top-[104px] left-1/2 z-[60] -translate-x-1/2 rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p>}
       {nearPerson && !jailed && !driving && (
-        <button type="button" onClick={fight} className="absolute right-3 bottom-52 z-[100001] min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
+        <button type="button" onClick={fight} className="jelly absolute right-3 bottom-52 z-[100001] min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
           Shove (F)
         </button>
       )}
@@ -903,7 +903,7 @@ export function WorldApp({
         else { const company=COMPANIES.find(c=>c.id===id); setInmate(`Call: ${company?.name??id}`); }
       }}/ >}
       {study && <PrisonStudy progress={life.prisonWork} onCorrect={()=>updateLife(l=>({...l,prisonWork:Math.min(3,l.prisonWork+1)}))} onClose={()=>setStudy(false)}/>}
-      {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
+      {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="jelly mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
       {mapId === "court" && life.hearing && (
         <HearingDialog
           charge={life.hearing.charge}
@@ -968,7 +968,7 @@ export function WorldApp({
       <button
         type="button"
         onClick={() => setTutorial(true)}
-        className="absolute right-3 bottom-11 z-[100001] min-h-11 rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
+        className="jelly absolute right-3 bottom-11 z-[100001] min-h-11 rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
       >
         How to play
       </button>
@@ -982,7 +982,7 @@ export function WorldApp({
         </div>
       )}
       {atHome && (
-        <Link href="/games/home" className="absolute right-3 bottom-3 z-[100001] rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] shadow-lg">
+        <Link href="/games/home" className="jelly absolute right-3 bottom-3 z-[100001] rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726] shadow-lg">
           Decorate
         </Link>
       )}
@@ -1033,7 +1033,7 @@ export function WorldApp({
                     {s.title && <span className="block truncate text-xs text-muted-foreground">{s.title}</span>}
                   </span>
                   {s.userId !== me.id && (
-                    <Link href={`/messages/new?to=${s.userId}`} className="rounded-full bg-[#f2d9a6] px-3 py-1.5 text-xs font-black text-[#0d1726]">
+                    <Link href={`/messages/new?to=${s.userId}`} className="jelly rounded-full bg-[#f2d9a6] px-3 py-1.5 text-xs font-black text-[#0d1726]">
                       Message
                     </Link>
                   )}
@@ -1041,10 +1041,10 @@ export function WorldApp({
               ))}
             </ul>
             <div className="mt-4 grid grid-cols-2 gap-2">
-              <Link href={`/companies/${officeSlug}`} className="rounded-full bg-brand py-2.5 text-center text-sm font-black">
+              <Link href={`/companies/${officeSlug}`} className="jelly rounded-full bg-brand py-2.5 text-center text-sm font-black">
                 Company profile
               </Link>
-              <Link href={`/companies/${officeSlug}#office-hours`} className="rounded-full bg-secondary py-2.5 text-center text-sm font-black">
+              <Link href={`/companies/${officeSlug}#office-hours`} className="jelly rounded-full bg-secondary py-2.5 text-center text-sm font-black">
                 Book office hours
               </Link>
             </div>

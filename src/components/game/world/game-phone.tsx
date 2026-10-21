@@ -80,7 +80,7 @@ export function GamePhone({
         </div>
         <nav aria-label="City services" className="grid grid-cols-2 gap-2 px-3 pb-3 text-[11px] font-bold">{[
           ["Assets & wealth", "/games/wealth"], ["Weekly challenges", "/games/weekly"], ["Friends & messages", "/games/friends"], ["Expansion packs", "/games/expansions"], ["Illumship", "/games/illumship"], ["Learning sources", "/games/sources"],
-        ].map(([label, href]) => <Link key={href} href={href} className="grid min-h-11 place-items-center rounded-xl bg-white px-2 py-3 text-center text-[#2b5fd9]">{label}</Link>)}</nav>
+        ].map(([label, href]) => <Link key={href} href={href} className="jelly grid min-h-11 place-items-center rounded-xl bg-white px-2 py-3 text-center text-[#2b5fd9]">{label}</Link>)}</nav>
         <div className="px-4">
           <label
             htmlFor="phone-search"

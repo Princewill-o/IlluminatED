@@ -37,12 +37,12 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
             <h2 className="mt-1 text-2xl font-black">Hire a bike</h2>
             <p className="text-sm text-[#13203a]/70">Walking is slow. Bikes get you across London fast. You have {clout} Clout.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="grid size-11 shrink-0 place-items-center rounded-full bg-white">
+          <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-11 shrink-0 place-items-center rounded-full bg-white">
             <X className="size-4" />
           </button>
         </div>
         {riding ? (
-          <button type="button" onClick={onDock} className="mt-4 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
+          <button type="button" onClick={onDock} className="jelly mt-4 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
             Dock your {riding.name} bike here
           </button>
         ) : (
@@ -388,7 +388,7 @@ export function Dealership({
               <h2 className="mt-1 text-2xl font-black">Car dealership</h2>
               <p className="text-sm text-white/75">Buy once, keep it forever. Cars are much faster than walking. You have {clout} Clout.</p>
             </div>
-            <button type="button" onClick={onClose} aria-label="Close" className="grid size-11 shrink-0 place-items-center rounded-full bg-white/15">
+            <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-11 shrink-0 place-items-center rounded-full bg-white/15">
               <X className="size-4" />
             </button>
           </div>
@@ -432,7 +432,7 @@ export function Dealership({
                           else setError(r.error);
                         })
                       }
-                      className="min-h-11 flex-1 rounded-full bg-[#f2d9a6] px-3 py-2.5 text-sm font-black disabled:opacity-50"
+                      className="jelly min-h-11 flex-1 rounded-full bg-[#f2d9a6] px-3 py-2.5 text-sm font-black disabled:opacity-50"
                     >
                       Buy for {c.price} Clout
                     </button>

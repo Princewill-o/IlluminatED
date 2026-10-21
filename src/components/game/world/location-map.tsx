@@ -306,7 +306,7 @@ export function LocationMap({
                   aria-label={`Zoom to ${group.places.length} nearby locations`}
                   title={group.places.map(p=>p.name).join(" · ")}
                   onClick={()=>{centre(group.x/S*TILE,group.y/S*TILE);setZoom(z=>Math.min(3,z+0.5));setArea(group.places.map(p=>p.id));}}
-                  className="absolute z-20 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white bg-[#263e47] text-xs font-black text-white shadow-md ring-4 ring-[#263e47]/15"
+                  className="jelly absolute z-20 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-[3px] border-white bg-[#263e47] text-xs font-black text-white shadow-md ring-4 ring-[#263e47]/15"
                   style={{left:group.x,top:group.y}}>{group.places.length}</button>
               ))}
               {pinGroups.filter(g=>g.places.length===1).map(({places:[p]}) => (
@@ -364,7 +364,7 @@ export function LocationMap({
               type="button"
               onClick={onClose}
               aria-label="Close the map"
-              className="grid size-11 shrink-0 place-items-center rounded-full bg-white"
+              className="jelly grid size-11 shrink-0 place-items-center rounded-full bg-white"
             >
               <X className="size-4" />
             </button>
