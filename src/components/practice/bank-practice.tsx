@@ -12,12 +12,14 @@ type Topic = { level: string; subject: string; topic: string; questions: number;
 type Item = { id: string; level: string; subject: string; topic: string; question_type: string; question: string; marks: number; source: string; licence: string; review_status: string; publish_ready: boolean; selfMarked: boolean };
 type Result = { correct: boolean | null; answer: string; explanation: string; marks: number; source: string; licence: string; reviewed: boolean };
 
+const LEVEL_ORDER = ["GCSE", "A-level", "BTEC", "T Level"];
+
 /** Practice straight from the Illumed question bank (via /api/questions). */
 export function BankPractice({ userId }: { userId: string }) {
   usePass(userId);
   const [topics, setTopics] = useState<Topic[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [level, setLevel] = useState("GCSE");
+  const [level, setLevel] = useState("");
   const [subject, setSubject] = useState<string>("");
   const [topic, setTopic] = useState<string>("");
   const [open, setOpen] = useState(false);
@@ -38,16 +40,18 @@ export function BankPractice({ userId }: { userId: string }) {
       .catch((e: Error) => setError(e.message));
   }, []);
 
-  const subjects = useMemo(() => [...new Set((topics ?? []).filter((t) => t.level === level).map((t) => t.subject))].sort(), [topics, level]);
+  // "" means "all": an empty level or subject mixes questions from across the whole bank.
+  const levels = useMemo(() => [...new Set((topics ?? []).map((t) => t.level))].sort((a, b) => LEVEL_ORDER.indexOf(a) - LEVEL_ORDER.indexOf(b)), [topics]);
+  const subjects = useMemo(() => [...new Set((topics ?? []).filter((t) => !level || t.level === level).map((t) => t.subject))].sort(), [topics, level]);
   const topicList = useMemo(() => (topics ?? []).filter((t) => t.level === level && t.subject === subject), [topics, level, subject]);
   useEffect(() => {
-    if (subjects.length && !subjects.includes(subject)) setSubject(subjects[0]);
+    if (subject && subjects.length && !subjects.includes(subject)) setSubject("");
   }, [subjects, subject]);
 
   const start = async () => {
     setBusy(true);
     setError(null);
-    const q = new URLSearchParams({ level, subject, limit: "10", ...(topic ? { topic } : {}), ...(open ? { open: "1" } : {}) });
+    const q = new URLSearchParams({ limit: "10", ...(level ? { level } : {}), ...(subject ? { subject } : {}), ...(topic ? { topic } : {}), ...(open ? { open: "1" } : {}) });
     const r = await fetch(`/api/questions?${q}`);
     const j = await r.json();
     setBusy(false);
@@ -118,19 +122,20 @@ export function BankPractice({ userId }: { userId: string }) {
             <label className="text-sm font-bold">
               Level
               <select value={level} onChange={(e) => { setLevel(e.target.value); setTopic(""); }} className="mt-1 w-full rounded-xl border bg-background px-3 py-2">
-                <option>GCSE</option>
-                <option>A-level</option>
+                <option value="">All levels</option>
+                {levels.map((l) => <option key={l}>{l}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold">
               Subject
               <select value={subject} onChange={(e) => { setSubject(e.target.value); setTopic(""); }} className="mt-1 w-full rounded-xl border bg-background px-3 py-2">
+                <option value="">All subjects (mixed)</option>
                 {subjects.map((s) => <option key={s}>{s}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold sm:col-span-2">
               Topic
-              <select value={topic} onChange={(e) => setTopic(e.target.value)} className="mt-1 w-full rounded-xl border bg-background px-3 py-2">
+              <select value={topic} disabled={!level || !subject} onChange={(e) => setTopic(e.target.value)} className="mt-1 w-full rounded-xl border bg-background px-3 py-2 disabled:opacity-60">
                 <option value="">Mixed topics</option>
                 {topicList.map((t) => <option key={t.topic} value={t.topic}>{t.topic} ({t.questions})</option>)}
               </select>
@@ -139,7 +144,7 @@ export function BankPractice({ userId }: { userId: string }) {
           <label className="mt-3 flex items-center gap-2 text-sm">
             <input type="checkbox" checked={open} onChange={(e) => setOpen(e.target.checked)} /> Include open questions (you mark these yourself against the mark scheme)
           </label>
-          <button type="button" disabled={busy || !subject} onClick={() => void start()} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50">
+          <button type="button" disabled={busy || !topics} onClick={() => void start()} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-5 font-bold text-primary-foreground disabled:opacity-50">
             {busy && <Loader2 className="size-4 animate-spin" aria-hidden />} Start 10 questions
           </button>
           {error && <p className="mt-3 text-sm font-bold text-destructive">{error}</p>}

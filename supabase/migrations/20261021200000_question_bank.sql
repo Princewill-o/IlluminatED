@@ -7,7 +7,7 @@
 
 create table if not exists public.bank_questions (
   id text primary key,
-  level text not null check (level in ('GCSE', 'A-level')),
+  level text not null check (level in ('GCSE', 'A-level', 'BTEC', 'T Level')),
   subject text not null,
   topic text not null,
   question_type text not null check (question_type in ('short_answer', 'calculation', 'evaluation', 'constructed_response', 'multiple_choice')),

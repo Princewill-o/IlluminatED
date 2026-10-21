@@ -22,6 +22,8 @@ import { startStudy, submitStudy } from "@/app/games/study/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 
 type Course = { id: string; title: string; level: string };
+
+const ALL_SUBJECTS: Course = { id: "all", title: "All subjects (mixed)", level: "Every level" };
 type Session = {
   id: string;
   courseId: string;
@@ -40,7 +42,7 @@ const button =
 
 /** An untimed, server-scored study session, shared by the city and the Learn area. */
 export function StudyRoom({
-  courses,
+  courses: subjectCourses,
   onClose,
   onReward,
 }: {
@@ -50,7 +52,10 @@ export function StudyRoom({
 }) {
   const labelId = useId();
   const questionId = useId();
-  const [courseId, setCourseId] = useState(courses[0]?.id ?? "");
+  // "All subjects" is always offered first: the server mixes five random questions
+  // from every subject's bank (course id 'all' in private.study_start_session).
+  const courses = [ALL_SUBJECTS, ...subjectCourses];
+  const [courseId, setCourseId] = useState(ALL_SUBJECTS.id);
   const [filter, setFilter] = useState("");
   const [session, setSession] = useState<Session | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
@@ -76,8 +81,10 @@ export function StudyRoom({
   const course = courses.find((c) => c.id === (session?.courseId ?? courseId));
   const question = session?.questions[index];
   const answered = answers.filter((answer) => answer >= 0).length;
-  const visibleCourses = courses.filter((c) =>
-    `${c.title} ${c.level}`.toLowerCase().includes(filter.toLowerCase().trim()),
+  const visibleCourses = courses.filter(
+    (c) =>
+      c.id === ALL_SUBJECTS.id ||
+      `${c.title} ${c.level}`.toLowerCase().includes(filter.toLowerCase().trim()),
   );
 
   useEffect(() => {
