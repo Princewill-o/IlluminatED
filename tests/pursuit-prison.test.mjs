@@ -91,3 +91,18 @@ test("New Study Quarter destinations are reachable, with a working station and a
   assert.equal(released.jailUntil,0); assert.equal(released.hearing,null);
   assert.equal(released.cardsUsed,2); assert.equal(released.prisonWork,3);
 });
+
+test("Escaping through the service exit frees you at maximum wanted level, so the police chase", () => {
+  const jailed = { ...L.freshLife(), jailUntil: 5_000_000, prisonWork: 2, hearing: { stars: 3, charge: "x" } };
+  const out = L.escapeFromPrison(jailed, 1000);
+  assert.equal(out.jailUntil, 0);
+  assert.equal(out.hearing, null);
+  assert.equal(out.prisonWork, 0);
+  assert.equal(out.stars, L.MAX_STARS);
+  assert.ok(out.stars >= L.POLICE_STARS, "police respond");
+  assert.equal(out.lastOffence, "Escaping from lawful custody");
+  // High-star wanted levels never fade on their own: you have to lose the police.
+  assert.equal(L.cooled(out, 1000 + 10 * L.STAR_FADE_MS).stars, L.MAX_STARS);
+  // Getting caught means a longer sentence than a one-star offence.
+  assert.ok(L.sentenceMs(out.stars) > L.sentenceMs(1));
+});

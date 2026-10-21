@@ -70,6 +70,7 @@ export const OFFENCES = {
   shoplifting: { stars: 2, charge: "Shoplifting from a high-street shop" },
   "car-theft": { stars: 3, charge: "Taking a car without the owner's consent" },
   "resisting-arrest": { stars: 1, charge: "Resisting arrest" },
+  "prison-escape": { stars: 5, charge: "Escaping from lawful custody" },
 } as const;
 export type Offence = keyof typeof OFFENCES;
 
@@ -102,6 +103,15 @@ export const cardsLeft = (homeworkDone: number, s: LifeState) => Math.max(0, hom
 
 /** The orange jumpsuit while you're inside. */
 export const PRISON_LOOK = { top: "top-tracksuit", topColor: "topcol-orange", bottom: "bottom-joggers", bottomColor: "botcol-orange", hat: "hat-none", held: "held-none" } as const;
+
+/**
+ * Breaking out through the service exit: you're free, but at the maximum wanted
+ * level, so the police chase starts as soon as you're outside. Lose them to clear
+ * your record; get caught and you're taken back with a longer sentence.
+ */
+export function escapeFromPrison(s: LifeState, now: number): LifeState {
+  return commit({ ...s, jailUntil: 0, hearing: null, prisonWork: 0 }, now, "prison-escape");
+}
 
 /** Every prison exit starts a clean wanted record, without losing study rewards. */
 export function releaseFromPrison(s: LifeState): LifeState {

@@ -2471,7 +2471,8 @@ export function World3D({
       const followed = followPlayerCamera(focus, { x: mx, z: mz }, dt);
       focus.set(followed.x, 0, followed.z);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors, { x: mx, z: mz }, cameraZoom, true);
+      // The prison is a large walkable block: keep the camera on the player there, as outdoors.
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison", { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
