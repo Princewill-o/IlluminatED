@@ -11,6 +11,7 @@ import { issueCareerReceipt, readCareerReceipt } from "@/lib/game/career-receipt
 import { getSupabase } from "@/lib/social/server";
 import { stripeLive } from "@/lib/stripe";
 
+
 const FRIENDLY: Record<string, string> = {
   overlap: "That furniture overlaps another item.",
   door_blocked: "Keep the front door clear.",
@@ -22,7 +23,7 @@ const FRIENDLY: Record<string, string> = {
   too_fast: "That shift was a bit quick to be real. Take your time on each task.",
   rate_limited: "Take a short break between shifts (45 seconds).",
   not_enough_clout: "Not enough Clout yet. Work a few shifts to earn more!",
-  career_subscription_required: "Plus+ Experience is required to complete simulated workplace activities. Explore workplaces for free and compare plans at /pricing.",
+  career_subscription_required: "Plus+ Experience is required to complete simulated workplace activities. You can still explore workplaces for free.",
   unknown_item: "That item isn't for sale.",
   too_many: "You've got plenty of those already.",
   not_owned: "You need to buy that first.",

@@ -11,6 +11,7 @@ import { Coins, Flame, Send } from "lucide-react";
 import { AppearanceSwitch } from "@/components/app/appearance-switch";
 import { AvatarFigure } from "@/components/game/avatar";
 import { SeasonXpToast } from "@/components/game/season/event-banner";
+import { PlanBadge } from "@/components/plan-badge";
 import { type Avatar, DEFAULT_AVATAR, sanitiseAvatar } from "@/game/core/cosmetics";
 import { levelForXp } from "@/game/core/progression";
 import { APP_TABS, activeTab, screenTitle } from "@/lib/app-shell";
@@ -118,6 +119,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Image src="/brand/lion-head.webp" alt="" width={36} height={36} className="size-9 rounded-full bg-brand" priority />
             <span className="hidden text-lg font-extrabold tracking-tight 2xl:block">IlluminatED</span>
           </Link>
+          {/* Your plan, right under the logo (short label on the narrow rail). */}
+          <div className="-mt-3 mb-4 flex justify-center px-1 2xl:justify-start 2xl:px-2">
+            <PlanBadge short compact className="2xl:hidden" />
+            <PlanBadge className="hidden 2xl:inline-flex" />
+          </div>
           <ul className="flex flex-1 flex-col gap-1">
             {APP_TABS.map((tab) => {
               const on = current === tab.id;
@@ -174,6 +180,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Image src="/brand/lion-head.webp" alt="" width={30} height={30} className="size-7 rounded-full bg-brand" priority />
               <span className="truncate text-base font-extrabold tracking-tight">{title ?? "IlluminatED"}</span>
             </Link>
+            <PlanBadge short />
             <span className="ml-auto flex shrink-0 items-center gap-2">
               <Stats player={player} compact />
               <Link prefetch={false} href="/messages" aria-label="Messages" className="grid size-11 place-items-center rounded-full bg-foreground/[0.05] active:scale-90">

@@ -12,6 +12,7 @@ import { TaskCard } from "./task-card";
 
 import { startCareerSession, completeCareerSession } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { CareerError } from "@/components/careers/career-error";
 import { AvatarFigure } from "@/components/game/avatar";
 import { CompanyLogo } from "@/components/game/company-logo";
 import { doActivity } from "@/components/game/world/use-needs";
@@ -100,7 +101,7 @@ export function Interview({ workplace, onHired, onClose }: { workplace: Workplac
       {pending || !outcome ? (
         <p>The panel is deciding…</p>
       ) : outcome.error ? (
-        <p className="text-ink-coral">{outcome.error}</p>
+        <p className="text-ink-coral"><CareerError message={outcome.error} /></p>
       ) : outcome.passed ? (
         <div className="text-center">
           <Sparkles className="mx-auto size-10 text-ink-sun" aria-hidden />
@@ -198,7 +199,7 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
       {pending || !summary ? (
         <p>Clocking out…</p>
       ) : summary.error ? (
-        <p className="text-ink-coral">{summary.error}</p>
+        <p className="text-ink-coral"><CareerError message={summary.error} /></p>
       ) : (
         <div className="text-center">
           <p className="text-sm font-bold tracking-widest text-muted-foreground uppercase">Payslip</p>
