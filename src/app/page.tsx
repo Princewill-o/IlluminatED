@@ -203,14 +203,16 @@ export default async function Home() {
         </div>
         <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-3xl border-4 border-[#1d1a4a] bg-white shadow-[10px_10px_0_#1d1a4a] dark:border-white/85 dark:shadow-[10px_10px_0_rgba(179,175,255,0.45)]">
           <video
-            className="block aspect-video w-full"
+            className="pointer-events-none block aspect-video w-full select-none"
             src="/landing/how-it-works.mp4"
             poster="/landing/how-it-works-poster.jpg"
             autoPlay
             muted
             loop
             playsInline
-            controls
+            disablePictureInPicture
+            disableRemotePlayback
+            tabIndex={-1}
             aria-label="Motion graphic: pick subjects, explore London, answer quizzes, the agent plans your week, spend Clout on your look, and teachers see progress"
           />
         </div>
