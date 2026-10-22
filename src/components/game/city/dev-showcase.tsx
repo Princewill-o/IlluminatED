@@ -15,6 +15,7 @@ import { FriendsPanel } from "./friends-panel";
 import { Character3DPreview } from "@/components/game/character-3d-preview";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
+import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { affiliationFor } from "@/game/core/affiliation";
@@ -38,10 +39,13 @@ export function DevShowcase({
   view,
   map,
   workplace,
+  as,
 }: {
   view: string;
   map: string;
   workplace?: string;
+  /** Voice test: which of the two test friends this tab is. */
+  as?: string;
 }) {
   const company = workplace ? workplaceById(workplace) : null;
   const job = company
@@ -116,6 +120,7 @@ export function DevShowcase({
       setStatus("Recording failed in this browser.");
     }
   }
+  if (view === "voice") return <VoiceTest as={as === "b" ? "b" : "a"} />;
   if (view === "world")
     return (
       <div className="fixed inset-0 z-[100005] bg-[#f7f1e6]">
@@ -309,6 +314,23 @@ export function DevShowcase({
           <ConversationPreview />
         </div>
       )}
+    </main>
+  );
+}
+
+/** Two tabs (?view=voice&as=a / as=b) call each other over a local channel with real WebRTC. */
+const VOICE_FRIENDS = { a: { id: "00000000-0000-4000-8000-00000000000a", username: "amara" }, b: { id: "00000000-0000-4000-8000-00000000000b", username: "ben" } };
+function VoiceTest({ as }: { as: "a" | "b" }) {
+  const me = VOICE_FRIENDS[as], friend = VOICE_FRIENDS[as === "a" ? "b" : "a"];
+  const [signaller] = useState(() => localSignaller());
+  const [near, setNear] = useState(false);
+  return (
+    <main className="min-h-dvh bg-[#1c2b3a] p-6 text-white">
+      <h1 className="text-xl font-black">Voice test · you are @{me.username}</h1>
+      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={near} onChange={e => setNear(e.target.checked)} /> Standing next to @{friend.username}</label>
+      <div className="fixed right-4 bottom-4 flex flex-col items-end gap-2">
+        <VoiceChat meId={me.id} nearby={near ? [friend.id] : []} signaller={signaller} friendList={[friend]} />
+      </div>
     </main>
   );
 }

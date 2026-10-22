@@ -24,10 +24,69 @@ const ICE: RTCConfiguration = { iceServers: [{ urls: ["stun:stun.l.google.com:19
 /** Proximity range in pixels (about 5 tiles). */
 export const VOICE_RANGE = 160;
 
-type Friend = { id: string; username: string };
+export type Friend = { id: string; username: string };
+
+/** One signalling topic. Supabase Realtime in the game; a BroadcastChannel in local tests. */
+export interface SignalChannel {
+  on(event: string, cb: (payload: unknown) => void): SignalChannel;
+  subscribe(ready?: () => void): void;
+  send(event: string, payload: unknown): void;
+  close(): void;
+}
+export interface Signaller {
+  open(topic: string): Promise<SignalChannel>;
+  /** Fire-and-forget message to a topic you don't listen on (another friend's ring inbox). */
+  post(topic: string, event: string, payload: unknown): Promise<void>;
+}
+
+/** Private Realtime channels; RLS limits them to accepted friends (friend_calls migration). */
+function supabaseSignaller(sb: SupabaseClient): Signaller {
+  const make = async (topic: string) => {
+    const { data } = await sb.auth.getSession();
+    if (data.session) await sb.realtime.setAuth(data.session.access_token);
+    return sb.channel(topic, { config: { private: true, broadcast: { self: false } } });
+  };
+  const wrap = (ch: RealtimeChannel): SignalChannel => {
+    const api: SignalChannel = {
+      on: (event, cb) => { ch.on("broadcast", { event }, ({ payload }) => cb(payload)); return api; },
+      subscribe: ready => { ch.subscribe(status => { if (status === "SUBSCRIBED") ready?.(); }); },
+      send: (event, payload) => { void ch.send({ type: "broadcast", event, payload }); },
+      close: () => { void sb.removeChannel(ch); },
+    };
+    return api;
+  };
+  return {
+    open: async topic => wrap(await make(topic)),
+    post: async (topic, event, payload) => {
+      const ch = await make(topic);
+      try { await ch.httpSend(event, payload); } finally { void sb.removeChannel(ch); }
+    },
+  };
+}
+
+/** Same-browser signalling for local tests and the preview (two tabs talk to each other). */
+export function localSignaller(): Signaller {
+  const wrap = (topic: string): SignalChannel => {
+    const bc = new BroadcastChannel(`voice:${topic}`);
+    const handlers = new Map<string, ((p: unknown) => void)[]>();
+    bc.onmessage = e => { const { event, payload } = e.data as { event: string; payload: unknown }; for (const cb of handlers.get(event) ?? []) cb(payload); };
+    const api: SignalChannel = {
+      on: (event, cb) => { handlers.set(event, [...(handlers.get(event) ?? []), cb]); return api; },
+      subscribe: ready => { window.setTimeout(() => ready?.(), 0); },
+      send: (event, payload) => bc.postMessage({ event, payload }),
+      close: () => bc.close(),
+    };
+    return api;
+  };
+  return {
+    open: async topic => wrap(topic),
+    post: async (topic, event, payload) => { const bc = new BroadcastChannel(`voice:${topic}`); bc.postMessage({ event, payload }); bc.close(); },
+  };
+}
+
 type Link = {
   pc: RTCPeerConnection;
-  channel: RealtimeChannel;
+  channel: SignalChannel;
   polite: boolean;
   making: boolean;
   ignore: boolean;
@@ -42,14 +101,16 @@ type Signal =
 
 const pairTopic = (a: string, b: string) => (a < b ? `call:${a}:${b}` : `call:${b}:${a}`);
 
-async function privateChannel(sb: SupabaseClient, topic: string) {
-  const { data } = await sb.auth.getSession();
-  if (data.session) await sb.realtime.setAuth(data.session.access_token);
-  return sb.channel(topic, { config: { private: true, broadcast: { self: false } } });
-}
-
-export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids within VOICE_RANGE on this map and server. */ nearby: string[] }) {
-  const [friends, setFriends] = useState<Friend[]>([]);
+export function VoiceChat({ meId, nearby, signaller: given, friendList }: {
+  meId: string;
+  /** Player ids within VOICE_RANGE on this map and server. */
+  nearby: string[];
+  /** Override signalling (local tests); defaults to Supabase Realtime. */
+  signaller?: Signaller;
+  /** Override the friends list (local tests). */
+  friendList?: Friend[];
+}) {
+  const [friends, setFriends] = useState<Friend[]>(friendList ?? []);
   const [micOn, setMicOn] = useState(false);
   const [camOn, setCamOn] = useState(false);
   const [open, setOpen] = useState(false);
@@ -59,8 +120,8 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
   const [error, setError] = useState<string | null>(null);
   const local = useRef<MediaStream | null>(null);
   const links = useRef(new Map<string, Link>());
-  const sbRef = useRef<SupabaseClient | null>(null);
-  const friendIds = useRef(new Set<string>());
+  const [sig] = useState<Signaller | null>(() => given ?? (() => { const sb = browserSupabase(); return sb ? supabaseSignaller(sb) : null; })());
+  const friendIds = useRef(new Set<string>(friendList?.map(f => f.id)));
 
   const refreshPeers = useCallback(() => {
     setPeers(Object.fromEntries([...links.current].map(([id, l]) => [id, { stream: l.stream, reason: l.reason }])));
@@ -68,8 +129,8 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
 
   // Accepted friends.
   useEffect(() => {
+    if (friendList) return;
     const sb = browserSupabase();
-    sbRef.current = sb;
     if (!sb) return;
     let alive = true;
     void sb
@@ -85,7 +146,7 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
         setFriends(list);
       });
     return () => { alive = false; };
-  }, [meId]);
+  }, [meId, friendList]);
 
   /** Microphone (and camera) for this device; tracks are enabled or muted in place. */
   const ensureMedia = useCallback(async (video: boolean) => {
@@ -113,28 +174,37 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
   const hangUp = useCallback((id: string, notify = true) => {
     const l = links.current.get(id);
     if (!l) return;
-    if (notify) void l.channel.send({ type: "broadcast", event: "sig", payload: { t: "bye", from: meId } satisfies Signal });
+    if (notify) l.channel.send("sig", { t: "bye", from: meId } satisfies Signal);
     l.pc.close();
-    void sbRef.current?.removeChannel(l.channel);
+    l.channel.close();
     links.current.delete(id);
     refreshPeers();
   }, [meId, refreshPeers]);
 
   /** Opens (or reuses) the peer link with one friend. */
   const connect = useCallback(async (id: string, reason: "call" | "near") => {
-    const sb = sbRef.current;
-    if (!sb || !friendIds.current.has(id)) return;
+    if (!sig || !friendIds.current.has(id)) return;
     const existing = links.current.get(id);
     if (existing) { if (reason === "call") existing.reason = "call"; refreshPeers(); return; }
     const stream = await ensureMedia(false);
     if (!stream) return;
-    const channel = await privateChannel(sb, pairTopic(meId, id));
+    if (links.current.has(id)) return;
+    const channel = await sig.open(pairTopic(meId, id));
+    if (links.current.has(id)) { channel.close(); return; }
     const pc = new RTCPeerConnection(ICE);
     const link: Link = { pc, channel, polite: meId > id, making: false, ignore: false, stream: null, reason };
     links.current.set(id, link);
-    const send = (payload: Signal) => void channel.send({ type: "broadcast", event: "sig", payload });
+    const send = (payload: Signal) => channel.send("sig", payload);
     for (const t of stream.getTracks()) pc.addTrack(t, stream);
-    pc.ontrack = e => { link.stream = e.streams[0] ?? new MediaStream([e.track]); refreshPeers(); };
+    // One stream per friend holding every track they send (audio stays when they add a camera).
+    pc.ontrack = e => {
+      const stream = link.stream ?? new MediaStream();
+      for (const old of stream.getTracks()) if (old.kind === e.track.kind && old !== e.track) stream.removeTrack(old);
+      stream.addTrack(e.track);
+      e.track.onended = () => { stream.removeTrack(e.track); refreshPeers(); };
+      link.stream = stream;
+      refreshPeers();
+    };
     pc.onicecandidate = e => { if (e.candidate) send({ t: "ice", from: meId, c: e.candidate.toJSON() }); };
     const negotiate = async () => {
       try { link.making = true; await pc.setLocalDescription(); send({ t: "desc", from: meId, sdp: pc.localDescription!.toJSON() }); }
@@ -142,13 +212,18 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
     };
     pc.onnegotiationneeded = negotiate;
     pc.onconnectionstatechange = () => { if (pc.connectionState === "failed") hangUp(id, false); };
-    channel.on("broadcast", { event: "sig" }, async ({ payload }) => {
+    channel.on("sig", async payload => {
       const s = payload as Signal;
       if (s.from !== id) return;
       try {
         if (s.t === "bye") { hangUp(id, false); return; }
         // The other side just joined: whoever isn't connected yet re-sends an offer they may have missed.
-        if (s.t === "hi") { if (pc.connectionState !== "connected" && pc.signalingState === "stable" && !link.making) await negotiate(); return; }
+        if (s.t === "hi") {
+          if (pc.connectionState === "connected" || link.making) return;
+          if (pc.signalingState === "have-local-offer" && pc.localDescription) send({ t: "desc", from: meId, sdp: pc.localDescription.toJSON() });
+          else if (pc.signalingState === "stable") await negotiate();
+          return;
+        }
         if (s.t === "desc") {
           const collision = s.sdp.type === "offer" && (link.making || pc.signalingState !== "stable");
           link.ignore = !link.polite && collision;
@@ -160,37 +235,33 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
         }
       } catch { /* A dropped signal: the next negotiation retries. */ }
     });
-    channel.subscribe(status => { if (status === "SUBSCRIBED") send({ t: "hi", from: meId }); });
+    channel.subscribe(() => send({ t: "hi", from: meId }));
     refreshPeers();
-  }, [meId, ensureMedia, hangUp, refreshPeers]);
+  }, [meId, sig, ensureMedia, hangUp, refreshPeers]);
 
   // Incoming calls on my ring inbox.
   useEffect(() => {
-    const sb = sbRef.current ?? browserSupabase();
-    if (!sb) return;
-    let ch: RealtimeChannel | null = null, dead = false;
-    void privateChannel(sb, `ring:${meId}`).then(c => {
-      if (dead) { void sb.removeChannel(c); return; }
+    if (!sig) return;
+    let ch: SignalChannel | null = null, dead = false;
+    void sig.open(`ring:${meId}`).then(c => {
+      if (dead) { c.close(); return; }
       ch = c;
-      c.on("broadcast", { event: "ring" }, ({ payload }) => {
+      c.on("ring", payload => {
         const from = friends.find(f => f.id === (payload as { from: string }).from);
         if (from) setRinging(from);
-      }).on("broadcast", { event: "answer" }, ({ payload }) => {
+      }).on("answer", payload => {
         const p = payload as { from: string; ok: boolean };
         setOutgoing(o => (o === p.from ? null : o));
-        if (p.ok) void connect(p.from, "call");
+        if (p.ok) { setMicOn(true); void connect(p.from, "call"); }
         else setError("Call declined.");
       }).subscribe();
     });
-    return () => { dead = true; if (ch) void sb.removeChannel(ch); };
-  }, [meId, friends, connect]);
+    return () => { dead = true; ch?.close(); };
+  }, [meId, sig, friends, connect]);
 
   const ring = useCallback(async (friend: Friend, event: "ring" | "answer", extra: Record<string, unknown> = {}) => {
-    const sb = sbRef.current;
-    if (!sb) return;
-    const ch = await privateChannel(sb, `ring:${friend.id}`);
-    try { await ch.httpSend(event, { from: meId, ...extra }); } finally { void sb.removeChannel(ch); }
-  }, [meId]);
+    await sig?.post(`ring:${friend.id}`, event, { from: meId, ...extra });
+  }, [meId, sig]);
 
   // Proximity: unmuted friends close by join; those who walk away (and aren't on a call) drop.
   const nearKey = nearby.filter(id => friendIds.current.has(id)).sort().join(",");
@@ -201,7 +272,11 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
   }, [nearKey, micOn, connect, hangUp]);
 
   // Mic and camera toggles mute tracks in place.
-  useEffect(() => { local.current?.getAudioTracks().forEach(t => (t.enabled = micOn || Object.values(peers).some(p => p.reason === "call"))); }, [micOn, peers]);
+  useEffect(() => { local.current?.getAudioTracks().forEach(t => (t.enabled = micOn)); }, [micOn, peers]);
+  useEffect(() => {
+    // Local debugging only: lets automated two-tab tests inspect the peer connections.
+    if (process.env.NODE_ENV === "development") (window as unknown as { __voice?: unknown }).__voice = links.current;
+  }, []);
   useEffect(() => {
     if (camOn) void ensureMedia(true).then(s => { if (!s) setCamOn(false); else s.getVideoTracks().forEach(t => (t.enabled = true)); });
     else local.current?.getVideoTracks().forEach(t => (t.enabled = false));
@@ -266,7 +341,7 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
             <Phone className="size-4 animate-pulse text-[#30d158]" />
             <span className="text-sm"><b>@{ringing.username}</b> is calling</span>
             <button type="button" aria-label="Decline" onClick={() => { void ring(ringing, "answer", { ok: false }); setRinging(null); }} className="gloss-off grid size-9 place-items-center rounded-full bg-[#ff3b30]"><PhoneOff className="size-4" /></button>
-            <button type="button" aria-label="Accept" onClick={() => { const f = ringing; setRinging(null); void ensureMedia(false).then(s => { if (!s) return; void connect(f.id, "call").then(() => ring(f, "answer", { ok: true })); }); }} className="gloss-off grid size-9 place-items-center rounded-full bg-[#30d158]"><Phone className="size-4" /></button>
+            <button type="button" aria-label="Accept" onClick={() => { const f = ringing; setRinging(null); setMicOn(true); void ensureMedia(false).then(s => { if (!s) return; void connect(f.id, "call").then(() => ring(f, "answer", { ok: true })); }); }} className="gloss-off grid size-9 place-items-center rounded-full bg-[#30d158]"><Phone className="size-4" /></button>
           </div>
         </HudSlot>
       )}
@@ -286,7 +361,16 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
 function MediaTile({ stream, label, muted = false, mirror = false, onEnd }: { stream: MediaStream | null; label: string; muted?: boolean; mirror?: boolean; onEnd?: () => void }) {
   const ref = useRef<HTMLVideoElement>(null);
   useEffect(() => { if (ref.current && ref.current.srcObject !== stream) ref.current.srcObject = stream; }, [stream]);
-  const hasVideo = !!stream?.getVideoTracks().some(t => t.enabled && t.readyState === "live");
+  // Re-render when a friend's camera starts or stops sending frames.
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const tracks = stream?.getVideoTracks() ?? [];
+    const bump = () => tick(n => n + 1);
+    for (const t of tracks) { t.addEventListener("mute", bump); t.addEventListener("unmute", bump); }
+    const timer = window.setInterval(bump, 1500);
+    return () => { window.clearInterval(timer); for (const t of tracks) { t.removeEventListener("mute", bump); t.removeEventListener("unmute", bump); } };
+  }, [stream]);
+  const hasVideo = !!stream?.getVideoTracks().some(t => t.enabled && !t.muted && t.readyState === "live");
   return (
     <figure className="relative h-20 w-28 overflow-hidden rounded-2xl border-2 border-white/70 bg-[#13203a] shadow-lg">
       <video ref={ref} autoPlay playsInline muted={muted} className={cn("size-full object-cover", !hasVideo && "opacity-0", mirror && "-scale-x-100")} />

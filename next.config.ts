@@ -42,7 +42,8 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=()",
+    // Our own pages may ask for the mic and camera (friends-only voice and video); embeds may not.
+    value: "camera=(self), microphone=(self), geolocation=()",
   },
   {
     key: "Strict-Transport-Security",
