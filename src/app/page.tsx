@@ -25,6 +25,33 @@ const soft = "text-[var(--sky-soft)]";
 const card = "rounded-3xl bg-[var(--sky-card)] ring-1 ring-[var(--sky-ring)] backdrop-blur";
 const accent = "text-[var(--sky-accent)]";
 
+/** Landing pricing. Paid prices match the Stripe prices checked at checkout (src/lib/premium-actions.ts). */
+const PLANS: {
+  name: string; tagline: string; price: string; per?: string; note: string;
+  features: string[]; href: string; cta: string; highlight?: boolean; badge?: string;
+}[] = [
+  {
+    name: "Explorer", tagline: "Get started with core revision.", price: "Free", note: "No card needed",
+    features: ["Introductory revision quests", "Basic XP and achievements", "Personal learning progress", "Explore the Career District"],
+    href: "/book?for=individual", cta: "Request access",
+  },
+  {
+    name: "Plus", tagline: "The complete revision experience.", price: "£5.99", per: "/ month", note: "or £59.90 a year",
+    features: ["Full revision library and unlimited quests", "Advanced progress insights", "Character customisation", "Season Pass premium track and event games"],
+    href: "/pricing#plans", cta: "Choose Plus",
+  },
+  {
+    name: "Plus+ Experience", tagline: "Revision plus career simulations.", price: "£12.99", per: "/ month", note: "or £129.90 a year · 7-day free trial",
+    features: ["Everything in Plus", "Virtual company workplaces", "Interactive career simulations", "Completion records for eligible activities"],
+    href: "/pricing#plans", cta: "Start free trial", highlight: true, badge: "Best value",
+  },
+  {
+    name: "Schools & colleges", tagline: "Licences for your learners and staff.", price: "Custom", note: "Priced per school after a call",
+    features: ["Teacher dashboards", "Homework quests and auto-marking", "Class progress reporting", "Student licences and onboarding"],
+    href: "/book?for=school", cta: "Make an enquiry",
+  },
+];
+
 /** A cartoon cloud: thick outline, flat fill. Shown in the day sky. */
 function Cloud({ className }: { className: string }) {
   return (
@@ -207,24 +234,55 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Access. */}
-      <section className="relative container pb-20" aria-labelledby="access-title">
-        <h2 id="access-title" className={`${display} text-4xl sm:text-5xl`}>One product. Clear ways in.</h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            ["Learners", "Invited learners use the core study tools free. Optional Premium is £5.99/month once live checkout is available; it is never needed for core revision.", "/book?for=individual", "Request an invitation"],
-            ["Schools and colleges", "School licences cover agreed learner seats, teacher workflows and onboarding. Seat pricing and pilot scope are agreed in writing before purchase.", "/book?for=school", "Discuss a school pilot"],
-            ["Investors and partners", "The product, revenue model and pilot questions, separating built features from the evidence we still need to collect.", "/investors", "Read the business overview"],
-          ].map(([title, text, href, label]) => (
-            <article key={title} className={`${card} flex flex-col p-6`}>
-              <h3 className="text-lg font-bold">{title}</h3>
-              <p className={`mt-3 flex-1 leading-7 ${soft}`}>{text}</p>
-              <Link prefetch={false} href={href} className={`mt-5 inline-flex min-h-11 items-center gap-1.5 font-bold ${accent}`}>
-                {label} <ArrowRight className="size-4" aria-hidden />
+      {/* Pricing: learner plans with prices, and school licences by enquiry. */}
+      <section id="pricing" className="relative container pb-20 scroll-mt-24" aria-labelledby="pricing-title">
+        <p className={`text-sm font-bold tracking-widest uppercase ${accent}`}>Pricing</p>
+        <h2 id="pricing-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>Start free. Upgrade when you&apos;re ready.</h2>
+        <p className={`mt-4 max-w-2xl leading-7 ${soft}`}>
+          Core revision is free. Paid plans are monthly or yearly, paid securely with Stripe, and you can cancel any time.
+        </p>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {PLANS.map((plan) => (
+            <article
+              key={plan.name}
+              className={`${card} relative flex flex-col p-6 ${plan.highlight ? "ring-2 ring-[#6b55e0] shadow-[0_12px_40px_-12px_rgba(107,85,224,0.55)]" : ""}`}
+            >
+              {plan.badge && (
+                <span className="absolute -top-3 right-5 rounded-full bg-[#6b55e0] px-3 py-1 text-xs font-black text-white shadow-md">{plan.badge}</span>
+              )}
+              <h3 className="text-lg font-bold">{plan.name}</h3>
+              <p className={`mt-1 text-sm ${soft}`}>{plan.tagline}</p>
+              <p className="mt-5">
+                <span className={`${display} text-4xl`}>{plan.price}</span>
+                {plan.per && <span className={`ml-1 text-sm font-semibold ${soft}`}>{plan.per}</span>}
+              </p>
+              <p className={`mt-1 min-h-5 text-xs font-semibold ${soft}`}>{plan.note}</p>
+              <ul className={`mt-5 flex-1 space-y-2 text-sm leading-6 ${soft}`}>
+                {plan.features.map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <span aria-hidden className={`mt-0.5 font-black ${accent}`}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                prefetch={false}
+                href={plan.href}
+                className={
+                  plan.highlight
+                    ? "mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#6b55e0] px-5 font-bold text-white shadow-[4px_4px_0_#1d1a4a]"
+                    : `mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-bold ring-2 ring-[var(--sky-ring)] ${accent}`
+                }
+              >
+                {plan.cta} <ArrowRight className="size-4" aria-hidden />
               </Link>
             </article>
           ))}
         </div>
+        <p className={`mt-6 text-sm ${soft}`}>
+          Prices in GBP. Under-18s need a parent or guardian&apos;s permission for a paid plan. Investors and partners:{" "}
+          <Link prefetch={false} href="/investors" className="font-semibold underline">read the business overview</Link>.
+        </p>
       </section>
 
       {/* Honest expectations. */}
