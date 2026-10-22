@@ -79,7 +79,39 @@ function Sticker({ children, className }: { children: React.ReactNode; className
   );
 }
 
-export default function Home() {
+/** Live platform totals (public.platform_stats), refreshed at most hourly; falls back to known totals if unreachable. */
+type PlatformStats = { questions: number; practice_sets: number; subjects: number; game_questions: number };
+const STATS_FALLBACK: PlatformStats = { questions: 4419, practice_sets: 256, subjects: 33, game_questions: 758 };
+async function platformStats(): Promise<PlatformStats> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return STATS_FALLBACK;
+  try {
+    const res = await fetch(`${url}/rest/v1/rpc/platform_stats`, {
+      method: "POST",
+      headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: "{}",
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return STATS_FALLBACK;
+    const data = (await res.json()) as Partial<PlatformStats>;
+    const n = (v: unknown, fallback: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback);
+    return {
+      questions: n(data.questions, STATS_FALLBACK.questions),
+      practice_sets: n(data.practice_sets, STATS_FALLBACK.practice_sets),
+      subjects: n(data.subjects, STATS_FALLBACK.subjects),
+      game_questions: n(data.game_questions, STATS_FALLBACK.game_questions),
+    };
+  } catch {
+    return STATS_FALLBACK;
+  }
+}
+
+export const revalidate = 3600;
+
+export default async function Home() {
+  const stats = await platformStats();
   return (
     <div className="landing-sky relative overflow-hidden text-[var(--sky-ink)]">
       <SiteStructuredData />
@@ -146,9 +178,12 @@ export default function Home() {
             </span>
           ))}
         </Marquee>
-        <div className="container mt-12 grid gap-4 sm:grid-cols-3">
+        <div className="container mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            [108, "questions in the quiz bank, each explained"],
+            [stats.questions, "practice questions, each with an answer and explanation"],
+            [stats.practice_sets, "topic practice sets ready to assign"],
+            [stats.subjects, "GCSE, A-level, BTEC and T Level subjects"],
+            [stats.game_questions, "quiz challenges to play inside the game"],
             [184, "Locker items to mix into your own look"],
             [13, "company HQs with jobs to try in the city"],
           ].map(([n, label]) => (
