@@ -19,6 +19,7 @@ import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
+import { VoiceChat, VOICE_RANGE } from "./voice-chat";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
@@ -601,6 +602,16 @@ export function WorldView({
   };
 
   const status = STATUS[world.status];
+  // Friends within talking range, for proximity voice (checked twice a second).
+  const [nearby, setNearby] = useState<string[]>([]);
+  useEffect(() => {
+    if (serverId === "solo") return;
+    const timer = window.setInterval(() => {
+      const ids = [...players.current.values()].filter(rp => !hidden.has(rp.id) && Math.hypot(rp.x - PLAYER.x, rp.y - PLAYER.y) < VOICE_RANGE).map(rp => rp.id).sort();
+      setNearby(prev => (prev.join() === ids.join() ? prev : ids));
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [serverId, hidden]);
   // Retain bounded 2D sprites while moving; positions update outside React.
   const others = [...players.current.values()].filter(p => !hidden.has(p.id)).slice(0,VISIBLE_PLAYERS);
 
@@ -704,6 +715,7 @@ export function WorldView({
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
       {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
+      {serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
