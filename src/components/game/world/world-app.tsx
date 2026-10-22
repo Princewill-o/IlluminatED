@@ -9,11 +9,12 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
+import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES, TUTOR } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
+import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { HudLayout, HudSlot } from "./hud";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
@@ -75,6 +76,8 @@ import {
   courtMap,
   hospitalMap,
   prisonMap,
+  tutorialMap,
+  TUTORIAL_MAP_ID,
   highlandsMap,
   busStops,
   homeMap,
@@ -112,6 +115,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "hospital") return hospitalMap();
   if (id === "court") return courtMap();
   if (id === "prison") return prisonMap();
+  if (id === TUTORIAL_MAP_ID) return tutorialMap();
   if (id.startsWith("station-")) return stationMap(id.slice("station-".length));
   if (id.startsWith("office-")) {
     const org = offices.find((o) => `office-${o.slug}` === id);
@@ -199,12 +203,22 @@ export function WorldApp({
   const [mapOpen, setMapOpen] = useState(false);
   const arrived = useCallback(() => setWaypoint(null), []);
   useEffect(() => setWaypoint(null), [mapId]);
+  // Fresh accounts start in Flight School: follow Ava, then fly to London.
+  const [flight, setFlight] = useState<number | null>(null);
+  const [flightModal, setFlightModal] = useState<"desk" | "quiz" | null>(null);
+  const [flying, setFlying] = useState(false);
   useEffect(() => {
+    let fresh = false;
     try {
-      if (!localStorage.getItem(`${TUTORIAL_KEY}:${me.id}`)) setTutorial(true);
-    } catch {
-      setTutorial(true);
-    }
+      fresh = !localStorage.getItem(`${FLIGHT_SCHOOL_KEY}:${me.id}`) && !localStorage.getItem(`${TUTORIAL_KEY}:${me.id}`);
+    } catch { fresh = false; }
+    if (!fresh) return;
+    const training = tutorialMap();
+    TUTOR.x = 7.5 * TILE; TUTOR.y = 9.5 * TILE; TUTOR.active = true;
+    setArrive(training.spawn);
+    setMapId(TUTORIAL_MAP_ID);
+    setTrip(n => n + 1);
+    setFlight(0);
   }, [me.id]);
   const [dock, setDock] = useState(false);
   const [games, setGames] = useState(false);
@@ -331,6 +345,7 @@ export function WorldApp({
   useEffect(()=>{const scene=(e:Event)=>{const d=(e as CustomEvent<{title?:string;subtitle?:string}>).detail;if(d?.title)say(d.title.slice(0,100));};window.addEventListener("illuminated:scene",scene);return()=>window.removeEventListener("illuminated:scene",scene);},[say]);
 
   const atHome = mapId === "home";
+  const inTutorial = mapId === TUTORIAL_MAP_ID;
   const lobby = useLobby(server && !atHome ? { map: mapId, server } : null, me.id);
 
   useEffect(() => {
@@ -378,7 +393,7 @@ export function WorldApp({
     setDriving(null);
     setGames(false); setPhone(false); setStudy(false); setInmate(null); setLearning(false); setAwardsOpen(false);
     setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false);
-    setDealer(false); setDock(false); setDesk(false); setBankOpen(false);
+    setDealer(false); setDock(false); setDesk(false); setBankOpen(false); setRoom(null);
     setSceneName(label);
     setFading(true);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
@@ -461,6 +476,15 @@ export function WorldApp({
         else router.push("/games/careers");
         return;
       }
+      if (to.kind === "tutorial") {
+        const goal = flight === null ? null : FLIGHT_STEPS[flight]?.goal;
+        if (goal !== to.step) { say(flight === null ? "Training's done. Use the gate to fly to London." : "Follow Ava first. She'll show you when to use this."); if (flight === null && to.step === "board") setFlying(true); return; }
+        if (to.step === "interact") setFlightModal("desk");
+        else if (to.step === "study") setFlightModal("quiz");
+        else if (to.step === "eat") { say("Yum! Hunger topped up. Keep an eye on your needs in London.", true); setFlight(n => n === null ? n : n + 1); }
+        else setFlying(true);
+        return;
+      }
       if (to.kind === "bank") { setBankOpen(true); return; }
       if (to.kind === "study-room") { setLearning(true); return; }
       if (to.kind === "awards") { setAwardsOpen(true); return; }
@@ -537,8 +561,20 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, flight],
   );
+
+  // Flight School: opening the phone completes the phone step.
+  useEffect(() => {
+    if (phone && flight !== null && FLIGHT_STEPS[flight]?.goal === "phone") setFlight(n => n === null ? n : n + 1);
+  }, [phone, flight]);
+  const landInLondon = useCallback(() => {
+    try { localStorage.setItem(`${FLIGHT_SCHOOL_KEY}:${me.id}`, "done"); localStorage.setItem(`${TUTORIAL_KEY}:${me.id}`, "seen"); } catch { /* Shown again next visit. */ }
+    TUTOR.active = false;
+    setFlying(false); setFlight(null); setFlightModal(null);
+    goTo("city", "Welcome to London");
+    say("Welcome to London! Your tasks are top left. Tap How to play any time for a reminder.", true);
+  }, [me.id, goTo, say]);
 
   const courtSteps = useMemo(() => {
     const p = CITY.portals.find((q) => q.id === "court");
@@ -762,7 +798,7 @@ export function WorldApp({
   const officeSlug = inOffice ? mapId.slice("office-".length) : null;
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
-  if (!server) {
+  if (!server && !inTutorial) {
     return <div className="mx-auto max-w-md p-6">
       <h1 className="text-2xl font-black">Join your regional community</h1>
       <p className="mt-2 text-sm text-muted-foreground">Choose your region. We connect you automatically; individual servers are managed in the background.</p>
@@ -792,11 +828,11 @@ export function WorldApp({
       } />
       {!(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
+        paused={safety || dailyBusy || Boolean(flightModal) || flying || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
         homeAction={homeAction}
         police={pursuit}
         map={map}
-        serverId={atHome ? "solo" : server}
+        serverId={atHome || inTutorial || !server ? "solo" : server}
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
@@ -974,7 +1010,11 @@ export function WorldApp({
         say("The police escort has arrived at HMP Thames. Your sentence has started.", true);
         goTo("prison", "HMP Thames");
       }} />}
-<SceneWipe show={fading} label={sceneName} />
+{inTutorial && flight !== null && !flying && <FlightSchoolGuide step={flight} onNext={() => setFlight(n => n === null ? n : n + 1)} onSkip={() => setFlying(true)} />}
+      {flightModal === "desk" && <FlightSchoolDesk onClose={() => { setFlightModal(null); setFlight(n => n === null ? n : n + 1); }} />}
+      {flightModal === "quiz" && <FlightSchoolQuiz onClose={() => setFlightModal(null)} onDone={() => { setFlightModal(null); setFlight(n => n === null ? n : n + 1); }} />}
+      {flying && <PlaneCutscene onArrive={landInLondon} />}
+      <SceneWipe show={fading} label={sceneName} />
       <HudSlot area="br-nav" order={4}><button
         type="button"
         onClick={() => setTutorial(true)}

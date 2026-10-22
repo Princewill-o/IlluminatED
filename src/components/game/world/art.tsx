@@ -337,6 +337,8 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number } | undefined)[] = [];
 export const PLAYER = { x: -9999, y: -9999 };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
+/** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
+export const TUTOR = { active: false, x: 0, y: 0 };
 /** Current local pedestrians, shared by both renderers and the game loop. */
 export const NPC_SPOTS: { x: number; y: number }[] = [];
 

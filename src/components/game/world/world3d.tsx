@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -2252,6 +2252,10 @@ export function World3D({
     const carLast = new THREE.Vector3();
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
+    // Flight School: Ava walks ahead and the player follows her.
+    const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
+    const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
+    if (tutor && tutorCaption) { tutorCaption.position.set(0,2.05,0); tutor.root.add(tutorCaption); tutor.root.position.set(TUTOR.x/TILE,0,TUTOR.y/TILE); scene.add(tutor.root); }
     if(map.kind === "prison") for(const portal of map.portals.filter(p=>p.to.kind === "prison"&&p.to.action === "talk")) {
       const person=makeBody({...npcLook(portal.id === "inmate-sam"?57:58),...PRISON_LOOK});
       person.root.position.set(portal.rect.x/TILE+0.5,0,portal.rect.y/TILE+0.5);
@@ -2472,7 +2476,7 @@ export function World3D({
       focus.set(followed.x, 0, followed.z);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison", { x: mx, z: mz }, cameraZoom, true);
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
       camera.position.set(framing.x, framing.height, framing.z + framing.distance);
       camera.lookAt(framing.x, framing.target, framing.z);
@@ -2579,6 +2583,15 @@ export function World3D({
           setWalking(body,pursuit?.stage === "chasing");
         }
       });
+      if (tutor) {
+        const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
+        const dx=tx-p.x, dz=tz-p.z, d=Math.hypot(dx,dz);
+        const moving=d>0.05;
+        if (moving) { const step=Math.min(d,0.05); p.x+=dx/d*step; p.z+=dz/d*step; tutor.root.rotation.y=Math.atan2(dx,dz); }
+        else tutor.root.rotation.y=Math.atan2(mx-p.x,mz-p.z);
+        tutor.root.visible=TUTOR.active;
+        setWalking(tutor,moving&&!reduce);
+      }
       const patrols=prisonGuardPositions(Date.now()/1000);
       guardBodies.forEach((body,i)=>{const p=patrols[i];body.root.position.set(p.x/TILE,0,p.y/TILE);body.root.rotation.y=p.angle;setWalking(body,!reduce);});
 

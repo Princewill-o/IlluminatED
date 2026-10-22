@@ -50,7 +50,11 @@ export type PortalTarget =
   | { kind: "shop"; shop: "tescow" | "bootz" }
   | { kind: "doctor" }
   | { kind: "bank" }
-  | { kind: "guide"; guide: "careers" | "study" | "transport" };
+  | { kind: "guide"; guide: "careers" | "study" | "transport" }
+  | { kind: "tutorial"; step: TutorialStation };
+
+/** Interactive stations in the new-player training ground. */
+export type TutorialStation = "interact" | "study" | "eat" | "board";
 
 export interface Portal {
   id: string;
@@ -743,6 +747,59 @@ export function prisonMap(): WorldMap {
     { id: "prison-escape", rect: px(44, 30, 2, 2), label: "Service exit: escape", to: { kind: "prison", action: "escape" } },
   ];
   return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
+}
+
+/**
+ * Flight School: the new-player training ground. Four halls joined by doorways;
+ * the guide (Ava) walks ahead and the player follows her from station to station,
+ * ending at the departure gate for the flight to London.
+ */
+export const TUTORIAL_MAP_ID = "tutorial";
+export function tutorialMap(): WorldMap {
+  const g = new Grid(44, 18, ".");
+  g.border("#");
+  for (let x = 2; x < 42; x += 3) g.set(x, 0, "W");
+  // Partitions with doorways that alternate, so you follow Ava across the hall.
+  g.fill(10, 1, 1, 16, "#"); g.fill(10, 7, 1, 4, ".");
+  g.fill(20, 1, 1, 16, "#"); g.fill(20, 11, 1, 4, ".");
+  g.fill(30, 1, 1, 16, "#"); g.fill(30, 4, 1, 4, ".");
+  // Hall 1: arrivals.
+  for (const [x, y] of [[2, 2], [8, 2], [2, 15], [8, 15]]) g.set(x, y, "p");
+  // Hall 2: help desk.
+  g.fill(13, 2, 5, 1, "r");
+  g.fill(12, 14, 3, 1, "s"); g.fill(16, 14, 3, 1, "s");
+  // Hall 3: practice desks.
+  g.fill(22, 2, 6, 1, "t"); g.fill(22, 8, 2, 1, "t"); g.fill(26, 8, 2, 1, "t");
+  g.set(28, 15, "b"); g.set(22, 15, "b");
+  // Hall 4: café and departure gate.
+  g.fill(32, 14, 5, 1, "r");
+  g.fill(40, 2, 3, 1, "A");
+  for (const [x, y] of [[32, 2], [42, 15]]) g.set(x, y, "p");
+  const portals: Portal[] = [
+    { id: "tut-desk", rect: px(14, 3, 3, 1), label: "Help desk: interact", to: { kind: "tutorial", step: "interact" } },
+    { id: "tut-study", rect: px(23, 3, 4, 1), label: "Practice desk: answer a question", to: { kind: "tutorial", step: "study" } },
+    { id: "tut-cafe", rect: px(33, 13, 3, 1), label: "Café: grab a snack", to: { kind: "tutorial", step: "eat" } },
+    { id: "tut-gate", rect: px(40, 3, 3, 2), label: "Gate 1: board your flight to London", to: { kind: "tutorial", step: "board" } },
+  ];
+  return finish(
+    {
+      id: TUTORIAL_MAP_ID,
+      kind: "office",
+      name: "Flight School",
+      structures: [],
+      portals,
+      rooms: [
+        { name: "Arrivals · learn to move", rect: px(1, 1, 9, 16) },
+        { name: "Help desk · learn to interact", rect: px(11, 1, 9, 16) },
+        { name: "Practice desks · learn to study", rect: px(21, 1, 9, 16) },
+        { name: "Café and Gate 1 · ready for London", rect: px(31, 1, 12, 16) },
+      ],
+      spawn: centre(3, 9),
+      accent: "#2b5fd9",
+      sign: { x: 5, y: 4, text: "Flight School · follow Ava" },
+    },
+    g,
+  );
 }
 
 /** A shared learning space: real subject practice, simulated careers and earned awards. */
