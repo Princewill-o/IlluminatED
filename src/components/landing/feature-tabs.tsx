@@ -25,7 +25,7 @@ const TABS = [
     label: "Careers",
     title: "Use what you learn at work.",
     text: "Step into simulated workplaces and tackle practical numeracy, reading and problem-solving tasks. Records describe practice, not real employment.",
-    media: { kind: "image", src: "/landing/game-city-life.webp", alt: "A simulated workplace in the game" },
+    media: { kind: "image", src: "/landing/game-city-life.webp", alt: "Working a shift at Pizzazz in the game" },
   },
   {
     id: "schools",
