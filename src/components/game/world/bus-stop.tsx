@@ -26,12 +26,15 @@ export function BusStop({
   stops,
   onGo,
   onClose,
+  onPickOnMap,
   homework = [],
 }: {
   here: string;
   stops: Stop[];
   onGo: (t: BusTrip, revised: boolean) => void;
   onClose: () => void;
+  /** Hop on and choose any destination on the city map. */
+  onPickOnMap?: () => void;
   homework?: string[];
 }) {
   const current = stops.find((s) => s.id === here);
@@ -123,6 +126,11 @@ export function BusStop({
           ))}
         </div>
 
+        {onPickOnMap && (
+          <button type="button" onClick={onPickOnMap} className="jelly mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#c8322d] p-3 text-sm font-black text-white">
+            <Bus className="size-4" aria-hidden /> Hop on: pick anywhere on the map
+          </button>
+        )}
         <label className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3 text-sm font-bold">
           <input
             type="checkbox"

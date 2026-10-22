@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES, TUTOR } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PLAYER, TRAFFIC_BOXES, TUTOR } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
@@ -51,7 +51,7 @@ import type { BikeBrand } from "@/game/core/bikes";
 import { WORKPLACES, workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import { COMPANIES } from "@/game/core/companies";
-import { nearestDrivingSpot, nearestParkingSpot } from "@/game/core/driving";
+import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
@@ -342,6 +342,36 @@ export function WorldApp({
       setDealer(false);
     }
   };
+  // Hop-on bus: choose anywhere on the map and the bus drives you there.
+  const [busPick, setBusPick] = useState(false);
+  const [hop, setHop] = useState<{ to: string; route: string } | null>(null);
+  const hopOn = useCallback((place: Place) => {
+    setBusPick(false);
+    if (mapId !== "city") { say("Buses run in London. Head outside first."); return; }
+    const route = roadRoute(map, PLAYER, place);
+    if (route.length < 2) { say("You're already there!"); return; }
+    const line = ["24", "38", "73", "159", "N11"][Math.abs(Math.round(place.x + place.y)) % 5];
+    setDriving(null); setBike(null); setWaypoint(place);
+    Object.assign(AUTOPILOT, { route, leg: 0, speed: 0, onArrive: () => {
+      const spot = nearestParkingSpot(map, PLAYER) ?? safeSpot(map, place.x, place.y);
+      setHop(null); setArrive(spot); setWaypoint(null);
+      doActivity("bus"); void gainXp("bus");
+      say(`You've arrived at ${place.name}. Mind the step!`, true);
+    } });
+    setHop({ to: place.name, route: line });
+    play("train", soundOn());
+  }, [map, mapId, say, gainXp]);
+  useEffect(() => {
+    // Local debugging only: lets automated walkthroughs read positions.
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT };
+  }, []);
+  const hopOff = useCallback(() => {
+    Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
+    setHop(null);
+    const spot = nearestParkingSpot(map, PLAYER);
+    if (spot) setArrive(spot);
+  }, [map]);
+  useEffect(() => { if (mapId !== "city" && hop) hopOff(); }, [mapId, hop, hopOff]);
   useEffect(()=>{const scene=(e:Event)=>{const d=(e as CustomEvent<{title?:string;subtitle?:string}>).detail;if(d?.title)say(d.title.slice(0,100));};window.addEventListener("illuminated:scene",scene);return()=>window.removeEventListener("illuminated:scene",scene);},[say]);
 
   const atHome = mapId === "home";
@@ -828,7 +858,7 @@ export function WorldApp({
       } />
       {!(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(flightModal) || flying || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
+        paused={safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
         homeAction={homeAction}
         police={pursuit}
         map={map}
@@ -841,7 +871,7 @@ export function WorldApp({
         ads={events}
         me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
-        car={driving && outdoors ? driving : null}
+        car={hop ? `bus:${hop.route}` : driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
       />}
       {developerTeleport && <DeveloperTeleport destinations={teleportDestinations} onTeleport={destination => {
@@ -904,6 +934,16 @@ export function WorldApp({
           onClose={() => setDealer(false)}
         />
       )}
+      {hop && (
+        <HudSlot area="bc" order={1}><div role="status" className="flex items-center gap-3 rounded-full bg-[#c8102e] py-1.5 pr-1.5 pl-4 text-white shadow-xl">
+          <span className="rounded-md bg-black/80 px-1.5 font-mono text-xs font-black text-[#ffd176]">{hop.route}</span>
+          <span className="text-sm font-bold">Next stop: {hop.to}</span>
+          <button type="button" onClick={hopOff} className="jelly min-h-9 rounded-full bg-white px-3 text-xs font-black text-[#c8102e]">Get off</button>
+        </div></HudSlot>
+      )}
+      {busPick && (
+        <CityMap map={map} waypoint={null} intro="You're on the bus! Pick any place on the map or in the list and the bus will drive you there." onPick={place => { if (place) hopOn(place); }} onClose={() => setBusPick(false)} />
+      )}
       {driving && outdoors && (
         <HudSlot area="bc" order={1}><button type="button" onClick={() => driveCar(null)} className="jelly min-h-11 rounded-full bg-[#13203a] px-4 py-2 text-xs font-black text-white shadow-lg">
           Park {carById(driving)?.name}
@@ -941,7 +981,7 @@ export function WorldApp({
       }}/ >}
       {arrest && <ArrestOverlay />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
-      {phone && <GamePhone onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+      {phone && <GamePhone time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
@@ -1040,7 +1080,7 @@ export function WorldApp({
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
       {dailyJob&&map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")&&<DailyShift job={dailyJob} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
       {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else {setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}}} />}
-      {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} />}
+      {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} onPickOnMap={() => { setBus(null); setBusPick(true); }} />}
       <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
         quests={quests}
         onLocate={(q) => {

@@ -257,7 +257,7 @@ export function useWorld({
             org: who.org,
             badge: who.badge,
             affiliation: who.affiliation ?? null,
-            car: typeof m.car === "string" && carById(m.car) ? m.car : null,
+            car: typeof m.car === "string" && (carById(m.car) || /^bus:[A-Z0-9]{1,4}$/.test(m.car)) ? m.car : null,
             heading: Number.isFinite(m.heading) ? m.heading : 0,
           };
           if (!p)
@@ -303,7 +303,7 @@ export function useWorld({
         p.dir = payload.d === -1 ? -1 : 1;
         p.walking = Boolean(payload.w);
         p.car =
-          typeof payload.car === "string" && carById(payload.car)
+          typeof payload.car === "string" && (carById(payload.car) || /^bus:[A-Z0-9]{1,4}$/.test(payload.car))
             ? payload.car
             : null;
         p.heading = Number.isFinite(payload.heading) ? payload.heading : 0;

@@ -207,6 +207,13 @@ export function VoiceChat({ meId, nearby }: { meId: string; /** Player ids withi
     else local.current?.getVideoTracks().forEach(t => (t.enabled = false));
   }, [camOn, ensureMedia]);
 
+  // The phone's FaceTime app opens the friends list.
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener("illuminated:open-calls", show);
+    return () => window.removeEventListener("illuminated:open-calls", show);
+  }, []);
+
   // Leave everything on unmount.
   useEffect(() => () => {
     for (const id of [...links.current.keys()]) hangUp(id);

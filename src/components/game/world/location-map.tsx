@@ -41,12 +41,15 @@ export function LocationMap({
   onPick,
   onClose,
   searchArea,
+  intro,
 }: {
   map: WorldMap;
   waypoint: Place | null;
   onPick: (place: Place | null) => void;
   onClose: () => void;
   searchArea?: { origin: { x: number; y: number }; radius: number } | null;
+  /** Replaces the default instructions (e.g. when picking a bus destination). */
+  intro?: string;
 }) {
   const [zoom, setZoom] = useState(1);
   const S = (map.cols > 100 ? 7 : 9) * zoom;
@@ -370,7 +373,7 @@ export function LocationMap({
             </button>
           </div>
           <p className="mt-1 text-xs text-[#13203a]/70">
-            Choose a destination to see its walking route. Tap a dark cluster to explore nearby places.
+            {intro ?? "Choose a destination to see its walking route. Tap a dark cluster to explore nearby places."}
           </p>
           <label className="mt-3 flex min-h-11 shrink-0 items-center gap-2 rounded-xl border border-[#c7b9a3] bg-white px-3">
             <Search className="size-4 shrink-0" aria-hidden />

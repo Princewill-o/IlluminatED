@@ -13,7 +13,7 @@ import { HudSlot } from "./hud";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { AUTOPILOT, ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -421,9 +421,32 @@ export function WorldView({
         ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
-      const driven = driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" "), maxSpeed: 96 * speedRef.current }, dt,
-        obstacles, (impact) => { collision = impact; }) : null;
-      if (driven && map.art === "london" && !pausedRef.current) {
+      // Hop-on bus: follow the planned road route, easing in and out of stops.
+      const auto = driving && AUTOPILOT.route.length > 0 ? (() => {
+        if (AUTOPILOT.leg === 0) { const first = AUTOPILOT.route[0]; p.x = first.x; p.y = first.y; AUTOPILOT.leg = 1; }
+        const goal = AUTOPILOT.route[AUTOPILOT.leg];
+        if (!goal) return null;
+        const last = AUTOPILOT.route[AUTOPILOT.route.length - 1];
+        const left = Math.hypot(last.x - p.x, last.y - p.y);
+        const cruise = Math.min(200, 60 + left * 0.8);
+        AUTOPILOT.speed = pausedRef.current ? 0 : Math.min(cruise, AUTOPILOT.speed + 120 * dt);
+        let travel = AUTOPILOT.speed * dt, x = p.x, y = p.y, heading = p.heading;
+        while (travel > 0 && AUTOPILOT.route[AUTOPILOT.leg]) {
+          const g = AUTOPILOT.route[AUTOPILOT.leg], gx = g.x - x, gy = g.y - y, d = Math.hypot(gx, gy);
+          if (d > 0.01) heading = Math.atan2(gy, gx);
+          if (d <= travel) { x = g.x; y = g.y; travel -= d; AUTOPILOT.leg++; }
+          else { x += gx / d * travel; y += gy / d * travel; travel = 0; }
+        }
+        if (!AUTOPILOT.route[AUTOPILOT.leg]) {
+          const done = AUTOPILOT.onArrive;
+          AUTOPILOT.route = []; AUTOPILOT.leg = 0; AUTOPILOT.speed = 0; AUTOPILOT.onArrive = null;
+          window.setTimeout(() => done?.(), 0);
+        }
+        return { x, y, heading, speed: AUTOPILOT.speed };
+      })() : null;
+      const driven = auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" "), maxSpeed: 96 * speedRef.current }, dt,
+        obstacles, (impact) => { collision = impact; }) : null);
+      if (driven && !auto && map.art === "london" && !pausedRef.current) {
         const violation = checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) });
         if (violation && acceptRoadViolation(roadCooldown.current, violation, Date.now())) {
           play("door", soundOn());

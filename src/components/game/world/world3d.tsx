@@ -2444,9 +2444,12 @@ export function World3D({
         carLoaded = want;
         carHolder.clear();
         if (want) {
-          const model = new THREE.Group();
-          carHolder.add(model);
-          void placeCar(model, want === "cab" ? "taxi" : want);
+          if (want.startsWith("bus:")) carHolder.add(busModel(want.slice(4)));
+          else {
+            const model = new THREE.Group();
+            carHolder.add(model);
+            void placeCar(model, want === "cab" ? "taxi" : want);
+          }
         }
       }
       me.root.visible = !want;
@@ -2544,7 +2547,8 @@ export function World3D({
           vehicle = { model: o.car, root };
           otherCars.set(o.id, vehicle);
           scene.add(root);
-          void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
+          if (o.car.startsWith("bus:")) root.add(busModel(o.car.slice(4)));
+          else void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
         }
         if (vehicle) {
           vehicle.root.position.set(b.x, 0.08, b.z);

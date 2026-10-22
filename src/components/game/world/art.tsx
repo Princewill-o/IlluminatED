@@ -339,6 +339,11 @@ export const PLAYER = { x: -9999, y: -9999 };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
 export const TUTOR = { active: false, x: 0, y: 0 };
+/**
+ * Hop-on bus autopilot: while `route` has points the player's vehicle follows it
+ * (world px) instead of the keyboard, then `onArrive` fires once at the last point.
+ */
+export const AUTOPILOT: { route: { x: number; y: number }[]; leg: number; speed: number; onArrive: (() => void) | null } = { route: [], leg: 0, speed: 0, onArrive: null };
 /** Current local pedestrians, shared by both renderers and the game loop. */
 export const NPC_SPOTS: { x: number; y: number }[] = [];
 
