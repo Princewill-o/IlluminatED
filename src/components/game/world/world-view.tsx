@@ -703,7 +703,7 @@ export function WorldView({
       {/* The old flat-map lighting overlay is kept mounted for the movement
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
-      {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
+      {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}

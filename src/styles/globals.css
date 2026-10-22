@@ -1245,3 +1245,16 @@ body :where(main h1, main h2) {
   .plan-badge-paid::after { display: none; }
   .plan-badge:hover { transform: none; }
 }
+
+/* iMessage-style chat bubble tails. */
+.imsg-bubble.imsg-tail-r::after,
+.imsg-bubble.imsg-tail-l::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 10px;
+  height: 14px;
+  background: inherit;
+}
+.imsg-bubble.imsg-tail-r::after { right: -4px; border-bottom-left-radius: 12px 10px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
+.imsg-bubble.imsg-tail-l::after { left: -4px; border-bottom-right-radius: 12px 10px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
