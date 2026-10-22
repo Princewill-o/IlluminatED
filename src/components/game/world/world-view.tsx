@@ -23,6 +23,7 @@ import { VoiceChat, VOICE_RANGE } from "./voice-chat";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
+import { npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 import { TRAIN_CALL } from "./train-state";
@@ -339,7 +340,13 @@ export function WorldView({
   const unavailable3d=useCallback(()=>setGraphicsState("unavailable"),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
-    () => nearbyPlayers(players.current.values(), pos.current, hidden).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
+    () => {
+      const now = Date.now();
+      // Local video capture can lift the on-screen player cap (development only).
+      const limit = process.env.NODE_ENV === "development" ? (window as unknown as { __crowd?: { limit?: number } }).__crowd?.limit : undefined;
+      const list = limit ? [...players.current.values()].filter(rp => !hidden.has(rp.id)).sort((a, b) => Math.hypot(a.x - pos.current.x, a.y - pos.current.y) - Math.hypot(b.x - pos.current.x, b.y - pos.current.y)).slice(0, limit) : nearbyPlayers(players.current.values(), pos.current, hidden);
+      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
+    },
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
@@ -625,6 +632,13 @@ export function WorldView({
   };
 
   const status = STATUS[world.status];
+  // Local video capture only: lets a script add simulated players (development builds).
+  const [, crowdTick] = useState(0);
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const w = window as unknown as { __crowd?: Record<string, unknown> };
+    w.__crowd = { ...(w.__crowd ?? {}), players: players.current, me: pos.current, look: npcLook, others: getOthers3d, rerender: () => crowdTick(n => n + 1) };
+  }, [players, getOthers3d]);
   // Friends within talking range, for proximity voice (checked twice a second).
   const [nearby, setNearby] = useState<string[]>([]);
   useEffect(() => {

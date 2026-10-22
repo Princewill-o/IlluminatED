@@ -67,6 +67,8 @@ export interface Mover3D {
   avatar: Avatar;
   car?: string | null;
   heading?: number;
+  /** Speech bubble text (emotes, phrases and chat), shown above the nameplate. */
+  chat?: string | null;
 }
 
 // ── Rolling-log curvature: every material bends the world down away from the camera focus ──
@@ -2535,6 +2537,16 @@ export function World3D({
         const labelX = (labelPoint.x + 1) * viewportWidth / 2;
         const labelY = (1 - labelPoint.y) * viewportHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;
+        let bubble = b.label.querySelector<HTMLElement>("[data-chat]");
+        if (o.chat) {
+          if (!bubble) {
+            bubble = document.createElement("div");
+            bubble.dataset.chat = "";
+            bubble.className = "absolute bottom-full left-1/2 mb-1 w-max max-w-[220px] whitespace-normal -translate-x-1/2 rounded-2xl rounded-bl-md bg-white px-3 py-1.5 text-[12px] leading-snug font-semibold text-[#13203a] shadow-lg";
+            b.label.appendChild(bubble);
+          }
+          if (bubble.textContent !== o.chat) bubble.textContent = o.chat;
+        } else bubble?.remove();
         b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < viewportWidth && labelY > 0 && labelY < viewportHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
         let vehicle = otherCars.get(o.id);
         if (vehicle && vehicle.model !== o.car) {
