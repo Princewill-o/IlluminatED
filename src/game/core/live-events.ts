@@ -4,6 +4,8 @@
  * Themes are inspired by genres (superheroes, space, detectives, sport), never by
  * real shows or brands.
  */
+import { seasonalEvent } from "./seasonal-events";
+
 export interface LiveEvent {
   id: string;
   name: string;
@@ -27,8 +29,14 @@ const WEEK = 7 * 24 * 60 * 60 * 1000;
 /** Weeks since Monday 5 January 2026 (UTC). */
 const weekIndex = (now: number) => Math.floor((now - Date.UTC(2026, 0, 5)) / WEEK);
 
-/** Hero Week runs every other week; the other genres rotate in between. */
+/**
+ * The event running now. Seasonal events (every season and the big holidays,
+ * all 2× XP) take priority; otherwise Hero Week runs every other week and the
+ * other genres rotate in between.
+ */
 export function currentEvent(now = Date.now()): { event: LiveEvent; endsAt: number } {
+  const seasonal = seasonalEvent(now);
+  if (seasonal) return seasonal;
   const w = weekIndex(now);
   const event = w % 2 === 0 ? EVENTS[0] : EVENTS[1 + (Math.floor(w / 2) % (EVENTS.length - 1))];
   return { event, endsAt: Date.UTC(2026, 0, 5) + (w + 1) * WEEK };

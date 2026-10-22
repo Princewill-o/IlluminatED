@@ -339,6 +339,8 @@ export const PLAYER = { x: -9999, y: -9999 };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
 export const TUTOR = { active: false, x: 0, y: 0 };
+/** Fright Night: whether Scary Bots are out, and which ones you've scared off today. */
+export const SCARY: { on: boolean; gone: Set<string> } = { on: false, gone: new Set() };
 /**
  * Hop-on bus autopilot: while `route` has points the player's vehicle follows it
  * (world px) instead of the keyboard, then `onArrive` fires once at the last point.

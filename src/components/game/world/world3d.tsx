@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -38,6 +38,8 @@ import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { botPose, scaryBotsFor } from "@/game/core/scary-bots";
+import { seasonalEvent } from "@/game/core/seasonal-events";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { trainFrame } from "@/game/core/train";
@@ -1304,6 +1306,51 @@ export function lymeBike(green = "#4cd137") {
   return g;
 }
 
+/** Fright Night Scary Bot: hovering robot body with a carved, glowing pumpkin head (original design). */
+const GLOW = new Map<string, THREE.MeshStandardMaterial>();
+const glow = (c: string, strength = 2.2) => {
+  let m = GLOW.get(c + strength);
+  if (!m) { m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: strength, roughness: 0.4 }); bend(m); GLOW.set(c + strength, m); }
+  return m;
+};
+function scaryBotModel() {
+  const g = new THREE.Group();
+  const body = new THREE.Group(); g.add(body);
+  // Hover jets and shadow-free glow underneath.
+  const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.12, 14), glow("#8a5cff", 1.6)); jet.position.y = 0.22; body.add(jet);
+  // Rounded steel torso with a belly screen.
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.22, 6, 16), mat("#3a3550")); torso.position.y = 0.62; torso.castShadow = true; body.add(torso);
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.02), glow("#7dff8a", 1.4)); screen.position.set(0, 0.64, 0.26); body.add(screen);
+  // Little arms raised in a "boo".
+  for (const side of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 8), mat("#2a2640"));
+    arm.position.set(side * 0.33, 0.78, 0.04); arm.rotation.z = side * -0.9; arm.castShadow = true; body.add(arm);
+    const claw = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), mat("#5d5778")); claw.position.set(side * 0.45, 0.93, 0.06); body.add(claw);
+  }
+  // Pumpkin head: ribbed orange sphere, stem, carved glowing eyes and grin.
+  const head = new THREE.Group(); head.position.y = 1.08; body.add(head);
+  const pumpkin = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), mat("#f07a1a")); pumpkin.scale.set(1.15, 0.9, 1.05); pumpkin.castShadow = true; head.add(pumpkin);
+  for (let i = 0; i < 6; i++) {
+    const rib = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), mat("#d9620f")); rib.scale.set(0.35, 0.92, 1.0); rib.rotation.y = (i / 6) * Math.PI; head.add(rib);
+  }
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.12, 8), mat("#3f6b2a")); stem.position.y = 0.3; stem.rotation.z = 0.25; head.add(stem);
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.09, 3), glow("#ffe14d", 3)); eye.position.set(side * 0.11, 0.06, 0.3); eye.rotation.set(Math.PI / 2, 0, side * 0.3); head.add(eye);
+  }
+  const grin = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14, Math.PI), glow("#ffe14d", 3)); grin.position.set(0, -0.06, 0.31); grin.rotation.z = Math.PI; head.add(grin);
+  // Antenna with a blinking tip.
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), mat("#2a2640")); antenna.position.set(0.12, 0.36, 0); head.add(antenna);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), glow("#ff3b6b", 3)); tip.position.set(0.12, 0.47, 0); head.add(tip);
+  g.userData = { body, tip };
+  g.scale.setScalar(1.3);
+  return g;
+}
+function pumpkinProp(g: THREE.Group, x: number, z: number, s = 1) {
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 14, 10), mat("#f07a1a")); p.scale.set(1.15, 0.85, 1.05); p.position.set(x, 0.18 * s, z); p.castShadow = true; g.add(p);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * s, 0.035 * s, 0.1 * s, 6), mat("#3f6b2a")); stem.position.set(x, 0.38 * s, z); g.add(stem);
+  for (const side of [-1, 1]) { const e = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, 0.06 * s, 3), glow("#ffe14d", 2.6)); e.position.set(x + side * 0.08 * s, 0.22 * s, z + 0.22 * s); e.rotation.x = Math.PI / 2; g.add(e); }
+}
+
 /** London double-decker, modelled in Blender (art/blender/bus.py); route blinds drawn here. */
 let BUS_KIT: Promise<THREE.Object3D> | null = null;
 function busModel(route: string) {
@@ -2254,6 +2301,20 @@ export function World3D({
     const carLast = new THREE.Vector3();
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
+    // Fright Night: Scary Bots and pumpkins (London only, while the event runs).
+    const frightNight = london && seasonalEvent()?.event.id === "fright-night";
+    const bots = frightNight ? scaryBotsFor(map).map((bot) => {
+      const model = scaryBotModel();
+      const label = makeNameplate(bot.name, null);
+      label.dataset.bot = bot.id;
+      el.appendChild(label);
+      scene.add(model);
+      return { bot, model, label };
+    }) : [];
+    if (frightNight) for (const [i, b] of scaryBotsFor(map).entries()) {
+      pumpkinProp(world, b.a.x / TILE + 0.9, b.a.y / TILE - 0.9, 1 + (i % 3) * 0.2);
+      pumpkinProp(world, b.a.x / TILE - 1.1, b.a.y / TILE - 0.7, 0.8);
+    }
     // Flight School: Ava walks ahead and the player follows her.
     const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
     const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
@@ -2599,6 +2660,18 @@ export function World3D({
           setWalking(body,pursuit?.stage === "chasing");
         }
       });
+      for (const { bot, model, label } of bots) {
+        const pose = botPose(bot, Date.now() / 1000);
+        const show = SCARY.on && !SCARY.gone.has(bot.id);
+        model.visible = show;
+        model.position.set(pose.x / TILE, 0.15 + pose.bob, pose.y / TILE);
+        model.rotation.y = -pose.heading + Math.PI / 2;
+        (model.userData.tip as THREE.Mesh).visible = Math.floor(Date.now() / 400) % 2 === 0;
+        const lp = projectedPoint.set(pose.x / TILE, 1.75, pose.y / TILE).project(camera);
+        const lx = (lp.x + 1) * viewportWidth / 2, ly = (1 - lp.y) * viewportHeight / 2;
+        label.style.left = `${lx}px`; label.style.top = `${ly}px`;
+        label.style.visibility = show && lp.z < 1 && lx > 0 && lx < viewportWidth && ly > 0 && ly < viewportHeight && !overview ? "visible" : "hidden";
+      }
       if (tutor) {
         const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
         const dx=tx-p.x, dz=tz-p.z, d=Math.hypot(dx,dz);
@@ -2916,6 +2989,7 @@ export function World3D({
       });
       playerLabel.remove();
       for (const other of others.values()) { other.label.remove(); other.dispose(); }
+      for (const b of bots) b.label.remove();
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.

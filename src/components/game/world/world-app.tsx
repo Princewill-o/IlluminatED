@@ -15,6 +15,7 @@ import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
+import { FrightNight } from "./fright-night";
 import { HudLayout, HudSlot } from "./hud";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
@@ -55,6 +56,7 @@ import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/d
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
+import { currentEvent } from "@/game/core/live-events";
 import { homeStyle } from "@/game/core/london";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -344,6 +346,7 @@ export function WorldApp({
   };
   // Hop-on bus: choose anywhere on the map and the bus drives you there.
   const [busPick, setBusPick] = useState(false);
+  const [botFight, setBotFight] = useState(false);
   const [hop, setHop] = useState<{ to: string; route: string } | null>(null);
   const hopOn = useCallback((place: Place) => {
     setBusPick(false);
@@ -858,7 +861,7 @@ export function WorldApp({
       } />
       {!(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
+        paused={safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
         homeAction={homeAction}
         police={pursuit}
         map={map}
@@ -934,6 +937,7 @@ export function WorldApp({
           onClose={() => setDealer(false)}
         />
       )}
+      <FrightNight map={map} userId={me.id} active={mapId === "city" && !jailed && currentEvent().event.id === "fright-night"} onOpen={setBotFight} onReward={(text) => { say(text, true); void gainXp("study"); }} />
       {hop && (
         <HudSlot area="bc" order={1}><div role="status" className="flex items-center gap-3 rounded-full bg-[#c8102e] py-1.5 pr-1.5 pl-4 text-white shadow-xl">
           <span className="rounded-md bg-black/80 px-1.5 font-mono text-xs font-black text-[#ffd176]">{hop.route}</span>
