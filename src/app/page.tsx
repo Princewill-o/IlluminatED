@@ -160,7 +160,7 @@ export default async function Home() {
 
         {/* The collage: real captures of the game, character and Locker. */}
         <div className="relative container mt-14 h-[260px] sm:h-[460px] lg:h-[540px]" aria-label="Screenshots of the game">
-          <Shot src="/landing/game-hub.webp" alt="Ava guiding a new player through Flight School" w={1440} h={960} className="top-10 left-[1%] hidden h-[260px] w-[360px] -rotate-6 md:block lg:h-[300px] lg:w-[420px]" />
+          <Shot src="/landing/game-hub.webp" alt="Ava guiding a new player through the airport" w={1440} h={960} className="top-10 left-[1%] hidden h-[260px] w-[360px] -rotate-6 md:block lg:h-[300px] lg:w-[420px]" />
           <Shot src="/landing/game-chibi-locker.webp" alt="A London street corner in the 3D city" w={1120} h={470} className="top-16 right-[1%] hidden h-[200px] w-[400px] rotate-6 md:block lg:h-[230px] lg:w-[460px]" />
           <Shot src="/landing/game-chibi-street.webp" alt="A player crossing a London street in the 3D world" w={880} h={550} className="top-0 left-1/2 z-10 h-[220px] w-[92%] -translate-x-1/2 sm:h-[360px] sm:w-[580px] lg:h-[420px] lg:w-[680px]" />
           <Sticker className="top-[-14px] left-[18%] hidden bg-[#ffd23f] sm:inline">+50 Clout</Sticker>

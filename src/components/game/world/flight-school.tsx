@@ -16,6 +16,10 @@ import { cn } from "@/lib/utils";
 export const FLIGHT_SCHOOL_KEY = "illuminated:flight-school";
 
 type Step = {
+  /** The objective, in a few words. */
+  title: string;
+  /** The keys to press. */
+  keys: string[];
   /** Where Ava walks, in tiles (a path through the doorways). */
   path: [number, number][];
   say: string;
@@ -24,15 +28,15 @@ type Step = {
 };
 
 export const FLIGHT_STEPS: Step[] = [
-  { path: [[7, 9]], goal: "near", say: "Hi, I'm Ava, your guide! Walk over to me. Use WASD or the arrow keys, or drag the joystick on a phone." },
-  { path: [[9, 9], [12, 9], [15, 6]], goal: "near", say: "Nice moves! Follow me through the doorway into the next hall." },
-  { path: [[15, 5]], goal: "interact", say: "This is the help desk. Stand next to it and press E, or tap the button that pops up. That's how you use anything in London." },
-  { path: [[15, 12], [19, 13], [22, 13], [25, 6]], goal: "near", say: "Great. Now follow me to the practice desks." },
-  { path: [[25, 5]], goal: "study", say: "Desks, buses and jobs in London ask real questions from your subjects. Use the practice desk and answer one." },
-  { path: [[27, 6], [31, 6], [34, 10]], goal: "near", say: "Clever! Follow me to the café." },
-  { path: [[34, 11]], goal: "eat", say: "Your needs (hunger, energy and fun) drop over time. Keep them up. Grab a snack at the café counter." },
-  { path: [[38, 8]], goal: "phone", say: "Your phone holds jobs, friends, maps and calls. Tap the phone button to open it, then close it again." },
-  { path: [[39, 5]], goal: "board", say: "You're ready! Remember: break the law and the police will chase you. Board at Gate 1 to fly to London." },
+  { path: [[7, 9]], goal: "near", title: "Walk to Ava", keys: ["W", "A", "S", "D"], say: "Welcome to IlluminatED Airport! I'm Ava, your guide. Walk over to me with WASD or the arrow keys (on a phone, drag the joystick)." },
+  { path: [[9, 9], [12, 9], [15, 6]], goal: "near", title: "Follow Ava to check-in", keys: ["W", "A", "S", "D"], say: "Nice moves! Follow me through the doorway to the check-in desks." },
+  { path: [[15, 5]], goal: "interact", title: "Check in at the desk", keys: ["E"], say: "Stand in front of the check-in desk and press E (or tap the button that pops up). That's how you use anything in London: doors, tills, buses, desks." },
+  { path: [[15, 12], [19, 13], [22, 13], [25, 6]], goal: "near", title: "Follow Ava to security", keys: ["W", "A", "S", "D"], say: "Bag checked in. Now follow me to security." },
+  { path: [[25, 5]], goal: "study", title: "Answer the security question", keys: ["E"], say: "Security asks a quick question from your subjects, just like jobs, buses and the police do in London. Walk up to the scanner, press E and answer it." },
+  { path: [[27, 6], [31, 6], [34, 10]], goal: "near", title: "Into the departure lounge", keys: ["W", "A", "S", "D"], say: "Clever! Follow me into the departure lounge." },
+  { path: [[34, 11]], goal: "eat", title: "Grab a snack at the café", keys: ["E"], say: "Your needs (hunger, energy, mood) drop over time. Keep them topped up. Grab a snack at the café counter with E." },
+  { path: [[38, 8]], goal: "phone", title: "Open your phone, then close it", keys: ["📱"], say: "Your phone has the map, buses, jobs, friends and calls. Tap the phone button (bottom right) to open it, then close it again." },
+  { path: [[39, 5]], goal: "board", title: "Board at Gate 1", keys: ["E"], say: "You're ready! One rule: break the law and the police will chase you. Walk to Gate 1 and press E to fly to London." },
 ];
 
 /** Ava walks along a step's path one point at a time (~3 tiles a second); true once she's at the end. */
@@ -79,14 +83,21 @@ export function FlightSchoolGuide({ step, onNext, onSkip }: { step: number; onNe
   if (!s) return null;
   return (
     <HudSlot area="tc" order={5}>
-      <section aria-live="polite" aria-label="Flight School guide" className="w-[min(26rem,calc(100vw-1.5rem))] rounded-3xl border-2 border-[#2b5fd9] bg-[#f7f1e6] p-4 text-[#13203a] shadow-xl">
+      <section aria-live="polite" aria-label="Airport guide" className="w-[min(26rem,calc(100vw-1.5rem))] rounded-3xl border-2 border-[#2b5fd9] bg-[#f7f1e6] p-4 text-[#13203a] shadow-xl">
         <div className="flex items-center gap-2">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#2b5fd9] text-sm font-black text-white" aria-hidden>A</span>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-black tracking-widest text-[#2b5fd9] uppercase">Flight School · step {step + 1} of {FLIGHT_STEPS.length}</p>
+            <p className="text-xs font-black tracking-widest text-[#2b5fd9] uppercase">Airport · step {step + 1} of {FLIGHT_STEPS.length}</p>
             <p className="text-sm font-black">Ava</p>
           </div>
           <button type="button" onClick={onSkip} className="gloss-off rounded-full px-3 py-1 text-xs font-bold text-[#5a6272] hover:bg-black/5">Skip</button>
+        </div>
+        <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#2b5fd9] px-3 py-2 text-white">
+          <span className="text-[10px] font-black tracking-widest uppercase opacity-80">Objective</span>
+          <span className="min-w-0 flex-1 text-sm font-black">{s.title}</span>
+          <span className="flex shrink-0 gap-1" aria-label={`Keys: ${s.keys.join(", ")}`}>
+            {s.keys.map((k) => <kbd key={k} className="grid min-w-6 place-items-center rounded-md border-b-2 border-[#13203a]/40 bg-white px-1.5 py-0.5 font-mono text-[11px] font-black text-[#13203a]">{k}</kbd>)}
+          </span>
         </div>
         <p className="mt-2 text-sm leading-relaxed">{s.say}</p>
         <div className="mt-3 flex gap-1" aria-hidden>
@@ -102,8 +113,9 @@ export function FlightSchoolGuide({ step, onNext, onSkip }: { step: number; onNe
 export function FlightSchoolDesk({ onClose }: { onClose: () => void }) {
   return (
     <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4">
-      <section role="dialog" aria-modal="true" aria-label="Help desk" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
-        <h2 className="text-2xl font-black">You did it!</h2>
+      <section role="dialog" aria-modal="true" aria-label="Check-in desk" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
+        <p className="text-xs font-black tracking-widest text-[#2b5fd9] uppercase">Boarding pass · LHR → London</p>
+        <h2 className="mt-1 text-2xl font-black">You&apos;re checked in!</h2>
         <p className="mt-3 leading-relaxed">That&apos;s interacting. In London you&apos;ll use it on doors, bus stops, shop tills, desks and people.</p>
         <ul className="mt-3 list-disc space-y-1 pl-5 text-sm">
           <li><b>Move:</b> WASD, arrow keys or the joystick</li>
@@ -188,7 +200,7 @@ export function PlaneCutscene({ onArrive }: { onArrive: () => void }) {
         <Plane className="size-48 rotate-45 fill-white text-[#13203a] drop-shadow-[0_18px_20px_rgba(0,0,0,.35)]" strokeWidth={1.2} aria-hidden />
       </div>
       <div className="absolute inset-x-4 top-8 mx-auto max-w-xl rounded-3xl border border-white/30 bg-[#13203a]/85 p-5 text-center shadow-xl backdrop-blur">
-        <p className="text-xs font-black tracking-[.18em] text-[#f2d9a6] uppercase">Flight IL101 · Flight School to London</p>
+        <p className="text-xs font-black tracking-[.18em] text-[#f2d9a6] uppercase">Flight IL101 · Terminal 1 to London</p>
         <p className="mt-2 text-2xl font-black">Next stop: London</p>
         <p className="mt-1 text-sm text-white/75">Your new life starts on landing. Study, work, explore and level up.</p>
         <button type="button" onClick={() => finish.current()} className="pointer-events-auto mt-4 min-h-10 rounded-full border border-white/35 px-5 text-xs font-bold hover:bg-white/10">Skip flight</button>

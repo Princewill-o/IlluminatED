@@ -786,48 +786,68 @@ export function prisonMap(): WorldMap {
  * ending at the departure gate for the flight to London.
  */
 export const TUTORIAL_MAP_ID = "tutorial";
+/**
+ * IlluminatED Airport, Terminal 1: where every new player starts. Four halls
+ * teach the basics as you go through the airport: walk in, check in (interact),
+ * clear security (answer a question), and the departure lounge (eat, phone,
+ * board at Gate 1). Furniture is the Blender interiors kit.
+ */
 export function tutorialMap(): WorldMap {
   const g = new Grid(44, 18, ".");
   g.border("#");
   for (let x = 2; x < 42; x += 3) g.set(x, 0, "W");
-  // Partitions with doorways that alternate, so you follow Ava across the hall.
+  // Partitions with doorways that alternate, so you follow Ava through the terminal.
   g.fill(10, 1, 1, 16, "#"); g.fill(10, 7, 1, 4, ".");
   g.fill(20, 1, 1, 16, "#"); g.fill(20, 11, 1, 4, ".");
   g.fill(30, 1, 1, 16, "#"); g.fill(30, 4, 1, 4, ".");
-  // Hall 1: arrivals.
-  for (const [x, y] of [[2, 2], [8, 2], [2, 15], [8, 15]]) g.set(x, y, "p");
-  // Hall 2: help desk.
-  g.fill(13, 2, 5, 1, "r");
-  g.fill(12, 14, 3, 1, "s"); g.fill(16, 14, 3, 1, "s");
-  // Hall 3: practice desks.
-  g.fill(22, 2, 6, 1, "t"); g.fill(22, 8, 2, 1, "t"); g.fill(26, 8, 2, 1, "t");
-  g.set(28, 15, "b"); g.set(22, 15, "b");
-  // Hall 4: café and departure gate.
-  g.fill(32, 14, 5, 1, "r");
-  g.fill(40, 2, 3, 1, "A");
-  for (const [x, y] of [[32, 2], [42, 15]]) g.set(x, y, "p");
+  const props: Prop[] = [];
+  const put = (model: string, x: number, y: number, w: number, d: number, tile = "t") => {
+    props.push({ model, x, y, w, d });
+    g.fill(x, y, w, d, tile);
+  };
+  // Hall 1: entrance. Plants and a row of seats.
+  for (const [x, y] of [[2, 2], [8, 2], [2, 15], [8, 15]]) put("tall-plant", x, y, 1, 1, "p");
+  put("gate-seats", 2, 5, 3, 1, "s");
+  put("gate-seats", 5, 13, 3, 1, "s");
+  // Hall 2: check-in desks and self-service kiosks.
+  put("checkin-desk", 13, 2, 3, 1, "r");
+  put("kiosk", 16, 2, 1, 1, "r"); put("kiosk", 17, 2, 1, 1, "r");
+  put("gate-seats", 12, 14, 3, 1, "s"); put("gate-seats", 16, 14, 3, 1, "s");
+  put("tall-plant", 18, 9, 1, 1, "p");
+  // Hall 3: security.
+  put("security-arch", 22, 2, 3, 1); put("security-arch", 25, 2, 3, 1);
+  put("kiosk", 22, 8, 1, 1); put("kiosk", 23, 8, 1, 1); put("kiosk", 26, 8, 1, 1); put("kiosk", 27, 8, 1, 1);
+  put("tall-plant", 22, 15, 1, 1, "b"); put("tall-plant", 28, 15, 1, 1, "b");
+  // Hall 4: departure lounge: café, departure board, seats and Gate 1.
+  put("cafe-counter", 32, 14, 5, 1, "r");
+  put("departures", 33, 2, 3, 1);
+  put("checkin-desk", 40, 2, 3, 1, "A");
+  put("gate-seats", 37, 11, 3, 1, "s");
+  for (const [x, y] of [[32, 2], [42, 15]]) put("tall-plant", x, y, 1, 1, "p");
   const portals: Portal[] = [
-    { id: "tut-desk", rect: px(14, 3, 3, 1), label: "Help desk: interact", to: { kind: "tutorial", step: "interact" } },
-    { id: "tut-study", rect: px(23, 3, 4, 1), label: "Practice desk: answer a question", to: { kind: "tutorial", step: "study" } },
-    { id: "tut-cafe", rect: px(33, 13, 3, 1), label: "Café: grab a snack", to: { kind: "tutorial", step: "eat" } },
+    { id: "tut-desk", rect: px(14, 3, 3, 1), label: "Check-in desk: check in your bag", to: { kind: "tutorial", step: "interact" } },
+    { id: "tut-study", rect: px(23, 3, 4, 1), label: "Security: answer the officer's question", to: { kind: "tutorial", step: "study" } },
+    { id: "tut-cafe", rect: px(33, 13, 3, 1), label: "Lounge café: grab a snack", to: { kind: "tutorial", step: "eat" } },
     { id: "tut-gate", rect: px(40, 3, 3, 2), label: "Gate 1: board your flight to London", to: { kind: "tutorial", step: "board" } },
   ];
   return finish(
     {
       id: TUTORIAL_MAP_ID,
       kind: "office",
-      name: "Flight School",
+      name: "IlluminatED Airport · Terminal 1",
       structures: [],
       portals,
+      props,
+      theme: { floor: ["#f4f3ef", "#e9e7e1"], wall: "#f3efe6", skirting: "#b68a5e" },
       rooms: [
-        { name: "Arrivals · learn to move", rect: px(1, 1, 9, 16) },
-        { name: "Help desk · learn to interact", rect: px(11, 1, 9, 16) },
-        { name: "Practice desks · learn to study", rect: px(21, 1, 9, 16) },
-        { name: "Café and Gate 1 · ready for London", rect: px(31, 1, 12, 16) },
+        { name: "Terminal entrance · learn to move", rect: px(1, 1, 9, 16) },
+        { name: "Check-in · learn to interact", rect: px(11, 1, 9, 16) },
+        { name: "Security · answer a question", rect: px(21, 1, 9, 16) },
+        { name: "Departure lounge and Gate 1", rect: px(31, 1, 12, 16) },
       ],
       spawn: centre(3, 9),
       accent: "#2b5fd9",
-      sign: { x: 5, y: 4, text: "Flight School · follow Ava" },
+      sign: { x: 5, y: 9, text: "Terminal 1 · follow Ava" },
     },
     g,
   );
