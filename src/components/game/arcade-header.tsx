@@ -9,6 +9,7 @@ const TABS = [
   { href: "/games/world", label: "Play IllumED World" },
   { href: "/games/championship", label: "Championship" },
   { href: "/games/racing", label: "Maths Racing" },
+  { href: "/games/schools", label: "School vs School" },
   { href: "/games/what-if", label: "What If?" },
   { href: "/games/locker", label: "Character" },
   { href: "/games/wealth", label: "Assets & wealth" },
