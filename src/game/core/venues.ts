@@ -35,7 +35,7 @@ export const VENUES: Venue[] = [
     counter: { label: "Pharmacy counter: medicine", to: { kind: "shop", shop: "bootz" } } },
   { id: "town-hall", name: "Town Hall", theme: "hall", accent: "#704c47",
     counter: { label: "Civic library: read and restore Focus", to: { kind: "act", activity: "study" } },
-    upstairs: { name: "Town Hall · Council gallery", label: "London through time: exhibition", to: { kind: "act", activity: "study" } } },
+    upstairs: { name: "Town Hall · Council gallery", label: "Networking event: meet people from your future industry", to: { kind: "networking", venue: "town-hall" } } },
 ];
 export const venueById = (id: string) => VENUES.find((v) => v.id === id);
 
@@ -142,6 +142,8 @@ export function venueMap(mapId: string): WorldMap | null {
     portals.push({ id: "counter", rect: px(spot.x, spot.y, spot.w, 1), label: v.counter.label, to: v.counter.to });
   }
   if (v.upstairs) portals.push({ id: "upstairs", level: 1, rect: px(15, 7, 2, 1), label: v.upstairs.label, to: v.upstairs.to });
+  // The café lounge also hosts networking meet-ups by the window.
+  if (v.id === "starbucks") portals.push({ id: "networking", level: 1, rect: px(19, 4, 2, 1), label: "Networking meet-up: swap cards over coffee", to: { kind: "networking", venue: "starbucks" } });
   return {
     id: mapId, kind: "office", name: v.name,
     cols: W, rows: H, width: W * TILE, height: H * TILE,

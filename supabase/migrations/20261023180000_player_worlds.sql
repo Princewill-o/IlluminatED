@@ -87,3 +87,14 @@ begin
     $r$not exists (select 1 from public.player_worlds w where w.code = p_server and (w.settings->>'visitors' = 'everyone' or w.owner = uid)))$r$);
   execute def;
 end $$;
+
+-- "Friends only" now means accepted city friends (plus the owner).
+do $$
+declare def text;
+begin
+  select pg_get_functiondef('public.world_claim(text,text,uuid,uuid)'::regprocedure) into def;
+  def := replace(def,
+    $r$(w.settings->>'visitors' = 'everyone' or w.owner = uid)$r$,
+    $r$(w.settings->>'visitors' = 'everyone' or w.owner = uid or exists (select 1 from public.city_friends f where f.state = 'accepted' and f.low_id = least(w.owner, uid) and f.high_id = greatest(w.owner, uid)))$r$);
+  execute def;
+end $$;

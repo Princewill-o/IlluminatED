@@ -75,7 +75,7 @@ export function RulesEditor({ rules, onChange }: { rules: WorldRules; onChange: 
       <Segmented label="Who can fly" value={rules.flight} onChange={(flight) => onChange({ ...rules, flight })} options={[["off", "Nobody"], ["owner", "Just me"], ["everyone", "Everyone"]]} />
       <Segmented label="Time of day" value={rules.time} onChange={(time) => onChange({ ...rules, time })} options={[["auto", "Live"], ["day", "Day"], ["dusk", "Dusk"], ["night", "Night"]]} />
       <Segmented label="Weather" value={rules.weather} onChange={(weather) => onChange({ ...rules, weather })} options={[["auto", "Live"], ["clear", "Clear"], ["rain", "Rain"], ["snow", "Snow"]]} />
-      <Segmented label="Visitors" value={rules.visitors} onChange={(visitors) => onChange({ ...rules, visitors })} options={[["everyone", "Everyone"], ["friends", "Closed (only me)"]]} />
+      <Segmented label="Visitors" value={rules.visitors} onChange={(visitors) => onChange({ ...rules, visitors })} options={[["everyone", "Everyone"], ["friends", "Friends only"]]} />
     </div>
   );
 }
@@ -174,7 +174,7 @@ export function WorldMenu({ region, onRegion, countFor, onJoin, username }: {
                 return (
                   <WorldRow key={w.code} selected={selected === w.code} onSelect={() => setSelected(w.code)} onJoin={() => onJoin(w.code, w)}
                     icon={<Icon className="size-7" aria-hidden />} colour={ICON_COLOURS[w.icon] ?? "#7a5ce6"} title={w.name}
-                    line={`by @${w.owner_name ?? "player"} · ${s.police === "off" ? "No police" : `Police: ${s.police}`}${s.flight === "everyone" ? " · Flying on" : ""}${s.visitors === "friends" ? " · Closed" : ""}`}
+                    line={`by @${w.owner_name ?? "player"} · ${s.police === "off" ? "No police" : `Police: ${s.police}`}${s.flight === "everyone" ? " · Flying on" : ""}${s.visitors === "friends" ? " · Friends only" : ""}`}
                     count={countFor(w.code)} locked={s.visitors === "friends" && w.owner !== status.userId} />
                 );
               })}
@@ -250,7 +250,7 @@ function WorldRow({ icon, colour, title, line, count, selected, locked, onSelect
       className={cn("gloss-off mb-1 flex w-full items-center gap-3 rounded-xl p-2 text-left", selected ? "bg-white/15 ring-2 ring-white/70" : "hover:bg-white/5")}>
       <span className="grid size-14 shrink-0 place-items-center rounded-lg text-white shadow-[inset_0_-4px_0_rgba(0,0,0,.25)]" style={{ background: colour }}>{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5 font-black">{title}{locked && <Lock className="size-3.5 text-white/60" aria-label="Closed" />}</span>
+        <span className="flex items-center gap-1.5 font-black">{title}{locked && <Lock className="size-3.5 text-white/60" aria-label="Friends only" />}</span>
         <span className="block truncate text-xs text-white/60">{line}</span>
       </span>
       <span className="flex shrink-0 flex-col items-end gap-1 text-xs font-bold text-white/80">

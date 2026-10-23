@@ -53,7 +53,7 @@ export async function buyCar(car: string) {
 }
 
 /** XP for things you do in the world. Quietly does nothing if it can't save. */
-export async function earnWorldXp(kind: "bus" | "hike" | "train" | "eat" | "study" | "sleep") {
+export async function earnWorldXp(kind: "bus" | "hike" | "train" | "eat" | "study" | "sleep" | "network") {
   const sb = await getSupabase();
   if (!sb) return null;
   const { data, error } = await sb.rpc("world_xp", { p_kind: kind });

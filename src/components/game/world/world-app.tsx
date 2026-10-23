@@ -32,6 +32,7 @@ import type { TubeTrip } from "./tube-map";
 import { useLife } from "./use-life";
 import { useNeeds, doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
+import { NetworkingEvent } from "./networking-event";
 import { DEFAULT_RULES, WorldAdmin, WorldMenu } from "./world-menu";
 import { WorldView } from "./world-view";
 import { useTechEvents } from "../event-ads";
@@ -318,6 +319,7 @@ export function WorldApp({
   const [rules, setRules] = useState<WorldRules>(DEFAULT_RULES);
   const [worldOwner, setWorldOwner] = useState<string | null>(null);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [networking, setNetworking] = useState<string | null>(null);
   const [soaring, setSoaring] = useState(false);
   const playerWorld = server?.startsWith("pw-") ? server : null;
   useEffect(() => {
@@ -401,7 +403,7 @@ export function WorldApp({
   }, [map, mapId, say, gainXp]);
   useEffect(() => {
     // Local debugging only: lets automated walkthroughs read positions.
-    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id) };
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id), network: (venue = "town-hall") => setNetworking(venue) };
   }, []);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
@@ -593,6 +595,7 @@ export function WorldApp({
         setTube(to.station);
       }
       else if (to.kind === "university") setUniversity({id:to.university,topic:to.topic});
+      else if (to.kind === "networking") setNetworking(to.venue);
       else if (to.kind === "work") {goTo(`workplace-${to.workplace}`, workplaceById(to.workplace)?.name ?? "Workplace");}
       else if (to.kind === "workstation" && map.id === `workplace-${to.workplace}`) {setWorkStation(to.station);setWork(to.workplace);}
       else if (to.kind === "bike") {setDock(true);}
@@ -869,7 +872,7 @@ export function WorldApp({
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
   const [menu, setMenu] = useState(false);
-  const busy = Boolean(interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
+  const busy = Boolean(networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1077,6 +1080,7 @@ export function WorldApp({
         onSwitch={() => { remember(); setMenu(false); setSoaring(false); setWorldInfo(null); setServer(null); }} />}
       {isOwner && <HudSlot area="br-nav" order={2}><button type="button" onClick={() => setAdminOpen(true)} aria-label="World admin" title="World admin" className="jelly grid size-11 place-items-center rounded-2xl bg-[#7a5ce6] text-white shadow-lg"><Crown className="size-5" aria-hidden /></button></HudSlot>}
       {canFly && !driving && outdoors && <HudSlot area="br-nav" order={3}><button type="button" aria-pressed={soaring} onClick={() => { setSoaring((f) => !f); say(soaring ? "Landing." : "You're soaring! Glide anywhere, then press again to land.", true); }} aria-label={soaring ? "Land" : "Fly"} title={soaring ? "Land" : "Fly"} className={`jelly grid size-11 place-items-center rounded-2xl text-white shadow-lg ${soaring ? "bg-[#1aa3c4]" : "bg-[#13203a]"}`}><Feather className="size-5" aria-hidden /></button></HudSlot>}
+      {networking && <NetworkingEvent venue={networking} meId={me.id} onClose={() => setNetworking(null)} onDone={(xp) => say(xp ? `Networking event complete: +${xp} XP. Great conversations!` : "Networking event complete. Great conversations!", true)} />}
       {adminOpen && isOwner && <WorldAdmin name={worldInfo?.name ?? "Your world"} rules={rules} onClose={() => setAdminOpen(false)}
         onSaved={(r) => { setRules(r); say("World rules saved.", true); }}
         commands={[

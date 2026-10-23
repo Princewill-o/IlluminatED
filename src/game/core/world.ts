@@ -50,6 +50,7 @@ export type PortalTarget =
   | { kind: "shop"; shop: "tescow" | "bootz" }
   | { kind: "doctor" }
   | { kind: "bank" }
+  | { kind: "networking"; venue: string }
   | { kind: "guide"; guide: "careers" | "study" | "transport" }
   | { kind: "tutorial"; step: TutorialStation };
 
