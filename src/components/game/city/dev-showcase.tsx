@@ -13,11 +13,11 @@ import {
 import { FriendsPanel } from "./friends-panel";
 
 import { Character3DPreview } from "@/components/game/character-3d-preview";
+import { RacingHub } from "@/components/game/racing/racing-hub";
+import { WhatIf } from "@/components/game/what-if/what-if";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
 import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
-import { RacingHub } from "@/components/game/racing/racing-hub";
-import { WhatIf } from "@/components/game/what-if/what-if";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { affiliationFor } from "@/game/core/affiliation";
