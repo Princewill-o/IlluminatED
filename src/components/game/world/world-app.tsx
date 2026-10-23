@@ -13,6 +13,7 @@ import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR } fr
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
+import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { FrightNight } from "./fright-night";
@@ -1034,6 +1035,7 @@ export function WorldApp({
         }
       }}/ >}
       {arrest && <ArrestOverlay />}
+      <Deliveries atHome={mapId === "home"} busy={busy || building} onGoHome={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else goTo("home", "Your house"); }} />
       {interview && <InterviewRoom charge={interview.charge} stars={interview.stars} area={interview.area} wallet={wallet} onDone={(outcome) => {
         setInterview(null);
         if (outcome.kind === "free") {

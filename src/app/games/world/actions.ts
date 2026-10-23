@@ -179,3 +179,20 @@ export async function gameQuiz(count = 1): Promise<GameQuestion[]> {
   const { data, error } = await sb.rpc("game_quiz", { p_count: count, p_subjects: subjects });
   return error ? [] : ((data ?? []) as GameQuestion[]);
 }
+
+// ── Deliveries ───────────────────────────────────────────────────────────────
+export type Delivery = { id: string; kind: "car" | "outfit" | "furniture"; item: string; created_at: string };
+/** Parcels on their way to your front door (oldest first). */
+export async function pendingDeliveries(): Promise<Delivery[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb.from("deliveries").select("id,kind,item,created_at").eq("status", "on_the_way").order("created_at").limit(10);
+  return error ? [] : ((data ?? []) as Delivery[]);
+}
+/** Sign for a parcel at the door. */
+export async function signDelivery(id: string) {
+  const sb = await getSupabase();
+  if (!sb) return false;
+  const { error } = await sb.rpc("delivery_sign", { p_id: id });
+  return !error;
+}

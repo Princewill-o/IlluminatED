@@ -1268,3 +1268,10 @@ body :where(main h1, main h2) {
 }
 .imsg-bubble.imsg-tail-r::after { right: -4px; border-bottom-left-radius: 12px 10px; clip-path: polygon(0 0, 100% 100%, 0 100%); }
 .imsg-bubble.imsg-tail-l::after { left: -4px; border-bottom-right-radius: 12px 10px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+
+/* Deliveries: the parcel lid pops open with a sparkle. */
+@keyframes delivery-lid { 0% { transform: none; } 60% { transform: translateY(-26px) rotate(-18deg); } 100% { transform: translateY(-22px) rotate(-14deg); } }
+@keyframes delivery-sparkle { from { opacity: 0; transform: translate(-50%, 10px) scale(.4); } to { opacity: 1; transform: translate(-50%, -6px) scale(1); } }
+.delivery-open .delivery-lid { animation: delivery-lid .7s cubic-bezier(.3,1.5,.5,1) .2s both; }
+.delivery-open .delivery-sparkle { animation: delivery-sparkle .5s ease-out .5s both; }
+@media (prefers-reduced-motion: reduce) { .delivery-open .delivery-lid, .delivery-open .delivery-sparkle { animation: none; } }

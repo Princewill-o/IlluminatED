@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -2460,6 +2460,18 @@ export function World3D({
       scene.add(responseCar,...responders.map(b=>b.root));
     }
     const carLast = new THREE.Vector3();
+    // Delivery courier (home only): hi-vis, cap, carrying a parcel.
+    const courier = map.kind === "home" ? makeBody({ ...npcLook(61), hat: "hat-cap", topColor: "topcol-orange" }) : null;
+    if (courier) {
+      const parcel = new THREE.Group();
+      box(parcel, "#b98a57", -0.28, 0.55, 0.18, 0.28, 0.95, 0.62);
+      box(parcel, "#e8dcc0", -0.29, 0.73, 0.17, 0.29, 0.77, 0.63);
+      box(parcel, "#e8dcc0", -0.03, 0.55, 0.17, 0.03, 0.96, 0.63);
+      courier.root.add(parcel);
+      courier.root.userData.parcel = parcel;
+      courier.root.visible = false;
+      scene.add(courier.root);
+    }
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
     // Fright Night: Scary Bots and pumpkins (London only, while the event runs).
@@ -2849,6 +2861,23 @@ export function World3D({
         else tutor.root.rotation.y=Math.atan2(mx-p.x,mz-p.z);
         tutor.root.visible=TUTOR.active;
         setWalking(tutor,moving&&!reduce);
+      }
+      if (courier) {
+        // The courier comes in from the front door, waits by you to be signed for, then leaves.
+        const door = { x: 10, z: 13.4 };
+        const t = (performance.now() - COURIER.since) / 1000;
+        const by = { x: mx + (mx < 10 ? 1.1 : -1.1), z: mz + 0.6 };
+        courier.root.visible = COURIER.active;
+        if (COURIER.active) {
+          const k = COURIER.phase === "arriving" ? Math.min(1, t / 2.8) : COURIER.phase === "leaving" ? 1 - Math.min(1, t / 2.4) : 1;
+          const x = door.x + (by.x - door.x) * k, z = door.z + (by.z - door.z) * k;
+          const moving = COURIER.phase !== "waiting" && k > 0 && k < 1;
+          courier.root.rotation.y = moving ? Math.atan2(COURIER.phase === "leaving" ? door.x - by.x : by.x - door.x, COURIER.phase === "leaving" ? door.z - by.z : by.z - door.z) : Math.atan2(mx - x, mz - z);
+          courier.root.position.set(x, 0, z);
+          (courier.root.userData.parcel as THREE.Object3D).visible = COURIER.phase !== "leaving";
+          setWalking(courier, moving && !reduce);
+          if (COURIER.phase === "leaving" && t > 2.4) COURIER.active = false;
+        }
       }
       const patrols=prisonGuardPositions(Date.now()/1000);
       guardBodies.forEach((body,i)=>{const p=patrols[i];body.root.position.set(p.x/TILE,0,p.y/TILE);body.root.rotation.y=p.angle;setWalking(body,!reduce);});
