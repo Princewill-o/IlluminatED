@@ -114,6 +114,8 @@ THEMES = {
     "bedroom":  dict(wall="#eef1f7", trim="#7a5ce6", floor=("#c49a6c", "#5a3a20"), sofa="#c3a6ff", accent="#ff8fc7", rug="#f6e7f3", glow="#fff0f6"),
     "gaming":   dict(wall="#1f2333", trim="#00e5ff", floor=("#4a3a33", "#1c1410"), sofa="#2a2f45", accent="#ff3bd4", rug="#2e2a52", glow="#9fe8ff"),
     "halloween":dict(wall="#2a1f3d", trim="#ff7a1a", floor=("#5a3a2a", "#20120a"), sofa="#3b1f4f", accent="#ff7a1a", rug="#3a2448", glow="#ffb36b"),
+    "cottage":  dict(wall="#dfe8d8", trim="#5f8a5a", floor=("#c49a6c", "#6a4a2a"), sofa="#efe4d0", accent="#c96f4a", rug="#f3ead8", glow="#fff1d6"),
+    "penthouse":dict(wall="#2b2f38", trim="#c9a24a", floor=("#3a3330", "#141110"), sofa="#1d4e89", accent="#c9a24a", rug="#d8d2c6", glow="#ffe2a8"),
     "winter":   dict(wall="#f3f7fb", trim="#c2263f", floor=("#9a6a45", "#3a2416"), sofa="#c2263f", accent="#2e9d55", rug="#ffffff", glow="#fff3d6"),
 }
 T = THEMES.get(THEME, THEMES["study"])
