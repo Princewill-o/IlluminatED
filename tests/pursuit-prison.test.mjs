@@ -133,3 +133,13 @@ test("the police car can't drive through other vehicles, and officers run when i
   assert.equal(state.stage, "chasing");
   assert.equal(state.officers.length, 2);
 });
+
+test("the police interview only happens when they aren't sure, and honesty lightens the charge", () => {
+  assert.equal(L.policeUnsure(2, "Shoplifting from a high-street shop"), true);
+  assert.equal(L.policeUnsure(3, "Causing a scuffle in the street"), true);
+  assert.equal(L.policeUnsure(4, "Causing a scuffle in the street"), false);
+  assert.equal(L.policeUnsure(3, "Taking a car without the owner's consent"), false);
+  assert.equal(L.policeUnsure(2, "Escaping from lawful custody"), false);
+  assert.equal(L.honestStars(3), 2);
+  assert.equal(L.honestStars(1), 1);
+});

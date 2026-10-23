@@ -106,3 +106,52 @@ export async function buyWorldItem(item: "medicine" | "drink" | "meal" | "coffee
   }
   return { ok: true as const, clout: data as number, free: false };
 }
+
+// ── Interview room deals ─────────────────────────────────────────────────────
+const DEAL_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to make a deal.",
+  pick_someone_else: "Pick another player.",
+  bad_amount: "Offer between 10 and 500 Clout.",
+  bad_charge: "That charge can't be passed on.",
+  unknown_player: "That player isn't around any more.",
+  not_enough_clout: "You don't have that much Clout.",
+  too_many_offers: "Too many offers. Wait a few minutes before trying again.",
+  no_offer: "That offer has gone.",
+};
+const dealError = (m?: string) => DEAL_ERRORS[Object.keys(DEAL_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
+
+/** Offer another player Clout to take the blame. They must accept. */
+export async function offerBlameDeal(to: string, charge: string, stars: number, clout: number) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: dealError() };
+  const { data, error } = await sb.rpc("blame_offer", { p_to: to, p_charge: charge, p_stars: stars, p_clout: Math.round(clout) });
+  if (error) return { ok: false as const, error: dealError(error.message) };
+  return { ok: true as const, deal: data as string };
+}
+
+/** Pending, accepted, declined, expired or cancelled. */
+export async function blameDealStatus(deal: string) {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc("blame_status", { p_deal: deal });
+  return error ? null : (data as string);
+}
+
+export type BlameOffer = { id: string; from_username: string; charge: string; stars: number; clout: number; created_at: string };
+/** Offers other players have sent me in the last minute. */
+export async function blameInbox(): Promise<BlameOffer[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc("blame_inbox");
+  return error ? [] : ((data ?? []) as BlameOffer[]);
+}
+
+/** Accept (get the Clout, face the charge) or decline an offer. */
+export async function answerBlameDeal(deal: string, accept: boolean) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: dealError() };
+  const { data, error } = await sb.rpc("blame_answer", { p_deal: deal, p_accept: accept });
+  if (error) return { ok: false as const, error: dealError(error.message) };
+  const r = data as { status: string; charge?: string; stars?: number; clout?: number; wallet?: number };
+  return { ok: true as const, ...r };
+}

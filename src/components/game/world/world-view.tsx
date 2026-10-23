@@ -13,7 +13,7 @@ import { HudSlot } from "./hud";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { AUTOPILOT, ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { AUTOPILOT, ArtScenery, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -289,6 +289,13 @@ export function WorldView({
   const nearRef = useRef<Portal | null>(null);
   const roomRef = useRef<string | null>(null);
   const { players, reportMove, stopped, say } = world;
+  // Share who's in this server with the rest of the game (interview-room deals).
+  useEffect(() => {
+    const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username })));
+    sync();
+    const timer = setInterval(sync, 2000);
+    return () => { clearInterval(timer); ONLINE.length = 0; };
+  }, [players, hidden]);
   const fxCanvas = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<Phase>("day");
   const phaseRef = useRef<Phase>("day");

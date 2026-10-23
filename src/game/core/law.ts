@@ -117,3 +117,14 @@ export function escapeFromPrison(s: LifeState, now: number): LifeState {
 export function releaseFromPrison(s: LifeState): LifeState {
   return { ...clearWanted(s), jailUntil: 0, hearing: null };
 }
+
+/**
+ * The police aren't sure you did it: a lower-level charge with no hard evidence
+ * goes to an interview first. Serious charges (taking a car, escaping custody,
+ * resisting arrest) or five stars go straight to court.
+ */
+export function policeUnsure(stars: number, charge: string) {
+  return stars <= 3 && !/owner's consent|lawful custody|Resisting arrest/i.test(charge);
+}
+/** Telling the truth in interview: the court treats it as one star less. */
+export const honestStars = (stars: number) => Math.max(1, stars - 1);

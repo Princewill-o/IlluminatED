@@ -18,6 +18,7 @@ import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, F
 import { FrightNight } from "./fright-night";
 import { GameMenu, saveResume } from "./game-menu";
 import { HudLayout, HudSlot } from "./hud";
+import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
@@ -56,9 +57,10 @@ import { COMPANIES } from "@/game/core/companies";
 import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeUse } from "@/game/core/homes";
-import { PRISON_LOOK, SHOP, POLICE_STARS, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
+import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { currentEvent } from "@/game/core/live-events";
 import { homeStyle } from "@/game/core/london";
+import { areaAt } from "@/game/core/map-guide";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";
@@ -227,6 +229,8 @@ export function WorldApp({
   const [games, setGames] = useState(false);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
+  /** A police interview in progress (the police aren't sure it was you). */
+  const [interview, setInterview] = useState<{ stars: number; charge: string; area: string } | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
   const [bankLoan, setBankLoan] = useState<BankLoan>({ balance: 0, status: "none" });
   const [gameDate, setGameDate] = useState(() => new Date());
@@ -367,7 +371,7 @@ export function WorldApp({
   }, [map, mapId, say, gainXp]);
   useEffect(() => {
     // Local debugging only: lets automated walkthroughs read positions.
-    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT };
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }) };
   }, []);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
@@ -836,7 +840,7 @@ export function WorldApp({
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
   const [menu, setMenu] = useState(false);
-  const busy = Boolean(safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
+  const busy = Boolean(interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1011,9 +1015,36 @@ export function WorldApp({
       {pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
         pursuitRef.current = null; setPursuit(null);
         if(correct) { updateLife(clearWanted); say("Correct. The officers let you go with a warning.",true); }
-        else { setArrest(true); arrestTimer.current=setTimeout(()=>{updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));setArrest(false);goTo("court","Crown Court");},2600); }
+        else {
+          setArrest(true);
+          const stars = life.stars, charge = wantedCharge(life);
+          arrestTimer.current=setTimeout(()=>{
+            setArrest(false);
+            // Not sure it was you: an interview first. Otherwise straight to court.
+            if (policeUnsure(stars, charge)) {
+              updateLife(clearWanted);
+              setInterview({ stars, charge, area: areaAt(Math.floor(PLAYER.x / TILE), Math.floor(PLAYER.y / TILE)) ?? "the city" });
+            } else {
+              updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));
+              goTo("court","Crown Court");
+            }
+          },2600);
+        }
       }}/ >}
       {arrest && <ArrestOverlay />}
+      {interview && <InterviewRoom charge={interview.charge} stars={interview.stars} area={interview.area} wallet={wallet} onDone={(outcome) => {
+        setInterview(null);
+        if (outcome.kind === "free") {
+          setWallet(w => Math.max(0, w - outcome.clout));
+          say(`@${outcome.by} took the blame. You walk out of the station a free person, ${outcome.clout} Clout lighter.`, true);
+          router.refresh();
+        } else updateLife(l => ({ ...l, hearing: { stars: outcome.stars, charge: outcome.charge } }));
+      }} />}
+      <BlameOfferPrompt busy={Boolean(interview || arrest || jailed || life.hearing || mapId === "court")} onAccepted={(deal) => {
+        if (typeof deal.wallet === "number") setWallet(deal.wallet);
+        updateLife(l => ({ ...l, hearing: { stars: deal.stars, charge: deal.charge } }));
+        say(`Deal done: +${deal.clout} Clout from @${deal.from}. You're due in court for ${deal.charge.toLowerCase()}.`, true);
+      }} />
       <HudSlot area="br-nav" order={0}><button type="button" onClick={() => setMenu(true)} aria-label="Game menu" title="Menu (Esc)" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Menu className="size-5" aria-hidden /></button></HudSlot>
       {menu && <GameMenu place={map.name} onContinue={() => setMenu(false)} onLeave={leaveGame} />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
