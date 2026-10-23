@@ -116,9 +116,9 @@ function PasswordForm({
       <EmailField />
       <PasswordField newPassword={mode === "sign-up"} />
       <Submit
-        pendingLabel={mode === "sign-in" ? "Signing in…" : "Activating invitation…"}
+        pendingLabel={mode === "sign-in" ? "Signing in…" : "Creating your account…"}
       >
-        {mode === "sign-in" ? "Sign in" : "Activate invitation"}
+        {mode === "sign-in" ? "Sign in" : "Create free account"}
       </Submit>
       <Status state={state} />
     </form>
@@ -175,13 +175,13 @@ export function SignInForm({
       {(mode === "sign-in" || mode === "sign-up") && (
         <div
           role="tablist"
-          aria-label="Sign in or activate an invitation"
+          aria-label="Sign in or create an account"
           className="bg-muted mb-6 grid grid-cols-2 gap-1 rounded-lg p-1"
         >
           {(
             [
               ["sign-in", "Sign in"],
-              ["sign-up", "Activate invitation"],
+              ["sign-up", "Create account"],
             ] as const
           ).map(([id, label]) => (
             <button

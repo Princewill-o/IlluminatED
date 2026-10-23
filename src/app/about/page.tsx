@@ -34,7 +34,7 @@ const HOW = [
   },
   {
     t: "Accounts",
-    d: "Beta access is by invitation for ages 13+. Core study is free for invited individual learners; Premium is optional. Schools and colleges agree licences separately. See our access and pricing page for details.",
+    d: "Anyone aged 13+ can sign up for free. Core study is free; paid plans are optional. Schools and colleges agree licences separately. See our access and pricing page for details.",
   },
 ];
 
@@ -43,7 +43,7 @@ export default function AboutPage() {
     <>
       <PageHeader
         title="About IlluminatED"
-        intro="A learning game connecting subject practice, workplace simulations and saved progress. Request an invitation or discuss a school pilot."
+        intro="A learning game connecting subject practice, workplace simulations and saved progress. Sign up free, or discuss a school pilot."
         crumbs={[{ label: "Home", href: "/" }, { label: "About" }]}
       />
       <Section rule={false}>

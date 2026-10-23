@@ -15,7 +15,7 @@ import { NumberTicker } from "@/components/ui/magic/number-ticker";
 export const metadata: Metadata = {
   title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
   description:
-    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress, with a study agent that plans your week. Request invited beta access or a school demo.",
+    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress, with a study agent that plans your week. Sign up free, or book a demo for your school.",
   alternates: { canonical: "/" },
 };
 
@@ -33,7 +33,7 @@ const PLANS: {
   {
     name: "Explorer", tagline: "Get started with core revision.", price: "Free", note: "No card needed",
     features: ["Introductory revision quests", "Basic XP and achievements", "Personal learning progress", "Explore the Career District"],
-    href: "/book?for=individual", cta: "Request access",
+    href: "/sign-in?mode=sign-up", cta: "Start free",
   },
   {
     name: "Plus", tagline: "The complete revision experience.", price: "£5.99", per: "/ month", note: "or £59.90 a year",
@@ -126,7 +126,7 @@ export default async function Home() {
         <div className="relative container flex flex-col items-center pt-20 text-center sm:pt-24">
           <BlurFade delay={0.05}>
           <p className="rounded-full border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-sm font-black text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
-            Invited beta · UK learners aged 13+
+            Now open · Free for UK learners aged 13+
           </p>
           </BlurFade>
           <BlurFade delay={0.15}>
@@ -143,8 +143,8 @@ export default async function Home() {
           </BlurFade>
           <BlurFade delay={0.35}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link prefetch={false} href="/book?for=individual" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
-              Request beta access <ArrowRight className="size-4" aria-hidden />
+            <Link prefetch={false} href="/sign-in?mode=sign-up" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
+              Start free <ArrowRight className="size-4" aria-hidden />
             </Link>
             <Link prefetch={false} href="/schools" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-white px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               For schools
@@ -152,7 +152,7 @@ export default async function Home() {
           </div>
           </BlurFade>
           <p className={`mt-5 text-sm ${soft}`}>
-            Already invited?{" "}
+            Already have an account?{" "}
             <Link prefetch={false} href="/sign-in" className="font-bold underline underline-offset-4">Sign in</Link>
           </p>
         </div>
@@ -327,9 +327,9 @@ export default async function Home() {
         <div className={`${card} grid gap-8 p-8 md:grid-cols-2 md:p-10`}>
           <div>
             <ShieldCheck className={`size-6 ${accent}`} aria-hidden />
-            <h2 className="mt-3 text-2xl font-bold">A measured beta, with honest expectations.</h2>
+            <h2 className="mt-3 text-2xl font-bold">Honest expectations.</h2>
             <p className={`mt-4 leading-7 ${soft}`}>
-              We are testing usability, device performance and learning engagement. We have not independently shown improved
+              We keep improving usability, device performance and learning engagement. We have not independently shown improved
               exam grades. Course and resource availability varies: check the subject, board and source before revising.
             </p>
           </div>
@@ -345,9 +345,9 @@ export default async function Home() {
       {/* Closing call to action. */}
       <section className="relative container pb-28 text-center" aria-labelledby="cta-title">
         <h2 id="cta-title" className={`${display} text-4xl sm:text-6xl`}>What should we revise first?</h2>
-        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Join the beta and ask the study agent. It already knows where to start.</p>
-        <Link prefetch={false} href="/book?for=individual" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
-          Request beta access <ArrowRight className="size-4" aria-hidden />
+        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Create your free account and ask the study agent. It already knows where to start.</p>
+        <Link prefetch={false} href="/sign-in?mode=sign-up" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
+          Start free <ArrowRight className="size-4" aria-hidden />
         </Link>
       </section>
     </div>

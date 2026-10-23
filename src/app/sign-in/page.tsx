@@ -39,12 +39,12 @@ export default async function SignInPage({
       <div className="grid gap-12 lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-20">
       <div>
         <h1 className="text-4xl tracking-tight">
-          Sign in or activate your invitation
+          Sign in or create your free account
         </h1>
         <p className="text-muted-foreground mt-3 leading-relaxed">
-          Beta access is by invitation. Use the email address on your invitation to activate your account.
+          New here? Create a free account in a minute. You need to be 13 or over.
         </p>
-        <p className="mt-3 text-sm text-muted-foreground">No invitation yet? <Link href="/book?for=individual" className="font-semibold underline">Request beta access</Link>. Core study is free for invited individual learners. <Link href="/pricing" className="underline">See access and pricing</Link>.</p>
+        <p className="mt-3 text-sm text-muted-foreground">Core study is free. <Link href="/pricing" className="underline">See plans and pricing</Link>. Schools can <Link href="/book?for=school" className="font-semibold underline">book a demo</Link>.</p>
         {sp.error && (
           <p role="alert" className="text-destructive mt-6 text-sm">
             That sign-in link didn't work. It may have expired, already been
