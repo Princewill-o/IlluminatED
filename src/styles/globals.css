@@ -899,13 +899,23 @@ html.dark body:has(.app-theme) {
 
 /* Scene changes: panels sweep across, the badge spins in with the place name. */
 .scene-panel { position: absolute; inset: -10% -20%; transform: translateX(-120%) skewX(-12deg); transition: transform 0.38s cubic-bezier(.7,0,.3,1); }
-.scene-panel-a { background: #2b5fd9; }
-.scene-panel-b { background: #13203a; transition-delay: 0.06s; }
+.scene-panel-gold { background: #f2d9a6; transition-delay: 0s; }
+.scene-panel-a { background: #2b5fd9; transition-delay: .04s; }
+.scene-panel-b { background: radial-gradient(120% 90% at 50% 40%, #1d3157 0%, #0d1726 70%); transition-delay: 0.08s; }
 .scene-panel.scene-in { transform: translateX(0) skewX(-12deg); }
-.scene-panel-a:not(.scene-in) { transform: translateX(120%) skewX(-12deg); transition-delay: 0.06s; }
+.scene-panel-a:not(.scene-in) { transform: translateX(120%) skewX(-12deg); transition-delay: 0.04s; }
+.scene-panel-gold:not(.scene-in) { transform: translateX(120%) skewX(-12deg); transition-delay: 0.08s; }
 .scene-panel-b:not(.scene-in) { transform: translateX(120%) skewX(-12deg); transition-delay: 0s; }
 .scene-title { opacity: 0; transform: scale(.85); transition: opacity .2s, transform .3s cubic-bezier(.3,1.5,.5,1); }
 .scene-title-in { opacity: 1; transform: scale(1); transition-delay: .2s; }
+.scene-word { display: inline-block; opacity: 0; transform: translateY(.45em); }
+.scene-title-in .scene-word { animation: scene-word .42s cubic-bezier(.2,.9,.25,1) both; }
+@keyframes scene-word { to { opacity: 1; transform: none; } }
+.scene-underline { transform: scaleX(0); transform-origin: left; }
+.scene-title-in .scene-underline { animation: scene-line .5s cubic-bezier(.6,0,.2,1) .35s both; }
+@keyframes scene-line { to { transform: scaleX(1); } }
+.scene-eyebrow { opacity: 0; }
+.scene-title-in .scene-eyebrow { animation: scene-word .35s ease-out .15s both; }
 .scene-title-in .scene-badge { display: inline-block; animation: badge-spin .6s cubic-bezier(.3,1.4,.5,1) .2s both; }
 @keyframes badge-spin { from { transform: rotate(-180deg) scale(0); } to { transform: rotate(0) scale(1); } }
 @keyframes tut-pop { from { transform: translate(-50%, -50%) scale(.4) rotate(-12deg); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
@@ -916,7 +926,7 @@ html.dark body:has(.app-theme) {
 .tutorial-rings { background: radial-gradient(circle, transparent 30%, rgba(246,242,232,.35) 31% 33%, transparent 34%) center / 120px 120px; animation: rings 2.4s ease-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) {
   .scene-panel, .scene-title { transition: opacity .2s; }
-  .scene-badge, .tutorial-pop, .tutorial-text, .tutorial-rings { animation: none; }
+  .scene-badge, .tutorial-pop, .tutorial-text, .tutorial-rings, .scene-word, .scene-underline, .scene-eyebrow { animation: none !important; opacity: 1; transform: none; }
 }
 
 /* Underground: a train pulls in, waits, and leaves; tunnel lights rush past the window. */

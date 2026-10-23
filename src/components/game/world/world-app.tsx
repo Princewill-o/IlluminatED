@@ -373,7 +373,7 @@ export function WorldApp({
   }, [map, mapId, say, gainXp]);
   useEffect(() => {
     // Local debugging only: lets automated walkthroughs read positions.
-    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }) };
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); } };
   }, []);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
@@ -441,7 +441,7 @@ export function WorldApp({
       setArrive(spot ?? next.spawn);
       setMapId(dest);
       setTrip((n) => n + 1);
-      fadeTimer.current = setTimeout(() => setFading(false), 550);
+      fadeTimer.current = setTimeout(() => setFading(false), 1050);
     }, 430);
   }, [offices, me.id]);
 
@@ -597,7 +597,7 @@ export function WorldApp({
         fadeTimer.current = setTimeout(() => {
           setArrive(spot);
           setMapId(to.mapId);
-          fadeTimer.current = setTimeout(() => setFading(false), 550);
+          fadeTimer.current = setTimeout(() => setFading(false), 1050);
         }, 430);
       }
     },
