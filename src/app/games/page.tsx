@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { ClipboardList, Gamepad2, Shirt } from "lucide-react";
+import { CarFront, ClipboardList, Gamepad2, Shirt, Sparkles, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
+import { QuestBoard } from "@/components/game/quests/quest-board";
 import { ContinuePlaying } from "@/components/game/world/game-menu";
 import { rankCompaniesFor } from "@/game/core/companies";
 import { levelProgress, levelTitle } from "@/game/core/progression";
@@ -89,6 +90,22 @@ export default async function GamesHome() {
           </div>
         </div>
       </section>
+
+      <section className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Competitions and games">
+        {[
+          { href: "/games/championship", title: "Championship", text: "Free weekly competition: climb your league", colour: "#d6a21b", Icon: Trophy },
+          { href: "/games/racing", title: "Maths Racing", text: "Answer to accelerate. Race your friends' ghosts", colour: "#e5484d", Icon: CarFront },
+          { href: "/games/what-if", title: "What If?", text: "Live a whole life, one year at a time", colour: "#7a5ce6", Icon: Sparkles },
+        ].map(({ href, title, text, colour, Icon }) => (
+          <Link key={title} href={href} className="group relative overflow-hidden rounded-3xl p-5 text-white shadow-[0_6px_0_rgba(19,32,58,0.18)] transition hover:-translate-y-1" style={{ background: colour }}>
+            <Icon className="absolute -right-3 -bottom-3 size-24 opacity-20 transition group-hover:rotate-[-8deg]" aria-hidden />
+            <span className="block text-xl font-black">{title}</span>
+            <span className="mt-1 block max-w-[85%] text-sm text-white/85">{text}</span>
+          </Link>
+        ))}
+      </section>
+
+      <div className="mt-6"><QuestBoard /></div>
 
       <section className="mt-6 grid gap-3 sm:grid-cols-3" aria-label="Shortcuts">
         {[
