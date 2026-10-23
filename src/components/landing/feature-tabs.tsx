@@ -9,9 +9,9 @@ const TABS = [
   {
     id: "play",
     label: "Play",
-    title: "A whole London to explore.",
-    text: "Walk, cycle or catch the bus across a 3D city with woods, a lake park and villages. Every quiz you pass earns Clout to spend on your character and home.",
-    media: { kind: "image", src: "/landing/game-london.webp", alt: "The IlluminatED 3D London game world" },
+    title: "IllumED World: a city to live in.",
+    text: "Start in Fountain Square, walk into every café and shop, race on maths, enter the weekly Championship and play with friends in the Open World. Every question you answer earns Clout.",
+    media: { kind: "video", src: "/landing/illumed-world-explainer.mp4", poster: "/landing/illumed-world-explainer-poster.jpg", alt: "IllumED World explainer: Fountain Square, venue interiors, networking events, deliveries, worlds, Maths Racing and What If" },
   },
   {
     id: "agent",
