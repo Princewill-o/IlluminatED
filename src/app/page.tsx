@@ -7,6 +7,7 @@ import { ArrowRight, CalendarCheck, ListChecks, ShieldCheck, Sparkles } from "lu
 import type { Metadata } from "next";
 
 import { FeatureTabs } from "@/components/landing/feature-tabs";
+import { GameplayShowcase } from "@/components/landing/gameplay-showcase";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 import { BlurFade } from "@/components/ui/magic/blur-fade";
 import { Marquee } from "@/components/ui/magic/marquee";
@@ -217,6 +218,8 @@ export default async function Home() {
           />
         </div>
       </section>
+
+      <GameplayShowcase accent={accent} soft={soft} display={display} card={card} />
 
       {/* Apple-style tabs: one feature at a time. */}
       <section className="relative container pb-24" aria-label="What IlluminatED does">
