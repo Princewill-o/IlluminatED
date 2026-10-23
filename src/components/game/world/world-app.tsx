@@ -373,7 +373,7 @@ export function WorldApp({
   }, [map, mapId, say, gainXp]);
   useEffect(() => {
     // Local debugging only: lets automated walkthroughs read positions.
-    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); } };
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id) };
   }, []);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
