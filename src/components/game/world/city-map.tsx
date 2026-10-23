@@ -16,16 +16,18 @@ import { CITY, TILE, type WorldMap } from "@/game/core/world";
  * waypoint; an arrow and distance then guide you there.
  */
 const COLOUR: Record<string, string> = {
-  w: "#5aa9e6",
-  g: "#9fd37a",
-  f: "#9fd37a",
-  T: "#6fb15a",
-  "=": "#55596a",
-  ":": "#55596a",
-  "-": "#e9e2d2",
-  _: "#e2d3a8",
-  "|": "#c9c2b2",
-  L: "#e9e2d2",
+  w: "#7cc6ef",
+  g: "#bfe3a2",
+  f: "#b2dd92",
+  T: "#7cc06a",
+  "=": "#ffffff",
+  ":": "#ffd76a",
+  "-": "#eef0ec",
+  _: "#f4ecd6",
+  "|": "#f2ede2",
+  L: "#eef0ec",
+  B: "#eef0ec",
+  X: "#c9ced6",
 };
 
 export { placesFor, type Place, type PlaceKind } from "@/game/core/map-guide";
@@ -57,7 +59,7 @@ function useCityCanvas(map: WorldMap, scale: number) {
     ctx.fillRect(0, 0, c.width, c.height);
     map.tiles.forEach((row, y) =>
       [...row].forEach((ch, x) => {
-        ctx.fillStyle = COLOUR[ch] ?? (map.id === "highlands" ? (ch === "k" ? "#9a98a2" : "#a98f6f") : "#c7b9a3");
+        ctx.fillStyle = COLOUR[ch] ?? (map.id === "highlands" ? (ch === "k" ? "#9a98a2" : "#a98f6f") : "#d9d4cc");
         ctx.fillRect(x * scale, y * scale, scale, scale);
       }),
     );

@@ -18,11 +18,14 @@ export function visualProfile(
           cinematic ? (mobile ? 1.25 : 1.5) : mobile ? 1 : 1.25,
           Math.max(1, Number.isFinite(dpr) ? dpr : 1),
         ),
-    shadows: cinematic,
-    shadowSize: cinematic && !mobile ? 2048 : 1024,
+    // Soft shadow maps on desktop by default; phones keep them for Cinematic.
+    shadows: cinematic || (!performance && !mobile),
+    shadowSize: !mobile && !performance ? 2048 : 1024,
     postProcessing: cinematic,
     environment: cinematic && !mobile,
     samples: cinematic && !mobile ? 4 : 0,
+    /** Hardware MSAA on the canvas itself (post-processing has its own samples). */
+    msaa: !performance && !cinematic,
     bloom: cinematic,
     bloomStrength: 0.18,
     exposure: 1.12,

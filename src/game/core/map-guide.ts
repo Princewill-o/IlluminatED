@@ -1,4 +1,7 @@
+import { CITY_CENTRE } from "./city-centre";
 import { buildLondon } from "./london";
+import { LONDON_DISTRICTS } from "./london-districts";
+import { OUTSKIRTS } from "./london-outskirts";
 import { TILE, safeSpot, blocked, type Portal, type WorldMap } from "./world";
 
 /** Group nearby screen pins without moving their actual navigation targets. */
@@ -16,7 +19,7 @@ export function mapPinGroups(places: Place[], scale: number, selectedId?: string
   }
   return groups;
 }
-const LANDMARK_NAMES: Record<string, string> = {
+export const LANDMARK_NAMES: Record<string, string> = {
   "big-ben": "Big Ben",
   parliament: "Houses of Parliament",
   eye: "London Eye",
@@ -29,6 +32,8 @@ const LANDMARK_NAMES: Record<string, string> = {
   tate: "Tate Modern",
   palace: "Buckingham Palace",
   canary: "Canary Wharf",
+  "town-hall": "Town Hall, Fountain Square",
+  fountain: "Fountain Square (city centre)",
 };
 
 /** Four-way walking route over the actual collision grid, never through buildings/water. */
@@ -215,3 +220,81 @@ export const placesFor = (map: WorldMap): Place[] => {
   });
   return [...portals, ...extra];
 };
+
+/** Named areas for the map: the new city centre, the districts and the outskirts. */
+export const MAP_AREAS: { name: string; x: number; y: number; w: number; h: number }[] = [
+  { name: "Fountain Square", ...CITY_CENTRE },
+  ...LONDON_DISTRICTS,
+  ...OUTSKIRTS,
+];
+/** Central London's neighbourhoods run west to east along the river. */
+const CORE_AREAS = [
+  { until: 15, name: "Westminster" },
+  { until: 35, name: "West End" },
+  { until: 55, name: "St Paul's" },
+  { until: 75, name: "The City" },
+  { until: 96, name: "Tower Bridge" },
+  { until: 112, name: "Study Quarter" },
+];
+const BUILDING_KINDS: Record<string, string> = {
+  terrace: "Townhouses", shop: "Shops", office: "Offices", glass: "Office tower", brick: "Offices", stone: "Building", company: "Company HQ",
+};
+
+export type SpotInfo = {
+  title: string;
+  /** What kind of thing this is (a place category, "Building", "River"...). */
+  detail: string;
+  /** The neighbourhood it's in. */
+  area: string | null;
+  /** A destination you can set as your waypoint, when there is one. */
+  place: Place | null;
+};
+
+/** The area a tile belongs to. */
+export function areaAt(x: number, y: number) {
+  const named = MAP_AREAS.find((a) => x >= a.x && x < a.x + a.w && y >= a.y && y < a.y + a.h);
+  if (named) return named.name;
+  if (x < 112 && y < 88) return CORE_AREAS.find((a) => x < a.until)?.name ?? "Central London";
+  return null;
+}
+
+/**
+ * What's at a spot on the map (tile coordinates): the nearest destination,
+ * else the building or landmark there, else the kind of ground (river, park,
+ * road...). Used when you tap anywhere on the map.
+ */
+export function describeSpot(map: WorldMap, places: Place[], x: number, y: number): SpotInfo {
+  const tx = Math.floor(x), ty = Math.floor(y);
+  const area = map.id === "city" ? areaAt(tx, ty) : null;
+  const near = places
+    .map((p) => ({ p, d: Math.hypot(p.x / TILE - x, p.y / TILE - y) }))
+    .filter((c) => c.d < 2.6)
+    .sort((a, b) => a.d - b.d)[0]?.p;
+  if (near) return { title: near.name, detail: KIND[near.kind].label.replace(/s$/, ""), area, place: near };
+  if (map.id === "city") {
+    for (const t of buildLondon().things) {
+      if (!("w" in t) || tx < t.x || tx >= t.x + t.w || ty < t.y || ty >= t.y + t.h) continue;
+      if (t.kind === "landmark") {
+        const name = LANDMARK_NAMES[t.name] ?? "Landmark";
+        const spot = safeSpot(map, (t.x + t.w / 2) * TILE, (t.y + t.h + 0.5) * TILE);
+        return { title: name, detail: "Landmark", area, place: { id: `landmark-${t.id}`, name, kind: "landmark", ...spot } };
+      }
+      if (t.kind === "station") return { title: `${t.name} station`, detail: "Underground", area, place: null };
+      if (t.kind === "building") {
+        // A building with an entrance nearby is that destination.
+        const door = places.find((p) => p.x / TILE >= t.x - 0.5 && p.x / TILE <= t.x + t.w + 0.5 && p.y / TILE >= t.y && p.y / TILE <= t.y + t.h + 1.5);
+        if (door) return { title: door.name, detail: KIND[door.kind].label.replace(/s$/, ""), area, place: door };
+        return { title: t.label ?? BUILDING_KINDS[t.style] ?? "Building", detail: t.label ? BUILDING_KINDS[t.style] ?? "Building" : "Private building", area, place: null };
+      }
+    }
+  }
+  const tile = map.tiles[ty]?.[tx] ?? "";
+  const ground: Record<string, [string, string]> = {
+    w: [map.id === "city" && ty > 30 && ty < 60 ? "River Thames" : "Water", "Water"],
+    g: ["Park and gardens", "Green space"], f: ["Flower garden", "Green space"], T: ["Trees", "Green space"],
+    "=": ["Road", "Watch for traffic"], ":": ["Road", "Watch for traffic"], "|": ["Bridge", "Crossing"],
+    "-": ["Pavement", "Walkway"], _: ["Footpath", "Walkway"], B: ["Bench", "Take a seat"], L: ["Street lamp", "Street furniture"],
+  };
+  const [title, detail] = ground[tile] ?? ["Building", "Private building"];
+  return { title, detail, area, place: null };
+}

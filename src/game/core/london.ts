@@ -1,3 +1,4 @@
+import { buildCityCentre } from "./city-centre";
 import { COMPANIES } from "./companies";
 import { expandLondon } from "./london-districts";
 import { expandOutskirts } from "./london-outskirts";
@@ -49,14 +50,16 @@ export type Thing =
         | "battersea"
         | "tate"
         | "palace"
-        | "canary";
+        | "canary"
+        | "town-hall"
+        | "fountain";
       x: number;
       y: number;
       w: number;
       h: number;
     }
   | {
-      kind: "tree" | "lamp" | "bench" | "phonebox" | "postbox" | "busstop";
+      kind: "tree" | "blossom" | "lamp" | "bench" | "phonebox" | "postbox" | "busstop";
       id: string;
       x: number;
       y: number;
@@ -607,7 +610,7 @@ export function buildLondon(): Built {
   const foodPlots = [
     {
       id: "mcdonalds",
-      label: "McDonald's",
+      label: "Big Bun Burgers",
       x: 104,
       y: 33,
       colour: "#f0d4a0",
@@ -616,7 +619,7 @@ export function buildLondon(): Built {
     },
     {
       id: "kfc",
-      label: "KFC",
+      label: "Cluck & Co.",
       x: 80,
       y: 66,
       colour: "#f5e4d4",
@@ -625,7 +628,7 @@ export function buildLondon(): Built {
     },
     {
       id: "starbucks",
-      label: "Starbucks",
+      label: "Hearth & Bean",
       x: 104,
       y: 51,
       colour: "#e5dcc9",
@@ -840,7 +843,7 @@ export function buildLondon(): Built {
     ),
     routes,
   };
-  cache = expandOutskirts(expandLondon(cache, 176, 136), LONDON_COLS, LONDON_ROWS);
+  cache = buildCityCentre(expandOutskirts(expandLondon(cache, 176, 136), LONDON_COLS, LONDON_ROWS));
   return cache;
 }
 

@@ -25,7 +25,8 @@ test("quality costs stay bounded on high DPI displays", () => {
   assert.equal(visualProfile("auto", true).shadows, false);
   assert.equal(visualProfile("auto", false).bloom, false);
   const balanced = visualProfile("auto", false, 2);
-  assert.equal(balanced.shadows, false);
+  assert.equal(balanced.shadows, true, "desktop default: soft shadow maps");
+  assert.equal(balanced.msaa, true, "desktop default: hardware MSAA");
   assert.equal(balanced.postProcessing, false);
   assert.equal(balanced.environment, false);
   assert.equal(balanced.samples, 0);

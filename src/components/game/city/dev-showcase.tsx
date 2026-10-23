@@ -40,10 +40,13 @@ export function DevShowcase({
   map,
   workplace,
   as,
+  at,
 }: {
   view: string;
   map: string;
   workplace?: string;
+  /** Start position in tiles, for screenshots. */
+  at?: { x: number; y: number };
   /** Voice test: which of the two test friends this tab is. */
   as?: string;
 }) {
@@ -139,6 +142,7 @@ export function DevShowcase({
             offices={[]}
             staff={{}}
             initialMap={map}
+            initialArrival={at ? { x: at.x * 32 + 16, y: at.y * 32 + 16 } : undefined}
             initialServer={null}
             job={job}
             home={{

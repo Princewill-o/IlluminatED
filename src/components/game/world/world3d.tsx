@@ -21,6 +21,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
+import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { TRAIN_CALL } from "./train-state";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
@@ -265,6 +266,69 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
   bendAll(o);
   g.add(o);
   return o;
+}
+
+/** IlluminatED's own Blender London kit (art/blender/london_kit.py). */
+const LONDON_KIT = "/world3d/london/";
+/**
+ * Fits a model to a footprint by stretching width and depth independently, with
+ * the height following the width, so a row of townhouses always fills its plot.
+ */
+async function placeStretched(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0) {
+  const gltf = await load(url);
+  const o = gltf.scene.clone(true);
+  const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+  o.scale.set(w / size.x, w / size.x, d / size.z);
+  const bb = new THREE.Box3().setFromObject(o);
+  const c = bb.getCenter(new THREE.Vector3());
+  o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
+  bendAll(o);
+  g.add(o);
+  return o;
+}
+
+/** A street of Georgian townhouses from the Blender kit, one house per ~3 tiles. */
+async function terraceKit(g: THREE.Group, t: { x: number; y: number; w: number; h: number; height?: number }) {
+  const seed = t.x * 7 + t.y * 13;
+  const x0 = t.x + 0.04, z0 = t.y + 0.04, w = t.w - 0.08, d = t.h - 0.08;
+  const units = Math.max(1, Math.round(w / 3));
+  const uw = w / units;
+  const floors = (t.height ?? 3) >= 2.9 ? 3 : 2;
+  const jobs: Promise<unknown>[] = [];
+  for (let u = 0; u < units; u++) {
+    const variant = "abc"[(seed + u * 2) % 3];
+    jobs.push(placeStretched(g, `${LONDON_KIT}terrace-${variant}-${floors}.glb`, x0 + u * uw, z0, uw, d));
+  }
+  await Promise.all(jobs);
+}
+
+/** Sparkling droplets that rise from the fountain's top jet and fall into the tiers. */
+function fountainSpray(cx: number, cz: number, top: number) {
+  const count = 160;
+  const pos = new Float32Array(count * 3);
+  const seeds = Array.from({ length: count }, (_, i) => ({ a: (i * 2.399) % (Math.PI * 2), v: 0.6 + ((i * 37) % 17) / 40, t: (i * 0.137) % 1 }));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: "#d9f3ff", size: 0.07, transparent: true, opacity: 0.85, depthWrite: false }));
+  bend(pts.material as THREE.PointsMaterial);
+  pts.frustumCulled = false;
+  pts.userData.spin = true;
+  let clock = 0;
+  pts.userData.update = (secs: number) => {
+    clock = secs;
+    for (let i = 0; i < count; i++) {
+      const s = seeds[i];
+      const k = (clock * 0.55 * s.v + s.t) % 1;
+      const r = k * 0.55 * s.v;
+      pos[i * 3] = cx + Math.cos(s.a) * r;
+      pos[i * 3 + 1] = top + 0.45 * Math.sin(k * Math.PI) * s.v - k * 0.6;
+      pos[i * 3 + 2] = cz + Math.sin(s.a) * r;
+    }
+    geo.attributes.position.needsUpdate = true;
+  };
+  pts.userData.update(0);
+  pts.userData.dispose = () => { geo.dispose(); (pts.material as THREE.Material).dispose(); };
+  return pts;
 }
 
 /** The kit's compact cars need a shared real footprint, including their mirrors. */
@@ -884,9 +948,9 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const coffee = identity.includes("starbucks"), chicken = identity.includes("kfc"), burgers = identity.includes("mcdonald");
   if (!coffee && !chicken && !burgers) return false;
   const x = t.x + 0.12, z = t.y + 0.12, w = t.w - 0.24, d = t.h - 0.24;
-  const accent = coffee ? "#006241" : chicken ? "#b72025" : "#c92627";
-  const trim = burgers ? "#ffc72c" : "#fff7e9";
-  const name = coffee ? "STARBUCKS" : chicken ? "KFC" : "McDonald's";
+  const accent = coffee ? "#5b3a29" : chicken ? "#b72025" : "#d6452a";
+  const trim = burgers ? "#ffd166" : "#fff7e9";
+  const name = coffee ? "HEARTH & BEAN" : chicken ? "CLUCK & CO." : "BIG BUN BURGERS";
   const h = coffee ? 2.55 : 2.8;
   box(g, coffee ? "#e7d8bc" : "#e9e2d8", x, 0.12, z, x + w, h, z + d);
   box(g, "#302e30", x - 0.06, h, z - 0.06, x + w + 0.06, h + 0.18, z + d + 0.06);
@@ -911,15 +975,15 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     // Red and cream awning stripes and a bold bucket-shaped roof sign.
     for (let i = 0; i < 8; i++) box(g, i % 2 ? "#fff7e9" : accent, x + i * w / 8, 1.83, z + d + 0.1, x + (i + 1) * w / 8, 1.96, z + d + 0.56);
     cyl(g, "#fff7e9", x + w * 0.75, z + d * 0.45, h + 0.18, h + 0.9, 0.46, 20, 0.6);
-    const bucket = sign("KFC", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
+    const bucket = sign("C&Co", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
     bucket.position.set(x + w * 0.75, h + 0.58, z + d * 0.45 + 0.55);
     g.add(bucket);
   } else if (burgers) {
-    // Raised golden arches read clearly even when the shop is behind the player.
-    const arches = sign("M", { bg: accent, fg: "#ffc72c", w: 1.3, h: 1.05, font: "900 100px system-ui, sans-serif" });
+    // A big round bun badge on the roof reads clearly from across the street.
+    const arches = sign("BUN", { bg: accent, fg: "#ffd166", w: 1.3, h: 1.05, font: "900 76px system-ui, sans-serif" });
     arches.position.set(x + w * 0.23, h + 0.72, z + d * 0.6);
     g.add(arches);
-    box(g, "#ffc72c", x, 0.13, z + d + 0.08, x + w, 0.25, z + d + 0.22);
+    box(g, "#ffd166", x, 0.13, z + d + 0.08, x + w, 0.25, z + d + 0.22);
   } else {
     roof(g, "#344d3e", x - 0.04, z - 0.04, x + w + 0.04, z + d * 0.7, h + 0.18, 0.65);
     for (const xx of [x + 0.22, x + w - 0.22]) cyl(g, "#3c6e45", xx, z + d + 0.18, 0.1, 0.56, 0.19, 12);
@@ -959,7 +1023,7 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     return;
   }
   if (restaurantShop(g, t)) return;
-  if (t.style === "terrace") return terrace(g, t, false);
+  if (t.style === "terrace") return terraceKit(g, t);
   const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
   if (co) return headquarters(g, t, co);
   if (t.id === "makerspace" || t.id === "study-club") return studyQuarterBuilding(g, t);
@@ -1408,18 +1472,6 @@ function officeCabinet(g: THREE.Group, x: number, z: number) {
   box(g, "#506369", x + 0.7, 0.9, z + 0.92, x + 0.74, 1.17, z + 0.96);
 }
 
-function heritageLamp(g: THREE.Group, x: number, z: number) {
-  const iron = "#293d3c";
-  box(g, iron, x + 0.34, 0.12, z + 0.34, x + 0.66, 0.38, z + 0.66);
-  box(g, iron, x + 0.45, 0.38, z + 0.45, x + 0.55, 2.55, z + 0.55);
-  box(g, iron, x + 0.27, 2.5, z + 0.27, x + 0.73, 2.58, z + 0.73);
-  box(g, "#f3d99d", x + 0.32, 2.58, z + 0.32, x + 0.68, 3.05, z + 0.68);
-  for (const dx of [0.28, 0.68]) for (const dz of [0.28, 0.68]) box(g, iron, x + dx, 2.57, z + dz, x + dx + 0.04, 3.08, z + dz + 0.04);
-  box(g, iron, x + 0.23, 3.05, z + 0.23, x + 0.77, 3.15, z + 0.77);
-  box(g, iron, x + 0.35, 3.15, z + 0.35, x + 0.65, 3.26, z + 0.65);
-  box(g, iron, x + 0.47, 3.26, z + 0.47, x + 0.53, 3.42, z + 0.53);
-}
-
 function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], station: boolean) {
   const g = new THREE.Group();
   world.add(g);
@@ -1682,17 +1734,14 @@ export function World3D({
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
-    try{renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
-    const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
-    renderer.domElement.addEventListener("webglcontextlost",contextLost);
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = graphicsBudget(quality === "low", mobile);
     const visual = visualProfile(quality,mobile,window.devicePixelRatio||1);
-    renderer.setPixelRatio(visual.pixelRatio);
-    renderer.shadowMap.enabled = visual.shadows;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // MSAA, sRGB output and soft PCF shadow maps (scene-setup.ts).
+    try{renderer = createRenderer(visual);}catch{onUnavailable?.();return;}
+    const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
+    renderer.domElement.addEventListener("webglcontextlost",contextLost);
     el.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
 
@@ -1708,16 +1757,8 @@ export function World3D({
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
     let phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
-    const hemi = new THREE.HemisphereLight(phase === "night" ? "#b2c5e0" : phase === "dusk" ? "#f5d3b0" : "#fff4db", phase === "night" ? "#455a57" : "#8e9d7d", phase === "night" ? 1.45 : 1.7);
-    scene.add(hemi);
-    const sun = new THREE.DirectionalLight(phase === "night" ? "#a7b9d2" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.45 : 1.25);
-    sun.castShadow = visual.shadows;
-    sun.shadow.mapSize.set(visual.shadowSize, visual.shadowSize);
-    Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 80 });
-    sun.shadow.bias = -0.00035;
-    sun.shadow.normalBias = .025;
-    sun.shadow.radius = 4;
-    scene.add(sun, sun.target);
+    // Ambient + sky fill + a shadow-casting sun (scene-setup.ts).
+    const { hemi, sun } = createLighting(scene, { phase, indoors, visual });
     if (phase !== "day" && !indoors) {
       const atmosphere=phase==="night"?"#17293f":"#d6b1a0";
       scene.background = new THREE.Color(atmosphere);
@@ -1726,12 +1767,7 @@ export function World3D({
     if (indoors) {
       scene.background = new THREE.Color(map.kind === "home" ? "#e7dfd0" : "#1d1a2b");
       scene.fog = null;
-      // Electric indoor lighting stays warm and legible after sunset.
-      hemi.color.set("#fff8ec");
-      hemi.groundColor.set("#b8b5ab");
-      sun.color.set("#fff5df");
-      hemi.intensity = 1.9;
-      sun.intensity = 1.2;
+      // Electric indoor lighting stays warm and legible after sunset (set in createLighting).
     }
 
     let presentation: ReturnType<typeof cinematicRenderer>;
@@ -1922,14 +1958,24 @@ export function World3D({
             g.add(sg);
           }
         }
-        else if (t.kind === "landmark") {
+        else if (t.kind === "landmark" && t.name === "town-hall") {
+          jobs.push(place(g, `${LONDON_KIT}townhall.glb`, t.x, t.y, t.w, t.h));
+          for (const lx of [t.x + 7.6, t.x + 10.4]) lamps.push(new THREE.Vector3(lx, 2.2, t.y + t.h));
+        } else if (t.kind === "landmark" && t.name === "fountain") {
+          jobs.push(place(g, `${LONDON_KIT}fountain.glb`, t.x, t.y, t.w, t.h));
+          const spray = fountainSpray(t.x + t.w / 2, t.y + t.h / 2, 3.0);
+          g.add(spray);
+          spinners.push(spray);
+        } else if (t.kind === "landmark") {
           landmark(g, t);
           g.traverse((c) => c.userData.spin && spinners.push(c));
         } else if (t.kind === "tree") {
           // Rounded planted trees are supplied in one shared scenery batch below.
+        } else if (t.kind === "blossom") {
+          jobs.push(place(g, `${LONDON_KIT}blossom.glb`, t.x - 0.8, t.y - 0.8, 2.6, 2.6));
         }
         else if (t.kind === "lamp") {
-          heritageLamp(g, t.x, t.y);
+          jobs.push(place(g, `${LONDON_KIT}lamp.glb`, t.x - 0.15, t.y - 0.15, 1.3, 1.3, 0.12));
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "phonebox") {
           telephoneBox(g, t.x, t.y);
@@ -2444,10 +2490,11 @@ export function World3D({
         const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
         (scene.background as THREE.Color).lerp(lightingColour.set(atmosphere), blend);
         if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
-        hemi.color.lerp(lightingColour.set(night ? "#b2c5e0" : dusk ? "#f5d3b0" : "#fff4db"), blend);
-        hemi.groundColor.lerp(lightingColour.set(night ? "#455a57" : "#8e9d7d"), blend);
-        sun.color.lerp(lightingColour.set(night ? "#a7b9d2" : dusk ? "#ffc89a" : "#fff6e6"), blend);
-        const strength = night ? 0.45 : dusk ? 0.8 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
+        const tone = skyColours(phase);
+        hemi.color.lerp(lightingColour.set(tone.sky), blend);
+        hemi.groundColor.lerp(lightingColour.set(tone.ground), blend);
+        sun.color.lerp(lightingColour.set(tone.sun), blend);
+        const strength = night || dusk ? tone.sunPower : ["Sunny", "Bright"].includes(weatherKind) ? tone.sunPower : tone.sunPower * 0.6;
         sun.intensity += (strength - sun.intensity) * blend;
         lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
         river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
@@ -2457,7 +2504,7 @@ export function World3D({
         weatherKind = weatherAt(new Date()).kind;
         precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
         precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
-        sun.intensity = phase === "night" ? 0.45 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
+        sun.intensity = phase === "night" ? skyColours("night").sunPower : ["Sunny", "Bright"].includes(weatherKind) ? skyColours(phase).sunPower : skyColours(phase).sunPower * 0.6;
         if (scene.fog instanceof THREE.Fog) { scene.fog.near = weatherKind === "Fog" ? 18 : 34; scene.fog.far = weatherKind === "Fog" ? 46 : 70; }
       }
       if (precipitation.visible) {
@@ -2568,8 +2615,7 @@ export function World3D({
       playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
       playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
-      sun.position.set(focus.x - 10, 22, focus.z + 12);
-      sun.target.position.copy(focus);
+      followSun(sun, focus);
 
       // Other players.
       const seen = new Set<string>();

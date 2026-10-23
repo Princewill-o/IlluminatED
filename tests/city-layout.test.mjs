@@ -205,9 +205,9 @@ test("Buildings and stations never overlap a landmark, each other, or a road", (
 test("Named food venues have their own clear plot and a public forecourt", () => {
   const { things, tiles } = buildLondon();
   for (const [id, label] of [
-    ["mcdonalds", "McDonald's"],
-    ["kfc", "KFC"],
-    ["starbucks", "Starbucks"],
+    ["mcdonalds", "Big Bun Burgers"],
+    ["kfc", "Cluck & Co."],
+    ["starbucks", "Hearth & Bean"],
   ]) {
     const shop = things.find((t) => t.id === id);
     assert.ok(shop && shop.kind === "building" && shop.style === "shop", id);
