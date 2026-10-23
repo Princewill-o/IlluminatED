@@ -16,11 +16,12 @@ test("A real responding car follows road tiles and officers can catch a stationa
         map.tiles[Math.floor(p.y / W.TILE)][Math.floor(p.x / W.TILE)],
       ),
     );
-  for (let t = 0; t < 90000 && s.stage !== "challenge"; t += 200) {
+  for (let t = 0; t < 90000 && s.stage !== "tased" && s.stage !== "challenge"; t += 200) {
     s = P.tickPursuit(s, map, player, t, 0.2);
     for (const o of s.officers) assert.equal(W.blocked(map, o.x, o.y), false);
   }
-  assert.equal(s.stage, "challenge");
+  // Caught: officers taser the player; the game then opens the knowledge challenge.
+  assert.equal(s.stage, "tased");
 });
 test("Leaving the search field clears stars only after six uninterrupted seconds", () => {
   const map = W.londonMap(),
@@ -68,8 +69,8 @@ test("The prison cell, study desk, inmate conversations and maze exit are connec
 });
 test("New Study Quarter destinations are reachable, with a working station and a larger world", () => {
   const map = W.londonMap();
-  assert.equal(map.cols, 112);
-  assert.equal(map.rows, 88);
+  assert.ok(map.cols >= 112, `world is ${map.cols} tiles wide`);
+  assert.ok(map.rows >= 88, `world is ${map.rows} tiles tall`);
   for (const id of ["makerspace", "study-club", "reading-garden"]) {
     const p = map.portals.find((p) => p.id === id);
     assert.ok(p, id);

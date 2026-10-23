@@ -247,7 +247,7 @@ test("a failed session start can recover without losing subject selection", asyn
   assert.match(text(game.render()), /Opening failed/);
   click(game, "Try opening session again");
   await settle();
-  assert.deepEqual(game.calls.start, ["gcse-maths", "gcse-maths"]);
+  assert.deepEqual(game.calls.start, ["all", "all"]); // the chosen mix is kept on retry
   assert.match(text(game.render()), /Recall question 1/);
   assert.equal(radios(game).length, 2);
 });

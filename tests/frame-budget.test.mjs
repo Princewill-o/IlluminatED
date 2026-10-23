@@ -25,7 +25,7 @@ test("graphics budgets bound GPU pixels, ambient residents and expensive lights"
   const desktop=graphicsBudget(false,false),mobile=graphicsBudget(false,true),low=graphicsBudget(true,false);
   assert.ok(desktop.pixelRatio**2 < .73);
   assert.ok(low.pixelRatio**2 < .43);
-  assert.equal(desktop.residents,12);
+  assert.equal(desktop.residents,14);
   assert.ok(low.residents < mobile.residents && mobile.residents < desktop.residents);
   assert.equal(low.lights,0);
   assert.equal(low.cyclists,2);

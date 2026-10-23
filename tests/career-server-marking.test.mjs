@@ -14,9 +14,9 @@ const C = projectData("src/game/core/careers.ts");
 const secret="test-only-secret-not-a-production-value-123456";
 function harness({job={workplace:"goggle",role:"junior-dev"},ready=true}={}) {
   const calls=[];
-  const sb={auth:{getUser:async()=>({data:{user:{id:"user-a"}}})},rpc:async(fn,args)=>{calls.push({fn,args});return {data:fn==="career_verified_ready"?ready:{pay:96,promoted:false,role:job.role},error:null};},from:()=>{const query={select:()=>query,eq:()=>query,maybeSingle:async()=>({data:job,error:null})};return query;}};
+  const sb={auth:{getUser:async()=>({data:{user:{id:"user-a"}}})},rpc:async(fn,args)=>{calls.push({fn,args});return {data:fn==="career_verified_ready"?ready:{pay:96,promoted:false,role:job.role},error:null};},from:(table)=>{const query={select:()=>query,eq:()=>query,maybeSingle:async()=>({data:table==="billing_accounts"?{tier:"plus_experience",status:"active",period_end:null}:job,error:null})};return query;}};
   const exports={};
-  const imports={"next/cache":{revalidatePath:()=>{}},zod:require("zod"),"@/game/core/careers":C,"@/game/core/homes":projectData("src/game/core/homes.ts"),"@/game/core/rng":projectData("src/game/core/rng.ts"),"@/lib/game/career-receipt":receipt.exports,"@/lib/social/server":{getSupabase:async()=>sb}};
+  const imports={"next/cache":{revalidatePath:()=>{}},zod:require("zod"),"@/game/core/careers":C,"@/game/core/homes":projectData("src/game/core/homes.ts"),"@/game/core/rng":projectData("src/game/core/rng.ts"),"@/lib/game/career-receipt":receipt.exports,"@/lib/social/server":{getSupabase:async()=>sb},"@/lib/stripe":{stripeLive:false}};
   vm.runInNewContext(code("src/app/games/careers/actions.ts"),{exports,require:name=>{if(!(name in imports))throw new Error(name);return imports[name];},process:{env:{BILLING_CALLBACK_SECRET:secret}},Date});
   return {actions:exports,calls};
 }
