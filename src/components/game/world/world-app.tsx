@@ -64,6 +64,7 @@ import { areaAt } from "@/game/core/map-guide";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";
+import { venueMap } from "@/game/core/venues";
 import {
   CITY,
   universityDistrictMap, universityInteriorMap, supermarketMap,
@@ -107,6 +108,7 @@ const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
+  if (id.startsWith("venue-")) return venueMap(id);
   if (id.startsWith("hotel-")) return hotelMap(id);
   if (id.startsWith("workplace-")) return workplaceMap(id.slice(10));
   if (id === "city") return CITY;

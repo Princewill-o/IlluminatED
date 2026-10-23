@@ -57,6 +57,8 @@ export type PortalTarget =
 export type TutorialStation = "interact" | "study" | "eat" | "board";
 
 export interface Portal {
+  /** On a map with a deck: 1 for portals up on the raised floor. */
+  level?: 0 | 1;
   id: string;
   /** In pixels. */
   rect: Rect;
@@ -105,6 +107,31 @@ export interface WorldMap {
   accent: string;
   /** A sign painted on the floor or lawn (tile coordinates, centre). */
   sign?: { x: number; y: number; text: string };
+  /** Blender furniture placed in an interior (tiles; models in /world3d/interiors). */
+  props?: Prop[];
+  /** Interior colours: floor (two alternating), walls and skirting. */
+  theme?: { floor: [string, string]; wall: string; skirting: string };
+  /** Stairs drawn in this room: going up from here, or the opening down to the floor below. */
+  stairs?: { x: number; y: number; down: boolean };
+  /**
+   * A raised floor in the same room (a mezzanine / double-decker space). `tiles`
+   * is the walkable grid up there; the ramp (a staircase, rising north) joins
+   * the two levels. Tiles.
+   */
+  deck?: { tiles: string[]; height: number; ramp: { x: number; y: number; w: number; h: number } };
+}
+
+/** One piece of interior furniture: a model fitted to a footprint (tiles). */
+export interface Prop {
+  model: string;
+  x: number;
+  y: number;
+  w: number;
+  d: number;
+  /** Height above the floor (hanging lamps). */
+  lift?: number;
+  /** Quarter turns. */
+  turn?: number;
 }
 
 /**
@@ -548,8 +575,9 @@ export function londonMap(): WorldMap {
   // Motor Mile: the car dealership, on the next shop along.
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
-  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
-  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "shop", shop: "bootz" } });
+  // Shops are walk-in: go inside to the checkout (venues.ts).
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
+  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
@@ -561,8 +589,11 @@ export function londonMap(): WorldMap {
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   for (const venue of L.things) {
     if (venue.kind !== "building" || !["mcdonalds", "kfc", "starbucks"].includes(venue.id)) continue;
-    portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "act", activity: "eat" } });
+    portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "map", mapId: `venue-${venue.id}`, label: venue.label ?? "Inside" } });
   }
+  // The town hall's doors, on the square.
+  const hall = L.things.find((t) => t.kind === "landmark" && t.name === "town-hall");
+  if (hall && hall.kind === "landmark") portals.push({ id: "town-hall", rect: px(hall.x + Math.floor(hall.w / 2) - 1, hall.y + hall.h, 2, 1), label: "Town Hall: civic library and council gallery", to: { kind: "map", mapId: "venue-town-hall", label: "Town Hall" } });
   portals.push(
     {id:"universities",rect:px(92,83,2,1),label:"University Quarter: explore universities",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
     {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: subject study sessions",to:{kind:"study-room"}},
@@ -1061,4 +1092,42 @@ export function supermarketMap():WorldMap {
  const g=new Grid(30,25,".");g.border("#");
  for(const x of [8,15,22])g.fill(x,6,2,10,"#");
  return finish({id:"supermarket",kind:"office",name:"Tesco · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
+}
+
+
+// ── Two-level rooms (mezzanines) ───────────────────────────────────────────
+const LEVEL_MAPS = new WeakMap<WorldMap, WorldMap>();
+/** The map as seen from one level: the deck's own walkable grid and its portals. */
+export function levelMap(map: WorldMap, level: number): WorldMap {
+  if (!map.deck) return map;
+  if (level !== 1) {
+    let ground = LEVEL_MAPS.get(map);
+    if (!ground) {
+      ground = { ...map, portals: map.portals.filter((p) => (p.level ?? 0) === 0) };
+      LEVEL_MAPS.set(map, ground);
+    }
+    return ground;
+  }
+  const deck = map.deck;
+  let upper = LEVEL_MAPS.get(deck as unknown as WorldMap);
+  if (!upper) {
+    upper = { ...map, tiles: deck.tiles, portals: map.portals.filter((p) => p.level === 1) };
+    LEVEL_MAPS.set(deck as unknown as WorldMap, upper);
+  }
+  return upper;
+}
+
+/**
+ * Height and level at a point. On the stairs, height follows how far up you
+ * are; past halfway you count as upstairs. Elsewhere you stay on your level.
+ */
+export function elevationAt(map: WorldMap, x: number, y: number, level: number) {
+  const deck = map.deck;
+  if (!deck) return { z: 0, level: 0 };
+  const r = deck.ramp, tx = x / TILE, ty = y / TILE;
+  if (tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h) {
+    const t = Math.max(0, Math.min(1, (r.y + r.h - ty) / r.h));
+    return { z: t * deck.height, level: t > 0.5 ? 1 : 0 };
+  }
+  return { z: level === 1 ? deck.height : 0, level: level === 1 ? 1 : 0 };
 }

@@ -287,6 +287,23 @@ async function placeStretched(g: THREE.Group, url: string, x: number, z: number,
   return o;
 }
 
+/** Places a kit model in a footprint, turned in quarter turns (0 = facing south). */
+async function placeTurned(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0, turn = 0) {
+  const gltf = await load(url);
+  const inner = gltf.scene.clone(true);
+  inner.rotation.y = (turn * Math.PI) / 2;
+  const o = new THREE.Group();
+  o.add(inner);
+  const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+  o.scale.set(w / size.x, Math.min(w / size.x, d / size.z), d / size.z);
+  const bb = new THREE.Box3().setFromObject(o);
+  const c = bb.getCenter(new THREE.Vector3());
+  o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
+  bendAll(o);
+  g.add(o);
+  return o;
+}
+
 /** A street of Georgian townhouses from the Blender kit, one house per ~3 tiles. */
 async function terraceKit(g: THREE.Group, t: { x: number; y: number; w: number; h: number; height?: number }) {
   const seed = t.x * 7 + t.y * 13;
@@ -1472,6 +1489,84 @@ function officeCabinet(g: THREE.Group, x: number, z: number) {
   box(g, "#506369", x + 0.7, 0.9, z + 0.92, x + 0.74, 1.17, z + 0.96);
 }
 
+/** Materials of the mezzanine and everything on it: they fade while you're underneath. */
+const DECK_FADE: THREE.Material[] = [];
+function fadeWithDeck(o: THREE.Object3D) {
+  o.traverse((c) => {
+    const mesh = c as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const own = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((m) => {
+      const copy = m.clone();
+      copy.userData = { ...copy.userData, bent: false };
+      copy.transparent = true;
+      bend(copy);
+      DECK_FADE.push(copy);
+      return copy;
+    });
+    mesh.material = Array.isArray(mesh.material) ? own : own[0];
+    mesh.userData.deck = true;
+  });
+  return o;
+}
+function deckMaterial(colour: string) {
+  const m = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.7, transparent: true });
+  bend(m);
+  DECK_FADE.push(m);
+  return m;
+}
+/** The raised floor: slab, fascia, columns, glass balustrades, and the staircase up to it. */
+function buildDeck(g: THREE.Group, map: WorldMap, jobs: Promise<unknown>[]) {
+  const deck = map.deck!;
+  const { height: h, ramp, tiles } = deck;
+  const floor = map.theme?.floor ?? ["#8a6446", "#7f5c40"];
+  const top = [deckMaterial(floor[0]), deckMaterial(floor[1])];
+  const fascia = deckMaterial(map.accent);
+  const rail = deckMaterial("#2b2b2e");
+  const glass = new THREE.MeshStandardMaterial({ color: "#cfe7ef", transparent: true, opacity: 0.35, roughness: 0.1 });
+  bend(glass);
+  const add = (material: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
+    const m = new THREE.Mesh(BOX, material);
+    m.scale.set(x1 - x0, y1 - y0, z1 - z0);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    m.castShadow = m.receiveShadow = true;
+    m.userData.deck = true;
+    g.add(m);
+  };
+  const inRamp = (x: number, y: number) => x >= ramp.x && x < ramp.x + ramp.w && y >= ramp.y && y < ramp.y + ramp.h;
+  const onDeck = (x: number, y: number) => tiles[y]?.[x] !== undefined && tiles[y][x] !== "#" && !inRamp(x, y);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let y = 0; y < tiles.length; y++)
+    for (let x = 0; x < tiles[0].length; x++) {
+      if (!onDeck(x, y)) continue;
+      add(top[(x + y) % 2], x, h - 0.16, y, x + 1, h, y + 1);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x + 1); minY = Math.min(minY, y); maxY = Math.max(maxY, y + 1);
+      // Open edges (not walls, not the top of the stairs) get a fascia and a glass balustrade.
+      const wall = (cx: number, cy: number) => ["#", "W", "G"].includes(map.tiles[cy]?.[cx] ?? "#");
+      for (const [nx, ny, x0, z0, x1, z1] of [[x, y + 1, x, y + 0.96, x + 1, y + 1.0], [x - 1, y, x, y, x + 0.04, y + 1], [x + 1, y, x + 0.96, y, x + 1, y + 1]] as const) {
+        if (onDeck(nx, ny) || inRamp(nx, ny) || wall(nx, ny)) continue;
+        add(fascia, x0, h - 0.34, z0, x1, h - 0.14, z1);
+        add(rail, x0, h + 0.9, z0, x1, h + 0.96, z1);
+        add(glass, x0 + 0.01, h, z0 + 0.01, x1 - 0.01, h + 0.9, z1 - 0.01);
+      }
+    }
+  // Columns hold the deck up along its open front.
+  for (let x = minX + 1; x < maxX; x += 3) add(rail, x - 0.07, 0, maxY - 0.2, x + 0.07, h - 0.16, maxY - 0.06);
+  add(rail, maxX - 0.2, 0, maxY - 0.2, maxX - 0.06, h - 0.16, maxY - 0.06);
+  // The staircase, scaled to the deck height, and the cupboard under its top.
+  jobs.push(load("/world3d/interiors/stairs.glb").then((gltf) => {
+    const o = gltf.scene.clone(true);
+    const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+    o.scale.set(ramp.w / size.x, h / size.y, ramp.h / size.z);
+    const bb = new THREE.Box3().setFromObject(o);
+    const c = bb.getCenter(new THREE.Vector3());
+    o.position.set(ramp.x + ramp.w / 2 - c.x, -bb.min.y, ramp.y + ramp.h / 2 - c.z);
+    bendAll(o);
+    g.add(o);
+  }));
+  box(g, map.theme?.wall ?? "#d9cbb3", ramp.x, 0, ramp.y - 1, ramp.x + ramp.w, h - 0.16, ramp.y - 0.02);
+  for (const x of [ramp.x - 1, ramp.x + ramp.w]) box(g, "#2b2b2e", x + 0.42, 0, ramp.y, x + 0.58, 0.95, ramp.y + ramp.h);
+}
+
 function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], station: boolean) {
   const g = new THREE.Group();
   world.add(g);
@@ -1510,9 +1605,9 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         // Back and side walls full height; the front wall is cut low so you can see in.
         const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
         const h = front ? 0.35 : ch === "G" ? 2.4 : 3;
-        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? "#e9e5dc" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
+        box(g, ch === "G" ? "#bfe0ef" : map.theme ? map.theme.wall : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? "#e9e5dc" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
         if (ch === "W") box(g, "#9fd2ef", x + 0.15, 1.1, y + 0.98, x + 0.85, 2.3, y + 1.02);
-        if (!front) box(g, home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
+        if (!front) box(g, map.theme ? map.theme.skirting : home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
         if (office && !front) {
           box(g, "#b4b2a9", x, 2.72, y + 0.98, x + 1, 2.8, y + 1.035);
           if (x % 3 === 0) box(g, "#c4c0b5", x + 0.04, 0.25, y + 0.99, x + 0.1, 2.72, y + 1.04);
@@ -1520,11 +1615,31 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         continue;
       }
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
+      // The stair opening on an upper floor has no floor: you look down the stairs.
+      if (map.stairs?.down && x >= map.stairs.x && x < map.stairs.x + 2 && y >= map.stairs.y && y < map.stairs.y + 4) continue;
+      if (map.theme) {
+        // Venue floors: checkerboard tiles for diners and halls, planks for the café.
+        const [a, b] = map.theme.floor;
+        box(g, (x + y) % 2 ? a : b, x, -0.05, y, x + 1, 0.01, y + 1);
+        continue;
+      }
       const homeFloor = x < 5 && y >= 7 && y <= 10 ? ((x + y) % 2 ? "#a6b9b3" : "#c8d4ca") : x >= 14 && y < 6 ? "#d5d1c3" : x % 2 ? "#c5a37c" : "#b99772";
       box(g, home ? homeFloor : hotel ? (x>=8&&x<=12?"#95715b":(x+y)%2?"#d1c0a4":"#d9cbb5") : office ? ((x + y) % 2 ? "#555b60" : "#5c6267") : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
     }
+  // Venues: Blender furniture, and the mezzanine deck with its stairs.
+  if (map.props) {
+    DECK_FADE.length = 0;
+    const deck = map.deck;
+    for (const p of map.props) {
+      const job = placeTurned(g, `/world3d/interiors/${p.model}.glb`, p.x, p.y, p.w, p.d, p.lift ?? 0, p.turn ?? 0);
+      // Furniture up on the deck fades with it when you walk underneath.
+      if (deck && (p.lift ?? 0) >= deck.height - 0.01) jobs.push(job.then((o) => fadeWithDeck(o)));
+      else jobs.push(job);
+    }
+    if (deck) buildDeck(g, map, jobs);
+  }
   // Office / station furniture from tile runs.
-  if (!home)
+  if (!home && !map.props)
     for (let y = 0; y < H; y++) {
       let x = 0;
       while (x < Wd) {
@@ -2435,6 +2550,7 @@ export function World3D({
     ro.observe(el);
 
     const focus = new THREE.Vector3();
+    let meZ = 0;
     const lastMe = new THREE.Vector3();
     const projectedPoint = new THREE.Vector3();
     const lightingColour = new THREE.Color();
@@ -2538,7 +2654,14 @@ export function World3D({
       else if (Math.hypot(dx, dz) > 0.002) carHolder.rotation.y = Math.atan2(-dz, dx);
       lastMe.set(mx, 0, mz);
       const airborne = performance.now() - jumpAt;
-      me.root.position.set(mx, airborne < 700 ? Math.max(0, Math.sin(((airborne - 100) / 500) * Math.PI)) * 0.55 * (airborne > 100 && airborne < 600 ? 1 : 0) : 0, mz);
+      // Up the stairs and on the deck: you're raised, and the camera rises with you.
+      meZ += (PLAYER.z - meZ) * Math.min(1, dt * 14);
+      me.root.position.set(mx, meZ + (airborne < 700 ? Math.max(0, Math.sin(((airborne - 100) / 500) * Math.PI)) * 0.55 * (airborne > 100 && airborne < 600 ? 1 : 0) : 0), mz);
+      if (DECK_FADE.length && map.deck) {
+        const under = PLAYER.level === 0 && map.deck.tiles[Math.floor(mz)]?.[Math.floor(mx)] !== "#" && PLAYER.z < 0.2;
+        const want = under ? 0.16 : 1;
+        for (const m of DECK_FADE) m.opacity += (want - m.opacity) * Math.min(1, dt * 8);
+      }
       me.root.rotation.x = 0;
       carHolder.position.set(mx, 0.08, mz);
       if (performance.now() > swingUntil) {
@@ -2591,8 +2714,8 @@ export function World3D({
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
       const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
-      camera.position.set(framing.x, framing.height, framing.z + framing.distance);
-      camera.lookAt(framing.x, framing.target, framing.z);
+      camera.position.set(framing.x, framing.height + meZ, framing.z + framing.distance);
+      camera.lookAt(framing.x, framing.target + meZ, framing.z);
       const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
       camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
       if (overview) {
@@ -2605,10 +2728,10 @@ export function World3D({
         playerRing.visible = false;
         rings.forEach(ring => { ring.visible = false; });
       }
-      playerRing.position.set(mx, 0.18, mz);
+      playerRing.position.set(mx, 0.18 + meZ, mz);
       playerRing.scale.setScalar(want ? 2.6 : 1);
       camera.updateMatrixWorld();
-      const screen = projectedPoint.set(mx, want ? 2.3 : 1.5, mz).project(camera);
+      const screen = projectedPoint.set(mx, (want ? 2.3 : 1.5) + meZ, mz).project(camera);
       const sx = (screen.x + 1) * viewportWidth / 2;
       const sy = (1 - screen.y) * viewportHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;

@@ -335,7 +335,7 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
 /** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
 export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number; id?: string } | undefined)[] = [];
-export const PLAYER = { x: -9999, y: -9999 };
+export const PLAYER = { x: -9999, y: -9999, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 export const ONLINE: { id: string; username: string }[] = [];
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };

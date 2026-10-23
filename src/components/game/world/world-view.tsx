@@ -38,7 +38,7 @@ import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadV
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { CAR_LENGTH } from "@/game/core/vehicles";
 import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
-import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
 
@@ -289,6 +289,8 @@ export function WorldView({
   const nearRef = useRef<Portal | null>(null);
   const roomRef = useRef<string | null>(null);
   const { players, reportMove, stopped, say } = world;
+  // Every map starts you on the ground floor.
+  useEffect(() => { PLAYER.level = 0; PLAYER.z = 0; }, [map]);
   // Share who's in this server with the rest of the game (interview-room deals).
   useEffect(() => {
     const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username })));
@@ -467,7 +469,9 @@ export function WorldView({
           offenceCallback.current?.(violation);
         }
       }
-      let next = driven ?? step(map, p, dx, dy, dt, speedRef.current);
+      // Two-level rooms: walk on the grid of the level you're on (ground or deck).
+      const walkMap = levelMap(map, PLAYER.level);
+      let next = driven ?? step(walkMap, p, dx, dy, dt, speedRef.current);
       if (map.kind === "station") {
         const elapsed = now - TRAIN_CALL.at;
         const distance = WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
@@ -510,6 +514,10 @@ export function WorldView({
       // Traffic: step into a car or bus and you get bumped back onto the pavement.
       PLAYER.x = p.x;
       PLAYER.y = p.y;
+      // Climbing the stairs raises you; past halfway you're upstairs.
+      const rise = elevationAt(map, p.x, p.y, PLAYER.level);
+      PLAYER.z = rise.z;
+      PLAYER.level = rise.level;
       Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
@@ -602,7 +610,7 @@ export function WorldView({
         }
       }
 
-      const portal = portalAt(map, p.x, p.y);
+      const portal = portalAt(levelMap(map, PLAYER.level), p.x, p.y);
       if (!pausedRef.current && moved && dy > 0 && map.kind === "station" &&
           canBoardTrain(now - TRAIN_CALL.at, map.cols, p.x / TILE, p.y / TILE)) {
         const boardingPortal = map.portals.find(item => item.id === "board");

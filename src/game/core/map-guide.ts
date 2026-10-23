@@ -2,6 +2,7 @@ import { CITY_CENTRE } from "./city-centre";
 import { buildLondon } from "./london";
 import { LONDON_DISTRICTS } from "./london-districts";
 import { OUTSKIRTS } from "./london-outskirts";
+import { venueById } from "./venues";
 import { TILE, safeSpot, blocked, type Portal, type WorldMap } from "./world";
 
 /** Group nearby screen pins without moving their actual navigation targets. */
@@ -143,6 +144,10 @@ export const KIND: Record<PlaceKind, { label: string; colour: string }> = {
 
 function kindOf(p: Portal): PlaceKind | null {
   const t = p.to;
+  if (t.kind === "map" && t.mapId.startsWith("venue-")) {
+    const venue = venueById(t.mapId.slice(6).replace(/-up$/, ""));
+    return venue?.theme === "pharmacy" ? "hospital" : venue?.theme === "hall" ? "landmark" : "food";
+  }
   if (t.kind === "map" && t.mapId.startsWith("hotel-")) return "hotel";
   if ((t.kind === "map" && t.mapId.startsWith("station-")) || t.kind === "tube")
     return "station";
