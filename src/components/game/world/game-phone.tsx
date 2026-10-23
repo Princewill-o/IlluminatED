@@ -1,36 +1,22 @@
 "use client";
-import { useEffect, useState, type ComponentType, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import Link from "next/link";
 
 import {
-  Award,
   BatteryFull,
-  BookOpen,
   Briefcase,
-  Bus,
-  CalendarDays,
-  CarFront,
   ChevronLeft,
-  GraduationCap,
-  House,
-  LibraryBig,
-  Map as MapIcon,
-  MessageCircle,
-  Phone,
   PhoneCall,
   Search,
-  Shirt,
-  ShoppingBag,
   Signal,
-  Sparkles,
-  Video,
   Wallet,
   Wifi,
 } from "lucide-react";
 
 import { CompanyLogo } from "../company-logo";
 
+import { AppIconArt, type AppIconName } from "@/components/app-icons";
 import { WORKPLACES } from "@/game/core/careers";
 import { COMPANIES } from "@/game/core/companies";
 import { cn } from "@/lib/utils";
@@ -40,16 +26,14 @@ const CONTACTS = [
   ...WORKPLACES.filter(w=>!w.companyId).map(w=>({id:`work:${w.id}`,name:w.name,sector:w.sector,logo:null})),
 ];
 
-type Icon = ComponentType<{ className?: string; strokeWidth?: number; style?: CSSProperties }>;
-type App = { name: string; Icon: Icon; bg: string; fg?: string; action?: () => void; href?: string };
+type App = { name: string; icon: AppIconName; action?: () => void; href?: string };
 
-/** iOS-style app tile: rounded-square gradient, glossy edge, label underneath. */
+/** iOS-style app tile: illustrated, glassy icon art with its label underneath. */
 function AppIcon({ app, label = true }: { app: App; label?: boolean }) {
   const tile = (
     <>
-      <span className="relative grid size-[3.25rem] place-items-center overflow-hidden rounded-[0.95rem] shadow-[0_2px_6px_rgba(0,0,0,.25)]" style={{ background: app.bg }}>
-        <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[0.95rem] bg-gradient-to-b from-white/25 to-transparent to-50%" />
-        <app.Icon className="relative size-7 drop-shadow-sm" strokeWidth={2.2} style={{ color: app.fg ?? "#fff" }} />
+      <span className="relative block size-[3.25rem] overflow-hidden rounded-[0.95rem] shadow-[0_1px_1px_rgba(0,0,0,.18),0_4px_10px_rgba(0,0,0,.28)]">
+        <AppIconArt name={app.icon} className="block size-full" />
       </span>
       {label && <span className="max-w-[4.5rem] truncate text-[11px] leading-tight font-medium text-white [text-shadow:0_1px_2px_rgba(0,0,0,.45)]">{app.name}</span>}
     </>
@@ -113,25 +97,25 @@ export function GamePhone({
 
   const facetime = () => { onClose(); window.dispatchEvent(new Event("illuminated:open-calls")); };
   const grid: App[] = [
-    { name: "Maps", Icon: MapIcon, bg: "linear-gradient(160deg,#6ee26b,#2fb3ff 55%,#f3f3f3)", action: onMap },
-    { name: "Bus", Icon: Bus, bg: "linear-gradient(180deg,#ff4f4f,#c8102e)", action: onBus ?? onMap },
-    { name: "Garage", Icon: CarFront, bg: "linear-gradient(180deg,#8e8e93,#3a3a3c)", action: onGarage },
-    { name: "Unis", Icon: GraduationCap, bg: "linear-gradient(180deg,#5e8bff,#2d50d6)", action: onUniversities },
-    { name: "Home", Icon: House, bg: "linear-gradient(180deg,#ffd76a,#ff9f0a)", action: onHome },
-    { name: "Locker", Icon: Shirt, bg: "linear-gradient(180deg,#ff8ad1,#d6339b)", action: onLocker },
-    { name: "Study", Icon: BookOpen, bg: "linear-gradient(180deg,#ffffff,#e9e9ee)", fg: "#ff9500", action: onStudy },
-    { name: "Awards", Icon: Award, bg: "linear-gradient(180deg,#ffe37a,#f4b400)", fg: "#7a4b00", action: onAwards },
-    { name: "Wallet", Icon: Wallet, bg: "linear-gradient(180deg,#2c2c2e,#000)", href: "/games/wealth" },
-    { name: "Weekly", Icon: CalendarDays, bg: "linear-gradient(180deg,#ffffff,#f0f0f3)", fg: "#ff3b30", href: "/games/weekly" },
-    { name: "Illumship", Icon: Sparkles, bg: "linear-gradient(180deg,#b388ff,#6a3de8)", href: "/games/illumship" },
-    { name: "Books", Icon: LibraryBig, bg: "linear-gradient(180deg,#ffb340,#ff7a00)", href: "/games/sources" },
-    { name: "Store", Icon: ShoppingBag, bg: "linear-gradient(180deg,#38b6ff,#0a6cff)", href: "/games/expansions" },
+    { name: "Maps", icon: "maps", action: onMap },
+    { name: "Bus", icon: "bus", action: onBus ?? onMap },
+    { name: "Garage", icon: "garage", action: onGarage },
+    { name: "Unis", icon: "unis", action: onUniversities },
+    { name: "Home", icon: "home", action: onHome },
+    { name: "Locker", icon: "locker", action: onLocker },
+    { name: "Study", icon: "study", action: onStudy },
+    { name: "Awards", icon: "awards", action: onAwards },
+    { name: "Wallet", icon: "wallet", href: "/games/wealth" },
+    { name: "Weekly", icon: "weekly", href: "/games/weekly" },
+    { name: "Illumship", icon: "illumship", href: "/games/illumship" },
+    { name: "Books", icon: "books", href: "/games/sources" },
+    { name: "Store", icon: "store", href: "/games/expansions" },
   ];
   const dock: App[] = [
-    { name: "Phone", Icon: Phone, bg: "linear-gradient(180deg,#65e26b,#21b33a)", action: () => setScreen("phone") },
-    { name: "FaceTime", Icon: Video, bg: "linear-gradient(180deg,#65e26b,#21b33a)", action: facetime },
-    { name: "Messages", Icon: MessageCircle, bg: "linear-gradient(180deg,#65e26b,#21b33a)", href: "/games/friends" },
-    { name: "Maps", Icon: MapIcon, bg: "linear-gradient(160deg,#6ee26b,#2fb3ff 55%,#f3f3f3)", action: onMap },
+    { name: "Phone", icon: "phone", action: () => setScreen("phone") },
+    { name: "FaceTime", icon: "facetime", action: facetime },
+    { name: "Messages", icon: "messages", href: "/games/friends" },
+    { name: "Maps", icon: "maps", action: onMap },
   ];
 
   return (

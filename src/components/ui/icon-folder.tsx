@@ -113,7 +113,7 @@ function useShape(ref: React.RefObject<HTMLDivElement | null>, make: (w: number,
 function Tile({ icon, ring, shadow }: { icon: FolderIcon; ring: string; shadow: string }) {
   return (
     <div
-      className="grid h-full w-full place-items-center overflow-hidden rounded-[inherit]"
+      className="relative grid h-full w-full place-items-center overflow-hidden rounded-[inherit]"
       style={{ background: icon.src ? undefined : icon.background ?? "#2a2a2a", boxShadow: `0 18px 40px ${shadow}, 0 0 0 1px ${ring}` }}
     >
       {icon.src ? <img src={icon.src} alt="" draggable={false} className="h-full w-full object-cover" /> : icon.node}
@@ -303,7 +303,7 @@ export function IconFolder(props: IconFolderProps) {
           >
             {icons.map((icon, i) => (
               <span key={i} className="block h-[22px] w-[22px] overflow-hidden rounded-[7px]">
-                <span className="grid h-full w-full place-items-center [&_svg]:h-[60%] [&_svg]:w-[60%]" style={{ background: icon.src ? undefined : icon.background }}>
+                <span className="relative grid h-full w-full place-items-center [&_svg:not([data-bleed])]:h-[60%] [&_svg:not([data-bleed])]:w-[60%]" style={{ background: icon.src ? undefined : icon.background }}>
                   {icon.src ? <img src={icon.src} alt="" className="h-full w-full object-cover" /> : icon.node}
                 </span>
               </span>

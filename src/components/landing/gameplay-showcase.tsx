@@ -1,23 +1,22 @@
 "use client";
 
-import { BookOpen, Bus, Map as MapIcon, Shirt, Wallet } from "lucide-react";
-
+import { AppIconArt, type AppIconName } from "@/components/app-icons";
 import GlassFolder from "@/components/ui/glass-folder-cards";
 import { IconFolder, type FolderIcon } from "@/components/ui/icon-folder";
 
-/** A white lucide icon on an app-style gradient tile. */
-const app = (label: string, background: string, Icon: typeof MapIcon): FolderIcon => ({
+/** An illustrated, glassy app icon that fills the folder's rounded tile. */
+const app = (label: string, name: AppIconName): FolderIcon => ({
   label,
-  background,
-  node: <Icon className="size-[46%] text-white" strokeWidth={2.2} aria-hidden />,
+  background: "transparent",
+  node: <AppIconArt name={name} className="absolute inset-0 block size-full" />,
 });
 
 const PHONE_APPS: FolderIcon[] = [
-  app("Maps", "linear-gradient(135deg,#6ee26b,#2fb3ff)", MapIcon),
-  app("Bus", "linear-gradient(135deg,#ff4f4f,#c8102e)", Bus),
-  app("Study", "linear-gradient(135deg,#ffb340,#ff7a00)", BookOpen),
-  app("Locker", "linear-gradient(135deg,#ff8ad1,#d6339b)", Shirt),
-  app("Wallet", "linear-gradient(135deg,#3a3a3c,#000000)", Wallet),
+  app("Maps", "maps"),
+  app("Bus", "bus"),
+  app("Study", "study"),
+  app("Locker", "locker"),
+  app("Wallet", "wallet"),
 ];
 
 /**
