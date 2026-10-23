@@ -61,6 +61,8 @@ function mountCommute() {
         return { cn: (...v) => v.filter(Boolean).join(" ") };
       if (name === "@/game/core/rng")
         return { createRng: () => () => 0.5, newSeed: () => 123 };
+      // The question bank is a server call; offline in tests, so the quick cards stay.
+      if (name === "@/app/games/world/actions") return { gameQuiz: () => Promise.resolve([]) };
       if (name === "@/game/core/arcade")
         return projectData("src/game/core/arcade.ts");
       throw new Error(name);
