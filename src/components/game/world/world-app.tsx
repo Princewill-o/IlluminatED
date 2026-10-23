@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CircleHelp, Gamepad2, Menu, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PLAYER, TRAFFIC_BOXES, TUTOR } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
@@ -649,7 +649,9 @@ export function WorldApp({
     if (arrest || policeTransport) return;
     const timer = setInterval(() => {
       const current = pursuitRef.current ?? startPursuit(map, PLAYER);
-      const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2);
+      const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
+      if (PLAYER_VEHICLE.active) traffic.push({ id: "player", x: PLAYER_VEHICLE.x, y: PLAYER_VEHICLE.y, hw: TILE * 0.9, hh: TILE * 0.9, dx: 0, dy: 0 });
+      const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2, traffic);
       if (next.escaped) {
         pursuitRef.current = null; setPursuit(null);
         updateLife(clearWanted);

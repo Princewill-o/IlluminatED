@@ -2744,6 +2744,15 @@ export function World3D({
         currentTraffic.push({ id: `cyclist-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: bicycleLength, width: bicycleWidth });
       });
       if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE });
+      // Every vehicle is solid: the police car and other players' cars and buses
+      // join the traffic picture, so nothing drives through them.
+      const solidVehicles: TrafficVehicle[] = [];
+      if (responseCar.visible) solidVehicles.push({ id: "police", x: responseCar.position.x, y: responseCar.position.z, heading: -responseCar.rotation.y, length: CAR_LENGTH, width: CAR_WIDTH });
+      for (const [id, vehicle] of otherCars) {
+        const bus = vehicle.model.startsWith("bus:");
+        solidVehicles.push({ id: `remote-${id}`, x: vehicle.root.position.x, y: vehicle.root.position.z, heading: -vehicle.root.rotation.y, length: bus ? BUS_LENGTH : CAR_LENGTH, width: bus ? BUS_WIDTH : CAR_WIDTH });
+      }
+      currentTraffic.push(...solidVehicles);
       const pedestrians = [...NPC_SPOTS.map(p => ({ x: p.x / TILE, y: p.y / TILE })), ...crossingWalkers.map(p => ({ x: p.x, y: p.y }))];
       if (!PLAYER_VEHICLE.active) pedestrians.push({ x: PLAYER.x / TILE, y: PLAYER.y / TILE });
       let ti = 0;
@@ -2877,6 +2886,11 @@ export function World3D({
         c.body.root.rotation.y = Math.atan2(q.dx, q.dz);
         const horizontal = Math.abs(q.dx) > Math.abs(q.dz);
         TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horizontal ? bicycleLength : bicycleWidth) * TILE / 2, hh: (horizontal ? bicycleWidth : bicycleLength) * TILE / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
+      }
+      for (const v of solidVehicles) {
+        const horizontal = Math.abs(Math.cos(v.heading)) >= Math.abs(Math.sin(v.heading));
+        const long = (v.length ?? CAR_LENGTH) * TILE, wide = (v.width ?? CAR_WIDTH) * TILE;
+        TRAFFIC_BOXES[ti++] = { id: v.id, x: v.x * TILE, y: v.y * TILE, hw: (horizontal ? long : wide) / 2, hh: (horizontal ? wide : long) / 2, dx: Math.sign(Math.cos(v.heading)), dy: Math.sign(Math.sin(v.heading)), speed: 0 };
       }
       TRAFFIC_BOXES.length = ti;
 

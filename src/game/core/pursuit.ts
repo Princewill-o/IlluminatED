@@ -5,6 +5,23 @@ export interface Point {
 }
 export const SEARCH_RADIUS = TILE * 14;
 export const ESCAPE_SECONDS = 6;
+/** If traffic boxes the police car in this long, the officers get out and run. */
+export const BLOCKED_SECONDS = 4;
+/** Another vehicle on the road, as a centred box in pixels (half-width, half-height). */
+export interface VehicleBox {
+  x: number;
+  y: number;
+  hw: number;
+  hh: number;
+  id?: string;
+}
+/** The police car's own footprint (a car, in pixels) for a direction of travel. */
+export function policeCarBox(at: Point, dir: Point): VehicleBox {
+  const horizontal = Math.abs(dir.x) >= Math.abs(dir.y);
+  const long = TILE * 0.95, wide = TILE * 0.5;
+  return { x: at.x, y: at.y, hw: horizontal ? long : wide, hh: horizontal ? wide : long, id: "police" };
+}
+const overlaps = (a: VehicleBox, b: VehicleBox) => Math.abs(a.x - b.x) < a.hw + b.hw && Math.abs(a.y - b.y) < a.hh + b.hh;
 export interface Pursuit {
   origin: Point;
   radius: number;
@@ -13,6 +30,8 @@ export interface Pursuit {
   officers: Point[];
   stage: "arriving" | "chasing" | "tased" | "challenge";
   outsideSince: number | null;
+  /** When the police car first got stuck behind another vehicle. */
+  blockedSince?: number | null;
   escaped: boolean;
 }
 const ROAD = new Set(["=", ":"]);
@@ -113,6 +132,8 @@ export function tickPursuit(
   player: Point,
   now: number,
   dt: number,
+  /** Every other vehicle: the police car can't drive through any of them. */
+  traffic: readonly VehicleBox[] = [],
 ): Pursuit {
   if (state.stage === "tased" || state.stage === "challenge" || state.escaped) return state;
   const outside =
@@ -124,29 +145,33 @@ export function tickPursuit(
   if (state.stage === "arriving") {
     const route = [...state.route];
     let car = { ...state.car },
-      budget = Math.min(dt, 0.5) * TILE * 5;
+      budget = Math.min(dt, 0.5) * TILE * 5,
+      blocked = false;
+    const others = traffic.filter((v) => v.id !== "police");
     while (budget > 0 && route.length) {
       const next = route[0],
         distance = Math.hypot(next.x - car.x, next.y - car.y);
-      if (distance <= budget) {
-        car = next;
-        route.shift();
-        budget -= distance;
-      } else {
-        car = {
-          x: car.x + ((next.x - car.x) * budget) / distance,
-          y: car.y + ((next.y - car.y) * budget) / distance,
-        };
-        budget = 0;
-      }
+      // Move in small slices so the car stops nose-to-tail, never inside another vehicle.
+      const slice = Math.min(budget, distance, TILE * 0.25);
+      const dir = { x: next.x - car.x, y: next.y - car.y };
+      const ahead = distance ? { x: car.x + (dir.x * slice) / distance, y: car.y + (dir.y * slice) / distance } : next;
+      if (others.some((v) => overlaps(policeCarBox(ahead, dir), v))) { blocked = true; break; }
+      car = ahead;
+      budget -= slice;
+      if (Math.hypot(next.x - car.x, next.y - car.y) < 0.5) { car = next; route.shift(); }
     }
+    const blockedSince = blocked ? (state.blockedSince ?? now) : null;
+    // Stuck in traffic: the officers leave the car and continue on foot.
+    const bail = blockedSince !== null && now - blockedSince >= BLOCKED_SECONDS * 1000;
+    const arrived = !route.length || bail;
     return {
       ...state,
       car,
-      route,
+      route: bail ? [] : route,
       outsideSince,
-      stage: route.length ? "arriving" : "chasing",
-      officers: route.length
+      blockedSince: arrived ? null : blockedSince,
+      stage: arrived ? "chasing" : "arriving",
+      officers: !arrived
         ? []
         : [
             safeSpot(map, car.x + TILE, car.y),

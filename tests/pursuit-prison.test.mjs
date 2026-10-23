@@ -107,3 +107,29 @@ test("Escaping through the service exit frees you at maximum wanted level, so th
   // Getting caught means a longer sentence than a one-star offence.
   assert.ok(L.sentenceMs(out.stars) > L.sentenceMs(1));
 });
+
+test("the police car can't drive through other vehicles, and officers run when it's boxed in", () => {
+  const pursuitModule = projectData("src/game/core/pursuit.ts");
+  const { startPursuit: start, tickPursuit: tick, policeCarBox, BLOCKED_SECONDS } = pursuitModule;
+  const city = W.londonMap();
+  const player = { ...city.spawn };
+  let state = start(city, player);
+  assert.ok(state.route.length > 4, "the car has a road route to drive");
+  // Park another car three tiles along the police car's route.
+  const blocker = state.route[Math.min(5, state.route.length - 1)];
+  const traffic = [{ id: "parked", x: blocker.x, y: blocker.y, hw: 16, hh: 16 }];
+  const overlap = (a, b) => Math.abs(a.x - b.x) < a.hw + b.hw && Math.abs(a.y - b.y) < a.hh + b.hh;
+  let now = 1_000_000;
+  for (let i = 0; i < 20; i++) {
+    const before = state.car;
+    state = tick(state, city, player, (now += 200), 0.2, traffic);
+    const dir = { x: state.car.x - before.x, y: state.car.y - before.y };
+    assert.ok(!overlap(policeCarBox(state.car, dir.x || dir.y ? dir : { x: 1, y: 0 }), traffic[0]), "never inside the parked car");
+    if (state.stage !== "arriving") break;
+  }
+  assert.ok(Math.hypot(state.car.x - blocker.x, state.car.y - blocker.y) > 16, "stopped short of the blocker");
+  // Boxed in for longer than the limit: officers get out and chase on foot.
+  for (let i = 0; i < (BLOCKED_SECONDS + 1) * 5 && state.stage === "arriving"; i++) state = tick(state, city, player, (now += 200), 0.2, traffic);
+  assert.equal(state.stage, "chasing");
+  assert.equal(state.officers.length, 2);
+});
