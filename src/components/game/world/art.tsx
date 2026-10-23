@@ -337,6 +337,18 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number; id?: string } | undefined)[] = [];
 export const PLAYER = { x: -9999, y: -9999, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
+/**
+ * The sandbox rules of the world you're in (player worlds set these; the Open
+ * World uses the defaults). `fly` is whether you are flying right now.
+ */
+export const WORLD_RULES = {
+  police: "normal" as "off" | "relaxed" | "normal" | "strict",
+  flight: "off" as "off" | "owner" | "everyone",
+  time: "auto" as "auto" | "day" | "dusk" | "night",
+  weather: "auto" as "auto" | "clear" | "rain" | "snow",
+  owner: false,
+  fly: false,
+};
 export const ONLINE: { id: string; username: string }[] = [];
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */

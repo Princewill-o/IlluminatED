@@ -44,9 +44,9 @@ export const NAV: NavGroup[] = [
     label: "Practise",
     items: [
       {
-        title: "IlluminatED City",
+        title: "IllumED World",
         href: "/games",
-        description: "Play Promotion Panic: intern to CEO by revising",
+        description: "Join the Open World or a player world, and revise as you play",
       },
       {
         title: "Ask Tiggy",

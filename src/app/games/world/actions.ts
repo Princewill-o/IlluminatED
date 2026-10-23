@@ -196,3 +196,60 @@ export async function signDelivery(id: string) {
   const { error } = await sb.rpc("delivery_sign", { p_id: id });
   return !error;
 }
+
+// ── IllumED World: player worlds ─────────────────────────────────────────────
+export type WorldRules = { police: "off" | "relaxed" | "normal" | "strict"; flight: "off" | "owner" | "everyone"; time: "auto" | "day" | "dusk" | "night"; weather: "auto" | "clear" | "rain" | "snow"; visitors: "everyone" | "friends" };
+export type PlayerWorld = { owner: string; code: string; name: string; icon: string; settings: WorldRules; owner_name?: string };
+const WORLD_ERRORS: Record<string, string> = {
+  plus_only: "Building your own world is part of IlluminatED Plus.",
+  already_built: "You already have a world. Each member gets one.",
+  invalid_settings: "Those world rules aren't allowed.",
+  no_world: "You haven't built a world yet.",
+  not_allowed: "Log in to build a world.",
+};
+const worldError = (m?: string) => WORLD_ERRORS[Object.keys(WORLD_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? (m?.includes("check") ? "Names are 3 to 30 characters." : "Couldn't reach the server. Try again.");
+
+/** Every player-built world (public), newest first, with the owner's name. */
+export async function listPlayerWorlds(): Promise<PlayerWorld[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data, error } = await sb.from("player_worlds").select("owner,code,name,icon,settings").order("updated_at", { ascending: false }).limit(60);
+  if (error || !data) return [];
+  const owners = [...new Set(data.map((w) => w.owner as string))];
+  const { data: names } = owners.length ? await sb.from("profiles").select("id,username").in("id", owners) : { data: [] };
+  const byId = new Map((names ?? []).map((p) => [p.id as string, p.username as string]));
+  return (data as PlayerWorld[]).map((w) => ({ ...w, owner_name: byId.get(w.owner) }));
+}
+
+/** Is the signed-in member on Plus (and so allowed to build a world)? */
+export async function worldPlusStatus() {
+  const sb = await getSupabase();
+  if (!sb) return { plus: false, signedIn: false };
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) return { plus: false, signedIn: false };
+  const { data } = await sb.from("billing_accounts").select("tier,status").eq("user_id", auth.user.id);
+  const plus = (data ?? []).some((b) => ["plus", "plus_experience"].includes(b.tier as string) && ["active", "trialing"].includes(b.status as string));
+  return { plus, signedIn: true, userId: auth.user.id };
+}
+
+export async function buildWorld(name: string, icon: string) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: worldError() };
+  const { data, error } = await sb.rpc("world_build", { p_name: name, p_icon: icon });
+  return error ? { ok: false as const, error: worldError(error.message) } : { ok: true as const, code: data as string };
+}
+
+export async function configureWorld(name: string | null, icon: string | null, settings: WorldRules | null) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: worldError() };
+  const { error } = await sb.rpc("world_configure", { p_name: name, p_icon: icon, p_settings: settings });
+  return error ? { ok: false as const, error: worldError(error.message) } : { ok: true as const };
+}
+
+/** One world's current rules (visitors re-check them while playing). */
+export async function worldRules(code: string): Promise<{ settings: WorldRules; owner: string; name: string } | null> {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { data } = await sb.from("player_worlds").select("settings, owner, name").eq("code", code).maybeSingle();
+  return data ? { settings: data.settings as WorldRules, owner: data.owner as string, name: data.name as string } : null;
+}

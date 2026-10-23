@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 import Link from "next/link";
 
-import { LogOut, MapPin, Play } from "lucide-react";
+import { Globe2, LogOut, MapPin, Play } from "lucide-react";
 
 /** Where a player left off, so "Continue playing" can drop them back there. */
 export type ResumeSpot = { map: string; name: string; x: number; y: number; at: number };
@@ -30,7 +30,7 @@ export function loadResume(userId: string): ResumeSpot | null {
 export const resumeHref = (s: ResumeSpot) => `/games/world?map=${encodeURIComponent(s.map)}&x=${s.x}&y=${s.y}`;
 
 /** Pause menu: carry on, or leave the game (your spot is saved for next time). */
-export function GameMenu({ place, onContinue, onLeave }: { place: string; onContinue: () => void; onLeave: () => void }) {
+export function GameMenu({ place, onContinue, onLeave, onSwitch }: { place: string; onContinue: () => void; onLeave: () => void; onSwitch?: () => void }) {
   const first = useRef<HTMLButtonElement>(null);
   useEffect(() => { first.current?.focus(); }, []);
   return (
@@ -49,6 +49,11 @@ export function GameMenu({ place, onContinue, onLeave }: { place: string; onCont
           <button ref={first} type="button" onClick={onContinue} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#f2d9a6] px-5 font-black text-[#0d1726] shadow-lg">
             <Play className="size-4 fill-current" aria-hidden /> Continue playing
           </button>
+          {onSwitch && (
+            <button type="button" onClick={onSwitch} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2a3346] px-5 font-black text-white">
+              <Globe2 className="size-4" aria-hidden /> Switch world
+            </button>
+          )}
           <button type="button" onClick={onLeave} style={{ "--jelly": "#e5484d", "--jelly-hi": "#ff8a8d", "--jelly-edge": "#9b1c20", "--jelly-ink": "#fff" } as CSSProperties} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e5484d] px-5 font-black text-white">
             <LogOut className="size-4" aria-hidden /> Leave game
           </button>

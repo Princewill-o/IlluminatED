@@ -41,21 +41,21 @@ export default async function GamesHome() {
         <div className="relative grid gap-6 p-6 md:grid-cols-[1fr_260px] md:p-10">
           <div className="max-w-xl">
             <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-black tracking-[0.2em] uppercase backdrop-blur">
-              <span className="size-2 animate-pulse rounded-full bg-[#6cc04a]" /> London is live
+              <span className="size-2 animate-pulse rounded-full bg-[#6cc04a]" /> IllumED World is live
             </p>
             <h1 className="arcade-display mt-4 text-5xl leading-[0.95] md:text-7xl">
-              Your life.
+              Illum<span className="text-[#f2d9a6]">ED</span>
               <br />
-              <span className="text-[#f2d9a6]">Your London.</span>
+              World.
             </h1>
             <p className="mt-4 text-lg leading-8 text-white/85">
-              Catch the BL1, ride the Tube, hire a Lyme bike, work shifts and hand in homework, all while revising for real. We&apos;ll put you on the
-              server nearest you.
+              Jump into the Open World with players near you, or visit a world built by a Plus member. Catch the BL1, ride the Tube, work shifts
+              and hand in homework, all while revising for real.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <ContinuePlaying userId={account.id} className="arcade-btn inline-flex items-center gap-2 rounded-full bg-[#6cc04a] px-8 py-4 text-lg font-black text-[#0d1726]" />
               <Link href="/games/world" className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]">
-                Play London →
+                Play IllumED World →
               </Link>
               <Link href="/games/locker" className="jelly rounded-full bg-white/15 px-5 py-3 font-black backdrop-blur hover:bg-white/25">
                 Edit your character

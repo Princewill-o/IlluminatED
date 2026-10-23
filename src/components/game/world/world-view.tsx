@@ -13,7 +13,7 @@ import { HudSlot } from "./hud";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { AUTOPILOT, ArtScenery, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { AUTOPILOT, ArtScenery, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -241,6 +241,7 @@ export function WorldView({
   const getHomeAction = useCallback(() => homeActionRef.current, []);
   policeRef.current = police;
   const getPolice = useCallback(() => policeRef.current, []);
+  const wasFlying = useRef(false);
   const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
   const world = useWorld({ mapId: map.id, serverId, me, start: start.current });
   const viewport = useRef<HTMLDivElement>(null);
@@ -471,7 +472,16 @@ export function WorldView({
       }
       // Two-level rooms: walk on the grid of the level you're on (ground or deck).
       const walkMap = levelMap(map, PLAYER.level);
-      let next = driven ?? step(walkMap, p, dx, dy, dt, speedRef.current);
+      // Sandbox flight (player worlds): glide over everything, inside the map's edges.
+      const flying = WORLD_RULES.fly && !driving;
+      // Landing: come down on the nearest open ground.
+      if (wasFlying.current && !flying) { const land = safeSpot(levelMap(map, 0), p.x, p.y); p.x = land.x; p.y = land.y; PLAYER.level = 0; }
+      wasFlying.current = flying;
+      const glide = () => {
+        const len = Math.hypot(dx, dy) || 1, sp = WALK_SPEED * 2.2 * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
+        return { x: Math.max(TILE, Math.min(map.width - TILE, p.x + dx / len * sp)), y: Math.max(TILE, Math.min(map.height - TILE, p.y + dy / len * sp)) };
+      };
+      let next = driven ?? (flying ? glide() : step(walkMap, p, dx, dy, dt, speedRef.current));
       if (map.kind === "station") {
         const elapsed = now - TRAIN_CALL.at;
         const distance = WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
@@ -486,7 +496,7 @@ export function WorldView({
           next = { x: p.x, y: 14.5 * TILE };
         }
       }
-      if (map.art === "london" && !driving) {
+      if (map.art === "london" && !driving && !flying) {
         const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
         const people = dx || dy ? NPC_SPOTS.map(person => ({ x: person.x, y: person.y })) : [];
         const corrected = nudgePedestrianFromTraffic(map, next, traffic, people);
@@ -516,8 +526,8 @@ export function WorldView({
       PLAYER.y = p.y;
       // Climbing the stairs raises you; past halfway you're upstairs.
       const rise = elevationAt(map, p.x, p.y, PLAYER.level);
-      PLAYER.z = rise.z;
-      PLAYER.level = rise.level;
+      PLAYER.z = flying ? 3.2 : rise.z;
+      PLAYER.level = flying ? PLAYER.level : rise.level;
       Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
@@ -781,7 +791,7 @@ export function WorldView({
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
             {world.status === "live" && world.ping !== null && <span className="text-[#8d85a0]">· {world.ping} ms</span>}
-            <span className="text-[#8d85a0]">· {REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
+            <span className="text-[#8d85a0]">· {serverId.startsWith("pw-") ? "Player world" : REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
           </span>
         </button>
       </HudSlot>

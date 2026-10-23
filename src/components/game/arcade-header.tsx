@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/games/world", label: "Enter the city" },
+  { href: "/games/world", label: "Play IllumED World" },
   { href: "/games/locker", label: "Character" },
   { href: "/games/wealth", label: "Assets & wealth" },
   { href: "/games/heroes", label: "Live event" },
@@ -23,7 +23,7 @@ export function ArcadeHeader() {
   if (path.startsWith("/games/challenge/") || path.startsWith("/games/promotion-panic/") || path.startsWith("/games/world"))
     return null;
   return (
-    <nav aria-label="Play" className="mx-auto max-w-6xl px-4 pt-4 md:pt-8">
+    <nav aria-label="IllumED World" className="mx-auto max-w-6xl px-4 pt-4 md:pt-8">
       <ul className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
         {TABS.map((t) => {
           const on = t.href === "/games" ? path === "/games" : path.startsWith(t.href);

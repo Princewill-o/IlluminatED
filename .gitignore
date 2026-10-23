@@ -48,3 +48,4 @@ next-env.d.ts
 # Supabase CLI temporary state
 supabase/.temp/
 .education-export/
+art/blender/__pycache__/

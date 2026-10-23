@@ -1275,3 +1275,10 @@ body :where(main h1, main h2) {
 .delivery-open .delivery-lid { animation: delivery-lid .7s cubic-bezier(.3,1.5,.5,1) .2s both; }
 .delivery-open .delivery-sparkle { animation: delivery-sparkle .5s ease-out .5s both; }
 @media (prefers-reduced-motion: reduce) { .delivery-open .delivery-lid, .delivery-open .delivery-sparkle { animation: none; } }
+
+/* IllumED World title screen: the backdrop drifts, the splash text pulses. */
+@keyframes world-menu-drift { from { transform: scale(1.08) translateX(-1.5%); } to { transform: scale(1.14) translateX(1.5%); } }
+@keyframes world-menu-splash { 0%, 100% { transform: rotate(-14deg) scale(1); } 50% { transform: rotate(-14deg) scale(1.08); } }
+.world-menu-drift { animation: world-menu-drift 40s ease-in-out infinite alternate; }
+.world-menu-splash { animation: world-menu-splash .8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .world-menu-drift, .world-menu-splash { animation: none; } }

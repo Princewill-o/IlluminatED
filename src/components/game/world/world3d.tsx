@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -1871,7 +1871,8 @@ export function World3D({
 
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
     const forced = new URLSearchParams(window.location.search).get("time");
-    let phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+    const pickPhase = () => WORLD_RULES.time !== "auto" ? WORLD_RULES.time : forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+    let phase = pickPhase();
     // Ambient + sky fill + a shadow-casting sun (scene-setup.ts).
     const { hemi, sun } = createLighting(scene, { phase, indoors, visual });
     if (phase !== "day" && !indoors) {
@@ -2612,7 +2613,7 @@ export function World3D({
       const mx = p.x / TILE;
       const mz = p.y / TILE;
       if (!indoors) {
-        phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+        phase = pickPhase();
         const blend = 1 - Math.exp(-dt * 1.5);
         const night = phase === "night", dusk = phase === "dusk";
         const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
@@ -2629,7 +2630,7 @@ export function World3D({
       }
       if (!indoors && now >= nextWeather) {
         nextWeather = now + 10_000;
-        weatherKind = weatherAt(new Date()).kind;
+        weatherKind = WORLD_RULES.weather === "clear" ? "Sunny" : WORLD_RULES.weather === "rain" ? "Light rain" : WORLD_RULES.weather === "snow" ? "Snow" : weatherAt(new Date()).kind;
         precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
         precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
         sun.intensity = phase === "night" ? skyColours("night").sunPower : ["Sunny", "Bright"].includes(weatherKind) ? skyColours(phase).sunPower : skyColours(phase).sunPower * 0.6;

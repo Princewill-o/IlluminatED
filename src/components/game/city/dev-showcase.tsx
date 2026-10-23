@@ -142,8 +142,8 @@ export function DevShowcase({
             offices={[]}
             staff={{}}
             initialMap={map}
+            initialServer={new URLSearchParams(window.location.search).has("menu") ? null : "lse-1"}
             initialArrival={at ? { x: at.x * 32 + 16, y: at.y * 32 + 16 } : undefined}
-            initialServer={null}
             job={job}
             home={{
               claimed: true,

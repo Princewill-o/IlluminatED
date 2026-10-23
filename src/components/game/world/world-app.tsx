@@ -6,10 +6,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CircleHelp, Gamepad2, Menu, Smartphone, Trophy } from "lucide-react";
+import { BookOpen, CircleHelp, Crown, Feather, Gamepad2, Menu, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
@@ -32,6 +32,7 @@ import type { TubeTrip } from "./tube-map";
 import { useLife } from "./use-life";
 import { useNeeds, doActivity } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
+import { DEFAULT_RULES, WorldAdmin, WorldMenu } from "./world-menu";
 import { WorldView } from "./world-view";
 import { useTechEvents } from "../event-ads";
 const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
@@ -46,7 +47,7 @@ const HomeEditor = dynamic(() => import("../../careers/home-editor").then(module
 
 const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
 
-import { earnWorldXp, worldBankStatus } from "@/app/games/world/actions";
+import { earnWorldXp, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
@@ -75,9 +76,7 @@ import {
   studyLobbyMap,
   type OfficeOrg,
   type Portal,
-  REGIONS,
   type RegionId,
-  SERVERS,
   type WorldMap,
   campusMap,
   courtMap,
@@ -94,7 +93,6 @@ import {
   officeMap,
   workplaceMap,
   hotelMap,
-  pickServer,
   safeSpot,
 } from "@/game/core/world";
 import type { HomeState } from "@/lib/game/careers-server";
@@ -195,6 +193,7 @@ export function WorldApp({
   const [mindGap, setMindGap] = useState(false);
   const [server, setServer] = useState<string | null>(() => initialServer);
   const [region, setRegion] = useState<RegionId>("lse");
+  const [worldInfo, setWorldInfo] = useState<PlayerWorld | null>(null);
   const [arrive, setArrive] = useState<{ x: number; y: number; heading?: number } | undefined>(initialArrival);
   const [desk, setDesk] = useState(false);
   const [work, setWork] = useState<string | null>(null);
@@ -314,9 +313,36 @@ export function WorldApp({
   const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout]);
   const inOffice = mapId.startsWith("office-");
   const outdoors = mapId === "city" || mapId === "highlands";
+  // IllumED World sandbox: a player world's rules, re-checked every few seconds
+  // so visitors see the owner's changes. The Open World uses the defaults.
+  const [rules, setRules] = useState<WorldRules>(DEFAULT_RULES);
+  const [worldOwner, setWorldOwner] = useState<string | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [soaring, setSoaring] = useState(false);
+  const playerWorld = server?.startsWith("pw-") ? server : null;
+  useEffect(() => {
+    if (!playerWorld) { setRules(DEFAULT_RULES); setWorldOwner(null); return; }
+    if (worldInfo?.code === playerWorld) { setRules({ ...DEFAULT_RULES, ...worldInfo.settings }); setWorldOwner(worldInfo.owner); }
+    let live = true;
+    const load = () => void worldRules(playerWorld).then((w) => { if (live && w) { setRules({ ...DEFAULT_RULES, ...w.settings }); setWorldOwner(w.owner); setWorldInfo((i) => i ?? { owner: w.owner, code: playerWorld, name: w.name, icon: "castle", settings: w.settings }); } }).catch(() => {});
+    load();
+    const t = window.setInterval(load, 8000);
+    return () => { live = false; window.clearInterval(t); };
+  }, [playerWorld, worldInfo]);
+  const isOwner = Boolean(playerWorld && worldOwner === me.id);
+  const canFly = rules.flight === "everyone" || (rules.flight === "owner" && isOwner);
+  const policeStars = rules.police === "strict" ? 2 : rules.police === "relaxed" ? 5 : POLICE_STARS;
+  useEffect(() => {
+    Object.assign(WORLD_RULES, { police: rules.police, flight: rules.flight, time: rules.time, weather: rules.weather, owner: isOwner, fly: soaring && canFly && outdoors });
+    if (soaring && !canFly) setSoaring(false);
+  }, [rules, isOwner, soaring, canFly, outdoors]);
+  useEffect(() => () => { Object.assign(WORLD_RULES, { police: "normal", flight: "off", time: "auto", weather: "auto", owner: false, fly: false }); }, []);
+  // Police switched off: nobody is wanted here.
+  useEffect(() => { if (rules.police === "off" && life.stars > 0 && !jailed) updateLife(clearWanted); }, [rules.police, life.stars, jailed, updateLife]);
+
   const drivingOffence = useCallback((offence: RoadViolation) => {
     const now = Date.now();
-    if (!driving || mapId !== "city" || jailed || arrest || life.hearing || pursuit?.stage === "challenge" || now - drivingOffenceAt.current < 3000) return;
+    if (rules.police === "off" || !driving || mapId !== "city" || jailed || arrest || life.hearing || pursuit?.stage === "challenge" || now - drivingOffenceAt.current < 3000) return;
     const charges: Record<RoadViolation["reason"], string> = {
       "red-light": "Driving through a red light",
       "wrong-way": "Driving against the flow of traffic",
@@ -326,10 +352,11 @@ export function WorldApp({
     drivingOffenceAt.current = now;
     updateLife(l => addStar(l, now, charges[offence.reason]));
     say(`${offence.message} +1 wanted star. ${warningFor({ ...life, stars: Math.min(5, life.stars + 1) })}`, true);
-  }, [driving, mapId, jailed, arrest, life, pursuit?.stage, updateLife, say]);
+  }, [driving, mapId, jailed, arrest, life, pursuit?.stage, updateLife, say, rules.police]);
   /** Commit an offence from the rulebook and tell the player where it leaves them. */
   const offend = useCallback((offence: Offence, lead = "") => {
     if (jailed) return;
+    if (WORLD_RULES.police === "off") { if (lead) say(`${lead} The police are switched off in this world.`); return; }
     updateLife(l => commit(l, Date.now(), offence));
     const next = Math.min(5, life.stars + (offence === "shoplifting" || offence === "trespass" ? 2 : offence === "car-theft" ? 3 : 1));
     say(`${lead ? lead + " " : ""}${warningFor({ ...life, stars: next })}`, true);
@@ -405,7 +432,6 @@ export function WorldApp({
       // Private browsing: use the time zone.
     }
     setRegion(r);
-    setServer((s) => s ?? pickServer(r, {}).id);
   }, []);
 
   // Keep the address bar shareable: /games/world?map=campus&server=lse-1
@@ -650,7 +676,7 @@ export function WorldApp({
 
   // Police catch the player with a brief taser stop before the challenge or escort.
   useEffect(() => {
-    if (life.stars < POLICE_STARS || jailed || life.hearing || !outdoors) {
+    if (life.stars < policeStars || jailed || life.hearing || !outdoors) {
       pursuitRef.current = null; setPursuit(null); return;
     }
     if (arrest || policeTransport) return;
@@ -682,7 +708,7 @@ export function WorldApp({
       }
     }, 200);
     return () => clearInterval(timer);
-  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, updateLife, say]);
+  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, updateLife, say, policeStars]);
 
   useEffect(() => {
     if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
@@ -869,15 +895,12 @@ export function WorldApp({
 
 
   if (!server && !inTutorial) {
-    return <div className="mx-auto max-w-md p-6">
-      <h1 className="text-2xl font-black">Join your regional community</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Choose your region. We connect you automatically; individual servers are managed in the background.</p>
-      <label className="mt-5 block text-sm font-bold" htmlFor="region">Your region</label>
-      <select id="region" value={region} onChange={e => chooseRegion(e.target.value as RegionId)} className="mt-2 w-full rounded-xl border bg-card p-3">
-        {REGIONS.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-      </select>
-      <button type="button" onClick={() => setServer(pickServer(region, Object.fromEntries(SERVERS.filter(s => s.region === region).map(s => [s.id, countFor(mapId, s.id)]))).id)} className="jelly mt-5 min-h-11 rounded-full bg-primary px-6 font-bold text-primary-foreground">Join region</button>
-    </div>;
+    return (
+      <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
+        <WorldMenu region={region} onRegion={chooseRegion} countFor={(id) => countFor(mapId, id)} username={me.username}
+          onJoin={(id, world) => { setWorldInfo(world ?? null); setServer(id); }} />
+      </div>
+    );
   }
 
   return (
@@ -1050,7 +1073,18 @@ export function WorldApp({
         say(`Deal done: +${deal.clout} Clout from @${deal.from}. You're due in court for ${deal.charge.toLowerCase()}.`, true);
       }} />
       <HudSlot area="br-nav" order={0}><button type="button" onClick={() => setMenu(true)} aria-label="Game menu" title="Menu (Esc)" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Menu className="size-5" aria-hidden /></button></HudSlot>
-      {menu && <GameMenu place={map.name} onContinue={() => setMenu(false)} onLeave={leaveGame} />}
+      {menu && <GameMenu place={playerWorld ? `${worldInfo?.name ?? "Player world"} · ${map.name}` : map.name} onContinue={() => setMenu(false)} onLeave={leaveGame}
+        onSwitch={() => { remember(); setMenu(false); setSoaring(false); setWorldInfo(null); setServer(null); }} />}
+      {isOwner && <HudSlot area="br-nav" order={2}><button type="button" onClick={() => setAdminOpen(true)} aria-label="World admin" title="World admin" className="jelly grid size-11 place-items-center rounded-2xl bg-[#7a5ce6] text-white shadow-lg"><Crown className="size-5" aria-hidden /></button></HudSlot>}
+      {canFly && !driving && outdoors && <HudSlot area="br-nav" order={3}><button type="button" aria-pressed={soaring} onClick={() => { setSoaring((f) => !f); say(soaring ? "Landing." : "You're soaring! Glide anywhere, then press again to land.", true); }} aria-label={soaring ? "Land" : "Fly"} title={soaring ? "Land" : "Fly"} className={`jelly grid size-11 place-items-center rounded-2xl text-white shadow-lg ${soaring ? "bg-[#1aa3c4]" : "bg-[#13203a]"}`}><Feather className="size-5" aria-hidden /></button></HudSlot>}
+      {adminOpen && isOwner && <WorldAdmin name={worldInfo?.name ?? "Your world"} rules={rules} onClose={() => setAdminOpen(false)}
+        onSaved={(r) => { setRules(r); say("World rules saved.", true); }}
+        commands={[
+          { label: "Teleport to Fountain Square", run: () => { setAdminOpen(false); goTo("city", "Fountain Square"); } },
+          { label: "Clear my wanted stars", run: () => { updateLife(clearWanted); say("Wanted stars cleared.", true); } },
+          { label: soaring ? "Land now" : "Start flying", run: () => { setAdminOpen(false); setSoaring((f) => !f); } },
+          { label: "Go home", run: () => { setAdminOpen(false); goTo("home", "Your house"); } },
+        ]} />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
       {phone && <GamePhone time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
