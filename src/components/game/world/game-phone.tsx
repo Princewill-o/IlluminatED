@@ -10,7 +10,6 @@ import {
   PhoneCall,
   Search,
   Signal,
-  Wallet,
   Wifi,
 } from "lucide-react";
 
@@ -29,11 +28,11 @@ const CONTACTS = [
 type App = { name: string; icon: AppIconName; action?: () => void; href?: string };
 
 /** iOS-style app tile: illustrated, glassy icon art with its label underneath. */
-function AppIcon({ app, label = true }: { app: App; label?: boolean }) {
+function AppIcon({ app, label = true, date }: { app: App; label?: boolean; date?: Date }) {
   const tile = (
     <>
-      <span className="relative block size-[3.25rem] overflow-hidden rounded-[0.95rem] shadow-[0_1px_1px_rgba(0,0,0,.18),0_4px_10px_rgba(0,0,0,.28)]">
-        <AppIconArt name={app.icon} className="block size-full" />
+      <span className="relative block size-[3.25rem] overflow-hidden rounded-[0.95rem] shadow-[0_1px_1px_rgba(0,0,0,.2),0_6px_14px_rgba(0,0,0,.35)]">
+        <AppIconArt name={app.icon} date={date} className="block size-full" />
       </span>
       {label && <span className="max-w-[4.5rem] truncate text-[11px] leading-tight font-medium text-white [text-shadow:0_1px_2px_rgba(0,0,0,.45)]">{app.name}</span>}
     </>
@@ -128,7 +127,7 @@ export function GamePhone({
         className="iphone relative aspect-[9/19.5] h-[min(42rem,calc(100dvh-1.5rem))] max-w-full overflow-hidden rounded-[3.1rem] border-[10px] border-[#1c1c1e] bg-black [color-scheme:light] shadow-[0_0_0_2px_#8e8e93,0_30px_60px_rgba(0,0,0,.5)]"
       >
         {/* Wallpaper */}
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,#ffb5a7_0%,transparent_60%),radial-gradient(120%_90%_at_100%_100%,#0b4f6c_10%,transparent_70%),linear-gradient(160deg,#f9c6b8_0%,#e88d8d_35%,#3e7c95_65%,#0d3550_100%)]" />
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(90%_45%_at_50%_42%,#4b6fa8_0%,transparent_70%),radial-gradient(70%_30%_at_10%_78%,#2c4a7e_0%,transparent_70%),linear-gradient(180deg,#0a1224_0%,#152a4f_40%,#0c1630_75%,#050a16_100%)]" />
         {/* Status bar + Dynamic Island */}
         <div className="relative z-20 flex h-11 items-center justify-between px-7 pt-1 text-[13px] font-semibold text-white">
           <span>{clock}</span>
@@ -140,27 +139,28 @@ export function GamePhone({
           <div className="relative z-10 flex h-[calc(100%-2.75rem)] flex-col px-4 pb-6">
             {/* Widgets */}
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="rounded-[1.4rem] bg-gradient-to-b from-[#3b82f6] to-[#1d4ed8] p-3 text-white shadow-lg">
-                <p className="text-[11px] font-semibold">London</p>
-                <p className="text-3xl leading-tight font-light">{clock}</p>
-                <p className="text-[11px] font-medium">{now.toLocaleDateString("en-GB", { weekday: "long" })}</p>
-                <p className="text-[10px] opacity-80">{now.toLocaleDateString("en-GB", { day: "numeric", month: "long" })}</p>
+              <div className="flex aspect-square flex-col rounded-[1.4rem] border border-white/20 bg-[#a9c7dd]/80 p-3 text-white shadow-lg backdrop-blur-xl">
+                <p className="text-[12px] font-semibold">London ➚</p>
+                <p className="text-[34px] leading-tight font-light tabular-nums">{clock}</p>
+                <p className="mt-auto text-[11px] font-semibold">In-game time</p>
+                <p className="text-[11px] font-medium opacity-90">{now.toLocaleDateString("en-GB", { day: "numeric", month: "long" })}</p>
               </div>
-              <Link href="/games/wealth" prefetch={false} className="gloss-off rounded-[1.4rem] bg-white/85 p-3 text-black shadow-lg backdrop-blur">
-                <p className="flex items-center gap-1 text-[11px] font-semibold text-[#ff9500]"><Wallet className="size-3" />Wallet</p>
-                <p className="mt-1 text-3xl leading-tight font-semibold tabular-nums">{(clout ?? 0).toLocaleString("en-GB")}</p>
-                <p className="text-[11px] text-[#3c3c43]/70">Clout to spend</p>
+              <Link href="/games/wealth" prefetch={false} className="gloss-off flex aspect-square flex-col rounded-[1.4rem] bg-white p-3 text-black shadow-lg">
+                <p className="text-[11px] font-bold tracking-wide text-[#ff3b30] uppercase">{now.toLocaleDateString("en-GB", { weekday: "long" })}</p>
+                <p className="text-[34px] leading-tight font-normal tabular-nums">{now.getDate()}</p>
+                <p className="mt-auto text-[12px] text-[#3c3c43]/70">Wallet</p>
+                <p className="text-[13px] font-semibold tabular-nums">{(clout ?? 0).toLocaleString("en-GB")} Clout</p>
               </Link>
             </div>
             {/* Apps */}
             <div className="mt-4 grid grid-cols-4 content-start gap-x-2 gap-y-3">
-              {grid.map(app => <AppIcon key={app.name} app={app} />)}
+              {grid.map(app => <AppIcon key={app.name} app={app} date={now} />)}
             </div>
             <div className="mt-auto flex justify-center pb-2">
-              <button type="button" onClick={() => setScreen("phone")} className="gloss-off flex items-center gap-1 rounded-full bg-white/25 px-3 py-1 text-[12px] font-medium text-white backdrop-blur-md"><Search className="size-3" />Search</button>
+              <button type="button" onClick={() => setScreen("phone")} className="gloss-off flex items-center gap-1 rounded-full border border-white/15 bg-white/15 px-3.5 py-1 text-[12px] font-medium text-white/90 backdrop-blur-md"><Search className="size-3" />Search</button>
             </div>
             {/* Dock */}
-            <nav aria-label="Dock" className="grid grid-cols-4 gap-2 rounded-[1.9rem] bg-white/25 p-2.5 backdrop-blur-xl">
+            <nav aria-label="Dock" className="grid grid-cols-4 gap-2 rounded-[1.9rem] border border-white/15 bg-white/12 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.18)] backdrop-blur-2xl">
               {dock.map(app => <AppIcon key={app.name} app={app} label={false} />)}
             </nav>
           </div>

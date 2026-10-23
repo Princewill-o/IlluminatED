@@ -73,6 +73,7 @@ const inView = (x: number, y: number, cam: { x: number; y: number }, vw: number,
   x > cam.x - pad && x < cam.x + vw + pad && y > cam.y - pad && y < cam.y + vh + pad;
 
 function ring(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  if (!(r > 0)) return; // a fading puff can dip below zero for a frame
   ctx.beginPath();
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fill();

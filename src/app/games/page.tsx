@@ -5,6 +5,7 @@ import { ClipboardList, Gamepad2, Shirt } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
+import { ContinuePlaying } from "@/components/game/world/game-menu";
 import { rankCompaniesFor } from "@/game/core/companies";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { CEO_RANK } from "@/game/core/shift";
@@ -52,6 +53,7 @@ export default async function GamesHome() {
               server nearest you.
             </p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
+              <ContinuePlaying userId={account.id} className="arcade-btn inline-flex items-center gap-2 rounded-full bg-[#6cc04a] px-8 py-4 text-lg font-black text-[#0d1726]" />
               <Link href="/games/world" className="arcade-btn rounded-full bg-[#f2d9a6] px-8 py-4 text-lg font-black text-[#0d1726]">
                 Play London →
               </Link>

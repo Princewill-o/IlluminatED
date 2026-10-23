@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy } from "lucide-react";
+import { BookOpen, CircleHelp, Gamepad2, Menu, Smartphone, Trophy } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { AUTOPILOT, NPC_SPOTS, PLAYER, TRAFFIC_BOXES, TUTOR } from "./art";
@@ -16,6 +16,7 @@ import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map"
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { FrightNight } from "./fright-night";
+import { GameMenu, saveResume } from "./game-menu";
 import { HudLayout, HudSlot } from "./hud";
 import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
@@ -831,6 +832,33 @@ export function WorldApp({
   const officeSlug = inOffice ? mapId.slice("office-".length) : null;
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
+  // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
+  const [menu, setMenu] = useState(false);
+  const busy = Boolean(safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
+  const busyRef = useRef(busy);
+  busyRef.current = busy;
+  const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
+  const remember = useCallback(() => {
+    if (resumable && Number.isFinite(PLAYER.x) && Number.isFinite(PLAYER.y) && PLAYER.x >= 0 && PLAYER.y >= 0) saveResume(me.id, { map: mapId, name: map.name, x: PLAYER.x, y: PLAYER.y });
+  }, [resumable, me.id, mapId, map.name]);
+  useEffect(() => {
+    const tick = setInterval(remember, 5000);
+    window.addEventListener("pagehide", remember);
+    return () => { clearInterval(tick); window.removeEventListener("pagehide", remember); remember(); };
+  }, [remember]);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, [contenteditable=true]")) return;
+      if (busyRef.current) return;
+      setMenu(open => !open);
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+  const leaveGame = () => { remember(); setMenu(false); router.push("/games"); };
+
+
   if (!server && !inTutorial) {
     return <div className="mx-auto max-w-md p-6">
       <h1 className="text-2xl font-black">Join your regional community</h1>
@@ -861,7 +889,7 @@ export function WorldApp({
       } />
       {!(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
+        paused={busy || menu}
         homeAction={homeAction}
         police={pursuit}
         map={map}
@@ -984,6 +1012,8 @@ export function WorldApp({
         else { setArrest(true); arrestTimer.current=setTimeout(()=>{updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));setArrest(false);goTo("court","Crown Court");},2600); }
       }}/ >}
       {arrest && <ArrestOverlay />}
+      <HudSlot area="br-nav" order={0}><button type="button" onClick={() => setMenu(true)} aria-label="Game menu" title="Menu (Esc)" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Menu className="size-5" aria-hidden /></button></HudSlot>
+      {menu && <GameMenu place={map.name} onContinue={() => setMenu(false)} onLeave={leaveGame} />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
       {phone && <GamePhone time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
