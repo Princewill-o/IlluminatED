@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/games/world", label: "Play IllumED World" },
+  { href: "/games/what-if", label: "What If?" },
   { href: "/games/locker", label: "Character" },
   { href: "/games/wealth", label: "Assets & wealth" },
   { href: "/games/heroes", label: "Live event" },

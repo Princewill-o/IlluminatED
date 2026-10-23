@@ -1282,3 +1282,10 @@ body :where(main h1, main h2) {
 .world-menu-drift { animation: world-menu-drift 40s ease-in-out infinite alternate; }
 .world-menu-splash { animation: world-menu-splash .8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .world-menu-drift, .world-menu-splash { animation: none; } }
+
+/* What If: each new year slides in; pop-ups bounce. */
+@keyframes what-if-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes what-if-pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.what-if-year:last-of-type { animation: what-if-in .35s ease-out; }
+.what-if-pop { animation: what-if-pop .25s cubic-bezier(.2,1.4,.4,1); }
+@media (prefers-reduced-motion: reduce) { .what-if-year:last-of-type, .what-if-pop { animation: none; } }

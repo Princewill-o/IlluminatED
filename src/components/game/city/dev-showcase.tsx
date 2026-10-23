@@ -16,6 +16,7 @@ import { Character3DPreview } from "@/components/game/character-3d-preview";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
 import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
+import { WhatIf } from "@/components/game/what-if/what-if";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { affiliationFor } from "@/game/core/affiliation";
@@ -124,6 +125,7 @@ export function DevShowcase({
     }
   }
   if (view === "voice") return <VoiceTest as={as === "b" ? "b" : "a"} />;
+  if (view === "what-if") return <div className="arcade mx-auto max-w-6xl p-4"><WhatIf userId="preview" /></div>;
   if (view === "world")
     return (
       <div className="fixed inset-0 z-[100005] bg-[#f7f1e6]">
