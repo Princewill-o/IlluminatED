@@ -25,10 +25,10 @@ const MIGRATION = fs.readFileSync(
   "supabase/migrations/20261015130925_games_promotion_panic.sql",
   "utf8",
 );
-const CHARACTERS = fs.readFileSync(
+const CHARACTERS = [
   "supabase/migrations/20261015150000_games_characters_v2.sql",
-  "utf8",
-);
+  "supabase/migrations/20261022170000_store_back_slot.sql",
+].map((f) => fs.readFileSync(f, "utf8")).join("\n");
 const ALL = {
   bank: QUESTION_BANK,
   terms: FLASHCARDS.filter((f) => f.kind === "Key term"),
@@ -224,7 +224,7 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
 test("Every boss is a valid character from the catalogue", () => {
   const { SLOTS, RARITY, SETS } = projectData("src/game/core/cosmetics.ts");
   const slots = new Set(SLOTS.map((s) => s.slot));
-  assert.equal(slots.size, 19);
+  assert.equal(slots.size, 20);
   for (const c of COMPANIES) {
     for (const [slot, id] of Object.entries(c.boss.look)) {
       assert.ok(slots.has(slot), `${c.boss.name}: slot ${slot}`);

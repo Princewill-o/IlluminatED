@@ -307,7 +307,7 @@ export function Locker({
                     >
                       {r.mark} {r.label}
                     </span>
-                    {["hair", "top", "bottom", "shoes"].includes(item.slot) ? (
+                    {["hair", "top", "bottom", "shoes"].includes(item.slot) || (item.slot === "back" && item.id !== "back-none") ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={`/characters/chibi/${item.id}.webp`} alt={item.name} width={128} height={152} loading="lazy" className="my-1 h-[152px] w-auto" />
                     ) : item.slot === "brand" ? (

@@ -7,8 +7,8 @@ import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
 import { faceCanvas } from "./character";
 import { addUniformLogo } from "./uniform-logo3d";
 
-import { BOTTOM, BRANDS, HAIR, SHOES, TOP } from "@/game/core/chibi-looks";
-import { type Avatar, look } from "@/game/core/cosmetics";
+import { BACK, BOTTOM, BRANDS, HAIR, SHOES, TOP } from "@/game/core/chibi-looks";
+import { type Avatar, cosmeticById, look } from "@/game/core/cosmetics";
 import { currentEvent } from "@/game/core/live-events";
 import { outfitColours } from "@/game/core/outfits";
 
@@ -127,20 +127,34 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
     top: top.v,
     bottom: BOTTOM[a.bottom] ?? "trousers",
     shoes: SHOES[a.shoes] ?? "trainers",
+    back: BACK[a.back ?? ""]?.v ?? null,
     extra: null,
   };
+  const backItem = BACK[a.back ?? ""];
+  const backColour = cosmeticById(a.back ?? "")?.color ?? "#e8473b";
   const colour: Record<string, string> = {
     skin: cols.skin, hair: cols.hair, top: cols.top, top2: top.second ?? "#ffffff", bottom: cols.bottom,
     shoes: cols.shoes, sole: "#2b2b33", white: "#ffffff", dark: "#15151c",
-    lens: "#1d2a5c", gear: "#15151c",
+    lens: backItem?.v === "wings-fairy" && !top.extras?.length ? backColour : "#1d2a5c", gear: "#15151c",
+    pack: backColour, pack2: backItem?.second ?? "#ffcf4a", metal: "#c9cbd6", membrane: backColour,
     accent: top.accent ? top.accent : a.top === "top-hivis" ? "#d8dde3" : a.top === "top-cape" ? "#c4433a" : a.shoes === "shoes-rocket" ? "#ff9f1c" : a.shoes === "shoes-skates" ? "#ff8fd1" : "#ff9f1c",
   };
   if (a.top === "top-hivis") colour.top = "#d7ff3a";
   // One material per fabric, shared by every piece of this character.
-  const mats = new Map<string, THREE.MeshLambertMaterial>();
+  // Soft, smooth "toy" materials (the kit is modelled smooth with bevelled edges).
+  const mats = new Map<string, THREE.MeshStandardMaterial>();
   const matFor = (name: string) => {
     let m = mats.get(name);
-    if (!m) { m = new THREE.MeshLambertMaterial({ color: colour[name] ?? "#cccccc", flatShading: true, ...(name === "lens" ? { transparent: true, opacity: 0.55 } : {}) }); mats.set(name, m); }
+    if (!m) {
+      const metal = name === "metal" || name === "gear";
+      m = new THREE.MeshStandardMaterial({
+        color: colour[name] ?? "#cccccc",
+        roughness: name === "skin" ? 0.6 : name === "hair" ? 0.55 : metal ? 0.35 : name === "sole" ? 0.7 : 0.85,
+        metalness: metal ? 0.6 : 0,
+        ...(name === "lens" ? { transparent: true, opacity: 0.55, roughness: 0.1 } : {}),
+      });
+      mats.set(name, m);
+    }
     return m;
   };
   const drop: THREE.Object3D[] = [];

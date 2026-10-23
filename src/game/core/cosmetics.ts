@@ -27,7 +27,8 @@ export type Slot =
   | "face"
   | "held"
   | "pet"
-  | "brand";
+  | "brand"
+  | "back";
 
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
@@ -131,6 +132,11 @@ export const COSMETICS: Cosmetic[] = [
   C("haircol-pink", "hairColor", "Pink", 120, { color: "#ff8fd1" }),
   C("haircol-green", "hairColor", "Green", 120, { color: "#5fd3a5" }),
   R("haircol-silver", "hairColor", "Silver", 250, { color: "#d8d4e0" }),
+  C("haircol-lilac", "hairColor", "Lilac", 150, { color: "#c3a6ff" }),
+  C("haircol-mint", "hairColor", "Mint", 150, { color: "#8ff0c8" }),
+  C("haircol-ruby", "hairColor", "Ruby", 150, { color: "#c2263f" }),
+  R("haircol-gold", "hairColor", "Gold", 300, { color: "#f5c542" }),
+  R("haircol-frost", "hairColor", "Frost", 300, { color: "#eef4ff", set: "seasonal" }),
 
   // ── Clothes ────────────────────────────────────────────
   C("top-tee", "top", "IlluminatED tee", 0, { color: "#2d1b69" }),
@@ -157,6 +163,12 @@ export const COSMETICS: Cosmetic[] = [
   L("top-hero-quill", "top", "Quill suit", 0, { unlock: "pass:10", color: "#8c2f4a", set: "heroes" }),
   L("top-hero-quotient", "top", "Captain Quotient suit", 0, { unlock: "pass:15", color: "#2b5fd9", set: "heroes" }),
 
+  // ── Seasonal drops ──
+  R("top-pumpkin", "top", "Pumpkin hoodie", 300, { color: "#f07a1a", set: "halloween" }),
+  R("top-puffer", "top", "Snow puffer", 450, { color: "#eef4ff", set: "seasonal" }),
+  R("top-varsity", "top", "Varsity jacket", 400, { color: "#1d4e89" }),
+  C("top-festival", "top", "Festival tee", 120, { color: "#ff9f0a", set: "seasonal" }),
+
   C("bottom-jeans", "bottom", "Jeans", 0, { color: "#3c5a9a" }),
   C("bottom-joggers", "bottom", "Joggers", 0, { color: "#3a2d58", set: "sporty" }),
   C("bottom-shorts", "bottom", "Shorts", 0, { color: "#c9a46b" }),
@@ -172,6 +184,7 @@ export const COSMETICS: Cosmetic[] = [
   R("shoes-smart", "shoes", "Smart shoes", 250, { color: "#13203a", set: "office" }),
   E("shoes-skates", "shoes", "Roller skates", 900, { color: "#ff8fd1", set: "party" }),
   L("shoes-rocket", "shoes", "Rocket boots", 3000, { color: "#b3abc4", set: "space" }),
+  R("shoes-chunky", "shoes", "Chunky sneakers", 350, { color: "#f3f6fb" }),
 
   // ── Dyes: free colours for any top, bottoms or shoes ("auto" keeps the item's own colour)
   ...(["topColor", "bottomColor", "shoesColor"] as const).flatMap((slot) => {
@@ -222,6 +235,17 @@ export const COSMETICS: Cosmetic[] = [
   C("brand-kowloon", "brand", "Kowloon Club"),
   C("brand-orbit", "brand", "Orbit"),
 
+  // ── Back: backpacks, wings and more (worn in 3D) ──
+  C("back-none", "back", "Nothing on your back"),
+  C("back-school", "back", "School backpack", 0, { color: "#e8473b" }),
+  C("back-mini", "back", "Mini backpack", 150, { color: "#ff8fd1" }),
+  R("back-teddy", "back", "Teddy backpack", 400, { color: "#b07548" }),
+  R("back-guitar", "back", "Gig guitar", 600, { color: "#c4622d", set: "party" }),
+  E("back-fairy", "back", "Fairy wings", 900, { color: "#bfe8ff" }),
+  E("back-bat", "back", "Bat wings", 666, { color: "#3b1f4f", set: "halloween" }),
+  E("back-jetpack", "back", "Jetpack", 1500, { color: "#c9cbd6", set: "space" }),
+  L("back-angel", "back", "Angel wings", 2500, { color: "#ffffff", set: "royal" }),
+
   C("pet-none", "pet", "No pet"),
   C("pet-hamster", "pet", "Hamster in charge", 150),
   R("pet-goldfish", "pet", "Office goldfish", 300, { set: "office" }),
@@ -242,6 +266,8 @@ export const SETS: Record<string, string> = {
   party: "Party Animal",
   royal: "Royalty",
   heroes: "Lumen League",
+  halloween: "Fright Night",
+  seasonal: "Seasons",
 };
 
 export const RARITY: Record<Rarity, { label: string; mark: string; color: string }> = {
@@ -277,6 +303,7 @@ export const DEFAULT_AVATAR: Avatar = {
   held: "held-none",
   pet: "pet-none",
   brand: "brand-none",
+  back: "back-none",
 };
 
 export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[] }[] = [
@@ -321,6 +348,7 @@ export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[
       { slot: "hat", label: "Hats" },
       { slot: "face", label: "Eyewear" },
       { slot: "held", label: "In hand" },
+      { slot: "back", label: "Back" },
     ],
   },
   { group: "Companion", slots: [{ slot: "pet", label: "Desk pet" }] },
