@@ -1289,3 +1289,9 @@ body :where(main h1, main h2) {
 .what-if-year:last-of-type { animation: what-if-in .35s ease-out; }
 .what-if-pop { animation: what-if-pop .25s cubic-bezier(.2,1.4,.4,1); }
 @media (prefers-reduced-motion: reduce) { .what-if-year:last-of-type, .what-if-pop { animation: none; } }
+
+/* Maths Racing: countdown pop and results bounce. */
+@keyframes race-count { from { transform: scale(1.6); opacity: 0; } 30% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
+.race-count { animation: race-count .5s cubic-bezier(.2,1.4,.4,1); }
+.race-results { animation: what-if-pop .3s cubic-bezier(.2,1.4,.4,1); }
+@media (prefers-reduced-motion: reduce) { .race-count, .race-results { animation: none; } }
