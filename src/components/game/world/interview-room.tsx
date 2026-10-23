@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ONLINE } from "./art";
+import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
 
 import { answerBlameDeal, blameDealStatus, blameInbox, offerBlameDeal, type BlameOffer } from "@/app/games/world/actions";
 import { honestStars } from "@/game/core/law";
+import { POLICE_QUESTIONS } from "@/game/core/pursuit";
 
 /**
  * The police interview room: a cutscene for when the police aren't sure you're
@@ -106,7 +108,13 @@ export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge:
     "Tell me the truth and the court will go easier on you. Or stay quiet and we'll let the judge decide.",
   ], [charge, area]);
   const [line, setLine] = useState(0);
-  const [mode, setMode] = useState<"talk" | "choose" | "deal" | "waiting" | "result">("talk");
+  const [mode, setMode] = useState<"talk" | "question" | "choose" | "deal" | "waiting" | "result">("talk");
+  // The alibi question comes from the question bank; get it right and every option is a star lighter.
+  const bank = useBankQuestions(1, () => POLICE_QUESTIONS[Math.floor(Math.random() * POLICE_QUESTIONS.length)]);
+  const [alibi, setAlibi] = useState<QuizQuestion | null>(null);
+  const [alibiPick, setAlibiPick] = useState<number | null>(null);
+  const alibiOk = alibi !== null && alibiPick === alibi.answer;
+  const base = alibiOk ? Math.max(1, stars - 1) : stars;
   const [target, setTarget] = useState<{ id: string; username: string } | null>(null);
   const [amount, setAmount] = useState(Math.max(10, Math.min(100, wallet)));
   const [note, setNote] = useState("");
@@ -144,14 +152,14 @@ export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge:
 
   const next = () => {
     if (!t.done) return t.skip();
-    if (mode === "talk") { if (line < lines.length - 1) setLine(line + 1); else setMode("choose"); }
+    if (mode === "talk") { if (line < lines.length - 1) setLine(line + 1); else { setAlibi(bank.next()); setMode("question"); } }
     else if (mode === "result" && result) onDone(result);
   };
   const court = (s: number) => { setResult({ kind: "court", stars: s, charge }); setMode("result"); };
   const send = async () => {
     if (!target) return;
     setNote("");
-    const r = await offerBlameDeal(target.id, charge, stars, amount);
+    const r = await offerBlameDeal(target.id, charge, base, amount);
     if (!r.ok) { setNote(r.error); return; }
     deal.current = r.deal;
     setTried(old => new Set(old).add(target.id));
@@ -175,16 +183,37 @@ export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge:
               <p className="mt-2 text-right text-[11px] text-white/50">{t.done ? (mode === "result" ? "Tap to continue" : "Tap for more") : "Tap to skip"}</p>
             </button>
           )}
+          {mode === "question" && alibi && (
+            <div>
+              <p className="text-[11px] font-black tracking-widest text-[#f2d9a6] uppercase">Detective Hale · back up your story</p>
+              <p className="mt-1 text-sm text-white/70">&ldquo;You say you were revising. Prove it.&rdquo;{alibi.subject ? ` · ${alibi.subject}` : ""}</p>
+              <p className="mt-2 text-lg leading-snug font-black">{alibi.prompt}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {alibi.options.map((o, i) => (
+                  <button key={`${o}-${i}`} type="button" disabled={alibiPick !== null} onClick={() => setAlibiPick(i)}
+                    className={`gloss-off rounded-2xl p-3 text-left text-sm font-bold ring-1 ${alibiPick !== null && i === alibi.answer ? "bg-[#15987f] ring-[#15987f]" : alibiPick === i ? "bg-[#c8322d] ring-[#c8322d]" : "bg-white/10 ring-white/15"}`}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+              {alibiPick !== null && (
+                <div className="mt-3 flex items-center gap-3">
+                  <p className="flex-1 text-sm text-white/80">{alibiOk ? "Your story checks out. The detective eases off: one star less." : `Not quite${alibi.explain ? `: ${alibi.explain}` : "."} The detective isn't convinced.`}</p>
+                  <button type="button" onClick={() => setMode("choose")} className="gloss-off shrink-0 rounded-full bg-[#f2d9a6] px-4 py-2 text-sm font-black text-[#0d1726]">Continue</button>
+                </div>
+              )}
+            </div>
+          )}
           {mode === "choose" && (
             <div>
               <p className="text-[11px] font-black tracking-widest text-[#f2d9a6] uppercase">Your answer</p>
               {note && <p className="mt-1 text-sm text-[#ffb4a8]">{note}</p>}
               <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                <button type="button" onClick={() => court(honestStars(stars))} className="gloss-off rounded-2xl bg-[#f2d9a6] p-3 text-left text-[#0d1726]">
-                  <span className="block font-black">Tell the truth</span><span className="block text-xs opacity-75">Court goes easier: {honestStars(stars)} star{honestStars(stars) === 1 ? "" : "s"}</span>
+                <button type="button" onClick={() => court(honestStars(base))} className="gloss-off rounded-2xl bg-[#f2d9a6] p-3 text-left text-[#0d1726]">
+                  <span className="block font-black">Tell the truth</span><span className="block text-xs opacity-75">Court goes easier: {honestStars(base)} star{honestStars(base) === 1 ? "" : "s"}</span>
                 </button>
-                <button type="button" onClick={() => court(stars)} className="gloss-off rounded-2xl bg-white/10 p-3 text-left ring-1 ring-white/15">
-                  <span className="block font-black">Say nothing</span><span className="block text-xs opacity-75">The judge decides on {stars} star{stars === 1 ? "" : "s"}</span>
+                <button type="button" onClick={() => court(base)} className="gloss-off rounded-2xl bg-white/10 p-3 text-left ring-1 ring-white/15">
+                  <span className="block font-black">Say nothing</span><span className="block text-xs opacity-75">The judge decides on {base} star{base === 1 ? "" : "s"}</span>
                 </button>
                 <button type="button" disabled={!choices.length || maxOffer < 10} onClick={() => { setTarget(choices[0] ?? null); setMode("deal"); }} className="gloss-off rounded-2xl bg-[#7a5ce6] p-3 text-left disabled:opacity-40">
                   <span className="block font-black">Offer a deal</span>

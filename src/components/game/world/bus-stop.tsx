@@ -6,6 +6,7 @@ import { Bus, Home, Briefcase, X } from "lucide-react";
 
 import { BusJourneyScene, BusRide } from "./transport";
 
+import { gameQuiz } from "@/app/games/world/actions";
 import { ARCADE } from "@/game/core/arcade";
 import { createRng, newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
@@ -236,7 +237,17 @@ export function Commute({
       disposed = true;
     };
   }, [homework]);
-  const cards = fromHomework ?? quick;
+  // No homework set: revise with real questions from the question bank instead.
+  const [fromBank, setFromBank] = useState<typeof quick | null>(null);
+  useEffect(() => {
+    if (homework.length) return;
+    let disposed = false;
+    void gameQuiz(3).then((qs) => {
+      if (!disposed && !answered.current && qs.length === 3) setFromBank(qs.map((q) => ({ prompt: q.prompt, options: q.options, answer: q.answer })));
+    }).catch(() => { /* offline: the quick cards stay */ });
+    return () => { disposed = true; };
+  }, [homework]);
+  const cards = fromHomework ?? fromBank ?? quick;
   const [i, setI] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [right, setRight] = useState(0);

@@ -6,6 +6,7 @@ import { Ghost, X } from "lucide-react";
 
 import { PLAYER, SCARY } from "./art";
 import { HudSlot } from "./hud";
+import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
 import { earnSeasonXp } from "../season/pass-store";
 
 import { ARCADE } from "@/game/core/arcade";
@@ -118,7 +119,10 @@ export function FrightNight({ map, userId, active, onOpen, onReward }: {
 
 function BotQuestion({ bot, onClose, onWin }: { bot: ScaryBot; onClose: () => void; onWin: () => void }) {
   const rng = useMemo(() => createRng(newSeed()), []);
-  const [q, setQ] = useState(() => ARCADE[Math.floor(rng() * ARCADE.length)].make(rng));
+  const bank = useBankQuestions(3, () => ARCADE[Math.floor(rng() * ARCADE.length)].make(rng));
+  const [q, setQ] = useState<QuizQuestion>(() => ARCADE[Math.floor(rng() * ARCADE.length)].make(rng));
+  const swapped = useRef(false);
+  useEffect(() => { if (bank.ready && !swapped.current) { swapped.current = true; setQ(bank.next()); } }, [bank]);
   const [picked, setPicked] = useState<number | null>(null);
   const right = picked === q.answer;
   return (
@@ -144,7 +148,7 @@ function BotQuestion({ bot, onClose, onWin }: { bot: ScaryBot; onClose: () => vo
         {picked !== null && (
           <>
             <p className="mt-3 text-sm">{right ? `${bot.name} shrieks and zooms off into the night! 👻` : `Mwahaha! It was ${q.options[q.answer]}. Try another…`}</p>
-            <button type="button" onClick={() => { if (right) onClose(); else { setQ(ARCADE[Math.floor(rng() * ARCADE.length)].make(rng)); setPicked(null); } }} className="jelly mt-4 rounded-full bg-[#ff7a1a] px-5 py-2 font-black text-[#1a0f2e]">
+            <button type="button" onClick={() => { if (right) onClose(); else { setQ(bank.next()); setPicked(null); } }} className="jelly mt-4 rounded-full bg-[#ff7a1a] px-5 py-2 font-black text-[#1a0f2e]">
               {right ? "Collect candy" : "Next question"}
             </button>
           </>

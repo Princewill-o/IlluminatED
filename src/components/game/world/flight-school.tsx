@@ -6,6 +6,7 @@ import { BookOpen, Plane, X } from "lucide-react";
 
 import { PLAYER, TUTOR } from "./art";
 import { HudSlot } from "./hud";
+import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
 
 import { ARCADE } from "@/game/core/arcade";
 import { createRng, newSeed } from "@/game/core/rng";
@@ -132,18 +133,24 @@ export function FlightSchoolDesk({ onClose }: { onClose: () => void }) {
 /** One practice question at the training desk. */
 export function FlightSchoolQuiz({ onDone, onClose }: { onDone: () => void; onClose: () => void }) {
   const rng = useMemo(() => createRng(newSeed()), []);
-  const [q, setQ] = useState(() => ARCADE[0].make(rng));
+  // Airport security asks a real question from your subjects.
+  const bank = useBankQuestions(3, () => ARCADE[0].make(rng));
+  const [q, setQ] = useState<QuizQuestion>(() => ARCADE[0].make(rng));
+  const swapped = useRef(false);
+  useEffect(() => { if (bank.ready && !swapped.current) { swapped.current = true; setQ(bank.next()); } }, [bank]);
   const [picked, setPicked] = useState<number | null>(null);
   const right = picked === q.answer;
   return (
     <div className="absolute inset-0 z-[100008] grid place-items-center overflow-y-auto bg-black/60 p-4">
-      <section role="dialog" aria-modal="true" aria-label="Practice desk" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
+      <section role="dialog" aria-modal="true" aria-label="Security check" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <div className="flex items-center gap-2">
           <BookOpen className="size-6 text-[#2b5fd9]" />
-          <h2 className="flex-1 text-xl font-black">Practice desk</h2>
-          <button type="button" onClick={onClose} aria-label="Close practice desk"><X className="size-5" /></button>
+          <h2 className="flex-1 text-xl font-black">Security check</h2>
+          <button type="button" onClick={onClose} aria-label="Close security check"><X className="size-5" /></button>
         </div>
-        <p className="mt-5 text-2xl font-black">{q.prompt}</p>
+        <p className="mt-2 text-sm text-[#5a6272]">The officer asks one question before you go through.</p>
+        {q.subject && <p className="mt-4 inline-block rounded-full bg-[#2b5fd9]/10 px-3 py-1 text-xs font-black text-[#2b5fd9]">{q.subject}{q.topic ? ` · ${q.topic}` : ""}</p>}
+        <p className="mt-3 text-xl font-black">{q.prompt}</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {q.options.map((o, i) => (
             <button key={i} type="button" disabled={picked !== null} onClick={() => setPicked(i)}
@@ -155,7 +162,7 @@ export function FlightSchoolQuiz({ onDone, onClose }: { onDone: () => void; onCl
         {picked !== null && (
           <>
             <p className="mt-3 text-sm">{right ? "Correct! In London that earns XP and Clout." : `Not quite: it was ${q.options[q.answer]}. Try another.`}</p>
-            <button type="button" onClick={() => { if (right) onDone(); else { setQ(ARCADE[0].make(rng)); setPicked(null); } }} className="jelly mt-4 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">
+            <button type="button" onClick={() => { if (right) onDone(); else { setQ(bank.next()); setPicked(null); } }} className="jelly mt-4 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">
               {right ? "Continue" : "Next question"}
             </button>
           </>

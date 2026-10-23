@@ -155,3 +155,27 @@ export async function answerBlameDeal(deal: string, accept: boolean) {
   const r = data as { status: string; charge?: string; stars?: number; clout?: number; wallet?: number };
   return { ok: true as const, ...r };
 }
+
+// ── Quick quizzes from the question bank ────────────────────────────────────
+export type GameQuestion = { id: string; prompt: string; options: string[]; answer: number; explain: string; subject: string; topic: string; level: string };
+
+/**
+ * Multiple-choice questions from the Supabase question bank, from the player's
+ * own subjects when possible. Used by police checks, the interview room,
+ * airport security and prison study. Returns [] when offline (callers fall back).
+ */
+export async function gameQuiz(count = 1): Promise<GameQuestion[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data: auth } = await sb.auth.getUser();
+  let subjects: string[] | null = null;
+  if (auth.user) {
+    const { data: details } = await sb.from("learner_details").select("subjects").eq("user_id", auth.user.id).maybeSingle();
+    const { COURSES } = await import("@/lib/data/courses");
+    const ids = Array.isArray(details?.subjects) ? (details.subjects as { courseId?: string }[]).map((s) => s.courseId) : [];
+    const titles = COURSES.filter((c) => ids.includes(c.id)).map((c) => c.register?.title ?? c.title.replace(/^(GCSE|A-level|BTEC|T Level)\s+/i, ""));
+    subjects = titles.length ? titles : null;
+  }
+  const { data, error } = await sb.rpc("game_quiz", { p_count: count, p_subjects: subjects });
+  return error ? [] : ((data ?? []) as GameQuestion[]);
+}

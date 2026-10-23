@@ -1,7 +1,9 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BookOpen, Siren, X } from "lucide-react";
+
+import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
 
 import { ARCADE } from "@/game/core/arcade";
 import { POLICE_QUESTIONS } from "@/game/core/pursuit";
@@ -13,10 +15,16 @@ export function PoliceChallenge({
 }: {
   onResult: (correct: boolean) => void;
 }) {
-  const [question] = useState(
-    () => POLICE_QUESTIONS[Math.floor(Math.random() * POLICE_QUESTIONS.length)],
-  );
+  // A real question from the question bank (your subjects), or a built-in one offline.
+  const bank = useBankQuestions(1, () => POLICE_QUESTIONS[Math.floor(Math.random() * POLICE_QUESTIONS.length)]);
+  const [question, setQuestion] = useState<QuizQuestion | null>(null);
+  useEffect(() => { if (bank.ready && !question) setQuestion(bank.next()); }, [bank, question]);
   const [picked, setPicked] = useState<number | null>(null);
+  if (!question) return (
+    <div className="absolute inset-0 z-[100008] grid place-items-center bg-[#13203a]/80 p-4">
+      <p role="status" className="rounded-2xl bg-[#f7f1e6] px-5 py-4 font-black text-[#13203a]">The officer is thinking of a question…</p>
+    </div>
+  );
   const correct = picked === question.answer;
   return (
     <div className="absolute inset-0 z-[100008] grid place-items-center overflow-y-auto bg-[#13203a]/80 p-4">
@@ -34,7 +42,8 @@ export function PoliceChallenge({
           The officers caught up. Answer correctly for a warning; a wrong answer
           sends you to a court hearing. This is a fictional game rule.
         </p>
-        <p className="mt-5 text-xl font-black">{question.prompt}</p>
+        {question.subject && <p className="mt-5 inline-block rounded-full bg-[#2b5fd9]/10 px-3 py-1 text-xs font-black text-[#2b5fd9]">{question.subject}{question.topic ? ` · ${question.topic}` : ""}</p>}
+        <p className="mt-3 text-xl font-black">{question.prompt}</p>
         <div className="mt-4 grid gap-2">
           {question.options.map((o, i) => (
             <button
@@ -57,7 +66,7 @@ export function PoliceChallenge({
         </div>
         {picked !== null && (
           <>
-            <p className="mt-4 text-sm">{question.explain}</p>
+            {question.explain && <p className="mt-4 text-sm">{question.explain}</p>}
             <button
               type="button"
               onClick={() => onResult(correct)}
@@ -82,7 +91,10 @@ export function PrisonStudy({
   onClose: () => void;
 }) {
   const rng = useMemo(() => createRng(newSeed()), []);
-  const [q, setQ] = useState(() => ARCADE[0].make(rng));
+  const bank = useBankQuestions(6, () => ARCADE[0].make(rng));
+  const [q, setQ] = useState<QuizQuestion>(() => ARCADE[0].make(rng));
+  const swapped = useRef(false);
+  useEffect(() => { if (bank.ready && !swapped.current) { swapped.current = true; setQ(bank.next()); } }, [bank]);
   const [picked, setPicked] = useState<number | null>(null);
   return (
     <div className="absolute inset-0 z-[100008] grid place-items-center overflow-y-auto bg-black/60 p-4">
@@ -140,7 +152,7 @@ export function PrisonStudy({
             <button
               type="button"
               onClick={() => {
-                setQ(ARCADE[Math.floor(rng() * ARCADE.length)].make(rng));
+                setQ(bank.next());
                 setPicked(null);
               }}
               disabled={progress >= 3}
