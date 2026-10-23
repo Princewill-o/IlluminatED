@@ -749,10 +749,12 @@ export function WorldView({
           getHomeAction={getHomeAction}
         />
       )}
-      {graphicsState !== "ready" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
+      {/* While the world loads, show a soft fade in the sky colour: no loading text. */}
+      {graphicsState === "loading" && <div aria-hidden className="pointer-events-none absolute inset-0 z-[100000] bg-[#d6e4df]" />}
+      {graphicsState === "unavailable" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
         <div className="max-w-sm rounded-3xl border border-[#c8b182]/50 bg-[#f7f1e6]/95 px-6 py-5 shadow-xl">
-          <p className="text-sm font-black uppercase tracking-[0.18em]">{graphicsState === "loading" ? "Building the 3D world" : "3D graphics unavailable"}</p>
-          <p className="mt-2 text-sm">{graphicsState === "loading" ? "Loading the detailed city and interiors…" : "This browser or device could not start WebGL. Enable hardware acceleration and reload to play."}</p>
+          <p className="text-sm font-black uppercase tracking-[0.18em]">3D graphics unavailable</p>
+          <p className="mt-2 text-sm">This browser or device could not start WebGL. Enable hardware acceleration and reload to play.</p>
         </div>
       </div>}
       {/* The old flat-map lighting overlay is kept mounted for the movement
