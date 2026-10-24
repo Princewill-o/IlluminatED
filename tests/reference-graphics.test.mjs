@@ -24,6 +24,9 @@ test("illustrated light composes with the existing r169 material and curved proj
     assert.ok(shader.vertexShader.includes("bw.y -= bz * bz * uBend.x"));
     assert.ok(shader.fragmentShader.includes("illustratedDropShadow = min(illustratedDropShadow, illustratedSunShadow)"));
     assert.ok(shader.fragmentShader.includes("illustratedVisibility=min(illustratedCore,illustratedDropShadow)"));
+    assert.ok(shader.fragmentShader.includes("vec3 illustratedLocalDiffuse=reflectedLight.directDiffuse"), "preserve point-light diffuse before sun shading");
+    assert.ok(shader.fragmentShader.includes("reflectedLight.directDiffuse-illustratedLocalDiffuse"));
+    assert.ok(shader.fragmentShader.includes("uIllustratedStrength)+illustratedLocalDiffuse"));
     assert.ok(!shader.fragmentShader.includes("getShadowMask()"), "reuse the existing shadow sample");
     assert.ok(shader.fragmentShader.includes("#include <lights_fragment_end>"));
   }

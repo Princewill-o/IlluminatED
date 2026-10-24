@@ -8,6 +8,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
 import { contactShadows } from "./contact-shadows";
+import { environmentPalette, type EnvironmentPhase } from "./environment-palette";
 import { miniatureFocus } from "./miniature-focus";
 import { outdoorEnvironment } from "./sky-environment";
 
@@ -20,33 +21,47 @@ export function cinematicRenderer(
   scene: THREE.Scene,
   camera: THREE.Camera,
   profile: Profile,
+  phase: EnvironmentPhase = "day",
 ) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = profile.exposure;
   let environment: THREE.WebGLRenderTarget | null = null;
+  const outside = !!scene.fog;
+  let environmentKey = "";
   const cleanup: Array<() => void> = [];
   const dispose = () => {
+    if (scene.environment === environment?.texture) scene.environment = null;
+    environment?.dispose(); environment = null;
     for (const release of cleanup.reverse()) release();
     cleanup.length = 0;
-    if (scene.environment === environment?.texture) scene.environment = null;
+  };
+  // Time/weather change rarely: rebake only on a changed palette, never per frame.
+  const setAtmosphere = (next: EnvironmentPhase, overcast = false) => {
+    const key = `${next}:${overcast}`;
+    if (!profile.environment || !outside || environmentKey === key) return;
+    const target = outdoorEnvironment(renderer, next, overcast);
+    const previous = environment;
+    environment = target; environmentKey = key;
+    scene.environment = target.texture;
+    previous?.dispose();
   };
   try {
     if (profile.environment) {
       if (scene.fog) {
-        environment = outdoorEnvironment(renderer);
+        setAtmosphere(phase);
       } else {
         const generator = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment();
         try { environment = generator.fromScene(room, 0.04); }
         finally { room.dispose(); generator.dispose(); }
       }
-      cleanup.push(() => environment?.dispose());
-      scene.environment = environment.texture;
-      scene.environmentIntensity = 0.32;
+      if (environment) scene.environment = environment.texture;
+      scene.environmentIntensity = outside ? environmentPalette(phase).environment : .32;
     }
     if (!profile.postProcessing)
       return {
         render: () => renderer.render(scene, camera),
         resize: () => {},
+        setAtmosphere,
         dispose,
       };
     const hdr = renderer.extensions.has("EXT_color_buffer_float");
@@ -128,6 +143,7 @@ c.rgb*=mix(.91,1.0,edge);gl_FragColor=vec4(max(c.rgb,vec3(0.0)),c.a);}`,
     }
     return {
       render: () => composer.render(),
+      setAtmosphere,
       resize: (width: number, height: number) => {
         composer.setPixelRatio(renderer.getPixelRatio());
         composer.setSize(Math.max(1, width), Math.max(1, height));

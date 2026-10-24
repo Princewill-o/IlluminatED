@@ -14,6 +14,26 @@ Three.js's existing directional shadow sample rather than sampling it twice.
 The map, collisions, controls, simulation, progression, and network messages
 remain the gameplay source of truth. These additions affect presentation.
 
+## Complete reference pass and ambient lighting
+
+The [expanded investigation](reference-analysis/full-graphics-analysis.md) covers
+all 128 authored/build JavaScript files, the Git asset inventory, a live REA browser
+capture, and the deployed rendering/physics bundles. Its evidence records both
+coverage and unresolved vendor-code relationships.
+
+- A shared palette coordinates ambient/hemisphere light, sunlight, atmospheric
+  fog, the backdrop and outdoor reflections at day, dusk and night.
+- Overcast skies rebake reflection lighting only when weather changes; rain
+  reduces sunlight and makes road, stone and masonry surfaces wetter.
+- Actual modelled lamp bulbs anchor small haloes and soft ground pools. Fixed
+  nearby buffers add insects/pollen, disabled under reduced motion. Static lamp
+  light remains available with that preference.
+- Windows and lantern materials smoothly switch with time. Their original cached
+  source materials are preserved, and the real lamp GLB is regression tested.
+- Exposed riverbank attributes drive shoreline foam. Procedural rain rings add
+  water movement without additional geometry or rendering passes.
+- Static scenery with compatible surfaces is batched to reduce draw calls.
+
 ## Environment and movement
 
 - Cutout leaf sprays use canopy normals, backlighting, wind, and matching animated
@@ -57,7 +77,7 @@ Run the preview with `ILLUMINATED_PREVIEW=1` in development, then open:
 
 `/games/city-showcase?map=city&time=day&weather=clear&x=40&y=36`
 
-`time=day|dusk|night` previews lighting; `weather=clear` applies only in the
+`time=day|dusk|night` previews lighting; `weather=clear|rain|snow` applies only in the
 development-only showcase. Production account and multiplayer access are unchanged.
 
 The development canvas exposes `data-graphics-fps`, `data-graphics-draws`,
@@ -69,9 +89,9 @@ Tests exercise the real car, bus, and character GLBs; geometry budgets; vegetati
 placement; bounded dynamics; reduced motion; adaptive resolution; camera framing;
 and existing driving, traffic, trains, and home behaviour.
 
-Visual checks completed during implementation showed the outdoor lighting,
-foliage, water, character movement, menus, and car rendering without browser shader
-errors. Browser automation was subsequently disabled in Work settings, so final
-visual checks after the marker, character-pose reset, and projection fixes remain
-pending. This is a substantial rendering upgrade, not a verified claim of parity
-with the reference's fully authored art assets or a measured 60 FPS result.
+Browser access became available for the expanded pass. Live day/night and Low/
+Ultra views have been inspected; repeatable REA captures and their validation
+limits are recorded in `reference-analysis/runtime-validation.json`. This is a
+substantial rendering upgrade, not a verified claim of parity with the reference's
+fully authored assets or a guaranteed 60 FPS result. Background/development
+measurements are diagnostic snapshots, not a hardware benchmark.

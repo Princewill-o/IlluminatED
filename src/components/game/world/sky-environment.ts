@@ -1,28 +1,34 @@
 import * as THREE from "three";
 
+import { environmentPalette, type EnvironmentPhase } from "./environment-palette";
+
 /** Bake a small HDR sky once. Outdoor glass and water should reflect a sky and
  * soft sun, rather than the rectangular studio lights of RoomEnvironment. */
-export function outdoorEnvironment(renderer: THREE.WebGLRenderer) {
+export function outdoorEnvironment(renderer: THREE.WebGLRenderer, phase: EnvironmentPhase = "day", overcast = false) {
+  const tone = environmentPalette(phase);
+  const muted = new THREE.Color(tone.horizon);
   const scene = new THREE.Scene();
   const geometry = new THREE.SphereGeometry(20, 32, 16);
   const material = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     uniforms: {
-      sky: { value: new THREE.Color("#a6bce2") },
-      horizon: { value: new THREE.Color("#eed6ac") },
-      earth: { value: new THREE.Color("#777065") },
+      sky: { value: new THREE.Color(tone.zenith).lerp(muted, overcast ? .45 : 0) },
+      horizon: { value: muted },
+      earth: { value: new THREE.Color(tone.earth) },
+      sunColour: { value: new THREE.Color(tone.sun) },
+      sunStrength: { value: tone.sunGlow * (overcast ? .15 : 1) },
     },
     vertexShader: `varying vec3 vSkyDirection;
       void main(){vSkyDirection=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-    fragmentShader: `uniform vec3 sky,horizon,earth; varying vec3 vSkyDirection;
+    fragmentShader: `uniform vec3 sky,horizon,earth,sunColour; uniform float sunStrength; varying vec3 vSkyDirection;
       void main(){
         vec3 direction=normalize(vSkyDirection);
         vec3 colour=mix(earth*.45,horizon,smoothstep(-.35,.08,direction.y));
         colour=mix(colour,sky,smoothstep(.0,.8,direction.y));
         vec3 sunDirection=normalize(vec3(-10.0,22.0,12.0));
         float alignment=max(0.0,dot(direction,sunDirection));
-        float glow=pow(alignment,64.0)*.5+pow(alignment,700.0)*4.0;
-        gl_FragColor=vec4(colour+vec3(1.0,.76,.43)*glow,1.0);
+        float glow=(pow(alignment,64.0)*.12+pow(alignment,700.0))*sunStrength;
+        gl_FragColor=vec4(colour+sunColour*glow,1.0);
       }`,
   });
   scene.add(new THREE.Mesh(geometry, material));

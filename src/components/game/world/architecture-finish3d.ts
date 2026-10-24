@@ -2,6 +2,18 @@ import * as THREE from "three";
 
 type Phase = "day" | "dusk" | "night";
 type SurfaceMaterial = THREE.MeshLambertMaterial | THREE.MeshStandardMaterial;
+type FinishState = {
+  material: SurfaceMaterial;
+  dryColour: THREE.Color;
+  duskColour: THREE.Color;
+  nightColour: THREE.Color;
+  emission: THREE.Color;
+  duskEmission: number;
+  nightEmission: number;
+  dayEmission: number;
+  roughness: number;
+  weathered: boolean;
+};
 
 // These are the authored masonry/roof palettes in world3d, rather than a broad
 // colour test that would accidentally put bricks on trees, signs or interiors.
@@ -65,9 +77,12 @@ function surfaceTexture(slate: boolean) {
  * rolling-world shader callback and remain batchable by source/finish variant.
  * The returned disposer owns only resources created by this pass.
  */
-export function finishArchitecture(world: THREE.Group, phase: Phase): () => void {
+export function finishArchitecture(world: THREE.Group, phase: Phase) {
   const materials = new Map<string, SurfaceMaterial>();
   const textures = new Map<"brick" | "slate", THREE.CanvasTexture | null>();
+  const states: FinishState[] = [];
+  const target = new THREE.Color();
+  let disposed = false;
   const getTexture = (kind: "brick" | "slate") => {
     if (!textures.has(kind)) textures.set(kind, surfaceTexture(kind === "slate"));
     return textures.get(kind) ?? null;
@@ -77,13 +92,15 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
     if (source.map || source.vertexColors || !mesh.geometry.getAttribute("uv")) return source;
     const colour = source.color.getHexString();
     const masonry = BRICK.has(colour), slate = SLATE.has(colour);
-    const lantern = LANTERN.has(colour), glass = GLASS.has(colour);
+    // The London lamp GLB names its emissive glass "lit". Its glTF colour is
+    // linear and does not match the procedural lantern's authored hex palette.
+    const lantern = LANTERN.has(colour) || source.name === "lit", glass = GLASS.has(colour);
     if (!masonry && !slate && !lantern && !glass) return source;
 
     // Keep some panes cool so rows of windows do not all glow identically.
     const seed = Math.abs(Math.round(mesh.position.x * 13) + Math.round(mesh.position.y * 29) + Math.round(mesh.position.z * 19));
     const lit = lantern || colour === "c4b284" || seed % 5 < 3;
-    const variant = masonry ? "brick" : slate ? "slate" : lit ? "lit" : "unlit";
+    const variant = masonry ? "brick" : slate ? "slate" : lantern ? "lantern" : lit ? `lit-${seed % 3}` : "unlit";
     const key = `${source.uuid}:${variant}`;
     let material = materials.get(key);
     if (!material) {
@@ -104,17 +121,22 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
           material.bumpScale = slate ? 0.035 : 0.018;
           material.roughness = slate ? 0.76 : 0.91;
         }
-      } else if (phase === "day") {
-        if (glass) material.color.set("#7dabb3");
-      } else if (lit) {
-        material.color.set(lantern ? "#ffe5a6" : "#d9b276");
-        material.emissive.set(lantern ? "#ffcb79" : "#ffc17a");
-        material.emissiveIntensity = phase === "night" ? (lantern ? 0.85 : 0.48) : (lantern ? 0.3 : 0.16);
-      } else {
-        material.color.set("#49677a");
-        material.emissive.set("#273a60");
-        material.emissiveIntensity = phase === "night" ? 0.15 : 0.04;
       }
+      const weathered = masonry || slate;
+      const warm = ["#ffd7a0", "#ffc88c", "#ffe4bd"][seed % 3];
+      const dryColour = glass ? new THREE.Color("#7dabb3") : source.color.clone();
+      states.push({
+        material,
+        dryColour,
+        duskColour: weathered ? dryColour.clone() : new THREE.Color(lit ? warm : "#63728d"),
+        nightColour: weathered ? dryColour.clone() : new THREE.Color(lit ? warm : "#405575"),
+        emission: weathered ? source.emissive.clone() : new THREE.Color(lit ? warm : "#637fb0"),
+        dayEmission: weathered ? source.emissiveIntensity : lantern ? 0.025 : 0,
+        duskEmission: weathered ? source.emissiveIntensity : lantern ? 0.7 : lit ? 0.32 : 0.025,
+        nightEmission: weathered ? source.emissiveIntensity : lantern ? 1.6 : lit ? 0.9 + (seed % 3) * 0.12 : 0.055,
+        roughness: material instanceof THREE.MeshStandardMaterial ? material.roughness : 1,
+        weathered,
+      });
       materials.set(key, material);
     }
     return material;
@@ -128,10 +150,38 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
       : finish(mesh.material, mesh);
   });
 
-  return () => {
+  // Change values on the shared materials, so instanced buildings follow time
+  // and rain without rebuilding geometry or compiling new shader variants.
+  const apply = (nextPhase: Phase, wetness: number, alpha: number) => {
+    if (disposed) return;
+    const wet = Number.isFinite(wetness) ? THREE.MathUtils.clamp(wetness, 0, 1) : 0;
+    for (const state of states) {
+      const material = state.material;
+      target.copy(nextPhase === "day" ? state.dryColour : nextPhase === "dusk" ? state.duskColour : state.nightColour);
+      if (state.weathered) target.multiplyScalar(1 - wet * 0.16);
+      material.color.lerp(target, alpha);
+      material.emissive.lerp(state.emission, alpha);
+      const emission = nextPhase === "day" ? state.dayEmission : nextPhase === "dusk" ? state.duskEmission : state.nightEmission;
+      material.emissiveIntensity += (emission - material.emissiveIntensity) * alpha;
+      if (state.weathered && material instanceof THREE.MeshStandardMaterial) {
+        const roughness = state.roughness * (1 - wet * 0.58);
+        material.roughness += (roughness - material.roughness) * alpha;
+      }
+    }
+  };
+  apply(phase, 0, 1);
+  const update = (nextPhase: Phase, wetness = 0, dt = 1) => {
+    const seconds = Number.isFinite(dt) ? THREE.MathUtils.clamp(dt, 0, 1) : 0;
+    apply(nextPhase, wetness, 1 - Math.exp(-seconds * 2));
+  };
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
     materials.forEach(material => material.dispose());
     textures.forEach(texture => texture?.dispose());
     materials.clear();
     textures.clear();
+    states.length = 0;
   };
+  return Object.assign(dispose, { update });
 }

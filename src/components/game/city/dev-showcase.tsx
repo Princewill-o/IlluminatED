@@ -16,7 +16,6 @@ import { Character3DPreview } from "@/components/game/character-3d-preview";
 import { RacingHub } from "@/components/game/racing/racing-hub";
 import { WhatIf } from "@/components/game/what-if/what-if";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
-import { WORLD_RULES } from "@/components/game/world/art";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
 import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
 import { WorldApp } from "@/components/game/world/world-app";
@@ -26,6 +25,7 @@ import { uniformFor, workplaceById } from "@/game/core/careers";
 import { DEFAULT_AVATAR } from "@/game/core/cosmetics";
 import { STARTER_LAYOUT } from "@/game/core/homes";
 import type { CitySnapshot } from "@/lib/game/city-server";
+const PREVIEW_PLAYER_ID = "88888888-8888-4888-8888-000000000099";
 const state: CitySnapshot = {
   ready: false,
   vip: true,
@@ -73,12 +73,10 @@ export function DevShowcase({
   const [clean, setClean] = useState(false);
   useEffect(() => {
     localStorage.setItem(TUTORIAL_KEY, "seen");
-    const previousWeather = WORLD_RULES.weather;
-    const clear = new URLSearchParams(window.location.search).get("weather") === "clear";
-    if (clear) WORLD_RULES.weather = "clear";
+    // The offline capture route must honour its requested map on a fresh profile.
+    if (map !== "tutorial") localStorage.setItem(`${TUTORIAL_KEY}:${PREVIEW_PLAYER_ID}`, "seen");
     setMounted(true);
-    return () => { if (clear) WORLD_RULES.weather = previousWeather; };
-  }, []);
+  }, [map]);
   useEffect(
     () => () => {
       if (video) URL.revokeObjectURL(video);
@@ -139,7 +137,7 @@ export function DevShowcase({
         {mounted && (
           <WorldApp
             me={{
-              id: "88888888-8888-4888-8888-000000000099",
+              id: PREVIEW_PLAYER_ID,
               username: "Preview player",
               avatar: uniformFor(job, DEFAULT_AVATAR),
               org: null,

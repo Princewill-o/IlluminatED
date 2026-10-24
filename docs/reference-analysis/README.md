@@ -1,5 +1,12 @@
 # Bruno Simon reference: REA findings and adaptations
 
+The initial pass below has been extended by the
+[comprehensive graphics investigation](full-graphics-analysis.md): all 128
+authored/build JavaScript files, the complete Git asset inventory, a live REA browser
+capture and deployed script identities. Current coverage is in
+`rea-full-provenance.json` and `rea-live-reference.json`; the ten-file provenance
+below remains as the historical record of the first implementation.
+
 ## What was inspected
 
 The live site's **Behind the scene → Source code** link points to

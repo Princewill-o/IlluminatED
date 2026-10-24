@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { environmentPalette } from "./environment-palette";
+
 import type { visualProfile } from "@/game/core/visual-quality";
 
 /**
@@ -31,21 +33,16 @@ export function createRenderer(visual: Visual) {
   return renderer;
 }
 
-const SKY: Record<Phase, { sky: string; ground: string; sun: string; sunPower: number; ambient: number }> = {
-  day: { sky: "#aab8e7", ground: "#9c816b", sun: "#ffd394", sunPower: 3.0, ambient: 0.13 },
-  dusk: { sky: "#a0a7d0", ground: "#876653", sun: "#ffad67", sunPower: 2.3, ambient: 0.14 },
-  night: { sky: "#7497c9", ground: "#3c5057", sun: "#a7c5f5", sunPower: 0.7, ambient: 0.15 },
-};
-export const skyColours = (phase: Phase) => SKY[phase];
+export const skyColours = environmentPalette;
 
 /**
  * Ambient light for overall environment brightness, a soft sky/ground fill,
  * and a directional sun that casts sharp-but-smooth shadows.
  */
 export function createLighting(scene: THREE.Scene, { phase, indoors, visual }: { phase: Phase; indoors: boolean; visual: Visual }) {
-  const tone = SKY[phase];
+  const tone = environmentPalette(phase);
   const ambient = new THREE.AmbientLight("#ffffff", indoors ? 0.5 : tone.ambient);
-  const hemi = new THREE.HemisphereLight(tone.sky, tone.ground, indoors ? 1.45 : phase === "night" ? 0.7 : 0.85);
+  const hemi = new THREE.HemisphereLight(tone.sky, tone.ground, indoors ? 1.45 : tone.hemisphere);
   const sun = new THREE.DirectionalLight(tone.sun, indoors ? 1.2 : tone.sunPower);
   sun.castShadow = visual.shadows;
   // A tight shadow box that follows the player keeps every texel close to the

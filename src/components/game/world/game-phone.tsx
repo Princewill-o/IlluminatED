@@ -60,6 +60,7 @@ export function GamePhone({
   onCall,
   onMap,
   onHome,
+  onHouses = onHome,
   onLocker,
   onStudy,
   onAwards,
@@ -74,6 +75,7 @@ export function GamePhone({
   onCall: (id: string) => void;
   onMap: () => void;
   onHome: () => void;
+  onHouses?: () => void;
   onLocker: () => void;
   onStudy: () => void;
   onAwards: () => void;
@@ -103,6 +105,7 @@ export function GamePhone({
     { name: "Garage", icon: "garage", action: onGarage },
     { name: "Unis", icon: "unis", action: onUniversities },
     { name: "Home", icon: "home", action: onHome },
+    { name: "Houses", icon: "home", action: onHouses },
     { name: "Locker", icon: "locker", action: onLocker },
     { name: "Study", icon: "study", action: onStudy },
     { name: "Awards", icon: "awards", action: onAwards },

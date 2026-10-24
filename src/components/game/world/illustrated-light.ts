@@ -19,6 +19,9 @@ const capturedLights = THREE.ShaderChunk.lights_fragment_begin.replace(
   (_line, factor: string) => `illustratedSunShadow = ${factor};
     illustratedDropShadow = min(illustratedDropShadow, illustratedSunShadow);
     directLight.color *= illustratedSunShadow;`,
+).replace(
+  "#if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )",
+  "vec3 illustratedLocalDiffuse=reflectedLight.directDiffuse;\n#if ( NUM_DIR_LIGHTS > 0 ) && defined( RE_Direct )",
 );
 
 export function illustratedLightShader(
@@ -71,7 +74,8 @@ export function illustratedLightShader(
       vec3 illustratedDiffuse=material.diffuseColor*illustratedShade;
       illustratedDiffuse=mix(illustratedDiffuse,material.diffuseColor*uIllustratedBounce,illustratedBounce);
       // Retain authored roughness, metal, glass and emissive behaviour.
-      reflectedLight.directDiffuse=mix(reflectedLight.directDiffuse,illustratedDiffuse,uIllustratedStrength);
+      // Keep local lamps physically warm and bright; art-direct only sunlight.
+      reflectedLight.directDiffuse=mix(reflectedLight.directDiffuse-illustratedLocalDiffuse,illustratedDiffuse,uIllustratedStrength)+illustratedLocalDiffuse;
       reflectedLight.indirectDiffuse*=1.0-uIllustratedStrength*.8;`,
     );
 }

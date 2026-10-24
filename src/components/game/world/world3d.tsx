@@ -6,26 +6,29 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { type Character3D, buildCharacter, npcLook } from "../char3d";
+import type { TechEvent } from "../event-ads";
+import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
 import { BUS_ROUTE_CODES, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
+import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
 import { driftingLeaves } from "./drifting-leaves";
+import { weatherLighting } from "./environment-palette";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
+import { homeFurniture } from "./home-furniture";
 import { HudSlot } from "./hud";
 import { illustratedLightShader, updateIllustratedLight } from "./illustrated-light";
 import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
-import { addStreetscape } from "./streetscape3d";
-export { NPC_SPOTS } from "./art";
-import { type Character3D, buildCharacter, npcLook } from "../char3d";
-import type { TechEvent } from "../event-ads";
-import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { softSunShadows } from "./soft-sun-shadows";
+import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
+import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { riverGeometry, riverSurface } from "./water-style3d";
@@ -54,6 +57,8 @@ import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
+
+export { NPC_SPOTS } from "./art";
 
 
 /**
@@ -93,10 +98,11 @@ function bend(m: THREE.Material) {
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
     if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) illustratedLightShader(sh);
+    atmosphereShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
     sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
   };
-  m.customProgramCacheKey = () => `${programKey}:rolling-world-illustrated-v3`;
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v4`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -1890,7 +1896,9 @@ export function World3D({
     const camera = new THREE.PerspectiveCamera(30, 1, 0.5, indoors ? 120 : 80);
 
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
-    const forced = new URLSearchParams(window.location.search).get("time");
+    const previewQuery = new URLSearchParams(window.location.search);
+    const forced = previewQuery.get("time");
+    const previewWeather = process.env.NODE_ENV === "development" && window.location.pathname === "/games/city-showcase" ? previewQuery.get("weather") : null;
     const pickPhase = () => WORLD_RULES.time !== "auto" ? WORLD_RULES.time : forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
     let phase = pickPhase();
     updateIllustratedLight(phase, indoors);
@@ -1906,22 +1914,27 @@ export function World3D({
       scene.fog = null;
       // Electric indoor lighting stays warm and legible after sunset (set in createLighting).
     }
+    const atmosphere = !indoors ? createAtmosphere(scene,phase) : null;
 
     let presentation: ReturnType<typeof cinematicRenderer>;
-    try { presentation=cinematicRenderer(renderer,scene,camera,visual); }
-    catch { presentation={render:()=>renderer.render(scene,camera),resize:()=>{},dispose:()=>{}}; }
+    try { presentation=cinematicRenderer(renderer,scene,camera,visual,phase); }
+    catch { presentation={render:()=>renderer.render(scene,camera),resize:()=>{},setAtmosphere:()=>{},dispose:()=>{}}; }
 
     // ── Build the world ──
     const world = new THREE.Group();
+    const retiredSceneryGeometry = new Set<THREE.BufferGeometry>();
     scene.add(world);
     const tiles = map.tiles;
     let disposeGroundStyle=()=>{};
     let disposeArchitecture=()=>{};
+    let updateArchitecture: (phase: "day" | "dusk" | "night", wetness: number, dt: number) => void = () => {};
+    let groundSurface: THREE.MeshStandardMaterial | null = null;
     const stationHoles=new Set<string>();
     if(london) for(const thing of buildLondon().things) if(thing.kind==="station")
       for(let y=thing.y;y<thing.y+thing.h;y++) for(let x=thing.x;x<thing.x+thing.w;x++) stationHoles.add(`${x},${y}`);
     if (!indoors) {
       const ground=groundMesh(tiles, highland,stationHoles);
+      if(ground.material instanceof THREE.MeshStandardMaterial) groundSurface=ground.material;
       const disposeTexture=london?applyGroundStyle(ground):()=>{};
       disposeGroundStyle=()=>{disposeTexture();ground.material.dispose();};
       world.add(ground);
@@ -1948,6 +1961,20 @@ export function World3D({
     const spinners: THREE.Object3D[] = [];
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
+    const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
+      lamps.push(position);
+      jobs.push(model.then(object => {
+        object.updateMatrixWorld(true);
+        const glass = new THREE.Box3();
+        object.traverse(child => {
+          if(!(child instanceof THREE.Mesh)) return;
+          const materials=Array.isArray(child.material)?child.material:[child.material];
+          if(materials.some(material=>material.name==="lit")) glass.union(new THREE.Box3().setFromObject(child));
+        });
+        // Use the modelled bulb, rather than an assumed height at the pole's base.
+        if(!glass.isEmpty()) glass.getCenter(position);
+      }));
+    };
     if (indoors) {
       interior(world, map, jobs, station);
       if (map.kind === "home") {
@@ -2074,8 +2101,7 @@ export function World3D({
           nm.position.set(t.x + t.w / 2, 2.18, t.y + t.h + 0.04);
           g.add(nm);
         } else if (t.kind === "lamp") {
-          jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1));
-          lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
+          registerLamp(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1),new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "bench") box(g, "#8a5a36", t.x + 0.05, 0.35, t.y + 0.4, t.x + 0.95, 0.45, t.y + 0.7);
       }
     } else {
@@ -2112,8 +2138,7 @@ export function World3D({
           jobs.push(place(g, `${LONDON_KIT}blossom.glb`, t.x - 0.8, t.y - 0.8, 2.6, 2.6));
         }
         else if (t.kind === "lamp") {
-          jobs.push(place(g, `${LONDON_KIT}lamp.glb`, t.x - 0.15, t.y - 0.15, 1.3, 1.3, 0.12));
-          lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
+          registerLamp(place(g, `${LONDON_KIT}lamp.glb`, t.x - 0.15, t.y - 0.15, 1.3, 1.3, 0.12),new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "phonebox") {
           telephoneBox(g, t.x, t.y);
         } else if (t.kind === "postbox") cyl(g, "#c8322d", t.x + 0.5, t.y + 0.5, 0.1, 1.15, 0.24, 14);
@@ -2175,6 +2200,16 @@ export function World3D({
     const precipitationPositions = new Float32Array(180 * 3);
     precipitationGeometry.setAttribute("position", new THREE.BufferAttribute(precipitationPositions, 3));
     const precipitationMaterial = new THREE.PointsMaterial({ color: "#dce9ee", size: 0.055, transparent: true, opacity: 0.65, depthWrite: false });
+    const precipitationSnow = {value:0};
+    precipitationMaterial.onBeforeCompile = shader => {
+      shader.uniforms.uPrecipitationSnow=precipitationSnow;
+      shader.fragmentShader=shader.fragmentShader.replace("#include <common>","#include <common>\nuniform float uPrecipitationSnow;")
+        .replace("#include <color_fragment>",`#include <color_fragment>
+          vec2 rainPoint=(gl_PointCoord-.5)*2.0;
+          rainPoint.x*=mix(4.0,1.0,uPrecipitationSnow);
+          diffuseColor.a*=1.0-smoothstep(.25,1.0,length(rainPoint));`);
+    };
+    bend(precipitationMaterial);
     const precipitation = new THREE.Points(precipitationGeometry, precipitationMaterial);
     precipitation.frustumCulled = false; precipitation.visible = false;
     scene.add(precipitation);
@@ -2202,10 +2237,12 @@ export function World3D({
     // A fixed pool lights nearby lamps without adding a shader light for every
     // street in the city. The visible lamp models remain in the scenery.
     const lampLights = lamps.slice(0, budget.lights).map(() => {
-      const light = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
+      const light = new THREE.PointLight("#ffcc88", phase === "night" ? 12 : 2, 7, 1.6);
       scene.add(light);
       return light;
     });
+    const ambience = !indoors && quality !== "low" ? ambientLife(world,lamps,mobile) : null;
+    if(ambience) { bendAll(ambience.group); bend(ambience.motes.material); }
     let nextLampUpdate = 0;
 
     if (map.id === "study-lobby") learningLobby(world, map);
@@ -2586,6 +2623,7 @@ export function World3D({
       const h = viewportHeight = el.clientHeight;
       renderer.setSize(w, h, false);
       presentation.resize(w,h);
+      atmosphere?.resize(w*renderer.getPixelRatio(),h*renderer.getPixelRatio());
       renderer.domElement.style.width = `${w}px`;
       renderer.domElement.style.height = `${h}px`;
       camera.aspect = w / Math.max(1, h);
@@ -2625,7 +2663,7 @@ export function World3D({
       last = now;
       const secs = (now - start) / 1000;
       updateIllustratedLight(phase, indoors);
-      river.update(reduce ? 0 : secs);
+      river.update(reduce ? 0 : secs, reduce ? 0 : weatherLighting(weatherKind).rain);
       streetscape?.userData.update?.(reduce ? 0 : secs);
       meadow?.userData.animate?.(reduce ? 0 : secs);
       if (newsroom && now >= nextBroadcast) {
@@ -2658,29 +2696,36 @@ export function World3D({
       if (!indoors) {
         phase = pickPhase();
         const blend = 1 - Math.exp(-dt * 1.5);
-        const night = phase === "night", dusk = phase === "dusk";
-        const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
-        (scene.background as THREE.Color).lerp(lightingColour.set(atmosphere), blend);
-        if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
+        const night = phase === "night";
+        const weather = weatherLighting(weatherKind);
         const tone = skyColours(phase);
-        if (scene.environment) scene.environmentIntensity += ((night ? .09 : dusk ? .22 : .32) - scene.environmentIntensity) * blend;
+        atmosphere?.update(phase,weather.haze,dt);
+        atmosphere?.resize(viewportWidth*renderer.getPixelRatio(),viewportHeight*renderer.getPixelRatio());
+        presentation.setAtmosphere(phase,weather.overcast);
+        if (scene.environment) scene.environmentIntensity += (tone.environment - scene.environmentIntensity) * blend;
         ambient.intensity += (tone.ambient - ambient.intensity) * blend;
+        hemi.intensity += (tone.hemisphere - hemi.intensity)*blend;
         hemi.color.lerp(lightingColour.set(tone.sky), blend);
         hemi.groundColor.lerp(lightingColour.set(tone.ground), blend);
         sun.color.lerp(lightingColour.set(tone.sun), blend);
-        const strength = night || dusk ? tone.sunPower : ["Sunny", "Bright"].includes(weatherKind) ? tone.sunPower : tone.sunPower * 0.6;
-        const daylightDrift = reduce ? 1 : 1 + Math.sin(secs * .11) * .022;
-        sun.intensity += (strength * daylightDrift - sun.intensity) * blend;
-        lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
+        const strength = tone.sunPower * (night ? 1 : weather.sun);
+        sun.intensity += (strength - sun.intensity) * blend;
+        lampLights.forEach(light => { light.intensity += (tone.glow*12 - light.intensity) * blend; });
+        ambience?.update(secs,mx,mz,camera,tone.glow,reduce,dt);
+        updateArchitecture(phase,weather.wetness,dt);
+        if(groundSurface) groundSurface.roughness += ((weather.wetness>.5?.38:.86)-groundSurface.roughness)*blend;
         river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
       }
       if (!indoors && now >= nextWeather) {
         nextWeather = now + 10_000;
-        weatherKind = WORLD_RULES.weather === "clear" ? "Sunny" : WORLD_RULES.weather === "rain" ? "Light rain" : WORLD_RULES.weather === "snow" ? "Snow" : weatherAt(new Date()).kind;
+        // Scope capture overrides to the offline development route. WorldApp
+        // refreshes the global world rules after mounting, so a parent mutation
+        // cannot reliably select weather for screenshots.
+        const weatherRule = previewWeather === "clear" || previewWeather === "rain" || previewWeather === "snow" ? previewWeather : WORLD_RULES.weather;
+        weatherKind = weatherRule === "clear" ? "Sunny" : weatherRule === "rain" ? "Light rain" : weatherRule === "snow" ? "Snow" : weatherAt(new Date()).kind;
         precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
         precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
-        sun.intensity = phase === "night" ? skyColours("night").sunPower : ["Sunny", "Bright"].includes(weatherKind) ? skyColours(phase).sunPower : skyColours(phase).sunPower * 0.6;
-        if (scene.fog instanceof THREE.Fog) { scene.fog.near = weatherKind === "Fog" ? 18 : 34; scene.fog.far = weatherKind === "Fog" ? 46 : 70; }
+        precipitationSnow.value = weatherKind === "Snow" ? 1 : 0;
       }
       if (precipitation.visible) {
         const speed = weatherKind === "Snow" ? 1.2 : 8;
@@ -3135,7 +3180,7 @@ export function World3D({
         const on = near?.id === r.userData.portal;
         r.scale.setScalar(on ? 1.5 + Math.sin(secs * 6) * 0.08 : 1 + Math.sin(secs * 2 + r.position.x) * 0.06);
       }
-      water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
+      water.position.y = -0.3 + (reduce ? 0 : Math.sin(secs * 0.8) * 0.02);
       if(!reduce) river.texture.offset.x=secs*0.002;
       // Animate nearby visible bodies only; distant residents still follow their routes.
       for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
@@ -3211,6 +3256,8 @@ export function World3D({
           graphicsTriangles: String(renderer.info.render.triangles),
           graphicsRatio: renderer.getPixelRatio().toFixed(2),
           graphicsPreset: quality,
+          graphicsPhase: phase,
+          graphicsWeather: weatherKind,
         });
         monitorAt = now; monitorFrames = 0;
       }
@@ -3225,7 +3272,7 @@ export function World3D({
     // Spatial batches retain useful frustum culling across the city.
     void Promise.allSettled(jobs).then(async () => {
       if (disposed) return;
-      if(london) disposeArchitecture=finishArchitecture(world,phase);
+      if(london) { const architecture=finishArchitecture(world,phase); disposeArchitecture=architecture; updateArchitecture=architecture.update; }
       world.updateMatrixWorld(true);
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
@@ -3233,15 +3280,17 @@ export function World3D({
         if(m.isMesh&&m.castShadow&&!m.customDepthMaterial)m.customDepthMaterial=CURVED_DEPTH;
         if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
-        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
+        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train || a.userData.vehicleRig) spin = true;
         if (spin || m.geometry.attributes.color) return;
+        const signature = staticScenerySignature(m);
+        if(signature === null) return;
         // These scenery meshes never move. Keep their baked world transforms
         // instead of rebuilding thousands of matrices on every render.
         m.updateMatrixWorld(true);
         m.matrixAutoUpdate = false;
         m.matrixWorldAutoUpdate = false;
         const position = new THREE.Vector3().setFromMatrixPosition(m.matrixWorld);
-        const key = `${m.geometry.uuid}:${m.material.uuid}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
+        const key = `${signature}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
         const list = groups.get(key) ?? [];
         list.push(m);
         groups.set(key, list);
@@ -3250,16 +3299,25 @@ export function World3D({
       for (const meshes of groups.values()) {
         if (disposed) return;
         if (meshes.length > 1) {
-          const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
-          meshes.forEach((source, i) => {
-            mesh.setMatrixAt(i, source.matrixWorld);
-            source.parent?.remove(source);
-          });
-          mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=meshes[0].customDepthMaterial ?? CURVED_DEPTH;
-          mesh.computeBoundingSphere();
-          mesh.matrixAutoUpdate = false;
-          mesh.matrixWorldAutoUpdate = false;
-          scene.add(mesh);
+          if(meshes.every(mesh=>mesh.geometry===meshes[0].geometry)) {
+            const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
+            meshes.forEach((source, i) => { mesh.setMatrixAt(i, source.matrixWorld); source.removeFromParent(); });
+            mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=meshes[0].customDepthMaterial ?? CURVED_DEPTH;
+            mesh.customDistanceMaterial=meshes[0].customDistanceMaterial;
+            mesh.renderOrder=meshes[0].renderOrder;mesh.layers.mask=meshes[0].layers.mask;
+            mesh.visible=meshes[0].visible;mesh.frustumCulled=meshes[0].frustumCulled;
+            mesh.onBeforeRender=meshes[0].onBeforeRender;mesh.onAfterRender=meshes[0].onAfterRender;
+            mesh.onBeforeShadow=meshes[0].onBeforeShadow;mesh.onAfterShadow=meshes[0].onAfterShadow;
+            mesh.computeBoundingSphere();
+            mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
+            scene.add(mesh);
+          } else {
+            const merged=mergeStaticScenery(meshes);
+            if(merged) {
+              for(const source of meshes) { if(source.geometry!==BOX) retiredSceneryGeometry.add(source.geometry); source.removeFromParent(); }
+              scene.add(merged);
+            }
+          }
         }
         if (performance.now() - batchStart > 4) {
           await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -3284,6 +3342,8 @@ export function World3D({
       window.removeEventListener("illuminated:jump", onJump);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
       presentation.dispose();
+      atmosphere?.dispose();
+      ambience?.dispose();
       motionPreference.removeEventListener("change",motionChanged);
       sun.shadow.map?.dispose();
       renderer.dispose();
@@ -3297,11 +3357,14 @@ export function World3D({
       leafDrift?.dispose();
       for (const spinner of spinners) spinner.userData.dispose?.();
       renderer.forceContextLoss();
+      const geometryToDispose = new Set(retiredSceneryGeometry);
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (o instanceof THREE.InstancedMesh) o.dispose();
-        if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
+        if (m.isMesh && m.geometry !== BOX) geometryToDispose.add(m.geometry);
       });
+      geometryToDispose.forEach(geometry=>geometry.dispose());
+      retiredSceneryGeometry.clear();
       playerLabel.remove();
       for (const other of others.values()) { other.label.remove(); other.dispose(); }
       for (const b of bots) b.label.remove();

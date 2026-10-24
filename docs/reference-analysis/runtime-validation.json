@@ -1,0 +1,191 @@
+{
+  "tool": "rea-agents@6.7.0",
+  "evidenceId": "ev_0c4b22b7df242459f462367cefacdb4b9ea10f7d4d75726bae1cc91608268c24",
+  "browser": {
+    "mode": "launch",
+    "process_ownership": "provider-owned",
+    "cleanup": "terminated-owned-process",
+    "product": "Chromium",
+    "version": "155.0.4283.45"
+  },
+  "completeness": {
+    "status": "incomplete",
+    "equality_eligible": false,
+    "missing_sections": [
+      "events"
+    ],
+    "truncated_sections": []
+  },
+  "events": {
+    "retained": 2290,
+    "dropped": 0,
+    "byKind": {
+      "request": 751,
+      "response": 745,
+      "request-finished": 737,
+      "console": 43,
+      "request-failed": 13,
+      "request-unfinished": 1
+    }
+  },
+  "steps": [
+    {
+      "id": "scenario_start",
+      "status": "completed"
+    },
+    {
+      "id": "day_ready",
+      "status": "completed"
+    },
+    {
+      "id": "day_warm",
+      "status": "completed"
+    },
+    {
+      "id": "night_navigate",
+      "status": "completed"
+    },
+    {
+      "id": "night_ready",
+      "status": "completed"
+    },
+    {
+      "id": "night_warm",
+      "status": "completed"
+    },
+    {
+      "id": "rain_navigate",
+      "status": "completed"
+    },
+    {
+      "id": "rain_ready",
+      "status": "completed"
+    },
+    {
+      "id": "rain_warm",
+      "status": "completed"
+    },
+    {
+      "id": "snow_navigate",
+      "status": "completed"
+    },
+    {
+      "id": "snow_ready",
+      "status": "completed"
+    },
+    {
+      "id": "snow_warm",
+      "status": "completed"
+    }
+  ],
+  "checks": [
+    {
+      "scene": "day",
+      "step": "day_warm",
+      "status": "completed",
+      "screenshot": {
+        "path": "output/graphics/full-rea-day.png",
+        "sha256": "70373dddef3b6a8f67bccb61c0ef20534dd299734f3d5fe8204706dd94f07efc"
+      },
+      "diagnostics": {
+        "graphics-fps": "10.2",
+        "graphics-draws": "3053",
+        "graphics-triangles": "870995",
+        "graphics-ratio": "0.85",
+        "graphics-preset": "auto",
+        "graphics-phase": "day",
+        "graphics-weather": "Sunny"
+      }
+    },
+    {
+      "scene": "night",
+      "step": "night_warm",
+      "status": "completed",
+      "screenshot": {
+        "path": "output/graphics/full-rea-night.png",
+        "sha256": "bfde24293954ca6b583e4628447bcc6ca8ed1af2664eb7c1911992bebc3ba91d"
+      },
+      "diagnostics": {
+        "graphics-fps": "12.2",
+        "graphics-draws": "3047",
+        "graphics-triangles": "869735",
+        "graphics-ratio": "1.00",
+        "graphics-preset": "auto",
+        "graphics-phase": "night",
+        "graphics-weather": "Sunny"
+      }
+    },
+    {
+      "scene": "rain",
+      "step": "rain_warm",
+      "status": "completed",
+      "screenshot": {
+        "path": "output/graphics/full-rea-rain.png",
+        "sha256": "746a9d91954e5ee679263dc241680894b6d28824e23f430934b4f62e0f78cbab"
+      },
+      "diagnostics": {
+        "graphics-fps": "11.1",
+        "graphics-draws": "3046",
+        "graphics-triangles": "868959",
+        "graphics-ratio": "1.00",
+        "graphics-preset": "auto",
+        "graphics-phase": "dusk",
+        "graphics-weather": "Light rain"
+      }
+    },
+    {
+      "scene": "snow",
+      "step": "snow_warm",
+      "status": "completed",
+      "screenshot": {
+        "path": "output/graphics/full-rea-snow.png",
+        "sha256": "9b26e43364376af86120e37016ca5f36d913f16cf62c9b2b0a12dce91e1fd499"
+      },
+      "diagnostics": {
+        "graphics-fps": "13.0",
+        "graphics-draws": "3053",
+        "graphics-triangles": "869127",
+        "graphics-ratio": "1.00",
+        "graphics-preset": "auto",
+        "graphics-phase": "day",
+        "graphics-weather": "Snow"
+      }
+    }
+  ],
+  "issues": [],
+  "validation": {
+    "productionBuild": "Passed next build (existing unrelated lint warnings)",
+    "typecheck": "Passed tsc --noEmit",
+    "targetedLint": "Passed",
+    "automatedTests": 53,
+    "credentialScan": "Passed; zero findings",
+    "manualBrowser": "Low, Ultra and sunset views inspected. No shader compilation errors. Historical server-action fetch errors occurred while the dev server was stopped for builds.",
+    "limits": [
+      "Development/headless diagnostic snapshots are not sustained foreground GPU benchmarks.",
+      "The browser scenario uses offline preview accounts and does not validate multiplayer connectivity.",
+      "Existing image-size warnings and an ANGLE PMREM texture-bias clamp warning are not shader compilation failures."
+    ],
+    "previewFixes": [
+      "Fresh offline preview honours its requested map rather than starting airport onboarding",
+      "Renderer-scoped preview weather survives normal world-rule refreshes"
+    ],
+    "manualScreenshot": {
+      "path": "output/graphics/full-rea-final-preview.png",
+      "sha256": "c58a5c4d28139b5a731873321bacb00855989d5af97b6d412eb8db23fc4e459d",
+      "phase": "dusk",
+      "weather": "Sunny"
+    }
+  },
+  "limitations": [
+    "Artifact identity is unavailable for this observation.",
+    "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+    "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+    "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+    "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+    "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+    "Storage values are hashed only after declared-secret redaction.",
+    "Non-cookie storage seeds use CDP pre-script instrumentation; only pauses in the scenario's private seed script are resumed by this observer.",
+    "Some network requests had not completed when capture ended; later activity is unknown.",
+    "Browser host platform and architecture were not observed."
+  ]
+}
