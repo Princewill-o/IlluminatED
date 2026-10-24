@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-
-import { GeistSans } from "geist/font/sans";
 import { ArrowRight, CalendarCheck, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -21,7 +19,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const display = `${GeistSans.className} font-semibold tracking-[-0.035em]`;
+const display = "[font-family:var(--font-geist-sans)] font-semibold tracking-[-0.035em]";
 /** Colours come from CSS variables on .landing-sky, so the same markup is a day sky in light mode and a night sky in dark mode. */
 const soft = "text-[var(--sky-soft)]";
 const card = "rounded-3xl bg-[var(--sky-card)] ring-1 ring-[var(--sky-ring)] backdrop-blur";
