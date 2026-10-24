@@ -23,15 +23,18 @@ export function createRenderer(visual: Visual) {
   });
   renderer.setPixelRatio(visual.pixelRatio);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = visual.exposure;
   renderer.shadowMap.enabled = visual.shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.info.autoReset = false;
   return renderer;
 }
 
 const SKY: Record<Phase, { sky: string; ground: string; sun: string; sunPower: number; ambient: number }> = {
-  day: { sky: "#fff4db", ground: "#8e9d7d", sun: "#fff6e6", sunPower: 1.55, ambient: 0.42 },
-  dusk: { sky: "#f5d3b0", ground: "#8e9d7d", sun: "#ffc89a", sunPower: 1.0, ambient: 0.38 },
-  night: { sky: "#b2c5e0", ground: "#455a57", sun: "#a7b9d2", sunPower: 0.5, ambient: 0.34 },
+  day: { sky: "#aab8e7", ground: "#9c816b", sun: "#ffd394", sunPower: 3.0, ambient: 0.13 },
+  dusk: { sky: "#a0a7d0", ground: "#876653", sun: "#ffad67", sunPower: 2.3, ambient: 0.14 },
+  night: { sky: "#7497c9", ground: "#3c5057", sun: "#a7c5f5", sunPower: 0.7, ambient: 0.15 },
 };
 export const skyColours = (phase: Phase) => SKY[phase];
 
@@ -42,7 +45,7 @@ export const skyColours = (phase: Phase) => SKY[phase];
 export function createLighting(scene: THREE.Scene, { phase, indoors, visual }: { phase: Phase; indoors: boolean; visual: Visual }) {
   const tone = SKY[phase];
   const ambient = new THREE.AmbientLight("#ffffff", indoors ? 0.5 : tone.ambient);
-  const hemi = new THREE.HemisphereLight(tone.sky, tone.ground, indoors ? 1.45 : phase === "night" ? 1.05 : 1.2);
+  const hemi = new THREE.HemisphereLight(tone.sky, tone.ground, indoors ? 1.45 : phase === "night" ? 0.7 : 0.85);
   const sun = new THREE.DirectionalLight(tone.sun, indoors ? 1.2 : tone.sunPower);
   sun.castShadow = visual.shadows;
   // A tight shadow box that follows the player keeps every texel close to the
@@ -51,8 +54,8 @@ export function createLighting(scene: THREE.Scene, { phase, indoors, visual }: {
   Object.assign(sun.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, near: 1, far: 80 });
   sun.shadow.camera.updateProjectionMatrix();
   sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.03;
-  sun.shadow.radius = 3;
+  sun.shadow.normalBias = 0.018;
+  sun.shadow.radius = 4;
   if (indoors) {
     hemi.color.set("#fff8ec");
     hemi.groundColor.set("#b8b5ab");

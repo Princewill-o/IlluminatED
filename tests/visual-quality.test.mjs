@@ -8,6 +8,7 @@ const {
   immersiveMotion,
   physicalSurface,
   curvedVertexShader,
+  adaptivePixelRatio,
 } = projectData("src/game/core/visual-quality.ts");
 test("quality costs stay bounded on high DPI displays", () => {
   for (const mobile of [true, false])
@@ -23,14 +24,34 @@ test("quality costs stay bounded on high DPI displays", () => {
     }
   assert.equal(readVisualQuality("obsolete"), "auto");
   assert.equal(visualProfile("auto", true).shadows, false);
-  assert.equal(visualProfile("auto", false).bloom, false);
-  const balanced = visualProfile("auto", false, 2);
+  assert.equal(visualProfile("auto", false).bloom, true);
+  assert.equal(readVisualQuality("cinematic"), "ultra");
+  for (const quality of ["low", "medium", "high", "ultra"]) assert.equal(readVisualQuality(quality), quality);
+  const balanced = visualProfile("medium", false, 2);
   assert.equal(balanced.shadows, true, "desktop default: soft shadow maps");
   assert.equal(balanced.msaa, true, "desktop default: hardware MSAA");
-  assert.equal(balanced.postProcessing, false);
-  assert.equal(balanced.environment, false);
-  assert.equal(balanced.samples, 0);
+  assert.equal(balanced.postProcessing, true);
+  assert.equal(balanced.environment, true);
+  assert.equal(balanced.ambientOcclusion, true);
+  assert.equal(balanced.samples, 2);
+  assert.equal(visualProfile("low", false).ambientOcclusion, false);
+  assert.equal(visualProfile("auto", true).postProcessing, false);
   assert.equal(visualProfile("cinematic", false).postProcessing, true);
+});
+
+test("automatic resolution ignores warm-up and hidden tabs, then recovers gradually", () => {
+  const adapt = adaptivePixelRatio(1.5);
+  let now=0, ratio=adapt(now);
+  for(;now<6000;now+=100) assert.equal(adapt(now),1.5);
+  for(;now<15000;now+=50) ratio=adapt(now);
+  assert.ok(ratio<1.5&&ratio>=.75);
+  const reduced=ratio;
+  for(;now<35000;now+=1000/60) ratio=adapt(now);
+  assert.ok(ratio>reduced&&ratio<=1.5);
+  const before=adapt(now,false);
+  now+=60000;
+  assert.equal(adapt(now,false),before);
+  assert.equal(adapt(NaN),before);
 });
 test("optional motion respects accessibility and cannot grow with vehicle speed", () => {
   for (const t of [0, 1, 100])

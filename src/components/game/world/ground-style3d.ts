@@ -122,8 +122,12 @@ export function applyGroundStyle(mesh: THREE.Mesh): () => void {
   colours.needsUpdate = true;
   geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
   for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
-    if (material instanceof THREE.MeshLambertMaterial) {
+    if (material instanceof THREE.MeshLambertMaterial || material instanceof THREE.MeshStandardMaterial) {
       material.map = texture;
+      if (material instanceof THREE.MeshStandardMaterial) {
+        material.bumpMap = texture;
+        material.bumpScale = 0.028;
+      }
       material.needsUpdate = true;
     }
   }

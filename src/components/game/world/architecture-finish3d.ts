@@ -79,7 +79,6 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
     const masonry = BRICK.has(colour), slate = SLATE.has(colour);
     const lantern = LANTERN.has(colour), glass = GLASS.has(colour);
     if (!masonry && !slate && !lantern && !glass) return source;
-    if (phase === "day" && (glass || lantern)) return source;
 
     // Keep some panes cool so rows of windows do not all glow identically.
     const seed = Math.abs(Math.round(mesh.position.x * 13) + Math.round(mesh.position.y * 29) + Math.round(mesh.position.z * 19));
@@ -88,7 +87,11 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
     const key = `${source.uuid}:${variant}`;
     let material = materials.get(key);
     if (!material) {
-      material = source.clone();
+      // Standard materials give the glazing actual sky highlights rather than
+      // a flat painted rectangle. Keep the original vertex/depth deformation.
+      material = glass
+        ? new THREE.MeshStandardMaterial({ color: source.color, roughness: 0.19, metalness: 0.38, envMapIntensity: 0.85 })
+        : source.clone();
       // Material.clone deliberately does not copy these callbacks in Three.js.
       // Losing the callback here would leave masonry floating above curved roads.
       material.onBeforeCompile = source.onBeforeCompile;
@@ -96,6 +99,13 @@ export function finishArchitecture(world: THREE.Group, phase: Phase): () => void
       material.name = `${source.name || colour} · London ${variant}`;
       if (masonry || slate) {
         material.map = getTexture(masonry ? "brick" : "slate");
+        if (material instanceof THREE.MeshStandardMaterial) {
+          material.bumpMap = material.map;
+          material.bumpScale = slate ? 0.035 : 0.018;
+          material.roughness = slate ? 0.76 : 0.91;
+        }
+      } else if (phase === "day") {
+        if (glass) material.color.set("#7dabb3");
       } else if (lit) {
         material.color.set(lantern ? "#ffe5a6" : "#d9b276");
         material.emissive.set(lantern ? "#ffcb79" : "#ffc17a");

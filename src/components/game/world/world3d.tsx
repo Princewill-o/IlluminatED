@@ -11,10 +11,13 @@ import { BUS_ROUTE_CODES, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRA
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
+import { driftingLeaves } from "./drifting-leaves";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
 import { HudSlot } from "./hud";
+import { illustratedLightShader, updateIllustratedLight } from "./illustrated-light";
 import { londonEye } from "./london-eye3d";
+import { addMeadow } from "./meadow3d";
 import { addStreetscape } from "./streetscape3d";
 export { NPC_SPOTS } from "./art";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
@@ -22,7 +25,9 @@ import type { TechEvent } from "../event-ads";
 import { homeFurniture } from "./home-furniture";
 import { makeNameplate } from "./nameplate";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
+import { softSunShadows } from "./soft-sun-shadows";
 import { TRAIN_CALL } from "./train-state";
+import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -46,7 +51,7 @@ import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVeh
 import { trainFrame } from "@/game/core/train";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
-import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
+import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -81,11 +86,17 @@ const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
-  m.onBeforeCompile = (sh) => {
+  const prepare = m.onBeforeCompile;
+  const programKey = m.customProgramCacheKey();
+  m.onBeforeCompile = (sh, renderer) => {
+    prepare.call(m, sh, renderer);
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
+    if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) illustratedLightShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
+    sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
   };
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-illustrated-v3`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -95,8 +106,9 @@ const bendAll = (o: THREE.Object3D) =>
     const mesh = c as THREE.Mesh;
     if (!mesh.isMesh) return;
     mesh.castShadow = !(Array.isArray(mesh.material)?mesh.material:[mesh.material]).some(m=>m.transparent||m instanceof THREE.MeshBasicMaterial);
-    mesh.customDepthMaterial = CURVED_DEPTH;
-    mesh.receiveShadow = true;
+    if (mesh.customDepthMaterial) bend(mesh.customDepthMaterial);
+    else mesh.customDepthMaterial = CURVED_DEPTH;
+    mesh.receiveShadow = !mesh.userData.foliage;
     (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(bend);
   });
 
@@ -351,6 +363,7 @@ function fountainSpray(cx: number, cz: number, top: number) {
 /** The kit's compact cars need a shared real footprint, including their mirrors. */
 async function placeCar(g: THREE.Group, model: string) {
   const gltf = await load(`/world3d/cars/${model}.glb`);
+  if (g.userData.vehicleRemoved) return g;
   const car = gltf.scene.clone(true);
   car.rotation.y = Math.PI / 2;
   const bounds = new THREE.Box3().setFromObject(car);
@@ -361,6 +374,7 @@ async function placeCar(g: THREE.Group, model: string) {
   const fitBounds = new THREE.Box3().setFromObject(fitted);
   const centre = fitBounds.getCenter(new THREE.Vector3());
   fitted.position.set(-centre.x, -fitBounds.min.y, -centre.z);
+  g.userData.vehicleRig = rigVehicle(car, fitted.scale.y);
   bendAll(fitted);
   g.add(fitted);
   return fitted;
@@ -424,7 +438,7 @@ function groundMesh(tiles: string[], highland: boolean, holes = new Set<string>(
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94 });
   bend(m);
   const mesh = new THREE.Mesh(geo, m);
   mesh.receiveShadow = true;
@@ -1438,7 +1452,9 @@ function busModel(route: string) {
   const g = new THREE.Group();
   BUS_KIT ??= new GLTFLoader().loadAsync("/world3d/bus.glb").then((m) => m.scene);
   void BUS_KIT.then((kit) => {
+    if (g.userData.vehicleRemoved) return;
     const body = kit.clone(true);
+    g.userData.vehicleRig = rigVehicle(body, g.scale.y, "x");
     bendAll(body);
     body.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
     g.add(body);
@@ -1866,7 +1882,7 @@ export function World3D({
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    const sky = highland ? "#bfe3ff" : "#d6e4df";
+    const sky = highland ? "#c8e2ef" : "#dce6df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
     // Outdoor fog is fully opaque by 70 units; don't draw hidden city blocks
@@ -1877,8 +1893,9 @@ export function World3D({
     const forced = new URLSearchParams(window.location.search).get("time");
     const pickPhase = () => WORLD_RULES.time !== "auto" ? WORLD_RULES.time : forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
     let phase = pickPhase();
+    updateIllustratedLight(phase, indoors);
     // Ambient + sky fill + a shadow-casting sun (scene-setup.ts).
-    const { hemi, sun } = createLighting(scene, { phase, indoors, visual });
+    const { ambient, hemi, sun } = createLighting(scene, { phase, indoors, visual });
     if (phase !== "day" && !indoors) {
       const atmosphere=phase==="night"?"#17293f":"#d6b1a0";
       scene.background = new THREE.Color(atmosphere);
@@ -2165,8 +2182,14 @@ export function World3D({
     const streetscape=london?addStreetscape(world,map,phase):null;
     if(streetscape) {
       bendAll(streetscape);
-      streetscape.traverse(object=>{if((object as THREE.Mesh).isMesh){object.castShadow=false;object.receiveShadow=false;}});
     }
+    const meadow = !indoors && quality !== "low" ? addMeadow(world, map, mobile) : null;
+    if (meadow) {
+      bendAll(meadow);
+      meadow.traverse(object => { object.castShadow = false; });
+    }
+    const leafDrift = london && quality !== "low" ? driftingLeaves(world, map, mobile) : null;
+    if (leafDrift) { bendAll(leafDrift.object); leafDrift.object.castShadow = false; }
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
@@ -2216,6 +2239,7 @@ export function World3D({
       root: THREE.Group;
       char: Character3D | null;
       walking: boolean;
+      motion?: { x: number; z: number; heading: number; speed: number };
       dispose: () => void;
     }
     const makeBody = (a: Avatar, logo: string | null = null, ambient = false): Body => {
@@ -2260,7 +2284,7 @@ export function World3D({
     let disposed = false;
     const me = makeBody(JSON.parse(avatarKey) as Avatar, badge);
     // Keep your character recognisable in crowds and behind tall buildings.
-    const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.47, 32), new THREE.MeshBasicMaterial({ color: "#62e5ff", transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+    const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.44, 48), new THREE.MeshBasicMaterial({ color: "#89d7e3", transparent: true, opacity: 0.6, depthWrite: false }));
     playerRing.rotation.x = -Math.PI / 2;
     playerRing.renderOrder = 1000;
     const playerLabel = makeNameplate(username, affiliation, true);
@@ -2581,13 +2605,17 @@ export function World3D({
     let raf = 0;
     let last = performance.now();
     const start = last;
+    let monitorAt = start, monitorFrames = 0;
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let reduce = motionPreference.matches;
     const motionChanged = () => {reduce=motionPreference.matches;};
     motionPreference.addEventListener("change",motionChanged);
     const renderDue = frameBudget(60);
+    const adaptResolution = adaptivePixelRatio(visual.pixelRatio);
     const frame = (now: number) => {
       if (document.hidden) {
+        adaptResolution(now, false);
+        monitorAt = now; monitorFrames = 0;
         last = now;
         raf = requestAnimationFrame(frame);
         return;
@@ -2596,6 +2624,10 @@ export function World3D({
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
+      updateIllustratedLight(phase, indoors);
+      river.update(reduce ? 0 : secs);
+      streetscape?.userData.update?.(reduce ? 0 : secs);
+      meadow?.userData.animate?.(reduce ? 0 : secs);
       if (newsroom && now >= nextBroadcast) {
         nextBroadcast = now + (reduce ? 8_000 : 250);
         const ctx = broadcastCanvas.getContext("2d")!;
@@ -2621,6 +2653,8 @@ export function World3D({
       const p = getMe();
       const mx = p.x / TILE;
       const mz = p.y / TILE;
+      meadow?.userData.update(mx, mz);
+      leafDrift?.update(secs, mx, mz, reduce);
       if (!indoors) {
         phase = pickPhase();
         const blend = 1 - Math.exp(-dt * 1.5);
@@ -2629,11 +2663,14 @@ export function World3D({
         (scene.background as THREE.Color).lerp(lightingColour.set(atmosphere), blend);
         if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
         const tone = skyColours(phase);
+        if (scene.environment) scene.environmentIntensity += ((night ? .09 : dusk ? .22 : .32) - scene.environmentIntensity) * blend;
+        ambient.intensity += (tone.ambient - ambient.intensity) * blend;
         hemi.color.lerp(lightingColour.set(tone.sky), blend);
         hemi.groundColor.lerp(lightingColour.set(tone.ground), blend);
         sun.color.lerp(lightingColour.set(tone.sun), blend);
         const strength = night || dusk ? tone.sunPower : ["Sunny", "Bright"].includes(weatherKind) ? tone.sunPower : tone.sunPower * 0.6;
-        sun.intensity += (strength - sun.intensity) * blend;
+        const daylightDrift = reduce ? 1 : 1 + Math.sin(secs * .11) * .022;
+        sun.intensity += (strength * daylightDrift - sun.intensity) * blend;
         lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
         river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
       }
@@ -2697,6 +2734,7 @@ export function World3D({
       const want = carRef.current;
       if (want !== carLoaded) {
         carLoaded = want;
+        disposeVehicle(carHolder);
         carHolder.clear();
         if (want) {
           if (want.startsWith("bus:")) carHolder.add(busModel(want.slice(4)));
@@ -2751,9 +2789,11 @@ export function World3D({
         rings.forEach(ring => { ring.visible = false; });
       }
       playerRing.position.set(mx, 0.18 + meZ, mz);
-      playerRing.scale.setScalar(want ? 2.6 : 1);
+      playerRing.scale.setScalar(want ? 1.7 : 1);
       camera.updateMatrixWorld();
       const screen = projectedPoint.set(mx, (want ? 2.3 : 1.5) + meZ, mz).project(camera);
+      streetscape?.userData.focus((screen.x + 1) / 2, (screen.y + 1) / 2,
+        viewportWidth * renderer.getPixelRatio(), viewportHeight * renderer.getPixelRatio());
       const sx = (screen.x + 1) * viewportWidth / 2;
       const sy = (1 - screen.y) * viewportHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
@@ -2802,6 +2842,7 @@ export function World3D({
         b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < viewportWidth && labelY > 0 && labelY < viewportHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
         let vehicle = otherCars.get(o.id);
         if (vehicle && vehicle.model !== o.car) {
+          disposeVehicle(vehicle.root);
           scene.remove(vehicle.root);
           otherCars.delete(o.id);
           vehicle = undefined;
@@ -2826,6 +2867,7 @@ export function World3D({
           b.label.remove();
           const vehicle = otherCars.get(id);
           if (vehicle) scene.remove(vehicle.root);
+          if (vehicle) disposeVehicle(vehicle.root);
           otherCars.delete(id);
           others.delete(id);
         }
@@ -3096,7 +3138,15 @@ export function World3D({
       water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
       if(!reduce) river.texture.offset.x=secs*0.002;
       // Animate nearby visible bodies only; distant residents still follow their routes.
-      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.update(dt, reduce);
+      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
+        const { x, z } = body.root.position, heading = body.root.rotation.y;
+        const previous = body.motion;
+        const distance = previous ? Math.hypot(x - previous.x, z - previous.z) : 0;
+        const speed = previous && distance < 2 && dt > 0 ? distance / dt : 0;
+        const turn = previous && dt > 0 ? Math.atan2(Math.sin(heading - previous.heading), Math.cos(heading - previous.heading)) / dt : 0;
+        body.motion = { x, z, heading, speed };
+        body.char.update(dt, reduce, { speed, turn });
+      }
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;
         // A real pedalling clip while moving; feet resting on the pedals when coasting.
@@ -3110,7 +3160,7 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
-      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? "walk" : "idle");
+      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? (me.motion?.speed ?? 0) > 4.2 ? "sprint" : "walk" : "idle");
       const homeAction = getHomeAction?.();
       playerRing.visible = !overview && !homeAction;
       for (const screen of homeScreens) {
@@ -3148,7 +3198,26 @@ export function World3D({
         }
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
+      if (want) animateVehicle(carHolder, dt, secs, phase !== "day", reduce);
+      for (const vehicle of traffic) animateVehicle(vehicle.obj, dt, secs, phase !== "day", reduce);
+      for (const vehicle of otherCars.values()) animateVehicle(vehicle.root, dt, secs, phase !== "day", reduce);
+      if (responseCar.visible) animateVehicle(responseCar, dt, secs, phase !== "day", reduce);
+      renderer.info.reset();
       presentation.render();
+      if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
+        Object.assign(renderer.domElement.dataset, {
+          graphicsFps: (monitorFrames * 1000 / (now - monitorAt)).toFixed(1),
+          graphicsDraws: String(renderer.info.render.calls),
+          graphicsTriangles: String(renderer.info.render.triangles),
+          graphicsRatio: renderer.getPixelRatio().toFixed(2),
+          graphicsPreset: quality,
+        });
+        monitorAt = now; monitorFrames = 0;
+      }
+      if (visual.adaptiveResolution) {
+        const ratio = adaptResolution(now);
+        if (Math.abs(ratio - renderer.getPixelRatio()) > .005) { renderer.setPixelRatio(ratio); fit(); }
+      }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -3161,8 +3230,8 @@ export function World3D({
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
-        if(m.isMesh&&m.castShadow)m.customDepthMaterial=CURVED_DEPTH;
-        if (!m.isMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
+        if(m.isMesh&&m.castShadow&&!m.customDepthMaterial)m.customDepthMaterial=CURVED_DEPTH;
+        if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
@@ -3186,7 +3255,7 @@ export function World3D({
             mesh.setMatrixAt(i, source.matrixWorld);
             source.parent?.remove(source);
           });
-          mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=CURVED_DEPTH;
+          mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=meshes[0].customDepthMaterial ?? CURVED_DEPTH;
           mesh.computeBoundingSphere();
           mesh.matrixAutoUpdate = false;
           mesh.matrixWorldAutoUpdate = false;
@@ -3202,6 +3271,7 @@ export function World3D({
     return () => {
       cancelAnimationFrame(raf);
       disposed = true;
+      disposeVehicle(scene);
       for (const body of bodies) body.dispose();
       for (const vehicle of traffic) if (vehicle.obj.userData.coach) vehicle.obj.userData.dispose();
       TRAFFIC_BOXES.length = 0;
@@ -3223,6 +3293,8 @@ export function World3D({
       disposeGroundStyle();
       disposeArchitecture();
       streetscape?.userData.dispose?.();
+      meadow?.userData.dispose?.();
+      leafDrift?.dispose();
       for (const spinner of spinners) spinner.userData.dispose?.();
       renderer.forceContextLoss();
       scene.traverse((o) => {

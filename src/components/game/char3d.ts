@@ -10,6 +10,7 @@ import { addUniformLogo } from "./uniform-logo3d";
 import { BACK, BOTTOM, BRANDS, HAIR, SHOES, TOP } from "@/game/core/chibi-looks";
 import { type Avatar, cosmeticById, look } from "@/game/core/cosmetics";
 import { currentEvent } from "@/game/core/live-events";
+import { motionDynamics, restingMotion } from "@/game/core/motion-dynamics";
 import { outfitColours } from "@/game/core/outfits";
 
 /**
@@ -112,7 +113,7 @@ export interface Character3D {
   object: THREE.Group;
   mixer: THREE.AnimationMixer;
   play: (clip: string) => void;
-  update: (dt: number, reducedMotion?: boolean) => void;
+  update: (dt: number, reducedMotion?: boolean, motion?: { speed: number; turn: number }) => void;
   dispose: () => void;
 }
 
@@ -261,9 +262,32 @@ export async function buildCharacter(a: Avatar, height = 1.15, workplaceLogo: st
   play("idle");
 
   let t = Math.random() * 4;
-  const update = (dt: number, reducedMotion = false) => {
+  let dynamics = restingMotion();
+  const torsoScale = torso.scale.y;
+  const animatedTorso = torso.quaternion.clone(), animatedHead = head.quaternion.clone();
+  const update: Character3D["update"] = (dt, reducedMotion = false, motion) => {
+    const locomotion = /^(idle|walk|sprint)$/.test(currentName);
+    const speed = motion?.speed ?? (currentName === "walk" ? 3 : currentName === "sprint" ? 5 : 0);
+    dynamics = motionDynamics(dynamics, speed, motion?.turn ?? 0, dt, reducedMotion);
+    if (current && /^(walk|sprint)$/.test(currentName)) {
+      const pace = Math.max(.65, Math.min(1.5, Math.abs(dynamics.speed) / (currentName === "sprint" ? 4.8 : 3)));
+      current.setEffectiveTimeScale(reducedMotion ? 1 : pace);
+    }
+    // Remove last frame's additive pose before sampling animation tracks. Some
+    // mixer tracks stay unchanged during idle, so otherwise lean accumulates.
+    torso.quaternion.copy(animatedTorso);
+    head.quaternion.copy(animatedHead);
     mixer.update(dt);
+    animatedTorso.copy(torso.quaternion);
+    animatedHead.copy(head.quaternion);
     t += Math.max(0, dt);
+    holder.rotation.z = locomotion ? dynamics.bank : 0;
+    if (locomotion && !reducedMotion) {
+      torso.rotation.x += dynamics.pitch;
+      head.rotation.z -= dynamics.bank * .6;
+      head.rotation.y += currentName === "idle" ? Math.sin(t * .57) * .12 + Math.sin(t * .23) * .045 : dynamics.bank * .4;
+    }
+    torso.scale.y = torsoScale * (1 + (reducedMotion ? 0 : Math.sin(t * 2.1) * (locomotion ? .007 : .003)));
     const blink = !reducedMotion && t % 4.3 < 0.14;
     const expression = blink ? 1 : /wave|dance|cheer|emote-yes/.test(currentName) ? 2 : /sprint|attack/.test(currentName) ? 3 : 0;
     face.material.map = expressions[expression];

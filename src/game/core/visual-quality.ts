@@ -1,34 +1,48 @@
-export type VisualQuality = "auto" | "low" | "cinematic";
+export type VisualQuality =
+  "auto" | "low" | "medium" | "high" | "ultra" | "cinematic";
 export function readVisualQuality(value: string | null): VisualQuality {
-  return value === "low" || value === "cinematic" ? value : "auto";
+  if (value === "cinematic") return "ultra";
+  return value === "low" ||
+    value === "medium" ||
+    value === "high" ||
+    value === "ultra"
+    ? value
+    : "auto";
 }
 
-/** Explicit costs, independent of camera zoom. Cinematic is opt-in. */
+/** Desktop gets the finished presentation; phones retain a direct, lighter renderer. */
 export function visualProfile(
   quality: VisualQuality,
   mobile: boolean,
   dpr = 1,
 ) {
   const performance = quality === "low";
-  const cinematic = quality === "cinematic";
+  const cinematic = quality === "cinematic" || quality === "ultra";
+  const high =
+    cinematic || quality === "high" || (quality === "auto" && !mobile);
+  const composed = high || (!performance && !mobile);
   return {
     pixelRatio: performance
       ? 0.75
       : Math.min(
-          cinematic ? (mobile ? 1.25 : 1.5) : mobile ? 1 : 1.25,
+          high ? (mobile ? 1.25 : 1.5) : mobile ? 1 : 1.25,
           Math.max(1, Number.isFinite(dpr) ? dpr : 1),
         ),
     // Soft shadow maps on desktop by default; phones keep them for Cinematic.
-    shadows: cinematic || (!performance && !mobile),
+    shadows: high || (!performance && !mobile),
     shadowSize: !mobile && !performance ? 2048 : 1024,
-    postProcessing: cinematic,
-    environment: cinematic && !mobile,
-    samples: cinematic && !mobile ? 4 : 0,
+    postProcessing: composed,
+    environment: !performance && !mobile,
+    samples: composed && !mobile ? (high ? 4 : 2) : 0,
+    ambientOcclusion: composed && !mobile,
+    occlusionSamples: cinematic ? 16 : high ? 12 : 8,
+    depthOfField: cinematic && !mobile,
     /** Hardware MSAA on the canvas itself (post-processing has its own samples). */
     msaa: !performance && !cinematic,
-    bloom: cinematic,
-    bloomStrength: 0.18,
-    exposure: 1.12,
+    bloom: high,
+    bloomStrength: cinematic ? 0.17 : 0.12,
+    exposure: 1.0,
+    adaptiveResolution: quality === "auto",
   };
 }
 
@@ -45,6 +59,48 @@ export function physicalSurface(colour: string) {
   return glass.has(colour.toLowerCase())
     ? { roughness: 0.24, metalness: 0.32, envMapIntensity: 0.75 }
     : { roughness: 0.84, metalness: 0.025, envMapIntensity: 0.25 };
+}
+
+/** Hysteresis avoids resolution pumping. Ignore asset/shader warm-up and
+ * suspended tabs; require sustained slow frames before reducing GPU load. */
+export function adaptivePixelRatio(maximum: number) {
+  let ratio = maximum,
+    started = -1,
+    windowStart = -1,
+    frames = 0,
+    slow = 0,
+    fast = 0;
+  return (now: number, active = true) => {
+    if (!Number.isFinite(now)) return ratio;
+    if (!active || started < 0) {
+      started = now;
+      windowStart = -1;
+      frames = slow = fast = 0;
+      return ratio;
+    }
+    if (now - started < 6000) return ratio;
+    if (windowStart < 0) {
+      windowStart = now;
+      frames = 0;
+      return ratio;
+    }
+    frames++;
+    if (now - windowStart < 2500) return ratio;
+    const fps = (frames * 1000) / (now - windowStart);
+    slow = fps < 42 ? slow + 1 : 0;
+    fast = fps > 57 ? fast + 1 : 0;
+    if (slow >= 2) {
+      ratio = Math.max(Math.min(0.75, maximum), ratio * 0.85);
+      slow = 0;
+    }
+    if (fast >= 3) {
+      ratio = Math.min(maximum, ratio + 0.1);
+      fast = 0;
+    }
+    frames = 0;
+    windowStart = now;
+    return ratio;
+  };
 }
 
 /** Small optional camera accents; no physical 4DX hardware integration. */

@@ -47,7 +47,10 @@ export function Character3DPreview({
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
@@ -57,6 +60,10 @@ export function Character3DPreview({
     const lamp = new THREE.DirectionalLight("#fff4e4", 1.6);
     lamp.position.set(2, 4, 3);
     lamp.castShadow = true;
+    lamp.shadow.mapSize.set(1024, 1024);
+    Object.assign(lamp.shadow.camera, { left: -1.5, right: 1.5, top: 2.5, bottom: -1.5, near: .1, far: 12 });
+    lamp.shadow.camera.updateProjectionMatrix();
+    lamp.shadow.normalBias = .018;
     scene.add(lamp);
     const floor = new THREE.Mesh(
       new THREE.CircleGeometry(0.75, 40),
@@ -106,6 +113,7 @@ export function Character3DPreview({
     let raf = 0;
     let last = performance.now();
     let played = "";
+    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
@@ -121,7 +129,7 @@ export function Character3DPreview({
           st.char.play(want as "idle" | "walk" | "emote-yes");
           played = want;
         }
-        st.char.mixer.update(dt);
+        st.char.update(dt, motionPreference.matches);
       }
       turntable.rotation.y +=
         (st.spin - turntable.rotation.y) * Math.min(1, dt * 8);

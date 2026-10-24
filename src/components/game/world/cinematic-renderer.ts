@@ -7,6 +7,10 @@ import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
+import { contactShadows } from "./contact-shadows";
+import { miniatureFocus } from "./miniature-focus";
+import { outdoorEnvironment } from "./sky-environment";
+
 import type { visualProfile } from "@/game/core/visual-quality";
 
 type Profile = ReturnType<typeof visualProfile>;
@@ -28,17 +32,16 @@ export function cinematicRenderer(
   };
   try {
     if (profile.environment) {
-      const generator = new THREE.PMREMGenerator(renderer),
-        room = new RoomEnvironment();
-      try {
-        environment = generator.fromScene(room, 0.04);
-        cleanup.push(() => environment?.dispose());
-        scene.environment = environment.texture;
-        scene.environmentIntensity = 0.5;
-      } finally {
-        room.dispose();
-        generator.dispose();
+      if (scene.fog) {
+        environment = outdoorEnvironment(renderer);
+      } else {
+        const generator = new THREE.PMREMGenerator(renderer), room = new RoomEnvironment();
+        try { environment = generator.fromScene(room, 0.04); }
+        finally { room.dispose(); generator.dispose(); }
       }
+      cleanup.push(() => environment?.dispose());
+      scene.environment = environment.texture;
+      scene.environmentIntensity = 0.32;
     }
     if (!profile.postProcessing)
       return {
@@ -66,16 +69,29 @@ export function cinematicRenderer(
     cleanup.push(() => target.dispose());
     const composer = new EffectComposer(renderer, target);
     cleanup.push(() => composer.dispose());
+    if (profile.ambientOcclusion) {
+      // Both ping-pong buffers can become the next frame's scene input.
+      for (const buffer of [composer.renderTarget1, composer.renderTarget2]) {
+        const depth = new THREE.DepthTexture(1, 1, THREE.UnsignedIntType);
+        buffer.depthTexture = depth;
+        cleanup.push(() => depth.dispose());
+      }
+    }
     const render = new RenderPass(scene, camera);
     composer.addPass(render);
     cleanup.push(() => render.dispose());
+    if (profile.ambientOcclusion) {
+      const contact = contactShadows(camera, profile.occlusionSamples);
+      composer.addPass(contact);
+      cleanup.push(() => contact.dispose());
+    }
     const bloom =
       profile.bloom && hdr
         ? new UnrealBloomPass(
             new THREE.Vector2(1, 1),
             profile.bloomStrength,
             0.45,
-            1.05,
+            1.45,
           )
         : null;
     if (bloom) {
@@ -88,11 +104,20 @@ export function cinematicRenderer(
         "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
       fragmentShader: `uniform sampler2D tDiffuse;varying vec2 vUv;
 void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));
-c.rgb=mix(vec3(l),c.rgb,1.035);vec2 p=vUv*(1.0-vUv.yx);float edge=clamp(pow(16.0*p.x*p.y,.12),0.0,1.0);
-c.rgb*=mix(.94,1.0,edge);gl_FragColor=vec4(max(c.rgb,vec3(0.0)),c.a);}`,
+// Linear HDR split toning: warm highlights, blue-green shadow fill.
+float highlight=smoothstep(.25,1.8,l);
+c.rgb*=mix(vec3(.9,.93,1.1),vec3(1.07,1.01,.91),highlight);
+l=dot(c.rgb,vec3(.2126,.7152,.0722));
+c.rgb=mix(vec3(l),c.rgb,1.12);
+// Preserve black detail while giving the miniature scene more separation.
+c.rgb*=mix(.91,1.025,smoothstep(.04,.8,l));
+vec2 p=vUv*(1.0-vUv.yx);float edge=clamp(pow(16.0*p.x*p.y,.12),0.0,1.0);
+c.rgb*=mix(.91,1.0,edge);gl_FragColor=vec4(max(c.rgb,vec3(0.0)),c.a);}`,
     });
     composer.addPass(grade);
     cleanup.push(() => grade.dispose());
+    const focus = profile.depthOfField && scene.fog ? miniatureFocus() : null;
+    if (focus) { composer.addPass(focus); cleanup.push(() => focus.dispose()); }
     const output = new OutputPass();
     composer.addPass(output);
     cleanup.push(() => output.dispose());
@@ -104,7 +129,9 @@ c.rgb*=mix(.94,1.0,edge);gl_FragColor=vec4(max(c.rgb,vec3(0.0)),c.a);}`,
     return {
       render: () => composer.render(),
       resize: (width: number, height: number) => {
+        composer.setPixelRatio(renderer.getPixelRatio());
         composer.setSize(Math.max(1, width), Math.max(1, height));
+        if (focus) focus.uniforms.resolution.value.set(Math.max(1, width) * renderer.getPixelRatio(), Math.max(1, height) * renderer.getPixelRatio());
         if (aa)
           aa.uniforms.resolution.value.set(
             1 / (Math.max(1, width) * renderer.getPixelRatio()),

@@ -1,0 +1,43 @@
+{
+  "tool": "rea-agents@6.7.0",
+  "repository": "https://github.com/brunosimon/folio-2025",
+  "commit": "41046b57eeed8d156d9c3fd7fa259900baef7816",
+  "evidenceId": "ev_953f6660801ba3652ece7638c195a78fdc02e6f404de5cbcb87465077251ca9c",
+  "artifactDigest": "6b23fdf4add0c5e7a2365deb4b296cce9ff1f058e7fb05c8718e7363be30667c",
+  "selection": {
+    "requested_paths": [
+      "sources/Game/Rendering.js",
+      "sources/Game/Materials/MeshDefaultMaterial.js",
+      "sources/Game/Ligthing.js",
+      "sources/Game/World/Foliage.js",
+      "sources/Game/World/Trees.js",
+      "sources/Game/World/Grass.js",
+      "sources/Game/World/WaterSurface.js",
+      "sources/Game/Passes/cheapDOF.js",
+      "sources/Game/Wind.js",
+      "sources/Game/Cycles/DayCycles.js"
+    ],
+    "unselected_files": 120
+  },
+  "statistics": {
+    "relevant_files": 130,
+    "nested_asar_containers": 0,
+    "text_bytes_read": 65584,
+    "invalid_utf8_files": 0,
+    "parsed_javascript_files": 10,
+    "skipped_javascript_files": 0,
+    "visited_ast_nodes": 10123,
+    "findings": 225,
+    "modules": 0,
+    "parse_failures": 0
+  },
+  "limitations": [
+    "Caller-selected source analysis leaves 120 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+    "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+    "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+    "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+    "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+    "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+    "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+  ]
+}

@@ -16,6 +16,7 @@ import { Character3DPreview } from "@/components/game/character-3d-preview";
 import { RacingHub } from "@/components/game/racing/racing-hub";
 import { WhatIf } from "@/components/game/what-if/what-if";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
+import { WORLD_RULES } from "@/components/game/world/art";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
 import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
 import { WorldApp } from "@/components/game/world/world-app";
@@ -72,7 +73,11 @@ export function DevShowcase({
   const [clean, setClean] = useState(false);
   useEffect(() => {
     localStorage.setItem(TUTORIAL_KEY, "seen");
+    const previousWeather = WORLD_RULES.weather;
+    const clear = new URLSearchParams(window.location.search).get("weather") === "clear";
+    if (clear) WORLD_RULES.weather = "clear";
     setMounted(true);
+    return () => { if (clear) WORLD_RULES.weather = previousWeather; };
   }, []);
   useEffect(
     () => () => {

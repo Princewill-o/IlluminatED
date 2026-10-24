@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main id="main" tabIndex={-1} data-world={inWorld ? "" : undefined} className={cn("min-h-[70dvh] min-w-0 outline-none md:pl-[76px] 2xl:pl-[224px]", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
+        <main key={path} id="main" tabIndex={-1} data-world={inWorld ? "" : undefined} className={cn("min-h-[70dvh] min-w-0 outline-none md:pl-[76px] 2xl:pl-[224px]", !inWorld && "platform-page-enter", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
           {children}
         </main>
 

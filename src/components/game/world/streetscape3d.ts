@@ -1,5 +1,8 @@
 import * as THREE from "three";
 
+import { createFoliage } from "./foliage3d";
+import { referenceTrees } from "./reference-trees3d";
+
 import { buildLondon } from "@/game/core/london";
 import type { WorldMap } from "@/game/core/world";
 
@@ -19,11 +22,17 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   const crown = new THREE.IcosahedronGeometry(1, 1);
   const smallLeaf = new THREE.IcosahedronGeometry(1, 0);
   const column = new THREE.CylinderGeometry(1, 1, 1, 7);
-  const materials = new Map<string, THREE.MeshLambertMaterial>();
+  const canopy = createFoliage();
+  const authoredTrees = referenceTrees(canopy);
+  scenery.userData.update = canopy.update;
+  scenery.userData.focus = canopy.focus;
+  const materials = new Map<string, THREE.MeshStandardMaterial>();
   let disposed = false;
   scenery.userData.dispose = () => {
     if (disposed) return;
     disposed = true;
+    canopy.dispose();
+    authoredTrees.dispose();
     for (const geometry of [cube, crown, smallLeaf, column]) geometry.dispose();
     const textures = new Set<THREE.Texture>();
     for (const value of materials.values()) {
@@ -37,7 +46,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   const material = (colour: string) => {
     let value = materials.get(colour);
     if (!value) {
-      value = new THREE.MeshLambertMaterial({ color: colour, flatShading: true });
+      value = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.93, flatShading: true });
       materials.set(colour, value);
     }
     return value;
@@ -46,8 +55,8 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
     const object = new THREE.Mesh(geometry, material(colour));
     object.position.set(x, y, z);
     object.scale.set(sx, sy, sz);
-    object.castShadow = false;
-    object.receiveShadow = false;
+    object.castShadow = true;
+    object.receiveShadow = true;
     scenery.add(object);
     return object;
   };
@@ -61,7 +70,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   const mortar = "#c7a88a";
   const stone = "#dac9a7";
   const soil = "#665448";
-  const foliage = phase === "day" ? ["#65845a", "#8ba56a"] : ["#617d59", "#849b69"];
+  const foliage = phase === "day" ? ["#547c49", "#94ae58"] : ["#53734e", "#8c9d5c"];
   const flowers = ["#e6ba98", "#d1a1a1", "#d5c98e"];
   const source = buildLondon();
   const tile = (x: number, y: number) => map.tiles[y]?.[x];
@@ -76,9 +85,15 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
     const seed = x * 7 + z * 13;
     const cx = x + 0.5, cz = z + 0.5;
     const blossom = seed % 7 === 0;
-    const leaves = blossom ? ["#bd8f82", "#ddb39d"] : foliage;
+    const autumn = [["#e77e3d", "#ffb65d"], ["#dba04a", "#f7d36d"], ["#cf6289", "#f0a0b8"], foliage];
+    const leaves = blossom ? ["#c36c83", "#eda3ad"] : tree.id.startsWith("outskirts-") ? foliage : autumn[seed % autumn.length];
     const height = 1.95 + (seed % 4) * 0.12;
-    mesh(column, "#7a604a", cx, 0.97, cz, 0.12, 1.64, 0.12);
+    const authored = tree.id.startsWith("park-tree");
+    if (authored) {
+      const treeModel = authoredTrees.create(seed % 2 ? "birch" : "cherry", leaves[seed % 2], height + 1.0);
+      treeModel.position.set(cx, .35, cz);
+      scenery.add(treeModel);
+    } else mesh(column, "#7a604a", cx, 0.97, cz, 0.12, 1.64, 0.12);
     // Countryside woods are far from the player most of the time: one big
     // rounded crown each keeps the open world inside the geometry budget.
     if (tree.id.startsWith("outskirts-")) {
@@ -86,11 +101,14 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
       continue;
     }
     // A short fork joins the visible trunk to the broad crown.
-    const branch = mesh(column, "#7a604a", cx + 0.15, 1.52, cz, 0.07, 0.68, 0.07);
-    branch.rotation.z = -0.48;
-    leaf(leaves[0], cx - 0.39, height, cz + 0.04, 0.77, 0.7, 0.73);
-    leaf(leaves[0], cx + 0.38, height + 0.09, cz + 0.02, 0.76, 0.75, 0.76);
-    leaf(leaves[1], cx, height + 0.53, cz - 0.12, 0.83, 0.72, 0.77);
+    if (!authored) {
+      const branch = mesh(column, "#7a604a", cx + 0.15, 1.52, cz, 0.07, 0.68, 0.07);
+      branch.rotation.z = -0.48;
+      const leavesMesh = canopy.mesh(leaves[seed % 2]);
+      leavesMesh.position.set(cx, height + .25, cz);
+      leavesMesh.scale.set(1.0, 1.03 + seed % 3 * .06, .94);
+      scenery.add(leavesMesh);
+    }
 
     // Outer groves grow directly from lawns; keep ornate beds for city streets.
     if (tree.id.startsWith("district-")) continue;

@@ -33,5 +33,21 @@ export function riverSurface(phase: "day" | "dusk" | "night", cols: number, rows
   texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
   texture.repeat.set(cols/9,rows/9);
   const material=new THREE.MeshStandardMaterial({roughness:.3,metalness:.12,envMapIntensity:.65,color:phase==="night"?"#63848b":"#a3c7bf",map:texture});
-  return {material,texture,dispose:()=>{texture.dispose();material.dispose();}};
+  const time = { value: 0 };
+  material.roughness = 0.22;
+  material.envMapIntensity = 1.1;
+  material.onBeforeCompile = shader => {
+    shader.uniforms.uRiverTime = time;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vRiverPosition;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvRiverPosition=position.xz;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nuniform float uRiverTime; varying vec2 vRiverPosition;")
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>
+        vec2 ripple=vec2(sin(vRiverPosition.x*5.0+vRiverPosition.y*2.0+uRiverTime*.8),
+          cos(vRiverPosition.y*7.0-vRiverPosition.x*1.7+uRiverTime*.65))*.065;
+        normal=normalize(normal+vec3(ripple.x,ripple.y,0.0));`);
+  };
+  material.customProgramCacheKey = () => "river-ripples-v1";
+  return {material,texture,update:(seconds:number)=>{time.value=seconds;},dispose:()=>{texture.dispose();material.dispose();}};
 }
