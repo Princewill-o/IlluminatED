@@ -7,6 +7,7 @@ import { Award, CalendarClock, Check, Crown, Gift, Medal, Share2, Target, Timer,
 import {
   type ChampAnswer, type ChampBoard, type ChampQuestion, type ChampStatus, type Division, champAnswer, champBoard, champClaim, champEnter, champNext, champStatus,
 } from "@/app/games/championship/actions";
+import { MarathonPanel } from "@/components/game/season/marathon-panel";
 import { cn } from "@/lib/utils";
 
 const DIVISIONS: { id: Division; name: string; blurb: string; colour: string }[] = [
@@ -88,6 +89,7 @@ export function Championship() {
 
   return (
     <div className="grid gap-6">
+      <MarathonPanel />
       {/* Hero */}
       <section className="relative overflow-hidden rounded-[2rem] bg-[#13203a] p-6 text-white md:p-8">
         <div className="absolute -top-16 -right-10 size-64 rounded-full bg-[#ffc83d]/20 blur-2xl" aria-hidden />

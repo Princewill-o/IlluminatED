@@ -114,6 +114,17 @@
   --sidebar-ring: #9dbcff;
 }
 
+/* Illustrated game cards keep their light paper surfaces in either theme.
+   Scope their ink and muted labels to that surface instead of inheriting night ink. */
+.event-game-content :is(.bg-white, .bg-\[\#f7f1e6\], .bg-\[\#f1ede4\]) {
+  color: #13203a;
+  --muted-foreground: #526074;
+}
+.event-game-content :is(button, a, input, select):focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: 3px;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

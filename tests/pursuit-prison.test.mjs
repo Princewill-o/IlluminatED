@@ -5,6 +5,18 @@ const W = projectData("src/game/core/world.ts");
 const P = projectData("src/game/core/pursuit.ts");
 const L = projectData("src/game/core/law.ts");
 
+test("vehicle pursuit reroutes towards the driver's current road position", () => {
+  const map = W.londonMap();
+  const start = P.startPursuit(map, map.spawn);
+  const target = start.route[4];
+  assert.ok(target);
+  const next = P.tickPursuit(start, map, target, 1000, .2, [{ id: "player", ...target, hw: W.TILE*.9, hh: W.TILE*.5 }], true);
+  assert.equal(next.stage, "arriving");
+  assert.equal(next.officers.length, 0);
+  assert.deepEqual(next.route.at(-1), target);
+  assert.ok(Math.hypot(next.car.x-start.car.x,next.car.y-start.car.y)>0);
+});
+
 test("A real responding car follows road tiles and officers can catch a stationary player", () => {
   const map = W.londonMap(),
     player = map.spawn;

@@ -314,7 +314,7 @@ async function terraceKit(g: THREE.Group, t: { x: number; y: number; w: number; 
   const jobs: Promise<unknown>[] = [];
   for (let u = 0; u < units; u++) {
     const variant = "abc"[(seed + u * 2) % 3];
-    jobs.push(placeStretched(g, `${LONDON_KIT}terrace-${variant}-${floors}.glb`, x0 + u * uw, z0, uw, d));
+    jobs.push(placeStretched(g, `/world3d/realism/terrace-${variant}-${floors}.glb`, x0 + u * uw, z0, uw, d));
   }
   await Promise.all(jobs);
 }
@@ -1732,6 +1732,10 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       const furniture = homeFurniture(p, Number(map.art?.split("-")[1] ?? 0));
       bendAll(furniture);
       g.add(furniture);
+      const model = f.design ?? f.id;
+      if (["sofa", "bed", "desk", "table"].includes(model)) {
+        jobs.push(place(g, `/world3d/realism/${model}.glb`, p.x + .05, p.y + .05, f.w - .1, f.h - .1).then(() => { g.remove(furniture); }).catch(() => {}));
+      }
     }
   if (hotel) {
     for (const portal of map.portals.filter(p=>p.id.startsWith("stairs-"))) {
@@ -2349,6 +2353,8 @@ export function World3D({
         path,
         offset: i * 3.71,
         knockedUntil: 0,
+        defendUntil: 0,
+        strikeAt: 0,
         greetUntil: 0,
         nextGreeting: 10_000 + ((i * 7919) % 24_000),
         greetingPoint: new THREE.Vector3(),
@@ -2415,6 +2421,7 @@ export function World3D({
     let swingUntil = 0;
     const onFight = () => {
       const now = performance.now();
+      if (now < swingUntil || PLAYER.knockedUntil > now || PLAYER_VEHICLE.active) return;
       swingUntil = now + 700;
       me.char?.play("attack-melee-right");
       const p = getMe();
@@ -2426,7 +2433,9 @@ export function World3D({
         if (d < bd) [best, bd] = [n, d];
       }
       if (best) {
-        best.knockedUntil = now + 2600;
+        best.knockedUntil = now + 650;
+        best.defendUntil = now + 5500;
+        best.strikeAt = now + 1200;
         best.body.char?.play("die");
       }
     };
@@ -2822,7 +2831,7 @@ export function World3D({
         }
 
       const pursuit = getPolice?.();
-      const tased = pursuit?.stage === "tased";
+      const tased = pursuit?.stage === "tased" || PLAYER.knockedUntil > now;
       if (tased && !wasTased) me.char?.play("die");
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
@@ -2896,7 +2905,7 @@ export function World3D({
         const q = cyclistPose(c);
         currentTraffic.push({ id: `cyclist-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: bicycleLength, width: bicycleWidth });
       });
-      if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE });
+      if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE, length: PLAYER_VEHICLE.length, width: PLAYER_VEHICLE.width });
       // Every vehicle is solid: the police car and other players' cars and buses
       // join the traffic picture, so nothing drives through them.
       const solidVehicles: TrafficVehicle[] = [];
@@ -2939,7 +2948,28 @@ export function World3D({
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE });
         if (n.knockedUntil > now) { n.speech.visible = false; return; }
-        if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; }
+        if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; n.body.char?.play("idle"); }
+        if (n.defendUntil > now && !PLAYER_VEHICLE.active) {
+          const pos = n.body.root.position, dx = mx - pos.x, dz = mz - pos.z, distance = Math.hypot(dx, dz);
+          n.speech.visible = false;
+          n.body.root.rotation.y = Math.atan2(dx, dz);
+          if (distance > 1.25 && distance < 5) {
+            const amount = Math.min(distance - 1.2, dt * 2.1);
+            const x = pos.x + dx / distance * amount, z = pos.z + dz / distance * amount;
+            if (!blocked(map, x * TILE, z * TILE)) pos.set(x, pos.y, z);
+            setWalking(n.body, !reduce);
+          } else {
+            setWalking(n.body, false);
+            if (distance <= 1.4 && now >= n.strikeAt && PLAYER.knockedUntil <= now) {
+              n.body.char?.play("attack-melee-right");
+              PLAYER.knockedUntil = now + 1400;
+              n.defendUntil = now + 600;
+              n.strikeAt = now + 2200;
+            }
+          }
+          return;
+        }
+        if (n.defendUntil) { n.defendUntil = 0; n.body.char?.play("idle"); }
         const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
         n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
         if (!n.body.root.visible) { n.speech.visible = false; return; }

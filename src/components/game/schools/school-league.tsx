@@ -6,6 +6,8 @@ import Link from "next/link";
 
 import { CarFront, Medal, School, ShieldCheck, Trophy, Users } from "lucide-react";
 
+import { SchoolSearch } from "./school-search";
+
 import { type League, type MySchool, mySchool, schoolLeague } from "@/app/games/schools/actions";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ export function SchoolLeague() {
 
   return (
     <div className="grid gap-6">
+      <SchoolSearch />
       <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#2b5fd9] to-[#7a5ce6] p-6 text-white md:p-8">
         <School className="absolute right-4 bottom-2 size-36 text-white/10" aria-hidden />
         <p className="text-xs font-black tracking-[0.3em] text-[#ffe066] uppercase">Weekly season</p>

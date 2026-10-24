@@ -134,18 +134,25 @@ export function tickPursuit(
   dt: number,
   /** Every other vehicle: the police car can't drive through any of them. */
   traffic: readonly VehicleBox[] = [],
+  driving = false,
 ): Pursuit {
   if (state.stage === "tased" || state.stage === "challenge" || state.escaped) return state;
   const outside =
-    Math.hypot(player.x - state.origin.x, player.y - state.origin.y) >
+    Math.hypot(player.x - (driving ? state.car.x : state.origin.x), player.y - (driving ? state.car.y : state.origin.y)) >
     state.radius;
   const outsideSince = outside ? (state.outsideSince ?? now) : null;
   if (outsideSince !== null && now - outsideSince >= ESCAPE_SECONDS * 1000)
     return { ...state, outsideSince, escaped: true };
+  if (driving && state.stage === "chasing" && Math.hypot(player.x - state.car.x, player.y - state.car.y) > TILE * 3) {
+    return { ...state, stage: "arriving", officers: [], blockedSince: null, outsideSince };
+  }
   if (state.stage === "arriving") {
-    const route = [...state.route];
+    // A moving suspect needs a moving destination, not the original offence spot.
+    const destination = driving ? traffic.find(v => v.id === "player") ?? player : player;
+    const roadTarget = { x: (Math.floor(destination.x / TILE) + 0.5) * TILE, y: (Math.floor(destination.y / TILE) + 0.5) * TILE };
+    const route = driving ? walkRoute(map, state.car, roadTarget, true) : [...state.route];
     let car = { ...state.car },
-      budget = Math.min(dt, 0.5) * TILE * 5,
+      budget = Math.min(dt, 0.5) * TILE * (driving ? 6.5 : 5),
       blocked = false;
     const others = traffic.filter((v) => v.id !== "police");
     while (budget > 0 && route.length) {
@@ -163,7 +170,8 @@ export function tickPursuit(
     const blockedSince = blocked ? (state.blockedSince ?? now) : null;
     // Stuck in traffic: the officers leave the car and continue on foot.
     const bail = blockedSince !== null && now - blockedSince >= BLOCKED_SECONDS * 1000;
-    const arrived = !route.length || bail;
+    const nearDriver = Math.hypot(player.x - car.x, player.y - car.y) < TILE * 2.2;
+    const arrived = driving ? (nearDriver && bail) : !route.length || bail;
     return {
       ...state,
       car,

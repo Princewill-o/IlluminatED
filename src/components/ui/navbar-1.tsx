@@ -129,7 +129,7 @@ export function Navbar1({
       <div className="pointer-events-none sticky top-0 z-50 flex w-full justify-center px-3 pt-3 pb-2 sm:px-4 sm:pt-4">
         <div
           ref={barRef}
-          className="bg-background pointer-events-auto relative flex w-full max-w-5xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.25)] sm:pl-4"
+          className="bg-background pointer-events-auto relative flex w-full max-w-7xl items-center justify-between gap-3 rounded-full border py-2 pr-2 pl-3 shadow-[0_8px_30px_-12px_rgb(15_23_42/0.25)] sm:pl-4"
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
@@ -147,7 +147,7 @@ export function Navbar1({
           </motion.div>
 
           {/* Desktop navigation */}
-          <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
+          <nav aria-label="Main" className="hidden shrink-0 items-center gap-1 xl:flex">
             {groups.map((group, i) => {
               const active = group.items.some((it) => isActive(it.href));
               const open = openGroup === group.label;
@@ -226,7 +226,7 @@ export function Navbar1({
             {actions}
             {cta && (
               <motion.div
-                className={cn(groups.length ? "hidden sm:block" : "block")}
+                className={cn(groups.length ? "hidden xl:block" : "block")}
                 initial={{ opacity: 0, x: 12 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: 0.2 }}
@@ -238,7 +238,7 @@ export function Navbar1({
             <motion.button
               type="button"
               className={cn(
-                "hover:bg-muted flex size-9 items-center justify-center rounded-full lg:hidden",
+                "hover:bg-muted flex size-9 items-center justify-center rounded-full xl:hidden",
                 !groups.length && "hidden",
               )}
               onClick={toggleMenu}
@@ -263,7 +263,7 @@ export function Navbar1({
             role="dialog"
             aria-modal="true"
             aria-label="Menu"
-            className="bg-background fixed inset-0 z-[60] overflow-y-auto px-6 pt-20 pb-10 lg:hidden"
+            className="bg-background fixed inset-0 z-[60] overflow-y-auto px-6 pt-20 pb-10 xl:hidden"
             initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: "100%" }}

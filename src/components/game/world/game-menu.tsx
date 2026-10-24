@@ -30,7 +30,7 @@ export function loadResume(userId: string): ResumeSpot | null {
 export const resumeHref = (s: ResumeSpot) => `/games/world?map=${encodeURIComponent(s.map)}&x=${s.x}&y=${s.y}`;
 
 /** Pause menu: carry on, or leave the game (your spot is saved for next time). */
-export function GameMenu({ place, onContinue, onLeave, onSwitch }: { place: string; onContinue: () => void; onLeave: () => void; onSwitch?: () => void }) {
+export function GameMenu({ place, onContinue, onLeave, onSwitch, onEvents }: { place: string; onContinue: () => void; onLeave: () => void; onSwitch?: () => void; onEvents?: () => void }) {
   const first = useRef<HTMLButtonElement>(null);
   useEffect(() => { first.current?.focus(); }, []);
   return (
@@ -49,6 +49,7 @@ export function GameMenu({ place, onContinue, onLeave, onSwitch }: { place: stri
           <button ref={first} type="button" onClick={onContinue} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#f2d9a6] px-5 font-black text-[#0d1726] shadow-lg">
             <Play className="size-4 fill-current" aria-hidden /> Continue playing
           </button>
+          {onEvents && <button type="button" onClick={onEvents} className="jelly min-h-12 rounded-full bg-[#7a5ce6] px-5 font-black text-white">Racing, Championship & What If</button>}
           {onSwitch && (
             <button type="button" onClick={onSwitch} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2a3346] px-5 font-black text-white">
               <Globe2 className="size-4" aria-hidden /> Switch world

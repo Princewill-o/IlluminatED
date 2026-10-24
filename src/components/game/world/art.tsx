@@ -335,7 +335,7 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
 /** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
 export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number; id?: string } | undefined)[] = [];
-export const PLAYER = { x: -9999, y: -9999, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
+export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 /**
  * The sandbox rules of the world you're in (player worlds set these; the Open
@@ -350,7 +350,7 @@ export const WORLD_RULES = {
   fly: false,
 };
 export const ONLINE: { id: string; username: string }[] = [];
-export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
+export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
 export const TUTOR = { active: false, x: 0, y: 0 };
 /** A delivery courier walking in from your front door (home map). Phase: arriving, waiting, leaving. */

@@ -103,9 +103,9 @@ function Room() {
 
 export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge: string; stars: number; area: string; wallet: number; onDone: (outcome: Outcome) => void }) {
   const lines = useMemo(() => [
-    `Sit down. I'm Detective Hale. We've had a report of ${charge.toLowerCase()} near ${area}.`,
-    "Here's the thing: the witnesses aren't sure it was you. The footage is grainy. So I'm asking.",
-    "Tell me the truth and the court will go easier on you. Or stay quiet and we'll let the judge decide.",
+    `Interview recording started. Detective Hale, Interview Room 2. The reported offence is ${charge.toLowerCase()}, near ${area}. We will go through the incident in order.`,
+    "The incident report and witness accounts are being reviewed. Give a clear account of where you were and what happened. Do not invent evidence or accuse another player to avoid responsibility.",
+    "You can give your account, request support, or choose not to answer. This is a fictional game interview: the next screen explains each gameplay consequence before you choose. Real legal rights are not determined by a quiz score.",
   ], [charge, area]);
   const [line, setLine] = useState(0);
   const [mode, setMode] = useState<"talk" | "question" | "choose" | "deal" | "waiting" | "result">("talk");
@@ -175,6 +175,8 @@ export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge:
       <div className="ir-bar absolute inset-x-0 bottom-0 bg-black" />
       <p className="absolute top-[12vh] left-1/2 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[10px] font-black tracking-[0.3em] text-[#f2d9a6] uppercase">Under caution · {stars} star{stars === 1 ? "" : "s"}</p>
       <div className="absolute inset-x-3 bottom-[12vh] mx-auto max-w-2xl">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/20 bg-[#0d1117]/95 px-4 py-2 text-xs text-white/85"><span>Case record · {charge} · {area}</span><button type="button" onClick={() => setNote("Interview paused for support. Take your time; you can continue when ready. In real life, ask for a solicitor and an appropriate adult if needed.")} className="rounded-full border border-white/40 bg-white/10 px-3 py-2 font-bold text-white">Request support</button></div>
+        {note && mode !== "choose" && <p role="status" className="mb-2 rounded-xl bg-[#17283a] px-4 py-2 text-sm text-white">{note}</p>}
         <div className="rounded-3xl border border-white/10 bg-[#0d1117]/92 p-4 shadow-2xl sm:p-5">
           {(mode === "talk" || mode === "result") && (
             <button type="button" onClick={next} className="gloss-off block w-full text-left">

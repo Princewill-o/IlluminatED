@@ -38,12 +38,12 @@ export function AccountButton({ className }: { className?: string }) {
     );
 
   const base =
-    "inline-flex h-9 items-center rounded-md px-3.5 text-sm font-semibold transition-colors";
+    "inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3.5 text-sm font-semibold transition-colors";
   return signedIn ? (
     <div
       className={cn(
         "flex items-center gap-2",
-        className?.includes("w-full") && "w-full",
+        className?.includes("w-full") && "w-full flex-col items-stretch",
       )}
     >
       <Link
@@ -53,7 +53,7 @@ export function AccountButton({ className }: { className?: string }) {
       >
         Dashboard
       </Link>
-      {admin && <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined} className={cn(base, "hover:bg-muted border")}>Admin</Link>}
+      {admin && <Link href="/admin" aria-current={pathname.startsWith("/admin") ? "page" : undefined} className={cn(base, "hover:bg-muted border", className)}>Admin</Link>}
       <button
         type="button"
         onClick={async () => {

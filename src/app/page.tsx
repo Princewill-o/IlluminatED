@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// eslint-disable-next-line import/no-unresolved -- resolved through the package "exports" map
+
 import { GeistSans } from "geist/font/sans";
 import { ArrowRight, CalendarCheck, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
+import { RewardsBanner } from "@/components/game/season/rewards-banner";
 import { FeatureTabs } from "@/components/landing/feature-tabs";
 import { GameplayShowcase } from "@/components/landing/gameplay-showcase";
 import { SiteStructuredData } from "@/components/seo/structured-data";
@@ -220,6 +221,7 @@ export default async function Home() {
       </section>
 
       <GameplayShowcase accent={accent} soft={soft} display={display} card={card} />
+      <div className="relative container pb-20"><RewardsBanner /></div>
 
       {/* Apple-style tabs: one feature at a time. */}
       <section className="relative container pb-24" aria-label="What IlluminatED does">

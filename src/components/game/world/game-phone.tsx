@@ -66,6 +66,7 @@ export function GamePhone({
   onGarage = onMap,
   onUniversities = onMap,
   onBus,
+  onEvents,
   time,
   clout,
 }: {
@@ -80,6 +81,7 @@ export function GamePhone({
   onUniversities?: () => void;
   /** Hail a bus and choose where it goes. */
   onBus?: () => void;
+  onEvents?: () => void;
   /** In-game clock. */
   time?: Date;
   clout?: number;
@@ -104,6 +106,7 @@ export function GamePhone({
     { name: "Locker", icon: "locker", action: onLocker },
     { name: "Study", icon: "study", action: onStudy },
     { name: "Awards", icon: "awards", action: onAwards },
+    { name: "Events", icon: "weekly", action: onEvents ?? onAwards },
     { name: "Wallet", icon: "wallet", href: "/games/wealth" },
     { name: "Weekly", icon: "weekly", href: "/games/weekly" },
     { name: "Illumship", icon: "illumship", href: "/games/illumship" },

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { CarFront, Crown, Flag, Ghost as GhostIcon, Link2, Lock, Medal, Play, RotateCcw, Star, Timer, Trophy } from "lucide-react";
 
+import { FriendRaces } from "./friend-races";
 import { Race, type RaceResult } from "./race";
 
 import { type Board, type Ghost, racingBoard, racingFinish, racingGhost, racingProgress, racingStart } from "@/app/games/racing/actions";
@@ -72,7 +73,7 @@ export function RacingHub() {
 
   if (live) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#0b0f17] p-2 sm:p-4">
+      <div className="fixed inset-0 z-[100030] bg-[#0b0f17] p-2 sm:p-4">
         <Race track={live.track} seed={live.seed} kart={kart} ghost={live.ghost ? { name: `@${live.ghost.name}`, events: live.ghost.events } : null}
           onDone={(r) => void finish(r)} onQuit={() => setLive(null)} />
       </div>
@@ -84,6 +85,7 @@ export function RacingHub() {
 
   return (
     <div className="grid gap-6">
+      <FriendRaces />
       {challenge && (
         <div className="flex flex-wrap items-center gap-3 rounded-3xl bg-[#13203a] p-4 text-white">
           <GhostIcon className="size-6 text-[#9ec5ff]" aria-hidden />

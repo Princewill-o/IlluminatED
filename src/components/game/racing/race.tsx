@@ -97,10 +97,13 @@ export interface RaceResult { events: RaceEvent[]; time: number; right: number; 
  * One race. Answer questions (keys 1–4 or tap) to boost; dodge cones with ←/→.
  * The simulation steps in fixed 50 ms ticks, exactly like the server replay.
  */
-export function Race({ track, seed, kart, ghost, onDone, onQuit }: {
+export function Race({ track, seed, kart, ghost, onDone, onQuit, livePlayers, startsAt, onProgress }: {
   track: Track; seed: number; kart: Kart;
   ghost?: { name: string; events: RaceEvent[] } | null;
   onDone: (r: RaceResult) => void; onQuit: () => void;
+  livePlayers?: { name: string; state: RaceState }[];
+  startsAt?: number;
+  onProgress?: (t: number, events: RaceEvent[]) => void;
 }) {
   const world = WORLDS[track.world - 1];
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -114,8 +117,19 @@ export function Race({ track, seed, kart, ghost, onDone, onQuit }: {
   const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null);
   const done = useRef(false);
   const visualLane = useRef(1);
+  const network = useRef({ livePlayers, onProgress });
+  network.current = { livePlayers, onProgress };
 
   useEffect(() => {
+    if (!startsAt) return;
+    const update = () => setCount(Math.max(0, Math.ceil((startsAt - Date.now()) / 1000)));
+    update();
+    const timer = setInterval(update, 100);
+    return () => clearInterval(timer);
+  }, [startsAt]);
+
+  useEffect(() => {
+    if (network.current.livePlayers) { others.current = []; return; }
     others.current = ghost
       ? [{ name: ghost.name, colour: "#9ec5ff", state: startState(), events: [...ghost.events].sort((a, b) => a.t - b.t), i: 0, ghost: true }]
       : rivals(track, seed).map((rv, i) => ({ name: rv.name, colour: rv.colour, state: startState(), events: rivalEvents(track, seed, rv, i), i: 0 }));
@@ -123,10 +137,10 @@ export function Race({ track, seed, kart, ghost, onDone, onQuit }: {
 
   // Countdown.
   useEffect(() => {
-    if (count <= 0) return;
+    if (count <= 0 || startsAt) return;
     const t = setTimeout(() => setCount((c) => c - 1), 800);
     return () => clearTimeout(t);
-  }, [count]);
+  }, [count, startsAt]);
 
   const input = useCallback((e: RaceEvent) => {
     if (count > 0 || done.current) return;
@@ -154,11 +168,15 @@ export function Race({ track, seed, kart, ghost, onDone, onQuit }: {
   useEffect(() => {
     const c = canvas.current!;
     const g = c.getContext("2d")!;
-    let raf = 0, last = performance.now(), acc = 0, hudAt = 0;
+    let raf = 0, last = performance.now(), acc = 0, hudAt = 0, sentAt = 0;
     const resize = () => { const r = c.getBoundingClientRect(); const dpr = Math.min(2, window.devicePixelRatio || 1); c.width = r.width * dpr; c.height = r.height * dpr; };
     resize();
     window.addEventListener("resize", resize);
     const stepOthers = (t: number) => {
+      if (network.current.livePlayers) {
+        others.current = network.current.livePlayers.map((p, i) => ({ name: p.name, colour: ["#9ec5ff", "#ffd23f", "#ff7a6b", "#5fd3a5", "#c7a5ff"][i % 5], state: p.state, events: [], i: 0 }));
+        return;
+      }
       for (const o of others.current) {
         while (o.i < o.events.length && o.events[o.i].t <= o.state.t) applyEvent(o.state, o.events[o.i++], track, seed);
         if (o.state.t < t) advance(o.state, STEP_MS, track, cones);
@@ -174,13 +192,15 @@ export function Race({ track, seed, kart, ghost, onDone, onQuit }: {
         if (s.finishedAt !== null && !done.current) {
           done.current = true;
           // Let the others finish (simulated instantly) to rank everyone.
-          for (const o of others.current) { let guard = 0; while (o.state.finishedAt === null && guard++ < 20000) { while (o.i < o.events.length && o.events[o.i].t <= o.state.t) applyEvent(o.state, o.events[o.i++], track, seed); advance(o.state, STEP_MS, track, cones); } }
+          if (!network.current.livePlayers) for (const o of others.current) { let guard = 0; while (o.state.finishedAt === null && guard++ < 20000) { while (o.i < o.events.length && o.events[o.i].t <= o.state.t) applyEvent(o.state, o.events[o.i++], track, seed); advance(o.state, STEP_MS, track, cones); } }
+          network.current.onProgress?.(s.t, [...events.current]);
           const order = [{ name: "You", time: s.finishedAt, me: true }, ...others.current.map((o) => ({ name: o.name, time: o.state.finishedAt }))].sort((a, b) => (a.time ?? 1e9) - (b.time ?? 1e9));
           const place = order.findIndex((o) => "me" in o && o.me) + 1;
           setTimeout(() => onDone({ events: events.current, time: s.finishedAt!, right: s.right, wrong: s.wrong, place, order }), 900);
         }
       }
       visualLane.current += (s.lane - visualLane.current) * Math.min(1, dt / 90);
+      if (count <= 0 && !done.current && now - sentAt > 1000) { sentAt = now; network.current.onProgress?.(s.t, [...events.current]); }
       render(g, c.width, c.height, s, now);
       if (now - hudAt > 120) {
         hudAt = now;

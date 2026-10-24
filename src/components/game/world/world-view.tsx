@@ -34,9 +34,9 @@ import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits,
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
-import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
+import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
-import { CAR_LENGTH } from "@/game/core/vehicles";
+import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
 import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
 import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
@@ -417,7 +417,7 @@ export function WorldView({
       if (!simulationDue(now)) { raf = requestAnimationFrame(frame); return; }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (pausedRef.current) {
+      if (pausedRef.current || PLAYER.knockedUntil > now) {
         keys.current.clear();
         stick.current = { x: 0, y: 0 };
         target.current = null;
@@ -451,8 +451,15 @@ export function WorldView({
         while (travel > 0 && AUTOPILOT.route[AUTOPILOT.leg]) {
           const g = AUTOPILOT.route[AUTOPILOT.leg], gx = g.x - x, gy = g.y - y, d = Math.hypot(gx, gy);
           if (d > 0.01) heading = Math.atan2(gy, gx);
-          if (d <= travel) { x = g.x; y = g.y; travel -= d; AUTOPILOT.leg++; }
-          else { x += gx / d * travel; y += gy / d * travel; travel = 0; }
+          if (d <= .01) { AUTOPILOT.leg++; continue; }
+          const own: TrafficVehicle = { id: "player", x: x / TILE, y: y / TILE, heading, length: BUS_LENGTH, width: BUS_WIDTH };
+          const vehicles: TrafficVehicle[] = TRAFFIC_BOXES.filter((b): b is NonNullable<typeof b> => Boolean(b)).map((b, i) => ({ id: b.id ?? `solid-${i}`, x: b.x / TILE, y: b.y / TILE, heading: Math.atan2(b.dy ?? 0, b.dx ?? 1), length: Math.max(b.hw, b.hh) * 2 / TILE, width: Math.min(b.hw, b.hh) * 2 / TILE }));
+          const desired = Math.min(travel, d, TILE * .15);
+          const allowed = trafficMoveDistance(own, desired / TILE, Date.now(), vehicles, NPC_SPOTS.map(n => ({ x: n.x / TILE, y: n.y / TILE }))) * TILE;
+          if (allowed < .001) { AUTOPILOT.speed = 0; break; }
+          x += gx / d * allowed; y += gy / d * allowed; travel -= allowed;
+          if (d - allowed < .01) AUTOPILOT.leg++;
+          if (allowed < desired - .001) { AUTOPILOT.speed = 0; break; }
         }
         if (!AUTOPILOT.route[AUTOPILOT.leg]) {
           const done = AUTOPILOT.onArrive;
@@ -528,7 +535,7 @@ export function WorldView({
       const rise = elevationAt(map, p.x, p.y, PLAYER.level);
       PLAYER.z = flying ? 3.2 : rise.z;
       PLAYER.level = flying ? PLAYER.level : rise.level;
-      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
+      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed, length: carRef.current?.startsWith("bus:") ? BUS_LENGTH : CAR_LENGTH, width: carRef.current?.startsWith("bus:") ? BUS_WIDTH : CAR_WIDTH });
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
       const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");

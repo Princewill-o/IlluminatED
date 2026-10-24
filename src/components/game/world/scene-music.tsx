@@ -66,7 +66,7 @@ export function SceneMusic({ scene }: { scene: MusicScene }) {
       </button>
       {open && <section id="scene-music-settings" aria-label="Music settings" className="absolute top-13 right-0 w-60 rounded-2xl border border-[#c8b182]/40 bg-[#183b35] p-4 shadow-xl">
         <p className="text-sm font-bold">{LABELS[scene]}</p>
-        <p className="mt-1 text-xs text-white/70">Original music for this scene</p>
+        <p className="mt-1 text-xs text-white/70">Grand piano, warm bass and soft instrumental beats. Original arrangement for this scene.</p>
         <button type="button" aria-pressed={enabled} onClick={() => update(!enabled, volume)} className="mt-3 min-h-11 w-full rounded-xl bg-[#fff3d8] px-3 text-xs font-bold text-[#183b35]">{enabled ? "Mute music" : "Play music"}</button>
         <label className="mt-3 block text-xs">Music volume · {Math.round(volume * 100)}%
           <input type="range" min="0" max="1" step="0.05" value={volume} onChange={event => update(enabled, Number(event.target.value))} className="mt-2 min-h-6 w-full accent-[#c8b182]" />
