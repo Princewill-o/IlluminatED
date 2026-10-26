@@ -21,7 +21,11 @@ export const Navbar = () => {
   return (
     <Navbar1
       logo={<span className="inline-flex items-center"><Logo wordmarkClassName="max-[480px]:hidden" /><PlanBadge className="ml-2" /></span>}
-      groups={signedIn ? NAV : []}
+      groups={signedIn ? NAV : [{ label: "Learn", items: [
+        { title: "Primary", href: "/curriculum?stage=primary", description: "Years 1–6 · no account needed" },
+        { title: "Secondary", href: "/curriculum?stage=secondary", description: "Years 7–11 · IllumED Slides and practice" },
+        { title: "Sixth form", href: "/curriculum?stage=sixth-form", description: "A-level, BTEC and T Level routes" },
+      ] }]}
       actions={<ThemeToggle className="rounded-full" />}
       cta={
         signedIn === false ? (

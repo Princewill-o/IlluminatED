@@ -40,6 +40,7 @@ import type { Course } from "@/lib/types";
 
 const TOOLS: { href: string; title: string; text: string; icon: LucideIcon }[] =
   [
+    { href: "/curriculum", title: "IllumED Slides", text: "Year 1–11 lessons and recall practice, plus sixth-form course routes.", icon: BookOpen },
     {
       href: "/practice",
       title: "Question bank",

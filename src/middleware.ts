@@ -51,6 +51,7 @@ const METADATA_IMAGE =
 const GAME_CHALLENGE = /^\/games\/challenge\/[A-Za-z0-9]{6}\/?$/;
 
 const isPublic = (path: string) =>
+  path === "/curriculum" || path.startsWith("/curriculum/") ||
   PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
   METADATA_IMAGE.test(path) ||
   GAME_CHALLENGE.test(path) ||

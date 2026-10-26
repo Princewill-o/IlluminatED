@@ -54,7 +54,7 @@ const WEBSITE_PATHS = new Set([
 
 export function isAppPath(path: string) {
   const clean = path.length > 1 ? path.replace(/\/$/, "") : path;
-  if (WEBSITE_PATHS.has(clean) || clean.startsWith("/homework/class/")) return false;
+  if (WEBSITE_PATHS.has(clean) || clean === "/curriculum" || clean.startsWith("/curriculum/") || clean.startsWith("/homework/class/")) return false;
   // Shared challenge cards are a landing page for people who haven't joined yet.
   if (clean.startsWith("/games/challenge/")) return false;
   return true;

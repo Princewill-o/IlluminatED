@@ -7,15 +7,16 @@ import type { Metadata } from "next";
 import { RewardsBanner } from "@/components/game/season/rewards-banner";
 import { FeatureTabs } from "@/components/landing/feature-tabs";
 import { GameplayShowcase } from "@/components/landing/gameplay-showcase";
+import { PlatformTotals } from "@/components/landing/platform-totals";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 import { BlurFade } from "@/components/ui/magic/blur-fade";
 import { Marquee } from "@/components/ui/magic/marquee";
-import { NumberTicker } from "@/components/ui/magic/number-ticker";
+import { platformStats } from "@/lib/server/platform-stats";
 
 export const metadata: Metadata = {
   title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
   description:
-    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress, with a study agent that plans your week. Sign up free, or book a demo for your school.",
+    "Learning from primary school to sixth form: explore IllumED Slides for Years 1–11, plus GCSE, A-level, BTEC and T Level revision, games and school tools. Browse lessons free without an account.",
   alternates: { canonical: "/" },
 };
 
@@ -79,36 +80,7 @@ function Sticker({ children, className }: { children: React.ReactNode; className
   );
 }
 
-/** Live platform totals (public.platform_stats), refreshed at most hourly; falls back to known totals if unreachable. */
-type PlatformStats = { questions: number; practice_sets: number; subjects: number; game_questions: number };
-const STATS_FALLBACK: PlatformStats = { questions: 4419, practice_sets: 256, subjects: 33, game_questions: 758 };
-async function platformStats(): Promise<PlatformStats> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return STATS_FALLBACK;
-  try {
-    const res = await fetch(`${url}/rest/v1/rpc/platform_stats`, {
-      method: "POST",
-      headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: "{}",
-      next: { revalidate: 3600 },
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!res.ok) return STATS_FALLBACK;
-    const data = (await res.json()) as Partial<PlatformStats>;
-    const n = (v: unknown, fallback: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback);
-    return {
-      questions: n(data.questions, STATS_FALLBACK.questions),
-      practice_sets: n(data.practice_sets, STATS_FALLBACK.practice_sets),
-      subjects: n(data.subjects, STATS_FALLBACK.subjects),
-      game_questions: n(data.game_questions, STATS_FALLBACK.game_questions),
-    };
-  } catch {
-    return STATS_FALLBACK;
-  }
-}
-
-export const revalidate = 3600;
+export const revalidate = 300;
 
 export default async function Home() {
   const stats = await platformStats();
@@ -126,7 +98,7 @@ export default async function Home() {
         <div className="relative container flex flex-col items-center pt-20 text-center sm:pt-24">
           <BlurFade delay={0.05}>
           <p className="rounded-full border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-sm font-black text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
-            Now open · Free for UK learners aged 13+
+            Primary to sixth form · Free lesson library
           </p>
           </BlurFade>
           <BlurFade delay={0.15}>
@@ -137,12 +109,13 @@ export default async function Home() {
           </BlurFade>
           <BlurFade delay={0.25}>
           <p className={`mt-6 max-w-xl text-lg leading-8 ${soft}`}>
-            Practise your subjects, take on simulated workplace challenges and explore a 3D London, with a study agent that
-            plans your week and quizzes you on your homework.
+            Start with primary and secondary lessons, then keep learning through GCSE and sixth form.
+            For learners aged 13+, revision games, simulated workplaces and a study agent help bring subjects to life.
           </p>
           </BlurFade>
           <BlurFade delay={0.35}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link prefetch={false} href="/curriculum" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-[#b9f0c9] px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">Browse school lessons</Link>
             <Link prefetch={false} href="/sign-in?mode=sign-up" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               Start free <ArrowRight className="size-4" aria-hidden />
             </Link>
@@ -172,27 +145,14 @@ export default async function Home() {
       {/* Scrolling ribbon of what's inside, then a few real numbers. */}
       <section className="relative mt-16" aria-label="What's inside">
         <Marquee pauseOnHover className="[--duration:35s] [--gap:0.75rem]">
-          {["GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
+          {["Primary · Years 1–6", "Secondary · Years 7–11", "Sixth form · Years 12–13", "IllumED Slides", "GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
             <span key={t} className="rounded-full border-[3px] border-[#1d1a4a] px-4 py-2 text-sm font-black whitespace-nowrap text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]" style={{ background: ["#ffd23f", "#b9f0c9", "#c9d7ff", "#ffb3c7", "#e3c9ff"][i % 5] }}>
               {t}
             </span>
           ))}
         </Marquee>
-        <div className="container mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            [stats.questions, "practice questions, each with an answer and explanation"],
-            [stats.practice_sets, "topic practice sets ready to assign"],
-            [stats.subjects, "GCSE, A-level, BTEC and T Level subjects"],
-            [stats.game_questions, "quiz challenges to play inside the game"],
-            [184, "Locker items to mix into your own look"],
-            [13, "company HQs with jobs to try in the city"],
-          ].map(([n, label]) => (
-            <div key={label as string} className={`${card} p-6 text-center`}>
-              <NumberTicker value={n as number} className={`${display} text-5xl text-[var(--sky-ink)] dark:text-[var(--sky-ink)]`} />
-              <p className={`mt-2 text-sm ${soft}`}>{label}</p>
-            </div>
-          ))}
-        </div>
+        <PlatformTotals initial={stats} />
+        <p className={`container mt-4 text-center text-xs ${soft}`}>Database totals refresh automatically. IllumED Slides covers KS1–KS4 using licensed Oak National Academy material; sixth-form courses are listed separately. <Link href="/curriculum" className="underline">Explore the library</Link>.</p>
       </section>
 
       {/* How it works: a short motion film. */}
@@ -337,7 +297,7 @@ export default async function Home() {
             </p>
           </div>
           <ul className={`space-y-3 leading-7 ${soft}`}>
-            <li>For ages 13+. Use a username and keep personal information private.</li>
+            <li>Open lessons for primary and secondary pupils; accounts and social features remain for ages 13+. Keep personal information private.</li>
             <li>Read the <Link prefetch={false} href="/safeguarding" className="underline">safeguarding information</Link>, including messaging limits.</li>
             <li>Report problems through <Link prefetch={false} href="/contact" className="underline">support</Link>. AI and practice questions can contain mistakes.</li>
             <li>Schools can review access and data requirements before agreeing a pilot.</li>

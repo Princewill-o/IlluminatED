@@ -145,7 +145,7 @@ const FAQ: { group: string; items: { q: string; a: React.ReactNode }[] }[] = [
     items: [
       {
         q: "Do I need an account?",
-        a: "Anyone aged 13+ can create a free account at illumed.co.uk. Core study is free, with optional Plus (£5.99/month) and Plus+ Experience (£12.99/month) plans. School licences are agreed separately.",
+        a: "Primary and secondary pupils can open the IllumED Slides library without an account. Anyone aged 13+ can create a free account at illumed.co.uk to save progress and use account features. Core study is free, with optional Plus (£5.99/month) and Plus+ Experience (£12.99/month) plans. School licences are agreed separately.",
       },
       {
         q: "Will my progress sync to my phone?",
