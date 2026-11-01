@@ -1,0 +1,13 @@
+# Supplied city models, hospital and voxel offices
+
+The city hospital now has its own stable `city-hospital` plot at (56,25), size 10×8, with a minimum height of eight tiles. Its centred entrance is the actual hospital portal at (60,33), width two tiles; the dropoff at (61,34) remains walkable. A pale clinical facade, glazed lobby, teal medical plus and reception canopy identify the venue. It does not depend on whichever generic building happens to be nearest Waterloo. Both existing hotels remain present at separate clear plots.
+
+Hospital rooms identify the west ward, east observation ward and reception/waiting lounge. Atomic Realm's supplied hospital pack furnishes all four bay blocks with beds, monitors, trolleys, overhead fixtures and storage. Added window-wall panels and a floor strip use the same pack; room dividers remain inside existing solid bed-bay tiles. The reception uses a voxel computer. Doctor and exit interactions and floor collisions are unchanged.
+
+Selected assets from `low_poly_city-pack` and `low_poly_city_game-ready` now take precedence over the older Crayon selections, which previously masked some source replacements. Standalone sports, coffee, restaurant and modern-office buildings retain their venues. Additional white/grey/orange standalone buildings dress the library, research labs and design studios; they are extracted individually, not overlaid as a second complete city. The original CC BY source notices are retained under `public/world3d/selected-city`.
+
+The voxel office conversion includes five additional models: white chair, brown/white desks, meeting table and coffee table (12 models total). Deterministic sector palettes choose imported desk, chair and computer families for tech, finance, creative and science rooms. Fitted models keep existing solid furniture footprints. The pack's author is MariaIsMe (Maria Is Me), released under CC BY 4.0; original attribution is `public/world3d/voxel-office/ATTRIBUTION.txt`. The VOX source remains an editable alternative; the matching OBJ files supply runtime GLBs.
+
+The realistic-car worker's common placement helper is wired into every existing `placeCar` call, so local/player/remote traffic use the supplied realistic car family. Bicycle, coach, bus and train renderers remain separate vehicle types.
+
+Validation: `node --test tests/supplied-building-assets.test.mjs tests/city-layout.test.mjs tests/additional-world-assets.test.mjs tests/kaykit-world-assets.test.mjs` (19 pass), plus `npm run typecheck`. Hospital portal reachability, both hotels, source model embedding and sector furniture selection are covered.

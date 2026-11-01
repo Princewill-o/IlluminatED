@@ -9,6 +9,7 @@ import HOME_ART from "../../../../public/world/home.json";
 import MOVERS from "../../../../public/world/movers.json";
 import { WorldFigure, poseWorldFigure } from "../character";
 
+import { residentIdentity } from "@/game/core/city-social";
 import { COACHES, COACH_LENGTH, COACH_WIDTH, coachById, type CoachId } from "@/game/core/coaches";
 import { look } from "@/game/core/cosmetics";
 import { cityFallbackPlan } from "@/game/core/fallback-city";
@@ -338,7 +339,9 @@ export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx:
 export const PLAYER = { x: -9999, y: -9999 };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
 /** Current local pedestrians, shared by both renderers and the game loop. */
-export const NPC_SPOTS: { x: number; y: number }[] = [];
+export const NPC_SPOTS: { x: number; y: number; id?: string; name?: string }[] = [];
+/** Visual-only delivery props; rewards are verified by the career session server. */
+export const DELIVERY_SCENE = { active: false, carrying: false, target: null as { x: number; y: number; name: string; pickup: boolean } | null };
 
 /** Blinds on the buses: the Superloop and the BL1. */
 export const BUS_ROUTE_CODES = ["SL6", "BL1", "SL8"];
@@ -522,7 +525,7 @@ function LondonLife({ map }: { map: WorldMap }) {
         const pose = residentPose(path, reduce ? 0 : secs, i * 3.71);
         const x = pose.x * TILE;
         const y = pose.z * TILE;
-        NPC_SPOTS.push({ x, y });
+        NPC_SPOTS.push({ x, y, ...residentIdentity(map.id, path) });
         el.style.transform = `translate3d(${Math.round(x - 20)}px, ${Math.round(y - 46)}px, 0)`;
         el.style.zIndex = String(Math.round(y));
         const ang = pose.angle;

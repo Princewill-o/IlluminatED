@@ -9,6 +9,7 @@ import { TubeBadge } from "./tube-map";
 import { buyCar, hireBike } from "@/app/games/world/actions";
 import { BIKES, type BikeBrand } from "@/game/core/bikes";
 import { CARS } from "@/game/core/cars";
+import { realisticCarPreview } from "@/game/core/realistic-cars";
 import { STATION_PLATFORM_Y, TILE, type WorldMap } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -408,9 +409,9 @@ export function Dealership({
             const on = driving === c.id;
             return (
               <li key={c.id} className="flex flex-col rounded-2xl border-2 border-white bg-white p-3 shadow-[0_4px_0_rgba(19,32,58,0.08)]">
-                <div className="grid h-20 place-items-center rounded-xl bg-[#e8eef8] [background-image:linear-gradient(transparent_70%,#d0d8e6_70%)]">
+                <div className="grid h-28 place-items-center rounded-xl bg-[#e8eef8] [background-image:linear-gradient(transparent_70%,#d0d8e6_70%)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/world/movers/${c.id}-E.webp`} alt="" className="dealer-car h-16 object-contain" />
+                  <img src={realisticCarPreview(c.id)} alt={c.name} className="dealer-car h-24 max-w-full object-contain" />
                 </div>
                 <p className="mt-3 font-black">{c.name}</p>
                 <p className="text-xs text-[#13203a]/70">{c.blurb}</p>

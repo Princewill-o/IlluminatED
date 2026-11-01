@@ -45,7 +45,7 @@ export function addUniformLogo(
   patch.position.set(
     (bounds.min.x + bounds.max.x) / 2 - size * 0.5,
     bounds.min.y + (bounds.max.y - bounds.min.y) * 0.7,
-    bounds.max.z + 0.005,
+    bounds.max.z + (body.name==='Modern_Body'?.09:.005),
   );
   torso.attach(patch);
 }

@@ -1,0 +1,27 @@
+{
+  "resources": {
+    "pack": "KayKit_ResourceBits_1.0_FREE",
+    "license": "CC0",
+    "files": 153
+  },
+  "medieval": {
+    "pack": "KayKit_Medieval_Hexagon_Pack_1.0_FREE",
+    "license": "CC0",
+    "files": 455
+  },
+  "platformer": {
+    "pack": "KayKit_Platformer_Pack_1.0_FREE",
+    "license": "CC0",
+    "files": 745
+  },
+  "restaurant": {
+    "pack": "KayKit_Restaurant_Bits_1.0_FREE",
+    "license": "CC0",
+    "files": 289
+  },
+  "city": {
+    "pack": "KayKit_City_Builder_Bits_1.0_FREE",
+    "license": "CC0",
+    "files": 83
+  }
+}

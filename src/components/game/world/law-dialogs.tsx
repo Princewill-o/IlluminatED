@@ -1,9 +1,10 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
-import { BookOpen, Siren, X } from "lucide-react";
+import { BookOpen, Coins, Gavel, ShieldCheck, Siren, X } from "lucide-react";
 
 import { ARCADE } from "@/game/core/arcade";
+import { adjudicateStreetCase, settleStreetVerdict, type StreetCourtCase, type StreetResolution, type StreetVerdict } from "@/game/core/civilian-conflict";
 import { POLICE_QUESTIONS } from "@/game/core/pursuit";
 import { createRng, newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
@@ -158,4 +159,46 @@ export function PrisonStudy({
       </section>
     </div>
   );
+}
+
+/** A separate evidence-based hearing for recorded civilian encounters. */
+export function StreetHearingDialog({ caseFile, balance, onResolved }: {
+  caseFile: StreetCourtCase;
+  balance: number;
+  onResolved: (resolution: StreetResolution) => void;
+}) {
+  const [verdict,setVerdict] = useState<StreetVerdict | null>(null);
+  const completed = useRef(false);
+  const [busy,setBusy] = useState(false);
+  const defence = caseFile.evidence.firstAttacker === "civilian";
+  const evidence = caseFile.evidence;
+  const resolve = (choice: "pay" | "custody") => {
+    if (!verdict || completed.current) return;
+    completed.current = true; setBusy(true);
+    onResolved(settleStreetVerdict(verdict,balance,Date.now(),choice));
+  };
+  return <div className="absolute inset-0 z-[100008] grid place-items-center overflow-y-auto bg-[#13203a]/80 p-4">
+    <section role="dialog" aria-modal="true" aria-label="Street incident hearing" className="my-auto w-full max-w-lg rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a] [color-scheme:light]">
+      <div className="flex items-center gap-3"><span className="grid size-12 place-items-center rounded-2xl bg-[#e0ece7] text-[#247666]"><Gavel className="size-7"/></span><div><p className="text-xs font-black uppercase tracking-widest text-[#6a634e]">Crown Court · fictional game</p><h2 className="mt-1 text-xl font-black">{defence ? "Present your self-defence case" : "Street-scuffle hearing"}</h2></div></div>
+      <p className="mt-4 text-sm leading-relaxed">{caseFile.charge}. The court reviews who landed the first hit and what happened afterwards.</p>
+      <dl className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-white p-4 text-sm">
+        <div><dt className="text-xs text-[#68717c]">First landed hit</dt><dd className="mt-1 font-bold">{defence ? caseFile.npcName : "You"}</dd></div>
+        <div><dt className="text-xs text-[#68717c]">Incident duration</dt><dd className="mt-1 font-bold">{Math.ceil(evidence.durationMs/1000)} seconds</dd></div>
+        <div><dt className="text-xs text-[#68717c]">Damage you received</dt><dd className="mt-1 font-bold">{evidence.damageToPlayer}</dd></div>
+        <div><dt className="text-xs text-[#68717c]">Damage you dealt</dt><dd className="mt-1 font-bold">{evidence.damageToCivilian}</dd></div>
+      </dl>
+      {defence && <p className={cn("mt-3 rounded-xl p-3 text-sm",evidence.proportionate?"bg-[#e0ece7] text-[#195b4f]":"bg-[#fff0d3] text-[#775229]")}><ShieldCheck className="mr-2 inline size-4"/>{evidence.proportionate ? "The record supports a prompt, limited response to the attack." : evidence.hitsAfterThreatEnded ? "The record includes hits after the civilian stopped attacking." : evidence.lateRetaliationHits ? "The record includes a delayed response after the attack." : "The response caused substantially more damage than the attack."}</p>}
+      {!verdict ? <div className="mt-5 space-y-2">
+        <p className="mb-3 text-sm">A lost case brings a {caseFile.fine} Clout fine. You can pay and leave; if you cannot afford it, you serve {Math.round(caseFile.stars*45)} seconds in the existing jail activity.</p>
+        <button type="button" onClick={()=>setVerdict(adjudicateStreetCase(caseFile,"contest"))} className="min-h-12 w-full rounded-2xl bg-[#2b5fd9] px-4 py-3 text-left font-black text-white">{defence ? "Explain self-defence and contest the case" : "Contest the case"}<span className="mt-1 block text-xs font-medium text-white/85">Game acquittal chance: {Math.round(caseFile.acquittalChance*100)}% · {evidence.witnesses} witness{evidence.witnesses===1?"":"es"}</span></button>
+        <button type="button" onClick={()=>setVerdict(adjudicateStreetCase(caseFile,"admit"))} className="min-h-11 w-full rounded-2xl border border-[#13203a]/20 bg-white px-4 py-3 text-left text-sm font-bold">Accept responsibility · {Math.max(1,Math.round(caseFile.fine*.8))} Clout fine</button>
+      </div> : verdict.outcome === "acquitted" ? <div className="mt-5 rounded-2xl bg-[#e0ece7] p-4">
+        <p className="font-black text-[#195b4f]">Case dismissed. No fine or jail.</p><p className="mt-1 text-sm">The incident is closed. You can return to the city.</p>
+        <button type="button" disabled={busy} onClick={()=>resolve("pay")} className="mt-4 min-h-11 w-full rounded-full bg-[#247666] px-4 py-3 font-black text-white disabled:opacity-50">Leave the court</button>
+      </div> : <div className="mt-5 rounded-2xl bg-white p-4">
+        <p className="flex items-center gap-2 font-black"><Coins className="size-5 text-[#a27325]"/>Fine: {verdict.fine} Clout</p><p className="mt-2 text-sm">Your balance: {Math.max(0,Math.floor(balance))} Clout.</p>
+        {balance >= verdict.fine ? <button type="button" disabled={busy} onClick={()=>resolve("pay")} className="mt-4 min-h-11 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white disabled:opacity-50">Pay {verdict.fine} Clout and leave</button> : <><p className="mt-3 text-sm text-[#8a463c]">You cannot afford this fine. Your Clout will stay unchanged and the sentence lasts {Math.round(verdict.custodyMs/1000)} seconds.</p><button type="button" disabled={busy} onClick={()=>resolve("custody")} className="mt-4 min-h-11 w-full rounded-full bg-[#13203a] px-4 py-3 font-black text-white disabled:opacity-50">Cannot pay · serve the sentence</button></>}
+      </div>}
+    </section>
+  </div>;
 }

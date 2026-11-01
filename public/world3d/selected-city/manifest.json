@@ -1,0 +1,67 @@
+[
+  {
+    "file": "restaurant.glb",
+    "source": "low_poly_city-pack",
+    "node": "RESTAURANT"
+  },
+  {
+    "file": "sports-store.glb",
+    "source": "low_poly_city-pack",
+    "node": "CLOTHES SHOP"
+  },
+  {
+    "file": "coffee-shop.glb",
+    "source": "low_poly_city-pack",
+    "node": "COFFEE SHOP"
+  },
+  {
+    "file": "fruit-shop.glb",
+    "source": "low_poly_city-pack",
+    "node": "FRUIT SHOP"
+  },
+  {
+    "file": "sports-centre.glb",
+    "source": "low_poly_city-pack",
+    "node": "SPORT CENTER"
+  },
+  {
+    "file": "white-building.glb",
+    "source": "low_poly_city-pack",
+    "node": "WHITE BUILDING"
+  },
+  {
+    "file": "grey-building.glb",
+    "source": "low_poly_city-pack",
+    "node": "GREY BUILDING2"
+  },
+  {
+    "file": "orange-building.glb",
+    "source": "low_poly_city-pack",
+    "node": "ORANGE BUILDING3"
+  },
+  {
+    "file": "commercial-1.glb",
+    "source": "low_poly_city_game-ready",
+    "node": "Commercial 1_1"
+  },
+  {
+    "file": "commercial-3.glb",
+    "source": "low_poly_city_game-ready",
+    "node": "Commercial 3_4"
+  },
+  {
+    "file": "commercial-5.glb",
+    "source": "low_poly_city_game-ready",
+    "node": "Commercial 5_5"
+  },
+  {
+    "file": "modern-office.glb",
+    "source": "low_poly_city_game-ready",
+    "node": "Modern Office.001_42"
+  },
+  {
+    "file": "post-office.glb",
+    "source": "low_poly_city_game-ready",
+    "node": "Post Office_2"
+  }
+]

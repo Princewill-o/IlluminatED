@@ -1,3 +1,5 @@
+import { ADVENTURERS, adventurerFor } from "./adventurers";
+import { BLOCKY_OUTFITS } from "./blocky-outfits";
 import { DYES } from "./looks";
 
 /**
@@ -24,6 +26,7 @@ export type Slot =
   | "bottomColor"
   | "shoesColor"
   | "hat"
+  | "cape"
   | "face"
   | "held"
   | "pet"
@@ -61,6 +64,7 @@ const E = make("epic");
 const L = make("legendary");
 
 export const COSMETICS: Cosmetic[] = [
+  ...ADVENTURERS.map(m => C(m.id, "head", m.name)),
   // ── Body ───────────────────────────────────────────────
   C("skin-1", "skin", "Tone 1", 0, { color: "#fbe0cf" }),
   C("skin-2", "skin", "Tone 2", 0, { color: "#f1c09a" }),
@@ -70,13 +74,6 @@ export const COSMETICS: Cosmetic[] = [
   C("skin-5", "skin", "Tone 6", 0, { color: "#8a5636" }),
   C("skin-6", "skin", "Tone 7", 0, { color: "#64402b" }),
   C("skin-8", "skin", "Tone 8", 0, { color: "#42291c" }),
-
-  C("head-human", "head", "Human"),
-  E("head-dog", "head", "Good-boy head", 1500, { color: "#c9a46b" }),
-  E("head-cow", "head", "Moo head", 1500, { color: "#f3f6fb" }),
-  L("head-robot", "head", "Robot head", 3000, { set: "space", color: "#b3abc4" }),
-  L("head-alien", "head", "Alien head", 3000, { set: "space", color: "#8de08a" }),
-  L("head-lion", "head", "Lion head", 0, { unlock: "streak:14", color: "#e39b2d" }),
 
   // ── Face ───────────────────────────────────────────────
   C("eyes-round", "eyes", "Round"),
@@ -132,6 +129,8 @@ export const COSMETICS: Cosmetic[] = [
   C("haircol-green", "hairColor", "Green", 120, { color: "#5fd3a5" }),
   R("haircol-silver", "hairColor", "Silver", 250, { color: "#d8d4e0" }),
 
+  ...BLOCKY_OUTFITS.map(outfit => C(outfit.id, "top", outfit.name, 0, { color: outfit.primary })),
+
   // ── Clothes ────────────────────────────────────────────
   C("top-tee", "top", "IlluminatED tee", 0, { color: "#2d1b69" }),
   C("top-hoodie", "top", "Comfy hoodie", 0, { color: "#3a2d58" }),
@@ -148,6 +147,12 @@ export const COSMETICS: Cosmetic[] = [
   L("top-labcoat", "top", "Dr Ow's lab coat", 0, { unlock: "ceo:st-plasters", color: "#ffffff", set: "st-plasters" }),
   L("top-hivis", "top", "Hi-vis of honour", 0, { unlock: "ceo:bodge", color: "#f2d9a6", set: "bodge" }),
   L("top-tracksuit", "top", "Nike tracksuit", 0, { unlock: "ceo:psyke", color: "#6bc6ff", set: "psyke" }),
+
+  C("cape-none", "cape", "No cape"),
+  C("cape-sky", "cape", "Skyline cape", 0, { color: "#2b5fd9", set: "heroes" }),
+  C("cape-crimson", "cape", "Crimson cape", 0, { color: "#c8322d", set: "royal" }),
+  C("cape-emerald", "cape", "Emerald cape", 0, { color: "#247b69", set: "heroes" }),
+  C("cape-sunrise", "cape", "Sunrise cape", 0, { color: "#f2a83b", set: "heroes" }),
 
   // ── Lumen League hero suits: Season Pass rewards (original heroes) ──
   E("top-hero-photon", "top", "Photon suit", 0, { unlock: "pass:1", color: "#0f9a8a", set: "heroes" }),
@@ -259,7 +264,7 @@ export type Avatar = Record<Slot, string>;
 
 export const DEFAULT_AVATAR: Avatar = {
   skin: "skin-3",
-  head: "head-human",
+  head: "head-blocky-hero",
   eyes: "eyes-round",
   brows: "brows-soft",
   mouth: "mouth-smile",
@@ -277,6 +282,7 @@ export const DEFAULT_AVATAR: Avatar = {
   held: "held-none",
   pet: "pet-none",
   brand: "brand-none",
+  cape: "cape-none",
 };
 
 export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[] }[] = [
@@ -309,6 +315,7 @@ export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[
       { slot: "top", label: "Tops" },
       { slot: "topColor", label: "Top colour" },
       { slot: "brand", label: "Brand" },
+      { slot: "cape", label: "Capes" },
       { slot: "bottom", label: "Bottoms" },
       { slot: "bottomColor", label: "Bottoms colour" },
       { slot: "shoes", label: "Shoes" },
@@ -333,7 +340,8 @@ export function sanitiseAvatar(raw: unknown, owned: Set<string>): Avatar {
   const out = { ...DEFAULT_AVATAR };
   if (raw && typeof raw === "object") {
     for (const { slot } of SLOTS) {
-      const id = (raw as Record<string, unknown>)[slot];
+      const value = (raw as Record<string, unknown>)[slot];
+      const id = slot === "head" && typeof value === "string" ? adventurerFor(value).id : value;
       const item = typeof id === "string" ? cosmeticById(id) : undefined;
       if (item && item.slot === slot && (isFree(item) || owned.has(item.id))) out[slot] = item.id;
     }
@@ -342,7 +350,7 @@ export function sanitiseAvatar(raw: unknown, owned: Set<string>): Avatar {
 }
 
 /** Builds a full avatar from a partial one (used for bosses and previews). */
-export const look = (partial: Partial<Avatar>): Avatar => ({ ...DEFAULT_AVATAR, ...partial });
+export const look = (partial: Partial<Avatar>): Avatar => ({ ...DEFAULT_AVATAR, ...partial, head: adventurerFor(partial.head).id });
 
 export function unlockLabel(unlock: string, companyName: (id: string) => string) {
   const [kind, value] = unlock.split(":");

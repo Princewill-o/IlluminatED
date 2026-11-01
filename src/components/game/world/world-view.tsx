@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { HudSlot } from "./hud";
+import { ControllerLegend } from "./controller-legend";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
@@ -35,7 +36,6 @@ import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { CAR_LENGTH } from "@/game/core/vehicles";
-import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
 import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
@@ -205,6 +205,7 @@ export function WorldView({
   onRoom,
   onChangeServer,
   onDrivingOffence,
+  onNearby,
   speed = 1,
   bike = null,
   car = null,
@@ -231,6 +232,7 @@ export function WorldView({
   onPortal: (portal: Portal) => void;
   onRoom?: (room: string | null) => void;
   onChangeServer: () => void;
+  onNearby?: (people: import("@/game/core/city-social").NearbyPerson[]) => void;
   onDrivingOffence?: (offence: RoadViolation) => void;
 }) {
   const policeRef = useRef(police);
@@ -251,6 +253,9 @@ export function WorldView({
   pausedRef.current = paused;
   const keys = useRef(new Set<string>());
   const stick = useRef({ x: 0, y: 0 });
+  const gamepadMove = useRef({ x: 0, y: 0 });
+  const gamepadBrake = useRef(false);
+  const gamepadButtons = useRef({ interact: false, jump: false });
   const target = useRef<{ x: number; y: number } | null>(null);
   /** Camera position in world px, shared with the click handler. */
   const camRef = useRef({ x: 0, y: 0 });
@@ -258,9 +263,7 @@ export function WorldView({
   const zoom = map.art === "london" || map.art === "highlands" ? 1.7 : map.art ? 1.35 : 1;
   const activeZoom = useRef(zoom);
   /** Every playable map uses the same fully modelled 3D scene. */
-  const [quality, setQuality] = useState<VisualQuality>("auto");
   const [immersive, setImmersive] = useState(false);
-  useEffect(() => { try {setQuality(readVisualQuality(localStorage.getItem("world-graphics")));} catch { /* Storage is optional. */ } }, []);
   const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
   const is3d = graphicsState === "ready";
   // Start the 3D renderer directly; the world never flashes a flat-map view.
@@ -281,7 +284,21 @@ export function WorldView({
   const [near, setNear] = useState<Portal | null>(null);
   const [sheet, setSheet] = useState(false);
   const [touch, setTouch] = useState(false);
+  const [gamepadConnected, setGamepadConnected] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if(!onNearby)return;
+    const refresh=()=>{
+      const people:import("@/game/core/city-social").NearbyPerson[]=[
+        ...NPC_SPOTS.filter(n=>n.id&&n.name).map(n=>({id:n.id!,name:n.name!,kind:"npc" as const,x:n.x,y:n.y,distance:Math.hypot(n.x-PLAYER.x,n.y-PLAYER.y)})),
+        ...Array.from(world.players.current.values()).filter(p=>!hidden.has(p.id)).map(p=>({id:p.id,name:p.username,kind:"player" as const,x:p.x,y:p.y,distance:Math.hypot(p.x-PLAYER.x,p.y-PLAYER.y)})),
+      ];
+      onNearby(people.filter(p=>p.distance<=64).sort((a,b)=>a.distance-b.distance).slice(0,8));
+    };
+    refresh();const timer=setInterval(refresh,350);
+    return()=>{clearInterval(timer);onNearby([]);};
+  },[map.id,onNearby,world.players,hidden]);
+
   const [picked, setPicked] = useState<RemotePlayer | null>(null);
   const [roster, setRoster] = useState<RemotePlayer[] | null>(null);
   const nearRef = useRef<Portal | null>(null);
@@ -348,6 +365,43 @@ export function WorldView({
     if (map.kind === "station" && nearRef.current?.id === "board") return;
     if (nearRef.current) onPortal(nearRef.current);
   }, [onPortal, map.kind]);
+  // Standard browser gamepad mapping: left stick moves, Cross interacts,
+  // Square jumps, and Circle brakes while driving.
+  useEffect(() => {
+    let frame = 0;
+    let connected = false;
+    const poll = () => {
+      const pad = Array.from(navigator.getGamepads?.() ?? []).find((item) => item?.connected) ?? null;
+      const nowConnected = Boolean(pad);
+      if (connected !== nowConnected) {
+        connected = nowConnected;
+        setGamepadConnected(nowConnected);
+      }
+      if (!pad || pausedRef.current) {
+        gamepadMove.current = { x: 0, y: 0 };
+        gamepadBrake.current = false;
+        gamepadButtons.current = { interact: false, jump: false };
+      } else {
+        const axis = (n: number) => Math.abs(n) < 0.18 ? 0 : n;
+        let x = axis(pad.axes[0] ?? 0);
+        let y = axis(pad.axes[1] ?? 0);
+        if (pad.buttons[14]?.pressed) x = -1;
+        if (pad.buttons[15]?.pressed) x = 1;
+        if (pad.buttons[12]?.pressed) y = -1;
+        if (pad.buttons[13]?.pressed) y = 1;
+        gamepadMove.current = { x, y };
+        gamepadBrake.current = Boolean(pad.buttons[1]?.pressed);
+        const interact = Boolean(pad.buttons[0]?.pressed);
+        const jump = Boolean(pad.buttons[2]?.pressed);
+        if (interact && !gamepadButtons.current.interact) enter();
+        if (jump && !gamepadButtons.current.jump) window.dispatchEvent(new Event("illuminated:jump"));
+        gamepadButtons.current = { interact, jump };
+      }
+      frame = requestAnimationFrame(poll);
+    };
+    frame = requestAnimationFrame(poll);
+    return () => cancelAnimationFrame(frame);
+  }, [enter]);
   const portalCallback = useRef(onPortal);
   portalCallback.current = onPortal;
 
@@ -411,6 +465,9 @@ export function WorldView({
       if (!dx && !dy && (stick.current.x || stick.current.y)) {
         dx = stick.current.x;
         dy = stick.current.y;
+      } else if (!dx && !dy && (gamepadMove.current.x || gamepadMove.current.y)) {
+        dx = gamepadMove.current.x;
+        dy = gamepadMove.current.y;
       }
       const p = pos.current;
       const driving = Boolean(carRef.current);
@@ -420,7 +477,7 @@ export function WorldView({
         ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
-      const driven = driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" "), maxSpeed: 96 * speedRef.current }, dt,
+      const driven = driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: 96 * speedRef.current }, dt,
         obstacles, (impact) => { collision = impact; }) : null;
       if (driven && map.art === "london" && !pausedRef.current) {
         const violation = checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) });
@@ -609,10 +666,9 @@ export function WorldView({
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
     >
-      <HudSlot area="bl-row" order={2}><details aria-label="Graphics settings" className="group relative rounded-full border border-white/20 bg-[#13203a]/95 px-3 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
+      <HudSlot area="bl-row" order={2}><details aria-label="Camera settings" className="group relative rounded-full border border-white/20 bg-[#13203a]/95 px-3 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
         <summary className="flex min-h-10 cursor-pointer items-center font-bold">Settings</summary>
         <div className="absolute bottom-full left-0 mb-2 flex w-max max-w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 shadow-xl">
-        <label>Graphics <select aria-label="3D graphics quality" value={quality} onChange={e=>{const next=readVisualQuality(e.target.value);setQuality(next);try{localStorage.setItem("world-graphics",next);}catch{/* Optional. */}}} className="ml-1 min-h-9 rounded bg-[#243c4b] px-1 font-bold text-white"><option value="auto">Balanced</option><option value="cinematic">Cinematic · more GPU</option><option value="low">Performance</option></select></label>
         <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
         </div>
       </details></HudSlot>
@@ -676,7 +732,6 @@ export function WorldView({
 
       {is3d && (
         <World3D
-          quality={quality}
           immersive={immersive}
           map={map}
           avatar={me.avatar}
@@ -703,7 +758,7 @@ export function WorldView({
       {/* The old flat-map lighting overlay is kept mounted for the movement
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
-      {serverId!=="solo" && <RoomChat key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
+      {serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
@@ -792,8 +847,11 @@ export function WorldView({
         {touch ? <div className="flex items-end gap-2"><Joystick driving={Boolean(car)} onMove={(x, y) => {
           stick.current = { x, y };
           if (x || y) target.current = null;
-        }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}</div> : (
-          <p className="pointer-events-none rounded-xl bg-black/60 px-3 py-2 text-[10px] text-[#d8d4e0] sm:text-xs">{car ? "W / ↑ accelerate · S / ↓ reverse · A D steer · Space brake" : "WASD / arrows · E to interact"}</p>
+        }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}{gamepadConnected && <span className="max-w-52 rounded-lg bg-black/70 p-2 text-[10px] leading-relaxed text-white"><ControllerLegend driving={Boolean(car)} connected /></span>}</div> : (
+          <p className="pointer-events-none rounded-xl bg-black/70 px-3 py-2 text-[10px] leading-relaxed text-[#f0eee9] sm:text-xs">
+            {car ? "W / ↑ accelerate · S / ↓ reverse · A D / ← → steer · Space brake" : "W A S D or ↑ ↓ ← → move · E / Enter interact"}
+            <span className="mt-1 block"><ControllerLegend driving={Boolean(car)} connected={gamepadConnected} /></span>
+          </p>
         )}
       </HudSlot>
       <HudSlot area="br" order={5}>
@@ -834,6 +892,7 @@ export function WorldView({
             <p className="mt-2 text-lg font-black">@{picked.username}</p>
             {picked.org && <p className="text-sm font-bold text-[#6bc6ff]">✓ Verified · {picked.org}</p>}
             <div className="mt-4 grid gap-2">
+              <button type="button" disabled={Math.hypot(picked.x-PLAYER.x,picked.y-PLAYER.y)>64} onClick={()=>{window.dispatchEvent(new Event("illuminated:nearby"));setPicked(null);}} className="jelly min-h-11 rounded-full bg-[#2b5fd9] py-2.5 font-bold text-white disabled:opacity-40">{Math.hypot(picked.x-PLAYER.x,picked.y-PLAYER.y)>64?"Walk closer to add friend":"Add nearby friend"}</button>
               {picked.org && (
                 <a href={`/messages/new?to=${encodeURIComponent(picked.id)}`} className="jelly rounded-full bg-[#f2d9a6] py-2.5 font-black text-[#0d1726]">
                   Ask for advice

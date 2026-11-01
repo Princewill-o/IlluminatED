@@ -9,5 +9,5 @@ export function dailyJobRoute(workplace:string,map:WorldMap):JobStop[]{
  const first={x:pickup.rect.x+pickup.rect.w/2,y:pickup.rect.y+pickup.rect.h/2};
  const homes=buildLondon().things.flatMap(t=>t.kind==="building"&&t.style==="terrace"?[safeSpot(map,(t.x+t.w/2)*TILE,(t.y+t.h+0.8)*TILE)]:[]).filter(p=>Math.hypot(p.x-first.x,p.y-first.y)>TILE*4).sort((a,b)=>Math.hypot(a.x-first.x,a.y-first.y)-Math.hypot(b.x-first.x,b.y-first.y));
  const unique=homes.filter((p,i)=>homes.findIndex(q=>Math.hypot(p.x-q.x,p.y-q.y)<TILE*2)===i).slice(0,4);
- return [{name:"Pizzazz: collect and check the order",...first},...unique.map((p,i)=>({name:`Delivery ${i+1}: check the ticket before handing over`,...p}))];
+ return [{name:"Pizzazz: collect and check the order",...first},...unique.map((p,i)=>({name:`${["Maya","Theo","Aisha","Jules"][i]} · waiting on the street for pizza`,...p}))];
 }

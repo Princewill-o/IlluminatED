@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import * as THREE from "three";
+import Image from "next/image";
+import { blockyThumbnail } from "@/game/core/adventurers";
 
 import { buildCharacter, type Character3D } from "./char3d";
 
 import type { Avatar } from "@/game/core/cosmetics";
+
+export type CharacterAnimation = "idle" | "walk" | "run" | "jump" | "fall" | "wave" | "punch" | "death" | "cheer" | "dance";
 
 /**
  * The Locker stage: your exact 3D character (same model as in the world),
@@ -20,12 +24,15 @@ export function Character3DPreview({
   workplaceLogo = null,
 }: {
   avatar: Avatar;
-  clip: "idle" | "walk" | "wave";
+  clip: CharacterAnimation;
   facing: "S" | "N" | "E" | "W";
   className?: string;
   workplaceLogo?: string | null;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
   const state = useRef<{
     char: Character3D | null;
     spin: number;
@@ -44,9 +51,14 @@ export function Character3DPreview({
   useEffect(() => {
     const el = host.current;
     if (!el) return;
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    setReady(false); setFailed(false);
+    let renderer: THREE.WebGLRenderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch { setFailed(true); return; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
     renderer.shadowMap.enabled = true;
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
@@ -77,8 +89,9 @@ export function Character3DPreview({
         turntable.add(c.object);
         loadedCharacter = c;
         state.current.char = c;
-        state.current.clip = "";
+        setReady(true);
       },
+      () => { if (alive) setFailed(true); },
     );
     const fit = () => {
       const w = el.clientWidth;
@@ -103,6 +116,8 @@ export function Character3DPreview({
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    el.addEventListener("lostpointercapture", up);
     let raf = 0;
     let last = performance.now();
     let played = "";
@@ -111,17 +126,12 @@ export function Character3DPreview({
       last = now;
       const st = state.current;
       if (st.char) {
-        const want =
-          st.clip === "wave"
-            ? "emote-yes"
-            : st.clip === "walk"
-              ? "walk"
-              : "idle";
+        const want = st.clip;
         if (want !== played) {
-          st.char.play(want as "idle" | "walk" | "emote-yes");
+          st.char.play(want);
           played = want;
         }
-        st.char.mixer.update(dt);
+        st.char.update(dt, window.matchMedia("(prefers-reduced-motion: reduce)").matches);
       }
       turntable.rotation.y +=
         (st.spin - turntable.rotation.y) * Math.min(1, dt * 8);
@@ -139,18 +149,24 @@ export function Character3DPreview({
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      el.removeEventListener("lostpointercapture", up);
       renderer.dispose();
+      renderer.forceContextLoss();
       el.removeChild(renderer.domElement);
     };
-  }, [key, workplaceLogo]);
+  }, [key, workplaceLogo, retry]);
 
   return (
     <div
       ref={host}
-      className={className}
+      className={`relative ${className ?? ""}`}
       style={{ touchAction: "pan-y", cursor: "grab" }}
       aria-label="Your character in 3D. Drag to turn."
       role="img"
-    />
+    >
+      {!ready && <Image src={blockyThumbnail(avatar.head)} alt="" fill sizes="340px" className="pointer-events-none object-contain p-5" priority />}
+      {!ready && <div className="absolute inset-x-3 top-2 z-10 text-center text-xs font-bold text-[#13203a]" role="status">{failed ? <>3D preview unavailable. <button type="button" onClick={()=>setRetry(n=>n+1)} className="underline">Try again</button></> : 'Loading your character…'}</div>}
+    </div>
   );
 }

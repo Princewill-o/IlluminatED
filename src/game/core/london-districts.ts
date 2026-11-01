@@ -65,7 +65,7 @@ export function expandLondon(core: Built, width: number, height: number): Built 
   building("bank","Thames & Co Bank",165,27,8,7,4.8,"stone","#d8c49b");
   path(119,25,10,14); path(137,25,21,14); path(163,25,11,14);
   // Wharf pavilions have open gardens behind the promenade and an inland court.
-  building("wharf-gallery","Wharf Gallery",120,65,9,7,3.2,"brick","#b97d69");
+  building("wharf-gallery","Venture Yard",120,65,9,7,3.2,"brick","#b97d69");
   building("wharf-cafe","Garden Cafe",138,65,15,6,2.4,"brick","#d4b793");
   building("boathouse","The Boathouse",164,66,9,9,2.6,"stone","#cbbfa3");
   path(119,74,10,16); path(137,74,21,16); path(163,78,11,12);

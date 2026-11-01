@@ -10,11 +10,7 @@ export function frameBudget(fps = 60) {
   };
 }
 
-export function graphicsBudget(low: boolean, mobile: boolean) {
-  return {
-    pixelRatio: low ? 0.65 : mobile ? 0.75 : 0.85,
-    residents: low ? 8 : mobile ? 10 : 14,
-    cyclists: low ? 2 : mobile ? 3 : 4,
-    lights: low ? 0 : 2,
-  };
+/** High-detail population and lighting, independent of previous quality settings. */
+export function graphicsBudget() {
+  return { residents: 14, cyclists: 4, lights: 2 };
 }

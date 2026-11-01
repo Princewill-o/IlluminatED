@@ -1,0 +1,1 @@
+Modern garments authored in Blender for IlluminatED. Original KayKit character faces, headwear and skeletons are retained under the supplied CC0 licence in ../kaykit-adventurers/License.txt. Rebuild with scripts/characters/build_modern_clothes.py. Editable sources: blender/modern-clothes/*.blend.

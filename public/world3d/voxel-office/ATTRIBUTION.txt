@@ -1,0 +1,5 @@
+3D Voxel Office Pack by MariaIsMe (Maria Is Me), released on itch.io.
+Converted OBJ assets are licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+Attribution: MariaIsMe / Maria Is Me (https://twitter.com/EggnCheesePls ; https://www.instagram.com/alyanna.maramag/).
+This project modifies the supplied OBJ assets into GLB format for in-game use.

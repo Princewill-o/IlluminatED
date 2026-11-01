@@ -1,5 +1,7 @@
 "use client";
 
+import { ControllerLegend } from "./controller-legend";
+
 import { useState } from "react";
 
 import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
@@ -29,8 +31,8 @@ const STEPS = [
   {
     icon: Footprints,
     title: "You're one student in a big city",
-    body: "Use W A S D or ↑ ↓ ← → to walk. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
-    hint: "Press E (or tap the glowing marker) to go through a door.",
+    body: "Use W A S D or ↑ ↓ ← → to walk. On a controller, move with the left stick or D-pad. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
+    hint: "Press E or Enter (controller Cross) near a glowing marker to enter. Press Space or controller Square to jump.",
   },
   {
     icon: Bus,
@@ -53,7 +55,7 @@ const STEPS = [
   {
     icon: CarFront,
     title: "Drive safely through London",
-    body: "Take an owned car from Garage. ↑ accelerates, ↓ brakes then reverses, ← → steer and Space brakes. On a phone, push the driving joystick up, down or sideways for the same controls.",
+    body: "Take an owned car from Garage. ↑ accelerates, ↓ brakes then reverses, ← → steer and Space brakes. On a controller, use the left stick to steer and accelerate or reverse; hold Circle to brake. On a phone, use the driving joystick.",
     hint: "Keep left. Brake before the stop line on amber and wait on red. Give way at zebra crossings. Collisions and road violations earn wanted stars.",
   },
   {
@@ -120,6 +122,7 @@ export function Tutorial({ onClose }: { onClose: () => void }) {
           <h2 className="mt-1 text-xl font-black">{s.title}</h2>
           <p className="mt-2 text-sm leading-relaxed">{s.body}</p>
           <p className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-bold">{s.hint}</p>
+          {(i === 0 || i === 4) && <div className="mt-3 rounded-xl bg-[#183b35] p-3 text-xs text-white"><ControllerLegend driving={i === 4} /></div>}
           <div className="mt-4 flex items-center gap-1.5">
             {STEPS.map((_, k) => (
               <span key={k} className={`h-1.5 flex-1 rounded-full ${k <= i ? "bg-[#2b5fd9]" : "bg-[#13203a]/15"}`} />

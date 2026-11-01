@@ -8,6 +8,8 @@ Free revision for UK learners: GCSE (Year 11 focus), A level (Years 12–13), BT
 
 Built with Next.js 15 (App Router), React 19, Tailwind CSS 4 and shadcn/ui, starting from the Mainline template by Shadcnblocks.com (MIT, see `LICENSE`).
 
+3D world art and kit integration: [KayKit and supplied asset packs](docs/gamification/kaykit-art.md).
+
 ## Run it
 
 Requires Node.js 18.18+ (20 LTS recommended).

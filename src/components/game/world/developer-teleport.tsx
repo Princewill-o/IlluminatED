@@ -18,7 +18,7 @@ export function DeveloperTeleport({ destinations, onTeleport }: {
     {open && <section aria-label="Developer teleport destinations" className="mt-2 w-64 rounded-2xl border border-violet-200 bg-[#f6f2ff] p-3 text-[#1a1833] shadow-2xl">
       <div className="mb-2 flex items-center justify-between"><p className="text-xs font-black uppercase tracking-wider text-violet-800">Jump to a feature</p><button type="button" onClick={() => setOpen(false)} aria-label="Close teleport list" className="rounded-full p-1 hover:bg-violet-100"><X size={16}/></button></div>
       <div className="max-h-[55dvh] space-y-1 overflow-y-auto">{destinations.map(destination => <button key={destination.id} type="button" onClick={() => { onTeleport(destination); setOpen(false); }} className="block w-full rounded-xl px-3 py-2 text-left text-sm font-bold hover:bg-violet-100">{destination.label}</button>)}</div>
-      <p className="mt-2 border-t border-violet-100 pt-2 text-[10px] leading-relaxed text-violet-800">Visible only on your owner account. Other players do not get this control.</p>
+      <p className="mt-2 border-t border-violet-100 pt-2 text-[10px] leading-relaxed text-violet-800">Jump between available places to explore the city.</p>
     </section>}
   </div></HudSlot>;
 }

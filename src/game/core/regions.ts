@@ -114,22 +114,23 @@ export function buildHighlands(): Region {
   };
 
   // Station at the west end of the glen road.
-  solid(6, 34, 3, 2);
-  things.push({ kind: "station", id: "highlands", name: "Glen Lorne", x: 6, y: 34, w: 3, h: 2 });
-  for (let x = 6; x < 9; x++) set(x, 36, "-");
+  solid(5, 32, 6, 4);
+  things.push({ kind: "station", id: "highlands", name: "Glen Lorne", x: 5, y: 32, w: 6, h: 4 });
+  for (let x = 5; x < 11; x++) set(x, 36, "-");
   set(7, 37, "-");
 
   // Village: cottages either side of the road, the cafe and the lodge on the square.
   const COLOURS = ["#f2ead8", "#e8dcc2", "#f4f0ea", "#d9c7a6"];
   const house = (x: number, y: number, w: number, h: number, style: "terrace" | "shop", label?: string) => {
     solid(x, y, w, h);
-    things.push({ kind: "building", id: id("cottage"), x, y, w, h, height: 2.6, colour: COLOURS[(x + y) % 4], roof: "#4a5568", style, label });
+    for (let j = y + h; j < y + h + 2; j++) for (let i = x; i < x + w; i++) if (["g", "f", "_"].includes(get(i,j) ?? "")) set(i,j,"-");
+    things.push({ kind: "building", id: id("cottage"), x, y, w, h, height: label ? 7 : 6, colour: COLOURS[(x + y) % 4], roof: "#4a5568", style, label });
   };
-  for (const x of [14, 19, 24, 48, 53]) house(x, 33, 4, 3, "terrace");
-  for (const x of [14, 19, 24, 48]) house(x, 41, 4, 3, "terrace");
-  house(31, 41, 6, 3, "terrace", "Highland Cafe");
-  house(39, 41, 6, 3, "terrace", "Mountain Lodge");
-  for (let y = 44; y < 45; y++) for (let x = 31; x < 45; x++) set(x, y, "-");
+  for (const x of [14, 22, 48, 56]) house(x, 31, 6, 5, "terrace");
+  for (const x of [14, 22, 50]) house(x, 41, 6, 5, "terrace");
+  house(31, 41, 7, 5, "terrace", "Highland Cafe");
+  house(40, 41, 8, 5, "terrace", "Mountain Lodge");
+  for (let y = 46; y < 47; y++) for (let x = 31; x < 48; x++) set(x, y, "-");
   for (const [x, y] of [[30, 47], [45, 47], [12, 37], [28, 37], [44, 37], [58, 37]]) {
     set(x, y, "L");
     things.push({ kind: "lamp", id: id("lamp"), x, y });

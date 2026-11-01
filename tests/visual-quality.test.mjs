@@ -4,32 +4,21 @@ import { ShaderLib } from "three";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const {
   visualProfile,
-  readVisualQuality,
   immersiveMotion,
   physicalSurface,
   curvedVertexShader,
 } = projectData("src/game/core/visual-quality.ts");
-test("quality costs stay bounded on high DPI displays", () => {
-  for (const mobile of [true, false])
-    for (const dpr of [1, 2, 4, NaN]) {
-      const low = visualProfile("low", mobile, dpr),
-        high = visualProfile("cinematic", mobile, dpr);
-      assert.equal(low.shadows, false);
-      assert.equal(low.postProcessing, false);
-      assert.equal(low.pixelRatio, 0.75);
-      assert.ok(high.pixelRatio <= 1.5);
-      assert.ok(high.shadowSize <= 2048);
-      assert.ok(high.samples <= 4);
-    }
-  assert.equal(readVisualQuality("obsolete"), "auto");
-  assert.equal(visualProfile("auto", true).shadows, false);
-  assert.equal(visualProfile("auto", false).bloom, false);
-  const balanced = visualProfile("auto", false, 2);
-  assert.equal(balanced.shadows, false);
-  assert.equal(balanced.postProcessing, false);
-  assert.equal(balanced.environment, false);
-  assert.equal(balanced.samples, 0);
-  assert.equal(visualProfile("cinematic", false).postProcessing, true);
+test("all displays use the single high graphics profile", () => {
+  for (const dpr of [1, 2, 4, NaN]) {
+    const high = visualProfile(dpr);
+    assert.equal(high.shadows, true);
+    assert.equal(high.shadowSize, 2048);
+    assert.equal(high.postProcessing, true);
+    assert.equal(high.environment, true);
+    assert.equal(high.bloom, true);
+    assert.equal(high.samples, 4);
+    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 1.5);
+  }
 });
 test("optional motion respects accessibility and cannot grow with vehicle speed", () => {
   for (const t of [0, 1, 100])

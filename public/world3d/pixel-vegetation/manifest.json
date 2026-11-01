@@ -1,0 +1,33 @@
+{
+  "source": "3DPixelArt_Tutorial_Vegetation.7z",
+  "author": "Eduardo Schildt",
+  "license": "MIT",
+  "conversion": "Static geometry, embedded bark/rock/flower textures and cutout leaf/grass materials; no Godot postprocessing or wind runtime.",
+  "assets": [
+    {
+      "file": "tree-a.glb",
+      "source": "tree.glb",
+      "bytes": 87868
+    },
+    {
+      "file": "tree-b.glb",
+      "source": "tree3.glb",
+      "bytes": 184468
+    },
+    {
+      "file": "rock.glb",
+      "source": "rock2.glb",
+      "bytes": 16996
+    },
+    {
+      "file": "flowers.glb",
+      "source": "flower.glb",
+      "bytes": 8504
+    },
+    {
+      "file": "grass.glb",
+      "source": "grass_plane.glb",
+      "bytes": 8460
+    }
+  ]
+}

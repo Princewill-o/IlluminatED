@@ -331,6 +331,8 @@ export function buildLondon(): Built {
       ...extra,
     });
     reserve(x, y + h, w);
+    // Keep key venues clear of later homes, trees and street furniture.
+    if (extra.companyId || extra.label) reserve(x - 1, y + h, w + 2, 3);
     return true;
   };
   const station = (
@@ -406,8 +408,9 @@ export function buildLondon(): Built {
   for (let x = 37; x < 51; x += 4) building(x, 24, 3, 4, 2.5, "brick");
   for (let x = 37; x < 51; x += 5) building(x, 30, 4, 3, 2, "shop");
 
-  // ── The City: the 13 parody company HQs ──────────────────────────────────
-  // Two blocks either side of Tower Bridge Road, two rows each (13 plots).
+  // ── Employer HQs across several London districts ────────────────────────
+  // Keep a few offices in the City while placing others in the West End,
+  // South Bank and eastern riverside so work destinations are not one cluster.
   const slots: [number, number][] = [
     [56, 12],
     [60, 12],
@@ -415,13 +418,13 @@ export function buildLondon(): Built {
     [74, 12],
     [78, 12],
     [82, 12],
-    [56, 25],
-    [60, 25],
-    [64, 25],
+    [86, 37],
+    [40, 46],
+    [44, 51],
     [74, 25],
     [82, 25],
     [92, 25],
-    [104, 25],
+    [56, 69],
   ];
   COMPANIES.forEach((c, i) => {
     const [x, y] = slots[i];
@@ -434,6 +437,11 @@ export function buildLondon(): Built {
     )
       throw new Error(`No room for ${c.id}`);
   });
+  // A dedicated hospital plot replaces the old nearest-building guess. Its
+  // address, entrance and model now refer to the same real ten-tile frontage.
+  if (!building(56, 25, 10, 8, 8, "stone", {
+    id: "city-hospital", label: "St Tomas' Hospital", accent: "#287a78", colour: "#edf3ed", roof: "#5f8182",
+  })) throw new Error("No room for the city hospital");
   things.push({
     kind: "landmark",
     id: "gherkin",
@@ -696,7 +704,7 @@ export function buildLondon(): Built {
   // Hotels occupy real reserved plots before the smaller neighbourhood homes.
   let hotels = 0;
   for (const y of [25, 31, 49, 65, 71]) {
-    for (const x of [19, 38, 56, 74, 92]) {
+    for (const x of [24, 19, 38, 56, 74, 92, 104]) {
       if (hotels >= 2) break;
       if (building(x, y, 6, 4, 5.8 + hotels, "stone", {
         id: `hotel-${hotels}`, label: hotels === 0 ? "The Lantern Hotel" : "The Garden House Hotel",

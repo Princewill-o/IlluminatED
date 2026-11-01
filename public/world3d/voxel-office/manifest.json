@@ -1,0 +1,79 @@
+{
+  "source": "3D Voxel Office Pack - Obj File",
+  "author": "MariaIsMe (Maria Is Me)",
+  "license": "CC BY 4.0",
+  "assets": [
+    {
+      "name": "computer-a",
+      "source": "Misc/Electronics/Office_Misc_PC_01.obj",
+      "file": "computer-a.glb",
+      "bytes": 9664
+    },
+    {
+      "name": "computer-b",
+      "source": "Misc/Electronics/Office_Misc_PC_02.obj",
+      "file": "computer-b.glb",
+      "bytes": 6664
+    },
+    {
+      "name": "coffee-machine",
+      "source": "Misc/Coffee/Office_Misc_Coffee_Machine_01.obj",
+      "file": "coffee-machine.glb",
+      "bytes": 27816
+    },
+    {
+      "name": "plant-a",
+      "source": "Misc/Office_Misc_Plant_01.obj",
+      "file": "plant-a.glb",
+      "bytes": 6980
+    },
+    {
+      "name": "plant-b",
+      "source": "Misc/Office_Misc_Plant_02.obj",
+      "file": "plant-b.glb",
+      "bytes": 15668
+    },
+    {
+      "name": "chair-brown",
+      "source": "Chairs/Office_Chair_Brown_01.obj",
+      "file": "chair-brown.glb",
+      "bytes": 29948
+    },
+    {
+      "name": "chair-black",
+      "source": "Chairs/Office_Chair_Black_01.obj",
+      "file": "chair-black.glb",
+      "bytes": 26156
+    },
+    {
+      "name": "chair-white",
+      "source": "Chairs/Office_Chair_White_01.obj",
+      "file": "chair-white.glb",
+      "bytes": 28396
+    },
+    {
+      "name": "desk-brown",
+      "source": "Tables/Office_Table_Brown_3x1_01.obj",
+      "file": "desk-brown.glb",
+      "bytes": 17420
+    },
+    {
+      "name": "desk-white",
+      "source": "Tables/Office_Table_White_3x1_01.obj",
+      "file": "desk-white.glb",
+      "bytes": 17420
+    },
+    {
+      "name": "meeting-table",
+      "source": "Tables/Office_Table_White_2x2_01.obj",
+      "file": "meeting-table.glb",
+      "bytes": 16620
+    },
+    {
+      "name": "coffee-table",
+      "source": "Tables/Office_Table_Coffee_01_Black.obj",
+      "file": "coffee-table.glb",
+      "bytes": 46380
+    }
+  ]
+}

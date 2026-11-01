@@ -171,14 +171,14 @@ export function ThreadView({
           {keyError && <span className="ml-1 text-ink-sun">{keyError}</span>}
         </p>
       )}
-      <div className="bg-card flex-1 space-y-2 overflow-y-auto rounded-3xl border p-3">
+      <div className="flex-1 space-y-3 overflow-y-auto rounded-3xl border border-[#d9dfe0] bg-[#f2f2f7] p-4 text-[#172b28] [color-scheme:light]">
         {shown.length === 0 && <p className="text-muted-foreground py-10 text-center text-sm">Say hello and ask your question.</p>}
         {shown.map((m) => (
           <div key={m.id} className={cn("flex", m.mine ? "justify-end" : "justify-start")}>
             <div
               className={cn(
                 "group max-w-[80%] rounded-3xl px-4 py-2.5 text-[15px] leading-6",
-                m.mine ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-secondary",
+                m.mine ? "rounded-br-md bg-[#1675ed] text-white" : "rounded-bl-md bg-[#e5e5ea] text-[#172b28]",
               )}
             >
               {m.unreadable ? <em className="text-white/60">Encrypted on another device</em> : <span className="whitespace-pre-wrap">{m.text}</span>}
@@ -214,9 +214,9 @@ export function ThreadView({
           maxLength={2000}
           rows={1}
           placeholder={usable ? "Message…" : "You can't send messages in this conversation yet"}
-          className="bg-card max-h-32 flex-1 resize-none rounded-3xl border px-4 py-3"
+          className="max-h-32 flex-1 resize-none rounded-3xl border border-[#d9dfe0] bg-white px-4 py-3 text-[#172b28] [color-scheme:light]"
         />
-        <button disabled={!usable || !text.trim()} className="rounded-full bg-[#f2d9a6] px-5 font-black text-[#0d1726] disabled:opacity-40">
+        <button disabled={!usable || !text.trim()} className="min-h-11 rounded-full bg-[#1675ed] px-5 font-bold text-white disabled:opacity-40">
           Send
         </button>
       </form>

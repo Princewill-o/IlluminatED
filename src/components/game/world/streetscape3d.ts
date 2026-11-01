@@ -8,7 +8,7 @@ import type { WorldMap } from "@/game/core/world";
  * every ground-level object stays on an existing tree tile or building plot.
  * Resources belong to this scene, so a later visit never reuses disposed data.
  */
-export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" | "dusk" | "night") {
+export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" | "dusk" | "night", replacementTrees:ReadonlySet<string>=new Set()) {
   const scenery = new THREE.Group();
   scenery.name = "London planted streets";
   scenery.userData.dispose = () => {};
@@ -16,7 +16,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   if (map.art !== "london") return scenery;
 
   const cube = new THREE.BoxGeometry(1, 1, 1);
-  const crown = new THREE.IcosahedronGeometry(1, 1);
+  const crown = new THREE.IcosahedronGeometry(1, 2);
   const smallLeaf = new THREE.IcosahedronGeometry(1, 0);
   const column = new THREE.CylinderGeometry(1, 1, 1, 7);
   const materials = new Map<string, THREE.MeshLambertMaterial>();
@@ -53,8 +53,11 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   };
   const box = (colour: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) =>
     mesh(cube, colour, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2, x1 - x0, y1 - y0, z1 - z0);
-  const leaf = (colour: string, x: number, y: number, z: number, w: number, h: number, d = w) =>
-    mesh(w < .4 ? smallLeaf : crown, colour, x, y, z, w, h, d);
+  const leaf = (colour: string, x: number, y: number, z: number, w: number, h: number, d = w) => {
+    const canopy=mesh(w < .4 ? smallLeaf : crown, colour, x, y, z, w, h, d);
+    if(w>=.4){canopy.castShadow=true;canopy.receiveShadow=true;}
+    return canopy;
+  };
 
   const iron = "#34443d";
   const brick = "#9e5c46";
@@ -71,7 +74,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   // using just three shared 80-triangle shapes per tree. High foliage may
   // overhang a path; trunks, beds and ironwork stay inside its solid tile.
   for (const tree of source.things) {
-    if (tree.kind !== "tree" || !onTree(tree.x, tree.y)) continue;
+    if (tree.kind !== "tree" || !onTree(tree.x, tree.y) || replacementTrees.has(tree.id)) continue;
     const { x, y: z } = tree;
     const seed = x * 7 + z * 13;
     const cx = x + 0.5, cz = z + 0.5;
@@ -160,6 +163,7 @@ export function addStreetscape(world: THREE.Group, map: WorldMap, phase: "day" |
   }
 
   // No dynamic lights, animation, textures or new navigation blockers.
-  scenery.userData.treeCount = source.things.filter(t => t.kind === "tree" && onTree(t.x, t.y)).length;
+  scenery.userData.treeCount = source.things.filter(t => t.kind === "tree" && onTree(t.x, t.y)&&!replacementTrees.has(t.id)).length;
+  scenery.userData.importedTreeCount=replacementTrees.size;
   return scenery;
 }

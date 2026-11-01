@@ -12,7 +12,7 @@ import { type Avatar, DEFAULT_AVATAR, cosmeticById } from "@/game/core/cosmetics
  */
 export type Mood = "happy" | "sad" | "wow" | "cool" | "cross";
 
-// Characters are now Blender-rendered sprites; see ./character.tsx.
+// Main avatar figures now use KayKit model snapshots; see ./character.tsx.
 export { AvatarFigure } from "./character";
 
 const INK = "#13203a";

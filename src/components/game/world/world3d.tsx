@@ -1,13 +1,25 @@
 "use client";
 
+import { buildingVisibility } from "./building-visibility";
+import { createEmergencyVehicle } from "./emergency-vehicle3d";
+import { placeRealisticCar } from "./realistic-car3d";
+import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
+
 import { useEffect, useRef, useState } from "react";
 
 
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
+import { crayonBuildingAsset, pixelTreePlans, pixelAsset } from "@/game/core/crayon-vegetation";
+import { removeCrayonColliders } from "./imported-pack";
+import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
+import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
+import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
+import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
+
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -25,6 +37,7 @@ import { TRAIN_CALL } from "./train-state";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
+import { residentIdentity } from "@/game/core/city-social";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import { look } from "@/game/core/cosmetics";
@@ -43,7 +56,7 @@ import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVeh
 import { trainFrame } from "@/game/core/train";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
-import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
+import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -52,8 +65,8 @@ import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
  * The live 3D world (three.js), viewed like Animal Crossing: a tilted camera that
  * follows you and a "rolling log" world that curves away towards the horizon.
  * Same layout and collisions as the 2D game (london.ts / regions.ts); 1 unit = 1 tile.
- * Models are Kenney CC0 kits (public/world3d); terraces, landmarks, buses and
- * mountains are built here from simple shapes.
+ * Scenery combines the supplied KayKit, Atomic Realm and city packs with
+ * existing landmarks and transit models; source licences live beside each pack.
  */
 
 export interface Mover3D {
@@ -76,7 +89,11 @@ const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
-  m.onBeforeCompile = (sh) => {
+  const previousCompile = m.onBeforeCompile.bind(m);
+  const previousKey = m.customProgramCacheKey.bind(m);
+  m.customProgramCacheKey = () => `${previousKey()}:world-curvature`;
+  m.onBeforeCompile = (sh, renderer) => {
+    previousCompile(sh, renderer);
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
@@ -250,6 +267,7 @@ const load = (url: string) => {
 async function place(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0, rot = 0) {
   const gltf = await load(url);
   const o = gltf.scene.clone(true);
+  if(url.startsWith('/world3d/crayon-city/'))removeCrayonColliders(o);
   o.rotation.y = rot;
   const bb = new THREE.Box3().setFromObject(o);
   const size = bb.getSize(new THREE.Vector3());
@@ -258,27 +276,18 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
   const bb2 = new THREE.Box3().setFromObject(o);
   const c = bb2.getCenter(new THREE.Vector3());
   o.position.set(x + w / 2 - c.x, y - bb2.min.y, z + d / 2 - c.z);
+  o.userData.importedAsset=url;
+  if(url.startsWith("/world3d/kaykit/"))o.userData.kaykitAsset=url;
   bendAll(o);
+  // Alpha-cutout cards receive light but must not cast solid rectangular helper shadows.
+  if(url.startsWith('/world3d/pixel-vegetation/'))o.traverse(c=>{const m=c as THREE.Mesh;if(m.isMesh&&(Array.isArray(m.material)?m.material:[m.material]).some(v=>(v as THREE.MeshStandardMaterial).alphaTest>0))m.castShadow=false;});
   g.add(o);
   return o;
 }
 
 /** The kit's compact cars need a shared real footprint, including their mirrors. */
 async function placeCar(g: THREE.Group, model: string) {
-  const gltf = await load(`/world3d/cars/${model}.glb`);
-  const car = gltf.scene.clone(true);
-  car.rotation.y = Math.PI / 2;
-  const bounds = new THREE.Box3().setFromObject(car);
-  const size = bounds.getSize(new THREE.Vector3());
-  const fitted = new THREE.Group();
-  fitted.add(car);
-  fitted.scale.set(CAR_LENGTH / size.x, CAR_WIDTH / size.z, CAR_WIDTH / size.z);
-  const fitBounds = new THREE.Box3().setFromObject(fitted);
-  const centre = fitBounds.getCenter(new THREE.Vector3());
-  fitted.position.set(-centre.x, -fitBounds.min.y, -centre.z);
-  bendAll(fitted);
-  g.add(fitted);
-  return fitted;
+  return placeRealisticCar(g, model, load, bendAll);
 }
 
 const GROUND: Record<string, [string, number]> = {
@@ -699,6 +708,7 @@ function headquarters(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>[
   box(b, ARCH.slate, 0, 0.14, f - 0.03, w, 0.27, f + 0.06);
   if (co.building !== "cinema") box(b, a, 0.02, 1.48, f - 0.03, w - 0.02, 1.98, f + 0.11);
   entrance(b, cx, f + 0.03, co.building === "bakery" ? ARCH.slate : a);
+  ensureBuildingHeight(b,4.5);
 }
 
 /** A glazed learning pavilion and a sawtooth-roof workshop anchor the Study Quarter. */
@@ -710,33 +720,34 @@ function studyQuarterBuilding(g: THREE.Group, t: Extract<ReturnType<typeof build
   const b = new THREE.Group();
   b.position.set(t.x + 0.08, 0, t.y + 0.08);
   g.add(b);
-  box(b, maker ? "#c58365" : "#e2dbef", 0, 0.15, 0, w, 3.25, d - 0.12);
+  box(b, maker ? "#c58365" : "#e2dbef", 0, 0.15, 0, w, 4.45, d - 0.12);
   box(b, ARCH.stone, -0.04, 0.15, -0.04, w + 0.04, 0.32, d);
-  box(b, ARCH.stone, -0.04, 3.2, -0.04, w + 0.04, 3.38, d);
+  box(b, ARCH.stone, -0.04, 4.4, -0.04, w + 0.04, 4.58, d);
   // A tall transparent-looking study frontage, in warm pale frames.
   for (let x = 0.35; x < w - 1; x += 1.35) facadeWindow(b, x, 0.7, d - 0.1, 0.96, 1.65);
   for (let z = 0.5; z < d - 0.7; z += 1.3) facadeWindow(b, z, 0.8, w, 0.88, 1.5, true);
-  box(b, accent, 0.12, 2.56, d - 0.04, w - 0.12, 3.08, d + 0.08);
+  box(b, accent, 0.12, 3.74, d - 0.04, w - 0.12, 4.26, d + 0.08);
   entrance(b, w / 2, d - 0.02, accent, 1.1);
   if (maker) {
     for (let z = 0.12; z < d - 1; z += 1.5) {
-      roof(b, ARCH.slate, 0, z, w, z + 1.4, 3.38, 0.75);
-      box(b, ARCH.glass, 0.2, 3.47, z + 1.32, w - 0.2, 3.83, z + 1.36);
+      roof(b, ARCH.slate, 0, z, w, z + 1.4, 4.58, 0.75);
+      box(b, ARCH.glass, 0.2, 4.67, z + 1.32, w - 0.2, 5.03, z + 1.36);
     }
     for (const x of [0.25, w - 0.4]) box(b, accent, x, 0.3, d - 0.04, x + 0.15, 3.2, d + 0.04);
   } else {
     // Roof garden and timber pergola remain inside the existing building footprint.
-    box(b, "#8fb794", 0.35, 3.38, 0.35, w - 0.35, 3.51, d - 0.35);
-    for (const x of [0.45, w - 0.55]) for (const z of [0.45, d - 0.55]) box(b, "#b7946b", x, 3.5, z, x + 0.1, 4.2, z + 0.1);
-    for (let x = 0.4; x < w - 0.3; x += 0.55) box(b, "#c9aa7e", x, 4.16, 0.4, x + 0.12, 4.28, d - 0.35);
+    box(b, "#8fb794", 0.35, 4.58, 0.35, w - 0.35, 4.71, d - 0.35);
+    for (const x of [0.45, w - 0.55]) for (const z of [0.45, d - 0.55]) box(b, "#b7946b", x, 4.7, z, x + 0.1, 5.4, z + 0.1);
+    for (let x = 0.4; x < w - 0.3; x += 0.55) box(b, "#c9aa7e", x, 5.36, 0.4, x + 0.12, 5.48, d - 0.35);
     for (const x of [0.5, w - 1.4]) {
-      box(b, ARCH.stone, x, 3.51, 0.6, x + 0.85, 3.77, 1.35);
-      box(b, "#6eaa7d", x + 0.08, 3.77, 0.68, x + 0.77, 4.0, 1.27);
+      box(b, ARCH.stone, x, 4.71, 0.6, x + 0.85, 4.97, 1.35);
+      box(b, "#6eaa7d", x + 0.08, 4.97, 0.68, x + 0.77, 5.2, 1.27);
     }
   }
   const plaque = sign(maker ? "MAKERSPACE" : "STUDY QUARTER", { bg: accent, fg: "#ffffff", w: w - 0.8, h: 0.4 });
-  plaque.position.set(w / 2, 2.82, d + 0.1);
+  plaque.position.set(w / 2, 3.98, d + 0.1);
   b.add(plaque);
+  ensureBuildingHeight(b,4.5);
 }
 
 /** Visual wayfinding follows the lobby's existing walkable interaction areas. */
@@ -794,7 +805,7 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   const d = t.h - 0.16;
   const wall = highland ? ["#f2ead8", "#e6dcc6", "#efe6d4"][seed % 3] : ["#b9634a", "#a65840", "#d8be92", "#ead9bd", "#c26b4f"][seed % 5];
   const roofC = highland || seed % 3 ? "#4d5862" : "#65534f";
-  const floors = highland ? 2 : Math.max(2, Math.min(4, Math.round(t.height ?? 3)));
+  const floors = Math.max(5, Math.ceil((t.height ?? 4.5) / .95));
   const top = 0.15 + floors * 0.95;
   box(g, wall, x0, 0, z0 + 0.25, x0 + w, top, z0 + d);
   box(g, "#877e77", x0, 0.12, z0 + d - 0.03, x0 + w, 0.27, z0 + d + 0.04);
@@ -874,6 +885,13 @@ function terrace(g: THREE.Group, t: { x: number; y: number; w: number; h: number
   }
 }
 
+function ensureBuildingHeight(object:THREE.Object3D,minHeight=4.5){
+  const bounds=new THREE.Box3().setFromObject(object),height=bounds.max.y-bounds.min.y;
+  if(height>=minHeight)return;
+  object.scale.y*=minHeight/Math.max(.01,height);object.updateMatrixWorld(true);
+  const resized=new THREE.Box3().setFromObject(object);object.position.y+=.13-resized.min.y;
+}
+
 /** Familiar high-street places get their own frontage rather than a generic office. */
 function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>) {
   const identity = `${t.id} ${t.label ?? ""}`.toLowerCase();
@@ -883,7 +901,7 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const accent = coffee ? "#006241" : chicken ? "#b72025" : "#c92627";
   const trim = burgers ? "#ffc72c" : "#fff7e9";
   const name = coffee ? "STARBUCKS" : chicken ? "KFC" : "McDonald's";
-  const h = coffee ? 2.55 : 2.8;
+  const h = 4.5;
   box(g, coffee ? "#e7d8bc" : "#e9e2d8", x, 0.12, z, x + w, h, z + d);
   box(g, "#302e30", x - 0.06, h, z - 0.06, x + w + 0.06, h + 0.18, z + d + 0.06);
   // Deep glazing, solid mullions and a separate entrance give the frontage depth.
@@ -898,14 +916,14 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   box(g, "#233e42", doorX - 0.32, 0.14, z + d + 0.05, doorX + 0.32, 1.88, z + d + 0.1);
   box(g, "#bbd9d6", doorX - 0.25, 0.27, z + d + 0.105, doorX + 0.25, 1.75, z + d + 0.12);
   box(g, "#f2e9ce", doorX + 0.13, 0.8, z + d + 0.12, doorX + 0.18, 1.1, z + d + 0.16);
-  box(g, accent, x - 0.04, 1.96, z + d - 0.05, x + w + 0.04, 2.55, z + d + 0.18);
+  box(g, accent, x - 0.04, 3.18, z + d - 0.05, x + w + 0.04, 3.8, z + d + 0.18);
   const board = sign(name, { bg: accent, fg: trim, w: Math.max(1.8, w - 0.4), h: 0.43 });
-  board.position.set(x + w / 2, 2.25, z + d + 0.19);
+  board.position.set(x + w / 2, 3.48, z + d + 0.19);
   g.add(board);
-  box(g, accent, x - 0.05, 1.82, z + d + 0.06, x + w + 0.05, 1.94, z + d + 0.55);
+  box(g, accent, x - 0.05, 3.04, z + d + 0.06, x + w + 0.05, 3.16, z + d + 0.55);
   if (chicken) {
     // Red and cream awning stripes and a bold bucket-shaped roof sign.
-    for (let i = 0; i < 8; i++) box(g, i % 2 ? "#fff7e9" : accent, x + i * w / 8, 1.83, z + d + 0.1, x + (i + 1) * w / 8, 1.96, z + d + 0.56);
+    for (let i = 0; i < 8; i++) box(g, i % 2 ? "#fff7e9" : accent, x + i * w / 8, 3.05, z + d + 0.1, x + (i + 1) * w / 8, 3.18, z + d + 0.56);
     cyl(g, "#fff7e9", x + w * 0.75, z + d * 0.45, h + 0.18, h + 0.9, 0.46, 20, 0.6);
     const bucket = sign("KFC", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
     bucket.position.set(x + w * 0.75, h + 0.58, z + d * 0.45 + 0.55);
@@ -923,6 +941,58 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   return true;
 }
 
+async function kaykitBuilding(g:THREE.Group,t:{id:string;x:number;y:number;w:number;h:number},url:string,scale=1,minHeight=4.5){
+  const w=(t.w-.16)*scale,d=(t.h-.16)*scale;
+  const object=await place(g,url,t.x+(t.w-w)/2,t.y+(t.h-d)/2,w,d,.13);
+  const bounds=new THREE.Box3().setFromObject(object);
+  // Give every city building a clear skyline above the player.
+  // Preserve its footprint and ground contact while scaling only its height.
+  const currentHeight=bounds.max.y-bounds.min.y;
+  if(currentHeight<minHeight){object.scale.y*=minHeight/Math.max(.01,currentHeight);object.updateMatrixWorld(true);const tallBounds=new THREE.Box3().setFromObject(object);object.position.y+=.13-tallBounds.min.y;}
+  object.position.z+=t.y+t.h-.08-bounds.max.z;
+  if(url.startsWith('/world3d/kaykit/city/')&&assetSeed(t.id)%3===0){
+    object.updateMatrixWorld(true);
+    const roof=new THREE.Box3().setFromObject(object),detail=roofKitDetail(t.id);
+    // Optional dressing must not make the building fall back to a second, overlapping mesh.
+    await placeKitDetail(g,{...detail,x:roof.min.x+.18,z:roof.min.z+.18,y:roof.max.y+.02}).catch(()=>{});
+  }
+  return object;
+}
+async function kaykitPlatform(g:THREE.Group,x:number,z:number,mapId:string){
+  const object=await place(g,platformTile(mapId),x+.015,z+.015,.97,.97,0);
+  // Keep the top flush with the existing walkable surface; movement uses the same tile grid.
+  object.position.y+=.025-new THREE.Box3().setFromObject(object).max.y;
+  return object;
+}
+
+/** A readable, full-size hospital with its entrance centred on the real portal. */
+function hospitalExterior(g: THREE.Group,t: Extract<ReturnType<typeof buildLondon>["things"][number],{kind:"building"}>) {
+  const x=t.x+.12,z=t.y+.12,w=t.w-.24,d=t.h-.24,front=z+d,cx=t.x+t.w/2;
+  const teal="#287a78",stone="#e5eee8",glass="#628f9a",top=Math.max(8,t.height);
+  box(g,stone,x,.13,z,x+w,top,front);
+  box(g,"#c0d5d2",x,top,z,x+w,top+.22,front);
+  for(const edge of [x+.12,x+w-.52])box(g,teal,edge,.15,z+.12,edge+.4,top,front+.03);
+  for(let floor=0;floor<4;floor++) {
+    const base=.65+floor*1.75;
+    box(g,"#b1c8c7",x+.15,base+1.38,front-.03,x+w-.15,base+1.48,front+.04);
+    for(let bay=0;bay<6;bay++) {
+      if(floor===0&&(bay===2||bay===3))continue;
+      const px=x+.5+bay*1.48;
+      facadeWindow(g,px,base,front+.045,1.04,1.18);
+    }
+  }
+  box(g,glass,cx-1.15,.15,front-.025,cx+1.15,2.55,front+.06);
+  box(g,"#dcecea",cx-.04,.16,front+.061,cx+.04,2.5,front+.09);
+  box(g,teal,cx-2.4,2.65,front-.15,cx+2.4,2.9,front+.55);
+  const title=sign("ST TOMAS' HOSPITAL",{bg:teal,fg:"#ffffff",w:6.4,h:.65});title.position.set(cx,3.35,front+.08);g.add(title);
+  const sub=sign("RECEPTION  ·  CARE & RECOVERY",{bg:stone,fg:teal,w:5.5,h:.32});sub.position.set(cx,2.33,front+.12);g.add(sub);
+  // A teal medical plus, distinct from protected Red Cross branding.
+  box(g,teal,cx-.3,top+.25,z+d*.5,cx+.3,top+2.05,z+d*.5+.28);
+  box(g,teal,cx-.9,top+.85,z+d*.5,cx+.9,top+1.45,z+d*.5+.28);
+  for(const edge of [x+.85,x+w-.85])architecturalPlanter(g,edge,front-.32);
+  const entranceMarker=sign("HOSPITAL",{bg:teal,fg:"#ffffff",w:2.1,h:.4});entranceMarker.position.set(x+1.45,4.75,front+.08);g.add(entranceMarker);
+}
+
 async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>) {
   const x0 = t.x + 0.08;
   const z0 = t.y + 0.08;
@@ -930,14 +1000,27 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const d = t.h - 0.16;
   const seed = t.x * 7 + t.y * 13;
   box(g, "#e9e1d0", x0 - 0.05, 0, z0 - 0.05, x0 + w + 0.05, 0.13, z0 + d + 0.05);
+  if (t.id === "city-hospital") { hospitalExterior(g,t); return; }
+  const selected = suppliedCityBuilding(t);
+  const crayon=selected ? null : crayonBuildingAsset(t);
+  if(crayon){
+    try{
+      await kaykitBuilding(g,t,crayon,1,t.id === "my-house" ? 6 : 4.5);
+      if(t.label&&!t.companyId){
+        const board=sign(t.label,{bg:t.accent??'#426e65',fg:'#f7f0d9',w:Math.min(t.w-.3,6),h:.35});
+        board.position.set(t.x+t.w/2,1.6,t.y+t.h+.04);g.add(board);
+      }
+      return;
+    }catch{ /* Existing model builders remain available if the supplied asset cannot load. */ }
+  }
   if (t.id.startsWith("hotel-")) {
     const front = z0 + d - 0.65;
     const accent = t.accent ?? "#315b50";
-    const top = t.height;
+    const top = Math.max(4.5,t.height);
     box(g, "#aa715a", x0, 0.15, z0, x0+w, top, front);
     for (const edge of [x0, x0+w-0.22]) box(g, "#dbc8a8", edge, 0.15, z0, edge+0.22, top, front+0.04);
-    for (let level = 0; level < 4; level++) {
-      const height = 0.65+level*1.25;
+    for (let level = 0; level < 5; level++) {
+      const height = 0.65+level*0.95;
       box(g, "#dccbac", x0-0.04, height-0.25, front, x0+w+0.04, height-0.16, front+0.13);
       for (let bay = 0; bay < 4; bay++) {
         if (level===0 && (bay===1 || bay===2)) continue;
@@ -950,14 +1033,31 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     // Shallow, ascending stone treads sit within the reserved building plot.
     for(let step=0;step<4;step++) box(g,"#cfbba0",x0+w/2-1,0.03,front+0.13+step*0.12,x0+w/2+1,0.19-step*0.035,front+0.25+step*0.12);
     const board=sign(t.label ?? "Hotel",{bg:accent,fg:"#f8e6b4",w:w-0.6,h:0.55});
-    board.position.set(x0+w/2,2.1,front+0.16);g.add(board);
+    board.position.set(x0+w/2,4.1,front+0.16);g.add(board);
     for(const edge of [x0+0.28,x0+w-0.28]) architecturalPlanter(g,edge,front+0.1);
     return;
   }
+  if (selected) {
+    try {
+      await kaykitBuilding(g,t,`/world3d/selected-city/${selected}.glb`);
+      if (t.label && !t.companyId) {
+        const board = sign(t.label,{bg:t.id === "mcdonalds" ? "#bd2525" : t.accent ?? "#205743",fg:"#fff2b5",w:Math.min(t.w-.3,8),h:.65});
+        board.position.set(t.x+t.w/2,2.5,t.y+t.h+.05);g.add(board);
+      }
+      return;
+    } catch { /* Keep the existing venue if its replacement cannot be loaded. */ }
+  }
   if (restaurantShop(g, t)) return;
-  if (t.style === "terrace") return terrace(g, t, false);
+  if (t.style === "terrace") {
+    try{return await kaykitBuilding(g,t,cityBuildingAsset(t.id));}catch{return terrace(g,t,false);}
+  }
   const co = t.companyId ? COMPANIES.find((c) => c.id === t.companyId) : null;
-  if (co) return headquarters(g, t, co);
+  if (co) {
+    try{return await kaykitBuilding(g,t,cityBuildingAsset(co.id));}catch{return headquarters(g,t,co);}
+  }
+  if(t.style==='office'&&(t.x+t.y)%3===0){
+    try{return await kaykitBuilding(g,t,freeCityAsset('building3'));}catch{return terrace(g,t,false);}
+  }
   if (t.id === "makerspace" || t.id === "study-club") return studyQuarterBuilding(g, t);
   const jobs: Promise<unknown>[] = [];
   if (t.style === "office" || t.style === "stone" || t.style === "company" || t.style === "glass") {
@@ -965,11 +1065,11 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     const cols = Math.max(1, Math.round(w / 3.2));
     const rows = Math.max(1, Math.round(d / 3.6));
     for (let r = 0; r < rows; r++)
-      for (let c = 0; c < cols; c++) jobs.push(place(g, lib[(seed + r * 3 + c) % lib.length], x0 + (c * w) / cols, z0 + (r * d) / rows, w / cols, d / rows, 0.13));
+      for (let c = 0; c < cols; c++) jobs.push(place(g, lib[(seed + r * 3 + c) % lib.length], x0 + (c * w) / cols, z0 + (r * d) / rows, w / cols, d / rows, 0.13).then(o=>ensureBuildingHeight(o)));
     if (t.style === "company") box(g, t.accent ?? "#c8322d", x0 + 0.1, 0.12, z0 + d - 0.12, x0 + w - 0.1, 0.9, z0 + d + 0.02);
   } else {
     const cols = Math.max(1, Math.round(w / 2.2));
-    for (let c = 0; c < cols; c++) jobs.push(place(g, MIDRISE[(seed + c * 5) % MIDRISE.length], x0 + (c * w) / cols, z0, w / cols, d, 0.13));
+    for (let c = 0; c < cols; c++) jobs.push(place(g, MIDRISE[(seed + c * 5) % MIDRISE.length], x0 + (c * w) / cols, z0, w / cols, d, 0.13).then(o=>ensureBuildingHeight(o)));
     if (t.style === "shop") box(g, ["#2d6a4f", "#c8322d", "#1b3a6b", "#1f5f8b"][t.x % 4], x0 + 0.1, 1.05, z0 + d - 0.02, x0 + w - 0.1, 1.18, z0 + d + 0.55);
   }
   await Promise.all(jobs);
@@ -1371,13 +1471,35 @@ function heritageLamp(g: THREE.Group, x: number, z: number) {
   box(g, iron, x + 0.47, 3.26, z + 0.47, x + 0.53, 3.42, z + 0.53);
 }
 
+/** Small kit props retain their horizontal proportions and stand on a known furniture surface. */
+async function placeKitDetail(g:THREE.Group,detail:KitDetail){
+  const object=await place(g,detail.asset,detail.x,detail.z,detail.w,detail.d,detail.y);
+  const size=new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
+  object.scale.y*=detail.height/Math.max(.001,size.y);
+  object.updateMatrixWorld(true);
+  object.position.y+=detail.y-new THREE.Box3().setFromObject(object).min.y;
+  object.userData.kitDressing=true;
+  return object;
+}
+
+async function kaykitInteriorProp(g:THREE.Group,url:string,x:number,z:number,w:number,height:number,stretch=false,rot=0,base=.03,depth=1){
+  const object=await place(g,url,x+.06,z+.06,w-.12,depth-.12,base,rot);
+  const size=new THREE.Box3().setFromObject(object).getSize(new THREE.Vector3());
+  object.scale.y*=height/Math.max(.001,size.y);
+  if(stretch){object.scale.x*=(w-.12)/Math.max(.001,size.x);object.scale.z*=.88/Math.max(.001,size.z);}
+  object.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(object),center=bounds.getCenter(new THREE.Vector3());
+  object.position.x+=x+w/2-center.x;object.position.z+=z+depth/2-center.z;object.position.y+=base-bounds.min.y;
+  return object;
+}
+
 function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], station: boolean) {
   const g = new THREE.Group();
   world.add(g);
   const rows = map.tiles;
   const H = rows.length;
   const Wd = rows[0].length;
-  const furn = "dctosvkFArbpL";
+  const furn = "dctosvkFArbpLO";
   const home = map.kind === "home";
   const office = map.kind === "office";
   const hotel = map.id.startsWith("hotel-");
@@ -1409,7 +1531,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         // Back and side walls full height; the front wall is cut low so you can see in.
         const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
         const h = front ? 0.35 : ch === "G" ? 2.4 : 3;
-        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? "#e9e5dc" : "#eef0f4", x, 0, y, x + 1, h, y + 1);
+        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? (map.design?.wall ?? "#e9e5dc") : "#eef0f4", x, 0, y, x + 1, h, y + 1);
         if (ch === "W") box(g, "#9fd2ef", x + 0.15, 1.1, y + 0.98, x + 0.85, 2.3, y + 1.02);
         if (!front) box(g, home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
         if (office && !front) {
@@ -1419,8 +1541,12 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         continue;
       }
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
+      if((map.id==='venture-hub'||map.id==='study-lobby')&&ch==='m'){
+        jobs.push(kaykitPlatform(g,x,y,map.id).catch(()=>{box(g,map.design?.floor??'#c7d3cb',x,-.05,y,x+1,.025,y+1);}));
+        continue;
+      }
       const homeFloor = x < 5 && y >= 7 && y <= 10 ? ((x + y) % 2 ? "#a6b9b3" : "#c8d4ca") : x >= 14 && y < 6 ? "#d5d1c3" : x % 2 ? "#c5a37c" : "#b99772";
-      box(g, home ? homeFloor : hotel ? (x>=8&&x<=12?"#95715b":(x+y)%2?"#d1c0a4":"#d9cbb5") : office ? ((x + y) % 2 ? "#555b60" : "#5c6267") : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0"), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
+      box(g, interiorFloor(map.id,x,y) ?? (home ? homeFloor : hotel ? (x>=8&&x<=12?"#95715b":(x+y)%2?"#d1c0a4":"#d9cbb5") : office ? (ch === "m" ? (map.design?.trim ?? "#78958c") : ch === "l" ? (map.design?.alternate ?? "#c2baa6") : ch === "," ? ((x+y)%2?"#f3ead6":"#e6d8bc") : (x+y)%2 ? (map.design?.floor ?? "#d6ddd6") : (map.design?.alternate ?? "#c7d3cb")) : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0")), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
     }
   // Office / station furniture from tile runs.
   if (!home)
@@ -1434,10 +1560,75 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         }
         let w = 1;
         while (rows[y][x + w] === ch) w++;
-        if (hotel && map.id.endsWith("floor-1") && ch === "d" && x < 8) {
+        if(map.id==='study-lobby'){
+          if(ch==='p'){x+=w;continue;}
+          if(ch==='t'){
+            if(y>=15)officeDesk(g,x+.05,y+.05,w-.1,y<12?'#467768':x<10?'#4b748b':'#947146');
+            else jobs.push(kaykitInteriorProp(g,kaykitAsset('restaurant','kitchentable_A_large'),x,y,w,.86,true));
+            x+=w;continue;
+          }
+          if(ch==='s'){
+            for(let i=0;i<w;i+=2)jobs.push(kaykitInteriorProp(g,kaykitAsset('city','bench'),x+i,y,Math.min(2,w-i),.78));
+            x+=w;continue;
+          }
+        }
+        if(map.id==='venture-hub'&&ch==='k'&&y>=15){
+          // Repair benches have tools and materials rather than café appliances.
+          box(g,'#956d46',x+.05,.82,y+.04,x+w-.05,.94,y+.96);
+          for(const edge of [x+.12,x+w-.25])box(g,'#3c544b',edge,.04,y+.12,edge+.13,.82,y+.86);
+          for(let i=0;i<w;i+=2){
+            box(g,'#3d5b52',x+i+.2,.945,y+.18,x+Math.min(w,i+1.6),.96,y+.8);
+            jobs.push(place(g,kaykitAsset('resources','Parts_Pile_Small'),x+i+.25,y+.22,Math.min(1.1,w-i-.35),.5,.97));
+          }
+          x+=w;continue;
+        }
+        if(map.id==='venture-hub'&&ch==='v'){
+          for(let i=0;i<w;i++)jobs.push(place(g,'/world3d/furniture/bookcaseOpen.glb',x+i+.06,y+.08,.88,.82));
+          x+=w;continue;
+        }
+        const importedProp=interiorAsset(map.id,map.design?.theme,ch);
+        if(importedProp){
+          const spec=interiorPropLayout(ch,w);
+          for(let i=0;i<w;i+=spec.span){
+            const width=Math.min(spec.span,w-i), at=x+i;
+            let rot=0;
+            if(ch==='c'){
+              let nearest=Infinity;
+              for(let yy=Math.max(0,y-3);yy<Math.min(H,y+4);yy++)for(let xx=Math.max(0,at-4);xx<Math.min(Wd,at+5);xx++)if('to'.includes(rows[yy][xx])){const d=Math.hypot(xx-at,yy-y);if(d<nearest){nearest=d;rot=Math.atan2(xx-at,yy-y);}}
+            }
+            const fixture=ch==='k'?counterKitAsset(map.id,map.design?.theme,at,y):importedProp;
+            jobs.push(kaykitInteriorProp(g,fixture,at,y,width,spec.height,spec.stretch,rot).then(()=>{
+              if(ch==='t')return place(g,kaykitAsset('restaurant','menu'),at+width/2-.12,y+.34,.24,.3,.83);
+            }));
+            if(ch==='O')jobs.push(place(g,kaykitAsset('restaurant','extractorhood'),at+.1,y+.1,width-.2,.7,1.8));
+          }
+          x+=w;continue;
+        }
+        if (deskOffice && ch === "t") {
+          jobs.push(kaykitInteriorProp(g,voxelOfficePalette(map.id,map.design?.theme).meeting,x,y,w,.83,true));
+        } else if (deskOffice && ch === "o") {
+          for(let i=0;i<w;i+=2)jobs.push(kaykitInteriorProp(g,voxelOfficePalette(map.id,map.design?.theme).coffee,x+i,y,Math.min(2,w-i),.6,true));
+        } else if (ch === "O") {
+          for(let i=0;i<w;i+=3){
+            const width=Math.min(3,w-i)-.1;
+            box(g,"#a75438",x+i+.05,.05,y+.05,x+i+width,1.8,y+.95);
+            box(g,"#353936",x+i+.2,.8,y+.94,x+i+width-.15,1.4,y+1.02);
+            box(g,"#eaa34a",x+i+.35,.85,y+1.025,x+i+width-.3,1.05,y+1.04);
+            box(g,"#f0e4ca",x+i+.02,1.8,y+.02,x+i+width+.03,1.9,y+.98);
+          }
+        } else if (hotel && map.id.endsWith("floor-1") && ch === "d" && x < 8) {
           jobs.push(place(g,"/world3d/furniture/bedDouble.glb",x+0.05,y+0.05,w-0.1,1.9));
         } else if (deskOffice && ch === "d") {
-          for (let i = 0; i < w; i += 3) officeDesk(g, x + i + 0.05, y + 0.05, Math.min(3, w - i) - 0.1, map.accent ?? "#587e76");
+          for (let i = 0; i < w; i += 3) {
+            const span = Math.min(3, w-i), palette = voxelOfficePalette(map.id,map.design?.theme);
+            jobs.push(kaykitInteriorProp(g,palette.desk,x+i,y,span,.96,true));
+            jobs.push(kaykitInteriorProp(g,palette.computer,x+i+span*.4,y+.08,Math.min(.9,span*.52),.65,false,0,.98,.65));
+            if(map.design?.theme==="creative") {
+              box(g,"#e7b485",x+i+.1,1,y+.1,x+i+.55,1.04,y+.5);
+              for(let j=0;j<3;j++)box(g,["#c97770","#6b9a9a","#dfb864"][j],x+i+.17+j*.1,1.04,y+.18,x+i+.23+j*.1,1.08,y+.4);
+            } else if(map.design?.theme==="finance")box(g,"#345950",x+i+.1,1,y+.13,x+i+.45,1.4,y+.21);
+            else if(map.design?.theme==="logistics")box(g,"#b38c5e",x+i+.12,1,y+.1,x+i+.6,1.4,y+.55);
+          }
         } else if (deskOffice && map.id.startsWith("workplace-") && ch === "v") {
           officeCabinet(g, x, y);
         } else if (deskOffice && ch === "F") {
@@ -1454,12 +1645,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
           box(g, "#faf8ee", x + 0.23, 1.3, y + 0.27, x + 0.77, 1.34, y + 0.7);
         } else if (deskOffice && ch === "c") {
           for (let i = 0; i < w; i++) {
-            box(g, "#869394", x + i + 0.1, 0.55, y + 0.1, x + i + 0.9, 0.7, y + 0.86);
-            box(g, "#647479", x + i + 0.1, 0.7, y + 0.72, x + i + 0.9, 1.48, y + 0.88);
-            box(g, "#aab5b5", x + i + 0.45, 0.17, y + 0.42, x + i + 0.55, 0.55, y + 0.52);
-            box(g, "#687779", x + i + 0.09, 0.13, y + 0.42, x + i + 0.91, 0.2, y + 0.52);
-            box(g, "#687779", x + i + 0.45, 0.13, y + 0.08, x + i + 0.55, 0.2, y + 0.88);
-            for (const edge of [0.06, 0.86]) box(g, "#536267", x + i + edge, 0.7, y + 0.25, x + i + edge + 0.08, 0.95, y + 0.7);
+            jobs.push(kaykitInteriorProp(g, voxelOfficePalette(map.id,map.design?.theme).chair, x + i + .06, y + .06, .88, .94, false, 0, .02, .88));
           }
         } else if (deskOffice && ch === "s") {
           box(g, "#40685f", x + 0.04, 0.3, y + 0.12, x + w - 0.04, 0.72, y + 0.86);
@@ -1470,8 +1656,18 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
           box(g, "#6b746c", x + 0.25, 0.05, y + 0.25, x + 0.75, 0.12, y + 0.75);
           box(g, "#a28a63", x + 0.47, 0.12, y + 0.47, x + 0.53, 1.65, y + 0.53);
           box(g, "#e6d9ba", x + 0.2, 1.65, y + 0.2, x + 0.8, 2.08, y + 0.8);
+        } else if (map.kind === "hospital" && ch === "r") {
+          box(g,"#287a78",x,.1,y,x+w,.98,y+.8);
+          box(g,"#e4ece7",x-.02,.98,y-.02,x+w+.02,1.08,y+.85);
+          jobs.push(kaykitInteriorProp(g,voxelOfficeAsset("computer-a"),x+w*.65,y+.08,.75,.6,false,0,1.08,.6));
+          const board=sign("RECEPTION",{bg:"#287a78",fg:"#ffffff",w:3.1,h:.34});board.position.set(x+w/2,.67,y+.82);g.add(board);
         } else if (map.kind === "hospital" && ch === "d") {
-          jobs.push(place(g, "/world3d/furniture/bedSingle.glb", x + 0.1, y + 0.05, w - 0.2, 1.9));
+          // Full two-row bays are furnished once below.
+        } else if(map.kind==='hospital'&&ch==='b'){
+          for(let i=0;i<w;i+=2){
+            jobs.push(kaykitInteriorProp(g,hospitalAsset('cupboard_bottom'),x+i,y,Math.min(2,w-i),.9));
+            jobs.push(kaykitInteriorProp(g,hospitalAsset('cupboard_top'),x+i,y,Math.min(2,w-i),.75,false,0,.95));
+          }
         } else if (map.kind === "prison" && ch === "b") {
           jobs.push(place(g, "/world3d/furniture/bedBunk.glb", x - 0.3, y - 1.5, 1.6, 2.4));
         } else if (deskOffice && ch === "b") {
@@ -1501,6 +1697,59 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         x += w;
       }
     }
+  for(const detail of [...roomKitDetails(map),...studyKitDetails(map)])jobs.push(placeKitDetail(g,detail));
+  if(map.kind==='hospital'){
+    hospitalBeds(rows).forEach((bay,index)=>{
+      jobs.push(kaykitInteriorProp(g,hospitalAsset(['bed_1','bed_2','bed_4'][index%3]),bay.x,bay.y,1.55,.95,false,0,.03,bay.h));
+      jobs.push(kaykitInteriorProp(g,hospitalAsset(index%2?'machine_2':'machine_1'),bay.x+1.8,bay.y,.8,1.15));
+      jobs.push(kaykitInteriorProp(g,hospitalAsset('tray_1'),bay.x+1.8,bay.y+1,.8,.7));
+      jobs.push(place(g,hospitalAsset('overhead_light'),bay.x+.25,bay.y+.3,1.1,1.2,2.35));
+      box(g,'#91b4af',bay.x+.03,.03,bay.y+.02,bay.x+.12,1.55,bay.y+bay.h-.04);
+      const bayLabel=sign(`BAY ${index+1}`,{bg:'#287a78',fg:'#ffffff',w:.8,h:.2});bayLabel.position.set(bay.x+.8,1.75,bay.y+.06);g.add(bayLabel);
+    });
+    for(let x=1;x<Wd-2;x+=4)jobs.push(kaykitInteriorProp(g,hospitalAsset('wall_window'),x,0,3.8,2.8,false,0,0,.96));
+    for(let x=10;x<16;x++)for(let y=8;y<11;y++)jobs.push(kaykitInteriorProp(g,hospitalAsset('floor_1'),x,y,1,.025,false,0,.022,1));
+    for(let x=1;x<Wd-1;x++)box(g,'#397f79',x,.05,.97,x+1,.85,1.025);
+    const board=sign('ST TOMAS  ·  CARE & RECOVERY',{bg:'#276b67',fg:'#e9f4e9',w:8,h:.6});board.position.set(Wd/2,2.1,1.04);g.add(board);
+  }
+  if(map.id==='study-lobby'){
+    for(let x=1;x<Wd-1;x++){
+      box(g,'#416e70',x,.05,.97,x+1,.85,1.025);
+      box(g,'#c7ab74',x,.85,.98,x+1,.9,1.03);
+    }
+    const title=sign('STUDY QUARTER',{bg:'#416e70',fg:'#f6efd9',w:8,h:.65});
+    title.position.set(Wd/2,2.1,1.05);g.add(title);
+    const subtitle=sign('LEARN  ·  MAKE  ·  EXPLORE CAREERS',{bg:'#416e70',fg:'#f6efd9',w:7,h:.3});
+    subtitle.position.set(Wd/2,1.62,1.05);g.add(subtitle);
+  }
+  if(office&&map.design&&map.id!=='workplace-pizzazz'&&map.id!=='venture-hub'){
+    const accent=map.design.trim;
+    for(let x=1;x<Wd-1;x++){
+      box(g,accent,x,.05,.97,x+1,.76,1.025);
+      box(g,'#c4aa7a',x,.76,.98,x+1,.81,1.03);
+    }
+    for(let y=1;y<H-1;y++)for(const x of [.97,Wd-1.025])box(g,accent,x,.05,y,x+.055,.76,y+1);
+    const board=sign(map.name,{bg:accent,fg:'#f6efdc',w:Math.min(10,Wd*.3),h:.65,logo:map.id.startsWith('workplace-')?map.id.slice(10):null});
+    board.position.set(Wd/2,2.2,1.05);g.add(board);
+    const caption=sign(map.design.room.toUpperCase(),{bg:accent,fg:'#f6efdc',w:6,h:.3});
+    caption.position.set(Wd/2,1.68,1.05);g.add(caption);
+  }
+  if(map.id==='workplace-pizzazz'||map.id==='venture-hub'){
+    const trim=map.id==='workplace-pizzazz'?'#335a4c':'#385e57';
+    // Joinery follows the existing boundary walls; nothing projects into a walkable route.
+    for(let x=1;x<Wd-1;x++){
+      box(g,trim,x,.05,.96,x+1,.92,1.02);
+      box(g,'#c8a66c',x,.92,.97,x+1,.97,1.035);
+    }
+    for(let y=1;y<H-1;y++)for(const x of [.96,Wd-1.02]){
+      box(g,trim,x,.05,y,x+.06,.92,y+1);
+      box(g,'#c8a66c',x,.92,y,x+.07,.97,y+1);
+    }
+    const board=sign(map.id==='workplace-pizzazz'?'PIZZAZZ  ·  KITCHEN & DELIVERY':'VENTURE YARD  ·  BUILD SOMETHING',{bg:trim,fg:'#f5e7c9',w:8,h:.7});
+    board.position.set(Wd/2,2.15,1.06);g.add(board);
+    // Flat inlay marks the main route from the front door to the service area.
+    for(let y=H-4;y>H-8;y--)box(g,'#6b816c',Wd/2-.32,.026,y,Wd/2+.32,.032,y+.72);
+  }
   // Station gates: steel posts with red paddles.
   if (station)
     for (let x = 0; x < Wd; x++)
@@ -1583,7 +1832,6 @@ export function World3D({
   onUnavailable,
   getHomeAction,
   overview = false,
-  quality = "auto",
   immersive = false,
 }: {
   map: WorldMap;
@@ -1601,7 +1849,6 @@ export function World3D({
   onUnavailable?:()=>void;
   getHomeAction?: () => HomeAction | null;
   overview?: boolean;
-  quality?: VisualQuality;
   immersive?: boolean;
   getPolice?: () => Pursuit | null;
   nearPortal: () => Portal | null;
@@ -1628,18 +1875,21 @@ export function World3D({
     const el = host.current;
     if (!el) return;
     const highland = map.art === "highlands";
+    const visibility = buildingVisibility();
+    const sightlineBuildings: THREE.Group[] = [];
+    let sightlinesReady = false;
+    const sightlineTarget = new THREE.Vector3();
     const london = map.art === "london";
     const indoors = !london && !highland && map.kind !== "campus";
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
-    try{renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
+    try{renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
     renderer.domElement.addEventListener("webglcontextlost",contextLost);
-    const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
-    const budget = graphicsBudget(quality === "low", mobile);
-    const visual = visualProfile(quality,mobile,window.devicePixelRatio||1);
+    const budget = graphicsBudget();
+    const visual = visualProfile(window.devicePixelRatio||1);
     renderer.setPixelRatio(visual.pixelRatio);
     renderer.shadowMap.enabled = visual.shadows;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1678,11 +1928,11 @@ export function World3D({
       scene.background = new THREE.Color(map.kind === "home" ? "#e7dfd0" : "#1d1a2b");
       scene.fog = null;
       // Electric indoor lighting stays warm and legible after sunset.
-      hemi.color.set("#fff8ec");
+      hemi.color.set(map.kind==='hospital'?"#f3fcff":"#fff8ec");
       hemi.groundColor.set("#b8b5ab");
       sun.color.set("#fff5df");
-      hemi.intensity = 1.9;
-      sun.intensity = 1.2;
+      hemi.intensity = 1.15;
+      sun.intensity = 1.35;
     }
 
     let presentation: ReturnType<typeof cinematicRenderer>;
@@ -1790,18 +2040,18 @@ export function World3D({
         world.add(g);
         const front = st.y + st.h;
         const stone = ["#e8dfcc", "#d4ddd7", "#ddd5c9"][index % 3];
-        box(g, stone, st.x, 0, st.y, st.x + st.w, 3.2, front);
+        box(g, stone, st.x, 0, st.y, st.x + st.w, 4.5, front);
         box(g, ARCH.ink, st.x, 0.12, front - 0.05, st.x + st.w, 0.38, front + 0.03);
-        box(g, "#253e3c", st.x - 0.05, 2.6, front - 0.05, st.x + st.w + 0.05, 3.3, front + 0.05);
-        box(g, ARCH.brass, st.x - 0.06, 2.55, front, st.x + st.w + 0.06, 2.62, front + 0.08);
-        box(g, ARCH.stone, st.x - 0.08, 3.3, st.y - 0.08, st.x + st.w + 0.08, 3.46, front + 0.08);
-        box(g, st.accent, st.x + 0.3, 3.47, front - 0.18, st.x + 2.1, 3.55, front + 0.04);
-        for (let i = 0; i < st.w - 1; i += 1.5) facadeWindow(g, st.x + 0.4 + i, 1.2, front, 0.7, 1.0);
+        box(g, "#253e3c", st.x - 0.05, 4.2, front - 0.05, st.x + st.w + 0.05, 4.6, front + 0.05);
+        box(g, ARCH.brass, st.x - 0.06, 4.15, front, st.x + st.w + 0.06, 4.22, front + 0.08);
+        box(g, ARCH.stone, st.x - 0.08, 4.6, st.y - 0.08, st.x + st.w + 0.08, 4.76, front + 0.08);
+        box(g, st.accent, st.x + 0.3, 4.77, front - 0.18, st.x + 2.1, 4.85, front + 0.04);
+        for (let i = 0; i < st.w - 1; i += 1.5) for(const y of [1.0,2.35,3.7]) facadeWindow(g, st.x + 0.4 + i, y, front, 0.7, 0.95);
         entrance(g, st.x + st.w / 2, front + 0.04, "#253e3c", 1.3);
         architecturalPlanter(g, st.x + 0.55, front - 0.25);
         if (index % 2 === 0) artFrontage(g, st.x, front + 0.09, st.w, index % 3);
         const sg = sign(st.label, { bg: "#253e3c", fg: "#fff3d8", w: Math.min(st.w - 0.4, 5), h: 0.55, logo: st.companyId ?? null });
-        sg.position.set(st.x + st.w / 2, 2.95, st.y + st.h + 0.07);
+        sg.position.set(st.x + st.w / 2, 4.42, st.y + st.h + 0.07);
         g.add(sg);
       }
       if(map.id === "universities") {
@@ -1815,7 +2065,9 @@ export function World3D({
       for (const t of H.things) {
         const g = new THREE.Group();
         world.add(g);
+        if (t.kind === "building" || t.kind === "station") sightlineBuildings.push(g);
         if (t.kind === "mountain") {
+          const fallback=()=>{
           const geo = new THREE.BoxGeometry(1, 1, 1);
           const cx = t.x + t.w / 2;
           const cz = t.y + t.h / 2;
@@ -1832,13 +2084,18 @@ export function World3D({
               m.castShadow = m.receiveShadow = true;
               g.add(m);
             }
-        } else if (t.kind === "pine") jobs.push(place(g, `/world3d/nature/${["tree_pineTallA", "tree_pineRoundB", "tree_pineDefaultA", "tree_pineTallC"][(t.x + t.y) % 4]}.glb`, t.x - 0.25, t.y - 0.25, 1.5, 1.5));
-        else if (t.kind === "rock") jobs.push(place(g, `/world3d/nature/${(t.x + t.y) % 2 ? "rock_largeA" : "rock_largeC"}.glb`, t.x + 0.05, t.y + 0.05, 0.9, 0.9));
+          };
+          const detail=mountainKitPlan(t);
+          jobs.push(kaykitInteriorProp(g,detail.asset,detail.x,detail.z,detail.w,detail.height,false,0,0,detail.d).catch(fallback));
+        } else if(t.kind==='pine'||t.kind==='rock'){
+          const detail=highlandNatureDetail(t,map);
+          if(detail)jobs.push(placeKitDetail(g,detail));
+        }
         else if (t.kind === "flower") jobs.push(place(g, `/world3d/nature/${["flower_redA", "flower_yellowB", "flower_purpleA"][(t.x + t.y) % 3]}.glb`, t.x + 0.3, t.y + 0.3, 0.4, 0.4));
         else if (t.kind === "tent") jobs.push(place(g, "/world3d/nature/tent_detailedOpen.glb", t.x + 0.1, t.y + 0.1, 1.8, 1.8));
         else if (t.kind === "campfire") jobs.push(place(g, "/world3d/nature/campfire_stones.glb", t.x + 0.1, t.y + 0.1, 0.8, 0.8));
         else if (t.kind === "building") {
-          terrace(g, t, true);
+          jobs.push(kaykitBuilding(g,t,highlandBuildingAsset(t.id,t.label),1,t.height).catch(()=>{terrace(g,t,true);}));
           if (t.label) {
             const sg = sign(t.label, { bg: t.label.includes("Cafe") ? "#2d6a4f" : "#7a4f32", fg: "#ffffff", w: 2.6, h: 0.45 });
             sg.position.set(t.x + t.w / 2, 1.05, t.y + t.h + 0.04);
@@ -1846,21 +2103,24 @@ export function World3D({
           }
         }
         else if (t.kind === "station") {
-          box(g, "#b5463a", t.x + 0.05, 0, t.y + 0.05, t.x + t.w - 0.05, 2.6, t.y + t.h - 0.05);
-          box(g, "#2d1b69", t.x, 2, t.y + t.h - 0.1, t.x + t.w, 2.35, t.y + t.h);
+          jobs.push(kaykitInteriorProp(g,kaykitAsset('medieval','buildings/blue/building_tavern_blue'),t.x,t.y,t.w,5.5,false,0,.13,t.h));
           const nm = sign(t.name, { bg: "#ffffff", fg: "#13203a", w: t.w + 0.4, h: 0.5, badge: true });
-          nm.position.set(t.x + t.w / 2, 2.18, t.y + t.h + 0.04);
+          nm.position.set(t.x + t.w / 2, 4.8, t.y + t.h + 0.04);
           g.add(nm);
         } else if (t.kind === "lamp") {
           jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1));
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
-        } else if (t.kind === "bench") box(g, "#8a5a36", t.x + 0.05, 0.35, t.y + 0.4, t.x + 0.95, 0.45, t.y + 0.7);
+        } else if(t.kind==='bench'){
+          const detail=highlandNatureDetail(t,map);
+          if(detail)jobs.push(placeKitDetail(g,detail));
+        }
       }
     } else {
       const L = buildLondon();
       for (const t of L.things) {
         const g = new THREE.Group();
         world.add(g);
+        if (t.kind === "building" || t.kind === "station" || t.kind === "landmark") sightlineBuildings.push(g);
         if (t.kind === "building") {
           jobs.push(building(g, t));
           if (!t.companyId && !t.id.startsWith("hotel-") && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
@@ -1880,19 +2140,16 @@ export function World3D({
           // Rounded planted trees are supplied in one shared scenery batch below.
         }
         else if (t.kind === "lamp") {
-          heritageLamp(g, t.x, t.y);
+          if((t.x+t.y)%8===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('streetLight'),t.x,t.y,1,2.9,false,0,.13));
+          else heritageLamp(g,t.x,t.y);
+          if((t.x+t.y)%13===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('garbageBin'),t.x+.05,t.y+.52,.4,.6,false,0,.13,.4));
+          if((t.x+t.y)%19===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('fireHydrant'),t.x+.58,t.y+.58,.35,.55,false,0,.13,.35));
           lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
         } else if (t.kind === "phonebox") {
           telephoneBox(g, t.x, t.y);
         } else if (t.kind === "postbox") cyl(g, "#c8322d", t.x + 0.5, t.y + 0.5, 0.1, 1.15, 0.24, 14);
         else if (t.kind === "bench") {
-          for (let slat = 0; slat < 3; slat++) box(g, "#b18b60", t.x + 0.05, 0.35, t.y + 0.4 + slat * 0.1, t.x + 0.95, 0.43, t.y + 0.48 + slat * 0.1);
-          box(g, "#b18b60", t.x + 0.05, 0.43, t.y + 0.35, t.x + 0.95, 0.75, t.y + 0.4);
-          for (const leg of [0.15, 0.8]) box(g, "#263e3b", t.x + leg, 0.1, t.y + 0.36, t.x + leg + 0.06, 0.6, t.y + 0.7);
-          for (const edge of [0.07, 0.87]) {
-            box(g, "#263e3b", t.x + edge, 0.4, t.y + 0.45, t.x + edge + 0.05, 0.69, t.y + 0.51);
-            box(g, "#263e3b", t.x + edge, 0.65, t.y + 0.38, t.x + edge + 0.05, 0.71, t.y + 0.73);
-          }
+          jobs.push(kaykitInteriorProp(g,freeCityAsset('bench2'),t.x,t.y,1,.65,false,0,.13));
         } else if (t.kind === "busstop") {
           box(g, "#263e3b", t.x - 0.1, 1.9, t.y + 0.25, t.x + 1.1, 2, t.y + 0.75);
           box(g, ARCH.brass, t.x - 0.1, 1.86, t.y + 0.73, t.x + 1.1, 1.91, t.y + 0.77);
@@ -1947,7 +2204,14 @@ export function World3D({
     precipitation.frustumCulled = false; precipitation.visible = false;
     scene.add(precipitation);
     let weatherKind = "Sunny";
-    const streetscape=london?addStreetscape(world,map,phase):null;
+    const pixelTrees=london?pixelTreePlans(map):[];
+    for(const detail of pixelTrees){
+      const imported=new THREE.Group();world.add(imported);
+      jobs.push(placeKitDetail(imported,detail));
+      if(assetSeed(detail.id)%3===0)jobs.push(placeKitDetail(imported,{asset:pixelAsset('flowers'),x:detail.x+.04,z:detail.z+.04,y:.13,w:.26,d:.28,height:.35}));
+      if(assetSeed(detail.id)%5===0)jobs.push(placeKitDetail(imported,{asset:pixelAsset('grass'),x:detail.x+.6,z:detail.z+.58,y:.13,w:.22,d:.22,height:.3}));
+    }
+    const streetscape=london?addStreetscape(world,map,phase,new Set(pixelTrees.map(t=>t.id))):null;
     if(streetscape) {
       bendAll(streetscape);
       streetscape.traverse(object=>{if((object as THREE.Mesh).isMesh){object.castShadow=false;object.receiveShadow=false;}});
@@ -1955,7 +2219,7 @@ export function World3D({
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
-        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : null;
+        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : p.id === "venture-yard" ? "Venture Yard" : null;
         if (!name) continue;
         const sg = sign(name, { bg: p.id === "pizzazz" ? "#c8322d" : "#13203a", fg: "#ffffff", w: 3, h: 0.5 });
         sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
@@ -2014,7 +2278,8 @@ export function World3D({
         if (b.char) { b.char.dispose(); b.char = null; }
         shadow.geometry.dispose(); shadow.material.dispose(); root.clear();
       } };
-      const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
+    const playerHeight=ambient?1.08:1.22;
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(ambient?0.3:0.34, 24), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.18 }));
       bend(shadow.material);
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = 0.14;
@@ -2022,7 +2287,7 @@ export function World3D({
       bodies.add(b);
       const loadBody = async () => {
         if (disposed || removed) return;
-        const c = await buildCharacter(a, 1.15, logo);
+        const c = await buildCharacter(a, playerHeight, logo);
         if (disposed || removed) { c.dispose(); return; }
         bendAll(c.object);
         c.object.position.y = 0.12;
@@ -2045,13 +2310,37 @@ export function World3D({
     let disposed = false;
     const me = makeBody(JSON.parse(avatarKey) as Avatar, badge);
     // Keep your character recognisable in crowds and behind tall buildings.
-    const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.38, 0.47, 32), new THREE.MeshBasicMaterial({ color: "#62e5ff", transparent: true, opacity: 0.85, depthTest: false, depthWrite: false }));
+    const playerRing = new THREE.Mesh(new THREE.RingGeometry(0.39, 0.48, 36), new THREE.MeshBasicMaterial({ color: "#62e5ff", transparent: true, opacity: 0.88, depthTest: false, depthWrite: false }));
     playerRing.rotation.x = -Math.PI / 2;
     playerRing.renderOrder = 1000;
     const playerLabel = makeNameplate(username, affiliation, true);
     el.appendChild(playerLabel);
     scene.add(playerRing);
     scene.add(me.root);
+    const pizzaParcel = new THREE.Group();
+    box(pizzaParcel, "#f1dcc0", -0.32, 0.8, 0.28, 0.32, 0.92, 0.92);
+    box(pizzaParcel, "#cb4c36", -0.33, 0.92, 0.27, 0.33, 0.95, 0.93);
+    const pizzaStamp = sign("PIZZAZZ", {bg:"#cb4c36",fg:"#fff8e7",w:0.48,h:0.14});
+    pizzaStamp.position.set(0, 0.85, 0.94); pizzaParcel.add(pizzaStamp);
+    me.root.add(pizzaParcel); pizzaParcel.visible = false;
+    const deliveryCustomer = makeBody(npcLook(33), null, true);
+    const deliverySign = sign("Pizza delivery", {bg:"#fff4dc",fg:"#315446",w:2.4,h:0.35});
+    deliverySign.position.set(0,2.6,0); deliveryCustomer.root.add(deliverySign);
+    deliveryCustomer.root.visible = false; scene.add(deliveryCustomer.root);
+    const pickupStack = new THREE.Group();
+    for(let i=0;i<4;i++) {
+      box(pickupStack,"#f1dcc0",-.42,.2+i*.14,-.4,.42,.31+i*.14,.4);
+      box(pickupStack,"#cb4c36",-.43,.31+i*.14,-.41,.43,.34+i*.14,.41);
+    }
+    const pickupLabel=sign("COLLECT PIZZAS",{bg:"#cb4c36",fg:"#fff8e7",w:2.4,h:.35});
+    pickupLabel.position.set(0,1.5,0);pickupStack.add(pickupLabel);pickupStack.visible=false;scene.add(pickupStack);
+    const ventureCharacters=(map.characters??[]).map((person,i)=>{
+      const body=makeBody({...npcLook(70+i),top:i===0?"top-apron":i===1?"top-polo":"top-hoodie"},null,true);
+      body.root.position.set(person.x+.5,.12,person.y+.5);
+      const label=sign(person.name,{bg:map.accent,fg:"#fff8e7",w:2.6,h:.35});
+      label.position.set(0,2.55,0);body.root.add(label);scene.add(body.root);
+      return {person,body};
+    });
     // People who work here: the judge in court, guards in prison, a doctor at the hospital.
     const staff: [Avatar, number, number, number][] =
       map.kind === "court"
@@ -2135,6 +2424,7 @@ export function World3D({
       return {
         body,
         speech,
+        identity: residentIdentity(map.id, path),
         path,
         offset: i * 3.71,
         knockedUntil: 0,
@@ -2202,7 +2492,7 @@ export function World3D({
 
     // ── Scuffles: you swing, the nearest person goes down ──
     let swingUntil = 0;
-    const onFight = () => {
+    const onFight = (event: Event) => {
       const now = performance.now();
       swingUntil = now + 700;
       me.char?.play("attack-melee-right");
@@ -2210,15 +2500,21 @@ export function World3D({
       let best: (typeof npcs)[number] | null = null;
       let bd = 2.2;
       for (const n of npcs) {
-        if (!n.body.root.visible) continue;
+        if (!n.body.root.visible || ((event as CustomEvent).detail?.npcId && n.identity.id !== (event as CustomEvent).detail.npcId)) continue;
         const d = Math.hypot(n.body.root.position.x - p.x / TILE, n.body.root.position.z - p.y / TILE);
         if (d < bd) [best, bd] = [n, d];
       }
       if (best) {
+        window.dispatchEvent(new CustomEvent("illuminated:street-hit",{detail:{npcId:best.identity.id,npcName:best.identity.name,defensive:(event as CustomEvent).detail?.defensive}}));
         best.knockedUntil = now + 2600;
         best.body.char?.play("die");
       }
     };
+    const onCivilianAttack = (event:Event) => {
+      const id=(event as CustomEvent).detail?.npcId,n=npcs.find(n=>n.identity.id===id);
+      if(n){n.body.char?.play("punch");n.greetUntil=performance.now()+650;n.greetingPoint.copy(n.body.root.position);n.greeting=true;}
+    };
+    window.addEventListener("illuminated:civilian-attack",onCivilianAttack);
     window.addEventListener("illuminated:fight", onFight);
     // ── Jumping: Space (or the on-screen jump button) for a springy hop ──
     let jumpAt = 0;
@@ -2241,16 +2537,15 @@ export function World3D({
 
     // A responding car and its officers are tied to the actual pursuit simulation.
     const responseCar = new THREE.Group();
+    let policeRig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null = null;
     let wasTased = false;
-    const responders = london || highland ? [makeBody({...npcLook(51),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(52),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
+    const responders = london || highland ? [makeBody({...npcLook(51),head:"head-blocky-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(52),head:"head-blocky-classic-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     if (london || highland) {
-      void placeCar(responseCar, "police");
-      box(responseCar,"#2b5fd9",-0.4,1.4,-0.42,0.05,1.56,0.42);
-      box(responseCar,"#e04a3f",0.05,1.4,-0.42,0.5,1.56,0.42);
+      void createEmergencyVehicle("police",load,bendAll).then(rig=>{if(disposed){rig.dispose();return;}policeRig=rig;responseCar.add(rig.root);}).catch(()=>{});
       scene.add(responseCar,...responders.map(b=>b.root));
     }
     const carLast = new THREE.Vector3();
-    const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"})] : [];
+    const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
     if(map.kind === "prison") for(const portal of map.portals.filter(p=>p.to.kind === "prison"&&p.to.action === "talk")) {
       const person=makeBody({...npcLook(portal.id === "inmate-sam"?57:58),...PRISON_LOOK});
@@ -2563,6 +2858,7 @@ export function World3D({
       if (tased && !wasTased) me.char?.play("die");
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
+      policeRig?.update(secs,!!pursuit);
       responseCar.visible = !!pursuit && (london || highland);
       if (pursuit && (london || highland)) {
         const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;
@@ -2624,10 +2920,27 @@ export function World3D({
         const wide = (v.obj.userData.coach ? COACH_WIDTH : v.obj.userData.label ? BUS_WIDTH : CAR_WIDTH) * TILE;
         TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horiz ? long : wide) / 2, hh: (horiz ? wide : long) / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
       }
+      pizzaParcel.visible = DELIVERY_SCENE.active && DELIVERY_SCENE.carrying;
+      const delivery = DELIVERY_SCENE.target;
+      deliveryCustomer.root.visible = map.id === "city" && DELIVERY_SCENE.active && !!delivery && !delivery.pickup;
+      pickupStack.visible = map.id === "city" && DELIVERY_SCENE.active && !!delivery?.pickup;
+      if(delivery) {
+        deliveryCustomer.root.position.set(delivery.x/TILE,.12,delivery.y/TILE);
+        deliveryCustomer.root.rotation.y = Math.atan2(me.root.position.x-delivery.x/TILE,me.root.position.z-delivery.y/TILE);
+        pickupStack.position.set(delivery.x/TILE,.05,delivery.y/TILE);
+      }
       NPC_SPOTS.length = 0;
+      if(deliveryCustomer.root.visible && delivery) {
+        const customerName=delivery.name.split(" · ")[0];
+        NPC_SPOTS.push({id:`city:resident:pizza-${customerName.toLowerCase()}`,name:customerName,x:delivery.x,y:delivery.y});
+      }
+      ventureCharacters.forEach(({person,body})=>{
+        NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
+        body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
+      });
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
-        if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE });
+        if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE, ...n.identity });
         if (n.knockedUntil > now) { n.speech.visible = false; return; }
         if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; }
         const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
@@ -2803,6 +3116,11 @@ export function World3D({
         }
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
+      if (sightlinesReady && (london || highland)) {
+        sightlineTarget.copy(me.root.position); sightlineTarget.y += .9;
+        // Keep the skyline solid in overview; normal play clears only the character's sightline.
+        visibility.update(camera.position, overview ? [] : [sightlineTarget], dt);
+      }
       presentation.render();
       raf = requestAnimationFrame(frame);
     };
@@ -2812,12 +3130,15 @@ export function World3D({
     void Promise.allSettled(jobs).then(async () => {
       if (disposed) return;
       if(london) disposeArchitecture=finishArchitecture(world,phase);
+      for (const group of sightlineBuildings) visibility.register(group);
+      sightlinesReady = true;
       world.updateMatrixWorld(true);
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
         if(m.isMesh&&m.castShadow)m.customDepthMaterial=CURVED_DEPTH;
         if (!m.isMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
+        for (let parent: THREE.Object3D | null = m; parent; parent = parent.parent) if (parent.userData.sightlineBuilding) return;
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
         if (spin || m.geometry.attributes.color) return;
@@ -2857,6 +3178,8 @@ export function World3D({
     return () => {
       cancelAnimationFrame(raf);
       disposed = true;
+      visibility.dispose();
+      policeRig?.dispose();
       for (const body of bodies) body.dispose();
       for (const vehicle of traffic) if (vehicle.obj.userData.coach) vehicle.obj.userData.dispose();
       TRAFFIC_BOXES.length = 0;
@@ -2865,6 +3188,7 @@ export function World3D({
       renderer.domElement.removeEventListener("click", onClick);
       renderer.domElement.removeEventListener("wheel",onWheel);
       window.removeEventListener("illuminated:fight", onFight);
+      window.removeEventListener("illuminated:civilian-attack",onCivilianAttack);
       window.removeEventListener("keydown", onJumpKey);
       window.removeEventListener("illuminated:jump", onJump);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
@@ -2891,7 +3215,7 @@ export function World3D({
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, avatarKey, overview, identityKey, quality]);
+  }, [map, avatarKey, overview, identityKey]);
 
   // Billboards: real upcoming hackathons and tech events on big boards around town.
   const adKey = ads.map((a) => a.id).join(",");

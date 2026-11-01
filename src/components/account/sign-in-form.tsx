@@ -79,18 +79,20 @@ function PasswordField({ newPassword }: { newPassword: boolean }) {
   );
 }
 
-function EmailField() {
+function EmailField({ allowUsername = false }: { allowUsername?: boolean }) {
   return (
     <div>
       <label htmlFor="email" className={labelCls}>
-        Email address
+        {allowUsername ? "Email address or demo username" : "Email address"}
       </label>
       <input
         id="email"
         name="email"
-        type="email"
+        type={allowUsername ? "text" : "email"}
         required
-        autoComplete="email"
+        autoComplete={allowUsername ? "username" : "email"}
+        autoCapitalize="none"
+        spellCheck={false}
         maxLength={200}
         className={cn(fieldCls, "h-11 text-base sm:text-sm")}
       />
@@ -113,7 +115,7 @@ function PasswordForm({
   return (
     <form action={action} className="space-y-5">
       <input type="hidden" name="next" value={next} />
-      <EmailField />
+      <EmailField allowUsername={mode === "sign-in"} />
       <PasswordField newPassword={mode === "sign-up"} />
       <Submit
         pendingLabel={mode === "sign-in" ? "Signing in…" : "Activating invitation…"}

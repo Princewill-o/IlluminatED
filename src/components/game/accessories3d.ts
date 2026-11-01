@@ -48,9 +48,9 @@ export function hat3d(id: string, colour: string): THREE.Group | null {
       add(g, ball(0.08), "#ff8fd1", 0, 0.74, 0);
       break;
     case "hat-headphones":
-      add(g, ring(0.6, 0.06), colour, 0, -0.25, 0, 0, Math.PI / 2, 0).scale.set(1, 1, 1);
-      add(g, cyl(0.2, 0.16), colour, 0.62, -0.6, 0, 0, 0, Math.PI / 2);
-      add(g, cyl(0.2, 0.16), colour, -0.62, -0.6, 0, 0, 0, Math.PI / 2);
+      add(g, new THREE.TorusGeometry(0.55, 0.055, 8, 32, Math.PI), colour, 0, -0.32, 0);
+      add(g, cyl(0.2, 0.16), colour, 0.55, -0.32, 0, 0, 0, Math.PI / 2);
+      add(g, cyl(0.2, 0.16), colour, -0.55, -0.32, 0, 0, 0, Math.PI / 2);
       break;
     case "hat-tophat":
       add(g, cyl(0.42, 0.06), colour, 0, 0.02, 0);

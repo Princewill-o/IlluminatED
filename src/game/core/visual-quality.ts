@@ -1,29 +1,13 @@
-export type VisualQuality = "auto" | "low" | "cinematic";
-export function readVisualQuality(value: string | null): VisualQuality {
-  return value === "low" || value === "cinematic" ? value : "auto";
-}
-
-/** Explicit costs, independent of camera zoom. Cinematic is opt-in. */
-export function visualProfile(
-  quality: VisualQuality,
-  mobile: boolean,
-  dpr = 1,
-) {
-  const performance = quality === "low";
-  const cinematic = quality === "cinematic";
+/** One high-detail rendering profile for every world; saved quality preferences are ignored. */
+export function visualProfile(dpr = 1) {
   return {
-    pixelRatio: performance
-      ? 0.75
-      : Math.min(
-          cinematic ? (mobile ? 1.25 : 1.5) : mobile ? 1 : 1.25,
-          Math.max(1, Number.isFinite(dpr) ? dpr : 1),
-        ),
-    shadows: cinematic,
-    shadowSize: cinematic && !mobile ? 2048 : 1024,
-    postProcessing: cinematic,
-    environment: cinematic && !mobile,
-    samples: cinematic && !mobile ? 4 : 0,
-    bloom: cinematic,
+    pixelRatio: Math.min(2, Math.max(1, Number.isFinite(dpr) ? dpr : 1)),
+    shadows: true,
+    shadowSize: 2048,
+    postProcessing: true,
+    environment: true,
+    samples: 4,
+    bloom: true,
     bloomStrength: 0.18,
     exposure: 1.12,
   };

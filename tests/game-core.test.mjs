@@ -186,6 +186,11 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
   const brandSql = fs.readFileSync("supabase/migrations/20261017121000_cartoon_brand_labels.sql", "utf8");
   const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
+    if (c.id.startsWith("head-kaykit-")) {
+      const filename=fs.readdirSync("supabase/migrations").find(n=>n.endsWith("_kaykit_adventurer_characters.sql"));
+      assert.ok(fs.readFileSync(`supabase/migrations/${filename}`,"utf8").includes(`('${c.id}', 'head', '${c.name}', 0, null`));
+      continue;
+    }
     if (c.slot === "brand" || c.id.startsWith("top-hero-")) {
       const sql = fs.readFileSync("supabase/migrations/20261021120000_chibi_brands.sql", "utf8");
       if (c.id.startsWith("top-hero-")) { assert.ok(sql.includes(`('${c.id}', 'top', '${c.name}', 0, '${c.unlock}'`), `hero row for ${c.id}`); continue; }

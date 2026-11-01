@@ -108,8 +108,23 @@ export default function AboutPage() {
         <p className="text-muted-foreground max-w-2xl leading-relaxed">
           The city, buildings, vehicles, trees and characters in IlluminatED&apos;s game world are built from{" "}
           <ExternalLink href="https://kenney.nl">Kenney</ExternalLink>&apos;s free CC0 3D kits (City Kit Commercial,
-          City Kit Suburban, City Kit Roads, Car Kit, Nature Kit and Mini Characters), rendered and styled by us in
+          City Kit Suburban, City Kit Roads and Nature Kit), rendered and styled by us in
           Blender. Thank you, Kenney.
+        </p>
+        <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+          Selected shops and offices are adapted from <ExternalLink href="https://sketchfab.com/3d-models/low-poly-city-pack-c693dae1fe06403ea1e0bcf4e9db108a">Low Poly City-Pack by medmgames</ExternalLink> and <ExternalLink href="https://sketchfab.com/3d-models/low-poly-city-game-ready-c7e3a158515c4e9da31ae52c30403cef">Low Poly City Game-Ready by costoWRLD</ExternalLink>, licensed under <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</ExternalLink>. We extracted individual buildings and adjusted their scale and signs.
+        </p>
+        <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+          Player characters and residents use Popyca&apos;s <ExternalLink href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 Blocky Characters free samples</ExternalLink>. Motor cars use Quaternius&apos; Realistic Car Pack, converted to GLB and adapted to the city&apos;s driving scale.
+        </p>
+        <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+          Office furniture is adapted from the 3D Voxel Office Pack by <ExternalLink href="https://twitter.com/EggnCheesePls">MariaIsMe / Maria Is Me</ExternalLink> under CC BY 4.0. Hospital furniture is adapted from Hospital Assets by <ExternalLink href="https://atomicrealm.itch.io">Atomic Realm</ExternalLink>, used under the supplied asset licence.
+        </p>
+        <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+          Controller UI Elements by <ExternalLink href="https://arks.itch.io/ps4-buttons">Mikkel Julian “Arks” Petersen / Arks @ScissorMarks</ExternalLink>.
+        </p>
+        <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
+          Instrumental recordings by isaiah658, Igor Gundarev and Abstraction / Tallbeard Studios (Ben Burnes), released under CC0. <ExternalLink href="/audio/credits.json">Track credits and original source links</ExternalLink>.
         </p>
       </Section>
     </>

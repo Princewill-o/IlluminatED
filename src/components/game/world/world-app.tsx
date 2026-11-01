@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy } from "lucide-react";
+import { BookOpen, CircleHelp, Gamepad2, Smartphone, Trophy, Users } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { NPC_SPOTS, PLAYER, TRAFFIC_BOXES } from "./art";
@@ -15,7 +15,7 @@ import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { HudLayout, HudSlot } from "./hud";
-import { PoliceChallenge, PrisonStudy } from "./law-dialogs";
+import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
@@ -25,30 +25,25 @@ import { TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
 import { useLife } from "./use-life";
-import { useNeeds, doActivity } from "./use-needs";
+import { useStreetEncounters } from "./use-street-encounters";
+import {courtFineTotal,recordCourtFine} from "@/game/core/court-wallet";
+import type { StreetAssessment } from "@/game/core/civilian-conflict";
+import { useNeeds, doActivity, setNeedsOutfit } from "./use-needs";
 import { type Me, useLobby } from "./use-world";
+import { VenturePanel } from "./venture-panel";
 import { WorldView } from "./world-view";
 import { useTechEvents } from "../event-ads";
-const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
-const StudyRoom = dynamic(() => import("../study/study-room").then((module) => module.StudyRoom), { ssr: false, loading: () => null });
-const GamePhone = dynamic(() => import("./game-phone").then((module) => module.GamePhone), { ssr: false, loading: () => null });
-const LearningAwards = dynamic(() => import("./learning-awards").then((module) => module.LearningAwards), { ssr: false, loading: () => null });
-const UniversityGuide = dynamic(() => import("./university-guide").then((module) => module.UniversityGuide), { ssr: false, loading: () => null });
-const DailyShift = dynamic(() => import("./daily-shift").then((module) => module.DailyShift), { ssr: false, loading: () => null });
-const BusStop = dynamic(() => import("./bus-stop").then((module) => module.BusStop), { ssr: false, loading: () => null });
-const TubeMap = dynamic(() => import("./tube-map").then((module) => module.TubeMap), { ssr: false, loading: () => null });
-const HomeEditor = dynamic(() => import("../../careers/home-editor").then(module => module.HomeEditor), { ssr: false });
 
-const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
-
+import { cityAction } from "@/app/games/city-actions";
 import { earnWorldXp, worldBankStatus } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
 import type { LearningAward } from "@/game/core/awards";
 import type { BikeBrand } from "@/game/core/bikes";
-import { WORKPLACES, workplaceById } from "@/game/core/careers";
+import { WORKPLACES, workplaceById, roleOf } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
+import type { NearbyPerson } from "@/game/core/city-social";
 import { COMPANIES } from "@/game/core/companies";
 import { nearestDrivingSpot, nearestParkingSpot } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
@@ -59,7 +54,7 @@ import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";
 import {
-  CITY,
+  CITY, ventureMap,
   universityDistrictMap, universityInteriorMap, supermarketMap,
   STATION_PLATFORM_Y,
   TILE,
@@ -90,11 +85,24 @@ import {
 import type { HomeState } from "@/lib/game/careers-server";
 import { cn } from "@/lib/utils";
 
+const AmbulanceRescue = dynamic(() => import("./ambulance-rescue").then(m => m.AmbulanceRescue), {ssr:false});
+const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
+const StudyRoom = dynamic(() => import("../study/study-room").then((module) => module.StudyRoom), { ssr: false, loading: () => null });
+const GamePhone = dynamic(() => import("./game-phone").then((module) => module.GamePhone), { ssr: false, loading: () => null });
+const LearningAwards = dynamic(() => import("./learning-awards").then((module) => module.LearningAwards), { ssr: false, loading: () => null });
+const UniversityGuide = dynamic(() => import("./university-guide").then((module) => module.UniversityGuide), { ssr: false, loading: () => null });
+const DailyShift = dynamic(() => import("./daily-shift").then((module) => module.DailyShift), { ssr: false, loading: () => null });
+const BusStop = dynamic(() => import("./bus-stop").then((module) => module.BusStop), { ssr: false, loading: () => null });
+const TubeMap = dynamic(() => import("./tube-map").then((module) => module.TubeMap), { ssr: false, loading: () => null });
+const HomeEditor = dynamic(() => import("../../careers/home-editor").then(module => module.HomeEditor), { ssr: false });
+
+const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
 
 const REGION_KEY = "world-region";
 
 const STATIONS = tubeStations();
 const HIGHLANDS = highlandsMap();
+const SUPERMARKET = supermarketMap();
 const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
@@ -102,6 +110,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id.startsWith("hotel-")) return hotelMap(id);
   if (id.startsWith("workplace-")) return workplaceMap(id.slice(10));
   if (id === "city") return CITY;
+  if (id === "venture-hub") return ventureMap();
   if (id === "universities") return universityDistrictMap();
   if (id === "supermarket") return supermarketMap();
   if (id.startsWith("university-")) return universityInteriorMap(id.slice(11));
@@ -248,6 +257,10 @@ export function WorldApp({
   }, []);
   const [shop, setShop] = useState<"tescow" | "bootz" | null>(null);
   const [phone, setPhone] = useState(false);
+  const [phoneApp,setPhoneApp]=useState<"home"|"nearby">("home");
+  const [nearby,setNearby]=useState<NearbyPerson[]>([]);
+  const [ventureOpen,setVentureOpen]=useState(false);
+  useEffect(()=>{const open=()=>{setPhoneApp("nearby");setPhone(true);};window.addEventListener("illuminated:nearby",open);return()=>window.removeEventListener("illuminated:nearby",open);},[]);
   const [study, setStudy] = useState(false);
   const [learning, setLearning] = useState(false);
   const [awardsOpen, setAwardsOpen] = useState(false);
@@ -265,8 +278,11 @@ export function WorldApp({
   const transportStars = useRef(4);
   const { life, update: updateLife } = useLife(me.id,wantedResetToken);
   const { needs } = useNeeds();
+  useEffect(()=>{setNeedsOutfit(me.avatar.top);return()=>setNeedsOutfit();},[me.avatar.top]);
   const [nearPerson, setNearPerson] = useState(false);
   const [safety, setSafety] = useState(false);
+  const [rescue, setRescue] = useState(false);
+  const pendingStreetCase = useRef<StreetAssessment | null>(null);
   const say = useCallback((text: string, big = false) => {
     setToast({ text, big });
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -275,7 +291,8 @@ export function WorldApp({
   const jailed = life.jailUntil > 0;
   const cards = cardsLeft(homeworkDone, life);
   const [journey, setJourney] = useState<{ to: string; go: () => void } | null>(null);
-  useEffect(() => setWallet(clout), [clout]);
+  const fineKey=`illuminated:court-fines:${me.id}`;
+  useEffect(() => {try{setWallet(Math.max(0,clout-courtFineTotal(JSON.parse(localStorage.getItem(fineKey)??"null"))));}catch{setWallet(clout);}}, [clout,fineKey]);
   useEffect(() => setXpNow(xp), [xp]);
   // Hired bikes go back to the dock by themselves when the time runs out.
   useEffect(() => {
@@ -390,6 +407,17 @@ export function WorldApp({
     }, 430);
   }, [offices, me.id]);
 
+  const streetCase = useCallback((assessment:StreetAssessment) => {
+    if (assessment.caseFile) {
+      pendingStreetCase.current=assessment;
+      updateLife(l=>({...l,hearing:{stars:assessment.caseFile!.stars,charge:assessment.caseFile!.charge,streetCase:assessment.caseFile!}}));
+    }
+    say(assessment.message,true);
+  },[updateLife,say]);
+  const street = useStreetEncounters(outdoors && !rescue && !jailed && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
+    setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
+  });
+  useEffect(()=>{if(needs && needs.energy<=0 && outdoors && !rescue && !jailed && !life.hearing && !fading){setRescue(true);setBike(null);setDriving(null);}},[needs,outdoors,rescue,jailed,life.hearing,fading]);
   const teleportDestinations: TeleportDestination[] = useMemo(() => {
     const places: TeleportDestination[] = [
       { id: "westminster", label: "London · Westminster", mapId: "city", x: 23, y: 31 },
@@ -406,6 +434,7 @@ export function WorldApp({
       { id: "universities", label: "University Quarter", mapId: "universities", x: 15, y: 9 },
       { id: "study", label: "Study Quarter", mapId: "study-lobby", x: 10, y: 10 },
       { id: "home", label: "Your home", mapId: "home", x: 10, y: 10 },
+      { id: "hospital-front", label: "London · Hospital entrance", mapId: "city", x: 61, y: 34 },
       { id: "hospital", label: "St Tomas’ Hospital", mapId: "hospital", x: 13, y: 8 },
       { id: "court", label: "Crown Court", mapId: "court", x: 11, y: 8 },
       { id: "prison", label: "HMP Thames", mapId: "prison", x: 15, y: 12 },
@@ -417,8 +446,8 @@ export function WorldApp({
   }, [offices]);
 
   useEffect(() => {
-    if (life.hearing && mapId !== "court" && !fading) goTo("court", "Crown Court");
-  }, [life.hearing, mapId, fading, goTo]);
+    if (life.hearing && !rescue && mapId !== "court" && !fading) goTo("court", "Crown Court");
+  }, [life.hearing, rescue, mapId, fading, goTo]);
 
   useEffect(() => {
     let active = true;
@@ -461,6 +490,7 @@ export function WorldApp({
         else router.push("/games/careers");
         return;
       }
+      if (to.kind === "venture") {setVentureOpen(true);return;}
       if (to.kind === "bank") { setBankOpen(true); return; }
       if (to.kind === "study-room") { setLearning(true); return; }
       if (to.kind === "awards") { setAwardsOpen(true); return; }
@@ -537,7 +567,7 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server],
   );
 
   const courtSteps = useMemo(() => {
@@ -576,7 +606,7 @@ export function WorldApp({
     if (life.stars < POLICE_STARS || jailed || life.hearing || !outdoors) {
       pursuitRef.current = null; setPursuit(null); return;
     }
-    if (arrest || policeTransport) return;
+    if (arrest || policeTransport || rescue) return;
     const timer = setInterval(() => {
       const current = pursuitRef.current ?? startPursuit(map, PLAYER);
       const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2);
@@ -603,7 +633,7 @@ export function WorldApp({
       }
     }, 200);
     return () => clearInterval(timer);
-  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, updateLife, say]);
+  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, rescue, updateLife, say]);
 
   useEffect(() => {
     if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
@@ -648,8 +678,9 @@ export function WorldApp({
     return () => clearInterval(t);
   }, [outdoors]);
   const fight = useCallback(() => {
-    setSafety(true);
-  }, []);
+    if (rescue) return;
+    if (!street.defend()) setSafety(true);
+  }, [rescue,street.defend]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "f" && nearPerson && !phone && !study && !inmate && !arrest && pursuit?.stage !== "challenge" && !document.querySelector('[role="dialog"]') && !(e.target instanceof HTMLElement && e.target.closest("input, textarea, button, [role=dialog]"))) fight();
@@ -790,9 +821,10 @@ export function WorldApp({
                           : map.kind === "prison" || map.kind === "hospital" || map.kind === "court" ? "quiet"
                             : map.kind === "campus" ? "university" : "city"
       } />
-      {!(building && mapId === "home") && <WorldView
+      {!rescue && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
         key={`${mapId}:${server}:${trip}`}
-        paused={safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
+        onNearby={setNearby}
+        paused={rescue || ventureOpen || safety || dailyBusy || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased"}
         homeAction={homeAction}
         police={pursuit}
         map={map}
@@ -803,7 +835,7 @@ export function WorldApp({
         onChangeServer={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity before changing servers."); else setServer(null); }}
         onDrivingOffence={drivingOffence}
         ads={events}
-        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : me}
+        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
         car={driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
@@ -883,18 +915,22 @@ export function WorldApp({
         <Gamepad2 className="size-4" aria-hidden /> <span className="hidden sm:inline">Games</span>
       </button></HudSlot>
       <WantedStars stars={life.stars} />
+      {street.warning && !rescue && <HudSlot area="tc" order={40}><div role="alert" className="max-w-sm rounded-2xl bg-[#7b342b] px-4 py-3 text-sm font-bold text-white">{street.warning}</div></HudSlot>}
+      {rescue && <AmbulanceRescue avatar={me.avatar} onArrive={()=>{doActivity("hospital");updateLife(l=>({...l,sick:false}));setRescue(false);goTo("hospital","Ambulance arrival · St Tomas’ Hospital");}}/>}
       {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
         <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>
         <p className="mt-3 text-sm">In this fictional game, choosing to shove brings the police. There is no reward for hurting others.</p>
         <button type="button" className="jelly mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
-        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));offend("scuffle","Someone was hurt.");}}>Continue with consequences</button>
+        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));}}>Continue with consequences</button>
       </section></div>}
       {outdoors && !jailed && <HudSlot area="tr" order={50} className="hidden sm:block"><EventBanner className="flex max-w-[220px]" /></HudSlot>}
       {life.sick && <HudSlot area="tc" order={30} className="pointer-events-none"><p className="rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p></HudSlot>}
+      {!!nearby.length && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>{setPhoneApp("nearby");setPhone(true);}} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#42745e] px-4 py-2 text-sm font-bold text-white shadow-lg"><Users className="size-4"/>Say hello · {nearby.length}</button></HudSlot>}
+      {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {nearPerson && !jailed && !driving && (
         <HudSlot area="br-act" order={1}><button type="button" onClick={fight} className="jelly min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
-          Shove (F)
+          {street.attacked ? "Defend yourself (F)" : "Shove (F)"}
         </button></HudSlot>
       )}
       {pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <HudSlot area="tc" order={15} className="pointer-events-none"><div role="status" className="rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div></HudSlot>}
@@ -904,8 +940,8 @@ export function WorldApp({
         else { setArrest(true); arrestTimer.current=setTimeout(()=>{updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));setArrest(false);goTo("court","Crown Court");},2600); }
       }}/ >}
       {arrest && <ArrestOverlay />}
-      <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>setPhone(true)} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
-      {phone && <GamePhone onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+      <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>{setPhoneApp("home");setPhone(true);}} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
+      {phone && <GamePhone initialApp={phoneApp} meId={me.id} username={me.username} clout={wallet} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity first.");return;}goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
@@ -914,7 +950,8 @@ export function WorldApp({
       }}/ >}
       {study && <PrisonStudy progress={life.prisonWork} onCorrect={()=>updateLife(l=>({...l,prisonWork:Math.min(3,l.prisonWork+1)}))} onClose={()=>setStudy(false)}/>}
       {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="jelly mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
-      {mapId === "court" && life.hearing && (
+      {mapId === "court" && life.hearing?.streetCase && <StreetHearingDialog key={life.hearing.streetCase.id} caseFile={life.hearing.streetCase} balance={wallet} onResolved={result=>{setWallet(result.balance);if(result.finePaid>0){try{localStorage.setItem(fineKey,JSON.stringify(recordCourtFine(JSON.parse(localStorage.getItem(fineKey)??"null"),result.caseId,result.finePaid)));}catch{/* The current session still keeps the paid balance. */}}pendingStreetCase.current=null;updateLife(l=>({...l,hearing:null,jailUntil:result.jailUntil,prisonWork:0}));if(result.outcome!=="jailed")goTo("city","London",courtSteps);}}/>}
+      {mapId === "court" && life.hearing && !life.hearing.streetCase && (
         <HearingDialog
           charge={life.hearing.charge}
           stars={life.hearing.stars}
@@ -998,7 +1035,7 @@ export function WorldApp({
         </Link></HudSlot>
       )}
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
-      {dailyJob&&map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")&&<DailyShift job={dailyJob} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
+      {dailyJob&&<DailyShift active={map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:CITY} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
       {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else {setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}}} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} />}
       <LifeHud avatar={me.avatar} name={me.username} clout={wallet}

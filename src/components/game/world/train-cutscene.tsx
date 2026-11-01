@@ -15,7 +15,7 @@ import type { Avatar } from "@/game/core/cosmetics";
  * other passengers sitting, reading and standing, and you holding the rail, until
  * the display says the next station and the train pulls in.
  */
-const RIDE_MS = 2400;
+const RIDE_MS = 15000;
 
 function mat(c: string, emissive = false) {
   return new THREE.MeshLambertMaterial({ color: c, emissive: emissive ? c : "#000000", emissiveIntensity: emissive ? 0.9 : 0 });
@@ -50,17 +50,19 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
   const [stage, setStage] = useState(0);
   const [ready, setReady] = useState(false);
   const [fallback,setFallback]=useState(false);
+  const controls = useRef(new Set<string>());
   const done = useRef(onArrive);
   done.current = onArrive;
 
   useEffect(() => {
+    if (!ready) return;
     const a = setTimeout(() => setStage(1), RIDE_MS * 0.55);
     const b = setTimeout(() => done.current(), RIDE_MS);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, []);
+  }, [ready]);
 
   useEffect(() => {
     const el = host.current;
@@ -167,13 +169,27 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     seat(7, 3.4, 1, "sit");
     seat(8, -4.6, 1, "idle", true);
     seat(9, 4.2, -1, "emote-yes", true);
-    // You, standing by the pole holding on.
+    let player: Character3D | null = null;
+    const position = { x: 1.15, z: 0.05 };
+    const key = (event: KeyboardEvent, down: boolean) => {
+      if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyW", "KeyA", "KeyS", "KeyD"].includes(event.code)) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (down) controls.current.add(event.code); else controls.current.delete(event.code);
+    };
+    const keyDown = (event: KeyboardEvent) => key(event, true);
+    const keyUp = (event: KeyboardEvent) => key(event, false);
+    const blur = () => controls.current.clear();
+    window.addEventListener("keydown", keyDown, true);
+    window.addEventListener("keyup", keyUp, true);
+    window.addEventListener("blur", blur);
+    // Walk along the aisle; benches, walls and carriage ends bound movement.
     passengers.push(buildCharacter(avatar, 1.1).then((c) => {
       if (!alive) { c.dispose(); return; }
-      c.object.position.set(1.15, 0, 0.05);
+      player = c;
+      c.object.position.set(position.x, 0, position.z);
       c.object.rotation.y = -0.5;
       car.add(c.object);
-      c.play("holding-right");
+      c.play("idle");
       mixers.push(c.mixer); characters.push(c);
     }).catch(() => {}));
     let departAt: number | null = null;
@@ -198,11 +214,22 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const t = departAt === null ? 0 : Math.min(1, (now - departAt) / RIDE_MS);
-      // Slow push-in on you, with the carriage gently swaying.
+      const keys = controls.current;
+      const pad = Array.from(navigator.getGamepads?.() ?? []).find(p => p?.connected);
+      const horizontal = Math.max(-1, Math.min(1, Number(keys.has("ArrowRight") || keys.has("KeyD")) - Number(keys.has("ArrowLeft") || keys.has("KeyA")) + (Math.abs(pad?.axes[0] ?? 0) > .2 ? pad!.axes[0] : 0)));
+      const vertical = Math.max(-1, Math.min(1, Number(keys.has("ArrowDown") || keys.has("KeyS")) - Number(keys.has("ArrowUp") || keys.has("KeyW")) + (Math.abs(pad?.axes[1] ?? 0) > .2 ? pad!.axes[1] : 0)));
+      const length = Math.max(1, Math.hypot(horizontal, vertical));
+      const x = THREE.MathUtils.clamp(position.x + vertical / length * dt * 2, -7.7, 7.7);
+      const z = THREE.MathUtils.clamp(position.z - horizontal / length * dt * 2, -.48, .48);
+      const blocked = [-4.4, -1.4, 1.4, 4.4].some(pole => Math.hypot(x - pole, z) < .24) || [[-4.6,.35],[4.2,-.35]].some(([px,pz])=>Math.hypot(x-px,z-pz)<.3);
+      const walking = departAt !== null && !blocked && (Math.abs(x-position.x)+Math.abs(z-position.z) > .001);
+      if (walking) { position.x = x; position.z = z; }
+      if (player) { player.object.position.set(position.x, 0, position.z); player.play(walking ? "walk" : "idle"); if (walking) player.object.rotation.y = Math.atan2(vertical, -horizontal); }
+      // Follow the player from inside the aisle, with a gentle carriage sway.
       const sway = Math.sin(now / 420) * 0.012 + Math.sin(now / 170) * 0.004;
       car.rotation.x = departAt === null ? 0 : sway * (1 - Math.max(0, (t - 0.7) / 0.3));
-      camera.position.set(5.1 - t * 0.3, 1.8 + Math.sin(now / 600) * 0.02, 0.35);
-      camera.lookAt(0.6, 0.9, 0);
+      camera.position.set(Math.min(8.7, position.x + 3.2), 1.8 + Math.sin(now / 600) * 0.02, .48);
+      camera.lookAt(position.x, .85, position.z);
       // The tunnel rushes past, then slows as you pull in.
       const speed = departAt === null ? 0 : t < 0.18 ? 26 * (t / 0.18) : t < 0.7 ? 26 : Math.max(0, 26 * (1 - (t - 0.7) / 0.3));
       for (const s of streaks) {
@@ -219,7 +246,11 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     };
     raf = requestAnimationFrame(frame);
     return () => {
-      alive = false; characters.forEach(c=>c.dispose());
+      alive = false; controls.current.clear();
+      window.removeEventListener("keydown", keyDown, true);
+      window.removeEventListener("keyup", keyUp, true);
+      window.removeEventListener("blur", blur);
+      characters.forEach(c=>c.dispose());
       clearTimeout(loadFallback);
       cancelAnimationFrame(raf);
       ro.disconnect();
@@ -235,6 +266,10 @@ export function TrainCutscene({ to, line, avatar, onArrive }: { to: string; line
     <div className="absolute inset-0 z-[100005] bg-[#0c0b10]" role="status" aria-live="polite">
       <div ref={host} className="absolute inset-0" aria-hidden />
       <div className="pointer-events-none absolute left-4 top-12 z-10 rounded-2xl bg-[#f6f2e8] px-4 py-3 text-[#13203a] shadow-xl"><CutsceneBrand kind="underground"/></div>
+      <div className="absolute bottom-14 left-4 z-20 rounded-2xl bg-black/70 p-3 text-xs text-white">
+        <p>Walk around · WASD / arrow keys / left stick</p>
+        <div className="mt-2 flex gap-1">{([['ArrowUp','Forward'],['ArrowDown','Back'],['ArrowLeft','Left'],['ArrowRight','Right']] as const).map(([key,label])=><button key={key} type="button" aria-label={label} className="min-h-11 min-w-11 touch-none rounded-lg bg-white/15 px-2" onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);controls.current.add(key);}} onPointerUp={()=>controls.current.delete(key)} onPointerCancel={()=>controls.current.delete(key)} onLostPointerCapture={()=>controls.current.delete(key)}>{label}</button>)}</div>
+      </div>
       <button type="button" className="absolute right-3 bottom-14 z-20 min-h-11 rounded-full border border-white/40 bg-black/60 px-4 py-2 text-xs font-bold text-white" onClick={()=>done.current()}>Skip journey</button>
       {fallback&&<div className="absolute inset-0 grid place-items-center bg-[#13203a] text-white"><div className="text-center"><CutsceneBrand kind="underground"/><TrainFront className="mx-auto mt-8 size-20 text-[#a8c6ff]"/><p className="mt-5 text-xl font-bold">Travelling to {to}</p><p className="mt-2 text-sm">Your journey continues in 2D mode.</p></div></div>}
       <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex justify-center px-3">

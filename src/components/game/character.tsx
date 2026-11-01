@@ -9,16 +9,8 @@ import { logoFor } from "@/game/core/logos";
 import { HAIR_LOOK } from "@/game/core/looks";
 import { outfitColours, outfitVariants } from "@/game/core/outfits";
 
-/**
- * IlluminatED characters, rendered from Blender.
- *
- * Every Locker item is a sprite sheet in /public/characters (cel-shaded with ink
- * outlines, built by scripts/characters/build.py + post.py). A character is the
- * sheets stacked in order. Skin and hair are rendered light grey and tinted
- * here, so one sheet covers every colour. Faces (eyes, brows, mouth, extras and
- * glasses) are drawn on top as crisp 2D shapes at the face anchor Blender
- * exported for every frame, so expressions stay sharp at any size.
- */
+/** Small avatars use snapshots of the same supplied Blocky models as the 3D world.
+ * Legacy sprite helpers remain available to existing callers and tests. */
 
 export type Mood = "happy" | "sad" | "wow" | "cool" | "cross";
 export type Facing = "S" | "N" | "E" | "W";
@@ -413,89 +405,16 @@ const CROP_NOPET = [16, 2, 112, 172] as const;
 const CROP_HEAD = [30, 12, 84, 84] as const;
 
 export async function createPainter(
-  avatar: Avatar,
-  { mood, showPet = true, headOnly = false, logo }: { mood?: Mood; showPet?: boolean; headOnly?: boolean; logo?: string | null } = {},
-): Promise<Painter> {
-  const a = { ...DEFAULT_AVATAR, ...avatar };
-  const plan = layersFor(a, showPet && !headOnly);
-  const crop = headOnly ? CROP_HEAD : plan.pet ? CROP_FULL : CROP_NOPET;
-  const chestLogo = logo ?? TOP_LOGO[a.top ?? ""] ?? (a.top === "top-tee" ? "illuminated" : undefined);
-  const all = [...plan.back, ...plan.front, ...plan.overHead, ...(plan.pet ? [plan.pet] : [])];
-  const imgs = await Promise.all(all.map((l) => load(l.name)));
-  const byName = new Map(all.map((l, i) => [l.name, imgs[i]]));
-  const face: FaceSpec = {
-    eyes: a.eyes ?? "eyes-round",
-    brows: a.brows ?? "brows-soft",
-    mouth: a.mouth ?? "mouth-smile",
-    extras: a.extras ?? "extras-none",
-    face: a.face ?? "face-none",
-    head: a.head ?? "head-human",
-    mood,
-  };
-  const sheet = (l: Layer) => {
-    const img = byName.get(l.name);
-    if (!img) return null;
-    return l.tint ? tint(img, l.name, l.tint, l.torso) : img;
-  };
-  return {
-    width: (h) => Math.round((h * crop[2]) / crop[3]),
-    draw(g, facing, clip, t, heightPx) {
-      const mirror = facing === "W";
-      const dir = facing === "W" ? "E" : facing;
-      const k = CLIP_START.get(`${dir}:${clip === "wave" && dir !== "S" ? "idle" : clip}`) ?? CLIP_START.get("S:idle")!;
-      const frame = Math.floor(t * FPS[clip]) % k.count;
-      const idx = k.start + ((frame + k.count) % k.count);
-      const sx = (idx % COLS) * FRAME;
-      const sy = Math.floor(idx / COLS) * FRAME;
-      const w = g.canvas.width;
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.clearRect(0, 0, w, g.canvas.height);
-      const scale = heightPx / crop[3];
-      g.setTransform(mirror ? -scale : scale, 0, 0, scale, mirror ? w : 0, 0);
-      g.translate(-crop[0], -crop[1]);
-      g.imageSmoothingEnabled = true;
-      g.imageSmoothingQuality = "high";
-      const put = (l: Layer) => {
-        const s = sheet(l);
-        if (s) g.drawImage(s, sx, sy, FRAME, FRAME, 0, 0, FRAME, FRAME);
-      };
-      const an = META.anchors[idx];
-      let skirtDrawn = false;
-      const skirt = () => {
-        if (skirtDrawn || a.bottom !== "bottom-skirt") return;
-        skirtDrawn = true;
-        const x = an.head[0], y = an.head[1] + U * 1.3;
-        const side = dir === "E";
-        const waist = U * (side ? 0.45 : 0.65), hem = U * (side ? 0.60 : 0.82);
-        const length = U * 0.52;
-        g.beginPath();
-        g.moveTo(x - waist, y); g.lineTo(x + waist, y);
-        g.lineTo(x + hem, y + length); g.lineTo(x - hem, y + length); g.closePath();
-        g.fillStyle = outfitColours(a).bottom; g.fill();
-        g.strokeStyle = INK; g.lineWidth = 1.2; g.stroke();
-        g.globalAlpha = 0.18;
-        for (const fraction of [-0.5, 0, 0.5]) {
-          g.beginPath(); g.moveTo(x + waist * fraction, y + 1); g.lineTo(x + hem * fraction, y + length - 1); g.stroke();
-        }
-        g.globalAlpha = 1;
-      };
-      for (const layer of plan.back) {
-        if (layer.name.endsWith("-skinU") || layer.name.endsWith("-top")) skirt();
-        put(layer);
-      }
-      skirt();
-      // Uniform logos on the chest; in the world your company badge also shows on your back.
-      if (chestLogo && (dir === "S" || (dir === "N" && logo))) drawLogo(g, chestLogo, an.chest[0], an.chest[1] - 1, 15);
-      plan.front.forEach(put);
-      if (dir !== "N") drawFace(g, face, an.face[0], an.face[1], dir === "E" ? 1 : 0);
-      plan.overHead.forEach(put);
-      if (plan.pet) put(plan.pet);
-    },
-  };
+ avatar:Avatar,{showPet=true,headOnly=false,logo}: {mood?:Mood;showPet?:boolean;headOnly?:boolean;logo?:string|null}={},
+):Promise<Painter>{
+ const {characterPortrait}=await import('./character-portrait');
+ const dressed=showPet?avatar:{...avatar,pet:'pet-none'};
+ const facings:Facing[]=['S','N','E','W'];
+ const images=await Promise.all(facings.map(f=>characterPortrait(dressed,f,headOnly,logo??null)));
+ return{width:h=>h*.75,draw:(g,f,_clip,_t,h)=>{g.clearRect(0,0,g.canvas.width,g.canvas.height);g.drawImage(images[facings.indexOf(f)]??images[0],0,0,h*.75,h);}};
 }
 
-// ── The component ──────────────────────────────────────────────────────────
-export interface CharacterProps {
+interface CharacterProps {
   avatar?: Avatar;
   mood?: Mood;
   /** Rendered height in px. */
@@ -531,7 +450,7 @@ export function AvatarFigure({
   const [ready, setReady] = useState(false);
   const hasPet = showPet && !headOnly && !!a.pet && !NONE.has(a.pet);
   const height = size;
-  const width = Math.round((size * (headOnly ? 84 : hasPet ? 176 : 112)) / (headOnly ? 84 : 172));
+  const width = Math.round(size * .75);
   const key = JSON.stringify(a);
 
   useEffect(() => {

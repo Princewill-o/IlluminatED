@@ -2,6 +2,7 @@ import { WORKPLACES } from "./careers";
 import { COMPANIES } from "./companies";
 import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture } from "./homes";
 import { buildHome, buildLondon } from "./london";
+import { officeDesign } from "./office-design";
 import { buildHighlands } from "./regions";
 import { UNIVERSITIES, universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
@@ -30,6 +31,7 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "venture"; staff?: string }
   | { kind: "study-room" }
   | { kind: "home-use"; key: string }
   | { kind: "awards" }
@@ -81,6 +83,8 @@ export interface Room {
 
 export interface WorldMap {
   id: string;
+  characters?: { id: string; name: string; x: number; y: number }[];
+  design?: ReturnType<typeof officeDesign>;
   kind: "city" | "campus" | "office" | "home" | "station" | "hospital" | "court" | "prison";
   /** Pre-rendered 3D art (Blender) drawn instead of the tile set. */
   art?: "london" | "highlands" | `home-${number}`;
@@ -111,7 +115,7 @@ export interface WorldMap {
  * - pavement, = road, : road with lane marking, T tree, B bench, L lamp,
  * w water, X building.
  */
-export const SOLID = new Set(["#", "W", "G", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X", "|"]);
+export const SOLID = new Set(["#", "W", "G", "O", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X", "|"]);
 
 class Grid {
   t: string[][];
@@ -198,42 +202,228 @@ export function hotelMap(id: string): WorldMap | null {
 }
 
 export function workplaceMap(id: string): WorldMap | null {
-  const w = WORKPLACES.find(workplace => workplace.id === id);
+  const w = WORKPLACES.find((workplace) => workplace.id === id);
   if (!w) return null;
-  const g = new Grid(26, 20, ".");
+  const design = officeDesign(id, w.sector),
+    g = new Grid(
+      28 + (design.seed % 3) * 2,
+      22 + ((design.seed >>> 4) % 2) * 2,
+      ".",
+    );
   g.border("#");
-  for (let x = 2; x < 24; x++) g.set(x, 0, "W");
-  g.fill(3, 14, 5, 1, "r");
-  g.fill(18, 14, 5, 1, "s");
-  g.set(20, 12, "o");
-  g.set(2, 2, "p"); g.set(23, 2, "p");
-  const practical = ["pizzazz", "tescow"].includes(id);
-  if (!practical) {
-    // Perimeter storage and a planted break corner leave the work aisles clear.
-    g.fill(4, 1, 3, 1, "b");
-    g.fill(18, 1, 3, 1, "b");
-    g.set(23, 11, "p");
-    g.set(17, 14, "L");
-    g.set(2, 10, "F");
-    g.set(22, 10, "k");
-    for (const x of [4, 18]) {
-      g.fill(x, 10, 3, 1, "d");
-      g.set(x + 1, 12, "c");
+  for (let x = 2; x < g.cols - 2; x++) g.set(x, 0, "W");
+  const mid = Math.floor(g.cols / 2),
+    stations: { x: number; y: number; label: string }[] = [];
+  g.fill(3, g.rows - 6, 4, 1, "r");
+  g.fill(g.cols - 7, g.rows - 6, 4, 1, "s");
+  g.set(g.cols - 5, g.rows - 8, "o");
+  g.set(2, 2, "p");
+  g.set(g.cols - 3, 2, "p");
+  if (id === "pizzazz") {
+    g.fill(2, 2, 8, 1, "O");
+    g.fill(3, 6, 7, 1, "k");
+    g.fill(3, 10, 7, 1, "k");
+    g.set(2, 9, "F");
+    g.fill(16, 2, 8, 5, ",");
+    g.fill(17, 3, 6, 1, "k");
+    g.set(24, 3, "F");
+    for (const y of [9, 13]) {
+      g.fill(19, y, 3, 1, "t");
+      g.set(18, y, "c");
+      g.set(22, y, "c");
+    }
+    stations.push(
+      { x: 4, y: 7, label: "Pizza prep · check tickets and allergens" },
+      { x: 4, y: 11, label: "Dispatch counter · delivery shifts" },
+      { x: 18, y: 4, label: "Kitchen station · start shift" },
+    );
+  } else if (id === "tescow") {
+    for (const x of [4, 11, 18]) {
+      g.fill(x, 3, 3, 6, "b");
+      stations.push({ x: x + 1, y: 10, label: "Stock aisle · start shift" });
+    }
+    g.fill(20, 13, 4, 1, "k");
+    g.set(24, 13, "F");
+  } else {
+    const variant = (design.seed >>> 6) % 4;
+    const xs =
+      variant === 0
+        ? [4, 10, 19]
+        : variant === 1
+          ? [3, 15, 23]
+          : variant === 2
+            ? [5, 13, 21]
+            : [3, 10, 22];
+    xs.forEach((x, i) => {
+      const y = 3 + ((i + variant) % 2) * 5;
+      g.fill(
+        x,
+        y,
+        3,
+        1,
+        design.theme === "finance"
+          ? "r"
+          : design.theme === "science"
+            ? "k"
+            : "d",
+      );
+      g.set(x + 1, y - 1, design.theme === "logistics" ? "b" : "v");
+      g.set(x + 1, y + 2, "c");
+      stations.push({
+        x,
+        y: y + 1,
+        label: `${design.room} · station ${i + 1}`,
+      });
+    });
+    const partition = 10 + (design.seed % 4);
+    g.fill(partition, 2, 1, 8, "G");
+    g.set(partition, 5, ".");
+    g.set(partition, 6, ".");
+    g.fill(2, g.rows - 10, 4, 1, "b");
+    g.set(g.cols - 3, g.rows - 9, "k");
+    g.set(g.cols - 3, g.rows - 10, "F");
+    if (design.theme === "creative") {
+      g.fill(g.cols - 10, 11, 6, 1, "v");
+      g.fill(g.cols - 10, 12, 6, 2, "l");
+    }
+    if (design.theme === "logistics") {
+      g.fill(4, 12, 3, 1, "b");
+      g.fill(10, 12, 3, 1, "b");
+    }
+    for (const x of [4, g.cols - 8]) {
+      g.fill(x, g.rows - 10, 3, 1, "d");
+      g.set(x + 1, g.rows - 8, "c");
+      stations.push({
+        x,
+        y: g.rows - 9,
+        label: `${design.lounge} · work desk`,
+      });
     }
   }
-  for (const x of [4, 11, 18]) {
-    g.fill(x, 5, 3, 1, practical ? "k" : "d");
-    g.set(x + 1, 4, practical ? "b" : "v");
-    g.set(x + 1, 7, "c");
-  }
-  return finish({id:`workplace-${id}`,kind:"office",name:w.name,structures:[],accent:w.accent,
-    spawn:centre(13,17),sign:{x:13,y:10,text:`${w.name} · walk to a work station`},rooms:[],
-    portals:[
-      {id:"exit",rect:px(12,18,2,1),label:"Leave workplace",to:{kind:"map",mapId:"city",label:"London"}},
-      {id:"recruitment",rect:px(4,15,3,1),label:"Reception · apply for a role",to:{kind:"workstation",workplace:id,station:"reception"}},
-      ...[4,11,18].map((x,i):Portal=>({id:`terminal-${i}`,rect:px(x,6,3,1),label:practical?"Use work counter · start shift":"Use computer · start shift",to:{kind:"workstation",workplace:id,station:"terminal"}})),
-      ...(!practical ? [4,18].map((x,i):Portal=>({id:`terminal-south-${i}`,rect:px(x,11,3,1),label:"Use computer · start shift",to:{kind:"workstation",workplace:id,station:"terminal"}})) : []),
-    ]},g);
+  return finish(
+    {
+      id: `workplace-${id}`,
+      kind: "office",
+      name: w.name,
+      structures: [],
+      design,
+      accent: w.accent,
+      spawn: centre(mid, g.rows - 3),
+      sign: { x: mid, y: g.rows - 9, text: `${w.name} · ${design.room}` },
+      rooms: [
+        {
+          name: `${w.name} · ${design.lounge}`,
+          rect: px(g.cols - 10, g.rows - 8, 8, 5),
+        },
+      ],
+      portals: [
+        {
+          id: "exit",
+          rect: px(mid - 1, g.rows - 2, 2, 1),
+          label: "Leave workplace",
+          to: { kind: "map", mapId: "city", label: "London" },
+        },
+        {
+          id: "recruitment",
+          rect: px(3, g.rows - 5, 4, 1),
+          label: "Reception · apply for a role",
+          to: { kind: "workstation", workplace: id, station: "reception" },
+        },
+        ...stations.map((p, i): Portal => ({
+          id: `terminal-${i}`,
+          rect: px(p.x, p.y, 3, 1),
+          label: p.label,
+          to: { kind: "workstation", workplace: id, station: "terminal" },
+        })),
+      ],
+    },
+    g,
+  );
+}
+
+/** A walkable shared business club, with three distinct practical spaces. */
+export function ventureMap(): WorldMap {
+  const g = new Grid(34, 26, ".");
+  g.border("#");
+  g.fill(2, 2, 9, 8, ",");
+  g.fill(22, 2, 10, 8, "l");
+  g.fill(9, 15, 17, 7, "m");
+  for (const x of [2, 5, 8, 23, 26, 29]) g.set(x, 0, "W");
+  g.fill(3, 3, 7, 1, "k");
+  g.set(2, 4, "F");
+  g.fill(4, 8, 3, 1, "t");
+  g.set(3, 8, "c");
+  g.fill(23, 3, 7, 1, "v");
+  g.fill(24, 8, 5, 1, "d");
+  g.set(25, 10, "c");
+  g.fill(10, 17, 4, 1, "k");
+  g.fill(18, 17, 5, 1, "k");
+  g.fill(11, 20, 4, 1, "b");
+  g.fill(13, 8, 5, 1, "r");
+  g.set(12, 8, "p");
+  g.set(19, 8, "p");
+  g.fill(2, 14, 4, 1, "s");
+  g.set(3, 16, "o");
+  g.set(31, 20, "p");
+  return finish(
+    {
+      id: "venture-hub",
+      kind: "office",
+      name: "Venture Yard",
+      design: officeDesign("venture-yard", "creative"),
+      accent: "#42745e",
+      structures: [],
+      characters: [
+        { id: "amara", name: "Amara · Operations", x: 6, y: 5 },
+        { id: "kai", name: "Kai · Customer care", x: 26, y: 5 },
+        { id: "priya", name: "Priya · Production", x: 16, y: 18 },
+      ],
+      rooms: [
+        { name: "The neighbourhood café", rect: px(2, 2, 9, 8) },
+        { name: "The creative studio", rect: px(22, 2, 10, 9) },
+        { name: "The repair workshop", rect: px(9, 15, 17, 7) },
+      ],
+      spawn: centre(17, 23),
+      sign: {
+        x: 17,
+        y: 12,
+        text: "VENTURE YARD · Build something of your own",
+      },
+      portals: [
+        {
+          id: "exit",
+          rect: px(16, 24, 2, 1),
+          label: "Back to London",
+          to: { kind: "map", mapId: "city", label: "London" },
+        },
+        {
+          id: "business",
+          rect: px(14, 9, 3, 1),
+          label: "Open your business ledger",
+          to: { kind: "venture" },
+        },
+        {
+          id: "cafe-mentor",
+          rect: px(6, 6, 2, 1),
+          label: "Amara · café and operations",
+          to: { kind: "venture", staff: "amara" },
+        },
+        {
+          id: "studio-mentor",
+          rect: px(26, 6, 2, 1),
+          label: "Kai · studio and customers",
+          to: { kind: "venture", staff: "kai" },
+        },
+        {
+          id: "workshop-mentor",
+          rect: px(16, 19, 2, 1),
+          label: "Priya · workshop and production",
+          to: { kind: "venture", staff: "priya" },
+        },
+      ],
+    },
+    g,
+  );
 }
 
 function scatterTrees(g: Grid, x: number, y: number, w: number, h: number, seed: number, density = 0.16) {
@@ -404,97 +594,30 @@ export function campusMap(orgs: OfficeOrg[]): WorldMap {
 export const MEETING_ROOMS = ["Meeting Room A", "Meeting Room B"] as const;
 
 export function officeMap(org: OfficeOrg): WorldMap {
-  const cols = 40;
-  const rows = 26;
-  const g = new Grid(cols, rows, ".");
-  g.border("#");
-  for (let x = 1; x < cols - 1; x++) if (x % 4 !== 0) g.set(x, 0, "W");
-
-  // Glass meeting rooms, top right.
-  g.fill(21, 1, 9, 8, "m");
-  g.fill(31, 1, 8, 8, "m");
-  g.fill(20, 1, 1, 9, "G");
-  g.fill(30, 1, 1, 9, "G");
-  g.fill(20, 9, 19, 1, "G");
-  g.set(25, 9, "m");
-  g.set(35, 9, "m");
-  g.fill(23, 4, 5, 2, "t");
-  g.fill(23, 3, 5, 1, "c");
-  g.fill(23, 6, 5, 1, "c");
-  g.fill(33, 4, 4, 2, "t");
-  g.fill(33, 3, 4, 1, "c");
-  g.fill(33, 6, 4, 1, "c");
-  g.set(25, 1, "v");
-  g.set(34, 1, "v");
-  g.set(21, 8, "p");
-  g.set(38, 8, "p");
-
-  // Open-plan desks, top left.
-  for (const x0 of [2, 7, 12]) {
-    for (const y0 of [2, 6]) {
-      g.fill(x0, y0, 3, 1, "c");
-      g.fill(x0, y0 + 1, 3, 1, "d");
-    }
-  }
-  g.fill(17, 2, 1, 3, "b");
-  g.set(1, 1, "p");
-  g.set(18, 8, "p");
-
-  // Lounge, bottom left.
-  g.fill(2, 15, 10, 7, "l");
-  g.fill(3, 15, 6, 1, "v");
-  g.fill(3, 20, 7, 1, "s");
-  g.fill(1, 16, 1, 4, "s");
-  g.fill(5, 17, 3, 2, "o");
-  g.set(1, 14, "p");
-  g.set(12, 22, "p");
-  g.fill(1, 23, 4, 1, "b");
-
-  // Reception and entrance, bottom middle.
-  g.fill(14, 20, 5, 1, "r");
-  g.fill(18, 24, 4, 1, "e");
-  g.set(13, 24, "p");
-  g.set(26, 24, "p");
-
-  // Advice Desk, centre.
-  g.fill(19, 13, 6, 1, "A");
-  g.set(18, 13, "p");
-  g.set(25, 13, "p");
-
-  // Kitchen, bottom right.
-  g.fill(29, 14, 10, 11, ",");
-  g.fill(38, 15, 1, 9, "k");
-  g.set(38, 14, "F");
-  g.fill(29, 24, 6, 1, "k");
-  g.fill(31, 18, 3, 2, "o");
-  g.fill(31, 17, 3, 1, "c");
-  g.fill(31, 20, 3, 1, "c");
-  g.set(29, 14, "p");
-
-  // Corridor plants.
-  g.set(1, 11, "p");
-  g.set(38, 11, "p");
-
-  return finish(
-    {
-      id: `office-${org.slug}`,
-      kind: "office",
-      name: org.name,
-      structures: [],
-      portals: [
-        { id: "advice", rect: px(20, 14, 4, 1), label: "Advice Desk: talk to the team", to: { kind: "desk" } },
-        { id: "exit", rect: px(19, 24, 2, 1), label: "Back to Careers Campus", to: { kind: "map", mapId: "campus", label: "Careers Campus" } },
-      ],
-      rooms: [
-        { name: MEETING_ROOMS[0], rect: px(21, 1, 9, 8) },
-        { name: MEETING_ROOMS[1], rect: px(31, 1, 8, 8) },
-      ],
-      spawn: centre(20, 22),
-      accent: org.accent,
-      sign: { x: 20, y: 17, text: org.name },
-    },
-    g,
-  );
+ const design=officeDesign(org.slug,org.sector),seed=design.seed;
+ const cols=34+(seed%6)*2,rows=24+((seed>>>4)%4)*2,g=new Grid(cols,rows,".");g.border("#");
+ const mid=Math.floor(cols/2),left=seed%2===0;
+ for(let x=2;x<cols-2;x++)if(x%3!==seed%3)g.set(x,0,"W");
+ // The sector, proportions, partition position and desk arrangement vary per organisation.
+ const roomWidth=8+((seed>>>8)%4),roomHeight=7+((seed>>>10)%3),rx=left?2:cols-roomWidth-2;
+ g.fill(rx,2,roomWidth,roomHeight,"m");g.fill(rx-1,1,roomWidth+2,1,"G");
+ g.fill(rx-1,2,1,roomHeight,"G");g.fill(rx+roomWidth,2,1,roomHeight,"G");g.fill(rx-1,roomHeight+2,roomWidth+2,1,"G");
+ g.set(rx+2,roomHeight+2,"m");g.set(rx+3,roomHeight+2,"m");
+ g.fill(rx+2,4,roomWidth-4,2,design.theme==="science"?"k":"t");g.fill(rx+2,3,roomWidth-4,1,"c");g.fill(rx+2,6,roomWidth-4,1,"c");g.set(rx+roomWidth-2,2,"v");
+ const workStart=left?roomWidth+6:3,workEnd=left?cols-3:rx-3;
+ for(let y=3;y<10;y+=3+(seed>>>13)%2)for(let x=workStart;x<workEnd-2;x+=4+(seed>>>16)%3){g.fill(x,y,3,1,design.theme==="science"?"k":"d");g.set(x+1,y+1,"c");}
+ const ly=rows-9,lx=left?cols-12:2;g.fill(lx,ly,10,6,"l");g.fill(lx+1,ly+4,7,1,"s");g.fill(lx+3,ly+1,3,1,"o");g.set(lx+8,ly,"p");
+ const kx=left?2:cols-8;g.fill(kx,rows-8,6,6,",");g.fill(kx,rows-7,4,1,"k");g.set(kx+5,rows-7,"F");
+ g.fill(mid-3,rows-6,5,1,"r");g.fill(mid-2,rows-2,4,1,"e");
+ const adviceY=12+((seed>>>20)%2);g.fill(mid-2,adviceY,5,1,"A");g.set(mid-3,adviceY,"p");
+ for(let i=0;i<4;i++){const x=2+(seed>>>i*3)%(cols-4),y=rows-11+(i%2)*2;if(Math.abs(x-mid)>4)g.set(x,y,i%2?"b":"p");}
+ if(design.theme==="creative")g.fill(workStart,11,Math.min(7,workEnd-workStart),1,"v");
+ if(design.theme==="logistics")for(let x=workStart;x<workEnd-1;x+=4)g.fill(x,11,2,1,"b");
+ return finish({id:`office-${org.slug}`,kind:"office",name:org.name,structures:[],accent:org.accent,design,
+ portals:[{id:"advice",rect:px(mid-1,adviceY+1,3,1),label:`${org.name} · talk to the team`,to:{kind:"desk"}},
+ {id:"exit",rect:px(mid-1,rows-2,2,1),label:"Back to Careers Campus",to:{kind:"map",mapId:"campus",label:"Careers Campus"}}],
+ rooms:[{name:`${org.name} · ${design.room}`,rect:px(rx,2,roomWidth,roomHeight)},{name:`${org.name} · ${design.lounge}`,rect:px(lx,ly,10,6)}],
+ spawn:centre(mid,rows-3),sign:{x:mid,y:rows-9,text:`${org.name} · ${design.room}`}},g);
 }
 
 /** London: the main world (3D art from Blender, layout from ./london.ts). */
@@ -503,7 +626,7 @@ export function londonMap(): WorldMap {
   const portals: Portal[] = [];
   for (const th of L.things) {
     if (th.kind === "building" && ["district-campus-library", "district-campus-studios", "district-campus-labs", "district-wharf-gallery", "district-wharf-cafe", "district-conservatory"].includes(th.id)) {
-      portals.push({id:th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.label ?? "Explore district",to:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
+      portals.push({id:th.id==="district-wharf-gallery"?"venture-yard":th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.id==="district-wharf-gallery"?"Venture Yard · run your own business":th.label ?? "Explore district",to:th.id==="district-wharf-gallery"?{kind:"map",mapId:"venture-hub",label:"Venture Yard"}:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
     }
     if (th.kind === "building" && /^hotel-[01]$/.test(th.id)) portals.push({id:th.id,rect:px(th.x+2,th.y+th.h,2,1),label:`Enter ${th.label}`,to:{kind:"map",mapId:th.id,label:th.label ?? "Hotel"}});
     if (th.kind === "building" && th.id === "district-bank") portals.push({id:"city-bank",rect:px(th.x+Math.floor(th.w/2)-1,th.y+th.h,2,1),label:"Thames & Co Bank: loans and repayments",to:{kind:"bank"}});
@@ -549,9 +672,9 @@ export function londonMap(): WorldMap {
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
-  const hosp = near(30, 52);
+  const hosp = L.things.find((t) => t.kind === "building" && t.id === "city-hospital");
   const court = near(44, 28, hosp);
-  if (hosp) portals.push({ id: "hospital", rect: px(hosp.x + 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
+  if (hosp && hosp.kind === "building") portals.push({ id: "hospital", rect: px(hosp.x + Math.floor(hosp.w/2) - 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
   if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
@@ -681,7 +804,7 @@ export function hospitalMap(): WorldMap {
         { id: "doctor", rect: px(12, 12, 2, 1), label: "See a doctor (free, takes a moment)", to: { kind: "doctor" } },
         { id: "exit", rect: px(12, 15, 2, 1), label: "Back out to London", to: { kind: "map", mapId: "city", label: "London" } },
       ],
-      rooms: [],
+      rooms: [{ name: "West ward · recovery bays", rect: px(1, 3, 10, 4) }, { name: "East ward · observation bays", rect: px(16, 3, 9, 4) }, { name: "Reception and waiting lounge", rect: px(9, 9, 15, 5) }],
       spawn: centre(13, 13),
       accent: "#15987f",
       sign: { x: 13, y: 8, text: "St Tomas' Hospital" },

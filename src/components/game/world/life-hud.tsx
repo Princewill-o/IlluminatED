@@ -112,6 +112,11 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
         </div>
       </div></HudSlot>
 
+      <HudSlot area="tl" order={25}><div className={cn(card,"w-44 px-3 py-2")}>
+        <div className="flex justify-between text-xs font-black"><span>Energy</span><span>{Math.round(needs.energy)} / 100</span></div>
+        <div className="mt-1 h-3 overflow-hidden rounded-full bg-[#e6dccb]" role="meter" aria-label="Player energy" aria-valuenow={Math.round(needs.energy)} aria-valuemin={0} aria-valuemax={100}><div className="h-full transition-[width]" style={{width:`${needs.energy}%`,background:needs.energy<20?"#c8322d":"#2b5fd9"}}/></div>
+        {needs.energy<20&&<p className="mt-1 text-[10px] font-bold">Low energy · rest or get help</p>}
+      </div></HudSlot>
       {/* You and your needs */}
       <HudSlot area="bl" order={20} className="hidden lg:block [@media(max-height:650px)]:!hidden"><div className={cn(card, "flex max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 xl:max-w-[280px]")}>
         <div className="flex size-12 shrink-0 justify-center overflow-hidden rounded-full border-4 border-white bg-[#8fb4ff]">

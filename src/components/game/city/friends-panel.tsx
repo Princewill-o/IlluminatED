@@ -39,10 +39,14 @@ export function FriendsPanel({
   meId,
   friends,
   ready,
+  compact = false,
+  onChanged,
 }: {
   meId: string;
   friends: FriendEdge[];
   ready: boolean;
+  compact?: boolean;
+  onChanged?: () => void;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -60,6 +64,7 @@ export function FriendsPanel({
       if (!r.error) {
         setUsername("");
         if (action !== "request") setOpen(null);
+        onChanged?.();
         router.refresh();
       }
     });
@@ -71,7 +76,13 @@ export function FriendsPanel({
           Friends are temporarily unavailable. Please try again later.
         </p>
       )}
-      <div className="bg-card mb-6 rounded-3xl border p-6">
+      <div
+        className={
+          compact
+            ? "mb-4 rounded-2xl bg-white p-4"
+            : "bg-card mb-6 rounded-3xl border p-6"
+        }
+      >
         <h2 className="flex items-center gap-2 text-xl font-black">
           <Users className="size-5" />
           {accepted.length}/30 friends
@@ -114,11 +125,24 @@ export function FriendsPanel({
           No friends yet. Send a request to someone you know.
         </p>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className={
+          compact
+            ? "overflow-hidden rounded-2xl bg-white"
+            : "grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        }
+      >
         {friends
           .filter((f) => f.state !== "declined")
           .map((f) => (
-            <article key={f.id} className="bg-card rounded-2xl border p-5">
+            <article
+              key={f.id}
+              className={
+                compact
+                  ? "border-b border-black/5 p-4 last:border-0"
+                  : "bg-card rounded-2xl border p-5"
+              }
+            >
               <p className="font-black">@{f.username}</p>
               <p className="text-muted-foreground mt-1 text-sm">
                 {f.state === "pending"
@@ -183,24 +207,27 @@ export function FriendsPanel({
             </article>
           ))}
       </div>
-      <section className="bg-card mt-7 rounded-2xl border p-5 text-sm leading-6">
-        <h2 className="flex items-center gap-2 font-black">
-          <ShieldCheck className="size-5" />
-          Private conversations, clear controls
-        </h2>
-        <p className="mt-2">
-          Messages are encrypted in your browser. IlluminatED stores ciphertext,
-          sender, recipient relationship and timing. Keep conversations here,
-          avoid sharing personal details and use Block if something feels wrong.
-          Reporting shares the selected message’s text with the safety team.
-        </p>
-        <Link
-          href="/safeguarding"
-          className="mt-2 inline-block font-bold underline"
-        >
-          Safety and support →
-        </Link>
-      </section>
+      {!compact && (
+        <section className="bg-card mt-7 rounded-2xl border p-5 text-sm leading-6">
+          <h2 className="flex items-center gap-2 font-black">
+            <ShieldCheck className="size-5" />
+            Private conversations, clear controls
+          </h2>
+          <p className="mt-2">
+            Messages are encrypted in your browser. IlluminatED stores
+            ciphertext, sender, recipient relationship and timing. Keep
+            conversations here, avoid sharing personal details and use Block if
+            something feels wrong. Reporting shares the selected message’s text
+            with the safety team.
+          </p>
+          <Link
+            href="/safeguarding"
+            className="mt-2 inline-block font-bold underline"
+          >
+            Safety and support →
+          </Link>
+        </section>
+      )}
       {open && (
         <FriendChat
           key={open.id}
@@ -412,13 +439,11 @@ function FriendChat({
   }
   async function submitReport() {
     if (!sb || !report?.text) return;
-    const { error: reportError } = await sb
-      .from("city_friend_reports")
-      .insert({
-        reporter: meId,
-        message_id: report.id,
-        disclosed_text: report.text,
-      });
+    const { error: reportError } = await sb.from("city_friend_reports").insert({
+      reporter: meId,
+      message_id: report.id,
+      disclosed_text: report.text,
+    });
     setNotice(
       reportError
         ? "Couldn't submit this report, or you have already reported it."
@@ -433,9 +458,9 @@ function FriendChat({
         role="dialog"
         aria-modal="true"
         aria-labelledby="friend-chat-title"
-        className="bg-background flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border shadow-2xl"
+        className="flex h-[min(740px,92dvh)] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-[#f2f2f7] text-[#172b28] [color-scheme:light] shadow-2xl"
       >
-        <header className="flex items-center gap-3 border-b p-4">
+        <header className="flex items-center gap-3 border-b border-black/5 bg-white/90 p-4">
           <LockKeyhole className="text-primary size-5" />
           <h2 id="friend-chat-title" className="flex-1 font-black">
             @{friend.username}
@@ -490,7 +515,7 @@ function FriendChat({
           {rows.map((r) => (
             <div
               key={r.id}
-              className={`max-w-[90%] rounded-2xl p-3 ${r.mine ? "bg-primary text-primary-foreground ml-auto" : "bg-secondary"}`}
+              className={`w-fit max-w-[85%] rounded-[1.25rem] px-4 py-3 ${r.mine ? "ml-auto rounded-br-md bg-[#1675ed] text-white" : "rounded-bl-md bg-[#e5e5ea] text-[#172b28]"}`}
             >
               <p className="text-xs font-bold">
                 {r.mine ? "You" : `@${friend.username}`}
@@ -531,7 +556,10 @@ function FriendChat({
         <p role="status" aria-live="polite" className="px-4 text-sm">
           {notice}
         </p>
-        <form className="flex items-end gap-2 border-t p-4" onSubmit={send}>
+        <form
+          className="flex items-end gap-2 border-t border-black/5 bg-white/70 p-4"
+          onSubmit={send}
+        >
           <label className="min-w-0 flex-1 text-xs font-bold">
             Message
             <textarea
@@ -541,7 +569,7 @@ function FriendChat({
               rows={2}
               onChange={(e) => setText(e.target.value)}
               disabled={friend.state !== "accepted"}
-              className="bg-background mt-1 block w-full resize-none rounded-xl border p-3 text-sm"
+              className="mt-1 block w-full resize-none rounded-[1.4rem] border border-black/15 bg-white px-4 py-3 text-sm text-[#172b28]"
             />
           </label>
           <button

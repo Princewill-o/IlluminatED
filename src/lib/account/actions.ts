@@ -94,7 +94,9 @@ export async function signInWithPassword(
 ): Promise<FormState> {
   const sb = await getSupabase();
   if (!sb) return { error: NOT_CONNECTED };
-  const email = String(fd.get("email") ?? "").trim();
+  const identifier = String(fd.get("email") ?? "").trim();
+  // Reviewer alias uses normal Supabase password authentication.
+  const email = identifier.toLowerCase() === "yctest" ? "yctest@example.com" : identifier;
   const password = String(fd.get("password") ?? "");
   if (!validEmail(email)) return { error: "Enter a valid email address." };
   if (!password) return { error: "Enter your password." };

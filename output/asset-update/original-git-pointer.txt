@@ -1,0 +1,1 @@
+gitdir: /Users/princewillokube/Documents/IlluminatED/.git/worktrees/IlluminatED2

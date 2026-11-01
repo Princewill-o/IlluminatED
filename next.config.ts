@@ -15,7 +15,9 @@ const csp = [
   "img-src 'self' data: blob: https://*.supabase.co https://covers.openlibrary.org",
   "font-src 'self' data:",
   [
-    "connect-src 'self'",
+    // GLTFLoader fetches embedded bufferView textures through short-lived blob:
+    // URLs in ImageBitmapLoader, so allow those same-origin transient blobs.
+    "connect-src 'self' blob:",
     "https://*.supabase.co",
     "wss://*.supabase.co",
     "https://register-api.ofqual.gov.uk",

@@ -109,7 +109,8 @@ export type PlaceKind =
   | "court"
   | "study"
   | "landmark"
-  | "hotel";
+  | "hotel"
+  | "venture";
 export interface Place {
   id: string;
   name: string;
@@ -119,6 +120,7 @@ export interface Place {
 }
 
 export const KIND: Record<PlaceKind, { label: string; colour: string }> = {
+  venture: {label:"Venture Yard",colour:"#42745e"},
   hotel: { label: "Hotels", colour: "#456c60" },
   landmark: { label: "Landmarks", colour: "#9b496a" },
   university: { label: "Universities", colour: "#7153b9" },
@@ -138,6 +140,7 @@ export const KIND: Record<PlaceKind, { label: string; colour: string }> = {
 
 function kindOf(p: Portal): PlaceKind | null {
   const t = p.to;
+  if(t.kind==="venture"||(t.kind==="map"&&t.mapId==="venture-hub"))return "venture";
   if (t.kind === "map" && t.mapId.startsWith("hotel-")) return "hotel";
   if ((t.kind === "map" && t.mapId.startsWith("station-")) || t.kind === "tube")
     return "station";

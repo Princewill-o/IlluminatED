@@ -1,0 +1,12 @@
+Ambient Relaxing Loop
+Author: isaiah658
+License: CC0 1.0 Universal (CC0-1.0)
+Public creator source: https://opengameart.org/content/ambient-relaxing-loop
+Audio SHA-256: 3c328794b77d3f3742a5a8fa36606c3b780d15b0b8f6148b29a78ec6caffcd9e
+Legal code: https://creativecommons.org/publicdomain/zero/1.0/legalcode.en
+Complete legal text: CC0-1.0.txt
+
+The creator's public page declares CC0. Author and source credit are retained voluntarily; CC0 does not require attribution.
+Authorship quote: this sound is 100% made with ZynAddSubFX and Audacity.
+
+CC0 applies only to rights the affirmer holds and can waive or license. Creator declarations are provenance, not an independent guarantee of worldwide rights or third-party clearance. Patent, trademark, privacy, publicity and other third-party rights may remain. No warranty or endorsement is implied. No listening-based, musicological or perceptual seamless-loop certification has been performed.

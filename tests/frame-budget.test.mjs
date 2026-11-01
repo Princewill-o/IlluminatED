@@ -21,12 +21,9 @@ test("returning from a suspended tab cannot build a backlog of catch-up frames",
   assert.equal(due(60000),true);assert.equal(due(60001),false);assert.equal(due(60017),true);
 });
 
-test("graphics budgets bound GPU pixels, ambient residents and expensive lights",()=>{
-  const desktop=graphicsBudget(false,false),mobile=graphicsBudget(false,true),low=graphicsBudget(true,false);
-  assert.ok(desktop.pixelRatio**2 < .73);
-  assert.ok(low.pixelRatio**2 < .43);
-  assert.equal(desktop.residents,12);
-  assert.ok(low.residents < mobile.residents && mobile.residents < desktop.residents);
-  assert.equal(low.lights,0);
-  assert.equal(low.cyclists,2);
+test("the single graphics budget retains all high-detail residents, cyclists and lights",()=>{
+  const budget=graphicsBudget();
+  assert.equal(budget.residents,14);
+  assert.equal(budget.cyclists,4);
+  assert.equal(budget.lights,2);
 });

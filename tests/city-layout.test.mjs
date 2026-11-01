@@ -281,3 +281,18 @@ test("Neighbourhoods contain many homes and remaining green land is divided by p
     "the open-world woods stay within a tree budget",
   );
 });
+
+test("larger Highland cottages retain solid footprints and accessible venue entrances", () => {
+  const { buildHighlands } = projectData("src/game/core/regions.ts");
+  const { highlandsMap } = projectData("src/game/core/world.ts");
+  const region = buildHighlands(), map = highlandsMap(), reachable = reachableTiles(map);
+  for (const building of region.things.filter(t => t.kind === "building")) {
+    assert.ok(building.w >= 6 && building.h >= 5 && building.height >= 6);
+    for (let y=building.y;y<building.y+building.h;y++) for(let x=building.x;x<building.x+building.w;x++) assert.equal(region.tiles[y][x],"X");
+    assert.ok(reachable.has(`${building.x+2},${building.y+building.h}`),`${building.id}: clear front path`);
+  }
+  for (const id of ["cafe","lodge"]) {
+    const portal=map.portals.find(p=>p.id===id);
+    assert.ok(portal);assert.ok(reachable.has(`${portal.rect.x/TILE},${portal.rect.y/TILE}`));
+  }
+});

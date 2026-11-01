@@ -73,8 +73,9 @@ const inView = (x: number, y: number, cam: { x: number; y: number }, vw: number,
   x > cam.x - pad && x < cam.x + vw + pad && y > cam.y - pad && y < cam.y + vh + pad;
 
 function ring(ctx: CanvasRenderingContext2D, x: number, y: number, r: number) {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(r) || r <= 0) return;
   ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.arc(x, y, Math.max(0.01, r), 0, Math.PI * 2);
   ctx.fill();
 }
 

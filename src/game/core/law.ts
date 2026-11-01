@@ -1,3 +1,5 @@
+import type { StreetCourtCase } from "./civilian-conflict";
+
 /**
  * Life in London beyond study: shops that restore your needs for Clout, getting
  * unwell and getting better, and the law. Start a scuffle and you get wanted
@@ -24,7 +26,7 @@ export interface LifeState {
   /** Prison release time (ms), or 0. */
   jailUntil: number;
   /** A court hearing is waiting. */
-  hearing: { stars: number; charge: string } | null;
+  hearing: { stars: number; charge: string; streetCase?: StreetCourtCase } | null;
   cardsUsed: number;
   prisonWork: number;
   /** Prevents an overdue bank loan from reopening the same hearing. */

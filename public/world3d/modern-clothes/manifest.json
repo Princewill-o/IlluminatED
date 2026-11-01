@@ -1,0 +1,116 @@
+{
+  "generator": "Blender",
+  "rig": "KayKit Rig_Medium",
+  "styles": [
+    "tee",
+    "hoodie",
+    "polo",
+    "blazer"
+  ],
+  "models": [
+    "Ranger",
+    "Knight",
+    "Mage",
+    "Rogue",
+    "Rogue_Hooded",
+    "Barbarian"
+  ],
+  "assets": [
+    {
+      "file": "Ranger-tee.glb",
+      "bytes": 402652
+    },
+    {
+      "file": "Ranger-hoodie.glb",
+      "bytes": 453748
+    },
+    {
+      "file": "Ranger-polo.glb",
+      "bytes": 471792
+    },
+    {
+      "file": "Ranger-blazer.glb",
+      "bytes": 446852
+    },
+    {
+      "file": "Knight-tee.glb",
+      "bytes": 436920
+    },
+    {
+      "file": "Knight-hoodie.glb",
+      "bytes": 488008
+    },
+    {
+      "file": "Knight-polo.glb",
+      "bytes": 506052
+    },
+    {
+      "file": "Knight-blazer.glb",
+      "bytes": 481116
+    },
+    {
+      "file": "Mage-tee.glb",
+      "bytes": 447048
+    },
+    {
+      "file": "Mage-hoodie.glb",
+      "bytes": 498132
+    },
+    {
+      "file": "Mage-polo.glb",
+      "bytes": 516176
+    },
+    {
+      "file": "Mage-blazer.glb",
+      "bytes": 491240
+    },
+    {
+      "file": "Rogue-tee.glb",
+      "bytes": 465240
+    },
+    {
+      "file": "Rogue-hoodie.glb",
+      "bytes": 516320
+    },
+    {
+      "file": "Rogue-polo.glb",
+      "bytes": 534360
+    },
+    {
+      "file": "Rogue-blazer.glb",
+      "bytes": 509424
+    },
+    {
+      "file": "Rogue_Hooded-tee.glb",
+      "bytes": 417884
+    },
+    {
+      "file": "Rogue_Hooded-hoodie.glb",
+      "bytes": 468968
+    },
+    {
+      "file": "Rogue_Hooded-polo.glb",
+      "bytes": 487008
+    },
+    {
+      "file": "Rogue_Hooded-blazer.glb",
+      "bytes": 462072
+    },
+    {
+      "file": "Barbarian-tee.glb",
+      "bytes": 437964
+    },
+    {
+      "file": "Barbarian-hoodie.glb",
+      "bytes": 489048
+    },
+    {
+      "file": "Barbarian-polo.glb",
+      "bytes": 507092
+    },
+    {
+      "file": "Barbarian-blazer.glb",
+      "bytes": 482156
+    }
+  ]
+}
