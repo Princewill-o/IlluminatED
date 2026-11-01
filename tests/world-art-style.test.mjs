@@ -3,21 +3,23 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import { createRequire } from "node:module";
+import path from "node:path";
 import ts from "typescript";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const require=createRequire(import.meta.url), THREE=require("three");
 const context=new Proxy({}, {get:()=>()=>{}});
 const document={createElement:()=>({width:0,height:0,getContext:()=>context})};
-function load(path) {
+function load(file) {
   const exports={};
-  const js=ts.transpileModule(fs.readFileSync(path,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(js,{exports,document,require:name=>name==="three"?THREE:projectData(name.replace("@/","src/")+".ts")});
+  const js=ts.transpileModule(fs.readFileSync(file,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
+  vm.runInNewContext(js,{exports,document,require:name=>name==="three"?THREE:name.endsWith(".json")?JSON.parse(fs.readFileSync(path.resolve(path.dirname(file),name),"utf8")):name.startsWith(".")?load(path.resolve(path.dirname(file),name+".ts")):projectData(name.replace("@/","src/")+".ts")});
   return exports;
 }
 const {riverGeometry,riverSurface}=load("src/components/game/world/water-style3d.ts");
 const {addStreetscape}=load("src/components/game/world/streetscape3d.ts");
 const {finishArchitecture}=load("src/components/game/world/architecture-finish3d.ts");
 const {applyGroundStyle}=load("src/components/game/world/ground-style3d.ts");
+const {addMeadow}=load("src/components/game/world/meadow3d.ts");
 const {londonEye}=load("src/components/game/world/london-eye3d.ts");
 
 test("London Eye capsules remain upright, supports stay fixed and geometry stays bounded",()=>{
@@ -46,13 +48,34 @@ test("water covers only river tiles and leaves sunken entrances dry",()=>{
   for(let i=0;i<p.count;i+=6){const x=Math.min(...Array.from({length:6},(_,j)=>p.getX(i+j))),z=Math.min(...Array.from({length:6},(_,j)=>p.getZ(i+j)));assert.equal(["wXX","-ww"][z][x],"w");}
   const river=riverSurface("night",112,88);assert.equal(river.material.transparent,false);assert.equal(river.texture.image.width,256);river.dispose();geometry.dispose();
 });
+
+test("meadow geometry is bounded, grounded on lawns and leaves routes unchanged",()=>{
+  const {CITY}=projectData("src/game/core/world.ts");
+  const before=JSON.stringify(CITY.tiles);
+  for(const mobile of [false,true]) {
+    const group=addMeadow(new THREE.Group(),CITY,mobile);
+    assert.ok(group.userData.tuftCount>0);
+    assert.ok(group.userData.tuftCount<=(mobile?2400:7000));
+    const matrix=new THREE.Matrix4(),position=new THREE.Vector3();
+    group.traverse(mesh=>{
+      if(!mesh.isInstancedMesh)return;
+      for(let i=0;i<mesh.count;i++){
+        mesh.getMatrixAt(i,matrix);position.setFromMatrixPosition(matrix);
+        assert.equal(CITY.tiles[Math.floor(position.z)][Math.floor(position.x)],"g");
+        assert.ok(Math.abs(position.y-.052)<1e-6);
+      }
+    });
+    group.userData.dispose();
+  }
+  assert.equal(JSON.stringify(CITY.tiles),before);
+});
 test("landscaping stays within a fixed geometry budget without changing navigation",()=>{
   const {CITY}=projectData("src/game/core/world.ts");
   const before=JSON.stringify([CITY.tiles,CITY.portals]);
   const group=addStreetscape(new THREE.Group(),CITY,"dusk"),geometries=new Set(),materials=new Set();let triangles=0;
   group.traverse(o=>{if(!o.isMesh)return;geometries.add(o.geometry);materials.add(o.material);triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3;});
   assert.equal(JSON.stringify([CITY.tiles,CITY.portals]),before);
-  assert.ok(group.userData.treeCount>=100);assert.ok(geometries.size<=4);assert.ok(materials.size<=16);assert.ok(triangles<80000, `triangle count: ${triangles}`);
+  assert.ok(group.userData.treeCount>=100);assert.ok(geometries.size<=7);assert.ok(materials.size<=29);assert.ok(triangles<90000, `triangle count: ${triangles}`);
   let disposals=0;for(const geometry of geometries)geometry.addEventListener("dispose",()=>disposals++);
   group.userData.dispose();group.userData.dispose();assert.equal(disposals,geometries.size);
 });

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Crown, GraduationCap, type LucideIcon, Sparkles } from "lucide-react";
+
 import { browserSupabase } from "@/lib/supabase-browser";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +21,8 @@ export const PLAN_LABEL: Record<PlanId, string> = {
 /** Short labels for tight spaces (narrow side rail, phone header). */
 export const PLAN_SHORT: Record<PlanId, string> = { free: "Free", plus: "Plus", plus_experience: "Plus+", schools: "School" };
 
-const PLAN_STYLE: Record<PlanId, string> = {
-  free: "bg-muted text-muted-foreground ring-1 ring-border",
-  plus: "bg-[#2b5fd9] text-white",
-  plus_experience: "bg-gradient-to-r from-[#6b55e0] to-[#2b5fd9] text-white",
-  schools: "bg-[#0f7a52] text-white",
-};
+/** Each paid plan gets its own icon; Free has none. */
+const PLAN_ICON: Partial<Record<PlanId, LucideIcon>> = { plus: Sparkles, plus_experience: Crown, schools: GraduationCap };
 
 /** The signed-in learner's plan (from public.my_plan), refreshed on navigation, focus and sign-in changes. */
 export function usePlan() {
@@ -57,16 +55,23 @@ export function PlanBadge({ className, compact = false, short = false }: { class
   const plan = usePlan();
   if (!plan) return null;
   const free = plan === "free";
+  const Icon = PLAN_ICON[plan];
   return (
     <Link
       prefetch={false}
       href={free ? "/pricing#plans" : plan === "schools" ? "/account" : "/billing"}
       title={free ? "You're on the Free plan. See plans to upgrade." : `Your plan: ${PLAN_LABEL[plan]}`}
       aria-label={free ? "Free plan. Upgrade" : `Your plan: ${PLAN_LABEL[plan]}`}
-      className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] leading-5 font-black whitespace-nowrap shadow-sm sm:text-xs", PLAN_STYLE[plan], className)}
+      data-plan={plan}
+      className={cn(
+        "plan-badge inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] leading-5 font-black whitespace-nowrap sm:text-xs",
+        free ? "plan-badge-free" : "plan-badge-paid",
+        className,
+      )}
     >
-      {short ? PLAN_SHORT[plan] : PLAN_LABEL[plan]}
-      {free && !compact && <span className="rounded-full bg-[#2b5fd9] px-1.5 text-white">Upgrade</span>}
+      {Icon && <Icon className="plan-badge-icon size-3 shrink-0 sm:size-3.5" strokeWidth={2.6} aria-hidden />}
+      <span>{short ? PLAN_SHORT[plan] : PLAN_LABEL[plan]}</span>
+      {free && !compact && <span className="plan-badge-upgrade rounded-full bg-[#2b5fd9] px-1.5 text-white">Upgrade</span>}
     </Link>
   );
 }

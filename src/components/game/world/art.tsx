@@ -335,9 +335,34 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
 /** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
-export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number } | undefined)[] = [];
-export const PLAYER = { x: -9999, y: -9999 };
-export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0 };
+export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number; id?: string } | undefined)[] = [];
+export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
+/** Real players currently in your server (kept fresh by the world view). */
+/**
+ * The sandbox rules of the world you're in (player worlds set these; the Open
+ * World uses the defaults). `fly` is whether you are flying right now.
+ */
+export const WORLD_RULES = {
+  police: "normal" as "off" | "relaxed" | "normal" | "strict",
+  flight: "off" as "off" | "owner" | "everyone",
+  time: "auto" as "auto" | "day" | "dusk" | "night",
+  weather: "auto" as "auto" | "clear" | "rain" | "snow",
+  owner: false,
+  fly: false,
+};
+export const ONLINE: { id: string; username: string }[] = [];
+export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
+/** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
+export const TUTOR = { active: false, x: 0, y: 0 };
+/** A delivery courier walking in from your front door (home map). Phase: arriving, waiting, leaving. */
+export const COURIER = { active: false, phase: "arriving" as "arriving" | "waiting" | "leaving", since: 0 };
+/** Fright Night: whether Scary Bots are out, and which ones you've scared off today. */
+export const SCARY: { on: boolean; gone: Set<string> } = { on: false, gone: new Set() };
+/**
+ * Hop-on bus autopilot: while `route` has points the player's vehicle follows it
+ * (world px) instead of the keyboard, then `onArrive` fires once at the last point.
+ */
+export const AUTOPILOT: { route: { x: number; y: number }[]; leg: number; speed: number; onArrive: (() => void) | null } = { route: [], leg: 0, speed: 0, onArrive: null };
 /** Current local pedestrians, shared by both renderers and the game loop. */
 export const NPC_SPOTS: { x: number; y: number; id?: string; name?: string }[] = [];
 /** Visual-only delivery props; rewards are verified by the career session server. */

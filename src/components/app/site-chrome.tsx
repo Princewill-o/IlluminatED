@@ -26,7 +26,7 @@ export function SiteChrome({
   return (
     <>
       {navbar}
-      <main id="main" tabIndex={-1} className="min-h-[60vh] outline-none">
+      <main key={path} id="main" tabIndex={-1} className="platform-page-enter min-h-[60vh] outline-none">
         {children}
       </main>
       {footer}

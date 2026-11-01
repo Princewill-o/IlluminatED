@@ -23,6 +23,8 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
   const host=useRef<HTMLDivElement>(null);
   const finish=useRef(onArrive);finish.current=onArrive;
   const arrived=useRef(false);
+  const wallDeadline=useRef(0);
+  if (!wallDeadline.current) wallDeadline.current=Date.now()+5000+RESCUE_DURATION_MS+300;
   const [phase,setPhase]=useState<RescuePhase>("downed");
   const [fallback,setFallback]=useState(false);
 
@@ -30,7 +32,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
     const element=host.current;if(!element)return;
     let alive=true,raf=0,renderer:THREE.WebGLRenderer|null=null,observer:ResizeObserver|null=null;
     let vehicle: Awaited<ReturnType<typeof createEmergencyVehicle>> | null=null;
-    let readyAt:number|null=null,last=performance.now(),currentPhase:RescuePhase="downed",rearOffset=-3.12;
+    let readyAt:number|null=null,last=performance.now(),lastRendered=0,currentPhase:RescuePhase="downed",rearOffset=-3.12;
     const characters:Character3D[]=[];
     const disposables:THREE.Object3D[]=[];
     const scene=new THREE.Scene();scene.background=new THREE.Color("#bdccd0");scene.fog=new THREE.Fog("#bdccd0",24,60);
@@ -40,7 +42,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
     const complete=()=>{if(!alive||arrived.current)return;arrived.current=true;finish.current();};
     // Includes a bounded asset-loading budget, then the full fifteen-second trip.
     const loadBudget=window.setTimeout(start,5000);
-    const hardStop=window.setTimeout(complete,5000+RESCUE_DURATION_MS+300);
+    const hardStop=window.setTimeout(complete,Math.max(0,wallDeadline.current-Date.now()));
     const material=(colour:string)=>new THREE.MeshStandardMaterial({color:colour,roughness:.86});
     const block=(parent:THREE.Object3D,colour:string,x:number,y:number,z:number,w:number,h:number,d:number)=>{
       const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material(colour));mesh.position.set(x,y,z);mesh.castShadow=mesh.receiveShadow=true;parent.add(mesh);return mesh;
@@ -66,7 +68,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
     tasks.push(buildCharacter({...avatar,pet:"pet-none",held:"held-none"},1.15).then(character=>{
       if(!alive){character.dispose();return;}player=character;characters.push(character);scene.add(character.object);character.play("idle");
     }).catch(()=>{}));
-    for(let index=0;index<2;index++)tasks.push(buildCharacter({...npcLook(index+4),...paramedic,pet:"pet-none",held:"held-none"},1.12).then(character=>{
+    for(let index=0;index<2;index++)tasks.push(buildCharacter({...npcLook(index+4),...paramedic,head:index?"head-blocky-classic-hero":"head-blocky-hero",pet:"pet-none",held:"held-none"},1.12).then(character=>{
       if(!alive){character.dispose();return;}medics.push(character);characters.push(character);scene.add(character.object);character.play("idle");
     }).catch(()=>{}));
     const loader=new GLTFLoader();
@@ -80,6 +82,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
     }catch{setFallback(true);start();}
     const frame=(now:number)=>{
       if(!alive)return;
+      if(Date.now()>=wallDeadline.current){complete();return;}
       const dt=Math.min(.05,(now-last)/1000);last=now;
       const elapsed=readyAt===null?0:now-readyAt,state=rescueFrame(elapsed);
       if(state.phase!==currentPhase){currentPhase=state.phase;setPhase(currentPhase);}
@@ -101,7 +104,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
       });
       for(const character of characters)character.update(dt);
       if(state.phase==="departing"){camera.position.x=THREE.MathUtils.lerp(-6,1,state.depart);camera.lookAt(vanX*.35,.9,0);}
-      renderer?.render(scene,camera);
+      if(now-lastRendered>=1000/30){renderer?.render(scene,camera);lastRendered=now;}
       if(state.complete){complete();return;}
       raf=requestAnimationFrame(frame);
     };
@@ -116,7 +119,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
 
-  return <div className="fixed inset-0 z-[100015] overflow-hidden bg-[#9eafb6] text-white" role="status" aria-live="polite">
+  return <div className="fixed inset-0 z-[100030] overflow-hidden bg-[#9eafb6] text-white" role="status" aria-live="polite">
     <div ref={host} className="absolute inset-0" aria-hidden/>
     <div className="absolute left-1/2 top-8 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-[#f7f1e6] px-5 py-3 text-[#17524b] shadow-xl"><HeartPulse className="size-7"/><div><p className="text-xs font-black uppercase tracking-widest">St Tomas' Ambulance</p><p className="text-sm font-bold">Care and recovery</p></div></div>
     <div className="absolute inset-x-4 bottom-8 mx-auto max-w-xl rounded-3xl bg-[#102d31]/95 p-5 text-center shadow-xl"><p className="text-xl font-black">{MESSAGES[phase]}</p><p className="mt-2 text-sm text-white/75">{fallback?"The rescue team is on its way. Your hospital transfer will complete shortly.":"You will recover after the paramedics take you to hospital."}</p></div>

@@ -1,0 +1,598 @@
+{
+  "tool": "rea-agents@6.7.0",
+  "scope": "Deployed main rendering bundle, Rapier JavaScript chunk and observed Basis/Draco decoder wrappers. Separate from complete published-source analysis.",
+  "result": "Main render and Rapier files parsed successfully (1,036,832 visited AST nodes). Basis parsed in the broad pass. Draco wrapper timed out in isolated bounded analysis; no claim of complete decoder or WebAssembly analysis. Semantic graph extraction for minified deployment is explicitly bounded.",
+  "runs": [
+    {
+      "record": "rea-deployed-evidence",
+      "completed": false,
+      "error": "provider_timeout",
+      "evidenceId": "ev_a5be01b39f24fa5b80fc0ee0f43b4d9107c59455608f972f7edcd5481786a906",
+      "artifactDigest": "fc593ad0d40718bb7f7b0306c169c3f23fbafc06fa2ac1152bdd953dd76faebb",
+      "parameters": {
+        "format": "auto",
+        "integrity_policy": "fail",
+        "max_heap_mb": 2048,
+        "analysis_timeout_ms": 180000
+      },
+      "statistics": {
+        "relevant_files": 4,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 5204556,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 3,
+        "visited_ast_nodes": 10774,
+        "findings": 7,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "semanticCoverage": {
+        "status": "partial",
+        "truncated": true,
+        "omittedNodes": null,
+        "omittedRelations": null,
+        "limits": [
+          {
+            "name": "javascript_analysis_worker_timeout_ms",
+            "value": 180000,
+            "unit": "milliseconds"
+          }
+        ],
+        "families": [
+          {
+            "family": "boundary",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "call-flow",
+            "status": "partial",
+            "retainedRelations": 873,
+            "omittedRelations": null,
+            "unknowns": 346
+          },
+          {
+            "family": "child-process",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "closure",
+            "status": "partial",
+            "retainedRelations": 746,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "configuration",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "data-flow",
+            "status": "partial",
+            "retainedRelations": 8277,
+            "omittedRelations": null,
+            "unknowns": 915
+          },
+          {
+            "family": "event",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "object-flow",
+            "status": "partial",
+            "retainedRelations": 420,
+            "omittedRelations": null,
+            "unknowns": 952
+          },
+          {
+            "family": "promise-ownership",
+            "status": "partial",
+            "retainedRelations": 26,
+            "omittedRelations": null,
+            "unknowns": 9
+          },
+          {
+            "family": "request",
+            "status": "partial",
+            "retainedRelations": 4,
+            "omittedRelations": null,
+            "unknowns": 5
+          },
+          {
+            "family": "resource-lifecycle",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "timer",
+            "status": "partial",
+            "retainedRelations": 2,
+            "omittedRelations": null,
+            "unknowns": 4
+          }
+        ]
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Source analysis was interrupted: Analysis operation timed out after 180000ms: analyze_javascript_application",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+        "draco_wasm_wrapper.js: Analysis operation timed out after 180000ms: analyze_javascript_application"
+      ]
+    },
+    {
+      "record": "rea-deployed-bounded-evidence",
+      "completed": false,
+      "error": "provider_timeout",
+      "evidenceId": "ev_7e72e4eb604bf80b94d74b43d0a8c59472a369ef6d05c40f72e5d57085c03b3d",
+      "artifactDigest": "fc593ad0d40718bb7f7b0306c169c3f23fbafc06fa2ac1152bdd953dd76faebb",
+      "parameters": {
+        "format": "auto",
+        "integrity_policy": "fail",
+        "max_semantic_nodes": 6000,
+        "max_semantic_nodes_per_file": 1500,
+        "max_semantic_unknowns": 2000,
+        "max_semantic_unknowns_per_file": 500,
+        "max_heap_mb": 2048,
+        "analysis_timeout_ms": 90000
+      },
+      "statistics": {
+        "relevant_files": 4,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 5204556,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 1,
+        "skipped_javascript_files": 3,
+        "visited_ast_nodes": 10774,
+        "findings": 7,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "semanticCoverage": {
+        "status": "partial",
+        "truncated": true,
+        "omittedNodes": null,
+        "omittedRelations": null,
+        "limits": [
+          {
+            "name": "javascript_analysis_worker_timeout_ms",
+            "value": 90000,
+            "unit": "milliseconds"
+          },
+          {
+            "name": "semantic_graph_file_node_ceiling",
+            "value": 1500,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_file_unknown_ceiling",
+            "value": 500,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_node_ceiling",
+            "value": 6000,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_unknown_ceiling",
+            "value": 2000,
+            "unit": "items"
+          }
+        ],
+        "families": [
+          {
+            "family": "boundary",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "call-flow",
+            "status": "partial",
+            "retainedRelations": 13,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "child-process",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "closure",
+            "status": "partial",
+            "retainedRelations": 746,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "configuration",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "data-flow",
+            "status": "partial",
+            "retainedRelations": 19,
+            "omittedRelations": null,
+            "unknowns": 503
+          },
+          {
+            "family": "event",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "object-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "promise-ownership",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "request",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "resource-lifecycle",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          },
+          {
+            "family": "timer",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 3
+          }
+        ]
+      },
+      "limitations": [
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Source analysis was interrupted: Analysis operation timed out after 90000ms: analyze_javascript_application",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+        "draco_wasm_wrapper.js: Analysis operation timed out after 90000ms: analyze_javascript_application"
+      ]
+    },
+    {
+      "record": "rea-deployed-renderer-evidence",
+      "completed": true,
+      "error": null,
+      "evidenceId": "ev_d1e015bec13525abe4400b600945a295cc9e98d41a5ace4081d80a652cfa0ffd",
+      "artifactDigest": "fc593ad0d40718bb7f7b0306c169c3f23fbafc06fa2ac1152bdd953dd76faebb",
+      "parameters": {
+        "format": "auto",
+        "integrity_policy": "fail",
+        "max_semantic_nodes": 6000,
+        "max_semantic_nodes_per_file": 3000,
+        "max_semantic_unknowns": 2000,
+        "max_semantic_unknowns_per_file": 1000,
+        "source_paths": [
+          "index-ORr3L4no.js",
+          "rapier-BmPn8Tpt.js"
+        ],
+        "max_heap_mb": 2048,
+        "analysis_timeout_ms": 120000
+      },
+      "statistics": {
+        "relevant_files": 4,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 5088260,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 2,
+        "skipped_javascript_files": 0,
+        "visited_ast_nodes": 1036832,
+        "findings": 722,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "semanticCoverage": {
+        "status": "partial",
+        "truncated": true,
+        "omittedNodes": null,
+        "omittedRelations": null,
+        "limits": [
+          {
+            "name": "semantic_graph_file_node_ceiling",
+            "value": 3000,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_file_unknown_ceiling",
+            "value": 1000,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_node_ceiling",
+            "value": 6000,
+            "unit": "items"
+          },
+          {
+            "name": "semantic_graph_unknown_ceiling",
+            "value": 2000,
+            "unit": "items"
+          }
+        ],
+        "families": [
+          {
+            "family": "boundary",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "call-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "child-process",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "closure",
+            "status": "partial",
+            "retainedRelations": 13,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "configuration",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "data-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 1000
+          },
+          {
+            "family": "event",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "object-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 1000
+          },
+          {
+            "family": "promise-ownership",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "request",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "resource-lifecycle",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          },
+          {
+            "family": "timer",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 0
+          }
+        ]
+      },
+      "limitations": [
+        "Caller-selected source analysis leaves 2 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Electron relationships are derived from inert syntax; runtime registration, reachability, defaults, and enforcement remain unproven.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Sender, frame, URL, and origin checks are observations only; REA does not claim that they enforce a complete authorization policy.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code."
+      ]
+    },
+    {
+      "record": "rea-deployed-decoder-evidence",
+      "completed": false,
+      "error": "provider_timeout",
+      "evidenceId": "ev_fa9faa5a063500bfd248aeb953810423973eb31d37408abae1e0850a2d190062",
+      "artifactDigest": "fc593ad0d40718bb7f7b0306c169c3f23fbafc06fa2ac1152bdd953dd76faebb",
+      "parameters": {
+        "format": "auto",
+        "integrity_policy": "fail",
+        "max_semantic_nodes": 200,
+        "max_semantic_nodes_per_file": 200,
+        "max_semantic_unknowns": 200,
+        "max_semantic_unknowns_per_file": 200,
+        "source_paths": [
+          "draco_wasm_wrapper.js"
+        ],
+        "max_heap_mb": 1024,
+        "analysis_timeout_ms": 30000
+      },
+      "statistics": {
+        "relevant_files": 4,
+        "nested_asar_containers": 0,
+        "text_bytes_read": 58763,
+        "invalid_utf8_files": 0,
+        "parsed_javascript_files": 0,
+        "skipped_javascript_files": 1,
+        "visited_ast_nodes": 0,
+        "findings": 0,
+        "modules": 0,
+        "parse_failures": 0
+      },
+      "semanticCoverage": {
+        "status": "partial",
+        "truncated": true,
+        "omittedNodes": null,
+        "omittedRelations": null,
+        "limits": [
+          {
+            "name": "javascript_analysis_worker_timeout_ms",
+            "value": 30000,
+            "unit": "milliseconds"
+          }
+        ],
+        "families": [
+          {
+            "family": "boundary",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "call-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "child-process",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "closure",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "configuration",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "data-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "event",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "object-flow",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "promise-ownership",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "request",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "resource-lifecycle",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          },
+          {
+            "family": "timer",
+            "status": "partial",
+            "retainedRelations": 0,
+            "omittedRelations": null,
+            "unknowns": 4
+          }
+        ]
+      },
+      "limitations": [
+        "Caller-selected source analysis leaves 3 inventoried files outside analysis scope. Inventory identity covers the complete artifact; relationships through unselected sources remain unknown.",
+        "CommonJS and ESM binding relationships were recovered from inert syntax and resolved only within the inventoried artifact container.",
+        "Graph coverage is incomplete; unavailable facts remain explicit and must not be read as absence.",
+        "JavaScript and HTML were parsed as inert text; bundle bootstrap code was never executed.",
+        "Static imports, entrypoints, workers, endpoints, and storage relationships do not prove runtime execution.",
+        "Static paths and relationships may remain unresolved when expressions are dynamic or obfuscated.",
+        "Webpack/Rspack factories were recovered from AST literals; REA did not invoke push handlers or bundle bootstrap code.",
+        "draco_wasm_wrapper.js: Analysis operation timed out after 30000ms: analyze_javascript_application"
+      ]
+    }
+  ]
+}

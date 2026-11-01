@@ -6,7 +6,9 @@ import Link from "next/link";
 
 import { Check, Crown, Lock, Sparkles, Zap } from "lucide-react";
 
+import { MarathonPanel } from "./marathon-panel";
 import { usePass } from "./pass-store";
+import { RewardsBanner } from "./rewards-banner";
 import { useIllumship } from "../city/membership";
 
 import { currentEvent, timeLeft } from "@/game/core/live-events";
@@ -35,6 +37,8 @@ export function SeasonPass({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-6">
+      <RewardsBanner />
+      <MarathonPanel />
       <section className="relative overflow-hidden rounded-3xl border-[3px] border-[#1d1a4a] bg-[linear-gradient(135deg,#2b5fd9,#6a4bd6_55%,#ff6fa9)] p-6 text-white shadow-[6px_6px_0_#1d1a4a] sm:p-8">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/heroes/quotient.webp" alt="" className="pointer-events-none absolute -right-2 -bottom-4 hidden h-56 sm:block" />

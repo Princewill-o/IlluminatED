@@ -3,7 +3,7 @@ import type { Built, Thing } from "./london";
 /** Authored neighbourhoods, in tiles. These also label the navigation map. */
 export const LONDON_DISTRICTS = [
   { name: "Riverside Campus", x: 114, y: 2, w: 60, h: 39, focus: [145, 32] },
-  { name: "Wharf Gardens", x: 114, y: 54, w: 60, h: 44, focus: [145, 83] },
+  { name: "Wharf Gardens", x: 114, y: 54, w: 60, h: 22, focus: [145, 74] },
   { name: "Primrose Mews", x: 2, y: 90, w: 61, h: 44, focus: [29, 119] },
   { name: "Orchard Commons", x: 66, y: 90, w: 61, h: 44, focus: [92, 120] },
   { name: "Conservatory Quarter", x: 136, y: 110, w: 38, h: 24, focus: [153, 128] },

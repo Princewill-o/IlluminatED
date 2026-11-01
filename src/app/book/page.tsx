@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { BookForm } from "@/components/book/book-form";
 
 export const metadata: Metadata = {
-  title: "Request access or a school demo",
+  title: "Book a school demo",
   description: "See IlluminatED, the revision game for GCSE, A level, BTEC and T Level students, and set up access for your school, college or sixth form.",
 };
 
@@ -18,10 +18,10 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
     <div className="container max-w-6xl pt-10 pb-20 lg:pt-16">
       <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div>
-          <p className="text-sm font-bold tracking-widest text-primary uppercase">Invited beta access</p>
-          <h1 className="mt-3 text-4xl leading-[1.05] tracking-tight text-balance md:text-5xl">Request access. See how learning fits.</h1>
+          <p className="text-sm font-bold tracking-widest text-primary uppercase">For schools and colleges</p>
+          <h1 className="mt-3 text-4xl leading-[1.05] tracking-tight text-balance md:text-5xl">Book a demo. See how learning fits.</h1>
           <p className="mt-5 text-lg leading-relaxed text-muted-foreground">
-            Request a learner invitation or arrange a school demo. We review beta requests before providing access. Invited individual learners can use core study for free; school licences and optional Premium are separate.
+            Arrange a demo or pilot for your school or college. Individual learners don't need this: anyone aged 13+ can sign up for free.
           </p>
           <ul className="mt-8 space-y-4">
             {[

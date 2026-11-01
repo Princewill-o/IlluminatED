@@ -52,9 +52,16 @@ export type PortalTarget =
   | { kind: "shop"; shop: "tescow" | "bootz" }
   | { kind: "doctor" }
   | { kind: "bank" }
-  | { kind: "guide"; guide: "careers" | "study" | "transport" };
+  | { kind: "networking"; venue: string }
+  | { kind: "guide"; guide: "careers" | "study" | "transport" }
+  | { kind: "tutorial"; step: TutorialStation };
+
+/** Interactive stations in the new-player training ground. */
+export type TutorialStation = "interact" | "study" | "eat" | "board";
 
 export interface Portal {
+  /** On a map with a deck: 1 for portals up on the raised floor. */
+  level?: 0 | 1;
   id: string;
   /** In pixels. */
   rect: Rect;
@@ -105,6 +112,31 @@ export interface WorldMap {
   accent: string;
   /** A sign painted on the floor or lawn (tile coordinates, centre). */
   sign?: { x: number; y: number; text: string };
+  /** Blender furniture placed in an interior (tiles; models in /world3d/interiors). */
+  props?: Prop[];
+  /** Interior colours: floor (two alternating), walls and skirting. */
+  theme?: { floor: [string, string]; wall: string; skirting: string };
+  /** Stairs drawn in this room: going up from here, or the opening down to the floor below. */
+  stairs?: { x: number; y: number; down: boolean };
+  /**
+   * A raised floor in the same room (a mezzanine / double-decker space). `tiles`
+   * is the walkable grid up there; the ramp (a staircase, rising north) joins
+   * the two levels. Tiles.
+   */
+  deck?: { tiles: string[]; height: number; ramp: { x: number; y: number; w: number; h: number } };
+}
+
+/** One piece of interior furniture: a model fitted to a footprint (tiles). */
+export interface Prop {
+  model: string;
+  x: number;
+  y: number;
+  w: number;
+  d: number;
+  /** Height above the floor (hanging lamps). */
+  lift?: number;
+  /** Quarter turns. */
+  turn?: number;
 }
 
 /**
@@ -667,8 +699,9 @@ export function londonMap(): WorldMap {
   // Motor Mile: the car dealership, on the next shop along.
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
-  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "shop", shop: "tescow" } });
-  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "shop", shop: "bootz" } });
+  // Shops are walk-in: go inside to the checkout (venues.ts).
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
+  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
@@ -680,8 +713,11 @@ export function londonMap(): WorldMap {
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   for (const venue of L.things) {
     if (venue.kind !== "building" || !["mcdonalds", "kfc", "starbucks"].includes(venue.id)) continue;
-    portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "act", activity: "eat" } });
+    portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "map", mapId: `venue-${venue.id}`, label: venue.label ?? "Inside" } });
   }
+  // The town hall's doors, on the square.
+  const hall = L.things.find((t) => t.kind === "landmark" && t.name === "town-hall");
+  if (hall && hall.kind === "landmark") portals.push({ id: "town-hall", rect: px(hall.x + Math.floor(hall.w / 2) - 1, hall.y + hall.h, 2, 1), label: "Town Hall: civic library and council gallery", to: { kind: "map", mapId: "venue-town-hall", label: "Town Hall" } });
   portals.push(
     {id:"universities",rect:px(92,83,2,1),label:"University Quarter: explore universities",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
     {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: subject study sessions",to:{kind:"study-room"}},
@@ -866,6 +902,79 @@ export function prisonMap(): WorldMap {
     { id: "prison-escape", rect: px(44, 30, 2, 2), label: "Service exit: escape", to: { kind: "prison", action: "escape" } },
   ];
   return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
+}
+
+/**
+ * Flight School: the new-player training ground. Four halls joined by doorways;
+ * the guide (Ava) walks ahead and the player follows her from station to station,
+ * ending at the departure gate for the flight to London.
+ */
+export const TUTORIAL_MAP_ID = "tutorial";
+/**
+ * IlluminatED Airport, Terminal 1: where every new player starts. Four halls
+ * teach the basics as you go through the airport: walk in, check in (interact),
+ * clear security (answer a question), and the departure lounge (eat, phone,
+ * board at Gate 1). Furniture is the Blender interiors kit.
+ */
+export function tutorialMap(): WorldMap {
+  const g = new Grid(44, 18, ".");
+  g.border("#");
+  for (let x = 2; x < 42; x += 3) g.set(x, 0, "W");
+  // Partitions with doorways that alternate, so you follow Ava through the terminal.
+  g.fill(10, 1, 1, 16, "#"); g.fill(10, 7, 1, 4, ".");
+  g.fill(20, 1, 1, 16, "#"); g.fill(20, 11, 1, 4, ".");
+  g.fill(30, 1, 1, 16, "#"); g.fill(30, 4, 1, 4, ".");
+  const props: Prop[] = [];
+  const put = (model: string, x: number, y: number, w: number, d: number, tile = "t") => {
+    props.push({ model, x, y, w, d });
+    g.fill(x, y, w, d, tile);
+  };
+  // Hall 1: entrance. Plants and a row of seats.
+  for (const [x, y] of [[2, 2], [8, 2], [2, 15], [8, 15]]) put("tall-plant", x, y, 1, 1, "p");
+  put("gate-seats", 2, 5, 3, 1, "s");
+  put("gate-seats", 5, 13, 3, 1, "s");
+  // Hall 2: check-in desks and self-service kiosks.
+  put("checkin-desk", 13, 2, 3, 1, "r");
+  put("kiosk", 16, 2, 1, 1, "r"); put("kiosk", 17, 2, 1, 1, "r");
+  put("gate-seats", 12, 14, 3, 1, "s"); put("gate-seats", 16, 14, 3, 1, "s");
+  put("tall-plant", 18, 9, 1, 1, "p");
+  // Hall 3: security.
+  put("security-arch", 22, 2, 3, 1); put("security-arch", 25, 2, 3, 1);
+  put("kiosk", 22, 8, 1, 1); put("kiosk", 23, 8, 1, 1); put("kiosk", 26, 8, 1, 1); put("kiosk", 27, 8, 1, 1);
+  put("tall-plant", 22, 15, 1, 1, "b"); put("tall-plant", 28, 15, 1, 1, "b");
+  // Hall 4: departure lounge: café, departure board, seats and Gate 1.
+  put("cafe-counter", 32, 14, 5, 1, "r");
+  put("departures", 33, 2, 3, 1);
+  put("checkin-desk", 40, 2, 3, 1, "A");
+  put("gate-seats", 37, 11, 3, 1, "s");
+  for (const [x, y] of [[32, 2], [42, 15]]) put("tall-plant", x, y, 1, 1, "p");
+  const portals: Portal[] = [
+    { id: "tut-desk", rect: px(14, 3, 3, 1), label: "Check-in desk: check in your bag", to: { kind: "tutorial", step: "interact" } },
+    { id: "tut-study", rect: px(23, 3, 4, 1), label: "Security: answer the officer's question", to: { kind: "tutorial", step: "study" } },
+    { id: "tut-cafe", rect: px(33, 13, 3, 1), label: "Lounge café: grab a snack", to: { kind: "tutorial", step: "eat" } },
+    { id: "tut-gate", rect: px(40, 3, 3, 2), label: "Gate 1: board your flight to London", to: { kind: "tutorial", step: "board" } },
+  ];
+  return finish(
+    {
+      id: TUTORIAL_MAP_ID,
+      kind: "office",
+      name: "IlluminatED Airport · Terminal 1",
+      structures: [],
+      portals,
+      props,
+      theme: { floor: ["#f4f3ef", "#e9e7e1"], wall: "#f3efe6", skirting: "#b68a5e" },
+      rooms: [
+        { name: "Terminal entrance · learn to move", rect: px(1, 1, 9, 16) },
+        { name: "Check-in · learn to interact", rect: px(11, 1, 9, 16) },
+        { name: "Security · answer a question", rect: px(21, 1, 9, 16) },
+        { name: "Departure lounge and Gate 1", rect: px(31, 1, 12, 16) },
+      ],
+      spawn: centre(3, 9),
+      accent: "#2b5fd9",
+      sign: { x: 5, y: 9, text: "Terminal 1 · follow Ava" },
+    },
+    g,
+  );
 }
 
 /** A shared learning space: real subject practice, simulated careers and earned awards. */
@@ -1127,4 +1236,42 @@ export function supermarketMap():WorldMap {
  const g=new Grid(30,25,".");g.border("#");
  for(const x of [8,15,22])g.fill(x,6,2,10,"#");
  return finish({id:"supermarket",kind:"office",name:"Tesco · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
+}
+
+
+// ── Two-level rooms (mezzanines) ───────────────────────────────────────────
+const LEVEL_MAPS = new WeakMap<WorldMap, WorldMap>();
+/** The map as seen from one level: the deck's own walkable grid and its portals. */
+export function levelMap(map: WorldMap, level: number): WorldMap {
+  if (!map.deck) return map;
+  if (level !== 1) {
+    let ground = LEVEL_MAPS.get(map);
+    if (!ground) {
+      ground = { ...map, portals: map.portals.filter((p) => (p.level ?? 0) === 0) };
+      LEVEL_MAPS.set(map, ground);
+    }
+    return ground;
+  }
+  const deck = map.deck;
+  let upper = LEVEL_MAPS.get(deck as unknown as WorldMap);
+  if (!upper) {
+    upper = { ...map, tiles: deck.tiles, portals: map.portals.filter((p) => p.level === 1) };
+    LEVEL_MAPS.set(deck as unknown as WorldMap, upper);
+  }
+  return upper;
+}
+
+/**
+ * Height and level at a point. On the stairs, height follows how far up you
+ * are; past halfway you count as upstairs. Elsewhere you stay on your level.
+ */
+export function elevationAt(map: WorldMap, x: number, y: number, level: number) {
+  const deck = map.deck;
+  if (!deck) return { z: 0, level: 0 };
+  const r = deck.ramp, tx = x / TILE, ty = y / TILE;
+  if (tx >= r.x && tx < r.x + r.w && ty >= r.y && ty < r.y + r.h) {
+    const t = Math.max(0, Math.min(1, (r.y + r.h - ty) / r.h));
+    return { z: t * deck.height, level: t > 0.5 ? 1 : 0 };
+  }
+  return { z: level === 1 ? deck.height : 0, level: level === 1 ? 1 : 0 };
 }

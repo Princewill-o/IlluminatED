@@ -1,0 +1,8 @@
+Salamander Grand Piano — Alexander Holm
+Yamaha C5 recordings, distributed under Creative Commons Attribution 3.0.
+https://creativecommons.org/licenses/by/3.0/
+Source: https://github.com/Tonejs/audio/tree/master/salamander
+Original author and licence: https://raw.githubusercontent.com/Tonejs/audio/master/salamander/README
+
+Included C2.mp3, C3.mp3, C4.mp3, C5.mp3 are unmodified samples.
+IlluminatED performs original arrangements, pitch shifts and envelopes at runtime.

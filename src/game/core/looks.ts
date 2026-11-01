@@ -45,6 +45,10 @@ export const TOP_LOOK: Record<string, string> = {
   "top-hero-catalyst": "female-f",
   "top-hero-quill": "female-d",
   "top-hero-quotient": "male-a",
+  "top-pumpkin": "male-f",
+  "top-puffer": "female-d",
+  "top-varsity": "female-e",
+  "top-festival": "male-a",
 };
 
 export const BOTTOM_LOOK: Record<string, string> = {
@@ -65,6 +69,7 @@ export const SHOES_LOOK: Record<string, string> = {
   "shoes-smart": "male-d",
   "shoes-skates": "female-e",
   "shoes-rocket": "male-e",
+  "shoes-chunky": "male-a",
 };
 
 /** Free colours you can dye any top, bottoms or shoes. */

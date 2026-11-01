@@ -13,8 +13,11 @@ import {
 import { FriendsPanel } from "./friends-panel";
 
 import { Character3DPreview } from "@/components/game/character-3d-preview";
+import { RacingHub } from "@/components/game/racing/racing-hub";
+import { WhatIf } from "@/components/game/what-if/what-if";
 import { AffiliationBadge } from "@/components/game/world/affiliation-badge";
 import { TUTORIAL_KEY } from "@/components/game/world/scene";
+import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { affiliationFor } from "@/game/core/affiliation";
@@ -24,6 +27,7 @@ import { CARS } from "@/game/core/cars";
 import { normaliseBlockyAvatar, PREVIEW_AVATAR_KEY, PREVIEW_AVATAR_EVENT } from "@/game/core/blocky-customization";
 import { STARTER_LAYOUT } from "@/game/core/homes";
 import type { CitySnapshot } from "@/lib/game/city-server";
+const PREVIEW_PLAYER_ID = "88888888-8888-4888-8888-000000000099";
 const state: CitySnapshot = {
   ready: false,
   vip: true,
@@ -40,10 +44,16 @@ export function DevShowcase({
   view,
   map,
   workplace,
+  as,
+  at,
 }: {
   view: string;
   map: string;
   workplace?: string;
+  /** Start position in tiles, for screenshots. */
+  at?: { x: number; y: number };
+  /** Voice test: which of the two test friends this tab is. */
+  as?: string;
 }) {
   const company = workplace ? workplaceById(workplace) : null;
   const job = company
@@ -74,9 +84,11 @@ export function DevShowcase({
     window.addEventListener(PREVIEW_AVATAR_EVENT, read);
     window.addEventListener("storage", storage);
     localStorage.setItem(TUTORIAL_KEY, "seen");
+    // The offline capture route must honour its requested map on a fresh profile.
+    if (map !== "tutorial") localStorage.setItem(`${TUTORIAL_KEY}:${PREVIEW_PLAYER_ID}`, "seen");
     setMounted(true);
     return () => { window.removeEventListener(PREVIEW_AVATAR_EVENT, read); window.removeEventListener("storage", storage); };
-  }, []);
+  }, [map]);
   useEffect(
     () => () => {
       if (video) URL.revokeObjectURL(video);
@@ -128,13 +140,16 @@ export function DevShowcase({
       setStatus("Recording failed in this browser.");
     }
   }
+  if (view === "voice") return <VoiceTest as={as === "b" ? "b" : "a"} />;
+  if (view === "racing") return <div className="arcade mx-auto max-w-6xl p-4"><RacingHub /></div>;
+  if (view === "what-if") return <div className="arcade mx-auto max-w-6xl p-4"><WhatIf userId="preview" /></div>;
   if (view === "world")
     return (
       <div className="fixed inset-0 z-[100005] bg-[#f7f1e6]">
         {mounted && (
           <WorldApp
             me={{
-              id: "88888888-8888-4888-8888-000000000099",
+              id: PREVIEW_PLAYER_ID,
               username: "Preview player",
               avatar: uniformFor(job, previewAvatar),
               org: null,
@@ -147,7 +162,8 @@ export function DevShowcase({
             staff={{}}
             developerTeleport
             initialMap={map}
-            initialServer="lse-1"
+            initialServer={new URLSearchParams(window.location.search).has("menu") ? null : "lse-1"}
+            initialArrival={at ? { x: at.x * 32 + 16, y: at.y * 32 + 16 } : undefined}
             job={job}
             home={{
               claimed: true,
@@ -323,6 +339,23 @@ export function DevShowcase({
           <ConversationPreview />
         </div>
       )}
+    </main>
+  );
+}
+
+/** Two tabs (?view=voice&as=a / as=b) call each other over a local channel with real WebRTC. */
+const VOICE_FRIENDS = { a: { id: "00000000-0000-4000-8000-00000000000a", username: "amara" }, b: { id: "00000000-0000-4000-8000-00000000000b", username: "ben" } };
+function VoiceTest({ as }: { as: "a" | "b" }) {
+  const me = VOICE_FRIENDS[as], friend = VOICE_FRIENDS[as === "a" ? "b" : "a"];
+  const [signaller] = useState(() => localSignaller());
+  const [near, setNear] = useState(false);
+  return (
+    <main className="min-h-dvh bg-[#1c2b3a] p-6 text-white">
+      <h1 className="text-xl font-black">Voice test · you are @{me.username}</h1>
+      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={near} onChange={e => setNear(e.target.checked)} /> Standing next to @{friend.username}</label>
+      <div className="fixed right-4 bottom-4 flex flex-col items-end gap-2">
+        <VoiceChat meId={me.id} nearby={near ? [friend.id] : []} signaller={signaller} friendList={[friend]} />
+      </div>
     </main>
   );
 }

@@ -1,4 +1,8 @@
-/** One high-detail rendering profile for every world; saved quality preferences are ignored. */
+/** Stored legacy graphics choices all resolve to the platform's high profile. */
+export type VisualQuality = "high";
+export function readVisualQuality(_value: string | null): VisualQuality { return "high"; }
+
+/** One high-detail profile on every display, including the latest composition effects. */
 export function visualProfile(dpr = 1) {
   return {
     pixelRatio: Math.min(2, Math.max(1, Number.isFinite(dpr) ? dpr : 1)),
@@ -7,10 +11,21 @@ export function visualProfile(dpr = 1) {
     postProcessing: true,
     environment: true,
     samples: 4,
+    ambientOcclusion: true,
+    occlusionSamples: 12,
+    depthOfField: true,
+    msaa: true,
     bloom: true,
     bloomStrength: 0.18,
     exposure: 1.12,
+    adaptiveResolution: false,
   };
+}
+
+/** Renderer compatibility: keep the chosen high display ratio through slow or suspended frames. */
+export function adaptivePixelRatio(maximum: number) {
+  const ratio = Math.min(2, Math.max(1, Number.isFinite(maximum) ? maximum : 1));
+  return (_now: number, _active = true) => ratio;
 }
 
 export function physicalSurface(colour: string) {

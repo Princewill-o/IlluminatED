@@ -14,15 +14,17 @@ import { ControllerLegend } from "./controller-legend";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { ArtScenery, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, fadeArtProps } from "./art";
+import { AUTOPILOT, ArtScenery, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
 import { BikeUnder, StationArt } from "./transport";
 import { type Connection, type Me, type RemotePlayer, useWorld } from "./use-world";
+import { VoiceChat, VOICE_RANGE } from "./voice-chat";
 const World3D = dynamic(() => import("./world3d").then((module) => module.World3D), { ssr: false });
 import MOVERS from "../../../../public/world/movers.json";
 import { AvatarFigure } from "../avatar";
+import { npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
 import { TRAIN_CALL } from "./train-state";
@@ -33,10 +35,11 @@ import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits,
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
-import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, type RoadViolation } from "@/game/core/traffic-rules";
+import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
-import { CAR_LENGTH } from "@/game/core/vehicles";
-import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
+import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
+import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
 
@@ -241,6 +244,7 @@ export function WorldView({
   const getHomeAction = useCallback(() => homeActionRef.current, []);
   policeRef.current = police;
   const getPolice = useCallback(() => policeRef.current, []);
+  const wasFlying = useRef(false);
   const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
   const world = useWorld({ mapId: map.id, serverId, me, start: start.current });
   const viewport = useRef<HTMLDivElement>(null);
@@ -304,6 +308,15 @@ export function WorldView({
   const nearRef = useRef<Portal | null>(null);
   const roomRef = useRef<string | null>(null);
   const { players, reportMove, stopped, say } = world;
+  // Every map starts you on the ground floor.
+  useEffect(() => { PLAYER.level = 0; PLAYER.z = 0; }, [map]);
+  // Share who's in this server with the rest of the game (interview-room deals).
+  useEffect(() => {
+    const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username })));
+    sync();
+    const timer = setInterval(sync, 2000);
+    return () => { clearInterval(timer); ONLINE.length = 0; };
+  }, [players, hidden]);
   const fxCanvas = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<Phase>("day");
   const phaseRef = useRef<Phase>("day");
@@ -355,7 +368,13 @@ export function WorldView({
   const unavailable3d=useCallback(()=>setGraphicsState("unavailable"),[]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
-    () => nearbyPlayers(players.current.values(), pos.current, hidden).map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation })),
+    () => {
+      const now = Date.now();
+      // Local video capture can lift the on-screen player cap (development only).
+      const limit = process.env.NODE_ENV === "development" ? (window as unknown as { __crowd?: { limit?: number } }).__crowd?.limit : undefined;
+      const list = limit ? [...players.current.values()].filter(rp => !hidden.has(rp.id)).sort((a, b) => Math.hypot(a.x - pos.current.x, a.y - pos.current.y) - Math.hypot(b.x - pos.current.x, b.y - pos.current.y)).slice(0, limit) : nearbyPlayers(players.current.values(), pos.current, hidden);
+      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
+    },
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
@@ -453,7 +472,7 @@ export function WorldView({
       if (!simulationDue(now)) { raf = requestAnimationFrame(frame); return; }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (pausedRef.current) {
+      if (pausedRef.current || PLAYER.knockedUntil > now) {
         keys.current.clear();
         stick.current = { x: 0, y: 0 };
         target.current = null;
@@ -477,16 +496,57 @@ export function WorldView({
         ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
-      const driven = driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: 96 * speedRef.current }, dt,
-        obstacles, (impact) => { collision = impact; }) : null;
-      if (driven && map.art === "london" && !pausedRef.current) {
+      // Hop-on bus: follow the planned road route, easing in and out of stops.
+      const auto = driving && AUTOPILOT.route.length > 0 ? (() => {
+        if (AUTOPILOT.leg === 0) { const first = AUTOPILOT.route[0]; p.x = first.x; p.y = first.y; AUTOPILOT.leg = 1; }
+        const goal = AUTOPILOT.route[AUTOPILOT.leg];
+        if (!goal) return null;
+        const last = AUTOPILOT.route[AUTOPILOT.route.length - 1];
+        const left = Math.hypot(last.x - p.x, last.y - p.y);
+        const cruise = Math.min(200, 60 + left * 0.8);
+        AUTOPILOT.speed = pausedRef.current ? 0 : Math.min(cruise, AUTOPILOT.speed + 120 * dt);
+        let travel = AUTOPILOT.speed * dt, x = p.x, y = p.y, heading = p.heading;
+        while (travel > 0 && AUTOPILOT.route[AUTOPILOT.leg]) {
+          const g = AUTOPILOT.route[AUTOPILOT.leg], gx = g.x - x, gy = g.y - y, d = Math.hypot(gx, gy);
+          if (d > 0.01) heading = Math.atan2(gy, gx);
+          if (d <= .01) { AUTOPILOT.leg++; continue; }
+          const own: TrafficVehicle = { id: "player", x: x / TILE, y: y / TILE, heading, length: BUS_LENGTH, width: BUS_WIDTH };
+          const vehicles: TrafficVehicle[] = TRAFFIC_BOXES.filter((b): b is NonNullable<typeof b> => Boolean(b)).map((b, i) => ({ id: b.id ?? `solid-${i}`, x: b.x / TILE, y: b.y / TILE, heading: Math.atan2(b.dy ?? 0, b.dx ?? 1), length: Math.max(b.hw, b.hh) * 2 / TILE, width: Math.min(b.hw, b.hh) * 2 / TILE }));
+          const desired = Math.min(travel, d, TILE * .15);
+          const allowed = trafficMoveDistance(own, desired / TILE, Date.now(), vehicles, NPC_SPOTS.map(n => ({ x: n.x / TILE, y: n.y / TILE }))) * TILE;
+          if (allowed < .001) { AUTOPILOT.speed = 0; break; }
+          x += gx / d * allowed; y += gy / d * allowed; travel -= allowed;
+          if (d - allowed < .01) AUTOPILOT.leg++;
+          if (allowed < desired - .001) { AUTOPILOT.speed = 0; break; }
+        }
+        if (!AUTOPILOT.route[AUTOPILOT.leg]) {
+          const done = AUTOPILOT.onArrive;
+          AUTOPILOT.route = []; AUTOPILOT.leg = 0; AUTOPILOT.speed = 0; AUTOPILOT.onArrive = null;
+          window.setTimeout(() => done?.(), 0);
+        }
+        return { x, y, heading, speed: AUTOPILOT.speed };
+      })() : null;
+      const driven = auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: 96 * speedRef.current }, dt,
+        obstacles, (impact) => { collision = impact; }) : null);
+      if (driven && !auto && map.art === "london" && !pausedRef.current) {
         const violation = checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) });
         if (violation && acceptRoadViolation(roadCooldown.current, violation, Date.now())) {
           play("door", soundOn());
           offenceCallback.current?.(violation);
         }
       }
-      let next = driven ?? step(map, p, dx, dy, dt, speedRef.current);
+      // Two-level rooms: walk on the grid of the level you're on (ground or deck).
+      const walkMap = levelMap(map, PLAYER.level);
+      // Sandbox flight (player worlds): glide over everything, inside the map's edges.
+      const flying = WORLD_RULES.fly && !driving;
+      // Landing: come down on the nearest open ground.
+      if (wasFlying.current && !flying) { const land = safeSpot(levelMap(map, 0), p.x, p.y); p.x = land.x; p.y = land.y; PLAYER.level = 0; }
+      wasFlying.current = flying;
+      const glide = () => {
+        const len = Math.hypot(dx, dy) || 1, sp = WALK_SPEED * 2.2 * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
+        return { x: Math.max(TILE, Math.min(map.width - TILE, p.x + dx / len * sp)), y: Math.max(TILE, Math.min(map.height - TILE, p.y + dy / len * sp)) };
+      };
+      let next = driven ?? (flying ? glide() : step(walkMap, p, dx, dy, dt, speedRef.current));
       if (map.kind === "station") {
         const elapsed = now - TRAIN_CALL.at;
         const distance = WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
@@ -501,7 +561,7 @@ export function WorldView({
           next = { x: p.x, y: 14.5 * TILE };
         }
       }
-      if (map.art === "london" && !driving) {
+      if (map.art === "london" && !driving && !flying) {
         const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
         const people = dx || dy ? NPC_SPOTS.map(person => ({ x: person.x, y: person.y })) : [];
         const corrected = nudgePedestrianFromTraffic(map, next, traffic, people);
@@ -529,7 +589,11 @@ export function WorldView({
       // Traffic: step into a car or bus and you get bumped back onto the pavement.
       PLAYER.x = p.x;
       PLAYER.y = p.y;
-      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed });
+      // Climbing the stairs raises you; past halfway you're upstairs.
+      const rise = elevationAt(map, p.x, p.y, PLAYER.level);
+      PLAYER.z = flying ? 3.2 : rise.z;
+      PLAYER.level = flying ? PLAYER.level : rise.level;
+      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed, length: carRef.current?.startsWith("bus:") ? BUS_LENGTH : CAR_LENGTH, width: carRef.current?.startsWith("bus:") ? BUS_WIDTH : CAR_WIDTH });
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
       const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");
@@ -621,7 +685,7 @@ export function WorldView({
         }
       }
 
-      const portal = portalAt(map, p.x, p.y);
+      const portal = portalAt(levelMap(map, PLAYER.level), p.x, p.y);
       if (!pausedRef.current && moved && dy > 0 && map.kind === "station" &&
           canBoardTrain(now - TRAIN_CALL.at, map.cols, p.x / TILE, p.y / TILE)) {
         const boardingPortal = map.portals.find(item => item.id === "board");
@@ -658,6 +722,23 @@ export function WorldView({
   };
 
   const status = STATUS[world.status];
+  // Local video capture only: lets a script add simulated players (development builds).
+  const [, crowdTick] = useState(0);
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development") return;
+    const w = window as unknown as { __crowd?: Record<string, unknown> };
+    w.__crowd = { ...(w.__crowd ?? {}), players: players.current, me: pos.current, look: npcLook, others: getOthers3d, rerender: () => crowdTick(n => n + 1) };
+  }, [players, getOthers3d]);
+  // Friends within talking range, for proximity voice (checked twice a second).
+  const [nearby, setNearby] = useState<string[]>([]);
+  useEffect(() => {
+    if (serverId === "solo") return;
+    const timer = window.setInterval(() => {
+      const ids = [...players.current.values()].filter(rp => !hidden.has(rp.id) && Math.hypot(rp.x - PLAYER.x, rp.y - PLAYER.y) < VOICE_RANGE).map(rp => rp.id).sort();
+      setNearby(prev => (prev.join() === ids.join() ? prev : ids));
+    }, 500);
+    return () => window.clearInterval(timer);
+  }, [serverId, hidden]);
   // Retain bounded 2D sprites while moving; positions update outside React.
   const others = [...players.current.values()].filter(p => !hidden.has(p.id)).slice(0,VISIBLE_PLAYERS);
 
@@ -749,16 +830,19 @@ export function WorldView({
           getHomeAction={getHomeAction}
         />
       )}
-      {graphicsState !== "ready" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
+      {/* While the world loads, show a soft fade in the sky colour: no loading text. */}
+      {graphicsState === "loading" && <div aria-hidden className="pointer-events-none absolute inset-0 z-[100000] bg-[#d6e4df]" />}
+      {graphicsState === "unavailable" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
         <div className="max-w-sm rounded-3xl border border-[#c8b182]/50 bg-[#f7f1e6]/95 px-6 py-5 shadow-xl">
-          <p className="text-sm font-black uppercase tracking-[0.18em]">{graphicsState === "loading" ? "Building the 3D world" : "3D graphics unavailable"}</p>
-          <p className="mt-2 text-sm">{graphicsState === "loading" ? "Loading the detailed city and interiors…" : "This browser or device could not start WebGL. Enable hardware acceleration and reload to play."}</p>
+          <p className="text-sm font-black uppercase tracking-[0.18em]">3D graphics unavailable</p>
+          <p className="mt-2 text-sm">This browser or device could not start WebGL. Enable hardware acceleration and reload to play.</p>
         </div>
       </div>}
       {/* The old flat-map lighting overlay is kept mounted for the movement
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
-      {serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name}/>}
+      {serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
+      {serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
@@ -770,7 +854,7 @@ export function WorldView({
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}
             {world.status === "live" && world.ping !== null && <span className="text-[#8d85a0]">· {world.ping} ms</span>}
-            <span className="text-[#8d85a0]">· {REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
+            <span className="text-[#8d85a0]">· {serverId.startsWith("pw-") ? "Player world" : REGIONS.find(r => r.id === serverById(serverId)?.region)?.name}</span>
           </span>
         </button>
       </HudSlot>

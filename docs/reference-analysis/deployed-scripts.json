@@ -1,0 +1,31 @@
+{
+  "origin": "https://bruno-simon.com",
+  "acquiredAt": "2026-10-24T21:05:10.121Z",
+  "observation": "Exact script URLs observed by pageAssets; fetched separately, not claimed as original network response bytes.",
+  "files": [
+    {
+      "url": "https://bruno-simon.com/assets/index-ORr3L4no.js",
+      "file": "index-ORr3L4no.js",
+      "bytes": 4858337,
+      "sha256": "4186c60c0c9c722b72e953c262fbc2a53a0a65900c4cb37f071eefd0108cd71d"
+    },
+    {
+      "url": "https://bruno-simon.com/assets/rapier-BmPn8Tpt.js",
+      "file": "rapier-BmPn8Tpt.js",
+      "bytes": 229923,
+      "sha256": "5aeeee7af8f3ea69db98743bfce4904b43e784bf7d4a9fb213a187d5b86ce9a0"
+    },
+    {
+      "url": "https://bruno-simon.com/draco/draco_wasm_wrapper.js",
+      "file": "draco_wasm_wrapper.js",
+      "bytes": 58763,
+      "sha256": "e8049906ef3f8f75d3456c22a3f31bfdfe5b5b5bd09ccdec613b9e9a49d554d8"
+    },
+    {
+      "url": "https://bruno-simon.com/basis/basis_transcoder.js",
+      "file": "basis_transcoder.js",
+      "bytes": 57533,
+      "sha256": "176d36c671637639fff989bad0f27f9df8eb4f1fc4b10a565e95786e93c8589c"
+    }
+  ]
+}

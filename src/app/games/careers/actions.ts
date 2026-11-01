@@ -25,6 +25,7 @@ const FRIENDLY: Record<string, string> = {
   not_enough_clout: "Not enough Clout yet. Work a few shifts to earn more!",
   career_subscription_required: "Plus+ Experience is required to complete simulated workplace activities. You can still explore workplaces for free.",
   unknown_item: "That item isn't for sale.",
+  unknown_home: "That house isn't for sale.",
   too_many: "You've got plenty of those already.",
   not_owned: "You need to buy that first.",
   out_of_room: "That doesn't fit in the room.",
@@ -95,7 +96,21 @@ export async function quitJob() {
 
 export async function buyHome(home: string) {
   if (!HOMES.some((h) => h.id === home)) return { ok: false as const, error: FRIENDLY.invalid };
-  return rpc("home_buy", { p_home: home }, ["/games/home", "/games/world"]);
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: friendly() };
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) return { ok: false as const, error: FRIENDLY.not_allowed };
+  const { error } = await sb.rpc("home_buy", { p_home: home });
+  if (error) return { ok: false as const, error: friendly(error.message) };
+  ["/games/home", "/games/world", "/games/wealth"].forEach(path => revalidatePath(path));
+  // A balance read is helpful but cannot turn an already committed purchase
+  // into a reported failure. The next route refresh also reloads the wallet.
+  let clout: number | null = null;
+  try {
+    const { data } = await sb.from("player_stats").select("clout").eq("user_id", auth.user.id).maybeSingle();
+    if (data && Number.isFinite(Number(data.clout))) clout = Number(data.clout);
+  } catch { /* Ownership saved; allow the normal refresh to recover the balance. */ }
+  return { ok: true as const, data: { home, clout } };
 }
 
 export async function buyFurniture(item: string) {

@@ -24,9 +24,9 @@ export function cityFallbackPlan(map: WorldMap) {
       for (let tx = t.x; tx < t.x + t.w; tx++)
         if (map.tiles[ty]?.[tx] === "X") solid.push({ x: tx * TILE, y: ty * TILE, w: TILE, h: TILE });
     const entrances = map.portals.filter(p => Math.abs(p.rect.y - y - h) < 1 && p.rect.x + p.rect.w / 2 >= x && p.rect.x + p.rect.w / 2 <= x + w && p.to.kind !== "bus" && p.to.kind !== "bike");
-    const brand = t.id === "mcdonalds" ? { accent: "#c92627", ink: "#ffc72c" }
+    const brand = t.id === "mcdonalds" ? { accent: "#d6452a", ink: "#ffd166" }
       : t.id === "kfc" ? { accent: "#b72025", ink: "#fff7e9" }
-        : t.id === "starbucks" ? { accent: "#006241", ink: "#ffffff" } : null;
+        : t.id === "starbucks" ? { accent: "#5b3a29", ink: "#ffffff" } : null;
     buildings.push({
       id: t.id, kind: t.kind, x, y, w, h, solid,
       label: t.kind === "building" ? t.label ?? entrances[0]?.label.split(":")[0] ?? "" : t.name.replaceAll("-", " "),

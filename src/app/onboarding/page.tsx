@@ -29,7 +29,7 @@ export default async function OnboardingPage({
   if (account.profile && account.details)
     redirect(account.tutorialCompleted ? next : `/getting-started?next=${encodeURIComponent(next)}`);
 
-  // New accounts need an invite: access is set up after a demo call.
+  // Closed only if sign-ups are switched back to invite-only (private.launch_settings).
   const sb = await getSupabase();
   const { data: allowed, error } = sb ? await sb.rpc("access_allowed") : { data: true, error: null };
   if (!error && allowed === false)

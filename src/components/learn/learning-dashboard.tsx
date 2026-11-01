@@ -585,7 +585,7 @@ export function LearningDashboard({
             </span>
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-xs font-black text-[#13203a]">
-            Enter the city
+            Enter IllumED World
             <ArrowRight className="size-4" />
           </span>
         </span>

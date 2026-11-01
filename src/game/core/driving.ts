@@ -183,3 +183,72 @@ export function nearestParkingSpot(map: WorldMap, position: { x: number; y: numb
   }
   return null;
 }
+
+/**
+ * A drivable road route between two points, for the hop-on bus: shortest path over
+ * road tiles with a penalty for turning, so the bus takes long straight runs and
+ * clean corners instead of weaving. Returns corner points in pixels (start → end),
+ * or [] when either end is nowhere near a road.
+ */
+export function roadRoute(map: WorldMap, from: { x: number; y: number }, to: { x: number; y: number }): { x: number; y: number }[] {
+  const cols = map.cols, rows = map.rows;
+  const road = (x: number, y: number) => x >= 0 && y >= 0 && x < cols && y < rows && ROAD.has(map.tiles[y]?.[x] ?? "");
+  const nearestRoad = (p: { x: number; y: number }) => {
+    const cx = Math.floor(p.x / TILE), cy = Math.floor(p.y / TILE);
+    for (let r = 0; r < 40; r++)
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          if (road(cx + dx, cy + dy)) return { x: cx + dx, y: cy + dy };
+        }
+    return null;
+  };
+  const a = nearestRoad(from), b = nearestRoad(to);
+  if (!a || !b) return [];
+  const DIRS = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+  const TURN = 6;
+  const n = cols * rows * 4;
+  const cost = new Float64Array(n).fill(Infinity);
+  const prev = new Int32Array(n).fill(-1);
+  // Binary heap of [cost, state].
+  const heap: [number, number][] = [];
+  const push = (c: number, s: number) => {
+    heap.push([c, s]);
+    for (let i = heap.length - 1; i > 0;) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; }
+  };
+  const pop = () => {
+    const top = heap[0], last = heap.pop()!;
+    if (heap.length) {
+      heap[0] = last;
+      for (let i = 0; ;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; [heap[m], heap[i]] = [heap[i], heap[m]]; i = m; }
+    }
+    return top;
+  };
+  const start = (a.y * cols + a.x) * 4;
+  for (let d = 0; d < 4; d++) { cost[start + d] = 0; prev[start + d] = start + d; push(0, start + d); }
+  let end = -1;
+  while (heap.length) {
+    const [c, s] = pop();
+    if (c > cost[s]) continue;
+    const tile = s >> 2, d = s & 3, x = tile % cols, y = Math.floor(tile / cols);
+    if (x === b.x && y === b.y) { end = s; break; }
+    for (let nd = 0; nd < 4; nd++) {
+      if (nd === (d + 2) % 4 && s !== prev[s]) continue; // no U-turns mid-route
+      const nx = x + DIRS[nd][0], ny = y + DIRS[nd][1];
+      if (!road(nx, ny)) continue;
+      const ns = (ny * cols + nx) * 4 + nd, nc = c + 1 + (nd === d ? 0 : TURN);
+      if (nc < cost[ns]) { cost[ns] = nc; prev[ns] = s; push(nc, ns); }
+    }
+  }
+  if (end < 0) return [];
+  const tiles: { x: number; y: number; d: number }[] = [];
+  for (let s = end; ; s = prev[s]) {
+    const tile = s >> 2;
+    tiles.push({ x: tile % cols, y: Math.floor(tile / cols), d: s & 3 });
+    if (prev[s] === s) break;
+  }
+  tiles.reverse();
+  // Keep the first, last and every corner.
+  const points = tiles.filter((t, i) => i === 0 || i === tiles.length - 1 || tiles[i + 1].d !== t.d);
+  return points.map(t => ({ x: (t.x + 0.5) * TILE, y: (t.y + 0.5) * TILE }));
+}

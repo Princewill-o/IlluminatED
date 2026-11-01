@@ -36,7 +36,7 @@ export function BookForm({ initialOrg }: { initialOrg?: Org }) {
         </span>
         <h2 className="mt-5 text-3xl font-bold tracking-tight">Request received</h2>
         <p className="mx-auto mt-3 max-w-md text-lg leading-relaxed text-muted-foreground">
-          Thanks, {f.name.split(" ")[0]}. Your request has been received for review. We will use {f.email} to follow up. Access is not confirmed until you receive an invitation.
+          Thanks, {f.name.split(" ")[0]}. Your request has been received. We will use {f.email} to arrange your demo.
         </p>
         {state.mailto && (
           <a href={state.mailto} className="mt-6 inline-block rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground">

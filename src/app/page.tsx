@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// eslint-disable-next-line import/no-unresolved -- resolved through the package "exports" map
-import { GeistSans } from "geist/font/sans";
 import { ArrowRight, CalendarCheck, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
 import type { Metadata } from "next";
 
+import { RewardsBanner } from "@/components/game/season/rewards-banner";
 import { FeatureTabs } from "@/components/landing/feature-tabs";
+import { GameplayShowcase } from "@/components/landing/gameplay-showcase";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 import { BlurFade } from "@/components/ui/magic/blur-fade";
 import { Marquee } from "@/components/ui/magic/marquee";
@@ -15,15 +15,42 @@ import { NumberTicker } from "@/components/ui/magic/number-ticker";
 export const metadata: Metadata = {
   title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
   description:
-    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress, with a study agent that plans your week. Request invited beta access or a school demo.",
+    "A learning game for UK students aged 13+: practise subjects, apply knowledge in simulated workplaces and track progress, with a study agent that plans your week. Sign up free, or book a demo for your school.",
   alternates: { canonical: "/" },
 };
 
-const display = `${GeistSans.className} font-semibold tracking-[-0.035em]`;
+const display = "[font-family:var(--font-geist-sans)] font-semibold tracking-[-0.035em]";
 /** Colours come from CSS variables on .landing-sky, so the same markup is a day sky in light mode and a night sky in dark mode. */
 const soft = "text-[var(--sky-soft)]";
 const card = "rounded-3xl bg-[var(--sky-card)] ring-1 ring-[var(--sky-ring)] backdrop-blur";
 const accent = "text-[var(--sky-accent)]";
+
+/** Landing pricing. Paid prices match the Stripe prices checked at checkout (src/lib/premium-actions.ts). */
+const PLANS: {
+  name: string; tagline: string; price: string; per?: string; note: string;
+  features: string[]; href: string; cta: string; highlight?: boolean; badge?: string;
+}[] = [
+  {
+    name: "Explorer", tagline: "Get started with core revision.", price: "Free", note: "No card needed",
+    features: ["Introductory revision quests", "Basic XP and achievements", "Personal learning progress", "Explore the Career District"],
+    href: "/sign-in?mode=sign-up", cta: "Start free",
+  },
+  {
+    name: "Plus", tagline: "The complete revision experience.", price: "£5.99", per: "/ month", note: "or £59.90 a year",
+    features: ["Full revision library and unlimited quests", "Advanced progress insights", "Character customisation", "Season Pass premium track and event games"],
+    href: "/pricing#plans", cta: "Choose Plus",
+  },
+  {
+    name: "Plus+ Experience", tagline: "Revision plus career simulations.", price: "£12.99", per: "/ month", note: "or £129.90 a year · 7-day free trial",
+    features: ["Everything in Plus", "Virtual company workplaces", "Interactive career simulations", "Completion records for eligible activities"],
+    href: "/pricing#plans", cta: "Start free trial", highlight: true, badge: "Best value",
+  },
+  {
+    name: "Schools & colleges", tagline: "Licences for your learners and staff.", price: "Custom", note: "Priced per school after a call",
+    features: ["Teacher dashboards", "Homework quests and auto-marking", "Class progress reporting", "Student licences and onboarding"],
+    href: "/book?for=school", cta: "Make an enquiry",
+  },
+];
 
 /** A cartoon cloud: thick outline, flat fill. Shown in the day sky. */
 function Cloud({ className }: { className: string }) {
@@ -52,7 +79,39 @@ function Sticker({ children, className }: { children: React.ReactNode; className
   );
 }
 
-export default function Home() {
+/** Live platform totals (public.platform_stats), refreshed at most hourly; falls back to known totals if unreachable. */
+type PlatformStats = { questions: number; practice_sets: number; subjects: number; game_questions: number };
+const STATS_FALLBACK: PlatformStats = { questions: 4419, practice_sets: 256, subjects: 33, game_questions: 758 };
+async function platformStats(): Promise<PlatformStats> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return STATS_FALLBACK;
+  try {
+    const res = await fetch(`${url}/rest/v1/rpc/platform_stats`, {
+      method: "POST",
+      headers: { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: "{}",
+      next: { revalidate: 3600 },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return STATS_FALLBACK;
+    const data = (await res.json()) as Partial<PlatformStats>;
+    const n = (v: unknown, fallback: number) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : fallback);
+    return {
+      questions: n(data.questions, STATS_FALLBACK.questions),
+      practice_sets: n(data.practice_sets, STATS_FALLBACK.practice_sets),
+      subjects: n(data.subjects, STATS_FALLBACK.subjects),
+      game_questions: n(data.game_questions, STATS_FALLBACK.game_questions),
+    };
+  } catch {
+    return STATS_FALLBACK;
+  }
+}
+
+export const revalidate = 3600;
+
+export default async function Home() {
+  const stats = await platformStats();
   return (
     <div className="landing-sky relative overflow-hidden text-[var(--sky-ink)]">
       <SiteStructuredData />
@@ -67,7 +126,7 @@ export default function Home() {
         <div className="relative container flex flex-col items-center pt-20 text-center sm:pt-24">
           <BlurFade delay={0.05}>
           <p className="rounded-full border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-sm font-black text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
-            Invited beta · UK learners aged 13+
+            Now open · Free for UK learners aged 13+
           </p>
           </BlurFade>
           <BlurFade delay={0.15}>
@@ -84,8 +143,8 @@ export default function Home() {
           </BlurFade>
           <BlurFade delay={0.35}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link prefetch={false} href="/book?for=individual" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
-              Request beta access <ArrowRight className="size-4" aria-hidden />
+            <Link prefetch={false} href="/sign-in?mode=sign-up" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
+              Start free <ArrowRight className="size-4" aria-hidden />
             </Link>
             <Link prefetch={false} href="/schools" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-white px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               For schools
@@ -93,15 +152,15 @@ export default function Home() {
           </div>
           </BlurFade>
           <p className={`mt-5 text-sm ${soft}`}>
-            Already invited?{" "}
+            Already have an account?{" "}
             <Link prefetch={false} href="/sign-in" className="font-bold underline underline-offset-4">Sign in</Link>
           </p>
         </div>
 
         {/* The collage: real captures of the game, character and Locker. */}
         <div className="relative container mt-14 h-[260px] sm:h-[460px] lg:h-[540px]" aria-label="Screenshots of the game">
-          <Shot src="/landing/game-hub.webp" alt="The Games Hall in the city" w={1440} h={960} className="top-10 left-[1%] hidden h-[260px] w-[360px] -rotate-6 md:block lg:h-[300px] lg:w-[420px]" />
-          <Shot src="/landing/game-chibi-locker.webp" alt="Dressing a character in the Locker" w={1120} h={470} className="top-16 right-[1%] hidden h-[200px] w-[400px] rotate-6 md:block lg:h-[230px] lg:w-[460px]" />
+          <Shot src="/landing/game-hub.webp" alt="Ava guiding a new player through the airport" w={1440} h={960} className="top-10 left-[1%] hidden h-[260px] w-[360px] -rotate-6 md:block lg:h-[300px] lg:w-[420px]" />
+          <Shot src="/landing/game-chibi-locker.webp" alt="A London street corner in the 3D city" w={1120} h={470} className="top-16 right-[1%] hidden h-[200px] w-[400px] rotate-6 md:block lg:h-[230px] lg:w-[460px]" />
           <Shot src="/landing/game-chibi-street.webp" alt="A player crossing a London street in the 3D world" w={880} h={550} className="top-0 left-1/2 z-10 h-[220px] w-[92%] -translate-x-1/2 sm:h-[360px] sm:w-[580px] lg:h-[420px] lg:w-[680px]" />
           <Sticker className="top-[-14px] left-[18%] hidden bg-[#ffd23f] sm:inline">+50 Clout</Sticker>
           <Sticker className="top-[42%] right-[12%] hidden bg-[#b9f0c9] [animation-delay:-1s] sm:inline">Quiz streak: 7 days</Sticker>
@@ -119,9 +178,12 @@ export default function Home() {
             </span>
           ))}
         </Marquee>
-        <div className="container mt-12 grid gap-4 sm:grid-cols-3">
+        <div className="container mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            [108, "questions in the quiz bank, each explained"],
+            [stats.questions, "practice questions, each with an answer and explanation"],
+            [stats.practice_sets, "topic practice sets ready to assign"],
+            [stats.subjects, "GCSE, A-level, BTEC and T Level subjects"],
+            [stats.game_questions, "quiz challenges to play inside the game"],
             [184, "Locker items to mix into your own look"],
             [13, "company HQs with jobs to try in the city"],
           ].map(([n, label]) => (
@@ -141,18 +203,23 @@ export default function Home() {
         </div>
         <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-3xl border-4 border-[#1d1a4a] bg-white shadow-[10px_10px_0_#1d1a4a] dark:border-white/85 dark:shadow-[10px_10px_0_rgba(179,175,255,0.45)]">
           <video
-            className="block aspect-video w-full"
+            className="pointer-events-none block aspect-video w-full select-none"
             src="/landing/how-it-works.mp4"
             poster="/landing/how-it-works-poster.jpg"
             autoPlay
             muted
             loop
             playsInline
-            controls
+            disablePictureInPicture
+            disableRemotePlayback
+            tabIndex={-1}
             aria-label="Motion graphic: pick subjects, explore London, answer quizzes, the agent plans your week, spend Clout on your look, and teachers see progress"
           />
         </div>
       </section>
+
+      <GameplayShowcase accent={accent} soft={soft} display={display} card={card} />
+      <div className="relative container pb-20"><RewardsBanner /></div>
 
       {/* Apple-style tabs: one feature at a time. */}
       <section className="relative container pb-24" aria-label="What IlluminatED does">
@@ -207,24 +274,55 @@ export default function Home() {
         </Link>
       </section>
 
-      {/* Access. */}
-      <section className="relative container pb-20" aria-labelledby="access-title">
-        <h2 id="access-title" className={`${display} text-4xl sm:text-5xl`}>One product. Clear ways in.</h2>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {[
-            ["Learners", "Invited learners use the core study tools free. Optional Premium is £5.99/month once live checkout is available; it is never needed for core revision.", "/book?for=individual", "Request an invitation"],
-            ["Schools and colleges", "School licences cover agreed learner seats, teacher workflows and onboarding. Seat pricing and pilot scope are agreed in writing before purchase.", "/book?for=school", "Discuss a school pilot"],
-            ["Investors and partners", "The product, revenue model and pilot questions, separating built features from the evidence we still need to collect.", "/investors", "Read the business overview"],
-          ].map(([title, text, href, label]) => (
-            <article key={title} className={`${card} flex flex-col p-6`}>
-              <h3 className="text-lg font-bold">{title}</h3>
-              <p className={`mt-3 flex-1 leading-7 ${soft}`}>{text}</p>
-              <Link prefetch={false} href={href} className={`mt-5 inline-flex min-h-11 items-center gap-1.5 font-bold ${accent}`}>
-                {label} <ArrowRight className="size-4" aria-hidden />
+      {/* Pricing: learner plans with prices, and school licences by enquiry. */}
+      <section id="pricing" className="relative container pb-20 scroll-mt-24" aria-labelledby="pricing-title">
+        <p className={`text-sm font-bold tracking-widest uppercase ${accent}`}>Pricing</p>
+        <h2 id="pricing-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>Start free. Upgrade when you&apos;re ready.</h2>
+        <p className={`mt-4 max-w-2xl leading-7 ${soft}`}>
+          Core revision is free. Paid plans are monthly or yearly, paid securely with Stripe, and you can cancel any time.
+        </p>
+        <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {PLANS.map((plan) => (
+            <article
+              key={plan.name}
+              className={`${card} relative flex flex-col p-6 ${plan.highlight ? "ring-2 ring-[#6b55e0] shadow-[0_12px_40px_-12px_rgba(107,85,224,0.55)]" : ""}`}
+            >
+              {plan.badge && (
+                <span className="absolute -top-3 right-5 rounded-full bg-[#6b55e0] px-3 py-1 text-xs font-black text-white shadow-md">{plan.badge}</span>
+              )}
+              <h3 className="text-lg font-bold">{plan.name}</h3>
+              <p className={`mt-1 text-sm ${soft}`}>{plan.tagline}</p>
+              <p className="mt-5">
+                <span className={`${display} text-4xl`}>{plan.price}</span>
+                {plan.per && <span className={`ml-1 text-sm font-semibold ${soft}`}>{plan.per}</span>}
+              </p>
+              <p className={`mt-1 min-h-5 text-xs font-semibold ${soft}`}>{plan.note}</p>
+              <ul className={`mt-5 flex-1 space-y-2 text-sm leading-6 ${soft}`}>
+                {plan.features.map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <span aria-hidden className={`mt-0.5 font-black ${accent}`}>✓</span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                prefetch={false}
+                href={plan.href}
+                className={
+                  plan.highlight
+                    ? "mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#6b55e0] px-5 font-bold text-white shadow-[4px_4px_0_#1d1a4a]"
+                    : `mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-bold ring-2 ring-[var(--sky-ring)] ${accent}`
+                }
+              >
+                {plan.cta} <ArrowRight className="size-4" aria-hidden />
               </Link>
             </article>
           ))}
         </div>
+        <p className={`mt-6 text-sm ${soft}`}>
+          Prices in GBP. Under-18s need a parent or guardian&apos;s permission for a paid plan. Investors and partners:{" "}
+          <Link prefetch={false} href="/investors" className="font-semibold underline">read the business overview</Link>.
+        </p>
       </section>
 
       {/* Honest expectations. */}
@@ -232,9 +330,9 @@ export default function Home() {
         <div className={`${card} grid gap-8 p-8 md:grid-cols-2 md:p-10`}>
           <div>
             <ShieldCheck className={`size-6 ${accent}`} aria-hidden />
-            <h2 className="mt-3 text-2xl font-bold">A measured beta, with honest expectations.</h2>
+            <h2 className="mt-3 text-2xl font-bold">Honest expectations.</h2>
             <p className={`mt-4 leading-7 ${soft}`}>
-              We are testing usability, device performance and learning engagement. We have not independently shown improved
+              We keep improving usability, device performance and learning engagement. We have not independently shown improved
               exam grades. Course and resource availability varies: check the subject, board and source before revising.
             </p>
           </div>
@@ -250,9 +348,9 @@ export default function Home() {
       {/* Closing call to action. */}
       <section className="relative container pb-28 text-center" aria-labelledby="cta-title">
         <h2 id="cta-title" className={`${display} text-4xl sm:text-6xl`}>What should we revise first?</h2>
-        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Join the beta and ask the study agent. It already knows where to start.</p>
-        <Link prefetch={false} href="/book?for=individual" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
-          Request beta access <ArrowRight className="size-4" aria-hidden />
+        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Create your free account and ask the study agent. It already knows where to start.</p>
+        <Link prefetch={false} href="/sign-in?mode=sign-up" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
+          Start free <ArrowRight className="size-4" aria-hidden />
         </Link>
       </section>
     </div>

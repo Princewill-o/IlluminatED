@@ -99,7 +99,7 @@ export const APP_TABS: AppTab[] = [
     ],
   },
   { id: "agent", label: "Agent", href: "/agent", icon: Sparkles, match: ["/agent"] },
-  { id: "play", label: "Play", href: "/games", icon: Gamepad2, match: ["/games"] },
+  { id: "play", label: "IllumED World", href: "/games", icon: Gamepad2, match: ["/games"] },
   { id: "homework", label: "Homework", href: "/homework", icon: ClipboardList, match: ["/homework"] },
   {
     id: "me",

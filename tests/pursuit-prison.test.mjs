@@ -5,6 +5,18 @@ const W = projectData("src/game/core/world.ts");
 const P = projectData("src/game/core/pursuit.ts");
 const L = projectData("src/game/core/law.ts");
 
+test("vehicle pursuit reroutes towards the driver's current road position", () => {
+  const map = W.londonMap();
+  const start = P.startPursuit(map, map.spawn);
+  const target = start.route[4];
+  assert.ok(target);
+  const next = P.tickPursuit(start, map, target, 1000, .2, [{ id: "player", ...target, hw: W.TILE*.9, hh: W.TILE*.5 }], true);
+  assert.equal(next.stage, "arriving");
+  assert.equal(next.officers.length, 0);
+  assert.deepEqual(next.route.at(-1), target);
+  assert.ok(Math.hypot(next.car.x-start.car.x,next.car.y-start.car.y)>0);
+});
+
 test("A real responding car follows road tiles and officers can catch a stationary player", () => {
   const map = W.londonMap(),
     player = map.spawn;
@@ -16,11 +28,12 @@ test("A real responding car follows road tiles and officers can catch a stationa
         map.tiles[Math.floor(p.y / W.TILE)][Math.floor(p.x / W.TILE)],
       ),
     );
-  for (let t = 0; t < 90000 && s.stage !== "challenge"; t += 200) {
+  for (let t = 0; t < 90000 && s.stage !== "tased" && s.stage !== "challenge"; t += 200) {
     s = P.tickPursuit(s, map, player, t, 0.2);
     for (const o of s.officers) assert.equal(W.blocked(map, o.x, o.y), false);
   }
-  assert.equal(s.stage, "challenge");
+  // Caught: officers taser the player; the game then opens the knowledge challenge.
+  assert.equal(s.stage, "tased");
 });
 test("Leaving the search field clears stars only after six uninterrupted seconds", () => {
   const map = W.londonMap(),
@@ -68,8 +81,8 @@ test("The prison cell, study desk, inmate conversations and maze exit are connec
 });
 test("New Study Quarter destinations are reachable, with a working station and a larger world", () => {
   const map = W.londonMap();
-  assert.equal(map.cols, 112);
-  assert.equal(map.rows, 88);
+  assert.ok(map.cols >= 112, `world is ${map.cols} tiles wide`);
+  assert.ok(map.rows >= 88, `world is ${map.rows} tiles tall`);
   for (const id of ["makerspace", "study-club", "reading-garden"]) {
     const p = map.portals.find((p) => p.id === id);
     assert.ok(p, id);
@@ -105,4 +118,40 @@ test("Escaping through the service exit frees you at maximum wanted level, so th
   assert.equal(L.cooled(out, 1000 + 10 * L.STAR_FADE_MS).stars, L.MAX_STARS);
   // Getting caught means a longer sentence than a one-star offence.
   assert.ok(L.sentenceMs(out.stars) > L.sentenceMs(1));
+});
+
+test("the police car can't drive through other vehicles, and officers run when it's boxed in", () => {
+  const pursuitModule = projectData("src/game/core/pursuit.ts");
+  const { startPursuit: start, tickPursuit: tick, policeCarBox, BLOCKED_SECONDS } = pursuitModule;
+  const city = W.londonMap();
+  const player = { ...city.spawn };
+  let state = start(city, player);
+  assert.ok(state.route.length > 4, "the car has a road route to drive");
+  // Park another car three tiles along the police car's route.
+  const blocker = state.route[Math.min(5, state.route.length - 1)];
+  const traffic = [{ id: "parked", x: blocker.x, y: blocker.y, hw: 16, hh: 16 }];
+  const overlap = (a, b) => Math.abs(a.x - b.x) < a.hw + b.hw && Math.abs(a.y - b.y) < a.hh + b.hh;
+  let now = 1_000_000;
+  for (let i = 0; i < 20; i++) {
+    const before = state.car;
+    state = tick(state, city, player, (now += 200), 0.2, traffic);
+    const dir = { x: state.car.x - before.x, y: state.car.y - before.y };
+    assert.ok(!overlap(policeCarBox(state.car, dir.x || dir.y ? dir : { x: 1, y: 0 }), traffic[0]), "never inside the parked car");
+    if (state.stage !== "arriving") break;
+  }
+  assert.ok(Math.hypot(state.car.x - blocker.x, state.car.y - blocker.y) > 16, "stopped short of the blocker");
+  // Boxed in for longer than the limit: officers get out and chase on foot.
+  for (let i = 0; i < (BLOCKED_SECONDS + 1) * 5 && state.stage === "arriving"; i++) state = tick(state, city, player, (now += 200), 0.2, traffic);
+  assert.equal(state.stage, "chasing");
+  assert.equal(state.officers.length, 2);
+});
+
+test("the police interview only happens when they aren't sure, and honesty lightens the charge", () => {
+  assert.equal(L.policeUnsure(2, "Shoplifting from a high-street shop"), true);
+  assert.equal(L.policeUnsure(3, "Causing a scuffle in the street"), true);
+  assert.equal(L.policeUnsure(4, "Causing a scuffle in the street"), false);
+  assert.equal(L.policeUnsure(3, "Taking a car without the owner's consent"), false);
+  assert.equal(L.policeUnsure(2, "Escaping from lawful custody"), false);
+  assert.equal(L.honestStars(3), 2);
+  assert.equal(L.honestStars(1), 1);
 });

@@ -628,16 +628,53 @@ const BEHAVIOURAL: [string, string, string[], string][] = [
   ],
 ];
 
+/** Situational judgement: what would you do at work? Harder than "tell me about yourself". */
+const SITUATIONAL: [string, string, string[], string][] = [
+  [
+    "A customer is angry because their order is wrong and the queue is growing. What's the best first step?",
+    "Apologise, listen to what went wrong, and fix it or get a supervisor quickly so the queue keeps moving.",
+    ["Tell them it isn't your fault and serve the next person.", "Argue about who took the order.", "Walk away to calm down without telling anyone."],
+    "Acknowledge the problem, take ownership of a fix, and escalate if you can't solve it yourself.",
+  ],
+  [
+    "You notice a colleague hasn't followed a safety rule. What do you do?",
+    "Remind them politely, and report it to your supervisor if the risk continues.",
+    ["Ignore it, it's not your job.", "Post about it on social media.", "Copy them so you're both quicker."],
+    "Safety is everyone's job: raise it calmly, then escalate if needed.",
+  ],
+  [
+    "You've been given two urgent tasks with the same deadline. What's the best approach?",
+    "Check with your manager which matters most, agree priorities, and update them if something slips.",
+    ["Do whichever is easier and hope for the best.", "Do both badly at the same time.", "Say nothing and miss one."],
+    "Prioritise with your manager and communicate early: that's what employers look for.",
+  ],
+  [
+    "On your first day, you don't understand an instruction. What should you do?",
+    "Ask a clear question, note the answer, and check back once you've tried it.",
+    ["Guess and hope nobody notices.", "Wait until someone asks why it isn't done.", "Ask a friend outside work."],
+    "Asking good questions early shows initiative and avoids mistakes.",
+  ],
+];
+
+/**
+ * A job application: five questions on the application form (one about you,
+ * one situational judgement, three real job tasks). INTERVIEW_PASS needed.
+ */
 export function buildInterview(role: Role, seed: number): Task[] {
   const rng = createRng(seed);
   const b = pick(rng, BEHAVIOURAL);
-  const { options, answer } = mc(rng, b[1], b[2]);
-  const q1: Task = { kind: "interview", skill: "written-communication", title: "Interview question", prompt: b[0], options, answer, explain: b[3] };
+  const one = mc(rng, b[1], b[2]);
+  const q1: Task = { kind: "interview", skill: "written-communication", title: "About you", prompt: b[0], options: one.options, answer: one.answer, explain: b[3] };
+  const sj = pick(rng, SITUATIONAL);
+  const two = mc(rng, sj[1], sj[2]);
+  const q2: Task = { kind: "interview", skill: "customer-service", title: "What would you do?", prompt: sj[0], options: two.options, answer: two.answer, explain: sj[3] };
   const job = role.tasks.map((k) => (GEN[k] ?? GEN.inbox)(rng));
-  return [q1, job[0], job[2]];
+  while (job.length < 3) job.push(GEN.inbox(rng));
+  return [q1, q2, job[0], job[1], job[2]];
 }
 
-export const INTERVIEW_PASS = 2;
+/** Correct answers needed (out of 5) to be offered the job. */
+export const INTERVIEW_PASS = 4;
 
 // ── CV wording ──────────────────────────────────────────────────────────────
 export interface CareerRecord {

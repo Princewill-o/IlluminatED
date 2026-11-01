@@ -16,6 +16,7 @@ export const TOP: Record<string, TopLook> = {
   "top-suit": { v: "jacket", second: "#ffffff" }, "top-tux": { v: "jacket", second: "#ffffff" },
   "top-astronaut": { v: "suitspace", second: "#c9cbd6" }, "top-cape": { v: "tee", cape: true },
   "top-labcoat": { v: "coat", second: "#bfe3ff" }, "top-hivis": { v: "vest" }, "top-tracksuit": { v: "long" },
+  "top-pumpkin": { v: "hoodie" }, "top-puffer": { v: "coat", second: "#c9d8ee" }, "top-varsity": { v: "jacket", second: "#ffffff" }, "top-festival": { v: "tee" },
 };
 // Lumen League suits: suit colour comes from the Locker item, trim and accent from the hero.
 for (const h of HEROES)
@@ -27,7 +28,15 @@ export const BOTTOM: Record<string, string> = {
 };
 export const SHOES: Record<string, string> = {
   "shoes-trainers": "trainers", "shoes-hightops": "hightops", "shoes-boots": "boots", "shoes-sliders": "sliders",
-  "shoes-smart": "smart", "shoes-skates": "skates", "shoes-rocket": "rocket",
+  "shoes-smart": "smart", "shoes-skates": "skates", "shoes-rocket": "rocket", "shoes-chunky": "chunky",
+};
+
+/** Back items -> Blender variant and their second fabric (straps, pocket, trim). */
+export const BACK: Record<string, { v: string; second: string }> = {
+  "back-school": { v: "backpack", second: "#ffcf4a" }, "back-mini": { v: "mini", second: "#ffffff" },
+  "back-teddy": { v: "teddy", second: "#f2d9a6" }, "back-guitar": { v: "guitar", second: "#13203a" },
+  "back-fairy": { v: "wings-fairy", second: "#ffffff" }, "back-bat": { v: "wings-bat", second: "#13203a" },
+  "back-jetpack": { v: "jetpack", second: "#13203a" }, "back-angel": { v: "wings-angel", second: "#ffffff" },
 };
 
 /** Fictional labels for the chest logo. */

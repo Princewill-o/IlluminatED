@@ -1,537 +1,213 @@
 "use client";
-import { useEffect, useRef, useState, type ElementType } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import Link from "next/link";
 
 import {
   BatteryFull,
-  BookOpen,
-  BriefcaseBusiness,
-  CarFront,
+  Briefcase,
   ChevronLeft,
-  Compass,
-  GraduationCap,
-  Home,
-  Landmark,
-  Map,
-  MessageCircle,
-  Phone,
   PhoneCall,
   Search,
-  Settings,
-  Shirt,
   Signal,
-  Sparkles,
-  Store,
-  Trophy,
-  Users,
   Wifi,
-  X,
 } from "lucide-react";
 
-import { CompanyLogo } from "../company-logo";
 import { NearbyPeople, PhoneMessages } from "./phone-messages";
-
-import { WORKPLACES } from "@/game/core/careers";
 import type { NearbyPerson } from "@/game/core/city-social";
+import { CompanyLogo } from "../company-logo";
+
+import { AppIconArt, type AppIconName } from "@/components/app-icons";
+import { WORKPLACES } from "@/game/core/careers";
 import { COMPANIES } from "@/game/core/companies";
+import { cn } from "@/lib/utils";
 
 const CONTACTS = [
-  ...COMPANIES.map((c) => ({
-    id: c.id,
-    name: c.name,
-    sector: c.sector,
-    logo: c.id,
-  })),
-  ...WORKPLACES.filter((w) => !w.companyId).map((w) => ({
-    id: `work:${w.id}`,
-    name: w.name,
-    sector: w.sector,
-    logo: null,
-  })),
+  ...COMPANIES.map(c=>({id:c.id,name:c.name,sector:c.sector,logo:c.id})),
+  ...WORKPLACES.filter(w=>!w.companyId).map(w=>({id:`work:${w.id}`,name:w.name,sector:w.sector,logo:null})),
 ];
-type AppId = "home" | "contacts" | "messages" | "nearby" | "settings";
-interface PhoneApp {
-  name: string;
-  Icon: ElementType;
-  colour: string;
-  action?: () => void;
-  href?: string;
+
+type App = { name: string; icon: AppIconName; action?: () => void; href?: string };
+
+/** iOS-style app tile: illustrated, glassy icon art with its label underneath. */
+function AppIcon({ app, label = true, date }: { app: App; label?: boolean; date?: Date }) {
+  const tile = (
+    <>
+      <span className="relative block size-[3.25rem] overflow-hidden rounded-[0.95rem] shadow-[0_1px_1px_rgba(0,0,0,.2),0_6px_14px_rgba(0,0,0,.35)]">
+        <AppIconArt name={app.icon} date={date} className="block size-full" />
+      </span>
+      {label && <span className="max-w-[4.5rem] truncate text-[11px] leading-tight font-medium text-white [text-shadow:0_1px_2px_rgba(0,0,0,.45)]">{app.name}</span>}
+    </>
+  );
+  const cls = "gloss-off flex flex-col items-center gap-1 rounded-2xl outline-none transition active:scale-90 focus-visible:ring-2 focus-visible:ring-white";
+  return app.href
+    ? <Link href={app.href} prefetch={false} aria-label={app.name} className={cls}>{tile}</Link>
+    : <button type="button" onClick={app.action} aria-label={app.name} className={cls}>{tile}</button>;
 }
 
-/** IlluminatED's fictional handset. Every app opens an existing game feature. */
+/** Screen inside an app: iOS navigation bar with a back label and large title. */
+function AppScreen({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
+  return (
+    <div className="phone-app absolute inset-0 z-10 flex flex-col bg-[#f2f2f7] pt-11 text-black">
+      <button type="button" onClick={onBack} className="gloss-off flex items-center gap-0.5 self-start px-2 py-1 text-[15px] text-[#007aff]"><ChevronLeft className="size-6" strokeWidth={2.4} />Home</button>
+      {title && <h2 className="px-4 pb-2 text-[28px] leading-tight font-bold tracking-tight">{title}</h2>}
+      {children}
+    </div>
+  );
+}
+
+/** A fictional iPhone-style phone: calls open the game's contacts, never real phone numbers. */
 export function GamePhone({
+  initialApp="home", meId="", username="", mapId="city", nearby=[], onNearbyRequest, onVenture=()=>{}, onBank=()=>{},
   onClose,
   onCall,
   onMap,
   onHome,
+  onHouses = onHome,
   onLocker,
   onStudy,
   onAwards,
   onGarage = onMap,
   onUniversities = onMap,
-  onVenture,
-  onBank,
-  onNearbyRequest,
-  nearby = [],
-  meId,
-  username,
-  clout = 0,
-  initialApp = "home",
+  onBus,
+  onEvents,
+  time,
+  clout,
 }: {
+  initialApp?: "home"|"nearby"; meId?:string; username?:string; mapId?:string; nearby?:NearbyPerson[]; onNearbyRequest?:(name:string)=>Promise<string|null>; onVenture?:()=>void; onBank?:()=>void;
   onClose: () => void;
   onCall: (id: string) => void;
   onMap: () => void;
   onHome: () => void;
+  onHouses?: () => void;
   onLocker: () => void;
   onStudy: () => void;
   onAwards: () => void;
   onGarage?: () => void;
   onUniversities?: () => void;
-  onVenture: () => void;
-  onBank: () => void;
-  onNearbyRequest: (name: string) => Promise<string | null>;
-  nearby?: NearbyPerson[];
-  meId: string;
-  username: string;
+  /** Hail a bus and choose where it goes. */
+  onBus?: () => void;
+  onEvents?: () => void;
+  /** In-game clock. */
+  time?: Date;
   clout?: number;
-  initialApp?: AppId;
 }) {
-  const [app, setApp] = useState<AppId>(initialApp),
-    [search, setSearch] = useState(""),
-    [clock, setClock] = useState("");
-  const panel = useRef<HTMLElement>(null);
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  const [screen, setScreen] = useState<"home" | "phone" | "messages" | "nearby">(initialApp);
+  const [search, setSearch] = useState("");
+  const now = time ?? new Date();
+  const clock = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   useEffect(() => {
-    const before = document.activeElement as HTMLElement | null;
-    panel.current?.focus();
-    const tick = () =>
-      setClock(
-        new Date().toLocaleTimeString("en-GB", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    tick();
-    const timer = setInterval(tick, 30000);
-    const keys = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.stopPropagation();
-        closeRef.current();
-      }
-      if (e.key === "Tab") {
-        const items = Array.from(
-            panel.current?.querySelectorAll<HTMLElement>(
-              "button:not(:disabled),a[href],input,summary",
-            ) ?? [],
-          ),
-          first = items[0],
-          last = items.at(-1);
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last?.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    document.addEventListener("keydown", keys);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("keydown", keys);
-      before?.focus();
-    };
-  }, []);
-  const apps: PhoneApp[] = [
-    {
-      name: "Messages",
-      Icon: MessageCircle,
-      colour: "from-[#43d75b] to-[#25a940]",
-      action: () => setApp("messages"),
-    },
-    {
-      name: "Nearby",
-      Icon: Users,
-      colour: "from-[#56c9d3] to-[#258c94]",
-      action: () => setApp("nearby"),
-    },
-    {
-      name: "Maps",
-      Icon: Map,
-      colour: "from-[#67bdb0] to-[#326d60]",
-      action: onMap,
-    },
-    {
-      name: "Study",
-      Icon: BookOpen,
-      colour: "from-[#f5b757] to-[#df8c25]",
-      action: onStudy,
-    },
-    {
-      name: "Venture",
-      Icon: Store,
-      colour: "from-[#bc91ef] to-[#7758be]",
-      action: onVenture,
-    },
-    {
-      name: "Jobs",
-      Icon: BriefcaseBusiness,
-      colour: "from-[#85a2b0] to-[#456675]",
-      action: () => setApp("contacts"),
-    },
-    {
-      name: "Bank",
-      Icon: Landmark,
-      colour: "from-[#dbc78b] to-[#9a7e3d]",
-      action: onBank,
-    },
-    {
-      name: "Home",
-      Icon: Home,
-      colour: "from-[#efad7d] to-[#c47450]",
-      action: onHome,
-    },
-    {
-      name: "Locker",
-      Icon: Shirt,
-      colour: "from-[#e997b6] to-[#b85d85]",
-      action: onLocker,
-    },
-    {
-      name: "Garage",
-      Icon: CarFront,
-      colour: "from-[#789ee8] to-[#4866b0]",
-      action: onGarage,
-    },
-    {
-      name: "University",
-      Icon: GraduationCap,
-      colour: "from-[#70aba2] to-[#3c726b]",
-      action: onUniversities,
-    },
-    {
-      name: "Awards",
-      Icon: Trophy,
-      colour: "from-[#f1d47a] to-[#c39735]",
-      action: onAwards,
-    },
-    {
-      name: "Wealth",
-      Icon: Sparkles,
-      colour: "from-[#9dc5a5] to-[#5c9367]",
-      href: "/games/wealth",
-    },
-    {
-      name: "Challenges",
-      Icon: Compass,
-      colour: "from-[#ef8e80] to-[#c35454]",
-      href: "/games/weekly",
-    },
-    {
-      name: "Learn",
-      Icon: GraduationCap,
-      colour: "from-[#71b1ed] to-[#3178b9]",
-      href: "/dashboard",
-    },
-    {name:"Ask Tiggy",Icon:Sparkles,colour:"from-[#e4b278] to-[#b47c42]",href:"/tiggy"},
-    {name:"Homework",Icon:BookOpen,colour:"from-[#89b7d1] to-[#4d829e]",href:"/homework"},
-    {name:"Careers",Icon:BriefcaseBusiness,colour:"from-[#82b29b] to-[#467d61]",href:"/games/careers"},
-    {name:"Community",Icon:Users,colour:"from-[#caabdb] to-[#9171a7]",href:"/social"},
-    {name:"Expansions",Icon:Compass,colour:"from-[#d1b17f] to-[#9a7643]",href:"/games/expansions"},
-    {name:"Advice",Icon:MessageCircle,colour:"from-[#78a9b8] to-[#47788b]",href:"/messages"},
-    {
-      name: "Settings",
-      Icon: Settings,
-      colour: "from-[#a9afb9] to-[#656f7b]",
-      action: () => setApp("settings"),
-    },
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") { if (screen === "home") onClose(); else setScreen("home"); } };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [screen, onClose]);
+
+  const facetime = () => { onClose(); window.dispatchEvent(new Event("illuminated:open-calls")); };
+  const grid: App[] = [
+    { name: "Nearby", icon: "messages", action: () => setScreen("nearby") },
+    { name: "Venture", icon: "wallet", action: onVenture },
+    { name: "Bank", icon: "wallet", action: onBank },
+    { name: "Maps", icon: "maps", action: onMap },
+    { name: "Bus", icon: "bus", action: onBus ?? onMap },
+    { name: "Garage", icon: "garage", action: onGarage },
+    { name: "Unis", icon: "unis", action: onUniversities },
+    { name: "Home", icon: "home", action: onHome },
+    { name: "Houses", icon: "home", action: onHouses },
+    { name: "Locker", icon: "locker", action: onLocker },
+    { name: "Study", icon: "study", action: onStudy },
+    { name: "Awards", icon: "awards", action: onAwards },
+    { name: "Events", icon: "weekly", action: onEvents ?? onAwards },
+    { name: "Wallet", icon: "wallet", href: "/games/wealth" },
+    { name: "Weekly", icon: "weekly", href: "/games/weekly" },
+    { name: "Illumship", icon: "illumship", href: "/games/illumship" },
+    { name: "Books", icon: "books", href: "/games/sources" },
+    { name: "Store", icon: "store", href: "/games/expansions" },
   ];
-  const icon = ({ name, Icon, colour }: PhoneApp) => (
-    <>
-      <span
-        className={`grid size-[54px] place-items-center rounded-[15px] border border-white/20 bg-gradient-to-b ${colour} shadow-[0_5px_12px_#0002,inset_0_1px_1px_#ffffff70]`}
-      >
-        <Icon className="size-7 text-white" strokeWidth={1.8} />
-      </span>
-      <span className="w-full truncate text-center text-[10px] font-semibold text-white drop-shadow">
-        {name}
-      </span>
-    </>
-  );
+  const dock: App[] = [
+    { name: "Phone", icon: "phone", action: () => setScreen("phone") },
+    { name: "FaceTime", icon: "facetime", action: facetime },
+    { name: "Messages", icon: "messages", action: () => setScreen("messages") },
+    { name: "Maps", icon: "maps", action: onMap },
+  ];
+
   return (
-    <div
-      className="absolute inset-0 z-[100007] flex items-center justify-center bg-[#081b16]/45 p-2 backdrop-blur-sm sm:justify-end sm:p-6"
-      onClick={onClose}
-    >
+    <div className="absolute inset-0 z-[100007] flex items-end justify-center bg-black/45 p-3 backdrop-blur-[2px] md:items-center md:justify-end md:p-8" onClick={onClose}>
       <section
-        ref={panel}
-        tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label="IlluminatED phone"
+        aria-label="Your game phone"
         onClick={(e) => e.stopPropagation()}
-        className="relative flex h-[min(790px,94dvh)] w-full max-w-[360px] flex-col overflow-hidden rounded-[2.9rem] border-[7px] border-[#172723] bg-[#edf0e9] text-[#142b25] [color-scheme:light] shadow-[0_24px_100px_#0007,0_0_0_1px_#c6b68a] outline-none"
+        className="iphone relative aspect-[9/19.5] h-[min(42rem,calc(100dvh-1.5rem))] max-w-full overflow-hidden rounded-[3.1rem] border-[10px] border-[#1c1c1e] bg-black [color-scheme:light] shadow-[0_0_0_2px_#8e8e93,0_30px_60px_rgba(0,0,0,.5)]"
       >
-        <div
-          className={`flex h-12 shrink-0 items-center justify-between px-6 text-[11px] font-bold ${app === "home" ? "bg-[#244f45] text-white" : "bg-[#f2f2f7]"}`}
-        >
-          <span suppressHydrationWarning>{clock || "City"}</span>
-          <span
-            aria-hidden
-            className="absolute top-2 left-1/2 h-6 w-[92px] -translate-x-1/2 rounded-full bg-[#12231f]"
-          />
-          <span className="flex gap-1.5" aria-label="Game phone connected">
-            <Signal className="size-3" />
-            <Wifi className="size-3" />
-            <BatteryFull className="size-4" />
-          </span>
+        {/* Wallpaper */}
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(90%_45%_at_50%_42%,#4b6fa8_0%,transparent_70%),radial-gradient(70%_30%_at_10%_78%,#2c4a7e_0%,transparent_70%),linear-gradient(180deg,#0a1224_0%,#152a4f_40%,#0c1630_75%,#050a16_100%)]" />
+        {/* Status bar + Dynamic Island */}
+        <div className="relative z-20 flex h-11 items-center justify-between px-7 pt-1 text-[13px] font-semibold text-white">
+          <span>{clock}</span>
+          <span aria-hidden className="absolute top-2 left-1/2 h-[26px] w-[92px] -translate-x-1/2 rounded-full bg-black" />
+          <span className="flex items-center gap-1" aria-hidden><Signal className="size-3.5" /><Wifi className="size-3.5" /><BatteryFull className="size-5" /></span>
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">
-          {app === "home" ? (
-            <div className="flex h-full flex-col overflow-y-auto bg-[radial-gradient(ellipse_at_0%_0%,#477e65_0%,#244f45_40%,#152e30_100%)] px-4 pt-2 pb-3">
-              <div className="mb-5 flex items-start justify-between">
-                <div>
-                  <p className="text-[10px] font-bold tracking-[0.2em] text-[#d7d0a8] uppercase">
-                    IlluminatED City
-                  </p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
-                    Your city. In your pocket.
-                  </h2>
-                </div>
-                <button
-                  aria-label="Close phone"
-                  onClick={onClose}
-                  className="-mr-2 grid size-11 shrink-0 place-items-center rounded-full text-white/75"
-                >
-                  <X className="size-5" />
-                </button>
+
+        {screen === "home" && (
+          <div className="relative z-10 flex h-[calc(100%-2.75rem)] flex-col px-4 pb-6">
+            {/* Widgets */}
+            <div className="grid shrink-0 grid-cols-2 gap-3 pt-2">
+              <div className="flex aspect-square flex-col rounded-[1.4rem] border border-white/20 bg-[#a9c7dd]/80 p-3 text-white shadow-lg backdrop-blur-xl">
+                <p className="text-[12px] font-semibold">London ➚</p>
+                <p className="text-[34px] leading-tight font-light tabular-nums">{clock}</p>
+                <p className="mt-auto text-[11px] font-semibold">In-game time</p>
+                <p className="text-[11px] font-medium opacity-90">{now.toLocaleDateString("en-GB", { day: "numeric", month: "long" })}</p>
               </div>
-              <div className="mb-5 grid grid-cols-2 gap-3">
-                <button
-                  onClick={onStudy}
-                  className="rounded-[1.35rem] border border-white/15 bg-white/10 p-4 text-left text-white"
-                >
-                  <BookOpen className="mb-3 size-6 text-[#ebd49a]" />
-                  <p className="text-sm font-semibold">A little every day</p>
-                  <p className="mt-1 text-[10px] text-white/70">
-                    Open your study room →
-                  </p>
-                </button>
-                <div className="rounded-[1.35rem] bg-[#ead7a8] p-4 text-[#254237]">
-                  <p className="text-[10px] font-bold tracking-wider uppercase">
-                    Your Clout
-                  </p>
-                  <p className="mt-3 text-2xl font-semibold tabular-nums">
-                    {clout.toLocaleString()}
-                  </p>
-                  <p className="mt-1 truncate text-[10px]">@{username}</p>
-                </div>
-              </div>
-              <label className="mb-4 flex items-center gap-2 rounded-full bg-black/15 px-3 py-2 text-white/70">
-                <Search className="size-3.5" />
-                <input
-                  aria-label="Search phone apps"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search your apps"
-                  className="w-full bg-transparent text-xs text-white outline-none placeholder:text-white/60"
-                />
-              </label>
-              <nav
-                aria-label="Phone apps"
-                className="grid grid-cols-4 gap-x-2 gap-y-4"
-              >
-                {apps
-                  .filter((a) =>
-                    a.name.toLowerCase().includes(search.toLowerCase()),
-                  )
-                  .map((a) =>
-                    a.href ? (
-                      <Link
-                        key={a.name}
-                        href={a.href}
-                        className="flex min-h-20 min-w-0 flex-col items-center gap-1.5"
-                      >
-                        {icon(a)}
-                      </Link>
-                    ) : (
-                      <button
-                        key={a.name}
-                        type="button"
-                        onClick={a.action}
-                        className="flex min-h-20 min-w-0 flex-col items-center gap-1.5"
-                      >
-                        {icon(a)}
-                      </button>
-                    ),
-                  )}
-              </nav>
-              <nav
-                aria-label="Phone dock"
-                className="mt-auto flex justify-around rounded-[1.7rem] border border-white/15 bg-white/15 p-3 pt-3 backdrop-blur-xl"
-              >
-                <button
-                  aria-label="Open phone contacts"
-                  onClick={() => {
-                    setSearch("");
-                    setApp("contacts");
-                  }}
-                  className="grid size-12 place-items-center rounded-[14px] bg-[#32bf52] text-white"
-                >
-                  <Phone />
-                </button>
-                <button
-                  aria-label="Open messages"
-                  onClick={() => setApp("messages")}
-                  className="grid size-12 place-items-center rounded-[14px] bg-[#32bf52] text-white"
-                >
-                  <MessageCircle />
-                </button>
-                <button
-                  aria-label="Open map"
-                  onClick={onMap}
-                  className="grid size-12 place-items-center rounded-[14px] bg-[#4a9b8e] text-white"
-                >
-                  <Map />
-                </button>
-                <Link
-                  aria-label="Account settings"
-                  href="/dashboard/settings"
-                  className="grid size-12 place-items-center rounded-[14px] bg-[#909ba3] text-white"
-                >
-                  <Settings />
-                </Link>
-              </nav>
+              <Link href="/games/wealth" prefetch={false} className="gloss-off flex aspect-square flex-col rounded-[1.4rem] bg-white p-3 text-black shadow-lg">
+                <p className="text-[11px] font-bold tracking-wide text-[#ff3b30] uppercase">{now.toLocaleDateString("en-GB", { weekday: "long" })}</p>
+                <p className="text-[34px] leading-tight font-normal tabular-nums">{now.getDate()}</p>
+                <p className="mt-auto text-[12px] text-[#3c3c43]/70">Wallet</p>
+                <p className="text-[13px] font-semibold tabular-nums">{(clout ?? 0).toLocaleString("en-GB")} Clout</p>
+              </Link>
             </div>
-          ) : (
-            <div className="flex h-full flex-col">
-              <header className="flex h-11 shrink-0 items-center justify-between bg-[#f2f2f7] px-2">
-                <button
-                  onClick={() => {
-                    setApp("home");
-                    setSearch("");
-                  }}
-                  className="flex min-h-11 items-center text-sm text-[#1675ed]"
-                >
-                  <ChevronLeft className="size-5" />
-                  Home
-                </button>
-                <button
-                  aria-label="Close phone"
-                  onClick={onClose}
-                  className="grid size-11 place-items-center"
-                >
-                  <X className="size-5" />
-                </button>
-              </header>
-              <div className="min-h-0 flex-1">
-                {app === "messages" && <PhoneMessages meId={meId} />}
-                {app === "nearby" && (
-                  <NearbyPeople
-                    people={nearby}
-                    meId={meId}
-                    mapId={
-                      nearby[0]?.kind === "npc"
-                        ? nearby[0].id.split(":resident:")[0]
-                        : "city"
-                    }
-                    onRequest={onNearbyRequest}
-                    onClose={onClose}
-                  />
-                )}
-                {app === "contacts" && (
-                  <div className="flex h-full flex-col bg-[#f2f2f7] p-3">
-                    <h2 className="px-1 pb-3 text-3xl font-bold tracking-tight">
-                      Contacts
-                    </h2>
-                    <input
-                      aria-label="Search company contacts"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search jobs and companies"
-                      className="mb-3 w-full rounded-xl bg-black/5 px-3 py-2 text-sm"
-                    />
-                    <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl bg-white">
-                      {CONTACTS.filter((c) =>
-                        `${c.name} ${c.sector}`
-                          .toLowerCase()
-                          .includes(search.toLowerCase()),
-                      ).map((c) => (
-                        <button
-                          key={c.id}
-                          onClick={() => onCall(c.id)}
-                          className="flex min-h-16 w-full items-center gap-3 border-b border-black/5 p-3 text-left"
-                        >
-                          {c.logo ? (
-                            <CompanyLogo id={c.logo} size={32} />
-                          ) : (
-                            <BriefcaseBusiness className="size-8 text-[#357b66]" />
-                          )}
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-semibold">
-                              {c.name}
-                            </span>
-                            <span className="block truncate text-xs text-[#63716e]">
-                              {c.sector}
-                            </span>
-                          </span>
-                          <PhoneCall className="size-4 text-[#2bad58]" />
-                        </button>
-                      ))}
-                    </div>
-                    <p className="px-2 pt-3 text-[10px] text-[#63716e]">
-                      Fictional in-game calls and unofficial company
-                      simulations.
-                    </p>
-                  </div>
-                )}
-                {app === "settings" && (
-                  <div className="h-full space-y-3 overflow-y-auto bg-[#f2f2f7] p-4">
-                    <h2 className="text-3xl font-bold">Settings</h2>
-                    <p className="rounded-2xl bg-white p-4 text-sm">
-                      @{username}
-                      <span className="mt-1 block text-xs text-[#63716e]">
-                        Your IlluminatED account
-                      </span>
-                    </p>
-                    {[
-                      ["Account & preferences", "/dashboard/settings"],
-                      ["Membership", "/games/illumship"],
-                      ["Learning sources", "/games/sources"],
-                      ["Help & safety", "/safeguarding"],
-                      ["Back to games", "/games"],
-                    ].map(([label, href]) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        className="block rounded-2xl bg-white px-4 py-4 text-sm text-[#1675ed]"
-                      >
-                        {label} →
-                      </Link>
-                    ))}
-                    <p className="text-xs text-[#63716e]">
-                      Use the game’s graphics and music controls to adjust this
-                      device’s experience.
-                    </p>
-                  </div>
-                )}
-              </div>
+            {/* Apps */}
+            <div className="mt-4 grid min-h-0 flex-1 grid-cols-4 content-start gap-x-2 gap-y-3 overflow-y-auto py-1">
+              {grid.map(app => <AppIcon key={app.name} app={app} date={now} />)}
             </div>
-          )}
-        </div>
-        <button
-          onClick={() => {
-            setApp("home");
-            setSearch("");
-          }}
-          aria-label="Phone home screen"
-          className={`grid h-7 shrink-0 place-items-center ${app === "home" ? "bg-[#152e30]" : "bg-[#f2f2f7]"}`}
-        >
-          <span
-            className={`h-1 w-24 rounded-full ${app === "home" ? "bg-white/80" : "bg-[#172723]"}`}
-          />
+            <div className="mt-2 flex shrink-0 justify-center pb-2">
+              <button type="button" onClick={() => setScreen("phone")} className="gloss-off flex items-center gap-1 rounded-full border border-white/15 bg-white/15 px-3.5 py-1 text-[12px] font-medium text-white/90 backdrop-blur-md"><Search className="size-3" />Search</button>
+            </div>
+            {/* Dock */}
+            <nav aria-label="Dock" className="grid shrink-0 grid-cols-4 gap-2 rounded-[1.9rem] border border-white/15 bg-white/12 p-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,.18)] backdrop-blur-2xl">
+              {dock.map(app => <AppIcon key={app.name} app={app} label={false} />)}
+            </nav>
+          </div>
+        )}
+
+        {screen === "messages" && <AppScreen title="" onBack={()=>setScreen("home")}><PhoneMessages meId={meId}/></AppScreen>}
+          {screen === "nearby" && <AppScreen title="Nearby" onBack={()=>setScreen("home")}><NearbyPeople meId={meId} mapId={mapId} people={nearby} onRequest={onNearbyRequest??(async()=>"Connect to request a friend.")} onClose={()=>setScreen("home")}/></AppScreen>}
+          {screen === "phone" && (
+          <AppScreen title="Contacts" onBack={() => setScreen("home")}>
+            <label className="mx-4 flex items-center gap-1.5 rounded-[10px] bg-[#767680]/15 px-2 py-1.5 text-[15px]">
+              <Search className="size-4 text-[#8e8e93]" aria-hidden />
+              <input aria-label="Search contacts" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-[#8e8e93]" />
+            </label>
+            <ul className="mx-4 mt-3 min-h-0 flex-1 divide-y divide-[#c6c6c8]/60 overflow-y-auto rounded-xl bg-white">
+              {CONTACTS.filter((c) => `${c.name} ${c.sector}`.toLowerCase().includes(search.toLowerCase())).map((c) => (
+                <li key={c.id}>
+                  <button type="button" onClick={() => onCall(c.id)} className="gloss-off flex w-full items-center gap-3 px-3 py-2 text-left active:bg-black/5">
+                    {c.logo ? <CompanyLogo id={c.logo} size={32} /> : <span className="grid size-8 place-items-center rounded-full bg-[#e5e5ea] text-[#8e8e93]"><Briefcase className="size-4" /></span>}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[15px] font-medium">{c.name}</span>
+                      <span className="block truncate text-xs text-[#8e8e93]">{c.sector}</span>
+                    </span>
+                    <PhoneCall className="size-4 text-[#34c759]" aria-label="Call" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="px-5 py-2 text-center text-[10px] text-[#8e8e93]">In-game calls only. Unofficial company simulations; no affiliation or endorsement.</p>
+          </AppScreen>
+        )}
+
+        {/* Home indicator: tap to go home, or close from the home screen. */}
+        <button type="button" aria-label={screen === "home" ? "Close phone" : "Back to home screen"} onClick={() => (screen === "home" ? onClose() : setScreen("home"))} className={cn("gloss-off absolute bottom-1.5 left-1/2 z-30 h-5 w-36 -translate-x-1/2 rounded-full")}>
+          <span className={cn("mx-auto block h-[5px] w-32 rounded-full", screen === "home" ? "bg-white" : "bg-black")} />
         </button>
       </section>
     </div>

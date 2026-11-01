@@ -1,0 +1,42 @@
+{
+  "repository": "https://github.com/brunosimon/folio-2025",
+  "revision": "41046b57eeed8d156d9c3fd7fa259900baef7816",
+  "license": "MIT",
+  "files": [
+    {
+      "file": "LICENSE.txt",
+      "bytes": 1087,
+      "sha256": "dcdac79081f611f54a16fdcb683242e930972c2ed31a0aea682aafab9baa5ef2"
+    },
+    {
+      "file": "birch-tree.glb",
+      "bytes": 4488,
+      "sha256": "d824fd7bdab448a96180020ded5912ecb675aa332b9bf7466aef2dd9dda8552a"
+    },
+    {
+      "file": "cherry-tree.glb",
+      "bytes": 4548,
+      "sha256": "5b30b7ada13c16902a4e331b187a48ec09cdc28c93ba13d36292a4d56775c241"
+    },
+    {
+      "file": "foliage-mask.png",
+      "bytes": 10950,
+      "sha256": "b73a07a219d1ecd284dedbea65d729b4fa68457947555f07fbdf6bfcc85f3fc3"
+    },
+    {
+      "file": "lanterns.glb",
+      "bytes": 28960,
+      "sha256": "9534afb32c2807ef7e97ff433c854014b1f5ea8f4a47c2585461a0da52b14f85"
+    },
+    {
+      "file": "palette.png",
+      "bytes": 362,
+      "sha256": "63780c518061ed026c91615f878741189b4c585651bc875a28577140daad22b9"
+    },
+    {
+      "file": "trees.json",
+      "bytes": 36196,
+      "sha256": "b36c189dd8f1f0165bc50c67b9ba341084d4ccee6532b68c7f882f7c0d62cbe1"
+    }
+  ]
+}

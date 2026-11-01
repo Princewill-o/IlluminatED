@@ -16,7 +16,7 @@ function runtime({energy=80,active=true}={}){
  return {hook,window,npc,cases,advance:ms=>{time+=ms;tick?.()},energy:()=>energy,downed:()=>downed,dispose:()=>cleanups.forEach(f=>f())};
 }
 test('a civilian hit drains energy; a prompt defensive hit retains first-attacker evidence and avoids aggression',()=>{
- const r=runtime();r.advance(250);r.advance(2250);assert.equal(r.energy(),71);assert.equal(r.hook.defend(),true);assert.equal(r.cases.length,1);assert.notEqual(r.cases[0].kind,'aggression');assert.equal(r.cases[0].caseFile?.evidence.firstAttacker??'civilian','civilian');r.dispose();
+ const r=runtime();r.advance(250);r.advance(2250);assert.equal(r.energy(),71);assert.equal(r.hook.defend(),true);assert.equal(r.cases.length,0);r.window.dispatchEvent(new CustomEvent('illuminated:street-hit',{detail:{npcId:r.npc.id,npcName:r.npc.name,defensive:true}}));assert.equal(r.cases.length,1);assert.notEqual(r.cases[0].kind,'aggression');assert.equal(r.cases[0].caseFile?.evidence.firstAttacker??'civilian','civilian');r.dispose();
 });
 test('unresisted attacks at zero energy call ambulance once and never file a player offence',()=>{
  const r=runtime({energy:9});r.advance(250);r.advance(2250);assert.equal(r.downed(),1);assert.equal(r.energy(),0);assert.equal(r.cases[0].kind,'no-case');r.advance(5000);assert.equal(r.downed(),1);r.dispose();

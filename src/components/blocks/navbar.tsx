@@ -33,10 +33,10 @@ export const Navbar = () => {
               Log in
             </Link>
             <Link prefetch={false}
-              href="/book"
+              href="/sign-in?mode=sign-up"
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center rounded-full px-4 text-sm font-semibold"
             >
-              Request access
+              Sign up free
             </Link>
           </div>
         ) : (

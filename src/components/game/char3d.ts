@@ -24,7 +24,7 @@ export interface Character3D {
   object: THREE.Group;
   mixer: THREE.AnimationMixer;
   play: (clip: string) => void;
-  update: (dt: number, reducedMotion?: boolean) => void;
+  update: (dt: number, reducedMotion?: boolean, motion?: {speed:number;turn:number}) => void;
   dispose: () => void;
 }
 /** GLTFLoader removes punctuation from bone names when creating animation bindings. */

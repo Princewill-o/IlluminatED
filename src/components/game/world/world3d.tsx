@@ -18,22 +18,31 @@ import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type K
 import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
 import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
 
+import { type Character3D, buildCharacter, npcLook } from "../char3d";
+import type { TechEvent } from "../event-ads";
+import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
+import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
+import { driftingLeaves } from "./drifting-leaves";
+import { weatherLighting } from "./environment-palette";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
-import { HudSlot } from "./hud";
-import { londonEye } from "./london-eye3d";
-import { addStreetscape } from "./streetscape3d";
-export { NPC_SPOTS } from "./art";
-import { type Character3D, buildCharacter, npcLook } from "../char3d";
-import type { TechEvent } from "../event-ads";
 import { homeFurniture } from "./home-furniture";
+import { HudSlot } from "./hud";
+import { illustratedLightShader, updateIllustratedLight } from "./illustrated-light";
+import { londonEye } from "./london-eye3d";
+import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
+import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
+import { softSunShadows } from "./soft-sun-shadows";
+import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
+import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
+import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -51,14 +60,18 @@ import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { botPose, scaryBotsFor } from "@/game/core/scary-bots";
+import { seasonalEvent } from "@/game/core/seasonal-events";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { trainFrame } from "@/game/core/train";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
-import { curvedVertexShader, immersiveMotion, physicalSurface, visualProfile } from "@/game/core/visual-quality";
+import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
+
+export { NPC_SPOTS } from "./art";
 
 
 /**
@@ -80,6 +93,8 @@ export interface Mover3D {
   avatar: Avatar;
   car?: string | null;
   heading?: number;
+  /** Speech bubble text (emotes, phrases and chat), shown above the nameplate. */
+  chat?: string | null;
 }
 
 // ── Rolling-log curvature: every material bends the world down away from the camera focus ──
@@ -89,15 +104,18 @@ const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
-  const previousCompile = m.onBeforeCompile.bind(m);
-  const previousKey = m.customProgramCacheKey.bind(m);
-  m.customProgramCacheKey = () => `${previousKey()}:world-curvature`;
+  const prepare = m.onBeforeCompile;
+  const programKey = m.customProgramCacheKey();
   m.onBeforeCompile = (sh, renderer) => {
-    previousCompile(sh, renderer);
+    prepare.call(m, sh, renderer);
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
+    if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) illustratedLightShader(sh);
+    atmosphereShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
+    sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
   };
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v4`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -107,8 +125,9 @@ const bendAll = (o: THREE.Object3D) =>
     const mesh = c as THREE.Mesh;
     if (!mesh.isMesh) return;
     mesh.castShadow = !(Array.isArray(mesh.material)?mesh.material:[mesh.material]).some(m=>m.transparent||m instanceof THREE.MeshBasicMaterial);
-    mesh.customDepthMaterial = CURVED_DEPTH;
-    mesh.receiveShadow = true;
+    if (mesh.customDepthMaterial) bend(mesh.customDepthMaterial);
+    else mesh.customDepthMaterial = CURVED_DEPTH;
+    mesh.receiveShadow = !mesh.userData.foliage;
     (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach(bend);
   });
 
@@ -285,9 +304,92 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
   return o;
 }
 
+/** IlluminatED's own Blender London kit (art/blender/london_kit.py). */
+const LONDON_KIT = "/world3d/london/";
+/**
+ * Fits a model to a footprint by stretching width and depth independently, with
+ * the height following the width, so a row of townhouses always fills its plot.
+ */
+async function placeStretched(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0) {
+  const gltf = await load(url);
+  const o = gltf.scene.clone(true);
+  const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+  o.scale.set(w / size.x, w / size.x, d / size.z);
+  const bb = new THREE.Box3().setFromObject(o);
+  const c = bb.getCenter(new THREE.Vector3());
+  o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
+  bendAll(o);
+  g.add(o);
+  return o;
+}
+
+/** Places a kit model in a footprint, turned in quarter turns (0 = facing south). */
+async function placeTurned(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0, turn = 0) {
+  const gltf = await load(url);
+  const inner = gltf.scene.clone(true);
+  inner.rotation.y = (turn * Math.PI) / 2;
+  const o = new THREE.Group();
+  o.add(inner);
+  const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+  o.scale.set(w / size.x, Math.min(w / size.x, d / size.z), d / size.z);
+  const bb = new THREE.Box3().setFromObject(o);
+  const c = bb.getCenter(new THREE.Vector3());
+  o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
+  bendAll(o);
+  g.add(o);
+  return o;
+}
+
+/** A street of Georgian townhouses from the Blender kit, one house per ~3 tiles. */
+async function terraceKit(g: THREE.Group, t: { x: number; y: number; w: number; h: number; height?: number }) {
+  const seed = t.x * 7 + t.y * 13;
+  const x0 = t.x + 0.04, z0 = t.y + 0.04, w = t.w - 0.08, d = t.h - 0.08;
+  const units = Math.max(1, Math.round(w / 3));
+  const uw = w / units;
+  const floors = (t.height ?? 3) >= 2.9 ? 3 : 2;
+  const jobs: Promise<unknown>[] = [];
+  for (let u = 0; u < units; u++) {
+    const variant = "abc"[(seed + u * 2) % 3];
+    jobs.push(placeStretched(g, `/world3d/realism/terrace-${variant}-${floors}.glb`, x0 + u * uw, z0, uw, d));
+  }
+  await Promise.all(jobs);
+}
+
+/** Sparkling droplets that rise from the fountain's top jet and fall into the tiers. */
+function fountainSpray(cx: number, cz: number, top: number) {
+  const count = 160;
+  const pos = new Float32Array(count * 3);
+  const seeds = Array.from({ length: count }, (_, i) => ({ a: (i * 2.399) % (Math.PI * 2), v: 0.6 + ((i * 37) % 17) / 40, t: (i * 0.137) % 1 }));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: "#d9f3ff", size: 0.07, transparent: true, opacity: 0.85, depthWrite: false }));
+  bend(pts.material as THREE.PointsMaterial);
+  pts.frustumCulled = false;
+  pts.userData.spin = true;
+  let clock = 0;
+  pts.userData.update = (secs: number) => {
+    clock = secs;
+    for (let i = 0; i < count; i++) {
+      const s = seeds[i];
+      const k = (clock * 0.55 * s.v + s.t) % 1;
+      const r = k * 0.55 * s.v;
+      pos[i * 3] = cx + Math.cos(s.a) * r;
+      pos[i * 3 + 1] = top + 0.45 * Math.sin(k * Math.PI) * s.v - k * 0.6;
+      pos[i * 3 + 2] = cz + Math.sin(s.a) * r;
+    }
+    geo.attributes.position.needsUpdate = true;
+  };
+  pts.userData.update(0);
+  pts.userData.dispose = () => { geo.dispose(); (pts.material as THREE.Material).dispose(); };
+  return pts;
+}
+
 /** The kit's compact cars need a shared real footprint, including their mirrors. */
 async function placeCar(g: THREE.Group, model: string) {
-  return placeRealisticCar(g, model, load, bendAll);
+  const fitted=await placeRealisticCar(g, model, load, bendAll);
+  if(g.userData.vehicleRemoved){fitted.removeFromParent();return g;}
+  g.userData.vehicleRig=rigVehicle(fitted,1);
+  return fitted;
 }
 
 const GROUND: Record<string, [string, number]> = {
@@ -348,7 +450,7 @@ function groundMesh(tiles: string[], highland: boolean, holes = new Set<string>(
   geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute("color", new THREE.Float32BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.94 });
   bend(m);
   const mesh = new THREE.Mesh(geo, m);
   mesh.receiveShadow = true;
@@ -925,15 +1027,15 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     // Red and cream awning stripes and a bold bucket-shaped roof sign.
     for (let i = 0; i < 8; i++) box(g, i % 2 ? "#fff7e9" : accent, x + i * w / 8, 3.05, z + d + 0.1, x + (i + 1) * w / 8, 3.18, z + d + 0.56);
     cyl(g, "#fff7e9", x + w * 0.75, z + d * 0.45, h + 0.18, h + 0.9, 0.46, 20, 0.6);
-    const bucket = sign("KFC", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
+    const bucket = sign("C&Co", { bg: accent, fg: "#ffffff", w: 0.76, h: 0.34 });
     bucket.position.set(x + w * 0.75, h + 0.58, z + d * 0.45 + 0.55);
     g.add(bucket);
   } else if (burgers) {
-    // Raised golden arches read clearly even when the shop is behind the player.
-    const arches = sign("M", { bg: accent, fg: "#ffc72c", w: 1.3, h: 1.05, font: "900 100px system-ui, sans-serif" });
+    // A big round bun badge on the roof reads clearly from across the street.
+    const arches = sign("BUN", { bg: accent, fg: "#ffd166", w: 1.3, h: 1.05, font: "900 76px system-ui, sans-serif" });
     arches.position.set(x + w * 0.23, h + 0.72, z + d * 0.6);
     g.add(arches);
-    box(g, "#ffc72c", x, 0.13, z + d + 0.08, x + w, 0.25, z + d + 0.22);
+    box(g, "#ffd166", x, 0.13, z + d + 0.08, x + w, 0.25, z + d + 0.22);
   } else {
     roof(g, "#344d3e", x - 0.04, z - 0.04, x + w + 0.04, z + d * 0.7, h + 0.18, 0.65);
     for (const xx of [x + 0.22, x + w - 0.22]) cyl(g, "#3c6e45", xx, z + d + 0.18, 0.1, 0.56, 0.19, 12);
@@ -1402,13 +1504,60 @@ export function lymeBike(green = "#4cd137") {
   return g;
 }
 
+/** Fright Night Scary Bot: hovering robot body with a carved, glowing pumpkin head (original design). */
+const GLOW = new Map<string, THREE.MeshStandardMaterial>();
+const glow = (c: string, strength = 2.2) => {
+  let m = GLOW.get(c + strength);
+  if (!m) { m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: strength, roughness: 0.4 }); bend(m); GLOW.set(c + strength, m); }
+  return m;
+};
+function scaryBotModel() {
+  const g = new THREE.Group();
+  const body = new THREE.Group(); g.add(body);
+  // Hover jets and shadow-free glow underneath.
+  const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.12, 14), glow("#8a5cff", 1.6)); jet.position.y = 0.22; body.add(jet);
+  // Rounded steel torso with a belly screen.
+  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.22, 6, 16), mat("#3a3550")); torso.position.y = 0.62; torso.castShadow = true; body.add(torso);
+  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.02), glow("#7dff8a", 1.4)); screen.position.set(0, 0.64, 0.26); body.add(screen);
+  // Little arms raised in a "boo".
+  for (const side of [-1, 1]) {
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 8), mat("#2a2640"));
+    arm.position.set(side * 0.33, 0.78, 0.04); arm.rotation.z = side * -0.9; arm.castShadow = true; body.add(arm);
+    const claw = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), mat("#5d5778")); claw.position.set(side * 0.45, 0.93, 0.06); body.add(claw);
+  }
+  // Pumpkin head: ribbed orange sphere, stem, carved glowing eyes and grin.
+  const head = new THREE.Group(); head.position.y = 1.08; body.add(head);
+  const pumpkin = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), mat("#f07a1a")); pumpkin.scale.set(1.15, 0.9, 1.05); pumpkin.castShadow = true; head.add(pumpkin);
+  for (let i = 0; i < 6; i++) {
+    const rib = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), mat("#d9620f")); rib.scale.set(0.35, 0.92, 1.0); rib.rotation.y = (i / 6) * Math.PI; head.add(rib);
+  }
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.12, 8), mat("#3f6b2a")); stem.position.y = 0.3; stem.rotation.z = 0.25; head.add(stem);
+  for (const side of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.09, 3), glow("#ffe14d", 3)); eye.position.set(side * 0.11, 0.06, 0.3); eye.rotation.set(Math.PI / 2, 0, side * 0.3); head.add(eye);
+  }
+  const grin = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14, Math.PI), glow("#ffe14d", 3)); grin.position.set(0, -0.06, 0.31); grin.rotation.z = Math.PI; head.add(grin);
+  // Antenna with a blinking tip.
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), mat("#2a2640")); antenna.position.set(0.12, 0.36, 0); head.add(antenna);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), glow("#ff3b6b", 3)); tip.position.set(0.12, 0.47, 0); head.add(tip);
+  g.userData = { body, tip };
+  g.scale.setScalar(1.3);
+  return g;
+}
+function pumpkinProp(g: THREE.Group, x: number, z: number, s = 1) {
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 14, 10), mat("#f07a1a")); p.scale.set(1.15, 0.85, 1.05); p.position.set(x, 0.18 * s, z); p.castShadow = true; g.add(p);
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * s, 0.035 * s, 0.1 * s, 6), mat("#3f6b2a")); stem.position.set(x, 0.38 * s, z); g.add(stem);
+  for (const side of [-1, 1]) { const e = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, 0.06 * s, 3), glow("#ffe14d", 2.6)); e.position.set(x + side * 0.08 * s, 0.22 * s, z + 0.22 * s); e.rotation.x = Math.PI / 2; g.add(e); }
+}
+
 /** London double-decker, modelled in Blender (art/blender/bus.py); route blinds drawn here. */
 let BUS_KIT: Promise<THREE.Object3D> | null = null;
 function busModel(route: string) {
   const g = new THREE.Group();
   BUS_KIT ??= new GLTFLoader().loadAsync("/world3d/bus.glb").then((m) => m.scene);
   void BUS_KIT.then((kit) => {
+    if (g.userData.vehicleRemoved) return;
     const body = kit.clone(true);
+    g.userData.vehicleRig = rigVehicle(body, g.scale.y, "x");
     bendAll(body);
     body.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
     g.add(body);
@@ -1459,16 +1608,82 @@ function officeCabinet(g: THREE.Group, x: number, z: number) {
   box(g, "#506369", x + 0.7, 0.9, z + 0.92, x + 0.74, 1.17, z + 0.96);
 }
 
-function heritageLamp(g: THREE.Group, x: number, z: number) {
-  const iron = "#293d3c";
-  box(g, iron, x + 0.34, 0.12, z + 0.34, x + 0.66, 0.38, z + 0.66);
-  box(g, iron, x + 0.45, 0.38, z + 0.45, x + 0.55, 2.55, z + 0.55);
-  box(g, iron, x + 0.27, 2.5, z + 0.27, x + 0.73, 2.58, z + 0.73);
-  box(g, "#f3d99d", x + 0.32, 2.58, z + 0.32, x + 0.68, 3.05, z + 0.68);
-  for (const dx of [0.28, 0.68]) for (const dz of [0.28, 0.68]) box(g, iron, x + dx, 2.57, z + dz, x + dx + 0.04, 3.08, z + dz + 0.04);
-  box(g, iron, x + 0.23, 3.05, z + 0.23, x + 0.77, 3.15, z + 0.77);
-  box(g, iron, x + 0.35, 3.15, z + 0.35, x + 0.65, 3.26, z + 0.65);
-  box(g, iron, x + 0.47, 3.26, z + 0.47, x + 0.53, 3.42, z + 0.53);
+/** Materials of the mezzanine and everything on it: they fade while you're underneath. */
+const DECK_FADE: THREE.Material[] = [];
+function fadeWithDeck(o: THREE.Object3D) {
+  o.traverse((c) => {
+    const mesh = c as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const own = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map((m) => {
+      const copy = m.clone();
+      copy.userData = { ...copy.userData, bent: false };
+      copy.transparent = true;
+      bend(copy);
+      DECK_FADE.push(copy);
+      return copy;
+    });
+    mesh.material = Array.isArray(mesh.material) ? own : own[0];
+    mesh.userData.deck = true;
+  });
+  return o;
+}
+function deckMaterial(colour: string) {
+  const m = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.7, transparent: true });
+  bend(m);
+  DECK_FADE.push(m);
+  return m;
+}
+/** The raised floor: slab, fascia, columns, glass balustrades, and the staircase up to it. */
+function buildDeck(g: THREE.Group, map: WorldMap, jobs: Promise<unknown>[]) {
+  const deck = map.deck!;
+  const { height: h, ramp, tiles } = deck;
+  const floor = map.theme?.floor ?? ["#8a6446", "#7f5c40"];
+  const top = [deckMaterial(floor[0]), deckMaterial(floor[1])];
+  const fascia = deckMaterial(map.accent);
+  const rail = deckMaterial("#2b2b2e");
+  const glass = new THREE.MeshStandardMaterial({ color: "#cfe7ef", transparent: true, opacity: 0.35, roughness: 0.1 });
+  bend(glass);
+  const add = (material: THREE.Material, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
+    const m = new THREE.Mesh(BOX, material);
+    m.scale.set(x1 - x0, y1 - y0, z1 - z0);
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    m.castShadow = m.receiveShadow = true;
+    m.userData.deck = true;
+    g.add(m);
+  };
+  const inRamp = (x: number, y: number) => x >= ramp.x && x < ramp.x + ramp.w && y >= ramp.y && y < ramp.y + ramp.h;
+  const onDeck = (x: number, y: number) => tiles[y]?.[x] !== undefined && tiles[y][x] !== "#" && !inRamp(x, y);
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let y = 0; y < tiles.length; y++)
+    for (let x = 0; x < tiles[0].length; x++) {
+      if (!onDeck(x, y)) continue;
+      add(top[(x + y) % 2], x, h - 0.16, y, x + 1, h, y + 1);
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x + 1); minY = Math.min(minY, y); maxY = Math.max(maxY, y + 1);
+      // Open edges (not walls, not the top of the stairs) get a fascia and a glass balustrade.
+      const wall = (cx: number, cy: number) => ["#", "W", "G"].includes(map.tiles[cy]?.[cx] ?? "#");
+      for (const [nx, ny, x0, z0, x1, z1] of [[x, y + 1, x, y + 0.96, x + 1, y + 1.0], [x - 1, y, x, y, x + 0.04, y + 1], [x + 1, y, x + 0.96, y, x + 1, y + 1]] as const) {
+        if (onDeck(nx, ny) || inRamp(nx, ny) || wall(nx, ny)) continue;
+        add(fascia, x0, h - 0.34, z0, x1, h - 0.14, z1);
+        add(rail, x0, h + 0.9, z0, x1, h + 0.96, z1);
+        add(glass, x0 + 0.01, h, z0 + 0.01, x1 - 0.01, h + 0.9, z1 - 0.01);
+      }
+    }
+  // Columns hold the deck up along its open front.
+  for (let x = minX + 1; x < maxX; x += 3) add(rail, x - 0.07, 0, maxY - 0.2, x + 0.07, h - 0.16, maxY - 0.06);
+  add(rail, maxX - 0.2, 0, maxY - 0.2, maxX - 0.06, h - 0.16, maxY - 0.06);
+  // The staircase, scaled to the deck height, and the cupboard under its top.
+  jobs.push(load("/world3d/interiors/stairs.glb").then((gltf) => {
+    const o = gltf.scene.clone(true);
+    const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
+    o.scale.set(ramp.w / size.x, h / size.y, ramp.h / size.z);
+    const bb = new THREE.Box3().setFromObject(o);
+    const c = bb.getCenter(new THREE.Vector3());
+    o.position.set(ramp.x + ramp.w / 2 - c.x, -bb.min.y, ramp.y + ramp.h / 2 - c.z);
+    bendAll(o);
+    g.add(o);
+  }));
+  box(g, map.theme?.wall ?? "#d9cbb3", ramp.x, 0, ramp.y - 1, ramp.x + ramp.w, h - 0.16, ramp.y - 0.02);
+  for (const x of [ramp.x - 1, ramp.x + ramp.w]) box(g, "#2b2b2e", x + 0.42, 0, ramp.y, x + 0.58, 0.95, ramp.y + ramp.h);
 }
 
 /** Small kit props retain their horizontal proportions and stand on a known furniture surface. */
@@ -1531,9 +1746,9 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         // Back and side walls full height; the front wall is cut low so you can see in.
         const front = y >= H - 1 || (y > H / 2 && rows[y - 1]?.[x] !== "#" && rows[y + 1]?.[x] === undefined);
         const h = front ? 0.35 : ch === "G" ? 2.4 : 3;
-        box(g, ch === "G" ? "#bfe0ef" : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? (map.design?.wall ?? "#e9e5dc") : "#eef0f4", x, 0, y, x + 1, h, y + 1);
+        box(g, ch === "G" ? "#bfe0ef" : map.theme ? map.theme.wall : home ? "#f3e7d3" : station ? "#f6f2e8" : office ? (map.design?.wall ?? "#e9e5dc") : "#eef0f4", x, 0, y, x + 1, h, y + 1);
         if (ch === "W") box(g, "#9fd2ef", x + 0.15, 1.1, y + 0.98, x + 0.85, 2.3, y + 1.02);
-        if (!front) box(g, home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
+        if (!front) box(g, map.theme ? map.theme.skirting : home ? "#d9c7a6" : "#c9ced8", x, 0, y + 0.98, x + 1, 0.25, y + 1.03);
         if (office && !front) {
           box(g, "#b4b2a9", x, 2.72, y + 0.98, x + 1, 2.8, y + 1.035);
           if (x % 3 === 0) box(g, "#c4c0b5", x + 0.04, 0.25, y + 0.99, x + 0.1, 2.72, y + 1.04);
@@ -1541,15 +1756,30 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
         continue;
       }
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
-      if((map.id==='venture-hub'||map.id==='study-lobby')&&ch==='m'){
+      // The stair opening on an upper floor has no floor: you look down the stairs.
+      if (map.stairs?.down && x >= map.stairs.x && x < map.stairs.x + 2 && y >= map.stairs.y && y < map.stairs.y + 4) continue;
+      if(map.theme){const [a,b]=map.theme.floor;box(g,(x+y)%2?a:b,x,-.05,y,x+1,.01,y+1);
+      } else if((map.id==='venture-hub'||map.id==='study-lobby')&&ch==='m'){
         jobs.push(kaykitPlatform(g,x,y,map.id).catch(()=>{box(g,map.design?.floor??'#c7d3cb',x,-.05,y,x+1,.025,y+1);}));
         continue;
       }
       const homeFloor = x < 5 && y >= 7 && y <= 10 ? ((x + y) % 2 ? "#a6b9b3" : "#c8d4ca") : x >= 14 && y < 6 ? "#d5d1c3" : x % 2 ? "#c5a37c" : "#b99772";
       box(g, interiorFloor(map.id,x,y) ?? (home ? homeFloor : hotel ? (x>=8&&x<=12?"#95715b":(x+y)%2?"#d1c0a4":"#d9cbb5") : office ? (ch === "m" ? (map.design?.trim ?? "#78958c") : ch === "l" ? (map.design?.alternate ?? "#c2baa6") : ch === "," ? ((x+y)%2?"#f3ead6":"#e6d8bc") : (x+y)%2 ? (map.design?.floor ?? "#d6ddd6") : (map.design?.alternate ?? "#c7d3cb")) : FLOOR[ch] ?? ((x + y) % 2 ? "#ead9bb" : "#e3d1b0")), x, -0.05, y, x + 1, (x + y) % 2 && !home ? 0.02 : 0.01, y + 1);
     }
+  // Venues: Blender furniture, and the mezzanine deck with its stairs.
+  if (map.props) {
+    DECK_FADE.length = 0;
+    const deck = map.deck;
+    for (const p of map.props) {
+      const job = placeTurned(g, `/world3d/interiors/${p.model}.glb`, p.x, p.y, p.w, p.d, p.lift ?? 0, p.turn ?? 0);
+      // Furniture up on the deck fades with it when you walk underneath.
+      if (deck && (p.lift ?? 0) >= deck.height - 0.01) jobs.push(job.then((o) => fadeWithDeck(o)));
+      else jobs.push(job);
+    }
+    if (deck) buildDeck(g, map, jobs);
+  }
   // Office / station furniture from tile runs.
-  if (!home)
+  if (!home && !map.props)
     for (let y = 0; y < H; y++) {
       let x = 0;
       while (x < Wd) {
@@ -1765,6 +1995,10 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       const furniture = homeFurniture(p, Number(map.art?.split("-")[1] ?? 0));
       bendAll(furniture);
       g.add(furniture);
+      const model = f.design ?? f.id;
+      if (["sofa", "bed", "desk", "table"].includes(model)) {
+        jobs.push(place(g, `/world3d/realism/${model}.glb`, p.x + .05, p.y + .05, f.w - .1, f.h - .1).then(() => { g.remove(furniture); }).catch(() => {}));
+      }
     }
   if (hotel) {
     for (const portal of map.portals.filter(p=>p.id.startsWith("stairs-"))) {
@@ -1884,22 +2118,20 @@ export function World3D({
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
-    try{renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });}catch{onUnavailable?.();return;}
-    const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
-    renderer.domElement.addEventListener("webglcontextlost",contextLost);
+    const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = graphicsBudget();
     const visual = visualProfile(window.devicePixelRatio||1);
-    renderer.setPixelRatio(visual.pixelRatio);
-    renderer.shadowMap.enabled = visual.shadows;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    // MSAA, sRGB output and soft PCF shadow maps (scene-setup.ts).
+    try{renderer = createRenderer(visual);}catch{onUnavailable?.();return;}
+    const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
+    renderer.domElement.addEventListener("webglcontextlost",contextLost);
     el.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
-    const sky = highland ? "#bfe3ff" : "#d6e4df";
+    const sky = highland ? "#c8e2ef" : "#dce6df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
     // Outdoor fog is fully opaque by 70 units; don't draw hidden city blocks
@@ -1907,18 +2139,14 @@ export function World3D({
     const camera = new THREE.PerspectiveCamera(30, 1, 0.5, indoors ? 120 : 80);
 
     // ?time=day|dusk|night previews the lighting; otherwise it follows UK time.
-    const forced = new URLSearchParams(window.location.search).get("time");
-    let phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
-    const hemi = new THREE.HemisphereLight(phase === "night" ? "#b2c5e0" : phase === "dusk" ? "#f5d3b0" : "#fff4db", phase === "night" ? "#455a57" : "#8e9d7d", phase === "night" ? 1.45 : 1.7);
-    scene.add(hemi);
-    const sun = new THREE.DirectionalLight(phase === "night" ? "#a7b9d2" : phase === "dusk" ? "#ffc89a" : "#fff6e6", phase === "night" ? 0.45 : 1.25);
-    sun.castShadow = visual.shadows;
-    sun.shadow.mapSize.set(visual.shadowSize, visual.shadowSize);
-    Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 22, bottom: -22, near: 1, far: 80 });
-    sun.shadow.bias = -0.00035;
-    sun.shadow.normalBias = .025;
-    sun.shadow.radius = 4;
-    scene.add(sun, sun.target);
+    const previewQuery = new URLSearchParams(window.location.search);
+    const forced = previewQuery.get("time");
+    const previewWeather = process.env.NODE_ENV === "development" && window.location.pathname === "/games/city-showcase" ? previewQuery.get("weather") : null;
+    const pickPhase = () => WORLD_RULES.time !== "auto" ? WORLD_RULES.time : forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+    let phase = pickPhase();
+    updateIllustratedLight(phase, indoors);
+    // Ambient + sky fill + a shadow-casting sun (scene-setup.ts).
+    const { ambient, hemi, sun } = createLighting(scene, { phase, indoors, visual });
     if (phase !== "day" && !indoors) {
       const atmosphere=phase==="night"?"#17293f":"#d6b1a0";
       scene.background = new THREE.Color(atmosphere);
@@ -1934,22 +2162,27 @@ export function World3D({
       hemi.intensity = 1.15;
       sun.intensity = 1.35;
     }
+    const atmosphere = !indoors ? createAtmosphere(scene,phase) : null;
 
     let presentation: ReturnType<typeof cinematicRenderer>;
-    try { presentation=cinematicRenderer(renderer,scene,camera,visual); }
-    catch { presentation={render:()=>renderer.render(scene,camera),resize:()=>{},dispose:()=>{}}; }
+    try { presentation=cinematicRenderer(renderer,scene,camera,visual,phase); }
+    catch { presentation={render:()=>renderer.render(scene,camera),resize:()=>{},setAtmosphere:()=>{},dispose:()=>{}}; }
 
     // ── Build the world ──
     const world = new THREE.Group();
+    const retiredSceneryGeometry = new Set<THREE.BufferGeometry>();
     scene.add(world);
     const tiles = map.tiles;
     let disposeGroundStyle=()=>{};
     let disposeArchitecture=()=>{};
+    let updateArchitecture: (phase: "day" | "dusk" | "night", wetness: number, dt: number) => void = () => {};
+    let groundSurface: THREE.MeshStandardMaterial | null = null;
     const stationHoles=new Set<string>();
     if(london) for(const thing of buildLondon().things) if(thing.kind==="station")
       for(let y=thing.y;y<thing.y+thing.h;y++) for(let x=thing.x;x<thing.x+thing.w;x++) stationHoles.add(`${x},${y}`);
     if (!indoors) {
       const ground=groundMesh(tiles, highland,stationHoles);
+      if(ground.material instanceof THREE.MeshStandardMaterial) groundSurface=ground.material;
       const disposeTexture=london?applyGroundStyle(ground):()=>{};
       disposeGroundStyle=()=>{disposeTexture();ground.material.dispose();};
       world.add(ground);
@@ -1976,6 +2209,20 @@ export function World3D({
     const spinners: THREE.Object3D[] = [];
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
+    const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
+      lamps.push(position);
+      jobs.push(model.then(object => {
+        object.updateMatrixWorld(true);
+        const glass = new THREE.Box3();
+        object.traverse(child => {
+          if(!(child instanceof THREE.Mesh)) return;
+          const materials=Array.isArray(child.material)?child.material:[child.material];
+          if(materials.some(material=>material.name==="lit")) glass.union(new THREE.Box3().setFromObject(child));
+        });
+        // Use the modelled bulb, rather than an assumed height at the pole's base.
+        if(!glass.isEmpty()) glass.getCenter(position);
+      }));
+    };
     if (indoors) {
       interior(world, map, jobs, station);
       if (map.kind === "home") {
@@ -2108,8 +2355,7 @@ export function World3D({
           nm.position.set(t.x + t.w / 2, 4.8, t.y + t.h + 0.04);
           g.add(nm);
         } else if (t.kind === "lamp") {
-          jobs.push(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1));
-          lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
+          registerLamp(place(g, "/world3d/roads/light-square.glb", t.x, t.y, 1, 1, 0.1),new THREE.Vector3(t.x+.5,2,t.y+.5));
         } else if(t.kind==='bench'){
           const detail=highlandNatureDetail(t,map);
           if(detail)jobs.push(placeKitDetail(g,detail));
@@ -2133,18 +2379,28 @@ export function World3D({
             g.add(sg);
           }
         }
-        else if (t.kind === "landmark") {
+        else if (t.kind === "landmark" && t.name === "town-hall") {
+          jobs.push(place(g, `${LONDON_KIT}townhall.glb`, t.x, t.y, t.w, t.h));
+          for (const lx of [t.x + 7.6, t.x + 10.4]) lamps.push(new THREE.Vector3(lx, 2.2, t.y + t.h));
+        } else if (t.kind === "landmark" && t.name === "fountain") {
+          jobs.push(place(g, `${LONDON_KIT}fountain.glb`, t.x, t.y, t.w, t.h));
+          const spray = fountainSpray(t.x + t.w / 2, t.y + t.h / 2, 3.0);
+          g.add(spray);
+          spinners.push(spray);
+        } else if (t.kind === "landmark") {
           landmark(g, t);
           g.traverse((c) => c.userData.spin && spinners.push(c));
         } else if (t.kind === "tree") {
           // Rounded planted trees are supplied in one shared scenery batch below.
+        } else if (t.kind === "blossom") {
+          jobs.push(place(g, `${LONDON_KIT}blossom.glb`, t.x - 0.8, t.y - 0.8, 2.6, 2.6));
         }
         else if (t.kind === "lamp") {
           if((t.x+t.y)%8===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('streetLight'),t.x,t.y,1,2.9,false,0,.13));
-          else heritageLamp(g,t.x,t.y);
+          else registerLamp(place(g, `${LONDON_KIT}lamp.glb`, t.x-.15,t.y-.15,1.3,1.3,.12),new THREE.Vector3(t.x+.5,2,t.y+.5));
           if((t.x+t.y)%13===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('garbageBin'),t.x+.05,t.y+.52,.4,.6,false,0,.13,.4));
           if((t.x+t.y)%19===0)jobs.push(kaykitInteriorProp(g,freeCityAsset('fireHydrant'),t.x+.58,t.y+.58,.35,.55,false,0,.13,.35));
-          lamps.push(new THREE.Vector3(t.x + 0.5, 2, t.y + 0.5));
+          lamps.push(new THREE.Vector3(t.x+.5,2,t.y+.5));
         } else if (t.kind === "phonebox") {
           telephoneBox(g, t.x, t.y);
         } else if (t.kind === "postbox") cyl(g, "#c8322d", t.x + 0.5, t.y + 0.5, 0.1, 1.15, 0.24, 14);
@@ -2200,6 +2456,16 @@ export function World3D({
     const precipitationPositions = new Float32Array(180 * 3);
     precipitationGeometry.setAttribute("position", new THREE.BufferAttribute(precipitationPositions, 3));
     const precipitationMaterial = new THREE.PointsMaterial({ color: "#dce9ee", size: 0.055, transparent: true, opacity: 0.65, depthWrite: false });
+    const precipitationSnow = {value:0};
+    precipitationMaterial.onBeforeCompile = shader => {
+      shader.uniforms.uPrecipitationSnow=precipitationSnow;
+      shader.fragmentShader=shader.fragmentShader.replace("#include <common>","#include <common>\nuniform float uPrecipitationSnow;")
+        .replace("#include <color_fragment>",`#include <color_fragment>
+          vec2 rainPoint=(gl_PointCoord-.5)*2.0;
+          rainPoint.x*=mix(4.0,1.0,uPrecipitationSnow);
+          diffuseColor.a*=1.0-smoothstep(.25,1.0,length(rainPoint));`);
+    };
+    bend(precipitationMaterial);
     const precipitation = new THREE.Points(precipitationGeometry, precipitationMaterial);
     precipitation.frustumCulled = false; precipitation.visible = false;
     scene.add(precipitation);
@@ -2214,8 +2480,14 @@ export function World3D({
     const streetscape=london?addStreetscape(world,map,phase,new Set(pixelTrees.map(t=>t.id))):null;
     if(streetscape) {
       bendAll(streetscape);
-      streetscape.traverse(object=>{if((object as THREE.Mesh).isMesh){object.castShadow=false;object.receiveShadow=false;}});
     }
+    const meadow = !indoors ? addMeadow(world, map, mobile) : null;
+    if (meadow) {
+      bendAll(meadow);
+      meadow.traverse(object => { object.castShadow = false; });
+    }
+    const leafDrift = london ? driftingLeaves(world, map, mobile) : null;
+    if (leafDrift) { bendAll(leafDrift.object); leafDrift.object.castShadow = false; }
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
@@ -2228,10 +2500,12 @@ export function World3D({
     // A fixed pool lights nearby lamps without adding a shader light for every
     // street in the city. The visible lamp models remain in the scenery.
     const lampLights = lamps.slice(0, budget.lights).map(() => {
-      const light = new THREE.PointLight("#ffcc88", phase === "night" ? 6 : 2, 7, 1.6);
+      const light = new THREE.PointLight("#ffcc88", phase === "night" ? 12 : 2, 7, 1.6);
       scene.add(light);
       return light;
     });
+    const ambience = !indoors ? ambientLife(world,lamps,mobile) : null;
+    if(ambience) { bendAll(ambience.group); bend(ambience.motes.material); }
     let nextLampUpdate = 0;
 
     if (map.id === "study-lobby") learningLobby(world, map);
@@ -2265,6 +2539,7 @@ export function World3D({
       root: THREE.Group;
       char: Character3D | null;
       walking: boolean;
+      motion?: { x: number; z: number; heading: number; speed: number };
       dispose: () => void;
     }
     const makeBody = (a: Avatar, logo: string | null = null, ambient = false): Body => {
@@ -2428,6 +2703,8 @@ export function World3D({
         path,
         offset: i * 3.71,
         knockedUntil: 0,
+        defendUntil: 0,
+        strikeAt: 0,
         greetUntil: 0,
         nextGreeting: 10_000 + ((i * 7919) % 24_000),
         greetingPoint: new THREE.Vector3(),
@@ -2494,6 +2771,7 @@ export function World3D({
     let swingUntil = 0;
     const onFight = (event: Event) => {
       const now = performance.now();
+      if (now < swingUntil || PLAYER.knockedUntil > now || PLAYER_VEHICLE.active) return;
       swingUntil = now + 700;
       me.char?.play("attack-melee-right");
       const p = getMe();
@@ -2545,8 +2823,38 @@ export function World3D({
       scene.add(responseCar,...responders.map(b=>b.root));
     }
     const carLast = new THREE.Vector3();
+    // Delivery courier (home only): hi-vis, cap, carrying a parcel.
+    const courier = map.kind === "home" ? makeBody({ ...npcLook(61), hat: "hat-cap", topColor: "topcol-orange" }) : null;
+    if (courier) {
+      const parcel = new THREE.Group();
+      box(parcel, "#b98a57", -0.28, 0.55, 0.18, 0.28, 0.95, 0.62);
+      box(parcel, "#e8dcc0", -0.29, 0.73, 0.17, 0.29, 0.77, 0.63);
+      box(parcel, "#e8dcc0", -0.03, 0.55, 0.17, 0.03, 0.96, 0.63);
+      courier.root.add(parcel);
+      courier.root.userData.parcel = parcel;
+      courier.root.visible = false;
+      scene.add(courier.root);
+    }
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
+    // Fright Night: Scary Bots and pumpkins (London only, while the event runs).
+    const frightNight = london && seasonalEvent()?.event.id === "fright-night";
+    const bots = frightNight ? scaryBotsFor(map).map((bot) => {
+      const model = scaryBotModel();
+      const label = makeNameplate(bot.name, null);
+      label.dataset.bot = bot.id;
+      el.appendChild(label);
+      scene.add(model);
+      return { bot, model, label };
+    }) : [];
+    if (frightNight) for (const [i, b] of scaryBotsFor(map).entries()) {
+      pumpkinProp(world, b.a.x / TILE + 0.9, b.a.y / TILE - 0.9, 1 + (i % 3) * 0.2);
+      pumpkinProp(world, b.a.x / TILE - 1.1, b.a.y / TILE - 0.7, 0.8);
+    }
+    // Flight School: Ava walks ahead and the player follows her.
+    const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
+    const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
+    if (tutor && tutorCaption) { tutorCaption.position.set(0,2.05,0); tutor.root.add(tutorCaption); tutor.root.position.set(TUTOR.x/TILE,0,TUTOR.y/TILE); scene.add(tutor.root); }
     if(map.kind === "prison") for(const portal of map.portals.filter(p=>p.to.kind === "prison"&&p.to.action === "talk")) {
       const person=makeBody({...npcLook(portal.id === "inmate-sam"?57:58),...PRISON_LOOK});
       person.root.position.set(portal.rect.x/TILE+0.5,0,portal.rect.y/TILE+0.5);
@@ -2607,6 +2915,7 @@ export function World3D({
       const h = viewportHeight = el.clientHeight;
       renderer.setSize(w, h, false);
       presentation.resize(w,h);
+      atmosphere?.resize(w*renderer.getPixelRatio(),h*renderer.getPixelRatio());
       renderer.domElement.style.width = `${w}px`;
       renderer.domElement.style.height = `${h}px`;
       camera.aspect = w / Math.max(1, h);
@@ -2617,6 +2926,7 @@ export function World3D({
     ro.observe(el);
 
     const focus = new THREE.Vector3();
+    let meZ = 0;
     const lastMe = new THREE.Vector3();
     const projectedPoint = new THREE.Vector3();
     const lightingColour = new THREE.Color();
@@ -2625,13 +2935,17 @@ export function World3D({
     let raf = 0;
     let last = performance.now();
     const start = last;
+    let monitorAt = start, monitorFrames = 0;
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let reduce = motionPreference.matches;
     const motionChanged = () => {reduce=motionPreference.matches;};
     motionPreference.addEventListener("change",motionChanged);
     const renderDue = frameBudget(60);
+    const adaptResolution = adaptivePixelRatio(visual.pixelRatio);
     const frame = (now: number) => {
       if (document.hidden) {
+        adaptResolution(now, false);
+        monitorAt = now; monitorFrames = 0;
         last = now;
         raf = requestAnimationFrame(frame);
         return;
@@ -2640,6 +2954,10 @@ export function World3D({
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
+      updateIllustratedLight(phase, indoors);
+      river.update(reduce ? 0 : secs, reduce ? 0 : weatherLighting(weatherKind).rain);
+      streetscape?.userData.update?.(reduce ? 0 : secs);
+      meadow?.userData.animate?.(reduce ? 0 : secs);
       if (newsroom && now >= nextBroadcast) {
         nextBroadcast = now + (reduce ? 8_000 : 250);
         const ctx = broadcastCanvas.getContext("2d")!;
@@ -2665,28 +2983,41 @@ export function World3D({
       const p = getMe();
       const mx = p.x / TILE;
       const mz = p.y / TILE;
+      meadow?.userData.update(mx, mz);
+      leafDrift?.update(secs, mx, mz, reduce);
       if (!indoors) {
-        phase = forced === "day" || forced === "dusk" || forced === "night" ? forced : ukPhase();
+        phase = pickPhase();
         const blend = 1 - Math.exp(-dt * 1.5);
-        const night = phase === "night", dusk = phase === "dusk";
-        const atmosphere = night ? "#17293f" : dusk ? "#d6b1a0" : sky;
-        (scene.background as THREE.Color).lerp(lightingColour.set(atmosphere), blend);
-        if (scene.fog instanceof THREE.Fog) scene.fog.color.copy(scene.background as THREE.Color);
-        hemi.color.lerp(lightingColour.set(night ? "#b2c5e0" : dusk ? "#f5d3b0" : "#fff4db"), blend);
-        hemi.groundColor.lerp(lightingColour.set(night ? "#455a57" : "#8e9d7d"), blend);
-        sun.color.lerp(lightingColour.set(night ? "#a7b9d2" : dusk ? "#ffc89a" : "#fff6e6"), blend);
-        const strength = night ? 0.45 : dusk ? 0.8 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
+        const night = phase === "night";
+        const weather = weatherLighting(weatherKind);
+        const tone = skyColours(phase);
+        atmosphere?.update(phase,weather.haze,dt);
+        atmosphere?.resize(viewportWidth*renderer.getPixelRatio(),viewportHeight*renderer.getPixelRatio());
+        presentation.setAtmosphere(phase,weather.overcast);
+        if (scene.environment) scene.environmentIntensity += (tone.environment - scene.environmentIntensity) * blend;
+        ambient.intensity += (tone.ambient - ambient.intensity) * blend;
+        hemi.intensity += (tone.hemisphere - hemi.intensity)*blend;
+        hemi.color.lerp(lightingColour.set(tone.sky), blend);
+        hemi.groundColor.lerp(lightingColour.set(tone.ground), blend);
+        sun.color.lerp(lightingColour.set(tone.sun), blend);
+        const strength = tone.sunPower * (night ? 1 : weather.sun);
         sun.intensity += (strength - sun.intensity) * blend;
-        lampLights.forEach(light => { light.intensity += ((night ? 6 : dusk ? 2 : 0) - light.intensity) * blend; });
+        lampLights.forEach(light => { light.intensity += (tone.glow*12 - light.intensity) * blend; });
+        ambience?.update(secs,mx,mz,camera,tone.glow,reduce,dt);
+        updateArchitecture(phase,weather.wetness,dt);
+        if(groundSurface) groundSurface.roughness += ((weather.wetness>.5?.38:.86)-groundSurface.roughness)*blend;
         river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
       }
       if (!indoors && now >= nextWeather) {
         nextWeather = now + 10_000;
-        weatherKind = weatherAt(new Date()).kind;
+        // Scope capture overrides to the offline development route. WorldApp
+        // refreshes the global world rules after mounting, so a parent mutation
+        // cannot reliably select weather for screenshots.
+        const weatherRule = previewWeather === "clear" || previewWeather === "rain" || previewWeather === "snow" ? previewWeather : WORLD_RULES.weather;
+        weatherKind = weatherRule === "clear" ? "Sunny" : weatherRule === "rain" ? "Light rain" : weatherRule === "snow" ? "Snow" : weatherAt(new Date()).kind;
         precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
         precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
-        sun.intensity = phase === "night" ? 0.45 : ["Sunny", "Bright"].includes(weatherKind) ? 1.25 : 0.75;
-        if (scene.fog instanceof THREE.Fog) { scene.fog.near = weatherKind === "Fog" ? 18 : 34; scene.fog.far = weatherKind === "Fog" ? 46 : 70; }
+        precipitationSnow.value = weatherKind === "Snow" ? 1 : 0;
       }
       if (precipitation.visible) {
         const speed = weatherKind === "Snow" ? 1.2 : 8;
@@ -2719,7 +3050,14 @@ export function World3D({
       else if (Math.hypot(dx, dz) > 0.002) carHolder.rotation.y = Math.atan2(-dz, dx);
       lastMe.set(mx, 0, mz);
       const airborne = performance.now() - jumpAt;
-      me.root.position.set(mx, airborne < 700 ? Math.max(0, Math.sin(((airborne - 100) / 500) * Math.PI)) * 0.55 * (airborne > 100 && airborne < 600 ? 1 : 0) : 0, mz);
+      // Up the stairs and on the deck: you're raised, and the camera rises with you.
+      meZ += (PLAYER.z - meZ) * Math.min(1, dt * 14);
+      me.root.position.set(mx, meZ + (airborne < 700 ? Math.max(0, Math.sin(((airborne - 100) / 500) * Math.PI)) * 0.55 * (airborne > 100 && airborne < 600 ? 1 : 0) : 0), mz);
+      if (DECK_FADE.length && map.deck) {
+        const under = PLAYER.level === 0 && map.deck.tiles[Math.floor(mz)]?.[Math.floor(mx)] !== "#" && PLAYER.z < 0.2;
+        const want = under ? 0.16 : 1;
+        for (const m of DECK_FADE) m.opacity += (want - m.opacity) * Math.min(1, dt * 8);
+      }
       me.root.rotation.x = 0;
       carHolder.position.set(mx, 0.08, mz);
       if (performance.now() > swingUntil) {
@@ -2733,11 +3071,15 @@ export function World3D({
       const want = carRef.current;
       if (want !== carLoaded) {
         carLoaded = want;
+        disposeVehicle(carHolder);
         carHolder.clear();
         if (want) {
-          const model = new THREE.Group();
-          carHolder.add(model);
-          void placeCar(model, want === "cab" ? "taxi" : want);
+          if (want.startsWith("bus:")) carHolder.add(busModel(want.slice(4)));
+          else {
+            const model = new THREE.Group();
+            carHolder.add(model);
+            void placeCar(model, want === "cab" ? "taxi" : want);
+          }
         }
       }
       me.root.visible = !want;
@@ -2767,10 +3109,10 @@ export function World3D({
       focus.set(followed.x, 0, followed.z);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison", { x: mx, z: mz }, cameraZoom, true);
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
-      camera.position.set(framing.x, framing.height, framing.z + framing.distance);
-      camera.lookAt(framing.x, framing.target, framing.z);
+      camera.position.set(framing.x, framing.height + meZ, framing.z + framing.distance);
+      camera.lookAt(framing.x, framing.target + meZ, framing.z);
       const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
       camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
       if (overview) {
@@ -2783,18 +3125,19 @@ export function World3D({
         playerRing.visible = false;
         rings.forEach(ring => { ring.visible = false; });
       }
-      playerRing.position.set(mx, 0.18, mz);
-      playerRing.scale.setScalar(want ? 2.6 : 1);
+      playerRing.position.set(mx, 0.18 + meZ, mz);
+      playerRing.scale.setScalar(want ? 1.7 : 1);
       camera.updateMatrixWorld();
-      const screen = projectedPoint.set(mx, want ? 2.3 : 1.5, mz).project(camera);
+      const screen = projectedPoint.set(mx, (want ? 2.3 : 1.5) + meZ, mz).project(camera);
+      streetscape?.userData.focus((screen.x + 1) / 2, (screen.y + 1) / 2,
+        viewportWidth * renderer.getPixelRatio(), viewportHeight * renderer.getPixelRatio());
       const sx = (screen.x + 1) * viewportWidth / 2;
       const sy = (1 - screen.y) * viewportHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
       playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
       playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
-      sun.position.set(focus.x - 10, 22, focus.z + 12);
-      sun.target.position.copy(focus);
+      followSun(sun, focus);
 
       // Other players.
       const seen = new Set<string>();
@@ -2823,9 +3166,20 @@ export function World3D({
         const labelX = (labelPoint.x + 1) * viewportWidth / 2;
         const labelY = (1 - labelPoint.y) * viewportHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;
+        let bubble = b.label.querySelector<HTMLElement>("[data-chat]");
+        if (o.chat) {
+          if (!bubble) {
+            bubble = document.createElement("div");
+            bubble.dataset.chat = "";
+            bubble.className = "absolute bottom-full left-1/2 mb-1 w-max max-w-[220px] whitespace-normal -translate-x-1/2 rounded-2xl rounded-bl-md bg-white px-3 py-1.5 text-[12px] leading-snug font-semibold text-[#13203a] shadow-lg";
+            b.label.appendChild(bubble);
+          }
+          if (bubble.textContent !== o.chat) bubble.textContent = o.chat;
+        } else bubble?.remove();
         b.label.style.visibility = labelPoint.z < 1 && labelX > 0 && labelX < viewportWidth && labelY > 0 && labelY < viewportHeight && !overview && !getHomeAction?.() ? "visible" : "hidden";
         let vehicle = otherCars.get(o.id);
         if (vehicle && vehicle.model !== o.car) {
+          disposeVehicle(vehicle.root);
           scene.remove(vehicle.root);
           otherCars.delete(o.id);
           vehicle = undefined;
@@ -2835,7 +3189,8 @@ export function World3D({
           vehicle = { model: o.car, root };
           otherCars.set(o.id, vehicle);
           scene.add(root);
-          void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
+          if (o.car.startsWith("bus:")) root.add(busModel(o.car.slice(4)));
+          else void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
         }
         if (vehicle) {
           vehicle.root.position.set(b.x, 0.08, b.z);
@@ -2849,12 +3204,13 @@ export function World3D({
           b.label.remove();
           const vehicle = otherCars.get(id);
           if (vehicle) scene.remove(vehicle.root);
+          if (vehicle) disposeVehicle(vehicle.root);
           otherCars.delete(id);
           others.delete(id);
         }
 
       const pursuit = getPolice?.();
-      const tased = pursuit?.stage === "tased";
+      const tased = pursuit?.stage === "tased" || PLAYER.knockedUntil > now;
       if (tased && !wasTased) me.char?.play("die");
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
@@ -2875,6 +3231,44 @@ export function World3D({
           setWalking(body,pursuit?.stage === "chasing");
         }
       });
+      for (const { bot, model, label } of bots) {
+        const pose = botPose(bot, Date.now() / 1000);
+        const show = SCARY.on && !SCARY.gone.has(bot.id);
+        model.visible = show;
+        model.position.set(pose.x / TILE, 0.15 + pose.bob, pose.y / TILE);
+        model.rotation.y = -pose.heading + Math.PI / 2;
+        (model.userData.tip as THREE.Mesh).visible = Math.floor(Date.now() / 400) % 2 === 0;
+        const lp = projectedPoint.set(pose.x / TILE, 1.75, pose.y / TILE).project(camera);
+        const lx = (lp.x + 1) * viewportWidth / 2, ly = (1 - lp.y) * viewportHeight / 2;
+        label.style.left = `${lx}px`; label.style.top = `${ly}px`;
+        label.style.visibility = show && lp.z < 1 && lx > 0 && lx < viewportWidth && ly > 0 && ly < viewportHeight && !overview ? "visible" : "hidden";
+      }
+      if (tutor) {
+        const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
+        const dx=tx-p.x, dz=tz-p.z, d=Math.hypot(dx,dz);
+        const moving=d>0.05;
+        if (moving) { const step=Math.min(d,0.05); p.x+=dx/d*step; p.z+=dz/d*step; tutor.root.rotation.y=Math.atan2(dx,dz); }
+        else tutor.root.rotation.y=Math.atan2(mx-p.x,mz-p.z);
+        tutor.root.visible=TUTOR.active;
+        setWalking(tutor,moving&&!reduce);
+      }
+      if (courier) {
+        // The courier comes in from the front door, waits by you to be signed for, then leaves.
+        const door = { x: 10, z: 13.4 };
+        const t = (performance.now() - COURIER.since) / 1000;
+        const by = { x: mx + (mx < 10 ? 1.1 : -1.1), z: mz + 0.6 };
+        courier.root.visible = COURIER.active;
+        if (COURIER.active) {
+          const k = COURIER.phase === "arriving" ? Math.min(1, t / 2.8) : COURIER.phase === "leaving" ? 1 - Math.min(1, t / 2.4) : 1;
+          const x = door.x + (by.x - door.x) * k, z = door.z + (by.z - door.z) * k;
+          const moving = COURIER.phase !== "waiting" && k > 0 && k < 1;
+          courier.root.rotation.y = moving ? Math.atan2(COURIER.phase === "leaving" ? door.x - by.x : by.x - door.x, COURIER.phase === "leaving" ? door.z - by.z : by.z - door.z) : Math.atan2(mx - x, mz - z);
+          courier.root.position.set(x, 0, z);
+          (courier.root.userData.parcel as THREE.Object3D).visible = COURIER.phase !== "leaving";
+          setWalking(courier, moving && !reduce);
+          if (COURIER.phase === "leaving" && t > 2.4) COURIER.active = false;
+        }
+      }
       const patrols=prisonGuardPositions(Date.now()/1000);
       guardBodies.forEach((body,i)=>{const p=patrols[i];body.root.position.set(p.x/TILE,0,p.y/TILE);body.root.rotation.y=p.angle;setWalking(body,!reduce);});
 
@@ -2891,7 +3285,16 @@ export function World3D({
         const q = cyclistPose(c);
         currentTraffic.push({ id: `cyclist-${i}`, x: q.x, y: q.z, heading: Math.atan2(q.dz, q.dx), length: bicycleLength, width: bicycleWidth });
       });
-      if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE });
+      if (PLAYER_VEHICLE.active) currentTraffic.push({ id: "player", x: PLAYER_VEHICLE.x / TILE, y: PLAYER_VEHICLE.y / TILE, heading: PLAYER_VEHICLE.heading, speed: PLAYER_VEHICLE.speed / TILE, length: PLAYER_VEHICLE.length, width: PLAYER_VEHICLE.width });
+      // Every vehicle is solid: the police car and other players' cars and buses
+      // join the traffic picture, so nothing drives through them.
+      const solidVehicles: TrafficVehicle[] = [];
+      if (responseCar.visible) solidVehicles.push({ id: "police", x: responseCar.position.x, y: responseCar.position.z, heading: -responseCar.rotation.y, length: CAR_LENGTH, width: CAR_WIDTH });
+      for (const [id, vehicle] of otherCars) {
+        const bus = vehicle.model.startsWith("bus:");
+        solidVehicles.push({ id: `remote-${id}`, x: vehicle.root.position.x, y: vehicle.root.position.z, heading: -vehicle.root.rotation.y, length: bus ? BUS_LENGTH : CAR_LENGTH, width: bus ? BUS_WIDTH : CAR_WIDTH });
+      }
+      currentTraffic.push(...solidVehicles);
       const pedestrians = [...NPC_SPOTS.map(p => ({ x: p.x / TILE, y: p.y / TILE })), ...crossingWalkers.map(p => ({ x: p.x, y: p.y }))];
       if (!PLAYER_VEHICLE.active) pedestrians.push({ x: PLAYER.x / TILE, y: PLAYER.y / TILE });
       let ti = 0;
@@ -2942,7 +3345,28 @@ export function World3D({
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE, ...n.identity });
         if (n.knockedUntil > now) { n.speech.visible = false; return; }
-        if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; }
+        if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; n.body.char?.play("idle"); }
+        if (n.defendUntil > now && !PLAYER_VEHICLE.active) {
+          const pos = n.body.root.position, dx = mx - pos.x, dz = mz - pos.z, distance = Math.hypot(dx, dz);
+          n.speech.visible = false;
+          n.body.root.rotation.y = Math.atan2(dx, dz);
+          if (distance > 1.25 && distance < 5) {
+            const amount = Math.min(distance - 1.2, dt * 2.1);
+            const x = pos.x + dx / distance * amount, z = pos.z + dz / distance * amount;
+            if (!blocked(map, x * TILE, z * TILE)) pos.set(x, pos.y, z);
+            setWalking(n.body, !reduce);
+          } else {
+            setWalking(n.body, false);
+            if (distance <= 1.4 && now >= n.strikeAt && PLAYER.knockedUntil <= now) {
+              n.body.char?.play("attack-melee-right");
+              PLAYER.knockedUntil = now + 1400;
+              n.defendUntil = now + 600;
+              n.strikeAt = now + 2200;
+            }
+          }
+          return;
+        }
+        if (n.defendUntil) { n.defendUntil = 0; n.body.char?.play("idle"); }
         const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
         n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
         if (!n.body.root.visible) { n.speech.visible = false; return; }
@@ -3043,6 +3467,11 @@ export function World3D({
         const horizontal = Math.abs(q.dx) > Math.abs(q.dz);
         TRAFFIC_BOXES[ti++] = { x: q.x * TILE, y: q.z * TILE, hw: (horizontal ? bicycleLength : bicycleWidth) * TILE / 2, hh: (horizontal ? bicycleWidth : bicycleLength) * TILE / 2, dx: Math.sign(q.dx), dy: Math.sign(q.dz), speed: dt ? step * TILE / dt : 0 };
       }
+      for (const v of solidVehicles) {
+        const horizontal = Math.abs(Math.cos(v.heading)) >= Math.abs(Math.sin(v.heading));
+        const long = (v.length ?? CAR_LENGTH) * TILE, wide = (v.width ?? CAR_WIDTH) * TILE;
+        TRAFFIC_BOXES[ti++] = { id: v.id, x: v.x * TILE, y: v.y * TILE, hw: (horizontal ? long : wide) / 2, hh: (horizontal ? wide : long) / 2, dx: Math.sign(Math.cos(v.heading)), dy: Math.sign(Math.sin(v.heading)), speed: 0 };
+      }
       TRAFFIC_BOXES.length = ti;
 
       for (const s of spinners) {
@@ -3061,10 +3490,18 @@ export function World3D({
         const on = near?.id === r.userData.portal;
         r.scale.setScalar(on ? 1.5 + Math.sin(secs * 6) * 0.08 : 1 + Math.sin(secs * 2 + r.position.x) * 0.06);
       }
-      water.position.y = -0.3 + Math.sin(secs * 0.8) * 0.02;
+      water.position.y = -0.3 + (reduce ? 0 : Math.sin(secs * 0.8) * 0.02);
       if(!reduce) river.texture.offset.x=secs*0.002;
       // Animate nearby visible bodies only; distant residents still follow their routes.
-      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) body.char.update(dt, reduce);
+      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
+        const { x, z } = body.root.position, heading = body.root.rotation.y;
+        const previous = body.motion;
+        const distance = previous ? Math.hypot(x - previous.x, z - previous.z) : 0;
+        const speed = previous && distance < 2 && dt > 0 ? distance / dt : 0;
+        const turn = previous && dt > 0 ? Math.atan2(Math.sin(heading - previous.heading), Math.cos(heading - previous.heading)) / dt : 0;
+        body.motion = { x, z, heading, speed };
+        body.char.update(dt, reduce, { speed, turn });
+      }
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;
         // A real pedalling clip while moving; feet resting on the pedals when coasting.
@@ -3078,7 +3515,7 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
-      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? "walk" : "idle");
+      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? (me.motion?.speed ?? 0) > 4.2 ? "sprint" : "walk" : "idle");
       const homeAction = getHomeAction?.();
       playerRing.visible = !overview && !homeAction;
       for (const screen of homeScreens) {
@@ -3121,7 +3558,28 @@ export function World3D({
         // Keep the skyline solid in overview; normal play clears only the character's sightline.
         visibility.update(camera.position, overview ? [] : [sightlineTarget], dt);
       }
+      if (want) animateVehicle(carHolder, dt, secs, phase !== "day", reduce);
+      for (const vehicle of traffic) animateVehicle(vehicle.obj, dt, secs, phase !== "day", reduce);
+      for (const vehicle of otherCars.values()) animateVehicle(vehicle.root, dt, secs, phase !== "day", reduce);
+      if (responseCar.visible) animateVehicle(responseCar, dt, secs, phase !== "day", reduce);
+      renderer.info.reset();
       presentation.render();
+      if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
+        Object.assign(renderer.domElement.dataset, {
+          graphicsFps: (monitorFrames * 1000 / (now - monitorAt)).toFixed(1),
+          graphicsDraws: String(renderer.info.render.calls),
+          graphicsTriangles: String(renderer.info.render.triangles),
+          graphicsRatio: renderer.getPixelRatio().toFixed(2),
+          graphicsPreset: "high",
+          graphicsPhase: phase,
+          graphicsWeather: weatherKind,
+        });
+        monitorAt = now; monitorFrames = 0;
+      }
+      if (visual.adaptiveResolution) {
+        const ratio = adaptResolution(now);
+        if (Math.abs(ratio - renderer.getPixelRatio()) > .005) { renderer.setPixelRatio(ratio); fit(); }
+      }
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -3129,26 +3587,28 @@ export function World3D({
     // Spatial batches retain useful frustum culling across the city.
     void Promise.allSettled(jobs).then(async () => {
       if (disposed) return;
-      if(london) disposeArchitecture=finishArchitecture(world,phase);
+      if(london) { const architecture=finishArchitecture(world,phase); disposeArchitecture=architecture; updateArchitecture=architecture.update; }
       for (const group of sightlineBuildings) visibility.register(group);
       sightlinesReady = true;
       world.updateMatrixWorld(true);
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
-        if(m.isMesh&&m.castShadow)m.customDepthMaterial=CURVED_DEPTH;
-        if (!m.isMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
+        if(m.isMesh&&m.castShadow&&!m.customDepthMaterial)m.customDepthMaterial=CURVED_DEPTH;
+        if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
         for (let parent: THREE.Object3D | null = m; parent; parent = parent.parent) if (parent.userData.sightlineBuilding) return;
         let spin = false;
-        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train) spin = true;
+        for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train || a.userData.vehicleRig) spin = true;
         if (spin || m.geometry.attributes.color) return;
+        const signature = staticScenerySignature(m);
+        if(signature === null) return;
         // These scenery meshes never move. Keep their baked world transforms
         // instead of rebuilding thousands of matrices on every render.
         m.updateMatrixWorld(true);
         m.matrixAutoUpdate = false;
         m.matrixWorldAutoUpdate = false;
         const position = new THREE.Vector3().setFromMatrixPosition(m.matrixWorld);
-        const key = `${m.geometry.uuid}:${m.material.uuid}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
+        const key = `${signature}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
         const list = groups.get(key) ?? [];
         list.push(m);
         groups.set(key, list);
@@ -3157,16 +3617,25 @@ export function World3D({
       for (const meshes of groups.values()) {
         if (disposed) return;
         if (meshes.length > 1) {
-          const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
-          meshes.forEach((source, i) => {
-            mesh.setMatrixAt(i, source.matrixWorld);
-            source.parent?.remove(source);
-          });
-          mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=CURVED_DEPTH;
-          mesh.computeBoundingSphere();
-          mesh.matrixAutoUpdate = false;
-          mesh.matrixWorldAutoUpdate = false;
-          scene.add(mesh);
+          if(meshes.every(mesh=>mesh.geometry===meshes[0].geometry)) {
+            const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
+            meshes.forEach((source, i) => { mesh.setMatrixAt(i, source.matrixWorld); source.removeFromParent(); });
+            mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=meshes[0].customDepthMaterial ?? CURVED_DEPTH;
+            mesh.customDistanceMaterial=meshes[0].customDistanceMaterial;
+            mesh.renderOrder=meshes[0].renderOrder;mesh.layers.mask=meshes[0].layers.mask;
+            mesh.visible=meshes[0].visible;mesh.frustumCulled=meshes[0].frustumCulled;
+            mesh.onBeforeRender=meshes[0].onBeforeRender;mesh.onAfterRender=meshes[0].onAfterRender;
+            mesh.onBeforeShadow=meshes[0].onBeforeShadow;mesh.onAfterShadow=meshes[0].onAfterShadow;
+            mesh.computeBoundingSphere();
+            mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
+            scene.add(mesh);
+          } else {
+            const merged=mergeStaticScenery(meshes);
+            if(merged) {
+              for(const source of meshes) { if(source.geometry!==BOX) retiredSceneryGeometry.add(source.geometry); source.removeFromParent(); }
+              scene.add(merged);
+            }
+          }
         }
         if (performance.now() - batchStart > 4) {
           await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -3180,6 +3649,7 @@ export function World3D({
       disposed = true;
       visibility.dispose();
       policeRig?.dispose();
+      disposeVehicle(scene);
       for (const body of bodies) body.dispose();
       for (const vehicle of traffic) if (vehicle.obj.userData.coach) vehicle.obj.userData.dispose();
       TRAFFIC_BOXES.length = 0;
@@ -3193,6 +3663,8 @@ export function World3D({
       window.removeEventListener("illuminated:jump", onJump);
       renderer.domElement.removeEventListener("webglcontextlost",contextLost);
       presentation.dispose();
+      atmosphere?.dispose();
+      ambience?.dispose();
       motionPreference.removeEventListener("change",motionChanged);
       sun.shadow.map?.dispose();
       renderer.dispose();
@@ -3202,15 +3674,21 @@ export function World3D({
       disposeGroundStyle();
       disposeArchitecture();
       streetscape?.userData.dispose?.();
+      meadow?.userData.dispose?.();
+      leafDrift?.dispose();
       for (const spinner of spinners) spinner.userData.dispose?.();
       renderer.forceContextLoss();
+      const geometryToDispose = new Set(retiredSceneryGeometry);
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (o instanceof THREE.InstancedMesh) o.dispose();
-        if (m.isMesh && m.geometry !== BOX) m.geometry.dispose();
+        if (m.isMesh && m.geometry !== BOX) geometryToDispose.add(m.geometry);
       });
+      geometryToDispose.forEach(geometry=>geometry.dispose());
+      retiredSceneryGeometry.clear();
       playerLabel.remove();
       for (const other of others.values()) { other.label.remove(); other.dispose(); }
+      for (const b of bots) b.label.remove();
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
