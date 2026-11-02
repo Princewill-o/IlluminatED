@@ -1,7 +1,7 @@
 import { hospitalAsset } from './additional-world-assets';
 import { assetSeed, kaykitAsset } from './kaykit-world-assets';
-import { TILE, type WorldMap } from './world';
 import type { OfficeTheme } from './office-design';
+import { TILE, type WorldMap } from './world';
 
 export interface KitDetail {
   asset: string;

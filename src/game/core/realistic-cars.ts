@@ -1,5 +1,5 @@
-import { CAR_LENGTH, CAR_WIDTH } from "./vehicles";
 import { EMERGENCY_ASSETS, AMBULANCE_LENGTH, AMBULANCE_WIDTH } from "./emergency-vehicles";
+import { CAR_LENGTH, CAR_WIDTH } from "./vehicles";
 
 /** Normal motor cars use the supplied Quaternius pack; rescue vehicles have dedicated rigs. */
 export const REALISTIC_CAR_MODELS = ["NormalCar1", "NormalCar2", "SportsCar", "SportsCar2", "SUV", "Taxi", "Cop"] as const;

@@ -1,6 +1,10 @@
 /** Stored legacy graphics choices all resolve to the platform's high profile. */
 export type VisualQuality = "high";
-export function readVisualQuality(_value: string | null): VisualQuality { return "high"; }
+export function readVisualQuality(value: string | null): VisualQuality {
+  // Accept existing stored preferences while retaining the single high profile.
+  void value;
+  return "high";
+}
 
 /** One high-detail profile on every display, including the latest composition effects. */
 export function visualProfile(dpr = 1) {
@@ -25,7 +29,11 @@ export function visualProfile(dpr = 1) {
 /** Renderer compatibility: keep the chosen high display ratio through slow or suspended frames. */
 export function adaptivePixelRatio(maximum: number) {
   const ratio = Math.min(2, Math.max(1, Number.isFinite(maximum) ? maximum : 1));
-  return (_now: number, _active = true) => ratio;
+  return (_now: number, active = true) => {
+    // Keep the renderer callback signature without changing its fixed ratio.
+    void active;
+    return ratio;
+  };
 }
 
 export function physicalSurface(colour: string) {

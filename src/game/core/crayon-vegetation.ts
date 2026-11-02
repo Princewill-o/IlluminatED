@@ -1,7 +1,7 @@
 import {assetSeed} from './kaykit-world-assets';
+import type {KitDetail} from './kit-dressing';
 import {buildLondon} from './london';
 import {TILE,type WorldMap} from './world';
-import type {KitDetail} from './kit-dressing';
 
 export const crayonAsset=(name:string)=>`/world3d/crayon-city/models/textured/${name}.glb`;
 export const pixelAsset=(name:string)=>`/world3d/pixel-vegetation/${name}.glb`;

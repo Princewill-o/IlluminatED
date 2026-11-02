@@ -1,11 +1,11 @@
 "use client";
 
-import { ControllerLegend } from "./controller-legend";
 
 import { useState } from "react";
 
 import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
 
+import { ControllerLegend } from "./controller-legend";
 import { CutsceneBrand, sceneBrandFor } from "./cutscene-brand";
 
 /**

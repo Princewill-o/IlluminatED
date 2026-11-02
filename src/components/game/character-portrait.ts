@@ -1,7 +1,9 @@
 "use client";
 import * as THREE from "three";
-import { blockyThumbnail } from "@/game/core/adventurers";
+
 import { buildCharacter } from "./char3d";
+
+import { blockyThumbnail } from "@/game/core/adventurers";
 import type { Avatar } from "@/game/core/cosmetics";
 
 /** All small avatars share one offscreen WebGL context instead of one GPU context per icon. */

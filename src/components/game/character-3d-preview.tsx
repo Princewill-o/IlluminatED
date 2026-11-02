@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import * as THREE from "three";
 import Image from "next/image";
-import { blockyThumbnail } from "@/game/core/adventurers";
+
+import * as THREE from "three";
 
 import { buildCharacter, type Character3D } from "./char3d";
 
+import { blockyThumbnail } from "@/game/core/adventurers";
 import type { Avatar } from "@/game/core/cosmetics";
 
 export type CharacterAnimation = "idle" | "walk" | "run" | "jump" | "fall" | "wave" | "punch" | "death" | "cheer" | "dance";

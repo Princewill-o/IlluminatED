@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import { HeartPulse } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { buildCharacter, npcLook, type Character3D } from "../char3d";
 import { createEmergencyVehicle } from "./emergency-vehicle3d";
-import { rescueFrame, rescuePatientPose, RESCUE_DURATION_MS, type RescuePhase } from "@/game/core/rescue";
+
 import type { Avatar } from "@/game/core/cosmetics";
+import { rescueFrame, rescuePatientPose, RESCUE_DURATION_MS, type RescuePhase } from "@/game/core/rescue";
 
 const MESSAGES: Record<RescuePhase,string> = {
   downed: "You collapsed. Help is on its way.",

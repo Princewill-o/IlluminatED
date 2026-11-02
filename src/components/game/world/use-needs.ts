@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import { outfitPerks, type OutfitPerks } from "@/game/core/blocky-outfits";
 import { earnSeasonXp } from "@/components/game/season/pass-store";
+import { outfitPerks, type OutfitPerks } from "@/game/core/blocky-outfits";
 import { type Activity, type Needs, apply, decay, fresh } from "@/game/core/needs";
 
 const KEY = "illuminated:needs";

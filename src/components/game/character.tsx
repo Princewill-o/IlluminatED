@@ -5,7 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import META_JSON from "../../../public/characters/meta.json";
 
 import { type Avatar, DEFAULT_AVATAR } from "@/game/core/cosmetics";
-import { logoFor } from "@/game/core/logos";
 import { HAIR_LOOK } from "@/game/core/looks";
 import { outfitColours, outfitVariants } from "@/game/core/outfits";
 
@@ -16,12 +15,9 @@ export type Mood = "happy" | "sad" | "wow" | "cool" | "cross";
 export type Facing = "S" | "N" | "E" | "W";
 export type Clip = "idle" | "walk" | "wave";
 
-const FRAME = 176;
-const COLS = 7;
 /** Head radius in sheet pixels, for drawing faces. */
 const U = (META_JSON as { u?: number }).u ?? 32;
 const INK = "#13203a";
-const BASE = "/characters";
 
 interface Meta {
   layers: string[];
@@ -45,68 +41,9 @@ META.frames.forEach(([d, c], i) => {
 
 const FPS: Record<Clip, number> = { idle: 4, walk: 11, wave: 8 };
 
-// ── Image loading and tinting (cached for the whole app) ───────────────────
-const images = new Map<string, Promise<HTMLImageElement | null>>();
-function load(name: string) {
-  let p = images.get(name);
-  if (!p) {
-    p = new Promise((resolve) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = `${BASE}/${name}.webp`;
-    });
-    images.set(name, p);
-  }
-  return p;
-}
-
-const tinted = new Map<string, HTMLCanvasElement>();
-function tint(img: HTMLImageElement, name: string, colour: string, torso?: string) {
-  const key = `${name}|${colour}|${torso ?? ""}`;
-  let c = tinted.get(key);
-  if (!c) {
-    c = document.createElement("canvas");
-    c.width = img.width;
-    c.height = img.height;
-    const g = c.getContext("2d")!;
-    g.drawImage(img, 0, 0);
-    // Imported ties/badges must not retain the source character's colours.
-    const flat = name.endsWith("-detail");
-    g.globalCompositeOperation = flat ? "source-in" : "multiply";
-    g.fillStyle = colour;
-    g.fillRect(0, 0, c.width, c.height);
-    if (!flat) {
-      g.globalCompositeOperation = "destination-in";
-      g.drawImage(img, 0, 0);
-    }
-    if (torso) {
-      // skinU also contains the source character's bare stomach/front panels.
-      // Cover its central torso while leaving the separate hand pixels skin.
-      g.globalCompositeOperation = "source-atop";
-      g.fillStyle = torso;
-      META.anchors.forEach((anchor, i) => {
-        const x = (i % COLS) * FRAME + anchor.head[0];
-        const y = Math.floor(i / COLS) * FRAME + anchor.head[1];
-        g.fillRect(x - U * 0.64, y + U * 0.58, U * 1.28, U * 1.85 - U * 0.58);
-      });
-    }
-    tinted.set(key, c);
-  }
-  return c;
-}
-
 // ── Which sheets make up an outfit, in draw order ──────────────────────────
 const ANIMAL_HEADS = new Set(["head-dog", "head-cow", "head-robot", "head-alien", "head-lion"]);
 const NONE = new Set(["hat-none", "face-none", "held-none", "pet-none", "hair-bald", "extras-none", "brows-none"]);
-
-/** Tops that carry a company logo on the chest. */
-const TOP_LOGO: Record<string, string> = {
-  "top-labcoat": "st-plasters",
-  "top-hivis": "bodge",
-  "top-tracksuit": "psyke",
-};
 
 export interface Layer {
   name: string;
@@ -362,47 +299,12 @@ function drawFace(g: CanvasRenderingContext2D, f: FaceSpec, fx: number, fy: numb
   }
 }
 
-function drawLogo(g: CanvasRenderingContext2D, id: string, x: number, y: number, s: number) {
-  const logo = logoFor(id);
-  if (logo) {
-    g.save();
-    g.translate(x - s / 2, y - s / 2);
-    g.scale(s / 64, s / 64);
-    g.beginPath();
-    g.roundRect(0, 0, 64, 64, 16);
-    g.fillStyle = logo.bg;
-    g.fill();
-    g.lineWidth = 5;
-    g.strokeStyle = INK;
-    g.stroke();
-    for (const sh of logo.shapes) {
-      if (sh.fill === "none") continue;
-      g.fillStyle = sh.fill;
-      g.fill(new Path2D(sh.d));
-    }
-    g.restore();
-    return;
-  }
-  // IlluminatED's own "i" badge.
-  ellipse(g, x, y, s / 2, s / 2, INK);
-  g.fillStyle = "#f2d9a6";
-  g.font = `900 ${Math.round(s * 0.72)}px ui-sans-serif, system-ui, sans-serif`;
-  g.textAlign = "center";
-  g.textBaseline = "middle";
-  g.fillText("i", x, y + s * 0.04);
-}
-
 // ── Painter: draws one character frame onto any canvas ───────────────────
 export interface Painter {
   /** Draws a frame. t is seconds into the clip (walk cycles use the stride phase). */
   draw(g: CanvasRenderingContext2D, facing: Facing, clip: Clip, t: number, heightPx: number): void;
   width(heightPx: number): number;
 }
-
-// Crop boxes in sheet pixels (x, y, w, h).
-const CROP_FULL = [0, 2, 176, 172] as const;
-const CROP_NOPET = [16, 2, 112, 172] as const;
-const CROP_HEAD = [30, 12, 84, 84] as const;
 
 export async function createPainter(
  avatar:Avatar,{showPet=true,headOnly=false,logo}: {mood?:Mood;showPet?:boolean;headOnly?:boolean;logo?:string|null}={},
@@ -448,7 +350,6 @@ export function AvatarFigure({
   const a = useMemo(() => ({ ...DEFAULT_AVATAR, ...avatar }), [avatar]);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
-  const hasPet = showPet && !headOnly && !!a.pet && !NONE.has(a.pet);
   const height = size;
   const width = Math.round(size * .75);
   const key = JSON.stringify(a);

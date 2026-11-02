@@ -53,7 +53,7 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   play('idle');mixer.update(0);object.updateMatrixWorld(true);
   const bodyBounds = new THREE.Box3().setFromObject(object);
   if(outfit) {
-    try { await attachBlockyOutfit(object,outfit,a,load,extraOutfitMaterials,geometries); for(const node of bakedPresetGarments)node.removeFromParent(); }
+    try { await attachBlockyOutfit(object,outfit,a,load,extraOutfitMaterials); for(const node of bakedPresetGarments)node.removeFromParent(); }
     catch {
       // Keep the supplied character visible if an outfit cannot be downloaded.
       for(const [mesh,original] of originalBodies){geometries.delete(mesh.geometry);mesh.geometry.dispose();mesh.geometry=original;}

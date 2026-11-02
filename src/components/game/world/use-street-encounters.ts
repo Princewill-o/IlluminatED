@@ -1,7 +1,9 @@
 "use client";
 import {useCallback,useEffect,useRef,useState} from 'react';
+
 import {NPC_SPOTS,PLAYER} from './art';
 import {damageEnergy,readNeeds} from './use-needs';
+
 import {assessStreetEncounter,beginStreetEncounter,civilianDisposition,endCivilianThreat,recordStreetHit,type StreetEncounter,type StreetAssessment} from '@/game/core/civilian-conflict';
 
 /** Only local ambient residents can initiate these fictional encounters. */

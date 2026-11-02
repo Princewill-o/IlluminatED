@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
+
 import { BLOCKY_BASE } from "@/game/core/adventurers";
 import { blockyOutfitAsset, type BlockyOutfit } from "@/game/core/blocky-outfits";
 import { cosmeticById, type Avatar } from "@/game/core/cosmetics";
@@ -22,7 +23,7 @@ export function clothedBodyGeometry(mesh:THREE.SkinnedMesh):THREE.BufferGeometry
 export async function attachBlockyOutfit(
   object:THREE.Group,outfit:BlockyOutfit,avatar:Avatar,
   load:(url:string)=>Promise<GLTF>,
-  materials:Set<THREE.Material>,geometries:Set<THREE.BufferGeometry>,
+  materials:Set<THREE.Material>,
 ) {
   const [garments,reference]=await Promise.all([load(blockyOutfitAsset(outfit.id)!),load(`${BLOCKY_BASE}/blocky_01_hero.glb`)]);
   reference.scene.updateMatrixWorld(true);garments.scene.updateMatrixWorld(true);

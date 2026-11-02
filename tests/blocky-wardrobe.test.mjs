@@ -41,7 +41,7 @@ test('modular garment transforms attach to every supplied rig and move with its 
  const families=[...new Set(core.BLOCKY_OUTFITS.map(o=>o.family))];
  for(let i=0;i<characters.ADVENTURERS.length;i++){
   const model=characters.ADVENTURERS[i],source=await load(`/world3d/blocky-characters/${model.file}.glb`),outfit=core.BLOCKY_OUTFITS.find(o=>o.family===families[i%families.length]);
-  const materials=new Set(),geometries=new Set();await attachBlockyOutfit(source.scene,outfit,cosmetics.look({top:outfit.id}),loader,materials,geometries);
+  const materials=new Set();await attachBlockyOutfit(source.scene,outfit,cosmetics.look({top:outfit.id}),loader,materials);
   let attached=0;source.scene.traverse(node=>{if(node.name.startsWith('outfit-')){assert.equal(node.parent.isBone,true);attached++;const position=node.getWorldPosition(new THREE.Vector3());assert.ok(position.toArray().every(Number.isFinite));}});assert.equal(attached,json(`public/world3d/blocky-outfits/${outfit.file}`).nodes.length);
   const torso=source.scene.getObjectByName('mixamorigSpine1');const jacket=source.scene.getObjectByName('outfit-jacket'),before=jacket.getWorldPosition(new THREE.Vector3());torso.position.x+=.2;source.scene.updateMatrixWorld(true);assert.ok(jacket.getWorldPosition(new THREE.Vector3()).distanceTo(before)>.15);
   const mesh=source.scene.getObjectByProperty('isSkinnedMesh',true),original=mesh.geometry;const filtered=clothedBodyGeometry(mesh);assert.ok(filtered.index.count>0&&filtered.index.count<=original.index.count,model.id);assert.notEqual(filtered,original);if(!model.id.startsWith('head-preset-'))assert.ok(original.index.count>filtered.index.count,model.id);filtered.dispose();materials.forEach(m=>m.dispose());
