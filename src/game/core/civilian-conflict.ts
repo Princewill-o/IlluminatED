@@ -62,7 +62,7 @@ const finite = (value: number, fallback = 0) => Number.isFinite(value) ? value :
 /** A stable minority of civilians are agitated; staff and other players never are. */
 export function civilianDisposition(id: string, seed = 0, role: "civilian" | "staff" | "player" = "civilian") {
   return {
-    hostile: role === "civilian" && hash(`${id}:${seed}`) % 12 === 0,
+    hostile: role === "civilian" && hash(`${id}:${seed}`) % (id.startsWith("prison:") ? 4 : 12) === 0,
     warning: "Agitated civilian · keep your distance or walk away",
     warningRadiusTiles: 3.2,
     attackRangeTiles: 1.05,

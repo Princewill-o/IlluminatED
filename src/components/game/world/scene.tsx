@@ -1,9 +1,8 @@
 "use client";
 
-
 import { useState } from "react";
 
-import { Bike, BookOpen, Briefcase, Bus, CarFront, Footprints, Gamepad2, Heart, Smartphone, Siren, TrainFront, X } from "lucide-react";
+import { BookOpen, Footprints, Heart, TrainFront, X } from "lucide-react";
 
 import { ControllerLegend } from "./controller-legend";
 import { CutsceneBrand, sceneBrandFor } from "./cutscene-brand";
@@ -15,16 +14,36 @@ import { CutsceneBrand, sceneBrandFor } from "./cutscene-brand";
 export function SceneWipe({ show, label }: { show: boolean; label: string }) {
   const words = label.split(/\s+/).filter(Boolean);
   return (
-    <div aria-hidden={!show} className="pointer-events-none absolute inset-0 z-[100001] overflow-hidden">
-      <div className={`scene-panel scene-panel-gold ${show ? "scene-in" : ""}`} />
+    <div
+      aria-hidden={!show}
+      className="pointer-events-none absolute inset-0 z-[100001] overflow-hidden"
+    >
+      <div
+        className={`scene-panel scene-panel-gold ${show ? "scene-in" : ""}`}
+      />
       <div className={`scene-panel scene-panel-a ${show ? "scene-in" : ""}`} />
       <div className={`scene-panel scene-panel-b ${show ? "scene-in" : ""}`} />
-      <div className={`scene-title absolute inset-0 grid place-items-center ${show ? "scene-title-in" : ""}`}>
+      <div
+        className={`scene-title absolute inset-0 grid place-items-center ${show ? "scene-title-in" : ""}`}
+      >
         <div className="flex flex-col items-center gap-3 px-6 text-center">
-          <span className="scene-badge"><CutsceneBrand kind={sceneBrandFor(label)} compact /></span>
-          <span className="scene-eyebrow text-[11px] font-black tracking-[0.35em] text-[#f2d9a6] uppercase">Now entering</span>
+          <span className="scene-badge">
+            <CutsceneBrand kind={sceneBrandFor(label)} compact />
+          </span>
+          <span className="scene-eyebrow text-[11px] font-black tracking-[0.35em] text-[#f2d9a6] uppercase">
+            Now entering
+          </span>
           <span className="max-w-3xl text-4xl leading-[1.05] font-black text-white drop-shadow-[0_4px_20px_rgba(0,0,0,.35)] sm:text-6xl">
-            {words.map((word, i) => <span key={`${word}-${i}`} className="scene-word" style={{ animationDelay: `${0.22 + i * 0.06}s` }}>{word}{i < words.length - 1 ? " " : ""}</span>)}
+            {words.map((word, i) => (
+              <span
+                key={`${word}-${i}`}
+                className="scene-word"
+                style={{ animationDelay: `${0.22 + i * 0.06}s` }}
+              >
+                {word}
+                {i < words.length - 1 ? " " : ""}
+              </span>
+            ))}
           </span>
           <span className="scene-underline h-1.5 w-40 rounded-full bg-[#f2d9a6]" />
         </div>
@@ -33,119 +52,134 @@ export function SceneWipe({ show, label }: { show: boolean; label: string }) {
   );
 }
 
-const STEPS = [
+const GUIDE = [
   {
+    label: "Explore",
     icon: Footprints,
-    title: "You're one student in a big city",
-    body: "Use W A S D or ↑ ↓ ← → to walk. On a controller, move with the left stick or D-pad. On a phone or tablet, use the joystick. Clicks select menus and activities; they never move your character. Use the mouse wheel or zoom buttons to adjust the camera.",
-    hint: "Press E or Enter (controller Cross) near a glowing marker to enter. Press Space or controller Square to jump.",
+    title: "Choose your next step",
+    steps: [
+      "Walk to a building's entrance. Doors open as you approach; E or the highlighted button also works.",
+      "Open the map, choose a place and follow its marker. Return to the city leaves you outside the same doorway.",
+      "Meet residents, visit a community social or make a clip in Creator studio on your phone.",
+    ],
   },
   {
-    icon: Bus,
-    title: "Catch a bus and revise on the way",
-    body: "Stand at a bus stop to see live departures: the BL1 and the Superloop. Tick \"Revise on the way\" and you answer 3 questions while you ride. If your teacher has set homework, the bus quizzes you on those exact topics.",
-    hint: "Revising on the bus fills your Focus bar.",
-  },
-  {
-    icon: TrainFront,
-    title: "Take the Underground for long trips",
-    body: "Walk into any station, through the barriers and onto the platform. Choose a stop on the map, ride the carriage, and step off at the other end. Way out takes you back up to the street.",
-    hint: "Mind the gap.",
-  },
-  {
-    icon: Bike,
-    title: "Hire a bike when you're in a hurry",
-    body: "There's a dock beside every station. Santa Cycles, Humm and Lyme cost Clout and make you up to 2.7 times faster for five minutes. Bikes stay outside when you go indoors.",
-    hint: "Watch the road: cars and buses will bump you back onto the pavement.",
-  },
-  {
-    icon: CarFront,
-    title: "Drive safely through London",
-    body: "Take an owned car from Garage. ↑ accelerates, ↓ brakes then reverses, ← → steer and Space brakes. On a controller, use the left stick to steer and accelerate or reverse; hold Circle to brake. On a phone, use the driving joystick.",
-    hint: "Keep left. Brake before the stop line on amber and wait on red. Give way at zebra crossings. Collisions and road violations earn wanted stars.",
-  },
-  {
-    icon: Heart,
-    title: "Look after your needs",
-    body: "Energy, Focus, Mood, Hunger and Social drop through the day. Sleep and eat at home, study to raise Focus, and hang out with friends for Social. Low bars make everything harder.",
-    hint: "Your needs appear beside your portrait on larger screens.",
-  },
-  {
+    label: "Learn & work",
     icon: BookOpen,
-    title: "Homework is part of the game",
-    body: "Join your class with your teacher's code in Homework. Every set piece shows up in your task list here, and handing it in boosts your Mood and earns Clout. Practise it on the bus first.",
-    hint: "Tasks are top left: tap one to open it.",
+    title: "Build your next chapter",
+    steps: [
+      "Open Study on your phone for your subjects and homework. Practise a little, read the feedback and try again.",
+      "Visit a workplace reception to apply. Inside, approach a desk or counter to start your simulated shift.",
+      "Follow the university marker in each city to explore courses and check official open-day information.",
+    ],
   },
   {
-    icon: Briefcase,
-    title: "Practise work skills, earn Clout",
-    body: "Walk into a workplace and approach its reception or computer to start an activity. Read the learning material, try the role’s tasks and questions, then use the feedback to improve. Practise decision-making, communication and subject knowledge while earning Clout.",
-    hint: "Describe completed activities as simulated workplace practice. Real work experience comes from applying for and taking part in an employer placement.",
+    label: "Travel",
+    icon: TrainFront,
+    title: "Enjoy the journey",
+    steps: [
+      "At a station, choose a destination and board through an open train door. Each ride lasts two minutes.",
+      "Walk between carriages, change your view or study while the train travels.",
+      "Choose an owned car in Garage. Keep left on the motorway and follow your city's signs onto its slip road.",
+    ],
   },
   {
-    icon: Smartphone,
-    title: "Your city is on your phone",
-    body: "Open the phone to call fictional companies, find jobs and open home services. Visit the Study Quarter for the makerspace, reading garden and shared lobby.",
-    hint: "Use the phone button on the right. CPU residents are scenery, separate from connected players.",
-  },
-  {
-    icon: Siren,
-    title: "Actions have game consequences",
-    body: "Road violations, collisions and scuffles earn wanted stars. Police can stop you with a taser; serious offences may bring a direct trip to prison. Lower wanted levels get a knowledge challenge.",
-    hint: "In prison, cells are open: study, use completed homework, talk to inmates or find the service-maze exit. Guards add time if they catch you.",
-  },
-  {
-    icon: Gamepad2,
-    title: "Play live with others",
-    body: "We put you on the server nearest to you automatically. Head to the Games Hall at Battersea Power Station for a live Quiz Battle with everyone on your server.",
-    hint: "Fastest right answers score the most.",
+    label: "Wellbeing",
+    icon: Heart,
+    title: "Your choices matter",
+    steps: [
+      "Eat, rest, study and spend time with others to keep your needs healthy. At very low health, paramedics take you to hospital.",
+      "Give an agitated resident space. Shoving and collisions have game consequences; officers can follow you indoors.",
+      "In a fictional hearing, compare testimony with the recorded incident. Incorrect learning answers add review rounds; evidence determines the case.",
+    ],
   },
 ];
-
 export const TUTORIAL_KEY = "world-tutorial-v2";
-
-/** First-visit walkthrough of how London works (reopen any time with "How to play"). */
+/** A skimmable, on-demand guide rather than a mandatory instruction slideshow. */
 export function Tutorial({ onClose }: { onClose: () => void }) {
-  const [i, setI] = useState(0);
-  const s = STEPS[i];
-  const Icon = s.icon;
+  const [selected, setSelected] = useState(0);
+  const section = GUIDE[selected];
+  const Icon = section.icon;
   return (
-    <div className="absolute inset-0 z-[100004] grid place-items-center bg-black/55 p-2 sm:p-3">
-      <div role="dialog" aria-modal="true" aria-label="How to play" className="flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-2xl bg-[#f7f1e6] text-[#13203a]">
-        <div className="relative h-20 shrink-0 overflow-hidden bg-[#2b5fd9] sm:h-24 [@media(max-height:450px)]:h-14">
-          <div className="tutorial-rings absolute inset-0" />
-          <span key={i} className="tutorial-pop absolute top-1/2 left-1/2 grid size-12 place-items-center rounded-2xl bg-[#f6f2e8] shadow-lg">
-            <Icon className="size-6 text-[#2b5fd9]" aria-hidden />
+    <div className="absolute inset-0 z-[100004] grid place-items-center bg-[#101d35]/65 p-4 backdrop-blur-sm">
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label="City guide"
+        className="max-h-full w-full max-w-lg overflow-y-auto rounded-3xl bg-[#f5f4ef] p-5 text-[#13203a] shadow-2xl"
+      >
+        <header className="flex items-center gap-3">
+          <span className="grid size-12 place-items-center rounded-2xl bg-[#2b5fd9] text-white">
+            <Icon aria-hidden className="size-6" />
           </span>
-          <button type="button" onClick={onClose} aria-label="Skip the tutorial" className="jelly absolute top-2 right-2 grid size-11 place-items-center rounded-full bg-white/90">
-            <X className="size-4" />
-          </button>
-        </div>
-        <div key={`t${i}`} className="tutorial-text min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
-          <p className="text-xs font-black tracking-[0.25em] text-[#2b5fd9] uppercase">
-            How to play · {i + 1} of {STEPS.length}
-          </p>
-          <h2 className="mt-1 text-xl font-black">{s.title}</h2>
-          <p className="mt-2 text-sm leading-relaxed">{s.body}</p>
-          <p className="mt-3 rounded-xl bg-white px-3 py-2 text-xs font-bold">{s.hint}</p>
-          {(i === 0 || i === 4) && <div className="mt-3 rounded-xl bg-[#183b35] p-3 text-xs text-white"><ControllerLegend driving={i === 4} /></div>}
-          <div className="mt-4 flex items-center gap-1.5">
-            {STEPS.map((_, k) => (
-              <span key={k} className={`h-1.5 flex-1 rounded-full ${k <= i ? "bg-[#2b5fd9]" : "bg-[#13203a]/15"}`} />
-            ))}
+          <div className="flex-1">
+            <p className="text-[10px] font-bold tracking-widest text-[#527090] uppercase">
+              Your city companion
+            </p>
+            <h2 className="text-xl font-black">What would you like to do?</h2>
           </div>
-        </div>
-        <div className="flex shrink-0 gap-2 border-t border-[#13203a]/10 p-3 pt-2">
-          {i > 0 && (
-            <button type="button" onClick={() => setI(i - 1)} className="jelly min-h-11 flex-1 rounded-full bg-white px-3 py-2 text-sm font-black">
-              Back
-            </button>
-          )}
-          <button type="button" onClick={() => (i < STEPS.length - 1 ? setI(i + 1) : onClose())} className="jelly min-h-11 flex-1 rounded-full bg-[#2b5fd9] px-3 py-2 text-sm font-black text-white">
-            {i < STEPS.length - 1 ? "Next" : "Start playing"}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close city guide"
+            className="grid size-11 place-items-center rounded-full bg-white"
+          >
+            <X className="size-5" />
           </button>
-        </div>
-      </div>
+        </header>
+        <nav aria-label="Guide topics" className="my-5 flex flex-wrap gap-2">
+          {GUIDE.map((item, index) => (
+            <button
+              key={item.label}
+              type="button"
+              aria-pressed={selected === index}
+              onClick={() => setSelected(index)}
+              className={
+                selected === index
+                  ? "min-h-11 rounded-xl bg-[#2b5fd9] px-3 text-sm font-bold text-white"
+                  : "min-h-11 rounded-xl bg-white px-3 text-sm font-bold"
+              }
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        <h3 className="font-black">{section.title}</h3>
+        <ol className="mt-3 space-y-3">
+          {section.steps.map((text, index) => (
+            <li
+              key={text}
+              className="flex gap-3 rounded-2xl bg-white p-3 text-sm leading-relaxed"
+            >
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-blue-50 font-bold text-blue-700">
+                {index + 1}
+              </span>
+              <span>{text}</span>
+            </li>
+          ))}
+        </ol>
+        <details className="mt-4 rounded-2xl bg-[#13203a] p-4 text-white">
+          <summary className="cursor-pointer text-sm font-bold">
+            Movement & controls
+          </summary>
+          <p className="mt-3 text-xs leading-relaxed">
+            Walk: WASD / arrow keys. Interact: E. Jump: Space. Driving: ↑
+            accelerate, ↓ brake / reverse, ← → steer, Space brake. On phones,
+            use the joystick and labelled action buttons. Camera controls change
+            your view.
+          </p>
+          <div className="mt-3 text-xs">
+            <ControllerLegend />
+          </div>
+        </details>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 min-h-12 w-full rounded-2xl bg-[#2b5fd9] font-bold text-white"
+        >
+          Back to my city
+        </button>
+      </section>
     </div>
   );
 }

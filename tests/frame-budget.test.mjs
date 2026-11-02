@@ -23,7 +23,7 @@ test("returning from a suspended tab cannot build a backlog of catch-up frames",
 
 test("the single graphics budget retains all high-detail residents, cyclists and lights",()=>{
   const budget=graphicsBudget();
-  assert.equal(budget.residents,14);
-  assert.equal(budget.cyclists,4);
+  assert.equal(budget.residents,64);
+  assert.equal(budget.cyclists,8);
   assert.equal(budget.lights,2);
 });

@@ -134,6 +134,8 @@ export function MobileLife({
   onGarage,
   onRecord,
   onLeave,
+  onStudio,
+  onParty,
 }: {
   me: Me;
   job: ActiveJob | null;
@@ -156,6 +158,8 @@ export function MobileLife({
   onGarage: () => void;
   onRecord: (text: string) => void;
   onLeave: () => void;
+  onStudio?: () => void;
+  onParty?: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("life");
   const [search, setSearch] = useState("");
@@ -599,6 +603,8 @@ export function MobileLife({
                 {resting ??
                   "Take a short pause to replenish your in-game needs."}
               </p>
+              <h2 className={styles.sectionTitle}>Create and connect</h2>
+              <div className={styles.group}><Row title="Creator studio" detail="Animate, record, review and build your in-game channel" icon={<Sparkles size={iconSize}/>} onClick={onStudio}/><Row title="Community socials" detail="Find the dance floor, people and study challenges" icon={<Users size={iconSize}/>} onClick={onParty}/></div>
               <h2 className={styles.sectionTitle}>Your platform</h2>
               <div className={styles.group}>
                 <Row

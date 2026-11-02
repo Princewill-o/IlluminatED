@@ -1,0 +1,60 @@
+.frame {
+  position: absolute;
+  inset: 0;
+  z-index: 100004;
+  pointer-events: none;
+  overflow: hidden;
+  background: #dce6df;
+}
+.frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.frame[data-ready="true"] {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.label {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 18px;
+  background: #102434e6;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+.door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  left: 0;
+  background: linear-gradient(90deg, #203347c9, #54728b80);
+  border: 1px solid #ffffff40;
+  animation: open-door 0.75s ease forwards;
+  transform-origin: left;
+}
+.door:nth-of-type(2) {
+  left: auto;
+  right: 0;
+  transform-origin: right;
+}
+@keyframes open-door {
+  to {
+    transform: perspective(900px) rotateY(95deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .door {
+    display: none;
+  }
+  .frame[data-ready="true"] {
+    transition: none;
+  }
+}

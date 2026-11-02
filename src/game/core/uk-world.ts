@@ -1,4 +1,6 @@
 import type { Built, Thing } from "./london";
+import { MOTORWAY_CORRIDORS, corridorScene, corridorMap } from "./motorway-corridors";
+import { universitiesInCity } from "./universities";
 import type { Portal, WorldMap } from "./world";
 
 /** Stylised playable districts: road names are researched, distances are compressed. */
@@ -112,7 +114,7 @@ const MANCHESTER_ROAD =
   "https://www.gov.uk/government/news/major-roads-investment-in-the-north-west";
 const SCOTTISH_A1 =
   "https://www.transport.gov.scot/road-order/the-north-east-north-west-and-south-east-scotland-no4-and-south-west-no3-trunk-roads-temporary-prohibitions-of-traffic-and-overtaking-and-temporary-speed-restrictions-order-2024/";
-export const UK_ROUTES: UKRoute[] = [
+const SOURCE_ROUTES: UKRoute[] = [
   {
     id: "london-orbital",
     from: "city",
@@ -187,7 +189,9 @@ export const UK_ROUTES: UKRoute[] = [
     ],
   },
 ];
+export const UK_ROUTES: UKRoute[] = SOURCE_ROUTES.flatMap(route => route.from === "m25" && route.to !== "city" ? [{...route,to:`road-${route.to}`},{...route,id:`${route.id}-city`,from:`road-${route.to}`}]:[route]);
 export const UK_SCENES = [
+  ...MOTORWAY_CORRIDORS.map(route=>`road-${route.city}`),
   "kent",
   "nottingham",
   "birmingham",
@@ -245,7 +249,7 @@ const portal = (
   to: { kind: "map", mapId, label },
 });
 const regionIds = new Set<string>(
-  UK_SCENES.filter((id) => id !== "m25" && id !== "rotherhithe"),
+  UK_PLACES.filter(place=>place.id!=="city").map(place=>place.id),
 );
 export const isUKScene = (id: string) =>
   UK_SCENES.some((scene) => scene === id);
@@ -427,7 +431,7 @@ function regionScene(id: string): Built {
     g.fill(x + 6, y + h, 2, 12, "_");
     things.push({
       kind: "building",
-      id: `uk-${id}-public-${i}`,
+      id: i===0&&universitiesInCity(id)[0] ? `university-site-${universitiesInCity(id)[0].id}` : `uk-${id}-public-${i}`,
       x,
       y,
       w,
@@ -436,7 +440,7 @@ function regionScene(id: string): Built {
       colour: a.wall[(i + 2) % 4],
       roof: a.roof[i % 3],
       style: i === 0 ? "stone" : "office",
-      label: publicLabels[id][i],
+      label: i===0 ? universitiesInCity(id)[0]?.fullName??publicLabels[id][i] : publicLabels[id][i],
       accent: ukPlace(id)!.accent,
     });
   }
@@ -646,7 +650,7 @@ export function buildUKScene(id: string): Built | null {
         ? motorwayScene()
         : id === "rotherhithe"
           ? tunnelScene()
-          : regionScene(id),
+          : id.startsWith("road-") ? corridorScene(id)! : regionScene(id),
     );
   return sceneCache.get(id)!;
 }
@@ -743,6 +747,7 @@ function homeMap(id: string, region: string, index: number): WorldMap | null {
 }
 export function ukWorldMap(id: string): WorldMap | null {
   if (mapCache.has(id)) return mapCache.get(id)!;
+  if(id.startsWith("road-")){const corridor=corridorMap(id);if(corridor)mapCache.set(id,corridor);return corridor;}
   const home =
     /^uk-home-(kent|nottingham|birmingham|manchester|edinburgh)-(\d+)$/.exec(
       id,
@@ -763,6 +768,8 @@ export function ukWorldMap(id: string): WorldMap | null {
           y = th.y + th.h;
         if (th.id.startsWith("uk-home-"))
           portals.push(portal(th.id, x, y, 2, 1, `Enter ${th.label}`, th.id));
+        else if(th.id.startsWith("university-site-")) portals.push(portal(th.id,x,y,2,1,`Enter ${th.label}`,`university-${th.id.slice(16)}`));
+        else if(th.id.endsWith("public-1")) portals.push(portal(`party-${id}`,x,y,2,1,"Community social · music and challenges",`party-${id}`));
         else
           portals.push({
             id: th.id,
@@ -779,11 +786,11 @@ export function ukWorldMap(id: string): WorldMap | null {
         2,
         2,
         `M25 · ${place!.roadLabels.join(" / ")} · London`,
-        "m25",
+        `road-${id}`,
       ),
     );
     portals.push(
-      portal("orbital-east", 89, 57, 2, 2, "Return road · M25 orbital", "m25"),
+      portal("orbital-east", 89, 57, 2, 2, "Motorway · London", `road-${id}`),
     );
   } else if (id === "m25") {
     const exits = [
@@ -800,9 +807,9 @@ export function ukWorldMap(id: string): WorldMap | null {
       )!;
       const gateId =
         exit.id === "city" ? "london-return" : `junction-${exit.id}`;
-      portals.push(portal(gateId, exit.x, 29, 3, 2, route.label, exit.id));
+      portals.push(portal(gateId, exit.x, 29, 3, 2, route.label, exit.id === "city" ? "city" : `road-${exit.id}`));
       portals.push(
-        portal(`${gateId}-westbound`, exit.x, 41, 3, 2, route.label, exit.id),
+        portal(`${gateId}-westbound`, exit.x, 41, 3, 2, route.label, exit.id === "city" ? "city" : `road-${exit.id}`),
       );
     }
   } else {
@@ -882,8 +889,10 @@ export function ukArrival(
   }
   const map = ukWorldMap(mapId);
   if (!map) return null;
+  if(mapId.startsWith("road-")){return fromMapId === "m25" ? point(24,30) : point(680,58);}
+  if(fromMapId.startsWith("road-") && regionIds.has(mapId))return point(9,21);
   if (mapId === "m25" && fromMapId !== "city") {
-    const junction=map.portals.find(p=>p.to.kind === "map" && p.to.mapId===fromMapId && p.id.endsWith("-westbound"));
+    const junction=map.portals.find(p=>p.to.kind === "map" && p.to.mapId===(regionIds.has(fromMapId)?`road-${fromMapId}`:fromMapId) && p.id.endsWith("-westbound"));
     if(junction)return {x:junction.rect.x+junction.rect.w/2,y:42*TILE};
   }
   if (mapId === "rotherhithe" && fromMapId === "city")

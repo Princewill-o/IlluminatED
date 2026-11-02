@@ -34,6 +34,7 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
+import { roadCruiseSpeed, crashImpact } from "@/game/core/living-world";
 import type { WorldNavigation } from "@/game/core/navigation";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
@@ -238,7 +239,7 @@ export function WorldView({
   map: WorldMap;
   serverId: string;
   me: Me;
-  arriveAt?: { x: number; y: number; heading?: number };
+  arriveAt?: { x: number; y: number; heading?: number; speed?: number };
   onPortal: (portal: Portal) => void;
   onRoom?: (room: string | null) => void;
   onChangeServer: () => void;
@@ -290,7 +291,7 @@ export function WorldView({
   const offenceCallback = useRef(onDrivingOffence);
   offenceCallback.current = onDrivingOffence;
   const roadCooldown = useRef(createRoadCooldown());
-  const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false, heading: arriveAt?.heading ?? 0, speed: 0 });
+  const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false, heading: arriveAt?.heading ?? 0, speed: arriveAt?.speed ?? 0 });
   const myChat = useRef<{ text: string; until: number } | null>(null);
   const [near, setNear] = useState<Portal | null>(null);
   const [sheet, setSheet] = useState(false);
@@ -331,9 +332,9 @@ export function WorldView({
   // Collecting a car/parking is an explicit move. Reset momentum before resuming.
   useEffect(() => {
     const requested = arriveAt ?? pos.current;
-    const candidate = { ...requested, heading: arriveAt?.heading ?? pos.current.heading, speed: 0 };
+    const candidate = { ...requested, heading: arriveAt?.heading ?? pos.current.heading, speed: arriveAt?.speed ?? 0 };
     const destination = car ? motorwayCarArrival(map, vehicleFits(map, candidate) ? candidate : nearestDrivingSpot(map, requested)) : safeSpot(map, requested.x, requested.y);
-    if (destination) Object.assign(pos.current, destination, { speed: 0, walking: false });
+    if (destination) Object.assign(pos.current, destination, { speed: car ? arriveAt?.speed ?? 0 : 0, walking: false });
     keys.current.clear();
     stick.current = { x: 0, y: 0 };
     target.current = null;
@@ -428,6 +429,8 @@ export function WorldView({
     frame = requestAnimationFrame(poll);
     return () => cancelAnimationFrame(frame);
   }, [enter]);
+  const [showControls,setShowControls]=useState(false);
+  const portalCooldown = useRef(performance.now()+1800);
   const portalCallback = useRef(onPortal);
   portalCallback.current = onPortal;
 
@@ -533,10 +536,14 @@ export function WorldView({
         }
         return { x, y, heading, speed: AUTOPILOT.speed };
       })() : null;
-      const driven = auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: 96 * speedRef.current }, dt,
+      const driven = auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: roadCruiseSpeed(map.id, speedRef.current) }, dt,
         obstacles, (impact) => { collision = impact; }) : null);
-      if (driven && !auto && map.art === "london" && !pausedRef.current) {
-        const violation = checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) });
+      if (collision && !pausedRef.current) {
+        const impact = crashImpact(collision.speed, collision.kind === "pedestrian");
+        if (impact.damage) window.dispatchEvent(new CustomEvent("illuminated:vehicle-crash", { detail: { ...impact, speed: collision.speed } }));
+      }
+      if (driven && !auto && (map.art === "london" || isUKScene(map.id)) && !pausedRef.current) {
+        const violation = map.id === "city" || collision ? checkRoadViolation(before, driven, Date.now(), { collision, pedestrians: NPC_SPOTS.map(person => ({ x: person.x / TILE, y: person.y / TILE })) }) : null;
         if (violation && acceptRoadViolation(roadCooldown.current, violation, Date.now())) {
           play("door", soundOn());
           offenceCallback.current?.(violation);
@@ -710,6 +717,10 @@ export function WorldView({
           stick.current = { x: 0, y: 0 };
           portalCallback.current(boardingPortal);
         }
+      }
+      if (portal?.to.kind === "map" && moved && !pausedRef.current && now > portalCooldown.current) {
+        const enters = driving || map.kind !== "city" || dy < -.05;
+        if (enters) {portalCooldown.current=now+2500;portalCallback.current(portal);}
       }
       if (portal?.id !== nearRef.current?.id) {
         nearRef.current = portal;
@@ -948,10 +959,10 @@ export function WorldView({
           stick.current = { x, y };
           if (x || y) target.current = null;
         }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}{gamepadConnected && <span className="max-w-52 rounded-lg bg-black/70 p-2 text-[10px] leading-relaxed text-white"><ControllerLegend driving={Boolean(car)} connected /></span>}</div> : (
-          <p className="pointer-events-none rounded-xl bg-black/70 px-3 py-2 text-[10px] leading-relaxed text-[#f0eee9] sm:text-xs">
+          <div className="rounded-xl bg-black/70 px-3 py-2 text-[10px] leading-relaxed text-[#f0eee9] sm:text-xs"><button type="button" aria-expanded={showControls} onClick={()=>setShowControls(v=>!v)} className="min-h-9 font-bold">{showControls?"Hide controls":"Controls"}</button>{showControls&&<p>
             {car ? "W / ↑ accelerate · S / ↓ reverse · A D / ← → steer · Space brake" : "W A S D or ↑ ↓ ← → move · E / Enter interact"}
             <span className="mt-1 block"><ControllerLegend driving={Boolean(car)} connected={gamepadConnected} /></span>
-          </p>
+          </p>}</div>
         )}
       </HudSlot>
       <HudSlot area="br" order={5}>

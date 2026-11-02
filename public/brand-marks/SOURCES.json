@@ -1,0 +1,51 @@
+{
+  "source": "Mixed sources: Simple Icons assets are CC0. NHS, Metropolitan Police and Royal Arms marks are protected identifiers with separate terms; see individual entries. No affiliation or endorsement is implied.",
+  "retrieved": "2026-11-02",
+  "icons": [
+    {
+      "name": "youtube",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/youtube.svg"
+    },
+    {
+      "name": "tiktok",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/tiktok.svg"
+    },
+    {
+      "name": "instagram",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/instagram.svg"
+    },
+    {
+      "name": "google",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/google.svg"
+    },
+    {
+      "name": "nationalrail",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/nationalrail.svg"
+    },
+    {
+      "name": "transportforlondon",
+      "status": 200,
+      "source": "https://raw.githubusercontent.com/simple-icons/simple-icons/develop/icons/transportforlondon.svg"
+    },
+    {
+      "name": "nhs",
+      "source": "https://www.nhs.uk/",
+      "note": "Unaltered NHS header mark; NHS identity is a protected trademark, not covered by Simple Icons CC0."
+    },
+    {
+      "name": "metropolitan-police",
+      "source": "https://www.met.police.uk/SysSiteAssets/foi-media/metropolitan-police/disclosure_2025/january_2025/copy-met-brand-guidelines.pdf",
+      "note": "Unaltered cover-page mark, extracted from the published version 3.3 branding guide. Protected trademark; no partnership or endorsement."
+    },
+    {
+      "name": "uk-crest",
+      "source": "https://www.gov.uk/assets/collections/govuk_publishing_components/crests/org_crest_18px_x2-d7e9ca2aac7d1a9dacc57634cb4acf442e21f2744086a105cc8ec3618f13aeee.png",
+      "note": "GOV.UK organisation crest as used on the HMCTS organisation page. Royal Arms are excluded from the Open Government Licence; no affiliation implied."
+    }
+  ]
+}

@@ -118,11 +118,11 @@ export function driveStep(map: WorldMap, state: DrivingState, input: DrivingInpu
   const count = Math.max(1, Math.ceil(dt / (1 / 120)));
   const tick = dt / count;
   const throttle = clamp(input.throttle, -1, 1), steer = clamp(input.steer, -1, 1);
-  const maxSpeed = clamp(input.maxSpeed ?? 260, 90, 380);
+  const maxSpeed = clamp(input.maxSpeed ?? 260, 90, map.id === "m25" || map.id?.startsWith("road-") ? 840 : 380);
   for (let i = 0; i < count; i++) {
     const reversingPedal = throttle !== 0 && Math.sign(throttle) !== Math.sign(next.speed) && Math.abs(next.speed) > 2;
     const speed = input.brake || reversingPedal ? approach(next.speed, 0, 280 * tick)
-      : throttle ? clamp(next.speed + throttle * 150 * tick, -maxSpeed * 0.35, maxSpeed)
+      : throttle ? clamp(next.speed + throttle * (maxSpeed > 380 ? 300 : 150) * tick, -maxSpeed * 0.35, maxSpeed)
       : approach(next.speed, 0, 85 * tick);
     const heading = next.heading + steer * 1.7 * Math.min(Math.abs(speed) / 70, 1) * Math.sign(speed) * tick;
     const candidate = { x: next.x + Math.cos(heading) * speed * tick, y: next.y + Math.sin(heading) * speed * tick, heading, speed };

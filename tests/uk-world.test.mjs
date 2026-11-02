@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const uk = projectData("src/game/core/uk-world.ts");
-const { blocked, TILE, CITY } = projectData("src/game/core/world.ts");
+const { universityInteriorMap, blocked, TILE, CITY } = projectData("src/game/core/world.ts");
 const regions = ["kent", "nottingham", "birmingham", "manchester", "edinburgh"];
 function reachable(map) {
   const s = [Math.floor(map.spawn.x / TILE), Math.floor(map.spawn.y / TILE)],
@@ -97,7 +97,7 @@ test("all destinations and road connections are reversible, without pretending K
         `${id}: ${p.id}`,
       );
       if (p.to.kind !== "map" || p.to.mapId === "city") continue;
-      const next = uk.ukWorldMap(p.to.mapId);
+      const next = uk.ukWorldMap(p.to.mapId) ?? (p.to.mapId.startsWith("university-")?universityInteriorMap(p.to.mapId.slice(11)):p.to.mapId.startsWith("party-")?projectData("src/game/core/party.ts").partyMap(p.to.mapId.slice(6)):null);
       assert.ok(next, p.to.mapId);
       assert.ok(
         next.portals.some(
@@ -205,7 +205,7 @@ test("M25 is a long six-lane separated motorway, with reversible exits and endle
   assert.equal(uk.loopRoadPosition("m25", 40, 35 * TILE), null);
   for (const id of ["city", ...regions])
     assert.equal(
-      map.portals.filter((p) => p.to.kind === "map" && p.to.mapId === id)
+      map.portals.filter((p) => p.to.kind === "map" && p.to.mapId === (id === "city" ? id : `road-${id}`))
         .length,
       2,
     );

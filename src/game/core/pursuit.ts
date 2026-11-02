@@ -102,7 +102,7 @@ export function startPursuit(map: WorldMap, player: Point): Pursuit {
       Math.hypot(a.x - player.x, a.y - player.y) -
       Math.hypot(b.x - player.x, b.y - player.y),
   );
-  const target = roads[0] ?? safeSpot(map, player.x, player.y);
+  const target = roads[0] ?? safeSpot(map, map.spawn.x, map.spawn.y);
   let car = target,
     route: Point[] = [];
   for (const candidate of roads

@@ -2,6 +2,7 @@ import { buildCityCentre } from "./city-centre";
 import { COMPANIES } from "./companies";
 import { expandLondon } from "./london-districts";
 import { expandOutskirts } from "./london-outskirts";
+import { universitiesInCity } from "./universities";
 
 /**
  * London: the main IlluminatED world. A stylised map of central London with the
@@ -852,6 +853,10 @@ export function buildLondon(): Built {
     routes,
   };
   cache = buildCityCentre(expandOutskirts(expandLondon(cache, 176, 136), LONDON_COLS, LONDON_ROWS));
+  const plots = cache.things.filter((thing):thing is Extract<Thing,{kind:"building"}>=>thing.kind==="building"&&!thing.companyId&&["district-campus-labs","district-campus-library","district-campus-studios"].includes(thing.id));
+  const extra = cache.things.find((thing):thing is Extract<Thing,{kind:"building"}>=>thing.kind==="building"&&!thing.companyId&&thing.style==="stone"&&thing.id.startsWith("district-")&&!thing.id.includes("hospital")&&!plots.includes(thing));
+  if(extra)plots.push(extra);
+  universitiesInCity("city").forEach((university,index)=>{const plot=plots[index];if(plot){plot.id=`university-site-${university.id}`;plot.label=university.fullName;plot.accent=university.colour;}});
   return cache;
 }
 

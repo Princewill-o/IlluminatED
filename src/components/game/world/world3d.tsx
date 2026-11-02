@@ -29,6 +29,7 @@ import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
 import { createNavigationTrail } from "./navigation-trail";
+import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { softSunShadows } from "./soft-sun-shadows";
 import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
@@ -52,6 +53,7 @@ import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, int
 import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
 import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
 import { PRISON_LOOK } from "@/game/core/law";
+import { residentActivity, residentMotionSeconds } from "@/game/core/living-world";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
 import type { WorldNavigation } from "@/game/core/navigation";
@@ -2019,6 +2021,8 @@ export function World3D({
   const newsRef = useRef(news.headlines);
   newsRef.current = news.headlines;
   const [zoom, setZoom] = useState(1);
+  const [view,setView]=useState<"follow"|"wide"|"overhead">("follow");
+  const viewRef=useRef(view);viewRef.current=view;
   const zoomRef = useRef(1);
   zoomRef.current = zoom;
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -2059,6 +2063,8 @@ export function World3D({
     const scene = new THREE.Scene();
     sceneRef.current = scene;
     const navigationTrail=createNavigationTrail(scene,bend);
+    let firstPaint = true;
+    const releaseCapture = registerSceneCapture(()=>{presentation.render();return renderer.domElement.toDataURL("image/jpeg",.85);});
     const sky = highland ? "#c8e2ef" : "#dce6df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
@@ -2548,7 +2554,8 @@ export function World3D({
       const body=makeBody({...npcLook(70+i),top:i===0?"top-apron":i===1?"top-polo":"top-hoodie"},null,true);
       body.root.position.set(person.x+.5,.12,person.y+.5);
       const label=sign(person.name,{bg:map.accent,fg:"#fff8e7",w:2.6,h:.35});
-      label.position.set(0,2.55,0);body.root.add(label);scene.add(body.root);
+      label.position.set(0,2.55,0);body.root.add(label);
+      scene.add(body.root);
       return {person,body};
     });
     // People who work here: the judge in court, guards in prison, a doctor at the hospital.
@@ -2595,7 +2602,7 @@ export function World3D({
       const regionalCount=ukTrafficCount(map.id);
       const kinds = london ? ["bus", "taxi", "sedan", "bus", "van", "delivery"] : Array.from({length:regionalCount},(_,i)=>["sedan","suv","taxi","sports","hatchback"][i%5]);
       kinds.forEach((k, i) => {
-        const route = i % (ukScene ? (map.id==="m25"?L.routes.length:L.routes.length*2) : 3);
+        const route = i % (ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:L.routes.length*2) : 3);
         const g = new THREE.Group();
         if (k === "bus") {
           const b = busModel(BUS_ROUTE_CODES[route]);
@@ -2603,7 +2610,7 @@ export function World3D({
           g.userData.label = BUS_ROUTE_CODES[route];
         } else void placeCar(g, k);
         scene.add(g);
-        traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/(map.id==="m25"?L.routes.length:2))/(kinds.length/(map.id==="m25"?L.routes.length:2)) : (i * 0.173) % 1, distance: 0, speed: ukScene ? (map.id==="m25"?5.8:map.id==="rotherhithe"?3.5:2.8) : [2.6, 2.8, 2.5][route] });
+        traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2))/(kinds.length/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2)) : (i * 0.173) % 1, distance: 0, speed: ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))||map.id.startsWith("road-")?15+(i%5)*1.5:map.id==="rotherhithe"?5:3.6) : [2.6, 2.8, 2.5][route] });
       });
       for (const coach of london ? COACHES.slice(0, 1) : []) {
         const obj=coachModel(coach.id);bendAll(obj);scene.add(obj);
@@ -2628,13 +2635,16 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = ukAmbientPeople(map.id, map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 14 : 10));
+    const residentLimit = ukAmbientPeople(map.id, map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 64 : 34));
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
-      const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i), null, true);
+      const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : {...npcLook(i),held:i%5===0?"held-phone":i%5===1?"held-book":"held-none"}, null, true);
       const speech = speechMark(); body.root.add(speech);
+      const initial=residentPose(path,window.matchMedia("(prefers-reduced-motion: reduce)").matches?0:residentMotionSeconds(i,Date.now()),i*3.71);body.root.position.set(initial.x,0,initial.z);
       scene.add(body.root);
       return {
         body,
+        activity: "walk",
+        activityPoint: new THREE.Vector3(),
         speech,
         identity: residentIdentity(map.id, path),
         path,
@@ -2653,6 +2663,15 @@ export function World3D({
         talkingAnimation: false,
       };
     });
+    const officeWorkers: Body[] = [];
+    if (map.kind === "office") {
+      for (let y = 1; y < map.rows - 1 && officeWorkers.length < 26; y++) for (let x = 1; x < map.cols - 1 && officeWorkers.length < 26; x++) {
+        if (map.tiles[y]?.[x] !== "c" || !"dkt".includes(map.tiles[y - 1]?.[x] ?? "")) continue;
+        const body = makeBody({...npcLook(130 + officeWorkers.length), top:"top-suit", held:"held-none"}, null, true);
+        body.root.position.set(x + .5, 0, y + .5); body.root.rotation.y = Math.PI;
+        scene.add(body.root); officeWorkers.push(body);
+      }
+    }
     const crossingNpcs = london ? crossingPedestrianPoses(Date.now()).map((pose, i) => {
       const body = makeBody(npcLook(90 + i)); scene.add(body.root);
       return { id: pose.id, body };
@@ -2704,6 +2723,19 @@ export function World3D({
       }
     });
 
+    const partyLights:THREE.PointLight[]=[];
+    const disco=map.id.startsWith("party-")?new THREE.Mesh(new THREE.IcosahedronGeometry(.65,1),new THREE.MeshStandardMaterial({color:"#d0d9ed",metalness:.85,roughness:.2})):null;
+    if(disco){
+      disco.position.set(18,4.4,12);scene.add(disco);
+      for(const [index,colour] of ["#c74cff","#48cce6"].entries()){const light=new THREE.PointLight(colour,9,20,2);light.position.set(index?24:12,3.5,11);scene.add(light);partyLights.push(light);}
+      for(let x=11;x<26;x+=3)for(let z=6;z<18;z+=3){const tile=new THREE.Mesh(new THREE.PlaneGeometry(2.7,2.7),new THREE.MeshStandardMaterial({color:(x+z)%2?"#6b57b7":"#278baf",emissive:(x+z)%2?"#38295e":"#153d52",roughness:.7}));tile.rotation.x=-Math.PI/2;tile.position.set(x,.03,z);scene.add(tile);}
+    }
+    const sparksGeometry=new THREE.BufferGeometry(),sparkPositions=new Float32Array(24*3);
+    sparksGeometry.setAttribute("position",new THREE.BufferAttribute(sparkPositions,3));
+    const sparks=new THREE.Points(sparksGeometry,new THREE.PointsMaterial({color:"#ffd88d",size:.12,transparent:true,depthWrite:false}));sparks.visible=false;scene.add(sparks);
+    let crashedAt=-Infinity;const crashOrigin=new THREE.Vector3();
+    const onCrash=(event:Event)=>{if(((event as CustomEvent).detail?.speed??0)<70)return;crashedAt=performance.now();crashOrigin.set(PLAYER.x/TILE,.45,PLAYER.y/TILE);};
+    window.addEventListener("illuminated:vehicle-crash",onCrash);
     // ── Scuffles: you swing, the nearest person goes down ──
     let swingUntil = 0;
     const onFight = (event: Event) => {
@@ -2731,6 +2763,8 @@ export function World3D({
     };
     window.addEventListener("illuminated:civilian-attack",onCivilianAttack);
     window.addEventListener("illuminated:fight", onFight);
+    const dance=()=>{swingUntil=performance.now()+10000;me.char?.play("dance");};
+    window.addEventListener("illuminated:dance",dance);
     // ── Jumping: Space (or the on-screen jump button) for a springy hop ──
     let jumpAt = 0;
     const onJump = () => {
@@ -2754,11 +2788,12 @@ export function World3D({
     const responseCar = new THREE.Group();
     let policeRig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null = null;
     let wasTased = false;
-    const responders = london || highland || ukScene && map.id !== "m25" && map.id !== "rotherhithe" ? [makeBody({...npcLook(51),head:"head-blocky-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(52),head:"head-blocky-classic-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
+    const responders = [makeBody({...npcLook(51),head:"head-blocky-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(52),head:"head-blocky-classic-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})];
     if (london || highland || ukScene && map.id !== "m25" && map.id !== "rotherhithe") {
       void createEmergencyVehicle("police",load,bendAll).then(rig=>{if(disposed){rig.dispose();return;}policeRig=rig;responseCar.add(rig.root);}).catch(()=>{});
-      scene.add(responseCar,...responders.map(b=>b.root));
+      scene.add(responseCar);
     }
+    scene.add(...responders.map(body=>body.root));
     const carLast = new THREE.Vector3();
     // Delivery courier (home only): hi-vis, cap, carrying a parcel.
     const courier = map.kind === "home" ? makeBody({ ...npcLook(61), hat: "hat-cap", topColor: "topcol-orange" }) : null;
@@ -3036,7 +3071,8 @@ export function World3D({
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
       const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: mx, z: mz }, cameraZoom, true);
       FOCUS.value.set(framing.x, 0, framing.z);
-      camera.position.set(framing.x, framing.height + meZ, framing.z + framing.distance);
+      const view=viewRef.current;
+      camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
       camera.lookAt(framing.x, framing.target + meZ, framing.z);
       const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
       camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
@@ -3255,6 +3291,7 @@ export function World3D({
         NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
         body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
       });
+      officeWorkers.forEach(body => { body.char?.play("typing"); });
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE, ...n.identity });
@@ -3286,8 +3323,8 @@ export function World3D({
           return;
         }
         if (n.defendUntil) { n.defendUntil = 0; n.body.char?.play("idle"); }
-        const pose = residentPose(n.path, reduce ? 0 : secs, n.offset);
-        n.body.root.visible = i < Math.max(4, residentLimit - onlineCount);
+        const pose = residentPose(n.path, reduce ? 0 : residentMotionSeconds(i,Date.now()), n.offset);
+        n.body.root.visible = i < Math.max(24, residentLimit - Math.floor(onlineCount / 2));
         if (!n.body.root.visible) { n.speech.visible = false; return; }
 
         // Local crowd AI: greet a nearby player at a natural pause, face them,
@@ -3314,8 +3351,20 @@ export function World3D({
           n.greeting = false;
           n.body.char?.play("idle");
         }
+        const activity = map.id.startsWith("party-") && i%3!==0 ? "dance" : residentActivity(i, Date.now(), map.kind === "office");
+        if (activity !== "walk") {
+          if (n.activity === "walk") n.activityPoint.copy(n.body.root.position);
+          n.activity = activity; n.body.root.position.copy(n.activityPoint);
+          setWalking(n.body, false); n.body.char?.play(activity);
+          n.speech.visible = activity === "talk";
+          return;
+        }
+        n.activity = "walk";
         n.speech.visible = false;
-        n.body.root.position.set(pose.x, 0, pose.z);
+        const distance = Math.hypot(pose.x-n.body.root.position.x,pose.z-n.body.root.position.z);
+        const blend = distance > .001 ? Math.min(1, dt*1.1/distance) : 1;
+        const rx=THREE.MathUtils.lerp(n.body.root.position.x,pose.x,blend),rz=THREE.MathUtils.lerp(n.body.root.position.z,pose.z,blend);
+        if(!blocked(map,rx*TILE,rz*TILE))n.body.root.position.set(rx,0,rz);
         n.body.root.rotation.y = pose.angle;
         setWalking(n.body, pose.walking && !reduce);
         if (n.talkUntil > now) {
@@ -3482,8 +3531,12 @@ export function World3D({
       for (const vehicle of traffic) animateVehicle(vehicle.obj, dt, secs, phase !== "day", reduce);
       for (const vehicle of otherCars.values()) animateVehicle(vehicle.root, dt, secs, phase !== "day", reduce);
       if (responseCar.visible) animateVehicle(responseCar, dt, secs, phase !== "day", reduce);
+      if(disco){disco.rotation.y=reduce?0:secs*.35;partyLights.forEach((light,index)=>{light.intensity=reduce?7:7+Math.sin(secs*1.8+index*Math.PI)*2;});}
+      const crashTime=(now-crashedAt)/1000;sparks.visible=!reduce&&crashTime>=0&&crashTime<.75;
+      if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
-      presentation.render();
+      presentation.render();releaseCapture.frame(renderer.domElement);
+      if(firstPaint){firstPaint=false;window.dispatchEvent(new CustomEvent("illuminated:scene-ready",{detail:{mapId:map.id}}));}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
         Object.assign(renderer.domElement.dataset, {
           graphicsFps: (monitorFrames * 1000 / (now - monitorAt)).toFixed(1),
@@ -3566,6 +3619,7 @@ export function World3D({
 
     return () => {
       cancelAnimationFrame(raf);
+      releaseCapture();sparksGeometry.dispose();sparks.material.dispose();
       disposed = true;
       visibility.dispose();
       policeRig?.dispose();
@@ -3579,6 +3633,8 @@ export function World3D({
       renderer.domElement.removeEventListener("click", onClick);
       renderer.domElement.removeEventListener("wheel",onWheel);
       window.removeEventListener("illuminated:fight", onFight);
+      window.removeEventListener("illuminated:dance",dance);
+      window.removeEventListener("illuminated:vehicle-crash",onCrash);
       window.removeEventListener("illuminated:civilian-attack",onCivilianAttack);
       window.removeEventListener("keydown", onJumpKey);
       window.removeEventListener("illuminated:jump", onJump);
@@ -3648,7 +3704,7 @@ export function World3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adKey, map]);
 
-  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<HudSlot area="tr-tools" order={1}><div className="flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera zoom">
+  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<HudSlot area="tr-tools" order={1}><div className="flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera controls"><button type="button" onClick={()=>setView(v=>v==="follow"?"wide":v==="wide"?"overhead":"follow")} aria-label={`Change camera view, current view ${view}`} className="min-h-9 rounded-full px-3 hover:bg-white/15">{view}</button>
     <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
     <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
     <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>

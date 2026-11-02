@@ -7,6 +7,7 @@ import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
 
 import { ARCADE } from "@/game/core/arcade";
 import { adjudicateStreetCase, settleStreetVerdict, type StreetCourtCase, type StreetResolution, type StreetVerdict } from "@/game/core/civilian-conflict";
+import { hearingQuestions, witnessStatements } from "@/game/core/hearing-learning";
 import { POLICE_QUESTIONS } from "@/game/core/pursuit";
 import { createRng, newSeed } from "@/game/core/rng";
 import { cn } from "@/lib/utils";
@@ -179,6 +180,11 @@ export function StreetHearingDialog({ caseFile, balance, onResolved }: {
   balance: number;
   onResolved: (resolution: StreetResolution) => void;
 }) {
+  const questions=useMemo(()=>hearingQuestions(caseFile),[caseFile]);
+  const witnesses=useMemo(()=>witnessStatements(caseFile),[caseFile]);
+  const [hearingStep,setHearingStep]=useState(0),[extensions,setExtensions]=useState(0),[answer,setAnswer]=useState<number|null>(null);
+  const hearingLength=questions.length+extensions;
+  const question=questions[hearingStep%questions.length];
   const [verdict,setVerdict] = useState<StreetVerdict | null>(null);
   const completed = useRef(false);
   const [busy,setBusy] = useState(false);
@@ -199,8 +205,14 @@ export function StreetHearingDialog({ caseFile, balance, onResolved }: {
         <div><dt className="text-xs text-[#68717c]">Damage you received</dt><dd className="mt-1 font-bold">{evidence.damageToPlayer}</dd></div>
         <div><dt className="text-xs text-[#68717c]">Damage you dealt</dt><dd className="mt-1 font-bold">{evidence.damageToCivilian}</dd></div>
       </dl>
+      <details className="mt-3 rounded-2xl bg-white p-4 text-sm"><summary className="cursor-pointer font-bold">Witness statements · {witnesses.length}</summary><p className="mt-2 text-xs text-slate-500">Fictional testimony generated from this game incident. Compare each claim with the recorded first hit.</p>{witnesses.length?witnesses.map(witness=><div key={witness.name} className="mt-3 border-t pt-3"><p className="font-bold">{witness.name}</p><p className="mt-1">“{witness.claim}”</p><details className="mt-2 text-xs"><summary className="cursor-pointer text-blue-700">Cross-check this account</summary><p className="mt-2">{witness.agrees?"This account agrees with the recorded first hit.":"This account contradicts the recorded first hit. Challenge the claim using the sequence of events."}</p></details></div>):<p className="mt-3">No witness was recorded. Use the incident record and be clear about what is unknown.</p>}</details>
       {defence && <p className={cn("mt-3 rounded-xl p-3 text-sm",evidence.proportionate?"bg-[#e0ece7] text-[#195b4f]":"bg-[#fff0d3] text-[#775229]")}><ShieldCheck className="mr-2 inline size-4"/>{evidence.proportionate ? "The record supports a prompt, limited response to the attack." : evidence.hitsAfterThreatEnded ? "The record includes hits after the civilian stopped attacking." : evidence.lateRetaliationHits ? "The record includes a delayed response after the attack." : "The response caused substantially more damage than the attack."}</p>}
-      {!verdict ? <div className="mt-5 space-y-2">
+      {hearingStep<hearingLength ? <div className="mt-5 rounded-2xl bg-white p-4">
+        <p className="text-xs font-bold text-[#527090]">Evidence hearing · {hearingStep+1} / {hearingLength} · {evidence.witnesses} recorded witnesses</p>
+        <h3 className="mt-2 font-black">{question.title}</h3><p className="mt-2 text-sm">{question.prompt}</p>
+        <div className="mt-3 space-y-2">{question.options.map((option,index)=><button type="button" key={option} disabled={answer!==null} onClick={()=>{setAnswer(index);if(index!==question.answer)setExtensions(n=>Math.min(7,n+1));}} className={cn("min-h-11 w-full rounded-xl border p-3 text-left text-sm",answer!==null&&index===question.answer?"border-green-600 bg-green-50":"border-slate-200")}>{option}</button>)}</div>
+        {answer!==null&&<div role="status" className="mt-3 text-sm"><p>{answer===question.answer?"Evidence checked.":"The court asks for an additional review round."} {question.explanation}</p><button type="button" onClick={()=>{setHearingStep(n=>n+1);setAnswer(null);}} className="mt-3 min-h-11 w-full rounded-xl bg-[#2b5fd9] p-3 font-bold text-white">Continue hearing</button></div>}
+      </div> : !verdict ? <div className="mt-5 space-y-2">
         <p className="mb-3 text-sm">A lost case brings a {caseFile.fine} Clout fine. You can pay and leave; if you cannot afford it, you serve {Math.round(caseFile.stars*45)} seconds in the existing jail activity.</p>
         <button type="button" onClick={()=>setVerdict(adjudicateStreetCase(caseFile,"contest"))} className="min-h-12 w-full rounded-2xl bg-[#2b5fd9] px-4 py-3 text-left font-black text-white">{defence ? "Explain self-defence and contest the case" : "Contest the case"}<span className="mt-1 block text-xs font-medium text-white/85">Game acquittal chance: {Math.round(caseFile.acquittalChance*100)}% · {evidence.witnesses} witness{evidence.witnesses===1?"":"es"}</span></button>
         <button type="button" onClick={()=>setVerdict(adjudicateStreetCase(caseFile,"admit"))} className="min-h-11 w-full rounded-2xl border border-[#13203a]/20 bg-white px-4 py-3 text-left text-sm font-bold">Accept responsibility · {Math.max(1,Math.round(caseFile.fine*.8))} Clout fine</button>

@@ -1,3 +1,4 @@
+
 import {
   nearestDrivingSpot,
   vehicleFits,
@@ -8,15 +9,19 @@ import {
   isUKScene,
   UK_PLACES,
   UK_ROUTES,
+  ukPlace,
   ukArrival,
   loopRoadPosition,
 } from "./uk-world";
+import { universityById } from "./universities";
 import { CAR_LENGTH, CAR_WIDTH } from "./vehicles";
 import { TILE, safeSpot, type WorldMap } from "./world";
 
 /** Offices belong to London; regional homes retain their own district. */
 export function ukRegionOf(mapId: string): string | null {
   if (mapId === "city" || isUKScene(mapId)) return mapId;
+  if(mapId.startsWith("party-"))return ukRegionOf(mapId.slice(6));
+  if(mapId.startsWith("university-"))return universityById(mapId.slice(11))?.city??null;
   const home =
     /^uk-home-(kent|nottingham|birmingham|manchester|edinburgh)-\d+$/.exec(
       mapId,
@@ -45,7 +50,7 @@ export function ukRegionOf(mapId: string): string | null {
 export function ukSceneName(id: string): string {
   return (
     UK_PLACES.find((place) => place.id === id)?.name ??
-    (id === "m25"
+    (id.startsWith("road-") ? `Motorway to ${ukPlace(id.slice(5))?.name??id.slice(5)}` : id === "m25"
       ? "M25 · London Orbital"
       : id === "rotherhithe"
         ? "A101 · Rotherhithe Tunnel"
@@ -119,6 +124,7 @@ export function roadTransitionArrival(
     driving &&
     from === "m25" &&
     isUKScene(map.id) &&
+    !map.id.startsWith("road-") &&
     map.id !== "m25" &&
     map.id !== "rotherhithe"
   ) {
@@ -134,7 +140,7 @@ export function motorwayCarArrival(
   map: WorldMap,
   candidate: DrivingState | null,
 ): DrivingState | null {
-  if (!candidate || map.id !== "m25") return candidate;
+  if (!candidate || (map.id !== "m25" && !map.id.startsWith("road-"))) return candidate;
   const northbound = candidate.y / TILE < 36;
   const lanes = northbound ? [28, 30, 32] : [40, 42, 44];
   const lane = lanes.reduce((nearest, y) =>

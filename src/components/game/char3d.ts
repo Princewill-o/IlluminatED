@@ -5,6 +5,7 @@ import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 
 import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
+import { activityPose } from "./activity-pose";
 import { attachBlockyOutfit, clothedBodyGeometry } from "./blocky-garments";
 
 import { ADVENTURERS, BLOCKY_BASE, adventurerFor } from "@/game/core/adventurers";
@@ -48,8 +49,8 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   const animationSource = source.animations.length < 10 ? await load(`${BLOCKY_BASE}/blocky_01_hero.glb`) : source;
   const mixer=new THREE.AnimationMixer(object),clips=new Map(animationSource.animations.map(original=>{const clip=original.clone();for(const track of clip.tracks){if(/mixamorig:?Hips\.position$/.test(track.name))for(let i=0;i<track.values.length;i+=3){track.values[i]=track.values[0];track.values[i+2]=track.values[2];}}return[clip.name.toLowerCase(),clip] as const;}));
   const aliases:Record<string,string>={static:'idle',sprint:'run',die:'death','pick-up':'cheer','emote-yes':'cheer','emote-no':'idle',celebrate:'cheer',attack:'punch','attack-melee-right':'punch','attack-melee-left':'punch','attack-kick-right':'punch','interact-right':'cheer','interact-left':'cheer',sit:'idle',drive:'idle','wheelchair-sit':'idle',crouch:'idle',cycle:'walk','cycle-coast':'idle','holding-right':'idle','holding-left':'idle','holding-both':'idle','holding-right-shoot':'punch','holding-left-shoot':'punch','holding-both-shoot':'punch'};
-  let current:THREE.AnimationAction|null=null,currentName='idle',disposed=false;
-  const play=(name:string)=>{const canonical=(aliases[name]??name).toLowerCase();const clip=clips.get(canonical)??clips.get('idle')??source.animations[0];if(!clip)return;const action=mixer.clipAction(clip);if(action===current)return;currentName=name;const once=['jump','death','punch'].includes(canonical)||name==='pick-up';action.reset().setLoop(once?THREE.LoopOnce:THREE.LoopRepeat,once?1:Infinity);action.clampWhenFinished=once;action.play();if(current)current.crossFadeTo(action,.15,false);current=action;};
+  let current:THREE.AnimationAction|null=null,currentName='idle',disposed=false,activityTime=0;
+  const play=(name:string)=>{const canonical=(aliases[name]??name).toLowerCase();const clip=clips.get(canonical)??clips.get('idle')??source.animations[0];if(!clip)return;const action=mixer.clipAction(clip);currentName=name;if(action===current)return;const once=['jump','death','punch'].includes(canonical)||name==='pick-up';action.reset().setLoop(once?THREE.LoopOnce:THREE.LoopRepeat,once?1:Infinity);action.clampWhenFinished=once;action.play();if(current)current.crossFadeTo(action,.15,false);current=action;};
   play('idle');mixer.update(0);object.updateMatrixWorld(true);
   const bodyBounds = new THREE.Box3().setFromObject(object);
   if(outfit) {
@@ -89,7 +90,7 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   const scale=targetHeight/Math.max(.01,bodyBounds.max.y-bodyBounds.min.y);object.scale.setScalar(scale);object.position.y=-bodyBounds.min.y*scale;
   const holder=new THREE.Group();holder.userData.characterModel=model.file;holder.add(object);
   const pet=pet3d(a.pet);if(pet){pet.scale.setScalar(targetHeight/1.15);pet.position.set(targetHeight*.5,0,-targetHeight*.15);holder.add(pet);pet.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){geometries.add(m.geometry);(Array.isArray(m.material)?m.material:[m.material]).forEach(x=>extraMaterials.add(x));}});}
-  return{object:holder,mixer,play,update:(dt,reduced=false)=>{if(!disposed)mixer.update(reduced&&currentName==='idle'?0:Math.min(.1,Math.max(0,dt)));},dispose:()=>{if(disposed)return;disposed=true;mixer.stopAllAction();mixer.uncacheRoot(object);skeletons.forEach(s=>s.dispose());materials.forEach(m=>m.dispose());extraOutfitMaterials.forEach(m=>m.dispose());generatedTextures.forEach(t=>t.dispose());extraMaterials.forEach(m=>{const mtl=m as THREE.Material&{userData?:Record<string,unknown>};const texture=mtl.userData?.generatedTexture as THREE.Texture|undefined;texture?.dispose();m.dispose();});geometries.forEach(g=>g.dispose());holder.removeFromParent();holder.clear();}};
+  return{object:holder,mixer,play,update:(dt,reduced=false)=>{if(!disposed){mixer.update(reduced&&currentName==='idle'?0:Math.min(.1,Math.max(0,dt)));activityTime+=Math.min(.1,Math.max(0,dt));activityPose(object,currentName,activityTime,reduced);}},dispose:()=>{if(disposed)return;disposed=true;mixer.stopAllAction();mixer.uncacheRoot(object);skeletons.forEach(s=>s.dispose());materials.forEach(m=>m.dispose());extraOutfitMaterials.forEach(m=>m.dispose());generatedTextures.forEach(t=>t.dispose());extraMaterials.forEach(m=>{const mtl=m as THREE.Material&{userData?:Record<string,unknown>};const texture=mtl.userData?.generatedTexture as THREE.Texture|undefined;texture?.dispose();m.dispose();});geometries.forEach(g=>g.dispose());holder.removeFromParent();holder.clear();}};
 }
 
 /** Recolour only palette swatches predominantly used by each skinned body region. */

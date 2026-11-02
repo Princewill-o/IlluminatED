@@ -25,7 +25,7 @@ test('Both practical jobs have five reachable, walkable work points',()=>{
 test('University buildings and all three NPC desks can be reached on foot',()=>{
  const district=W.universityDistrictMap(),entrances=district.portals.filter(p=>p.to.mapId?.startsWith('university-'));assert.equal(entrances.length,4);
  for(const p of entrances){const point={x:p.rect.x+p.rect.w/2,y:p.rect.y+p.rect.h/2};assert.ok(P.walkRoute(district,district.spawn,point).length);const room=W.universityInteriorMap(p.to.mapId.slice(11));assert.ok(room);assert.equal(room.portals.filter(q=>q.to.kind==='university').length,3);for(const desk of room.portals){assert.ok(P.walkRoute(room,room.spawn,{x:desk.rect.x+desk.rect.w/2,y:desk.rect.y+desk.rect.h/2}).length);}}
- const gate=W.londonMap().portals.find(p=>p.id==='universities');assert.ok(P.walkRoute(W.londonMap(),W.londonMap().spawn,{x:gate.rect.x+W.TILE,y:gate.rect.y+W.TILE/2}).length);
+ assert.equal(district.id,'city');assert.equal(district.portals.some(p=>p.to.mapId==='universities'),false);
 });
 test('Establishing shots return to player follow and respect reduced motion',()=>{
  assert.equal(C.cinematicOffset(-1).x,0);assert.equal(C.cinematicOffset(C.INTRO_MS).x,0);assert.ok(C.cinematicOffset(C.INTRO_MS/2).x>0);assert.equal(C.cinematicOffset(1000,true).x,0);

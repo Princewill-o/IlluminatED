@@ -34,7 +34,7 @@ function AppIcon({ app, label = true, date }: { app: App; label?: boolean; date?
   const tile = (
     <>
       <span className="relative block size-[3.25rem] overflow-hidden rounded-[0.95rem] shadow-[0_1px_1px_rgba(0,0,0,.2),0_6px_14px_rgba(0,0,0,.35)]">
-        <AppIconArt name={app.icon} date={date} className="block size-full" />
+        {app.name.endsWith(" studio")?<span className={`grid size-full place-items-center ${app.name.startsWith("YouTube")?"bg-[#e83035]":app.name.startsWith("Instagram")?"bg-gradient-to-tr from-amber-400 via-rose-500 to-violet-600":"bg-[#111827]"}`}><span className="size-8 bg-white" style={{mask:`url(/brand-marks/${app.name.split(" ")[0].toLowerCase()}.svg) center/contain no-repeat`}}/></span>:<AppIconArt name={app.icon} date={date} className="block size-full" />}
       </span>
       {label && <span className="max-w-[4.5rem] truncate text-[11px] leading-tight font-medium text-white [text-shadow:0_1px_2px_rgba(0,0,0,.45)]">{app.name}</span>}
     </>
@@ -60,6 +60,8 @@ function AppScreen({ title, onBack, children }: { title: string; onBack: () => v
 export function GamePhone({
   initialApp="home", meId="", mapId="city", nearby=[], onNearbyRequest, onVenture=()=>{}, onBank=()=>{},
   onClose,
+  onStudio,
+  onParty,
   onCall,
   onMap,
   onHome,
@@ -77,6 +79,8 @@ export function GamePhone({
 }: {
   initialApp?: "home"|"nearby"; meId?:string; username?:string; mapId?:string; nearby?:NearbyPerson[]; onNearbyRequest?:(name:string)=>Promise<string|null>; onVenture?:()=>void; onBank?:()=>void;
   onClose: () => void;
+  onStudio?: (channel:"tiktok"|"youtube"|"instagram") => void;
+  onParty?: () => void;
   onCall: (id: string) => void;
   onMap: () => void;
   onHome: () => void;
@@ -106,6 +110,10 @@ export function GamePhone({
 
   const facetime = () => { onClose(); window.dispatchEvent(new Event("illuminated:open-calls")); };
   const grid: App[] = [
+    {name:"TikTok studio",icon:"facetime",action:()=>onStudio?.("tiktok")},
+    {name:"YouTube studio",icon:"facetime",action:()=>onStudio?.("youtube")},
+    {name:"Instagram studio",icon:"facetime",action:()=>onStudio?.("instagram")},
+    {name:"Socials",icon:"weekly",action:onParty??onEvents},
     { name: "Nearby", icon: "messages", action: () => setScreen("nearby") },
     { name: "Venture", icon: "wallet", action: onVenture },
     { name: "Bank", icon: "wallet", action: onBank },

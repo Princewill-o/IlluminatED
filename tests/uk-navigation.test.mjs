@@ -9,13 +9,13 @@ const {vehicleFits} = projectData('src/game/core/driving.ts');
 
 test('routes connect every district through the orbital in both directions', () => {
   for (const place of ['kent','nottingham','birmingham','manchester','edinburgh']) {
-    assert.deepEqual(Array.from(planUKJourney('city',place).maps),['city','m25',place]);
-    assert.deepEqual(Array.from(planUKJourney(place,'city').maps),[place,'m25','city']);
+    assert.deepEqual(Array.from(planUKJourney('city',place).maps),['city','m25',`road-${place}`,place]);
+    assert.deepEqual(Array.from(planUKJourney(place,'city').maps),[place,`road-${place}`,'m25','city']);
     assert.ok(planUKJourney('city',place).roads.length >= 2);
-    assert.equal(nextUKPortal(ukWorldMap(place),'city').to.mapId,'m25');
+    assert.equal(nextUKPortal(ukWorldMap(place),'city').to.mapId,`road-${place}`);
     assert.equal(nextUKPortal(CITY,place).to.mapId,'m25');
   }
-  assert.deepEqual(Array.from(planUKJourney('kent','nottingham').maps),['kent','m25','nottingham']);
+  assert.deepEqual(Array.from(planUKJourney('kent','nottingham').maps),['kent','road-kent','m25','road-nottingham','nottingham']);
   assert.deepEqual(Array.from(planUKJourney('city','rotherhithe').roads),['A101']);
   assert.equal(planUKJourney('fake','kent'),null);
 });

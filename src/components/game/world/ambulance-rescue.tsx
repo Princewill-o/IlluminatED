@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { HeartPulse } from "lucide-react";
+
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { buildCharacter, npcLook, type Character3D } from "../char3d";
+import { CutsceneBrand } from "./cutscene-brand";
 import { createEmergencyVehicle } from "./emergency-vehicle3d";
 
 import type { Avatar } from "@/game/core/cosmetics";
@@ -123,7 +124,7 @@ export function AmbulanceRescue({ avatar, onArrive }: { avatar: Avatar; onArrive
 
   return <div className="fixed inset-0 z-[100030] overflow-hidden bg-[#9eafb6] text-white" role="status" aria-live="polite">
     <div ref={host} className="absolute inset-0" aria-hidden/>
-    <div className="absolute left-1/2 top-8 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-[#f7f1e6] px-5 py-3 text-[#17524b] shadow-xl"><HeartPulse className="size-7"/><div><p className="text-xs font-black uppercase tracking-widest">St Tomas' Ambulance</p><p className="text-sm font-bold">Care and recovery</p></div></div>
+    <div className="absolute left-1/2 top-8 flex -translate-x-1/2 items-center gap-3 rounded-2xl bg-[#f7f1e6] px-5 py-3 text-[#17524b] shadow-xl"><CutsceneBrand kind="hospital"/></div>
     <div className="absolute inset-x-4 bottom-8 mx-auto max-w-xl rounded-3xl bg-[#102d31]/95 p-5 text-center shadow-xl"><p className="text-xl font-black">{MESSAGES[phase]}</p><p className="mt-2 text-sm text-white/75">{fallback?"The rescue team is on its way. Your hospital transfer will complete shortly.":"You will recover after the paramedics take you to hospital."}</p></div>
   </div>;
 }

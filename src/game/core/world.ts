@@ -5,7 +5,7 @@ import { buildHome, buildLondon } from "./london";
 import { officeDesign } from "./office-design";
 import { buildHighlands } from "./regions";
 import { UK_GATEWAYS } from "./uk-world";
-import { UNIVERSITIES, universityById } from "./universities";
+import { universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
 
 /**
@@ -638,7 +638,7 @@ export function officeMap(org: OfficeOrg): WorldMap {
  g.set(rx+2,roomHeight+2,"m");g.set(rx+3,roomHeight+2,"m");
  g.fill(rx+2,4,roomWidth-4,2,design.theme==="science"?"k":"t");g.fill(rx+2,3,roomWidth-4,1,"c");g.fill(rx+2,6,roomWidth-4,1,"c");g.set(rx+roomWidth-2,2,"v");
  const workStart=left?roomWidth+6:3,workEnd=left?cols-3:rx-3;
- for(let y=3;y<10;y+=3+(seed>>>13)%2)for(let x=workStart;x<workEnd-2;x+=4+(seed>>>16)%3){g.fill(x,y,3,1,design.theme==="science"?"k":"d");g.set(x+1,y+1,"c");}
+ for(let y=3;y<rows-12;y+=3)for(let x=workStart;x<workEnd-2;x+=4){g.fill(x,y,3,1,design.theme==="science"?"k":"d");g.set(x+1,y+1,"c");}
  const ly=rows-9,lx=left?cols-12:2;g.fill(lx,ly,10,6,"l");g.fill(lx+1,ly+4,7,1,"s");g.fill(lx+3,ly+1,3,1,"o");g.set(lx+8,ly,"p");
  const kx=left?2:cols-8;g.fill(kx,rows-8,6,6,",");g.fill(kx,rows-7,4,1,"k");g.set(kx+5,rows-7,"F");
  g.fill(mid-3,rows-6,5,1,"r");g.fill(mid-2,rows-2,4,1,"e");
@@ -661,6 +661,7 @@ export function londonMap(): WorldMap {
     to: { kind: "map", mapId: gate.mapId, label: gate.label },
   }));
   for (const th of L.things) {
+    if(th.kind === "building" && th.id.startsWith("university-site-")) portals.push({id:th.id,rect:px(th.x+Math.floor(th.w/2)-1,th.y+th.h,2,1),label:`Enter ${th.label}`,to:{kind:"map",mapId:`university-${th.id.slice(16)}`,label:th.label??"University"}});
     if (th.kind === "building" && ["district-campus-library", "district-campus-studios", "district-campus-labs", "district-wharf-gallery", "district-wharf-cafe", "district-conservatory"].includes(th.id)) {
       portals.push({id:th.id==="district-wharf-gallery"?"venture-yard":th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.id==="district-wharf-gallery"?"Venture Yard · run your own business":th.label ?? "Explore district",to:th.id==="district-wharf-gallery"?{kind:"map",mapId:"venture-hub",label:"Venture Yard"}:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
     }
@@ -690,6 +691,8 @@ export function londonMap(): WorldMap {
     if (th.kind === "landmark" && th.name === "battersea")
       portals.push({ id: "games-hall", rect: px(th.x + 4, th.y + th.h, 2, 1), label: "Games Hall: play live with others", to: { kind: "games" } });
   }
+  const partyBuilding=L.things.find(th=>th.kind === "building" && th.id === "district-wharf-cafe");
+  if(partyBuilding&&partyBuilding.kind==="building")portals.unshift({id:"party-city",rect:px(partyBuilding.x+1,partyBuilding.y+partyBuilding.h,2,1),label:"Community social · music and challenges",to:{kind:"map",mapId:"party-city",label:"London community social"}});
   // Pizzazz Pizza: the first shop on the West End parade.
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
   // Lyme e-bikes parked on pavements all over London (tap one to ride).
@@ -707,7 +710,7 @@ export function londonMap(): WorldMap {
   if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
   if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
-  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
+  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
   const hosp = L.things.find((t) => t.kind === "building" && t.id === "city-hospital");
   const court = near(44, 28, hosp);
@@ -723,7 +726,6 @@ export function londonMap(): WorldMap {
   const hall = L.things.find((t) => t.kind === "landmark" && t.name === "town-hall");
   if (hall && hall.kind === "landmark") portals.push({ id: "town-hall", rect: px(hall.x + Math.floor(hall.w / 2) - 1, hall.y + hall.h, 2, 1), label: "Town Hall: civic library and council gallery", to: { kind: "map", mapId: "venue-town-hall", label: "Town Hall" } });
   portals.push(
-    {id:"universities",rect:px(92,83,2,1),label:"University Quarter: explore universities",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
     {id:"makerspace",rect:px(93,70,2,1),label:"Makerspace: subject study sessions",to:{kind:"study-room"}},
     {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter: study room and awards",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter"}},
     {id:"reading-garden",rect:px(87,80,2,2),label:"Reading garden: restore Focus",to:{kind:"act",activity:"study"}},
@@ -894,6 +896,9 @@ export function prisonMap(): WorldMap {
   }
   g.fill(2, 13, 5, 1, "t"); g.fill(11, 13, 5, 1, "t");
   g.fill(2, 22, 5, 1, "b");
+  g.fill(10,20,10,5,"l");g.fill(12,21,6,1,"d");g.fill(12,22,6,1,"c");
+  g.fill(18,4,6,1,"k");g.fill(18,5,6,1,"c");g.fill(3,28,6,1,"s");
+  g.set(23,20,"p");g.set(2,19,"p");
   // A connected service maze: alternating wall gaps make a genuine escape route.
   g.fill(26, 1, 1, 32, "#"); g.set(26, 18, ".");
   for (const [x, gap] of [[30, 27], [34, 9], [38, 27], [42, 9]]) {
@@ -905,7 +910,7 @@ export function prisonMap(): WorldMap {
     { id: "inmate-riley", rect: px(18, 16, 2, 2), label: "Talk to Riley", to: { kind: "prison", action: "talk", name: "Riley" } },
     { id: "prison-escape", rect: px(44, 30, 2, 2), label: "Service exit: escape", to: { kind: "prison", action: "escape" } },
   ];
-  return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
+  return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [{name:"Learning workshop",rect:px(10,20,10,5)},{name:"Meals and conversation",rect:px(17,3,8,5)},{name:"Exercise and quiet time",rect:px(2,25,20,7)}], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
 }
 
 /**
@@ -1215,24 +1220,12 @@ export const chatText = (id: string) =>
   EMOTES.find((e) => e.id === id)?.label ?? PHRASES.find((p) => p.id === id)?.text ?? null;
 
 /** Walkable fictional district, not a geographical replica of the universities. */
-export function universityDistrictMap(): WorldMap {
- const g=new Grid(48,38,"g");g.border("T");g.fill(1,17,46,6,"-");g.fill(22,1,5,36,"-");
- const structures:Structure[]=[],portals:Portal[]=[];
- UNIVERSITIES.forEach((u,i)=>{
-  const x=i%2?30:6,y=i<2?5:26;
-  g.fill(x,y,12,6,"#");g.fill(x+4,y+6,3,i<2?7:1,"-");
-  if(i>=2)g.fill(x+4,22,3,4,"-");
-  structures.push({x,y,w:12,h:6,label:u.fullName,accent:u.colour,door:"bottom"});
-  portals.push({id:`enter-${u.id}`,rect:px(x+4,y+6,3,1),label:`Enter ${u.fullName}`,to:{kind:"map",mapId:`university-${u.id}`,label:u.fullName}});
- });
- for(const x of [4,20,28,44]) for(const y of [3,14,24,35])g.set(x,y,"T");
- portals.push({id:"london",rect:px(1,18,2,2),label:"Return to London",to:{kind:"map",mapId:"city",label:"London"}});
- return finish({id:"universities",kind:"campus",name:"University Quarter",structures,portals,rooms:[],spawn:centre(4,20),accent:"#7153b9",sign:{x:24,y:19,text:"Explore your next chapter"}},g);
-}
+/** Compatibility for old bookmarks; universities now live in their own cities. */
+export function universityDistrictMap(): WorldMap { return CITY; }
 export function universityInteriorMap(id:string): WorldMap|null {
  const u=universityById(id);if(!u)return null;
  const g=new Grid(26,23,".");g.border("#");
- const portals:Portal[]=[{id:"exit",rect:px(12,21,2,1),label:"Back to University Quarter",to:{kind:"map",mapId:"universities",label:"University Quarter"}},
+ const portals:Portal[]=[{id:"exit",rect:px(12,21,2,1),label:`Return to ${u.city === "city" ? "London" : u.city}`,to:{kind:"map",mapId:u.city,label:u.city === "city"?"London":u.city}},
  ...(["courses","events","networking"] as const).map((topic,i)=>({id:`${id}-${topic}`,rect:px(5+i*7,8,2,2),label:`Talk: ${topic==="courses"?"subject guide":topic==="events"?"events ambassador":"networking mentor"}`,to:{kind:"university" as const,university:id,topic}}))];
  return finish({id:`university-${id}`,kind:"office",name:`${u.name} · discovery lounge`,structures:[],portals,rooms:[{name:"Courses and questions",rect:px(2,3,7,10)},{name:"Open days and events",rect:px(10,3,7,10)},{name:"Networking safely",rect:px(18,3,6,10)}],spawn:centre(13,18),accent:u.colour,sign:{x:13,y:3,text:`${u.name}: ask, explore, plan`}},g);
 }

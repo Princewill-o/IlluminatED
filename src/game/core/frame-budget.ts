@@ -12,5 +12,5 @@ export function frameBudget(fps = 60) {
 
 /** High-detail population and lighting, independent of previous quality settings. */
 export function graphicsBudget() {
-  return { residents: 14, cyclists: 4, lights: 2 };
+  return { residents: 64, cyclists: 8, lights: 2 };
 }
