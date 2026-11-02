@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { localPreviewPath } from "@/lib/game/local-preview";
+import { isNativeIOS, nativeMembershipPath, NATIVE_MEMBERSHIP_PATH } from "@/lib/native-ios";
 import {
   SUPABASE_KEY,
   SUPABASE_URL,
@@ -42,6 +43,7 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/investors",
   "/revision-games",
+  "/ios/membership",
 ];
 
 /** Metadata image routes (e.g. /opengraph-image or /social/opengraph-image-abc123), which link previews fetch without signing in. */
@@ -52,6 +54,7 @@ const METADATA_IMAGE =
 const GAME_CHALLENGE = /^\/games\/challenge\/[A-Za-z0-9]{6}\/?$/;
 
 const isPublic = (path: string) =>
+  path === "/curriculum" || path.startsWith("/curriculum/") ||
   PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
   METADATA_IMAGE.test(path) ||
   GAME_CHALLENGE.test(path) ||
@@ -63,6 +66,12 @@ const isPublic = (path: string) =>
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+  // The iOS build consumes existing memberships; it does not sell them.
+  // RSC/client navigation requests carry the native user agent too.
+  if (isNativeIOS(request.headers.get("user-agent")) && nativeMembershipPath(path)) {
+    return NextResponse.redirect(new URL(NATIVE_MEMBERSHIP_PATH, request.url), 303);
+  }
+
   if (localPreviewPath(path,process.env.NODE_ENV,process.env.ILLUMINATED_PREVIEW)) return NextResponse.next();
   // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();

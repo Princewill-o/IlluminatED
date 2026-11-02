@@ -50,7 +50,7 @@ const RAIL: Record<"tl" | "tr" | "tc" | "bl" | "br" | "bc", string> = {
   bc: "left-1/2 -translate-x-1/2 bottom-3 flex-col-reverse items-center w-max lg:max-w-[calc(100%-46rem)]",
 };
 
-export function HudLayout({ children }: { children: ReactNode }) {
+export function HudLayout({ children, hidden = false }: { children: ReactNode; hidden?: boolean }) {
   const [rails, setRails] = useState<Rails>({});
   // Stable ref callbacks: one per rail, created once.
   const [refs] = useState(() =>
@@ -69,6 +69,9 @@ export function HudLayout({ children }: { children: ReactNode }) {
           key={area}
           ref={refs[area]}
           data-hud-rail={area}
+          hidden={hidden}
+          inert={hidden}
+          style={hidden ? { display: "none" } : undefined}
           className={cn("hud-rail pointer-events-none absolute z-[100001] flex gap-2", RAIL[area])}
         >
           {Object.entries(ROWS)

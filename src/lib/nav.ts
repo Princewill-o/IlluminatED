@@ -12,6 +12,7 @@ export const NAV: NavGroup[] = [
   {
     label: "Learn",
     items: [
+      { title: "Primary to sixth form", href: "/curriculum", description: "Year 1–13 learning, with IllumED Slides for KS1–KS4" },
       {
         title: "GCSE",
         href: "/gcse",

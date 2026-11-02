@@ -69,7 +69,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
               return (
                 <li key={q.id} className="text-xs font-bold">
                   {q.href ? (
-                    <Link href={q.href} className="flex min-h-11 items-center gap-2 hover:underline">
+                    <Link href={q.href} onClick={event => { if (q.tag === "Study" && onLocate?.(q)) event.preventDefault(); }} className="flex min-h-11 items-center gap-2 hover:underline">
                       {body}
                     </Link>
                   ) : (
@@ -77,7 +77,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
                   )}
                   {onLocate && !q.done && (
                     <button type="button" onClick={() => onLocate(q)} className="ml-5 flex min-h-11 items-center gap-1 text-xs font-black text-[#2b5fd9]">
-                      <MapPin className="size-3" aria-hidden /> Show me where
+                      <MapPin className="size-3" aria-hidden /> {q.tag === "Study" ? "Choose quest" : "Show me where"}
                     </button>
                   )}
                 </li>

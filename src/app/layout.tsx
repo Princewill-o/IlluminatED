@@ -47,12 +47,12 @@ const dmSans = localFont({
 });
 
 const description =
-  "GCSE, A-Level, BTEC and T Level revision through educational games, quizzes and teacher-set homework. A learning platform for UK students, schools and sixth forms.";
+  "Learning from primary school to sixth form: free lesson slides for Years 1–11, plus GCSE, A-Level, BTEC and T Level revision, educational games and school tools.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "IlluminatED | GCSE & A-Level Revision Games",
+    default: "IlluminatED | Primary to Sixth Form Learning",
     template: "%s | IlluminatED",
   },
   description,

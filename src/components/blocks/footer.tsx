@@ -8,6 +8,7 @@ import { LEGAL_LINKS } from "@/lib/site";
 import { useSignedIn } from "@/lib/use-signed-in";
 
 const PUBLIC_LINKS = [
+  { href: "/curriculum", title: "IllumED Slides · Primary to sixth form" },
   { href: "/pricing", title: "Access and pricing" },
   { href: "/investors", title: "Business overview" },
   { href: "/about", title: "About IlluminatED" },
@@ -26,7 +27,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed">
-            The revision game for students, schools, colleges and sixth forms in the UK. </p>
+            Learning from primary school to sixth form, with free lesson slides and revision games for ages 13+. </p>
         </div>
         {signedIn ? (
           <nav

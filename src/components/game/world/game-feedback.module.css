@@ -1,0 +1,195 @@
+.notice {
+  animation: notice-in 0.35s ease-out both;
+}
+.scene {
+  animation: scene-in 0.45s ease-out both;
+  background: radial-gradient(
+    ellipse at 50% 20%,
+    #553f82 0%,
+    #192442 48%,
+    #09121f 100%
+  );
+}
+.street {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  perspective: 500px;
+}
+.road {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -18%;
+  height: 64%;
+  background: linear-gradient(
+    90deg,
+    #23314a 46%,
+    #ff48aa 48%,
+    #ffb2db 50%,
+    #ff48aa 52%,
+    #23314a 54%
+  );
+  transform: rotateX(55deg);
+  box-shadow: 0 0 65px #e5379360;
+}
+.city {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 30%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 14px;
+  opacity: 0.6;
+  animation: city-drift 5.4s ease-in-out both;
+}
+.building {
+  width: 10%;
+  border: 1px solid #90c9ff30;
+  border-radius: 8px 8px 0 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 15px,
+      #92caff40 16px 19px,
+      transparent 20px 28px
+    ),
+    linear-gradient(110deg, #263656, #48648a);
+}
+.hero {
+  position: absolute;
+  bottom: 26%;
+  left: 50%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 12px 25px #0a092d);
+  animation: hero-enter 1.1s ease-out both;
+}
+.orbit {
+  position: absolute;
+  left: 50%;
+  bottom: 24%;
+  width: 220px;
+  height: 50px;
+  border: 3px solid #ff71be;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 35px #ff339f80;
+  animation: ring-pulse 1.7s ease-in-out infinite;
+}
+.spark {
+  position: absolute;
+  bottom: 30%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffe095;
+  animation: spark-rise 2.5s ease-out infinite;
+}
+.progress {
+  transform-origin: left;
+  animation: progress 5.4s linear both;
+}
+.card {
+  animation: notice-in 0.4s ease-out both;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.card:hover {
+  transform: translateY(-3px);
+}
+.lesson {
+  animation: lesson-in 0.25s ease-out both;
+}
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes scene-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 50px) scale(0.75);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+@keyframes city-drift {
+  from {
+    transform: scale(1.15) translateY(15px);
+  }
+  to {
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes ring-pulse {
+  50% {
+    opacity: 0.45;
+    transform: translateX(-50%) scale(1.12);
+  }
+}
+@keyframes spark-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-150px);
+  }
+}
+@keyframes progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+@keyframes lesson-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notice,
+  .scene,
+  .city,
+  .hero,
+  .orbit,
+  .spark,
+  .progress,
+  .card,
+  .lesson {
+    animation: none;
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+}

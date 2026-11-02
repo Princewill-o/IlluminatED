@@ -1,0 +1,30 @@
+name: iOS app
+on:
+  workflow_dispatch:
+  push:
+    paths: ['ios/**', 'scripts/*ios*.mjs', 'tests/native-ios.test.mjs', '.github/workflows/ios.yml']
+  pull_request:
+    paths: ['ios/**', 'scripts/*ios*.mjs', 'tests/native-ios.test.mjs', '.github/workflows/ios.yml']
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node scripts/generate-ios-project.mjs --check
+      - run: xcodebuild -version
+      - run: bash ios/scripts/test-simulator.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iOS-simulator-tests
+          path: ios/build/Tests.xcresult
+          if-no-files-found: ignore
+          retention-days: 7

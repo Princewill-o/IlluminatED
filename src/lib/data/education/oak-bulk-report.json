@@ -1,0 +1,180 @@
+{
+  "version": "oak-bulk-2026-10-26",
+  "source": "Oak National Academy",
+  "attribution": "Oak National Academy · Open Government Licence v3.0",
+  "licence": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+  "collections": 32,
+  "units": 2175,
+  "lessons": 13670,
+  "readable_lessons": 10421,
+  "restricted_lessons": 3249,
+  "transcripts": 8733,
+  "key_stages": [
+    "ks1",
+    "ks2",
+    "ks3",
+    "ks4"
+  ],
+  "files": [
+    {
+      "name": "art-primary.json",
+      "sha256": "883a6e3c49dc328d8943be992de196fbbee7c3f34d5cd850ea1a7b64b6e593ed",
+      "lessons": 238
+    },
+    {
+      "name": "art-secondary.json",
+      "sha256": "194fdc7af05a996712a56c23fa3c5f9eb172db3eafb390a54f51ebd1711c55b7",
+      "lessons": 323
+    },
+    {
+      "name": "citizenship-secondary.json",
+      "sha256": "15793d343ff9a62554bd22a72b90186435ee3670f678d2b5ce50ebbc9390844a",
+      "lessons": 346
+    },
+    {
+      "name": "computing-primary.json",
+      "sha256": "31b8ddd37f2a941b335190e2790398047da308b6c50c60e144b78b3e65ffd71a",
+      "lessons": 180
+    },
+    {
+      "name": "computing-secondary.json",
+      "sha256": "d806edba6f79abedc690260e7399e1988f4e8e00a7db8262d59801eb670a036c",
+      "lessons": 528
+    },
+    {
+      "name": "cooking-nutrition-primary.json",
+      "sha256": "0efb2acece6e38e0e006cc46ea13c83a28cc45b786a408333ded28e614f1e73b",
+      "lessons": 72
+    },
+    {
+      "name": "cooking-nutrition-secondary.json",
+      "sha256": "e6a0398013d9cedc5c629bfc3b1c411ae0be1c58fbaf213a5fcef1bcd5bf4b20",
+      "lessons": 36
+    },
+    {
+      "name": "design-technology-primary.json",
+      "sha256": "7058f35cb16c3f0bf8dd481137c0c1cd0dbef64bd674762f3ab4aa9099084622",
+      "lessons": 144
+    },
+    {
+      "name": "design-technology-secondary.json",
+      "sha256": "73e71621485fe1da7a07a15ba388b9d27c13efd9b58a1b085a6bd9d1c9c4ddd6",
+      "lessons": 318
+    },
+    {
+      "name": "english-primary.json",
+      "sha256": "1a8b7eab98428a50e4fb20ef5a559b44ad23740885829c5fd5b3d779c08904c3",
+      "lessons": 1589
+    },
+    {
+      "name": "english-secondary.json",
+      "sha256": "055953f7dcf18c4267850594337e6d0240d4fb8aef095ae2b72d6334120b6aa1",
+      "lessons": 2135
+    },
+    {
+      "name": "french-primary.json",
+      "sha256": "dcdccc96454be37b601f2cdc67b88d89f27f9115e58e14755ad5cfa8452739ff",
+      "lessons": 105
+    },
+    {
+      "name": "french-secondary.json",
+      "sha256": "4e90a3e58167ca3becd03fb2148da5742c2df99c5bf9aebcb9d80714ad29250f",
+      "lessons": 626
+    },
+    {
+      "name": "geography-primary.json",
+      "sha256": "3aec70967657d990104419b5b6182c72b0ff0e41aa51d74d73bc66c87c0b0d5f",
+      "lessons": 246
+    },
+    {
+      "name": "geography-secondary.json",
+      "sha256": "6559dba721fc7fe611b45b07e84a7a14249c16db13db6154b2dff24ddadf83e9",
+      "lessons": 559
+    },
+    {
+      "name": "german-secondary.json",
+      "sha256": "d445173738ec2f298c3a8c6e2ef8fd67a99d844810e7c096e027da24d915881f",
+      "lessons": 619
+    },
+    {
+      "name": "history-primary.json",
+      "sha256": "122779e0c9ba2a78f71ed43c381d5883ae5a65f3afdc682a4ed530d824a6f391",
+      "lessons": 302
+    },
+    {
+      "name": "history-secondary.json",
+      "sha256": "dc730bbe5e5d81f781ff86291f80071a200e3a0d262c2ec2dd34ec985a7a50d8",
+      "lessons": 633
+    },
+    {
+      "name": "maths-primary.json",
+      "sha256": "dc952651fa170c1553f883c96fd30f05349f1d509bf45e4eb09d4d9b24e5e605",
+      "lessons": 1072
+    },
+    {
+      "name": "maths-secondary.json",
+      "sha256": "6c19b99d7dd1ec78d97ea25b19530811cbdf3d278e843c5d42d3429cc7da88b3",
+      "lessons": 1236
+    },
+    {
+      "name": "music-primary.json",
+      "sha256": "56f69483906fef17aea70d7fff5b6ef103d76b470d982646fd30d2a6968b91d2",
+      "lessons": 228
+    },
+    {
+      "name": "music-secondary.json",
+      "sha256": "1ed55e19300fdc83f61bb331dfcfb358605d2ee264fd41dc9f88120fc8e6df84",
+      "lessons": 651
+    },
+    {
+      "name": "physical-education-primary.json",
+      "sha256": "be8003561ccc8901132f00eaba783e363601831fcb5095345c2a0711d8f246b4",
+      "lessons": 468
+    },
+    {
+      "name": "physical-education-secondary.json",
+      "sha256": "057775523f75f924317785df663ec2a315eb583260dc4adfb9c518f3038e0373",
+      "lessons": 1012
+    },
+    {
+      "name": "religious-education-primary.json",
+      "sha256": "52f308f93987fd425563329e0d3ee10b54741ab1ee7ffbef76a5700815875a70",
+      "lessons": 216
+    },
+    {
+      "name": "religious-education-secondary.json",
+      "sha256": "2df3c2fe47255d744272a9e371b88fe535d186a93ef3add3655fbaa3360234f5",
+      "lessons": 493
+    },
+    {
+      "name": "rshe-pshe-primary.json",
+      "sha256": "775f9a4f6fc615d85f01140207e0e6c3686273f99ad4996059048fdc053dfe07",
+      "lessons": 216
+    },
+    {
+      "name": "rshe-pshe-secondary.json",
+      "sha256": "dbfb1c0798439a9c6de51ebf9c09737eedf3d29b096eb80fb6d061bdc09c57d5",
+      "lessons": 172
+    },
+    {
+      "name": "science-primary.json",
+      "sha256": "ae668d37683fbe00c281aad76b6ac290dc775a6f24976c111244e6c6eb17a2b0",
+      "lessons": 390
+    },
+    {
+      "name": "science-secondary.json",
+      "sha256": "5c7fa0d5464ade0394250e1d7ad241b9e9b70711a65e844ea0c8b3931d7a51b0",
+      "lessons": 2089
+    },
+    {
+      "name": "spanish-primary.json",
+      "sha256": "a09a12ffcd55ed5959713b807603f873f2c98fc02722a7b91f076ad40115961b",
+      "lessons": 112
+    },
+    {
+      "name": "spanish-secondary.json",
+      "sha256": "f3ea772c3d9e982f474336146a376c91663681ab702fafc6816924c826524597",
+      "lessons": 629
+    }
+  ]
+}

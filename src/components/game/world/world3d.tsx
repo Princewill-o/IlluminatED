@@ -28,6 +28,7 @@ import { illustratedLightShader, updateIllustratedLight } from "./illustrated-li
 import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
+import { createNavigationTrail } from "./navigation-trail";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { softSunShadows } from "./soft-sun-shadows";
 import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
@@ -53,6 +54,7 @@ import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-
 import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
+import type { WorldNavigation } from "@/game/core/navigation";
 import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
@@ -1988,7 +1990,9 @@ export function World3D({
   getHomeAction,
   overview = false,
   immersive = false,
+  navigation = null,
 }: {
+  navigation?: WorldNavigation | null;
   map: WorldMap;
   getMe: () => { x: number; y: number; walking: boolean; heading?: number; speed?: number };
   getOthers: () => Mover3D[];
@@ -2010,6 +2014,7 @@ export function World3D({
   onGround?: (x: number, y: number) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const navigationRef=useRef(navigation);navigationRef.current=navigation;
   const news = useCityNews();
   const newsRef = useRef(news.headlines);
   newsRef.current = news.headlines;
@@ -2053,6 +2058,7 @@ export function World3D({
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    const navigationTrail=createNavigationTrail(scene,bend);
     const sky = highland ? "#c8e2ef" : "#dce6df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
@@ -2871,6 +2877,7 @@ export function World3D({
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
+      navigationTrail.update(navigationRef.current,secs,reduce);
       updateIllustratedLight(phase, indoors);
       river.update(reduce ? 0 : secs, reduce ? 0 : weatherLighting(weatherKind).rain);
       streetscape?.userData.update?.(reduce ? 0 : secs);
@@ -3562,6 +3569,7 @@ export function World3D({
       disposed = true;
       visibility.dispose();
       policeRig?.dispose();
+      navigationTrail.dispose();
       disposeVehicle(scene);
       for (const body of bodies) body.dispose();
       for (const vehicle of traffic) if (vehicle.obj.userData.coach) vehicle.obj.userData.dispose();

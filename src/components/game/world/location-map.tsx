@@ -368,7 +368,7 @@ export function LocationMap({
                       .map((p) => `${(p.x / TILE) * S},${(p.y / TILE) * S}`)
                       .join(" ")}
                     fill="none"
-                    stroke="#1368c4"
+                    stroke="#ed218e"
                     strokeWidth={4}
                     strokeLinejoin="round"
                   />
@@ -454,7 +454,7 @@ export function LocationMap({
             </div>
           </div>
           <div className="pointer-events-none absolute bottom-3 left-3 z-30 rounded-lg bg-white/95 px-3 py-2 text-[10px] font-bold shadow">
-            Tap anywhere to see what&apos;s there · Orange: you · Blue: route
+            Tap anywhere to see what&apos;s there · Orange: you · Pink: route
           </div>
         </div>
         <aside className="flex max-h-[48%] w-full shrink-0 flex-col border-t border-[#d5c5ad] p-3 sm:p-4 md:max-h-full md:w-80 md:border-t-0 md:border-l">

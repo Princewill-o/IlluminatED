@@ -1,0 +1,11 @@
+.build/
+.swiftpm/
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.ipa
+*.xcarchive/
+*.xcresult/
+ExportOptions.local.plist
+Configuration/Signing.local.xcconfig

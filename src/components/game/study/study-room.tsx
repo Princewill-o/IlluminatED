@@ -20,6 +20,7 @@ import {
 
 import { startStudy, submitStudy } from "@/app/games/study/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { SubjectQuests } from "@/components/game/study/subject-quests";
 
 type Course = { id: string; title: string; level: string };
 
@@ -41,7 +42,12 @@ const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#2b5fd9] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none";
 
 /** An untimed, server-scored study session, shared by the city and the Learn area. */
-export function StudyRoom({
+export function StudyRoom(props: {courses:Course[];onClose?:()=>void;onReward?:(reward:{xp:number;clout:number})=>void}) {
+  return <SubjectQuests {...props} />;
+}
+
+/** Standalone legacy mixed practice. The game's default entry now opens selected-subject quests. */
+export function FreeStudyRoom({
   courses: subjectCourses,
   onClose,
   onReward,

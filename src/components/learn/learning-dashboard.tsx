@@ -40,6 +40,7 @@ import type { Course } from "@/lib/types";
 
 const TOOLS: { href: string; title: string; text: string; icon: LucideIcon }[] =
   [
+    { href: "/curriculum", title: "IllumED Slides", text: "Year 1–11 lessons and recall practice, plus sixth-form course routes.", icon: BookOpen },
     {
       href: "/practice",
       title: "Question bank",
@@ -136,7 +137,7 @@ export function LearningDashboard({
   const continueCourse =
     subjects.find((course) => study.courses.includes(course.id)) ?? subjects[0];
   const continueHref = continueCourse
-    ? `/study/${continueCourse.id}`
+    ? `/games/world?activity=study&subject=${continueCourse.id}`
     : "/dashboard/settings";
   // Career history already includes the active job; count it only once.
   const careerShifts = career.history.reduce((sum, job) => sum + job.shifts, 0);
@@ -415,7 +416,7 @@ export function LearningDashboard({
             {subjects.map((course, index) => (
               <li key={course.id}>
                 <Link
-                  href={`/study/${course.id}`}
+                  href={`/games/world?activity=study&subject=${course.id}`}
                   className="group border-border bg-card hover:border-primary/40 flex h-full min-h-36 flex-col rounded-2xl border p-4 transition hover:shadow-md"
                 >
                   <div className="flex items-center gap-2.5">

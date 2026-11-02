@@ -5,6 +5,7 @@ import { PUBLIC_WEB_URL as SITE } from "@/lib/site";
 /** Only the pages anyone can open. Everything else needs an account. */
 const PUBLIC_PAGES = [
   "/",
+  "/curriculum",
   "/about",
   "/book",
   "/schools",

@@ -19,6 +19,12 @@ test("scene music schedules bounded voices, mutes, resumes and releases its cont
     constructor() { context = this; }
     createGain() { return node(); }
     createBiquadFilter() { return node(); }
+    sampleRate = 100;
+    createConvolver() { return node(); }
+    createBuffer(channels, length) {
+      const data = Array.from({ length: channels }, () => new Float32Array(length));
+      return { getChannelData: channel => data[channel] };
+    }
     createOscillator() {
       const osc = { ...node(), start(at) { assert.ok(at >= context.currentTime); }, stop(at) { this.stopAt = at; } };
       nodes.push(osc);
@@ -36,7 +42,10 @@ test("scene music schedules bounded voices, mutes, resumes and releases its cont
     const js = ts.transpileModule(fs.readFileSync("src/components/game/music.ts", "utf8"), {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText;
-    vm.runInNewContext(js, { exports, AudioContext: MockAudioContext, window: globalThis.window, clearInterval: globalThis.clearInterval });
+    let sampleSignal;
+    vm.runInNewContext(js, { exports, AudioContext: MockAudioContext, window: globalThis.window, clearInterval: globalThis.clearInterval, AbortController,
+      fetch: async (_url, { signal }) => { sampleSignal = signal; return { ok: false }; },
+    });
     const { createMusic } = exports;
     const music = createMusic();
     tick();
@@ -58,6 +67,7 @@ test("scene music schedules bounded voices, mutes, resumes and releases its cont
     music.suspend();
     assert.equal(context.state, "suspended");
     music.dispose();
+    assert.equal(sampleSignal.aborted, true, "disposal cancels pending sample requests");
     assert.equal(context.state, "closed");
     assert.equal(cleared, true);
   } finally {
