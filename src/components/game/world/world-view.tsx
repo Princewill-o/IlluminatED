@@ -33,6 +33,7 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
+import type { WorldNavigation } from "@/game/core/navigation";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
@@ -148,7 +149,7 @@ function Joystick({ onMove, driving = false }: { onMove: (dx: number, dy: number
     const r = base.current!.getBoundingClientRect();
     let dx = e.clientX - (r.left + r.width / 2);
     let dy = e.clientY - (r.top + r.height / 2);
-    const max = r.width / 2;
+    const max = r.width / 2 - 22;
     const len = Math.hypot(dx, dy);
     if (len > max) {
       dx = (dx / len) * max;
@@ -167,19 +168,20 @@ function Joystick({ onMove, driving = false }: { onMove: (dx: number, dy: number
       ref={base}
       role="application"
       aria-label={driving ? "Drive: up to accelerate, down to brake or reverse, left or right to steer" : "Move joystick"}
-      className="pointer-events-auto relative size-24 touch-none rounded-full border-2 border-white/20 bg-black/40 sm:size-28"
+      className="pointer-events-auto relative size-28 touch-none rounded-full border border-white/60 bg-white/25 shadow-[0_8px_24px_#10213c30,inset_0_1px_0_#ffffff80] backdrop-blur-xl"
       onPointerDown={(e) => {
+        if (active.current !== null) return;
         active.current = e.pointerId;
         e.currentTarget.setPointerCapture(e.pointerId);
         update(e);
       }}
       onPointerMove={(e) => active.current === e.pointerId && update(e)}
-      onPointerUp={end}
-      onPointerCancel={end}
+      onPointerUp={(e) => { if (active.current === e.pointerId) end(); }}
+      onPointerCancel={(e) => { if (active.current === e.pointerId) end(); }}
       onLostPointerCapture={end}
     >
       <div
-        className="absolute top-1/2 left-1/2 size-11 rounded-full bg-[#8fb4ff] shadow-[0_4px_0_0_rgba(0,0,0,0.5)]"
+        className="absolute top-1/2 left-1/2 size-11 rounded-full border border-white/80 bg-white/90 shadow-[0_3px_12px_#10213c30]"
         style={{ transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))` }}
       />
     </div>
@@ -214,7 +216,9 @@ export function WorldView({
   paused = false,
   police = null,
   homeAction = null,
+  navigation = null,
 }: {
+  navigation?: WorldNavigation | null;
   homeAction?: HomeAction | null;
   paused?: boolean;
   police?: Pursuit | null;
@@ -757,6 +761,7 @@ export function WorldView({
       {is3d && (
         <World3D
           quality={quality}
+          navigation={navigation}
           immersive={immersive}
           map={map}
           avatar={me.avatar}

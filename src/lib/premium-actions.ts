@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 
 import { getAccount } from "@/lib/account/server";
 import { PREMIUM_MONTHLY_PENCE, TRIAL_DAYS } from "@/lib/campaign";
+import { requireWebCheckout } from "@/lib/native-ios-server";
 import { siteOrigin as origin } from "@/lib/site";
 import { getSupabase } from "@/lib/social/server";
 import { PREMIUM_PRICE_ID, getStripe, premiumEnabled, stripeLive, subscriptionPriceId, type BillingCadence, type PaidTier } from "@/lib/stripe";
 
 /** Starts one of the published individual learner plans. */
 export async function startSubscriptionCheckout(fd: FormData) {
+  await requireWebCheckout();
   const rawTier = fd.get("tier");
   const rawCadence = fd.get("cadence");
   const tier: PaidTier | null = rawTier === "plus" || rawTier === "plus_experience" ? rawTier : null;
@@ -64,6 +66,7 @@ export async function startSubscriptionCheckout(fd: FormData) {
 }
 
 export async function startPremiumCheckout(fd: FormData) {
+  await requireWebCheckout();
   const sb = await getSupabase();
   const account = await getAccount();
   if (!sb || !account) redirect("/sign-in?next=/premium");
@@ -110,6 +113,7 @@ export async function startPremiumCheckout(fd: FormData) {
 }
 
 export async function openBillingPortal() {
+  await requireWebCheckout();
   const sb = await getSupabase();
   const account = await getAccount();
   if (!sb || !account) redirect("/sign-in?next=/billing");

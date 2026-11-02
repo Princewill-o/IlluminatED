@@ -18,7 +18,10 @@
     "test:world:load": "node scripts/benchmark-world.mjs",
     "test:world:db": "node tests/world-admission-database.mjs",
     "check:secrets": "node scripts/check-secrets.mjs",
-    "publish:education": "node --env-file-if-exists=.env.local scripts/publish-education.mjs"
+    "publish:education": "node --env-file-if-exists=.env.local scripts/publish-education.mjs",
+    "ios:content": "node scripts/build-ios-content.mjs",
+    "ios:project": "node scripts/generate-ios-project.mjs",
+    "ios:check": "node scripts/build-ios-content.mjs --check && node scripts/generate-ios-project.mjs --check && node --test tests/native-ios.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

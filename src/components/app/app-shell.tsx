@@ -11,6 +11,7 @@ import { Coins, Flame, Send } from "lucide-react";
 import { AppearanceSwitch } from "@/components/app/appearance-switch";
 import { AvatarFigure } from "@/components/game/avatar";
 import { SeasonXpToast } from "@/components/game/season/event-banner";
+import { usePhoneLayout } from "@/components/game/world/use-phone-layout";
 import { PlanBadge } from "@/components/plan-badge";
 import { type Avatar, DEFAULT_AVATAR, sanitiseAvatar } from "@/game/core/cosmetics";
 import { levelForXp } from "@/game/core/progression";
@@ -105,6 +106,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const current = activeTab(path);
   const title = screenTitle(path);
   const inWorld = path === "/games/world";
+  const phoneLayout = usePhoneLayout();
+  const phoneGame = phoneLayout === true && inWorld;
 
   return (
     <PlayerContext.Provider value={player}>
@@ -113,6 +116,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Side rail: tablets and laptops (like Instagram on the web) */}
         <nav
           aria-label="App"
+          inert={phoneGame}
+          style={phoneGame ? { display: "none" } : undefined}
           className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-border bg-background/70 px-3 py-4 backdrop-blur-xl md:flex 2xl:w-[224px]"
         >
           <Link prefetch={false} href="/dashboard" className="mb-5 flex items-center gap-3 px-2" aria-label="IlluminatED home">
@@ -174,7 +179,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Top bar: phones */}
-        <header className="sticky top-0 z-40 border-b border-border bg-chrome pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
+        <header inert={phoneGame} style={phoneGame ? { display: "none" } : undefined} className="sticky top-0 z-40 border-b border-border bg-chrome pt-[env(safe-area-inset-top)] backdrop-blur md:hidden">
           <div className="flex h-14 items-center gap-2 px-3">
             <Link prefetch={false} href="/dashboard" aria-label="IlluminatED home" className="flex min-h-11 min-w-0 items-center gap-2">
               <Image src="/brand/lion-head.webp" alt="" width={30} height={30} className="size-7 rounded-full bg-brand" priority />
@@ -197,6 +202,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Bottom tab bar: phones (like the iOS app) */}
         <nav
           aria-label="App"
+          inert={phoneGame}
+          style={phoneGame ? { display: "none" } : undefined}
           className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-chrome pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
           <ul className="grid h-[64px] grid-cols-6">

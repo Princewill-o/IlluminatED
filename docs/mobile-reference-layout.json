@@ -1,0 +1,404 @@
+{
+  "method": "REA archive inventory/extraction; supplemental UnityPy 1.25.4 static RectTransform decode",
+  "ipa_sha256": "2dd2e9ccaca59d801238e0089d06362142c3233c8b7873bbdf76173a3856cc68",
+  "source_asset": "Payload/BitLife.app/Data/data.unity3d",
+  "source_sha256": "73ab44ba4791db856077c240d4bef9679df8aba7e24c28d485899f86667276f6",
+  "serialized_file": "level0",
+  "observations": [
+    {
+      "id": 1437,
+      "go": 167,
+      "depth": 2,
+      "name": "Viewport",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        -17.0
+      ],
+      "parent": 1565
+    },
+    {
+      "id": 1586,
+      "go": 326,
+      "depth": 3,
+      "name": "NavBar",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1591
+    },
+    {
+      "id": 1439,
+      "go": 169,
+      "depth": 3,
+      "name": "HeroBar",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1591
+    },
+    {
+      "id": 1431,
+      "go": 161,
+      "depth": 4,
+      "name": "Hero Image - CandyImage",
+      "anchorMin": [
+        0.0,
+        0.5
+      ],
+      "anchorMax": [
+        0.0,
+        0.5
+      ],
+      "position": [
+        93.0,
+        0.0
+      ],
+      "size": [
+        122.0,
+        122.0
+      ],
+      "parent": 1439
+    },
+    {
+      "id": 1639,
+      "go": 386,
+      "depth": 4,
+      "name": "Occupation Text - CandyText",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        236.0,
+        44.0
+      ],
+      "size": [
+        710.0,
+        0.0
+      ],
+      "parent": 1439
+    },
+    {
+      "id": 1288,
+      "go": 11,
+      "depth": 4,
+      "name": "Name Bank Grp",
+      "anchorMin": [
+        0.0,
+        1.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        236.0,
+        -48.0
+      ],
+      "size": [
+        -280.0,
+        60.0
+      ],
+      "parent": 1439
+    },
+    {
+      "id": 1332,
+      "go": 58,
+      "depth": 5,
+      "name": "BankBalanceValue - CandyText",
+      "anchorMin": [
+        1.0,
+        1.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        0.0,
+        -30.0
+      ],
+      "size": [
+        400.0,
+        66.1500015258789
+      ],
+      "parent": 1288
+    },
+    {
+      "id": 1524,
+      "go": 261,
+      "depth": 3,
+      "name": "LifeLog",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1591
+    },
+    {
+      "id": 1856,
+      "go": 618,
+      "depth": 4,
+      "name": "CandyScroller",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1524
+    },
+    {
+      "id": 1859,
+      "go": 621,
+      "depth": 5,
+      "name": "Viewport",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1856
+    },
+    {
+      "id": 1575,
+      "go": 314,
+      "depth": 4,
+      "name": "CandyScroller",
+      "anchorMin": [
+        0.0,
+        1.0
+      ],
+      "anchorMax": [
+        0.0,
+        1.0
+      ],
+      "position": [
+        621.0,
+        -282.5
+      ],
+      "size": [
+        1242.0,
+        565.0
+      ],
+      "parent": 1391
+    },
+    {
+      "id": 1279,
+      "go": 2,
+      "depth": 5,
+      "name": "Viewport",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1575
+    },
+    {
+      "id": 1676,
+      "go": 423,
+      "depth": 4,
+      "name": "Toolbar-Stats",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        940.0
+      ],
+      "parent": 1504
+    },
+    {
+      "id": 1312,
+      "go": 35,
+      "depth": 5,
+      "name": "Toolbar",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1676
+    },
+    {
+      "id": 1841,
+      "go": 597,
+      "depth": 10,
+      "name": "AgeUp - CandyImage",
+      "anchorMin": [
+        0.5,
+        0.5
+      ],
+      "anchorMax": [
+        0.5,
+        0.5
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        352.0,
+        352.0
+      ],
+      "parent": 1807
+    },
+    {
+      "id": 1896,
+      "go": 690,
+      "depth": 5,
+      "name": "Stats",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        0.0,
+        0.0
+      ],
+      "position": [
+        0.0,
+        0.0
+      ],
+      "size": [
+        0.0,
+        0.0
+      ],
+      "parent": 1676
+    },
+    {
+      "id": 1845,
+      "go": 681,
+      "depth": 8,
+      "name": "Viewport",
+      "anchorMin": [
+        0.0,
+        0.0
+      ],
+      "anchorMax": [
+        1.0,
+        1.0
+      ],
+      "position": [
+        3.0,
+        -4.000030517578125
+      ],
+      "size": [
+        -6.0,
+        -8.0
+      ],
+      "parent": 1943
+    }
+  ],
+  "limits": [
+    "Serialized hierarchy and anchors only; runtime placement may be changed by scripts.",
+    "No target app executed, no iOS screenshot captured. No code or media imported into IlluminatED."
+  ]
+}

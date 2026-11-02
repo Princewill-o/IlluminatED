@@ -8,6 +8,7 @@ import { PLAYER } from "./art";
 import { HudSlot } from "./hud";
 
 import { KIND, placesFor, type Place, type PlaceKind } from "@/game/core/map-guide";
+import type { WorldNavigation } from "@/game/core/navigation";
 import { CITY, TILE, type WorldMap } from "@/game/core/world";
 
 /**
@@ -70,7 +71,7 @@ function useCityCanvas(map: WorldMap, scale: number) {
 export { LocationMap as CityMap } from "./location-map";
 
 /** Small map that follows you, with an arrow and distance to your waypoint. */
-export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searchArea?: { origin: { x: number; y: number }; radius: number } | null; map: WorldMap; waypoint: Place | null; onOpen: () => void; onArrive: () => void }) {
+export function MiniMap({ map, waypoint, navigation=null, onOpen, onArrive, searchArea }: { navigation?:WorldNavigation|null; searchArea?: { origin: { x: number; y: number }; radius: number } | null; map: WorldMap; waypoint: Place | null; onOpen: () => void; onArrive: () => void }) {
   const S = 4;
   const canvas = useCityCanvas(map, S);
   const wrap = useRef<HTMLSpanElement>(null);
@@ -90,8 +91,8 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
         const dy = waypoint.y - PLAYER.y;
         if (arrow.current) arrow.current.style.transform = `rotate(${Math.atan2(dy, dx) + Math.PI / 2}rad)`;
         // Rough metres: a tile is about 8 m of London.
-        if (Math.hypot(dx, dy) < TILE * 1.6) onArrive();
-        if (dist.current) dist.current.textContent = `${Math.round((Math.hypot(dx, dy) / TILE) * 8)} m`;
+        if (!navigation && Math.hypot(dx, dy) < TILE * 1.6) onArrive();
+        if (dist.current) dist.current.textContent = navigation?`${navigation.metres} m${navigation.driving?" · park & walk":""}`:`${Math.round((Math.hypot(dx, dy) / TILE) * 8)} m`;
         if (pin.current) {
           pin.current.style.left = `${(waypoint.x / TILE) * S}px`;
           pin.current.style.top = `${(waypoint.y / TILE) * S}px`;
@@ -101,7 +102,7 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [waypoint, onArrive]);
+  }, [waypoint, onArrive, navigation]);
   return (
     <HudSlot area="tr" order={60}><button type="button" onClick={onOpen} aria-label="Open the map" className="block text-left">
       <span ref={viewport} className="relative block size-20 overflow-hidden rounded-full border-4 border-[#f6f2e8] bg-[#d9cfbd] shadow-xl sm:size-[104px] xl:size-28 [@media(max-width:639px)_and_(max-height:700px)]:size-16">
@@ -111,7 +112,8 @@ export function MiniMap({ map, waypoint, onOpen, onArrive, searchArea }: { searc
           {places.map((p) => (
             <span key={p.id} className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white" style={{ left: (p.x / TILE) * S, top: (p.y / TILE) * S, background: KIND[p.kind].colour }} />
           ))}
-          {waypoint && <span ref={pin} className="map-me absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#d4241f]" />}
+          {navigation&&<svg aria-hidden className="pointer-events-none absolute inset-0" width={map.cols*S} height={map.rows*S}><polyline points={navigation.points.map(p=>`${p.x/TILE*S},${p.y/TILE*S}`).join(" ")} fill="none" stroke="white" strokeWidth="4"/><polyline points={navigation.points.map(p=>`${p.x/TILE*S},${p.y/TILE*S}`).join(" ")} fill="none" stroke="#ed218e" strokeWidth="2"/></svg>}
+          {waypoint && <span ref={pin} className="map-me absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#ed218e]" />}
         </span>
         <span className="absolute top-1/2 left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#f2a03a]" />
         <span className="absolute right-1 bottom-1 grid size-7 place-items-center rounded-full bg-[#13203a] text-white">

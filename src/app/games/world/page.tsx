@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { loadSubjectQuests } from "@/app/games/study/quest-actions";
 import { WorldApp } from "@/components/game/world/world-app";
 import { affiliationFor } from "@/game/core/affiliation";
 import { awardsFor } from "@/game/core/awards";
@@ -30,7 +31,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
     const result = await sb.from("player_cars").select("car").eq("user_id", account.id);
     return ((result.data ?? []) as {car:string}[]).map(row => row.car);
   })();
-  const [player, orgs, membership, career, home, homework, learning, staff, cars] = await Promise.all([loadPlayer(account.id), organisations, myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id), staffRequest, carsRequest]);
+  const [player, orgs, membership, career, home, homework, learning, staff, cars, studyQuests] = await Promise.all([loadPlayer(account.id), organisations, myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id), staffRequest, carsRequest, loadSubjectQuests()]);
+  const chosenStudyQuest = studyQuests.ok ? studyQuests.board.quests.find(quest => quest.active) : undefined;
   const preferred = new Set(account.details.subjects.map((subject) => subject.courseId));
   const studyCourses = COURSES.filter((course) => QUESTION_BANK.filter((question) => question.courseId === course.id).length >= 5)
     .sort((a, b) => Number(preferred.has(b.id)) - Number(preferred.has(a.id)) || a.title.localeCompare(b.title))
@@ -60,6 +62,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: "Europe/London" });
   const quests = [
+    { id: "study-room", title: chosenStudyQuest ? `Your quest: ${chosenStudyQuest.title}` : "Choose a study quest from your subjects", tag: "Study", href: "/games/study" },
     ...homework
       .filter((h) => !h.mine || new Date(h.dueAt) > new Date())
       .slice(0, 3)
@@ -68,7 +71,6 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       ? { id: "shift", title: `Work a shift at ${workplaceById(a.workplace)?.name ?? "work"}`, tag: "Job", href: "/games/careers" }
       : { id: "job", title: "Get a job at the job centre", tag: "Job", href: "/games/careers" },
     { id: "bus", title: "Revise on the bus (walk to a bus stop)", tag: "Daily" },
-    { id: "study-room", title: "Complete a subject session in the Study Quarter", tag: "Study", href: "/games/study" },
     { id: "arcade", title: "Beat your best in the Arcade", tag: "Daily", href: "/games/arcade" },
   ];
 
@@ -81,7 +83,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       staff={bySlug}
       initialMap={map ?? "city"}
       initialBuild={build === "1"}
-      initialActivity={activity === "racing" || activity === "championship" || activity === "what-if" || activity === "events" ? activity : undefined}
+      initialActivity={activity === "racing" || activity === "championship" || activity === "what-if" || activity === "events" || activity === "study" ? activity : undefined}
       initialServer={server || null}
       initialArrival={Number.isFinite(Number(x)) && Number.isFinite(Number(y)) && x !== undefined && y !== undefined ? { x: Number(x), y: Number(y) } : undefined}
       job={job}

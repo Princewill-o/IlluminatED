@@ -1,0 +1,1626 @@
+{
+  "version": 1,
+  "source": "Original IlluminatED questions. Offline practice does not award account XP or Clout.",
+  "questions": [
+    {
+      "id": "gcse-maths-percentages:pc1",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Percentages and percentage change",
+      "prompt": "What is 15% of 80?",
+      "options": [
+        "8",
+        "12",
+        "15",
+        "20"
+      ],
+      "answer": 1,
+      "explanation": "10% of 80 is 8 and 5% is 4, so 15% is 12."
+    },
+    {
+      "id": "gcse-maths-percentages:pc2",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Percentages and percentage change",
+      "prompt": "Which multiplier increases an amount by 3.5%?",
+      "options": [
+        "0.965",
+        "1.35",
+        "1.035",
+        "3.5"
+      ],
+      "answer": 2,
+      "explanation": "100% + 3.5% = 103.5% = 1.035."
+    },
+    {
+      "id": "gcse-maths-percentages:pc3",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Percentages and percentage change",
+      "prompt": "After a 25% increase a ticket costs £30. What was the original price?",
+      "options": [
+        "£22.50",
+        "£24",
+        "£25",
+        "£37.50"
+      ],
+      "answer": 1,
+      "explanation": "Original × 1.25 = 30, so original = 30 ÷ 1.25 = £24."
+    },
+    {
+      "id": "gcse-maths-percentages:pc4",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Percentages and percentage change",
+      "prompt": "A car's value falls from £12,000 to £9,000. What is the percentage decrease?",
+      "options": [
+        "25%",
+        "33.3%",
+        "30%",
+        "75%"
+      ],
+      "answer": 0,
+      "explanation": "Change £3,000 ÷ original £12,000 × 100 = 25%."
+    },
+    {
+      "id": "gcse-maths-linear-equations:le1",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Solving linear equations",
+      "prompt": "Solve 4x − 3 = 21.",
+      "options": [
+        "x = 4.5",
+        "x = 6",
+        "x = 7",
+        "x = 24"
+      ],
+      "answer": 1,
+      "explanation": "Add 3: 4x = 24. Divide by 4: x = 6."
+    },
+    {
+      "id": "gcse-maths-linear-equations:le2",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Solving linear equations",
+      "prompt": "Solve 6x + 2 = 2x + 18.",
+      "options": [
+        "x = 2",
+        "x = 4",
+        "x = 5",
+        "x = 16"
+      ],
+      "answer": 1,
+      "explanation": "Subtract 2x: 4x + 2 = 18. Subtract 2: 4x = 16, so x = 4."
+    },
+    {
+      "id": "gcse-maths-linear-equations:le3",
+      "subject": "Mathematics",
+      "course": "Level 1/2",
+      "topic": "Solving linear equations",
+      "prompt": "Solve (x + 5) ÷ 3 = 4.",
+      "options": [
+        "x = 7",
+        "x = 12",
+        "x = 17",
+        "x = −1"
+      ],
+      "answer": 0,
+      "explanation": "Multiply by 3: x + 5 = 12, so x = 7."
+    },
+    {
+      "id": "gcse-englang-language-analysis:la1",
+      "subject": "English Language",
+      "course": "Level 1/2",
+      "topic": "Analysing language",
+      "prompt": "Which quotation length is usually best for language analysis?",
+      "options": [
+        "A whole paragraph",
+        "Several sentences",
+        "A short word or phrase",
+        "No quotation"
+      ],
+      "answer": 2,
+      "explanation": "Short quotations let you zoom in on individual word choices."
+    },
+    {
+      "id": "gcse-englang-language-analysis:la2",
+      "subject": "English Language",
+      "course": "Level 1/2",
+      "topic": "Analysing language",
+      "prompt": "'The classroom was a zoo.' What technique is this?",
+      "options": [
+        "Simile",
+        "Metaphor",
+        "Onomatopoeia",
+        "Alliteration"
+      ],
+      "answer": 1,
+      "explanation": "It says the classroom *is* a zoo, rather than *like* one, so it is a metaphor."
+    },
+    {
+      "id": "gcse-englang-language-analysis:la3",
+      "subject": "English Language",
+      "course": "Level 1/2",
+      "topic": "Analysing language",
+      "prompt": "Which is the strongest comment on effect?",
+      "options": [
+        "It uses a verb.",
+        "It makes it interesting.",
+        "'Clawed' suggests violent, animal-like force, making the storm feel threatening.",
+        "It is descriptive."
+      ],
+      "answer": 2,
+      "explanation": "It explains the connotation and links it to the reader's response."
+    },
+    {
+      "id": "gcse-englit-essay-writing:ee1",
+      "subject": "English Literature",
+      "course": "Level 1/2",
+      "topic": "Writing a literature essay",
+      "prompt": "What should the opening of a literature essay do?",
+      "options": [
+        "Summarise the plot",
+        "Give the author's biography",
+        "Answer the question with a clear argument",
+        "List every technique"
+      ],
+      "answer": 2,
+      "explanation": "A clear thesis tells the examiner your argument from the start."
+    },
+    {
+      "id": "gcse-englit-essay-writing:ee2",
+      "subject": "English Literature",
+      "course": "Level 1/2",
+      "topic": "Writing a literature essay",
+      "prompt": "Which is the best use of context?",
+      "options": [
+        "A paragraph on Victorian history",
+        "Linking a writer's portrayal of poverty to attitudes of the time",
+        "Stating the year the text was published",
+        "Ignoring it"
+      ],
+      "answer": 1,
+      "explanation": "Context should explain the writer's choices and the text's ideas."
+    },
+    {
+      "id": "gcse-bio-cells:ce1",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Cell structure",
+      "prompt": "Which structure controls the activities of a eukaryotic cell?",
+      "options": [
+        "Cell wall",
+        "Nucleus",
+        "Cytoplasm",
+        "Ribosome"
+      ],
+      "answer": 1,
+      "explanation": "The nucleus contains the genetic material that controls cell activities."
+    },
+    {
+      "id": "gcse-bio-cells:ce2",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Cell structure",
+      "prompt": "Which is found in bacterial cells but not in animal cells?",
+      "options": [
+        "Ribosomes",
+        "Cell membrane",
+        "Plasmids",
+        "Cytoplasm"
+      ],
+      "answer": 2,
+      "explanation": "Plasmids are small rings of DNA found in bacteria."
+    },
+    {
+      "id": "gcse-bio-cells:ce3",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Cell structure",
+      "prompt": "Where does protein synthesis take place?",
+      "options": [
+        "Ribosomes",
+        "Mitochondria",
+        "Vacuole",
+        "Cell wall"
+      ],
+      "answer": 0,
+      "explanation": "Ribosomes join amino acids to make proteins."
+    },
+    {
+      "id": "gcse-bio-cells:ce4",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Cell structure",
+      "prompt": "An image is 25 mm and the real object is 0.05 mm. Magnification?",
+      "options": [
+        "×50",
+        "×125",
+        "×500",
+        "×1250"
+      ],
+      "answer": 2,
+      "explanation": "25 ÷ 0.05 = 500."
+    },
+    {
+      "id": "gcse-bio-enzymes:en1",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Enzymes",
+      "prompt": "What happens to an enzyme above its optimum temperature?",
+      "options": [
+        "It is killed",
+        "It becomes denatured",
+        "It works faster forever",
+        "It turns into a substrate"
+      ],
+      "answer": 1,
+      "explanation": "Bonds break, the active site changes shape and the enzyme is denatured."
+    },
+    {
+      "id": "gcse-bio-enzymes:en2",
+      "subject": "Biology",
+      "course": "Level 1/2",
+      "topic": "Enzymes",
+      "prompt": "Why is each enzyme specific to one substrate?",
+      "options": [
+        "Enzymes are large",
+        "The active site has a complementary shape",
+        "Enzymes are made of fat",
+        "Substrates are catalysts"
+      ],
+      "answer": 1,
+      "explanation": "Only a substrate that fits the active site's shape can bind."
+    },
+    {
+      "id": "gcse-chem-atomic-structure:at1",
+      "subject": "Chemistry",
+      "course": "Level 1/2",
+      "topic": "Atomic structure",
+      "prompt": "What is the charge of a neutron?",
+      "options": [
+        "+1",
+        "−1",
+        "0",
+        "It varies"
+      ],
+      "answer": 2,
+      "explanation": "Neutrons have no electric charge."
+    },
+    {
+      "id": "gcse-chem-atomic-structure:at2",
+      "subject": "Chemistry",
+      "course": "Level 1/2",
+      "topic": "Atomic structure",
+      "prompt": "An atom has mass number 23 and atomic number 11. How many neutrons?",
+      "options": [
+        "11",
+        "12",
+        "23",
+        "34"
+      ],
+      "answer": 1,
+      "explanation": "23 − 11 = 12 neutrons."
+    },
+    {
+      "id": "gcse-chem-atomic-structure:at3",
+      "subject": "Chemistry",
+      "course": "Level 1/2",
+      "topic": "Atomic structure",
+      "prompt": "What is the electron configuration of oxygen (8 electrons)?",
+      "options": [
+        "2,6",
+        "8",
+        "2,8",
+        "4,4"
+      ],
+      "answer": 0,
+      "explanation": "The first shell holds 2, leaving 6 in the second shell."
+    },
+    {
+      "id": "gcse-chem-bonding:bo1",
+      "subject": "Chemistry",
+      "course": "Level 1/2",
+      "topic": "Ionic and covalent bonding",
+      "prompt": "What happens to a metal atom in ionic bonding?",
+      "options": [
+        "It gains electrons",
+        "It loses electrons",
+        "It shares electrons",
+        "It gains protons"
+      ],
+      "answer": 1,
+      "explanation": "Metal atoms lose electrons to form positive ions."
+    },
+    {
+      "id": "gcse-chem-bonding:bo2",
+      "subject": "Chemistry",
+      "course": "Level 1/2",
+      "topic": "Ionic and covalent bonding",
+      "prompt": "Why does diamond have a very high melting point?",
+      "options": [
+        "Weak intermolecular forces",
+        "Free ions",
+        "Many strong covalent bonds must be broken",
+        "It is a metal"
+      ],
+      "answer": 2,
+      "explanation": "Diamond is a giant covalent structure."
+    },
+    {
+      "id": "gcse-phys-energy:eg1",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Energy stores and transfers",
+      "prompt": "What happens to kinetic energy if speed doubles?",
+      "options": [
+        "It doubles",
+        "It halves",
+        "It quadruples",
+        "It stays the same"
+      ],
+      "answer": 2,
+      "explanation": "Eₖ is proportional to v², and 2² = 4."
+    },
+    {
+      "id": "gcse-phys-energy:eg2",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Energy stores and transfers",
+      "prompt": "A kettle has 80% efficiency and uses 1000 J. How much is wasted?",
+      "options": [
+        "80 J",
+        "200 J",
+        "800 J",
+        "1080 J"
+      ],
+      "answer": 1,
+      "explanation": "Useful = 800 J, so 200 J is dissipated."
+    },
+    {
+      "id": "gcse-phys-energy:eg3",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Energy stores and transfers",
+      "prompt": "Which is the unit of energy?",
+      "options": [
+        "Watt",
+        "Newton",
+        "Joule",
+        "Pascal"
+      ],
+      "answer": 2,
+      "explanation": "Energy is measured in joules (J)."
+    },
+    {
+      "id": "gcse-phys-forces:fo1",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Forces and Newton's laws",
+      "prompt": "What is the unit of force?",
+      "options": [
+        "Joule",
+        "Watt",
+        "Newton",
+        "Pascal"
+      ],
+      "answer": 2,
+      "explanation": "Force is measured in newtons (N)."
+    },
+    {
+      "id": "gcse-phys-forces:fo2",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Forces and Newton's laws",
+      "prompt": "A 5 kg object has a resultant force of 20 N. Its acceleration is…",
+      "options": [
+        "0.25 m/s²",
+        "4 m/s²",
+        "25 m/s²",
+        "100 m/s²"
+      ],
+      "answer": 1,
+      "explanation": "a = F ÷ m = 20 ÷ 5 = 4 m/s²."
+    },
+    {
+      "id": "gcse-phys-forces:fo3",
+      "subject": "Physics",
+      "course": "Level 1/2",
+      "topic": "Forces and Newton's laws",
+      "prompt": "A car moves in a straight line at a constant 30 m/s. The resultant force is…",
+      "options": [
+        "Forwards",
+        "Backwards",
+        "Zero",
+        "Equal to its weight"
+      ],
+      "answer": 2,
+      "explanation": "Constant velocity means no acceleration, so the resultant force is zero."
+    },
+    {
+      "id": "gcse-history-sources:hs1",
+      "subject": "History",
+      "course": "Level 1/2",
+      "topic": "Evaluating historical sources",
+      "prompt": "A government propaganda poster is most useful for studying…",
+      "options": [
+        "Exact casualty figures",
+        "How the government wanted people to think",
+        "Private opinions of soldiers",
+        "Weather at the time"
+      ],
+      "answer": 1,
+      "explanation": "Propaganda reveals the message and methods the government used."
+    },
+    {
+      "id": "gcse-history-sources:hs2",
+      "subject": "History",
+      "course": "Level 1/2",
+      "topic": "Evaluating historical sources",
+      "prompt": "What does 'provenance' mean?",
+      "options": [
+        "How long a source is",
+        "Where a source comes from and why it was made",
+        "Whether it is a picture",
+        "Its grade value"
+      ],
+      "answer": 1,
+      "explanation": "Provenance covers who made the source, when and for what purpose."
+    },
+    {
+      "id": "gcse-geog-tectonics:tc1",
+      "subject": "Geography",
+      "course": "Level 1/2",
+      "topic": "Tectonic hazards",
+      "prompt": "Which margin has earthquakes but no volcanoes?",
+      "options": [
+        "Constructive",
+        "Destructive",
+        "Conservative",
+        "All of them"
+      ],
+      "answer": 2,
+      "explanation": "At conservative margins plates slide past each other; no magma rises."
+    },
+    {
+      "id": "gcse-geog-tectonics:tc2",
+      "subject": "Geography",
+      "course": "Level 1/2",
+      "topic": "Tectonic hazards",
+      "prompt": "Which is a primary effect of an earthquake?",
+      "options": [
+        "Disease spreading",
+        "Buildings collapsing",
+        "Loss of tourism",
+        "Food shortages weeks later"
+      ],
+      "answer": 1,
+      "explanation": "Collapse happens immediately as the ground shakes."
+    },
+    {
+      "id": "gcse-cs-binary:bi1",
+      "subject": "Computer Science",
+      "course": "Level 1/2",
+      "topic": "Binary and data representation",
+      "prompt": "What is 00010101 in denary?",
+      "options": [
+        "19",
+        "21",
+        "25",
+        "37"
+      ],
+      "answer": 1,
+      "explanation": "16 + 4 + 1 = 21."
+    },
+    {
+      "id": "gcse-cs-binary:bi2",
+      "subject": "Computer Science",
+      "course": "Level 1/2",
+      "topic": "Binary and data representation",
+      "prompt": "What is 1110 1010 in hexadecimal?",
+      "options": [
+        "EA",
+        "AE",
+        "E10",
+        "D9"
+      ],
+      "answer": 0,
+      "explanation": "1110 = 14 = E and 1010 = 10 = A."
+    },
+    {
+      "id": "gcse-cs-binary:bi3",
+      "subject": "Computer Science",
+      "course": "Level 1/2",
+      "topic": "Binary and data representation",
+      "prompt": "How many bits are in a byte?",
+      "options": [
+        "4",
+        "8",
+        "10",
+        "16"
+      ],
+      "answer": 1,
+      "explanation": "One byte is 8 bits."
+    },
+    {
+      "id": "alevel-maths-differentiation:df1",
+      "subject": "Mathematics",
+      "course": "Level 3",
+      "topic": "Differentiation from first principles to tangents",
+      "prompt": "Differentiate y = x³.",
+      "options": [
+        "3x²",
+        "x²",
+        "3x",
+        "x⁴/4"
+      ],
+      "answer": 0,
+      "explanation": "Using the power rule, d(x³)/dx = 3x²."
+    },
+    {
+      "id": "alevel-maths-differentiation:df2",
+      "subject": "Mathematics",
+      "course": "Level 3",
+      "topic": "Differentiation from first principles to tangents",
+      "prompt": "What is the gradient of y = x² + 5x at x = 2?",
+      "options": [
+        "9",
+        "14",
+        "4",
+        "10"
+      ],
+      "answer": 0,
+      "explanation": "dy/dx = 2x + 5 = 9 at x = 2."
+    },
+    {
+      "id": "alevel-maths-differentiation:df3",
+      "subject": "Mathematics",
+      "course": "Level 3",
+      "topic": "Differentiation from first principles to tangents",
+      "prompt": "If d²y/dx² > 0 at a stationary point, it is a…",
+      "options": [
+        "Maximum",
+        "Minimum",
+        "Asymptote",
+        "Root"
+      ],
+      "answer": 1,
+      "explanation": "A positive second derivative means the curve is concave up: a minimum."
+    },
+    {
+      "id": "alevel-bio-cell-division:cd1",
+      "subject": "Biology",
+      "course": "Level 3",
+      "topic": "Mitosis and the cell cycle",
+      "prompt": "Which process produces two genetically identical daughter cells?",
+      "options": [
+        "Meiosis",
+        "Mitosis",
+        "Fertilisation",
+        "Transcription"
+      ],
+      "answer": 1,
+      "explanation": "Mitosis produces two genetically identical daughter cells."
+    },
+    {
+      "id": "alevel-bio-cell-division:cd2",
+      "subject": "Biology",
+      "course": "Level 3",
+      "topic": "Mitosis and the cell cycle",
+      "prompt": "In which stage are sister chromatids pulled to opposite poles?",
+      "options": [
+        "Prophase",
+        "Metaphase",
+        "Anaphase",
+        "Telophase"
+      ],
+      "answer": 2,
+      "explanation": "Centromeres divide in anaphase and chromatids separate."
+    },
+    {
+      "id": "alevel-chem-equilibria:eq1",
+      "subject": "Chemistry",
+      "course": "Level 3",
+      "topic": "Chemical equilibria",
+      "prompt": "What does a catalyst do to the position of equilibrium?",
+      "options": [
+        "Moves it right",
+        "Moves it left",
+        "Does not change it",
+        "Stops equilibrium"
+      ],
+      "answer": 2,
+      "explanation": "A catalyst speeds up forward and reverse reactions equally."
+    },
+    {
+      "id": "alevel-chem-equilibria:eq2",
+      "subject": "Chemistry",
+      "course": "Level 3",
+      "topic": "Chemical equilibria",
+      "prompt": "N₂ + 3H₂ ⇌ 2NH₃. Increasing pressure shifts equilibrium…",
+      "options": [
+        "Left",
+        "Right",
+        "Not at all",
+        "It depends on catalyst"
+      ],
+      "answer": 1,
+      "explanation": "The right side has 2 gas molecules versus 4 on the left."
+    },
+    {
+      "id": "alevel-chem-equilibria:eq3",
+      "subject": "Chemistry",
+      "course": "Level 3",
+      "topic": "Chemical equilibria",
+      "prompt": "Which change alters the value of Kc?",
+      "options": [
+        "Adding more reactant",
+        "Increasing pressure",
+        "Changing temperature",
+        "Adding a catalyst"
+      ],
+      "answer": 2,
+      "explanation": "Only temperature changes Kc."
+    },
+    {
+      "id": "alevel-psych-research-methods:rm1",
+      "subject": "Psychology",
+      "course": "Level 3",
+      "topic": "Research methods: experiments and variables",
+      "prompt": "Which design avoids order effects?",
+      "options": [
+        "Repeated measures",
+        "Independent groups",
+        "Counterbalanced repeated measures",
+        "Longitudinal"
+      ],
+      "answer": 1,
+      "explanation": "Each participant does only one condition, so there are no order effects."
+    },
+    {
+      "id": "alevel-psych-research-methods:rm2",
+      "subject": "Psychology",
+      "course": "Level 3",
+      "topic": "Research methods: experiments and variables",
+      "prompt": "'Participants who sleep 8 hours recall more words than those who sleep 4 hours' is…",
+      "options": [
+        "A null hypothesis",
+        "A directional hypothesis",
+        "A non-directional hypothesis",
+        "An aim"
+      ],
+      "answer": 1,
+      "explanation": "It predicts which condition will do better."
+    },
+    {
+      "id": "alevel-econ-supply-demand:sd1",
+      "subject": "Economics",
+      "course": "Level 3",
+      "topic": "Supply, demand and market equilibrium",
+      "prompt": "Coffee becomes more expensive. What happens to demand for tea (a substitute)?",
+      "options": [
+        "Shifts right",
+        "Shifts left",
+        "Movement along",
+        "No change"
+      ],
+      "answer": 0,
+      "explanation": "People switch to the substitute, so demand for tea increases."
+    },
+    {
+      "id": "alevel-econ-supply-demand:sd2",
+      "subject": "Economics",
+      "course": "Level 3",
+      "topic": "Supply, demand and market equilibrium",
+      "prompt": "An indirect tax on a good will usually…",
+      "options": [
+        "Shift supply right",
+        "Shift supply left",
+        "Shift demand right",
+        "Have no effect"
+      ],
+      "answer": 1,
+      "explanation": "Taxes raise costs for producers, reducing supply."
+    },
+    {
+      "id": "btec-business-marketing-mix:mk1",
+      "subject": "Business",
+      "course": "Level 2–3",
+      "topic": "The marketing mix and target markets",
+      "prompt": "What does a target market describe?",
+      "options": [
+        "All competitors",
+        "The intended customer group",
+        "A sales forecast",
+        "A business objective"
+      ],
+      "answer": 1,
+      "explanation": "A target market is the particular group of customers a product aims to reach."
+    },
+    {
+      "id": "btec-business-marketing-mix:mk2",
+      "subject": "Business",
+      "course": "Level 2–3",
+      "topic": "The marketing mix and target markets",
+      "prompt": "Which is part of 'place' in the marketing mix?",
+      "options": [
+        "Discounts",
+        "Social media adverts",
+        "Where and how the product is sold",
+        "Packaging design"
+      ],
+      "answer": 2,
+      "explanation": "Place covers distribution channels and where customers can buy."
+    },
+    {
+      "id": "btec-hsc-care-values:cv1",
+      "subject": "Health and Social Care",
+      "course": "Level 2–3",
+      "topic": "Care values and person-centred practice",
+      "prompt": "Why is confidentiality important in care?",
+      "options": [
+        "It speeds up paperwork",
+        "It protects personal information and trust",
+        "It removes consent",
+        "It replaces safeguarding"
+      ],
+      "answer": 1,
+      "explanation": "Confidentiality protects private information and supports trust, while safeguarding duties still apply."
+    },
+    {
+      "id": "btec-hsc-care-values:cv2",
+      "subject": "Health and Social Care",
+      "course": "Level 2–3",
+      "topic": "Care values and person-centred practice",
+      "prompt": "Which action best promotes independence?",
+      "options": [
+        "Doing tasks for the person to save time",
+        "Encouraging the person to do what they can with support",
+        "Deciding their routine for them",
+        "Limiting their choices"
+      ],
+      "answer": 1,
+      "explanation": "Supporting people to do what they can for themselves promotes independence."
+    },
+    {
+      "id": "digital-cyber-threats:cy1",
+      "subject": "Information Technology",
+      "course": "Level 2–3",
+      "topic": "Cyber security threats and protection",
+      "prompt": "What is the purpose of multi-factor authentication?",
+      "options": [
+        "Use a longer username",
+        "Verify identity using more than one factor",
+        "Encrypt every file",
+        "Remove passwords"
+      ],
+      "answer": 1,
+      "explanation": "MFA asks for two or more different types of evidence to verify a user."
+    },
+    {
+      "id": "digital-cyber-threats:cy2",
+      "subject": "Information Technology",
+      "course": "Level 2–3",
+      "topic": "Cyber security threats and protection",
+      "prompt": "Which threat encrypts files and demands payment?",
+      "options": [
+        "Spyware",
+        "Ransomware",
+        "Adware",
+        "A firewall"
+      ],
+      "answer": 1,
+      "explanation": "Ransomware locks data until a ransom is paid."
+    },
+    {
+      "id": "tlevel-health-infection-control:ic1",
+      "subject": "Health",
+      "course": "Level 3",
+      "topic": "Infection prevention and control",
+      "prompt": "Which of these is a standard infection control precaution that applies to every patient?",
+      "options": [
+        "Hand hygiene",
+        "PPE only for patients known to be infectious",
+        "Reusing single-use gloves between patients",
+        "Skipping hand hygiene if gloves were worn"
+      ],
+      "answer": 0,
+      "explanation": "Standard infection control precautions, including hand hygiene, are used for all patients, all the time, whether or not an infection is known."
+    },
+    {
+      "id": "tlevel-health-infection-control:ic2",
+      "subject": "Health",
+      "course": "Level 3",
+      "topic": "Infection prevention and control",
+      "prompt": "Which link is broken by effective hand hygiene?",
+      "options": [
+        "Susceptible host",
+        "Mode of transmission",
+        "Infectious agent's DNA",
+        "None"
+      ],
+      "answer": 1,
+      "explanation": "Hand hygiene stops hands transmitting microorganisms."
+    },
+    {
+      "id": "fs-maths-ratio:ra1",
+      "subject": "Functional Skills Maths",
+      "course": "Entry Level to Level 2",
+      "topic": "Ratio and proportion",
+      "prompt": "Share £45 in the ratio 4:5.",
+      "options": [
+        "£20 and £25",
+        "£18 and £27",
+        "£4 and £5",
+        "£22.50 each"
+      ],
+      "answer": 0,
+      "explanation": "9 parts; 1 part = £5; £20 and £25."
+    },
+    {
+      "id": "fs-maths-ratio:ra2",
+      "subject": "Functional Skills Maths",
+      "course": "Entry Level to Level 2",
+      "topic": "Ratio and proportion",
+      "prompt": "Write 18:24 in its simplest form.",
+      "options": [
+        "9:12",
+        "3:4",
+        "6:8",
+        "2:3"
+      ],
+      "answer": 1,
+      "explanation": "Divide both parts by the highest common factor, 6, to get 3:4."
+    },
+    {
+      "id": "core-maths-estimation:fe1",
+      "subject": "Core Maths",
+      "course": "Level 3",
+      "topic": "Estimation and Fermi problems",
+      "prompt": "Which is most important in an estimation answer?",
+      "options": [
+        "Many decimal places",
+        "Clearly stated, sensible assumptions",
+        "Using a calculator",
+        "Matching the textbook exactly"
+      ],
+      "answer": 1,
+      "explanation": "Reasoning and assumptions earn the credit."
+    },
+    {
+      "id": "epq-planning:ep1",
+      "subject": "Extended Project",
+      "course": "Level 3",
+      "topic": "Planning an EPQ and referencing sources",
+      "prompt": "Which is the strongest EPQ question?",
+      "options": [
+        "Climate change",
+        "Everything about AI",
+        "To what extent can urban tree planting reduce summer temperatures in UK cities?",
+        "Is maths good?"
+      ],
+      "answer": 2,
+      "explanation": "It is focused, researchable and allows a reasoned judgement."
+    },
+    {
+      "id": "alevel-physics-suvat:sv1",
+      "subject": "Physics",
+      "course": "Level 3",
+      "topic": "Motion in a straight line and the SUVAT equations",
+      "prompt": "A stone is dropped from rest and falls for 2.0 s. Ignoring air resistance, what is its speed? (g = 9.81 m s⁻²)",
+      "options": [
+        "19.6 m s⁻¹",
+        "9.81 m s⁻¹",
+        "39.2 m s⁻¹",
+        "4.9 m s⁻¹"
+      ],
+      "answer": 0,
+      "explanation": "v = u + at = 0 + 9.81 × 2.0 = 19.6 m s⁻¹."
+    },
+    {
+      "id": "alevel-physics-suvat:sv2",
+      "subject": "Physics",
+      "course": "Level 3",
+      "topic": "Motion in a straight line and the SUVAT equations",
+      "prompt": "What does the gradient of a velocity–time graph give?",
+      "options": [
+        "Displacement",
+        "Acceleration",
+        "Speed",
+        "Distance travelled"
+      ],
+      "answer": 1,
+      "explanation": "Gradient = change in velocity ÷ time, which is acceleration. The area under the graph gives displacement."
+    },
+    {
+      "id": "alevel-physics-suvat:sv3",
+      "subject": "Physics",
+      "course": "Level 3",
+      "topic": "Motion in a straight line and the SUVAT equations",
+      "prompt": "A cyclist starts from rest and accelerates uniformly at 1.5 m s⁻² for 4.0 s. How far does she travel?",
+      "options": [
+        "6.0 m",
+        "24 m",
+        "12 m",
+        "3.0 m"
+      ],
+      "answer": 2,
+      "explanation": "s = ut + ½at² = 0 + ½ × 1.5 × 4.0² = 12 m."
+    },
+    {
+      "id": "alevel-fmaths-complex-numbers:cx1",
+      "subject": "Further Mathematics",
+      "course": "Level 3",
+      "topic": "Complex numbers and the Argand diagram",
+      "prompt": "What is |5 − 12i|?",
+      "options": [
+        "7",
+        "13",
+        "17",
+        "169"
+      ],
+      "answer": 1,
+      "explanation": "|5 − 12i| = √(5² + 12²) = √169 = 13."
+    },
+    {
+      "id": "alevel-fmaths-complex-numbers:cx2",
+      "subject": "Further Mathematics",
+      "course": "Level 3",
+      "topic": "Complex numbers and the Argand diagram",
+      "prompt": "What is the principal argument of −1 + i?",
+      "options": [
+        "π/4",
+        "−π/4",
+        "3π/4",
+        "−3π/4"
+      ],
+      "answer": 2,
+      "explanation": "The point (−1, 1) is in the second quadrant, so arg z = π − π/4 = 3π/4."
+    },
+    {
+      "id": "alevel-fmaths-complex-numbers:cx3",
+      "subject": "Further Mathematics",
+      "course": "Level 3",
+      "topic": "Complex numbers and the Argand diagram",
+      "prompt": "Simplify (2 + i)(2 − i).",
+      "options": [
+        "3",
+        "4 − i",
+        "5",
+        "4 + 2i"
+      ],
+      "answer": 2,
+      "explanation": "(2 + i)(2 − i) = 4 − i² = 4 + 1 = 5, a real number."
+    },
+    {
+      "id": "alevel-englit-unseen-poetry:up1",
+      "subject": "English Literature",
+      "course": "Level 3",
+      "topic": "Comparing unseen poems",
+      "prompt": "Which opening is the strongest comparative thesis?",
+      "options": [
+        "Poem A is about love and Poem B is also about love.",
+        "Both poets explore loss, but one finds comfort in memory while the other resists it.",
+        "Poem A uses lots of techniques such as metaphor.",
+        "I will first write about Poem A and then Poem B."
+      ],
+      "answer": 1,
+      "explanation": "It links both poems and states a similarity and a difference, which gives the essay a clear comparative argument."
+    },
+    {
+      "id": "alevel-englit-unseen-poetry:up2",
+      "subject": "English Literature",
+      "course": "Level 3",
+      "topic": "Comparing unseen poems",
+      "prompt": "A sentence runs over a line break without punctuation. What is this called?",
+      "options": [
+        "Caesura",
+        "Enjambment",
+        "Volta",
+        "Sibilance"
+      ],
+      "answer": 1,
+      "explanation": "Enjambment carries the sense from one line into the next. A caesura is a pause within a line."
+    },
+    {
+      "id": "alevel-englit-unseen-poetry:up3",
+      "subject": "English Literature",
+      "course": "Level 3",
+      "topic": "Comparing unseen poems",
+      "prompt": "In AQA 7712 Paper 1 Section B, what are you asked to do?",
+      "options": [
+        "Write a comparative essay on two unseen poems",
+        "Answer a passage-based question on Shakespeare",
+        "Write about a set poetry anthology with the book open",
+        "Write an independent critical study"
+      ],
+      "answer": 0,
+      "explanation": "Section B is a compulsory essay question on two unseen poems (25 marks)."
+    },
+    {
+      "id": "alevel-history-interpretations:hi1",
+      "subject": "History",
+      "course": "Level 3",
+      "topic": "Evaluating historical interpretations",
+      "prompt": "Which of these is the best way to evaluate a historian's extract?",
+      "options": [
+        "Comment on when the book was published",
+        "Test its claims against your own contextual knowledge",
+        "Count how many facts it includes",
+        "Say whether you agree with the historian's politics"
+      ],
+      "answer": 1,
+      "explanation": "AO3 rewards evaluating the argument in relation to the historical context, using your own knowledge."
+    },
+    {
+      "id": "alevel-history-interpretations:hi2",
+      "subject": "History",
+      "course": "Level 3",
+      "topic": "Evaluating historical interpretations",
+      "prompt": "In AQA 7042 Component 1 Section A, how many extracts are you given?",
+      "options": [
+        "One",
+        "Two",
+        "Three",
+        "Four"
+      ],
+      "answer": 2,
+      "explanation": "Section A provides three extracts linked to a broad issue, and is worth 30 marks."
+    },
+    {
+      "id": "alevel-history-interpretations:hi3",
+      "subject": "History",
+      "course": "Level 3",
+      "topic": "Evaluating historical interpretations",
+      "prompt": "A letter written by a politician in 1911 is best described as…",
+      "options": [
+        "An interpretation",
+        "A primary source",
+        "Historiography",
+        "A secondary argument"
+      ],
+      "answer": 1,
+      "explanation": "It comes from the period itself, so it is a source (assessed through AO2), not a later interpretation."
+    },
+    {
+      "id": "btec-appsci-cells-microscopy:cm1",
+      "subject": "Applied Science",
+      "course": "Level 2–3",
+      "topic": "Cell structure, microscopy and magnification",
+      "prompt": "Which structure is found in prokaryotic cells but not usually in eukaryotic cells?",
+      "options": [
+        "Nucleus",
+        "Mitochondria",
+        "Plasmids",
+        "Golgi apparatus"
+      ],
+      "answer": 2,
+      "explanation": "Plasmids are small loops of DNA typical of bacteria. Prokaryotes have no nucleus, mitochondria or Golgi apparatus."
+    },
+    {
+      "id": "btec-appsci-cells-microscopy:cm2",
+      "subject": "Applied Science",
+      "course": "Level 2–3",
+      "topic": "Cell structure, microscopy and magnification",
+      "prompt": "An image is 12 mm long and the actual object is 40 µm long. What is the magnification?",
+      "options": [
+        "×0.3",
+        "×30",
+        "×300",
+        "×3000"
+      ],
+      "answer": 2,
+      "explanation": "12 mm = 12 000 µm, and 12 000 ÷ 40 = ×300."
+    },
+    {
+      "id": "btec-appsci-cells-microscopy:cm3",
+      "subject": "Applied Science",
+      "course": "Level 2–3",
+      "topic": "Cell structure, microscopy and magnification",
+      "prompt": "Why can an electron microscope show ribosomes when a light microscope cannot?",
+      "options": [
+        "It has a higher resolution",
+        "It uses living specimens",
+        "It uses coloured stains",
+        "It has a larger field of view"
+      ],
+      "answer": 0,
+      "explanation": "Electrons have a much shorter wavelength than light, so electron microscopes can resolve much smaller structures."
+    },
+    {
+      "id": "btec-sport-skeletal-muscular:sk1",
+      "subject": "Sport",
+      "course": "Level 2–3",
+      "topic": "Joints, antagonistic pairs and muscle fibre types",
+      "prompt": "Which fibre type would a marathon runner rely on most?",
+      "options": [
+        "Type IIx",
+        "Type IIa",
+        "Type I",
+        "Cardiac muscle"
+      ],
+      "answer": 2,
+      "explanation": "Type I fibres are slow twitch and highly resistant to fatigue, ideal for long endurance events."
+    },
+    {
+      "id": "btec-sport-skeletal-muscular:sk2",
+      "subject": "Sport",
+      "course": "Level 2–3",
+      "topic": "Joints, antagonistic pairs and muscle fibre types",
+      "prompt": "Holding a plank position mainly involves which type of contraction?",
+      "options": [
+        "Concentric",
+        "Eccentric",
+        "Isometric",
+        "Isotonic"
+      ],
+      "answer": 2,
+      "explanation": "The muscles produce tension without changing length, which is an isometric contraction."
+    },
+    {
+      "id": "btec-sport-skeletal-muscular:sk3",
+      "subject": "Sport",
+      "course": "Level 2–3",
+      "topic": "Joints, antagonistic pairs and muscle fibre types",
+      "prompt": "Pointing the toes, as in a ballet position, is called…",
+      "options": [
+        "Dorsiflexion",
+        "Plantarflexion",
+        "Abduction",
+        "Circumduction"
+      ],
+      "answer": 1,
+      "explanation": "Plantarflexion points the toes away from the shin; dorsiflexion pulls them towards it."
+    },
+    {
+      "id": "btec-eng-dc-circuits:dc1",
+      "subject": "Engineering",
+      "course": "Level 2–3",
+      "topic": "DC circuits: Ohm's law, resistor networks and power",
+      "prompt": "A current of 2 A flows through a 5 Ω resistor. What power does it dissipate?",
+      "options": [
+        "10 W",
+        "20 W",
+        "2.5 W",
+        "50 W"
+      ],
+      "answer": 1,
+      "explanation": "P = I²R = 2² × 5 = 20 W."
+    },
+    {
+      "id": "btec-eng-dc-circuits:dc2",
+      "subject": "Engineering",
+      "course": "Level 2–3",
+      "topic": "DC circuits: Ohm's law, resistor networks and power",
+      "prompt": "A current of 0.5 A flows for 2 minutes. How much charge passes?",
+      "options": [
+        "1 C",
+        "60 C",
+        "0.25 C",
+        "240 C"
+      ],
+      "answer": 1,
+      "explanation": "Q = It = 0.5 × 120 s = 60 C. Convert minutes to seconds first."
+    },
+    {
+      "id": "btec-eng-dc-circuits:dc3",
+      "subject": "Engineering",
+      "course": "Level 2–3",
+      "topic": "DC circuits: Ohm's law, resistor networks and power",
+      "prompt": "What is the total resistance of 20 Ω and 30 Ω in parallel?",
+      "options": [
+        "50 Ω",
+        "25 Ω",
+        "12 Ω",
+        "10 Ω"
+      ],
+      "answer": 2,
+      "explanation": "1/R = 1/20 + 1/30 = 5/60, so R = 12 Ω."
+    },
+    {
+      "id": "btec-media-representation:mr1",
+      "subject": "Creative Media",
+      "course": "Level 2–3",
+      "topic": "Media representation and audience readings",
+      "prompt": "A viewer accepts part of an advert's message but disagrees with the rest. What type of reading is this?",
+      "options": [
+        "Preferred",
+        "Negotiated",
+        "Oppositional",
+        "Aberrant"
+      ],
+      "answer": 1,
+      "explanation": "A negotiated reading accepts some of the encoded message and rejects or adapts other parts."
+    },
+    {
+      "id": "btec-media-representation:mr2",
+      "subject": "Creative Media",
+      "course": "Level 2–3",
+      "topic": "Media representation and audience readings",
+      "prompt": "What is anchorage?",
+      "options": [
+        "The camera position in a shot",
+        "Text that fixes the intended meaning of an image",
+        "A recurring character type",
+        "The main audience of a product"
+      ],
+      "answer": 1,
+      "explanation": "Anchorage, such as a caption or slogan, narrows down how an image is meant to be read."
+    },
+    {
+      "id": "btec-media-representation:mr3",
+      "subject": "Creative Media",
+      "course": "Level 2–3",
+      "topic": "Media representation and audience readings",
+      "prompt": "A dark, low-key lit alley denotes a street at night. What might it connote?",
+      "options": [
+        "A street",
+        "Danger or threat",
+        "Night-time",
+        "A location"
+      ],
+      "answer": 1,
+      "explanation": "The other options describe what is literally shown (denotation). Danger is an associated meaning (connotation)."
+    },
+    {
+      "id": "tlevel-science-lab-safety:ls1",
+      "subject": "Science",
+      "course": "Level 3",
+      "topic": "Working safely in the laboratory",
+      "prompt": "Which is an engineering control?",
+      "options": [
+        "Safety goggles",
+        "A fume cupboard",
+        "A standard operating procedure",
+        "A warning sign"
+      ],
+      "answer": 1,
+      "explanation": "A fume cupboard physically removes fumes at source. Goggles are PPE; SOPs and signs are administrative controls."
+    },
+    {
+      "id": "tlevel-science-lab-safety:ls2",
+      "subject": "Science",
+      "course": "Level 3",
+      "topic": "Working safely in the laboratory",
+      "prompt": "A pictogram shows a flame over a circle. What does it mean?",
+      "options": [
+        "Flammable",
+        "Oxidising",
+        "Explosive",
+        "Corrosive"
+      ],
+      "answer": 1,
+      "explanation": "Flame over a circle means oxidising. A flame on its own means flammable."
+    },
+    {
+      "id": "tlevel-science-lab-safety:ls3",
+      "subject": "Science",
+      "course": "Level 3",
+      "topic": "Working safely in the laboratory",
+      "prompt": "Replacing a concentrated solution with a more dilute one that still works is an example of…",
+      "options": [
+        "Elimination",
+        "Substitution",
+        "PPE",
+        "Administrative control"
+      ],
+      "answer": 1,
+      "explanation": "Substitution swaps a hazardous substance for a less hazardous one."
+    },
+    {
+      "id": "tlevel-eey-child-development:cd1",
+      "subject": "Education and Early Years",
+      "course": "Level 3",
+      "topic": "Patterns of child development",
+      "prompt": "Which of these is a gross motor skill?",
+      "options": [
+        "Using a pincer grasp",
+        "Climbing stairs",
+        "Threading beads",
+        "Turning a page"
+      ],
+      "answer": 1,
+      "explanation": "Climbing stairs uses large movements of the whole body. The others are fine motor skills."
+    },
+    {
+      "id": "tlevel-eey-child-development:cd2",
+      "subject": "Education and Early Years",
+      "course": "Level 3",
+      "topic": "Patterns of child development",
+      "prompt": "Two children learn to walk at 11 months and 17 months. What does this show?",
+      "options": [
+        "The sequence of development varies",
+        "The rate of development varies",
+        "The younger walker has a delay",
+        "The older walker has a delay"
+      ],
+      "answer": 1,
+      "explanation": "Both follow the same sequence, but at different rates. Both ages can be within the typical range."
+    },
+    {
+      "id": "tlevel-eey-child-development:cd3",
+      "subject": "Education and Early Years",
+      "course": "Level 3",
+      "topic": "Patterns of child development",
+      "prompt": "Why should practitioners view development holistically?",
+      "options": [
+        "Because areas of development are interconnected",
+        "Because only physical development can be observed",
+        "Because milestones are fixed",
+        "Because each area develops separately"
+      ],
+      "answer": 0,
+      "explanation": "Progress in one area supports others, so the whole child should be considered."
+    },
+    {
+      "id": "tlevel-construction-building-regs:br1",
+      "subject": "Design, Surveying and Planning for Construction",
+      "course": "Level 3",
+      "topic": "Building Regulations and energy efficiency",
+      "prompt": "Which Approved Document covers fire safety?",
+      "options": [
+        "Part A",
+        "Part B",
+        "Part L",
+        "Part M"
+      ],
+      "answer": 1,
+      "explanation": "Part B is fire safety. Part A is structure, Part L is fuel and power, and Part M is access."
+    },
+    {
+      "id": "tlevel-construction-building-regs:br2",
+      "subject": "Design, Surveying and Planning for Construction",
+      "course": "Level 3",
+      "topic": "Building Regulations and energy efficiency",
+      "prompt": "A 10 m² window has a U-value of 1.4 W/m²K. What is the heat loss when ΔT = 15 K?",
+      "options": [
+        "14 W",
+        "21 W",
+        "150 W",
+        "210 W"
+      ],
+      "answer": 3,
+      "explanation": "Q = U × A × ΔT = 1.4 × 10 × 15 = 210 W."
+    },
+    {
+      "id": "tlevel-construction-building-regs:br3",
+      "subject": "Design, Surveying and Planning for Construction",
+      "course": "Level 3",
+      "topic": "Building Regulations and energy efficiency",
+      "prompt": "Who is the building control authority for higher-risk buildings in England?",
+      "options": [
+        "The local planning authority",
+        "The Building Safety Regulator",
+        "The Health and Safety Executive's CDM team",
+        "The principal contractor"
+      ],
+      "answer": 1,
+      "explanation": "The Building Safety Regulator is the building control authority for higher-risk buildings."
+    },
+    {
+      "id": "tlevel-onsite-cdm-2015:cdm1",
+      "subject": "Onsite Construction",
+      "course": "Level 3",
+      "topic": "Construction health and safety: CDM 2015",
+      "prompt": "Which project is notifiable to HSE?",
+      "options": [
+        "20 working days with 15 workers at once (300 person days)",
+        "35 working days with 25 workers at once",
+        "35 working days with 10 workers at once (350 person days)",
+        "A one-day job with 5 workers"
+      ],
+      "answer": 1,
+      "explanation": "It lasts longer than 30 working days and has more than 20 workers at the same time. None of the other projects meets either test: none exceeds 500 person days, and none combines more than 30 days with more than 20 workers at once."
+    },
+    {
+      "id": "tlevel-onsite-cdm-2015:cdm2",
+      "subject": "Onsite Construction",
+      "course": "Level 3",
+      "topic": "Construction health and safety: CDM 2015",
+      "prompt": "On a project involving more than one contractor, who appoints the principal contractor?",
+      "options": [
+        "HSE",
+        "The principal designer",
+        "The client",
+        "The workers"
+      ],
+      "answer": 2,
+      "explanation": "The client must appoint the principal designer and principal contractor in writing."
+    },
+    {
+      "id": "tlevel-onsite-cdm-2015:cdm3",
+      "subject": "Onsite Construction",
+      "course": "Level 3",
+      "topic": "Construction health and safety: CDM 2015",
+      "prompt": "What must every worker receive from the principal contractor?",
+      "options": [
+        "A site-specific induction",
+        "An F10 form",
+        "A copy of the design drawings",
+        "A CSCS card"
+      ],
+      "answer": 0,
+      "explanation": "The principal contractor must make sure all workers have a site-specific induction."
+    },
+    {
+      "id": "tlevel-accounting-double-entry:de1",
+      "subject": "Accounting",
+      "course": "Level 3",
+      "topic": "Double-entry bookkeeping and the trial balance",
+      "prompt": "A business has assets of £50,000 and liabilities of £18,000. What is its capital?",
+      "options": [
+        "£68,000",
+        "£32,000",
+        "£18,000",
+        "£50,000"
+      ],
+      "answer": 1,
+      "explanation": "Capital = assets − liabilities = £50,000 − £18,000 = £32,000."
+    },
+    {
+      "id": "tlevel-accounting-double-entry:de2",
+      "subject": "Accounting",
+      "course": "Level 3",
+      "topic": "Double-entry bookkeeping and the trial balance",
+      "prompt": "A business sells goods on credit to a customer for £400. What is the double entry?",
+      "options": [
+        "Debit Sales; credit Trade receivables",
+        "Debit Trade receivables; credit Sales",
+        "Debit Bank; credit Sales",
+        "Debit Sales; credit Bank"
+      ],
+      "answer": 1,
+      "explanation": "The customer now owes the business (an asset, so debit Trade receivables), and income increases (credit Sales)."
+    },
+    {
+      "id": "tlevel-accounting-double-entry:de3",
+      "subject": "Accounting",
+      "course": "Level 3",
+      "topic": "Double-entry bookkeeping and the trial balance",
+      "prompt": "A purchase invoice is never entered in the books. What type of error is this?",
+      "options": [
+        "Error of commission",
+        "Error of principle",
+        "Error of omission",
+        "Casting error"
+      ],
+      "answer": 2,
+      "explanation": "An error of omission leaves out a transaction completely, so the trial balance still agrees."
+    },
+    {
+      "id": "tlevel-legal-civil-courts:cc1",
+      "subject": "Legal Services",
+      "course": "Level 3",
+      "topic": "The civil court system and track allocation",
+      "prompt": "Where do most civil claims start?",
+      "options": [
+        "The Crown Court",
+        "The County Court",
+        "The Court of Appeal",
+        "The Magistrates' Court"
+      ],
+      "answer": 1,
+      "explanation": "The County Court hears most civil claims. The Crown Court deals with criminal cases."
+    },
+    {
+      "id": "tlevel-legal-civil-courts:cc2",
+      "subject": "Legal Services",
+      "course": "Level 3",
+      "topic": "The civil court system and track allocation",
+      "prompt": "What is the maximum value of a claim on the fast track?",
+      "options": [
+        "£10,000",
+        "£25,000",
+        "£50,000",
+        "£100,000"
+      ],
+      "answer": 1,
+      "explanation": "The fast track is for claims up to £25,000 with a trial of no more than one day."
+    },
+    {
+      "id": "tlevel-legal-civil-courts:cc3",
+      "subject": "Legal Services",
+      "course": "Level 3",
+      "topic": "The civil court system and track allocation",
+      "prompt": "Which High Court division would normally hear a dispute about a trust?",
+      "options": [
+        "King's Bench Division",
+        "Chancery Division",
+        "Family Division",
+        "Court of Appeal (Civil Division)"
+      ],
+      "answer": 1,
+      "explanation": "The Chancery Division deals with business, property, trusts and insolvency matters."
+    },
+    {
+      "id": "ctech-it-networks:nw1",
+      "subject": "Cambridge Technicals",
+      "course": "Level 2–3",
+      "topic": "Network characteristics and IP addressing",
+      "prompt": "How many usable host addresses are there on a subnet with mask 255.255.255.192 (/26)?",
+      "options": [
+        "64",
+        "62",
+        "126",
+        "30"
+      ],
+      "answer": 1,
+      "explanation": "/26 leaves 6 host bits: 2⁶ − 2 = 64 − 2 = 62."
+    },
+    {
+      "id": "ctech-it-networks:nw2",
+      "subject": "Cambridge Technicals",
+      "course": "Level 2–3",
+      "topic": "Network characteristics and IP addressing",
+      "prompt": "Which network model makes centralised backup and security easiest?",
+      "options": [
+        "Peer-to-peer",
+        "Client–server",
+        "Bus",
+        "Ring"
+      ],
+      "answer": 1,
+      "explanation": "Client–server networks store data and manage users centrally. Bus and ring are topologies, not network models."
+    },
+    {
+      "id": "ctech-it-networks:nw3",
+      "subject": "Cambridge Technicals",
+      "course": "Level 2–3",
+      "topic": "Network characteristics and IP addressing",
+      "prompt": "Which topology gives the most resilience because devices have several connections?",
+      "options": [
+        "Bus",
+        "Star",
+        "Ring",
+        "Mesh"
+      ],
+      "answer": 3,
+      "explanation": "In a mesh, data can take other routes if a link fails, though it costs more to cable."
+    },
+    {
+      "id": "applied-general-break-even:be1",
+      "subject": "Applied General",
+      "course": "Level 3",
+      "topic": "Break-even analysis",
+      "prompt": "Fixed costs are £9,000, price is £20 and variable cost is £8 per unit. What is break-even output?",
+      "options": [
+        "450 units",
+        "750 units",
+        "1,125 units",
+        "321 units"
+      ],
+      "answer": 1,
+      "explanation": "Contribution = £20 − £8 = £12. Break-even = £9,000 ÷ £12 = 750 units."
+    },
+    {
+      "id": "applied-general-break-even:be2",
+      "subject": "Applied General",
+      "course": "Level 3",
+      "topic": "Break-even analysis",
+      "prompt": "A business breaks even at 750 units and sells 1,000 units. What is its margin of safety?",
+      "options": [
+        "250 units",
+        "1,750 units",
+        "750 units",
+        "1,000 units"
+      ],
+      "answer": 0,
+      "explanation": "Margin of safety = 1,000 − 750 = 250 units."
+    },
+    {
+      "id": "applied-general-break-even:be3",
+      "subject": "Applied General",
+      "course": "Level 3",
+      "topic": "Break-even analysis",
+      "prompt": "Which is a limitation of break-even analysis?",
+      "options": [
+        "It shows the output needed to avoid a loss",
+        "It assumes all output is sold at a single price",
+        "It helps when setting prices",
+        "It can support a loan application"
+      ],
+      "answer": 1,
+      "explanation": "In practice businesses offer discounts and costs are not perfectly linear, so the model simplifies reality. The other options are uses."
+    }
+  ]
+}

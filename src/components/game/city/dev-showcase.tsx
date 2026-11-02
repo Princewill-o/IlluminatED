@@ -166,7 +166,7 @@ export function DevShowcase({
             cars={["sedan"]}
           />
         )}
-        <div className="absolute bottom-3 left-1/2 z-[100020] flex max-w-[90vw] -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl bg-[#13203a]/95 px-4 py-2 text-xs text-white">
+        <div hidden={clean} className={`${clean ? "hidden" : "flex"} absolute bottom-3 left-1/2 z-[100020] max-w-[90vw] -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl bg-[#13203a]/95 px-4 py-2 text-xs text-white`}>
           <span>Actual game · offline preview · ambient residents</span>
           {!clean && (
             <button

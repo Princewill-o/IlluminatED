@@ -50,6 +50,7 @@ const WEBSITE_PATHS = new Set([
   "/revision-games",
   "/teacher",
   "/school-access",
+  "/ios/membership",
 ]);
 
 export function isAppPath(path: string) {

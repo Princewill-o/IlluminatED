@@ -68,6 +68,7 @@ function mountStudy({ start, submit, onReward } = {}) {
       if (name === "next/link") return { default: "a" };
       if (name === "lucide-react") return {};
       if (name === "@/components/app/app-shell") return { notifyPlayerChanged() {} };
+      if (name === "@/components/game/study/subject-quests") return { SubjectQuests: () => null };
       if (name === "@/app/games/study/actions")
         return {
           async startStudy(courseId) {
@@ -88,7 +89,7 @@ function mountStudy({ start, submit, onReward } = {}) {
     calls,
     render() {
       cursor = 0;
-      return exports.StudyRoom({
+      return exports.FreeStudyRoom({
         courses: [
           { id: "gcse-maths", title: "GCSE Mathematics", level: "Level 1/2" },
         ],

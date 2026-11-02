@@ -13,17 +13,19 @@ const Championship = dynamic(() => import("../championship/championship").then(m
 const WhatIf = dynamic(() => import("../what-if/what-if").then(m => m.WhatIf), { ssr: false });
 const Season = dynamic(() => import("../season/season-pass").then(m => m.SeasonPass), { ssr: false });
 const Schools = dynamic(() => import("../schools/school-league").then(m => m.SchoolLeague), { ssr: false });
+const Study = dynamic(() => import("../study/subject-quests").then(m => m.SubjectQuests), { ssr: false });
 
-export type EventGame = "racing" | "championship" | "what-if" | "events" | "rewards" | "schools";
-const TITLES: Record<EventGame, string> = { racing: "Maths Racing", championship: "Championship", "what-if": "What If", events: "Events & rewards", rewards: "How rewards work", schools: "School league" };
+export type EventGame = "racing" | "championship" | "what-if" | "events" | "rewards" | "schools" | "study";
+const TITLES: Record<EventGame, string> = { study:"Study quests", racing: "Maths Racing", championship: "Championship", "what-if": "What If", events: "Events & rewards", rewards: "How rewards work", schools: "School league" };
 
-export function EventArcade({ userId, initial = "events", onClose }: { userId: string; initial?: EventGame; onClose: () => void }) {
+export function EventArcade({ userId, initial = "events", onClose, onStudyReward }: { userId: string; initial?: EventGame; onClose: () => void; onStudyReward?: (reward: {xp:number;clout:number}) => void }) {
   const [game, setGame] = useState(initial);
   const root = useRef<HTMLElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     root.current?.focus();
     const key = (e: KeyboardEvent) => {
+      if(document.querySelector("[data-game-cutscene]"))return;
       if (e.key === "Escape") { e.stopImmediatePropagation(); onClose(); }
       if (e.key === "Tab") {
         const items = Array.from(root.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input, select, [tabindex="0"]') ?? []).filter(el => el.offsetParent !== null);
@@ -44,7 +46,7 @@ export function EventArcade({ userId, initial = "events", onClose }: { userId: s
         <button type="button" onClick={onClose} className="flex items-center gap-2 rounded-full bg-secondary px-4 py-2 font-bold"><X className="size-4" aria-hidden />Back to world</button>
       </header>
       <div className="event-game-content mx-auto max-w-6xl p-4 pb-16 sm:p-6" key={game}>
-        {game === "racing" ? <Racing /> : game === "championship" ? <Championship /> : game === "what-if" ? <WhatIf userId={userId} /> : game === "schools" ? <Schools /> : game === "rewards" ? <RewardGuide /> : <Season userId={userId} />}
+        {game === "study" ? <Study onReward={onStudyReward} /> : game === "racing" ? <Racing /> : game === "championship" ? <Championship /> : game === "what-if" ? <WhatIf userId={userId} /> : game === "schools" ? <Schools /> : game === "rewards" ? <RewardGuide /> : <Season userId={userId} />}
       </div>
     </section>
   );
