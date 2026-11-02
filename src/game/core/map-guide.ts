@@ -160,7 +160,7 @@ function kindOf(p: Portal): PlaceKind | null {
     (t.kind === "map" && t.mapId === "supermarket")
   )
     return "food";
-  if (t.kind === "map" && t.mapId === "home") return "home";
+  if (t.kind === "map" && (t.mapId === "home" || t.mapId.startsWith("uk-home-"))) return "home";
   if (
     t.kind === "university" ||
     (t.kind === "map" &&

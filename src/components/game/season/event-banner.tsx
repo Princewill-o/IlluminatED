@@ -14,6 +14,7 @@ import { currentEvent, timeLeft } from "@/game/core/live-events";
 export function EventBanner({ className = "", onOpen }: { className?: string; onOpen?: () => void }) {
   const [{ event, endsAt }, setNow] = useState(() => currentEvent());
   useEffect(() => {
+    setNow(currentEvent());
     const t = setInterval(() => setNow(currentEvent()), 60_000);
     return () => clearInterval(t);
   }, []);

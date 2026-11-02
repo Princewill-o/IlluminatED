@@ -4,7 +4,7 @@ import type { LiveEvent } from "./live-events";
  * Seasonal events: one for every season plus the big UK holidays. While one is
  * running it replaces the weekly event, decorates London and doubles XP (Season
  * XP here; level XP and Clout-run XP on the server via
- * private.event_xp_multiplier, which mirrors these exact windows).
+ * private.event_xp_multiplier; historical server bonus windows are managed by migrations).
  *
  * Windows are London calendar dates, inclusive. Lunar New Year moves each year.
  */
@@ -15,7 +15,7 @@ export interface SeasonalEvent extends LiveEvent {
   from: [number, number];
   to: [number, number];
   /** World decorations to switch on. */
-  decor: "snow" | "lanterns" | "blossom" | "books" | "bunting" | "leaves" | "pumpkins" | "fireworks";
+  decor: "snow" | "lanterns" | "blossom" | "books" | "bunting" | "leaves" | "fireworks";
 }
 
 const ev = (e: Omit<SeasonalEvent, "xpBoost">): SeasonalEvent => ({ ...e, xpBoost: 2 });
@@ -28,7 +28,6 @@ export const SEASONAL: SeasonalEvent[] = [
   ev({ id: "summer-festival", season: "summer", name: "Summer Festival", blurb: "Bunting, ice cream vans and a festival stage on the South Bank. Summer quiz cup all holiday.", href: "/games/heroes?mode=cup", game: "Festival Cup", colours: ["#ff9f0a", "#4fd1ff"], from: [7, 20], to: [8, 16], decor: "bunting" }),
   ev({ id: "back-to-school", season: "autumn", name: "Back to School", blurb: "New term, new goals. Set your subjects and get a head start with double XP.", href: "/practice", game: "Starter quizzes", colours: ["#13203a", "#f2d9a6"], from: [9, 1], to: [9, 14], decor: "books" }),
   ev({ id: "autumn-harvest", season: "autumn", name: "Autumn Harvest", blurb: "Golden leaves and a harvest market. Collect acorns from quizzes for autumn looks.", href: "/games/heroes?mode=case", game: "Harvest Case", colours: ["#b45309", "#fde68a"], from: [9, 22], to: [10, 12], decor: "leaves" }),
-  ev({ id: "fright-night", season: "autumn", name: "Fright Night", blurb: "Scary Bots have taken over London after dark! Answer their questions to scare them off and collect candy.", href: "/games/world", game: "Scary Bot hunt", colours: ["#1a0f2e", "#ff7a1a"], from: [10, 18], to: [11, 2], decor: "pumpkins" }),
   ev({ id: "bonfire-night", season: "autumn", name: "Bonfire Night", blurb: "Remember, remember: fireworks over the river and a sparkler for every streak.", href: "/games/heroes?mode=space", game: "Firework Rush", colours: ["#0b1026", "#ff4f8b"], from: [11, 3], to: [11, 9], decor: "fireworks" }),
 ];
 

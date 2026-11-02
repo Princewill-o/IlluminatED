@@ -18,7 +18,7 @@ export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: 
   const [pending, start] = useTransition();
   return (
     <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
-      <div role="dialog" aria-label={shop === "bootz" ? "Bootz Pharmacy" : "Tesco Express"} onClick={(e) => e.stopPropagation()} className="w-full max-w-md rounded-t-3xl bg-[#f7f1e6] p-5 text-[#13203a] md:rounded-3xl">
+      <div role="dialog" aria-label={shop === "bootz" ? "Bootz Pharmacy" : "Tesco Express"} onClick={(e) => e.stopPropagation()} className="pixel-panel w-full max-w-md p-5">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-black tracking-[0.25em] uppercase" style={{ color: shop === "bootz" ? "#2b5fd9" : "#c8322d" }}>
@@ -27,7 +27,7 @@ export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: 
             <h2 className="mt-1 text-2xl font-black">{shop === "bootz" ? "Feeling rough?" : "Grab something"}</h2>
             <p className="text-sm text-[#13203a]/70">You have {clout} Clout.</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-9 place-items-center rounded-full bg-white">
+          <button type="button" onClick={onClose} aria-label="Close" className="pixel-button grid size-9 place-items-center rounded-full bg-white">
             <X className="size-4" />
           </button>
         </div>
@@ -47,7 +47,7 @@ export function ShopDialog({ shop, clout, onBought, onClose, onSteal }: { shop: 
                       else setError(r.error);
                     })
                   }
-                  className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left disabled:opacity-50"
+                  className="pixel-button flex w-full items-center gap-3 p-3 text-left disabled:opacity-50"
                 >
                   <span className={cn("grid size-11 place-items-center rounded-xl text-white", id === "medicine" ? "bg-[#2b5fd9]" : "bg-[#c8322d]")}>
                     {id === "medicine" ? <Pill className="size-6" aria-hidden /> : <ShoppingBasket className="size-6" aria-hidden />}
@@ -89,7 +89,7 @@ export function WantedStars({ stars }: { stars: number }) {
 export function ArrestOverlay() {
   return (
     <div className="arrest-flash pointer-events-none absolute inset-0 z-[100006] grid place-items-center bg-[#142235]/20" role="alert">
-      <div className="rounded-3xl border border-white/30 bg-[#13203a] px-7 py-6 text-center text-white shadow-2xl">
+      <div className="pixel-panel px-7 py-6 text-center">
         <div className="flex justify-center"><CutsceneBrand kind="police"/></div>
         <div className="relative mx-auto mt-5 grid size-16 place-items-center rounded-full bg-[#154d91] text-white"><Siren className="size-9" aria-hidden/><span className="absolute -inset-1 animate-ping rounded-full border-2 border-[#6bc6ff]/70"/></div>
         <p className="mt-4 text-2xl font-black">Taser stop. You&apos;re under arrest.</p>
@@ -123,7 +123,7 @@ export function HearingDialog({
   };
   return (
     <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/50 md:place-items-center">
-      <div role="dialog" aria-label="Court hearing" className="w-full max-w-md rounded-t-3xl bg-[#f7f1e6] p-5 text-[#13203a] md:rounded-3xl">
+      <div role="dialog" aria-label="Court hearing" className="pixel-panel w-full max-w-md p-5">
         <p className="text-xs font-black tracking-[0.25em] text-[#7a4f32] uppercase">Crown Court · Hearing</p>
         <h2 className="mt-1 text-2xl font-black">{charge}</h2>
         <p className="mt-1 text-sm text-[#13203a]/70">
@@ -131,15 +131,15 @@ export function HearingDialog({
         </p>
         {stage === "plea" && (
           <div className="mt-4 grid gap-2">
-            <button type="button" disabled={!cards} onClick={() => onVerdict("dismissed")} className="flex items-center gap-2 rounded-2xl bg-[#15987f] px-4 py-3 text-left font-black text-white disabled:opacity-40">
+            <button type="button" disabled={!cards} onClick={() => onVerdict("dismissed")} className="pixel-button pixel-button--green flex items-center gap-2 px-4 py-3 text-left disabled:opacity-40">
               <BookOpenCheck className="size-5" aria-hidden />
               <span className="flex-1">Show finished homework (get out of jail free)</span>
               <span className="rounded-full bg-white/20 px-2 text-xs">{cards} left</span>
             </button>
-            <button type="button" onClick={() => decide("not")} className="rounded-2xl bg-white px-4 py-3 text-left font-black">
+            <button type="button" onClick={() => decide("not")} className="pixel-button px-4 py-3 text-left">
               Plead not guilty <span className="text-xs font-bold text-[#13203a]/60">({Math.round(acquittalChance(stars) * 100)}% chance)</span>
             </button>
-            <button type="button" onClick={() => decide("guilty")} className="rounded-2xl bg-white px-4 py-3 text-left font-black">
+            <button type="button" onClick={() => decide("guilty")} className="pixel-button px-4 py-3 text-left">
               Plead guilty
             </button>
             {!cards && <p className="text-xs text-[#13203a]/60">Finish homework from your teacher to earn get out of jail free cards.</p>}
@@ -153,7 +153,7 @@ export function HearingDialog({
         {stage === "done" && result && (
           <div className="mt-4">
             <p className={cn("rounded-2xl p-3 text-lg font-black", result === "acquitted" ? "bg-[#e3f5ec] text-[#15987f]" : "bg-[#fdeceb] text-[#c8322d]")}>{result === "acquitted" ? "Not guilty. You're free to go." : "Guilty. Take them down."}</p>
-            <button type="button" onClick={() => onVerdict(result)} className="jelly mt-3 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
+            <button type="button" onClick={() => onVerdict(result)} className="pixel-button mt-3 w-full rounded-full bg-[#13203a] py-3 font-black text-white">
               {result === "acquitted" ? "Leave the court" : "Go to prison"}
             </button>
           </div>
@@ -166,13 +166,13 @@ export function HearingDialog({
 /** Inside HMP Thames: time left, and the homework card. */
 export function PrisonHud({ leftMs, cards, progress, onStudy, onCard }: { leftMs: number; cards: number; progress: number; onStudy: () => void; onCard: () => void }) {
   const seconds = Math.max(0, Math.ceil(leftMs / 1000));
-  return <HudSlot area="tl" order={20}><div className="w-[min(320px,100%)] rounded-3xl bg-[#f2d9a6] p-4 text-[#13203a] shadow-xl">
+  return <HudSlot area="tl" order={20}><div className="pixel-panel w-[min(320px,100%)] p-4">
     <p className="text-xs font-black tracking-widest uppercase">HMP Thames · fictional game</p>
     <p className="mt-1 text-lg font-black">Time left {Math.floor(seconds/60)}:{String(seconds%60).padStart(2,"0")} · Study {progress}/3</p>
     <p className="mt-1 text-xs">Serve your time or complete three study tasks to be released with a clean record.</p>
     <p className="mt-1 text-xs"><span className="font-black">Or risk it:</span> slip past the guards to the service exit in the far corner. You&apos;ll be free, but at 5 wanted stars with the police chasing you. Lose them to clear your record; if they catch you, you&apos;re brought back for longer. Guards who spot you add 45 seconds.</p>
-    <button type="button" onClick={onStudy} className="jelly mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
-    <button type="button" disabled={!cards} onClick={onCard} className="jelly mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
+    <button type="button" onClick={onStudy} className="pixel-button mt-3 w-full rounded-full bg-[#2b5fd9] px-4 py-2 text-sm font-black text-white">Open study desk</button>
+    <button type="button" disabled={!cards} onClick={onCard} className="pixel-button mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-black text-white disabled:opacity-40"><BookOpenCheck className="size-4"/>Use homework card ({cards})</button>
     <a href="/homework" className="mt-2 block text-center text-xs font-bold underline">Complete assigned homework</a>
   </div></HudSlot>;
 }

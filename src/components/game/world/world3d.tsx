@@ -1,33 +1,24 @@
 "use client";
 
-import { buildingVisibility } from "./building-visibility";
-import { createEmergencyVehicle } from "./emergency-vehicle3d";
-import { placeRealisticCar } from "./realistic-car3d";
-import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
-
 import { useEffect, useRef, useState } from "react";
-
 
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
-import { crayonBuildingAsset, pixelTreePlans, pixelAsset } from "@/game/core/crayon-vegetation";
 import { removeCrayonColliders } from "./imported-pack";
-import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
-import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
-import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
-import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
-
+import { placeRealisticCar } from "./realistic-car3d";
 import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, SCARY, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
+import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
 import { driftingLeaves } from "./drifting-leaves";
+import { createEmergencyVehicle } from "./emergency-vehicle3d";
 import { weatherLighting } from "./environment-palette";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
@@ -42,17 +33,23 @@ import { softSunShadows } from "./soft-sun-shadows";
 import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
 import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
+import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
+import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { residentIdentity } from "@/game/core/city-social";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
-import { look } from "@/game/core/cosmetics";
 import type { Avatar } from "@/game/core/cosmetics";
+import { look } from "@/game/core/cosmetics";
+import { crayonBuildingAsset, pixelTreePlans, pixelAsset } from "@/game/core/crayon-vegetation";
 import { frameBudget, graphicsBudget } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
+import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
+import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
+import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
 import { PRISON_LOOK } from "@/game/core/law";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon } from "@/game/core/london";
@@ -60,19 +57,20 @@ import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
-import { botPose, scaryBotsFor } from "@/game/core/scary-bots";
-import { seasonalEvent } from "@/game/core/seasonal-events";
+import { STREET_CUSTODY } from "@/game/core/street-custody";
+import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { trainFrame } from "@/game/core/train";
+import { ukTrafficRoutes, ukTrafficOffset, ukAmbientPeople, ukTrafficCount } from "@/game/core/uk-traffic";
+import { buildUKScene, UK_GATEWAYS } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
-import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile, type VisualQuality } from "@/game/core/visual-quality";
+import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
 export { NPC_SPOTS } from "./art";
-
 
 /**
  * The live 3D world (three.js), viewed like Animal Crossing: a tilted camera that
@@ -306,23 +304,6 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
 
 /** IlluminatED's own Blender London kit (art/blender/london_kit.py). */
 const LONDON_KIT = "/world3d/london/";
-/**
- * Fits a model to a footprint by stretching width and depth independently, with
- * the height following the width, so a row of townhouses always fills its plot.
- */
-async function placeStretched(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0) {
-  const gltf = await load(url);
-  const o = gltf.scene.clone(true);
-  const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
-  o.scale.set(w / size.x, w / size.x, d / size.z);
-  const bb = new THREE.Box3().setFromObject(o);
-  const c = bb.getCenter(new THREE.Vector3());
-  o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
-  bendAll(o);
-  g.add(o);
-  return o;
-}
-
 /** Places a kit model in a footprint, turned in quarter turns (0 = facing south). */
 async function placeTurned(g: THREE.Group, url: string, x: number, z: number, w: number, d: number, y = 0, turn = 0) {
   const gltf = await load(url);
@@ -338,21 +319,6 @@ async function placeTurned(g: THREE.Group, url: string, x: number, z: number, w:
   bendAll(o);
   g.add(o);
   return o;
-}
-
-/** A street of Georgian townhouses from the Blender kit, one house per ~3 tiles. */
-async function terraceKit(g: THREE.Group, t: { x: number; y: number; w: number; h: number; height?: number }) {
-  const seed = t.x * 7 + t.y * 13;
-  const x0 = t.x + 0.04, z0 = t.y + 0.04, w = t.w - 0.08, d = t.h - 0.08;
-  const units = Math.max(1, Math.round(w / 3));
-  const uw = w / units;
-  const floors = (t.height ?? 3) >= 2.9 ? 3 : 2;
-  const jobs: Promise<unknown>[] = [];
-  for (let u = 0; u < units; u++) {
-    const variant = "abc"[(seed + u * 2) % 3];
-    jobs.push(placeStretched(g, `/world3d/realism/terrace-${variant}-${floors}.glb`, x0 + u * uw, z0, uw, d));
-  }
-  await Promise.all(jobs);
 }
 
 /** Sparkling droplets that rise from the fountain's top jet and fall into the tiers. */
@@ -1504,51 +1470,6 @@ export function lymeBike(green = "#4cd137") {
   return g;
 }
 
-/** Fright Night Scary Bot: hovering robot body with a carved, glowing pumpkin head (original design). */
-const GLOW = new Map<string, THREE.MeshStandardMaterial>();
-const glow = (c: string, strength = 2.2) => {
-  let m = GLOW.get(c + strength);
-  if (!m) { m = new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: strength, roughness: 0.4 }); bend(m); GLOW.set(c + strength, m); }
-  return m;
-};
-function scaryBotModel() {
-  const g = new THREE.Group();
-  const body = new THREE.Group(); g.add(body);
-  // Hover jets and shadow-free glow underneath.
-  const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 0.12, 14), glow("#8a5cff", 1.6)); jet.position.y = 0.22; body.add(jet);
-  // Rounded steel torso with a belly screen.
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.26, 0.22, 6, 16), mat("#3a3550")); torso.position.y = 0.62; torso.castShadow = true; body.add(torso);
-  const screen = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.02), glow("#7dff8a", 1.4)); screen.position.set(0, 0.64, 0.26); body.add(screen);
-  // Little arms raised in a "boo".
-  for (const side of [-1, 1]) {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.22, 4, 8), mat("#2a2640"));
-    arm.position.set(side * 0.33, 0.78, 0.04); arm.rotation.z = side * -0.9; arm.castShadow = true; body.add(arm);
-    const claw = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), mat("#5d5778")); claw.position.set(side * 0.45, 0.93, 0.06); body.add(claw);
-  }
-  // Pumpkin head: ribbed orange sphere, stem, carved glowing eyes and grin.
-  const head = new THREE.Group(); head.position.y = 1.08; body.add(head);
-  const pumpkin = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 14), mat("#f07a1a")); pumpkin.scale.set(1.15, 0.9, 1.05); pumpkin.castShadow = true; head.add(pumpkin);
-  for (let i = 0; i < 6; i++) {
-    const rib = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), mat("#d9620f")); rib.scale.set(0.35, 0.92, 1.0); rib.rotation.y = (i / 6) * Math.PI; head.add(rib);
-  }
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 0.12, 8), mat("#3f6b2a")); stem.position.y = 0.3; stem.rotation.z = 0.25; head.add(stem);
-  for (const side of [-1, 1]) {
-    const eye = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.09, 3), glow("#ffe14d", 3)); eye.position.set(side * 0.11, 0.06, 0.3); eye.rotation.set(Math.PI / 2, 0, side * 0.3); head.add(eye);
-  }
-  const grin = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.022, 6, 14, Math.PI), glow("#ffe14d", 3)); grin.position.set(0, -0.06, 0.31); grin.rotation.z = Math.PI; head.add(grin);
-  // Antenna with a blinking tip.
-  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.2, 6), mat("#2a2640")); antenna.position.set(0.12, 0.36, 0); head.add(antenna);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), glow("#ff3b6b", 3)); tip.position.set(0.12, 0.47, 0); head.add(tip);
-  g.userData = { body, tip };
-  g.scale.setScalar(1.3);
-  return g;
-}
-function pumpkinProp(g: THREE.Group, x: number, z: number, s = 1) {
-  const p = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 14, 10), mat("#f07a1a")); p.scale.set(1.15, 0.85, 1.05); p.position.set(x, 0.18 * s, z); p.castShadow = true; g.add(p);
-  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02 * s, 0.035 * s, 0.1 * s, 6), mat("#3f6b2a")); stem.position.set(x, 0.38 * s, z); g.add(stem);
-  for (const side of [-1, 1]) { const e = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, 0.06 * s, 3), glow("#ffe14d", 2.6)); e.position.set(x + side * 0.08 * s, 0.22 * s, z + 0.22 * s); e.rotation.x = Math.PI / 2; g.add(e); }
-}
-
 /** London double-decker, modelled in Blender (art/blender/bus.py); route blinds drawn here. */
 let BUS_KIT: Promise<THREE.Object3D> | null = null;
 function busModel(route: string) {
@@ -2114,7 +2035,8 @@ export function World3D({
     let sightlinesReady = false;
     const sightlineTarget = new THREE.Vector3();
     const london = map.art === "london";
-    const indoors = !london && !highland && map.kind !== "campus";
+    const ukScene = buildUKScene(map.id);
+    const indoors = !london && !highland && !ukScene && map.kind !== "campus";
     const station = map.kind === "station";
     BEND.value.set(indoors ? 0 : 0.0055, indoors ? 0 : 0.0012);
     let renderer: THREE.WebGLRenderer;
@@ -2177,6 +2099,7 @@ export function World3D({
     let disposeArchitecture=()=>{};
     let updateArchitecture: (phase: "day" | "dusk" | "night", wetness: number, dt: number) => void = () => {};
     let groundSurface: THREE.MeshStandardMaterial | null = null;
+    let updateUKScenery: (x:number,z:number,overview?:boolean)=>void = () => {};
     const stationHoles=new Set<string>();
     if(london) for(const thing of buildLondon().things) if(thing.kind==="station")
       for(let y=thing.y;y<thing.y+thing.h;y++) for(let x=thing.x;x<thing.x+thing.w;x++) stationHoles.add(`${x},${y}`);
@@ -2188,7 +2111,7 @@ export function World3D({
       world.add(ground);
     }
     const signals = london ? streetSignals(world) : [];
-    if (!indoors) {
+    if (!indoors && !ukScene && !london) {
       // A landscaped apron keeps the following camera above scenery at the edge.
       box(world, "#63765b", -40, -0.7, -40, map.cols + 40, -0.35, map.rows + 40);
       // Align the low perimeter wall with the existing impassable world bounds.
@@ -2361,6 +2284,11 @@ export function World3D({
           if(detail)jobs.push(placeKitDetail(g,detail));
         }
       }
+    } else if (ukScene) {
+      const regional = addUKScenery(world,map,ukScene,{box,roof,sign,mat});
+      sightlineBuildings.push(...regional.buildings);
+      lamps.push(...regional.lamps);
+      updateUKScenery=regional.update;
     } else {
       const L = buildLondon();
       for (const t of L.things) {
@@ -2439,6 +2367,7 @@ export function World3D({
         }
       }
     }
+    if(london)addUKGateways(world,UK_GATEWAYS,{box,roof,sign,mat});
     const newsroom = london ? buildLondon().things.find(t => t.kind === "building" && !t.companyId && t.w >= 6 && t.height >= 3) : null;
     const broadcastCanvas = document.createElement("canvas");
     broadcastCanvas.width = 768; broadcastCanvas.height = 384;
@@ -2654,12 +2583,13 @@ export function World3D({
     const otherCars = new Map<string, { model: string; root: THREE.Group }>();
 
     // Traffic: buses and Kenney cars driving the road loops on the left.
-    const L = london ? buildLondon() : null;
+    const L = london ? buildLondon() : ukScene;
     const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; velocity?: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
-      const kinds = ["bus", "taxi", "sedan", "bus", "van", "delivery"];
+      const regionalCount=ukTrafficCount(map.id);
+      const kinds = london ? ["bus", "taxi", "sedan", "bus", "van", "delivery"] : Array.from({length:regionalCount},(_,i)=>["sedan","suv","taxi","sports","hatchback"][i%5]);
       kinds.forEach((k, i) => {
-        const route = i % 3;
+        const route = i % (ukScene ? (map.id==="m25"?L.routes.length:L.routes.length*2) : 3);
         const g = new THREE.Group();
         if (k === "bus") {
           const b = busModel(BUS_ROUTE_CODES[route]);
@@ -2667,14 +2597,15 @@ export function World3D({
           g.userData.label = BUS_ROUTE_CODES[route];
         } else void placeCar(g, k);
         scene.add(g);
-        traffic.push({ obj: g, route, at: (i * 0.173) % 1, distance: 0, speed: [2.6, 2.8, 2.5][route] });
+        traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/(map.id==="m25"?L.routes.length:2))/(kinds.length/(map.id==="m25"?L.routes.length:2)) : (i * 0.173) % 1, distance: 0, speed: ukScene ? (map.id==="m25"?5.8:map.id==="rotherhithe"?3.5:2.8) : [2.6, 2.8, 2.5][route] });
       });
-      for (const coach of COACHES.slice(0, 1)) {
+      for (const coach of london ? COACHES.slice(0, 1) : []) {
         const obj=coachModel(coach.id);bendAll(obj);scene.add(obj);
         traffic.push({obj,route:coach.route,at:coach.at,distance:0,speed:2.4});
       }
     }
-    const paths = L ? L.routes.map(route => { const first = route[0], last = route[route.length - 1]; return first[0] === last[0] && first[1] === last[1] ? route : [...route, first]; }) : [];
+    const regionalRoutes=ukScene ? ukTrafficRoutes(map.id,ukScene.routes) : L?.routes;
+    const paths = regionalRoutes ? regionalRoutes.map(route => { const first = route[0], last = route[route.length - 1]; return first[0] === last[0] && first[1] === last[1] ? route : [...route, first]; }) : [];
     const lengths = paths.map((pts) => pts.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0));
     const pointAt = (pi: number, dist: number) => {
       const pts = paths[pi];
@@ -2691,7 +2622,7 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 14 : 10);
+    const residentLimit = ukAmbientPeople(map.id, map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 14 : 10));
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : npcLook(i), null, true);
       const speech = speechMark(); body.root.add(speech);
@@ -2720,14 +2651,14 @@ export function World3D({
       const body = makeBody(npcLook(90 + i)); scene.add(body.root);
       return { id: pose.id, body };
     }) : [];
-    const cyclists = L ? Array.from({ length: budget.cyclists }, (_, i) => {
+    const cyclists = london ? Array.from({ length: budget.cyclists }, (_, i) => {
       const body = makeBody(npcLook(i + 30), null, true);
       const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
       bendAll(bike);
       scene.add(body.root, bike);
       return { body, bike, route: i % paths.length, at: i * 0.217, distance: 0, moving: false };
     }) : [];
-    if (L) for (let i = 0; i < 2; i++) {
+    if (london) for (let i = 0; i < 2; i++) {
       const obj = new THREE.Group();
       void placeCar(obj, ["sedan", "suv", "taxi"][i]);
       const body = makeBody(npcLook(40 + i), null, true);
@@ -2737,11 +2668,11 @@ export function World3D({
 
     const trafficPose = (v: typeof traffic[number]) => {
       const q = pointAt(v.route, v.distance), length = Math.hypot(q.dx, q.dz) || 1;
-      return { ...q, x: q.x + q.dz / length * ROAD_LANE_OFFSET, z: q.z - q.dx / length * ROAD_LANE_OFFSET };
+      return { ...q, x: q.x + q.dz / length * (ukScene?ukTrafficOffset(map.id):ROAD_LANE_OFFSET), z: q.z - q.dx / length * (ukScene?ukTrafficOffset(map.id):ROAD_LANE_OFFSET) };
     };
     const cyclistPose = (c: typeof cyclists[number]) => {
       const q = pointAt(c.route, c.distance), length = Math.hypot(q.dx, q.dz) || 1;
-      return { ...q, x: q.x + q.dz / length * ROAD_LANE_OFFSET, z: q.z - q.dx / length * ROAD_LANE_OFFSET };
+      return { ...q, x: q.x + q.dz / length * (ukScene?ukTrafficOffset(map.id):ROAD_LANE_OFFSET), z: q.z - q.dx / length * (ukScene?ukTrafficOffset(map.id):ROAD_LANE_OFFSET) };
     };
     const bicycleLength = 1.7, bicycleWidth = .65;
     const parked: TrafficVehicle[] = [];
@@ -2817,8 +2748,8 @@ export function World3D({
     const responseCar = new THREE.Group();
     let policeRig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null = null;
     let wasTased = false;
-    const responders = london || highland ? [makeBody({...npcLook(51),head:"head-blocky-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(52),head:"head-blocky-classic-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
-    if (london || highland) {
+    const responders = london || highland || ukScene && map.id !== "m25" && map.id !== "rotherhithe" ? [makeBody({...npcLook(51),head:"head-blocky-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(52),head:"head-blocky-classic-hero",top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
+    if (london || highland || ukScene && map.id !== "m25" && map.id !== "rotherhithe") {
       void createEmergencyVehicle("police",load,bendAll).then(rig=>{if(disposed){rig.dispose();return;}policeRig=rig;responseCar.add(rig.root);}).catch(()=>{});
       scene.add(responseCar,...responders.map(b=>b.root));
     }
@@ -2837,20 +2768,6 @@ export function World3D({
     }
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
-    // Fright Night: Scary Bots and pumpkins (London only, while the event runs).
-    const frightNight = london && seasonalEvent()?.event.id === "fright-night";
-    const bots = frightNight ? scaryBotsFor(map).map((bot) => {
-      const model = scaryBotModel();
-      const label = makeNameplate(bot.name, null);
-      label.dataset.bot = bot.id;
-      el.appendChild(label);
-      scene.add(model);
-      return { bot, model, label };
-    }) : [];
-    if (frightNight) for (const [i, b] of scaryBotsFor(map).entries()) {
-      pumpkinProp(world, b.a.x / TILE + 0.9, b.a.y / TILE - 0.9, 1 + (i % 3) * 0.2);
-      pumpkinProp(world, b.a.x / TILE - 1.1, b.a.y / TILE - 0.7, 0.8);
-    }
     // Flight School: Ava walks ahead and the player follows her.
     const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
     const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
@@ -3101,7 +3018,8 @@ export function World3D({
       }
 
       // Keep outdoor gameplay centred on the player, including at map edges.
-      if (first) {
+      if (first || Math.hypot(mx-focus.x,mz-focus.z)>24) {
+        // Edge-road loops must not sweep the camera through the entire city.
         focus.set(mx, 0, mz);
         first = false;
       }
@@ -3215,8 +3133,8 @@ export function World3D({
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
       policeRig?.update(secs,!!pursuit);
-      responseCar.visible = !!pursuit && (london || highland);
-      if (pursuit && (london || highland)) {
+      responseCar.visible = !!pursuit && (london || highland || !!ukScene);
+      if (pursuit && (london || highland || !!ukScene)) {
         const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;
         if(Math.hypot(cx-carLast.x,cz-carLast.z)>0.01)responseCar.rotation.y=Math.atan2(-(cz-carLast.z),cx-carLast.x);
         responseCar.position.set(cx,0.05,cz); carLast.set(cx,0,cz);
@@ -3231,18 +3149,6 @@ export function World3D({
           setWalking(body,pursuit?.stage === "chasing");
         }
       });
-      for (const { bot, model, label } of bots) {
-        const pose = botPose(bot, Date.now() / 1000);
-        const show = SCARY.on && !SCARY.gone.has(bot.id);
-        model.visible = show;
-        model.position.set(pose.x / TILE, 0.15 + pose.bob, pose.y / TILE);
-        model.rotation.y = -pose.heading + Math.PI / 2;
-        (model.userData.tip as THREE.Mesh).visible = Math.floor(Date.now() / 400) % 2 === 0;
-        const lp = projectedPoint.set(pose.x / TILE, 1.75, pose.y / TILE).project(camera);
-        const lx = (lp.x + 1) * viewportWidth / 2, ly = (1 - lp.y) * viewportHeight / 2;
-        label.style.left = `${lx}px`; label.style.top = `${ly}px`;
-        label.style.visibility = show && lp.z < 1 && lx > 0 && lx < viewportWidth && ly > 0 && ly < viewportHeight && !overview ? "visible" : "hidden";
-      }
       if (tutor) {
         const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
         const dx=tx-p.x, dz=tz-p.z, d=Math.hypot(dx,dz);
@@ -3301,12 +3207,13 @@ export function World3D({
       for (const [i, v] of traffic.entries()) {
         const commuter = v.commuter ? commuterPhase(reduce ? 0 : secs, v.commuter.offset) : null;
         const own = currentTraffic[i];
-        const step = reduce || commuter?.out ? 0 : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic, pedestrians);
+        const step = reduce || commuter?.out ? 0 : ukScene ? regionalTrafficClearance(own,dt*v.speed,currentTraffic,pedestrians) : trafficMoveDistance(own, dt * v.speed, roadTime, currentTraffic, pedestrians);
         const advance=trafficAdvance(v.velocity??0,v.speed,dt,step);
         v.velocity=advance.speed;
         v.distance += advance.distance;
         const q = trafficPose(v), len = Math.hypot(q.dx, q.dz) || 1;
         v.obj.position.set(q.x, .02, q.z);
+        v.obj.visible = Math.hypot(q.x-mx,q.z-mz)<75;
         own.x = q.x; own.y = q.z; own.heading = Math.atan2(q.dz, q.dx);
         if (v.commuter && commuter) {
           const driver = v.commuter.body;
@@ -3344,6 +3251,11 @@ export function World3D({
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE, ...n.identity });
+        if (STREET_CUSTODY.npcId === n.identity.id && STREET_CUSTODY.stage) {
+          n.body.root.visible=STREET_CUSTODY.stage!=="transport";
+          n.speech.visible=false;setWalking(n.body,false);n.defendUntil=0;n.knockedUntil=0;n.body.char?.play("idle");
+          return;
+        }
         if (n.knockedUntil > now) { n.speech.visible = false; return; }
         if (n.knockedUntil) { n.knockedUntil = 0; n.body.walking = false; n.body.char?.play("idle"); }
         if (n.defendUntil > now && !PLAYER_VEHICLE.active) {
@@ -3553,7 +3465,8 @@ export function World3D({
         }
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
-      if (sightlinesReady && (london || highland)) {
+      updateUKScenery(mx,mz,overview);
+      if (sightlinesReady && (london || highland || ukScene)) {
         sightlineTarget.copy(me.root.position); sightlineTarget.y += .9;
         // Keep the skyline solid in overview; normal play clears only the character's sightline.
         visibility.update(camera.position, overview ? [] : [sightlineTarget], dt);
@@ -3688,7 +3601,6 @@ export function World3D({
       retiredSceneryGeometry.clear();
       playerLabel.remove();
       for (const other of others.values()) { other.label.remove(); other.dispose(); }
-      for (const b of bots) b.label.remove();
       el.removeChild(renderer.domElement);
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.

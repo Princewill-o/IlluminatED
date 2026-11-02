@@ -1,6 +1,7 @@
-/** Supplied CC0 Blocky character collection. The duplicate -8-2 folder adds no new models. */
+import PRESET_MANIFEST from "../../../public/world3d/blocky-characters/presets/manifest.json";
+/** Supplied CC0 Blocky collection plus original Blender-built derivatives. */
 export const BLOCKY_BASE = "/world3d/blocky-characters";
-export const ADVENTURERS = [
+export const SUPPLIED_ADVENTURERS = [
   { id: "head-blocky-hero", name: "City Hero", file: "blocky_01_hero", style: "blocky", description: "A bright, blocky everyday adventurer." },
   { id: "head-blocky-knight", name: "Knight", file: "blocky_03_knight", style: "blocky", description: "A cheerful block-built knight." },
   { id: "head-blocky-wizard", name: "Wizard", file: "blocky_05_wizard", style: "blocky", description: "A storybook spellcaster." },
@@ -18,6 +19,8 @@ export const ADVENTURERS = [
   { id: "head-blocky-classic-zombie", name: "Zombie · Classic", file: "classic_blocky_09_zombie", style: "blocky", description: "The original sample zombie design." },
   { id: "head-blocky-classic-princess", name: "Princess · Classic", file: "classic_blocky_19_princess", style: "blocky", description: "The original sample princess design." },
 ] as const;
+export const BLENDER_PRESETS = PRESET_MANIFEST.presets;
+export const ADVENTURERS = [...SUPPLIED_ADVENTURERS, ...BLENDER_PRESETS];
 /** Legacy or unknown character choices always resolve to the supplied City Hero. */
 export const adventurerFor = (head: string | undefined) => ADVENTURERS.find(m => m.id === (head === "head-blocky-princess-rose" ? "head-blocky-classic-princess" : head)) ?? ADVENTURERS[0];
 export const blockyThumbnail = (head: string | undefined) => `${BLOCKY_BASE}/${adventurerFor(head).file}.png`;

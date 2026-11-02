@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import "./pixel-gui.css";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CircleHelp, Crown, Feather, Gamepad2, Menu, Smartphone, Trophy, Users } from "lucide-react";
+import { BookOpen, CircleHelp, Crown, Feather, Gamepad2, MapPinned, Menu, Smartphone, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
@@ -17,7 +18,6 @@ import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { EventArcade, type EventGame } from "./event-arcade";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
-import { FrightNight } from "./fright-night";
 import { GameMenu, saveResume } from "./game-menu";
 import { HudLayout, HudSlot } from "./hud";
 import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
@@ -32,10 +32,8 @@ import { TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
 import { useLife } from "./use-life";
-import { useStreetEncounters } from "./use-street-encounters";
-import {courtFineTotal,recordCourtFine} from "@/game/core/court-wallet";
-import type { StreetAssessment } from "@/game/core/civilian-conflict";
 import { useNeeds, doActivity, setNeedsOutfit } from "./use-needs";
+import { useStreetEncounters } from "./use-street-encounters";
 import { type Me, useLobby } from "./use-world";
 import { VenturePanel } from "./venture-panel";
 import { DEFAULT_RULES, WorldAdmin, WorldMenu } from "./world-menu";
@@ -53,17 +51,21 @@ import type { BikeBrand } from "@/game/core/bikes";
 import { WORKPLACES, workplaceById, roleOf } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import type { NearbyPerson } from "@/game/core/city-social";
+import type { StreetAssessment } from "@/game/core/civilian-conflict";
 import { COMPANIES } from "@/game/core/companies";
+import {courtFineTotal,recordCourtFine} from "@/game/core/court-wallet";
 import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/driving";
 import { gameDateAt } from "@/game/core/game-clock";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
-import { currentEvent } from "@/game/core/live-events";
 import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
+import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";
+import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } from "@/game/core/uk-navigation";
+import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
 import { venueMap } from "@/game/core/venues";
 import {
   CITY, ventureMap,
@@ -108,6 +110,7 @@ const TubeMap = dynamic(() => import("./tube-map").then((module) => module.TubeM
 const HomeEditor = dynamic(() => import("../../careers/home-editor").then(module => module.HomeEditor), { ssr: false });
 
 const TrainCutscene = dynamic(() => import("./train-cutscene").then((module) => module.TrainCutscene), { ssr: false, loading: () => null });
+const UKRoadMap = dynamic(() => import("./uk-road-map").then(module => module.UKRoadMap), { ssr: false });
 
 const REGION_KEY = "world-region";
 
@@ -118,6 +121,8 @@ const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[] } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
+  const regional = ukWorldMap(id);
+  if (regional) return regional;
   if (id.startsWith("venue-")) return venueMap(id);
   if (id.startsWith("hotel-")) return hotelMap(id);
   if (id.startsWith("workplace-")) return workplaceMap(id.slice(10));
@@ -213,7 +218,7 @@ export function WorldApp({
   }, [savedHomeId, savedOwnedHomes]);
   HOME = home;
   const router = useRouter();
-  const [mapId, setMapId] = useState(() => (loadMap(initialMap, offices, me.id) ? initialMap : "city"));
+  const [mapId, setMapId] = useState(() => (loadMap(initialMap, offices, me.id) && (initialMap !== "m25" || cars.some(id => carById(id))) ? initialMap : "city"));
   const [building, setBuilding] = useState(initialBuild && initialMap === "home");
   const [tube, setTube] = useState<string | null>(null);
   const [trip, setTrip] = useState(0);
@@ -235,6 +240,9 @@ export function WorldApp({
   const [tutorial, setTutorial] = useState(false);
   const [waypoint, setWaypoint] = useState<Place | null>(null);
   const [mapOpen, setMapOpen] = useState(false);
+  const [ukRoadsOpen, setUKRoadsOpen] = useState(false);
+  const [roadDestination, setRoadDestination] = useState<string | null>(null);
+  const closeUKRoads = useCallback(() => setUKRoadsOpen(false), []);
   const arrived = useCallback(() => setWaypoint(null), []);
   useEffect(() => setWaypoint(null), [mapId]);
   // Fresh accounts start in Flight School: follow Ava, then fly to London.
@@ -286,7 +294,7 @@ export function WorldApp({
   }, [homeAction, mapId]);
   const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
-  const [driving, setDriving] = useState<string | null>(null);
+  const [driving, setDriving] = useState<string | null>(() => initialMap === "m25" ? cars.find(id => carById(id)) ?? null : null);
   const [xpNow, setXpNow] = useState(xp);
   const [toast, setToast] = useState<{ text: string; big?: boolean } | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -319,6 +327,7 @@ export function WorldApp({
   useEffect(() => () => { if (arrestTimer.current) clearTimeout(arrestTimer.current); }, []);
   useEffect(() => { if (new URLSearchParams(window.location.search).get("phone") === "1") setPhone(true); }, []);
   const [arrest, setArrest] = useState(false);
+  const [streetCustody, setStreetCustody] = useState<StreetCustody | null>(null);
   const [policeTransport, setPoliceTransport] = useState(false);
   const transportStars = useRef(4);
   const { life, update: updateLife } = useLife(me.id,wantedResetToken);
@@ -351,7 +360,7 @@ export function WorldApp({
   }, []);
   const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout]);
   const inOffice = mapId.startsWith("office-");
-  const outdoors = mapId === "city" || mapId === "highlands";
+  const outdoors = mapId === "city" || mapId === "highlands" || isUKScene(mapId);
   // IllumED World sandbox: a player world's rules, re-checked every few seconds
   // so visitors see the owner's changes. The Open World uses the defaults.
   const [rules, setRules] = useState<WorldRules>(DEFAULT_RULES);
@@ -404,7 +413,7 @@ export function WorldApp({
   const driveCar = (car: string | null) => {
     if (!outdoors) { say("Head outside to take a car from your garage."); return; }
     if (car) {
-      const spot = nearestDrivingSpot(map, PLAYER, TRAFFIC_BOXES.filter((vehicle): vehicle is NonNullable<typeof vehicle> => Boolean(vehicle)));
+      const spot = motorwayCarArrival(map, nearestDrivingSpot(map, PLAYER, TRAFFIC_BOXES.filter((vehicle): vehicle is NonNullable<typeof vehicle> => Boolean(vehicle))));
       if (!spot) { say("Move closer to a clear road before taking your car out."); return; }
       setArrive(spot);
       setDriving(car);
@@ -412,6 +421,7 @@ export function WorldApp({
       setDealer(false);
       say("Car ready. Keep left, stop at red lights and give way at crossings. Road offences add wanted stars.", true);
     } else {
+      if (mapId === "m25") { say("Leave the motorway at a signed exit before parking."); return; }
       const spot = nearestParkingSpot(map, PLAYER);
       if (!spot) { say("Pull up beside a pavement before getting out."); return; }
       setDriving(null);
@@ -421,7 +431,6 @@ export function WorldApp({
   };
   // Hop-on bus: choose anywhere on the map and the bus drives you there.
   const [busPick, setBusPick] = useState(false);
-  const [botFight, setBotFight] = useState(false);
   const [hop, setHop] = useState<{ to: string; route: string } | null>(null);
   const hopOn = useCallback((place: Place) => {
     setBusPick(false);
@@ -454,7 +463,7 @@ export function WorldApp({
 
   const atHome = mapId === "home";
   const inTutorial = mapId === TUTORIAL_MAP_ID;
-  const lobby = useLobby(server && !atHome ? { map: mapId, server } : null, me.id);
+  const lobby = useLobby(server && map.kind !== "home" ? { map: mapId, server } : null, me.id);
 
   useEffect(() => {
     if (TRAIN_CALL.at < 0) TRAIN_CALL.at = performance.now() - 6500;
@@ -496,21 +505,46 @@ export function WorldApp({
   const goTo = useCallback((dest: string, label: string, spot?: { x: number; y: number }) => {
     const next = loadMap(dest, offices, me.id);
     if (!next) return;
+    if (life.hearing?.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && streetCustody?.stage !== "transport" && map.kind !== "court" && dest !== "hospital") { say("The officers need to complete the street incident first."); return; }
+    const motorwayCar = dest === "m25" ? driving ?? cars.find(id => carById(id)) : null;
+    if (dest === "m25" && !motorwayCar) { say("Take a car from your garage before joining the motorway."); return; }
+    const arrival = motorwayCar ? motorwayCarArrival(next, nearestDrivingSpot(next, spot ?? next.spawn)) : spot ?? next.spawn;
+    if (!arrival) return;
     setBike(null);
-    setDriving(null);
+    setDriving(motorwayCar ?? null);
     setGames(false); setPhone(false); setHousing(false); setStudy(false); setInmate(null); setLearning(false); setAwardsOpen(false);
-    setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false);
+    setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false); setUKRoadsOpen(false);
     setDealer(false); setDock(false); setDesk(false); setBankOpen(false); setRoom(null);
     setSceneName(label);
     setFading(true);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     fadeTimer.current = setTimeout(() => {
-      setArrive(spot ?? next.spawn);
+      setArrive(arrival);
       setMapId(dest);
       setTrip((n) => n + 1);
       fadeTimer.current = setTimeout(() => setFading(false), 1050);
     }, 430);
-  }, [offices, me.id]);
+  }, [offices, me.id, cars, driving, say, life.hearing, streetCustody?.stage, map.kind]);
+
+  useEffect(() => {
+    if (!roadDestination) return;
+    if (mapId === roadDestination) {
+      setRoadDestination(null); setWaypoint(null);
+      say(`Welcome to ${ukSceneName(mapId)}. Explore the neighbourhood or plan a return route.`, true);
+      return;
+    }
+    const gate = nextUKPortal(map, roadDestination);
+    if (gate) setWaypoint({ id: gate.id, name: gate.label, kind: "view", x: gate.rect.x + gate.rect.w / 2, y: gate.rect.y + gate.rect.h / 2 });
+  }, [map, mapId, roadDestination, say]);
+
+  const guideUKRoad = (destination: string) => {
+    if (jailed || life.stars >= POLICE_STARS) { say("Finish your current law activity first."); return; }
+    const gate = nextUKPortal(map, destination);
+    if (!gate) { say("Return to a city street to start this route."); return; }
+    setUKRoadsOpen(false); setRoadDestination(destination);
+    setWaypoint({ id: gate.id, name: gate.label, kind: "view", x: gate.rect.x + gate.rect.w / 2, y: gate.rect.y + gate.rect.h / 2 });
+    say(`Route to ${ukSceneName(destination)} ready. Follow the marker, then interact at the exit.`, true);
+  };
 
   const streetCase = useCallback((assessment:StreetAssessment) => {
     if (assessment.caseFile) {
@@ -519,7 +553,7 @@ export function WorldApp({
     }
     say(assessment.message,true);
   },[updateLife,say]);
-  const street = useStreetEncounters(outdoors && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !jailed && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
+  const street = useStreetEncounters(outdoors && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !jailed && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
     setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
   });
   useEffect(()=>{if(needs && needs.energy<=0 && outdoors && !rescue && !jailed && !life.hearing && !fading){setRescue(true);setBike(null);setDriving(null);}},[needs,outdoors,rescue,jailed,life.hearing,fading]);
@@ -543,6 +577,7 @@ export function WorldApp({
       { id: "hospital", label: "St Tomas’ Hospital", mapId: "hospital", x: 13, y: 8 },
       { id: "court", label: "Crown Court", mapId: "court", x: 11, y: 8 },
       { id: "prison", label: "HMP Thames", mapId: "prison", x: 15, y: 12 },
+      ...UK_SCENES.map(id => { const scene = ukWorldMap(id)!; return { id: `uk-${id}`, label: ukSceneName(id), mapId: id, x: scene.spawn.x / TILE, y: scene.spawn.y / TILE }; }),
       ...offices.map(office => ({ id: `office-${office.slug}`, label: `${office.name} · Office`, mapId: `office-${office.slug}`, x: 10, y: 10 })),
       ...WORKPLACES.map(workplace => ({ id: `workplace-${workplace.id}`, label: `${workplace.name} · Workplace`, mapId: `workplace-${workplace.id}`, x: 10, y: 10 })),
       ...CITY.portals.filter(portal => portal.to.kind === "map" && portal.to.mapId.startsWith("station-")).map(portal => portal.to.kind === "map" ? ({ id: portal.to.mapId, label: `${portal.label} · Station`, mapId: portal.to.mapId, x: 14, y: 3 }) : null).filter((place): place is TeleportDestination => place !== null),
@@ -551,7 +586,12 @@ export function WorldApp({
   }, [offices]);
 
   useEffect(() => {
-    if (life.hearing && !rescue && mapId !== "court" && !fading) goTo("court", "Crown Court");
+    if (!life.hearing || rescue || fading) return;
+    if (life.hearing.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody)) {
+      if (mapId === "court") goTo("city","Police response pending");
+      return;
+    }
+    if (mapId !== "court") goTo("court", "Crown Court");
   }, [life.hearing, rescue, mapId, fading, goTo]);
 
   useEffect(() => {
@@ -577,6 +617,7 @@ export function WorldApp({
   const onPortal = useCallback(
     (portal: Portal) => {
       const to = portal.to;
+      if (life.hearing?.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && map.kind !== "hospital") { say("Wait for the officers to finish responding to the incident."); return; }
       if (to.kind === "home-use") {
         const placed = map.layout?.find(item => item.key === to.key);
         const furniture = placed && furnitureById(placed.item);
@@ -622,7 +663,7 @@ export function WorldApp({
         );
         const returnParams = new URLSearchParams({ map: mapId, x: String(Math.round(outside.x)), y: String(Math.round(outside.y)) });
         if (server) returnParams.set("server", server);
-        const params = new URLSearchParams({ returnTo: `/games/world?${returnParams}` });
+        const params = new URLSearchParams({ returnTo: `${developerTeleport ? "/games/city-showcase" : "/games/world"}?${returnParams}` });
         router.push(`/games/promotion-panic/${to.companyId}?${params}`);
       }
       else if (to.kind === "link") {
@@ -662,16 +703,20 @@ export function WorldApp({
         updateLife((l) => ({ ...l, sick: false }));
         say("The doctor sorted you out. Feeling much better.", true);
       } else if (to.kind === "map") {
-        // No bikes or cars indoors: leave them outside.
-        if (to.mapId !== "city") setBike(null);
-        if (to.mapId !== "city" && to.mapId !== "highlands") setDriving(null);
+        if (to.mapId === "m25" && !driving) { say("Take a car from Garage before joining the motorway.", true); setDealer(true); return; }
         const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
+        const roadLink = isUKScene(mapId) || isUKScene(to.mapId) || mapId.startsWith("uk-home-") || to.mapId.startsWith("uk-home-");
+        const keepCar = Boolean(driving) && (to.mapId === "city" || isUKScene(to.mapId));
+        const roadArrival = roadLink ? roadTransitionArrival(next, mapId, portal.id, keepCar) : null;
+        if (keepCar && roadLink && !roadArrival) { say("This exit needs a clear road. Park your car first."); return; }
+        if (to.mapId !== "city" && !isUKScene(to.mapId)) setBike(null);
+        if (next.kind !== "city") setDriving(null);
         // Arrive outside the door that leads back to where you came from.
         const back = next.portals.find((p) => p.to.kind === "map" && p.to.mapId === mapId);
-        const spot = back
+        const spot = roadArrival ?? (back
           ? safeSpot(next, back.rect.x + back.rect.w / 2, back.rect.y + (back.rect.y + back.rect.h >= next.height - 4 ? -24 : back.rect.y > next.height / 2 ? -50 : back.rect.h + 50))
-          : next.spawn;
+          : next.spawn);
         // Fade to black, swap the map underneath, then fade back in.
         play("door", soundOn());
         setSceneName(to.label);
@@ -685,7 +730,7 @@ export function WorldApp({
         }, 430);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -731,8 +776,42 @@ export function WorldApp({
     }
   }, [needs, life.sick, updateLife, say]);
 
+  // A street allegation stays on the street until real officers have reached the participants.
+  useEffect(() => {
+    const file = life.hearing?.streetCase;
+    if (!file || canHearStreetCase(file,life.hearing?.custody)) { setStreetCustody(null); return; }
+    if (!outdoors || rescue || jailed) return;
+    setStreetCustody(current => current?.caseId === file.id ? current : beginStreetCustody(file,Date.now()));
+  }, [life.hearing,outdoors,rescue,jailed]);
+  useEffect(() => {
+    STREET_CUSTODY.npcId = streetCustody?.npcId ?? null;
+    STREET_CUSTODY.stage = streetCustody?.stage ?? null;
+    STREET_CUSTODY.both = Boolean(streetCustody?.participants.includes("civilian"));
+    return () => { STREET_CUSTODY.npcId=null; STREET_CUSTODY.stage=null; STREET_CUSTODY.both=false; };
+  }, [streetCustody]);
+  useEffect(() => {
+    if (!streetCustody || rescue || !outdoors || jailed) return;
+    if (streetCustody.stage === "arresting") {
+      const timer = setTimeout(() => setStreetCustody(current => current ? advanceStreetCustody(current,Date.now(),true) : current),Math.max(0,3000-(Date.now()-(streetCustody.arrestedAt??Date.now()))));
+      return () => clearTimeout(timer);
+    }
+    if (streetCustody.stage !== "responding") return;
+    const timer = setInterval(() => {
+      let current = pursuitRef.current ?? startPursuit(map,PLAYER);
+      if (current.escaped) current=startPursuit(map,PLAYER);
+      const traffic=TRAFFIC_BOXES.filter((box):box is NonNullable<typeof box>=>Boolean(box));
+      const next=tickPursuit(current,map,PLAYER,Date.now(),.2,traffic,false);
+      const contact=next.stage === "tased" || next.officers.some(officer=>Math.hypot(officer.x-PLAYER.x,officer.y-PLAYER.y)<TILE*.8);
+      const displayed=contact?{...next,stage:"challenge" as const}:next;
+      pursuitRef.current=displayed;setPursuit(displayed);
+      if(contact)setStreetCustody(state=>state?advanceStreetCustody(state,Date.now(),true):state);
+    },200);
+    return () => clearInterval(timer);
+  }, [streetCustody,rescue,outdoors,jailed,map]);
+
   // Police catch the player with a brief taser stop before the challenge or escort.
   useEffect(() => {
+    if (life.hearing?.streetCase) return;
     if (life.stars < policeStars || jailed || life.hearing || !outdoors) {
       pursuitRef.current = null; setPursuit(null); return;
     }
@@ -812,7 +891,7 @@ export function WorldApp({
   const fight = useCallback(() => {
     if (rescue) return;
     if (!street.defend()) setSafety(true);
-  }, [rescue,street.defend]);
+  }, [rescue,street]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "f" && nearPerson && !phone && !study && !inmate && !arrest && pursuit?.stage !== "challenge" && !document.querySelector('[role="dialog"]') && !(e.target instanceof HTMLElement && e.target.closest("input, textarea, button, [role=dialog]"))) fight();
@@ -926,7 +1005,7 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
-  const busy = Boolean(rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || botFight || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || life.hearing) || arrest || policeTransport || pursuit?.stage === "challenge" || pursuit?.stage === "tased");
+  const busy = Boolean(ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -950,10 +1029,9 @@ export function WorldApp({
   }, []);
   const leaveGame = () => { remember(); setMenu(false); router.push("/games"); };
 
-
   if (!server && !inTutorial) {
     return (
-      <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
+      <div className="illumed-pixel-world relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
         <WorldMenu region={region} onRegion={chooseRegion} countFor={(id) => countFor(mapId, id)} username={me.username}
           onJoin={(id, world) => { setWorldInfo(world ?? null); setServer(id); }} />
       </div>
@@ -961,7 +1039,7 @@ export function WorldApp({
   }
 
   return (
-    <div className="relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
+    <div className="illumed-pixel-world relative h-[calc(100dvh-56px-64px-env(safe-area-inset-top)-env(safe-area-inset-bottom))] md:h-dvh">
     <HudLayout>
       <SceneMusic scene={
         journey || bus ? "journey"
@@ -977,13 +1055,14 @@ export function WorldApp({
                             : map.kind === "campus" ? "university" : "city"
       } />
       {!rescue && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
+        offlinePreview={developerTeleport}
         key={`${mapId}:${server}:${trip}`}
         onNearby={setNearby}
         paused={busy || menu || rescue || ventureOpen}
         homeAction={homeAction}
         police={pursuit}
         map={map}
-        serverId={atHome || inTutorial || !server ? "solo" : server}
+        serverId={map.kind === "home" || inTutorial || !server ? "solo" : server}
         arriveAt={arrive}
         onPortal={onPortal}
         onRoom={setRoom}
@@ -1066,7 +1145,6 @@ export function WorldApp({
           onClose={() => setDealer(false)}
         />
       )}
-      <FrightNight map={map} userId={me.id} active={mapId === "city" && !jailed && currentEvent().event.id === "fright-night"} onOpen={setBotFight} onReward={(text) => { say(text, true); void gainXp("study"); }} />
       {hop && (
         <HudSlot area="bc" order={1}><div role="status" className="flex items-center gap-3 rounded-full bg-[#c8102e] py-1.5 pr-1.5 pl-4 text-white shadow-xl">
           <span className="rounded-md bg-black/80 px-1.5 font-mono text-xs font-black text-[#ffd176]">{hop.route}</span>
@@ -1077,7 +1155,7 @@ export function WorldApp({
       {busPick && (
         <CityMap map={map} waypoint={null} intro="You're on the bus! Pick any place on the map or in the list and the bus will drive you there." onPick={place => { if (place) hopOn(place); }} onClose={() => setBusPick(false)} />
       )}
-      {driving && outdoors && (
+      {driving && outdoors && mapId !== "m25" && (
         <HudSlot area="bc" order={1}><button type="button" onClick={() => driveCar(null)} className="jelly min-h-11 rounded-full bg-[#13203a] px-4 py-2 text-xs font-black text-white shadow-lg">
           Park {carById(driving)?.name}
         </button></HudSlot>
@@ -1110,8 +1188,8 @@ export function WorldApp({
           {street.attacked ? "Defend yourself (F)" : "Shove (F)"}
         </button></HudSlot>
       )}
-      {pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <HudSlot area="tc" order={15} className="pointer-events-none"><div role="status" className="rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div></HudSlot>}
-      {pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
+      {!streetCustody && pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <HudSlot area="tc" order={15} className="pointer-events-none"><div role="status" className="rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div></HudSlot>}
+      {!streetCustody && pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
         pursuitRef.current = null; setPursuit(null);
         if(correct) { updateLife(clearWanted); say("Correct. The officers let you go with a warning.",true); }
         else {
@@ -1130,6 +1208,13 @@ export function WorldApp({
           },2600);
         }
       }}/ >}
+      {streetCustody && streetCustody.stage !== "transport" && !rescue && <HudSlot area="tc" order={5}><section role="status" aria-live="polite" className="pixel-panel max-w-md p-4 text-center"><p className="font-black">{streetCustody.stage === "responding" ? "Police responding to the incident" : streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName} are under arrest` : "You are under arrest"}</p><p className="mt-2 text-xs">{streetCustody.stage === "responding" ? "Officers are approaching to stop the people involved. The hearing has not started." : "Officers are completing the arrest before escorting the detained participants to court. Arrest does not decide the case."}</p></section></HudSlot>}
+      {streetCustody?.stage === "transport" && !rescue && <PoliceTransportCutscene destination="court" people={streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName}` : "You"} onArrive={() => {
+        const proof=finishStreetTransport(streetCustody,Date.now());if(!proof)return;
+        updateLife(current=>current.hearing?.streetCase?.id===proof.caseId?{...current,hearing:{...current.hearing,custody:proof}}:current);
+        pursuitRef.current=null;setPursuit(null);setStreetCustody(null);
+        goTo("court","Police escort · Crown Court");
+      }}/>}
       {arrest && <ArrestOverlay />}
       <Deliveries atHome={mapId === "home"} busy={busy || building} onGoHome={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else goTo("home", "Your house"); }} />
       {interview && <InterviewRoom charge={interview.charge} stars={interview.stars} area={interview.area} wallet={wallet} onDone={(outcome) => {
@@ -1160,7 +1245,7 @@ export function WorldApp({
           { label: "Go home", run: () => { setAdminOpen(false); goTo("home", "Your house"); } },
         ]} />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>{setPhoneApp("home");setPhone(true);}} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
-      {phone && <GamePhone mapId={mapId} initialApp={phoneApp} meId={me.id} username={me.username} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}}
+      {phone && <GamePhone onUKRoads={() => { setPhone(false); setUKRoadsOpen(true); }} mapId={mapId} initialApp={phoneApp} meId={me.id} username={me.username} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}}
         onHouses={() => { setPhone(false); if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setHousing(true); }}
         onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId==="universities");if(gate){setWaypoint({id:gate.id,name:"University Quarter",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the university marker to explore the district.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
@@ -1171,7 +1256,7 @@ export function WorldApp({
       }}/ >}
       {study && <PrisonStudy progress={life.prisonWork} onCorrect={()=>updateLife(l=>({...l,prisonWork:Math.min(3,l.prisonWork+1)}))} onClose={()=>setStudy(false)}/>}
       {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="jelly mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
-      {mapId === "court" && life.hearing?.streetCase && <StreetHearingDialog key={life.hearing.streetCase.id} caseFile={life.hearing.streetCase} balance={wallet} onResolved={result=>{setWallet(result.balance);if(result.finePaid>0){try{localStorage.setItem(fineKey,JSON.stringify(recordCourtFine(JSON.parse(localStorage.getItem(fineKey)??"null"),result.caseId,result.finePaid)));}catch{/* The current session still keeps the paid balance. */}}pendingStreetCase.current=null;updateLife(l=>({...l,hearing:null,jailUntil:result.jailUntil,prisonWork:0}));if(result.outcome!=="jailed")goTo("city","London",courtSteps);}}/>}
+      {mapId === "court" && life.hearing?.streetCase && canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && <StreetHearingDialog key={life.hearing.streetCase.id} caseFile={life.hearing.streetCase} balance={wallet} onResolved={result=>{setWallet(result.balance);if(result.finePaid>0){try{localStorage.setItem(fineKey,JSON.stringify(recordCourtFine(JSON.parse(localStorage.getItem(fineKey)??"null"),result.caseId,result.finePaid)));}catch{/* The current session still keeps the paid balance. */}}pendingStreetCase.current=null;updateLife(l=>({...l,hearing:null,jailUntil:result.jailUntil,prisonWork:0}));if(result.outcome!=="jailed")goTo("city","London",courtSteps);}}/>}
       {mapId === "court" && life.hearing && !life.hearing.streetCase && (
         <HearingDialog
           charge={life.hearing.charge}
@@ -1275,6 +1360,9 @@ export function WorldApp({
       />
       {!atHome && <MiniMap map={map} searchArea={pursuit} waypoint={waypoint} onOpen={() => setMapOpen(true)} onArrive={arrived} />}
       {mapOpen && <CityMap map={map} searchArea={pursuit} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
+      <HudSlot area="br-nav" order={3}><button type="button" onClick={() => setUKRoadsOpen(true)} aria-label="UK road atlas" className="jelly flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#235c4d] px-4 text-xs font-black text-white shadow-lg"><MapPinned size={17}/><span className="hidden sm:inline">UK roads</span></button></HudSlot>
+      {ukRoadsOpen && <UKRoadMap map={map} onClose={closeUKRoads} onGuide={guideUKRoad} />}
+      {roadDestination && <HudSlot area="tc" order={35}><div className="flex max-w-[min(90vw,28rem)] items-center gap-3 rounded-2xl border border-white/20 bg-[#143f35]/95 px-4 py-2 text-white shadow-lg"><MapPinned className="size-4 shrink-0"/><button type="button" onClick={() => setUKRoadsOpen(true)} className="truncate text-left text-xs font-bold">Route to {ukSceneName(roadDestination)}<span className="block text-[10px] font-medium text-[#c0dac8]">Follow the marker · interact at the next junction</span></button><button type="button" aria-label="Cancel UK route" onClick={() => { setRoadDestination(null); setWaypoint(null); }} className="ml-auto rounded-full p-1"><X size={16}/></button></div></HudSlot>}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}
       {room && (
         <HudSlot area="tc" order={25}><div className="rounded-full bg-brand px-4 py-2 text-sm font-black" role="status">

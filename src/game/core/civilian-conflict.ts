@@ -1,5 +1,5 @@
-import { createRng, type Rng } from "./rng";
 import { sentenceMs } from "./law";
+import { createRng, type Rng } from "./rng";
 
 export type StreetActor = "player" | "civilian";
 export interface StreetHit { attacker: StreetActor; damage: number; at: number }
@@ -28,6 +28,7 @@ export interface StreetEvidence {
 }
 export interface StreetCourtCase {
   id: string;
+  npcId?: string;
   npcName: string;
   seed: number;
   charge: string;
@@ -131,7 +132,7 @@ export function assessStreetEncounter(encounter: StreetEncounter, rng: Rng = cre
   const chance = aggression ? .08 : evidence.proportionate ? Math.min(.95,.78+evidence.witnesses*.08) : Math.max(.14,.42-evidence.lateRetaliationHits*.05-evidence.hitsAfterThreatEnded*.08);
   const stars = evidence.damageToCivilian >= 50 ? 2 : 1;
   const caseFile: StreetCourtCase = {
-    id: encounter.id, npcName: encounter.npcName, seed: encounter.seed,
+    id: encounter.id, npcId: encounter.npcId, npcName: encounter.npcName, seed: encounter.seed,
     charge: aggression ? "Starting a street scuffle" : "Contested street incident · self-defence review",
     evidence, acquittalChance: chance,
     fine: Math.min(240,30+Math.ceil(evidence.damageToCivilian)*2+(!evidence.proportionate&&!aggression?20:0)), stars,

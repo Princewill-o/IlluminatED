@@ -8,9 +8,9 @@ import dynamic from "next/dynamic";
 import { Bike, Bus, CarFront, DoorOpen, Gamepad2, MessageCircle, Sparkles, TrainFront } from "lucide-react";
 import { createPortal } from "react-dom";
 
+import { ControllerLegend } from "./controller-legend";
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { HudSlot } from "./hud";
-import { ControllerLegend } from "./controller-legend";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
@@ -37,9 +37,10 @@ import type { HomeAction } from "@/game/core/homes";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
+import { freeRoadLoop, motorwayCarArrival } from "@/game/core/uk-navigation";
+import { isUKScene, loopRoadPosition } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
-import { readVisualQuality, type VisualQuality } from "@/game/core/visual-quality";
-import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
+import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, blocked, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { cn } from "@/lib/utils";
 
@@ -216,8 +217,10 @@ export function WorldView({
   paused = false,
   police = null,
   homeAction = null,
+  offlinePreview = false,
 }: {
   homeAction?: HomeAction | null;
+  offlinePreview?: boolean;
   paused?: boolean;
   police?: Pursuit | null;
   /** Real tech events shown on billboards around the world. */
@@ -246,7 +249,7 @@ export function WorldView({
   const getPolice = useCallback(() => policeRef.current, []);
   const wasFlying = useRef(false);
   const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
-  const world = useWorld({ mapId: map.id, serverId, me, start: start.current });
+  const world = useWorld({ mapId: map.id, serverId: offlinePreview ? "solo" : serverId, me, start: start.current });
   const viewport = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
   const meEl = useRef<HTMLDivElement | null>(null);
@@ -325,7 +328,7 @@ export function WorldView({
   useEffect(() => {
     const requested = arriveAt ?? pos.current;
     const candidate = { ...requested, heading: arriveAt?.heading ?? pos.current.heading, speed: 0 };
-    const destination = car ? (vehicleFits(map, candidate) ? candidate : nearestDrivingSpot(map, requested)) : safeSpot(map, requested.x, requested.y);
+    const destination = car ? motorwayCarArrival(map, vehicleFits(map, candidate) ? candidate : nearestDrivingSpot(map, requested)) : safeSpot(map, requested.x, requested.y);
     if (destination) Object.assign(pos.current, destination, { speed: 0, walking: false });
     keys.current.clear();
     stick.current = { x: 0, y: 0 };
@@ -492,7 +495,7 @@ export function WorldView({
       const driving = Boolean(carRef.current);
       const before = { x: p.x, y: p.y, heading: p.heading, speed: p.speed };
       let collision: DrivingCollision | undefined;
-      const obstacles: VehicleObstacle[] = map.art === "london" ? [
+      const obstacles: VehicleObstacle[] = map.art === "london" || isUKScene(map.id) ? [
         ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
@@ -561,7 +564,7 @@ export function WorldView({
           next = { x: p.x, y: 14.5 * TILE };
         }
       }
-      if (map.art === "london" && !driving && !flying) {
+      if ((map.art === "london" || isUKScene(map.id)) && !driving && !flying) {
         const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
         const people = dx || dy ? NPC_SPOTS.map(person => ({ x: person.x, y: person.y })) : [];
         const corrected = nudgePedestrianFromTraffic(map, next, traffic, people);
@@ -574,6 +577,14 @@ export function WorldView({
             meEl.current?.animate([{ translate: "0 0" }, { translate: "0 -14px" }, { translate: "0 0" }, { translate: "0 -5px" }, { translate: "0 0" }], { duration: 450, easing: "ease-out", composite: "add" });
             play("door", soundOn());
           }
+        }
+      }
+      if (!pausedRef.current && !flying && (dx || dy)) {
+        const wrapped = driving ? freeRoadLoop(map, next, driven?.heading ?? p.heading, obstacles) : loopRoadPosition(map.id, next.x, next.y);
+        if (wrapped && (driving ? vehicleFits(map, { ...wrapped, heading: driven?.heading ?? p.heading }, true) : !blocked(map, wrapped.x, wrapped.y))) {
+          next = wrapped;
+          target.current = null;
+          window.dispatchEvent(new Event("illuminated:road-loop"));
         }
       }
       const moved = next.x !== p.x || next.y !== p.y;
@@ -593,7 +604,7 @@ export function WorldView({
       const rise = elevationAt(map, p.x, p.y, PLAYER.level);
       PLAYER.z = flying ? 3.2 : rise.z;
       PLAYER.level = flying ? PLAYER.level : rise.level;
-      Object.assign(PLAYER_VEHICLE, { active: driving && map.art === "london", x: p.x, y: p.y, heading: p.heading, speed: p.speed, length: carRef.current?.startsWith("bus:") ? BUS_LENGTH : CAR_LENGTH, width: carRef.current?.startsWith("bus:") ? BUS_WIDTH : CAR_WIDTH });
+      Object.assign(PLAYER_VEHICLE, { active: driving && (map.art === "london" || isUKScene(map.id)), x: p.x, y: p.y, heading: p.heading, speed: p.speed, length: carRef.current?.startsWith("bus:") ? BUS_LENGTH : CAR_LENGTH, width: carRef.current?.startsWith("bus:") ? BUS_WIDTH : CAR_WIDTH });
       p.walking = moved;
       // Driving: turn the car sprite to face where you're going.
       const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");
@@ -721,7 +732,7 @@ export function WorldView({
     setSheet(false);
   };
 
-  const status = STATUS[world.status];
+  const status = offlinePreview ? {text:"Offline preview",dot:"#83ca9d"} : STATUS[world.status];
   // Local video capture only: lets a script add simulated players (development builds).
   const [, crowdTick] = useState(0);
   useEffect(() => {
@@ -738,7 +749,7 @@ export function WorldView({
       setNearby(prev => (prev.join() === ids.join() ? prev : ids));
     }, 500);
     return () => window.clearInterval(timer);
-  }, [serverId, hidden]);
+  }, [serverId, hidden, players]);
   // Retain bounded 2D sprites while moving; positions update outside React.
   const others = [...players.current.values()].filter(p => !hidden.has(p.id)).slice(0,VISIBLE_PLAYERS);
 
@@ -841,15 +852,15 @@ export function WorldView({
       {/* The old flat-map lighting overlay is kept mounted for the movement
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
-      {serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
-      {serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby}/>}
+      {!offlinePreview && serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
+      {!offlinePreview && serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}
       <HudSlot area="tl" order={0}>
         <button type="button" onClick={onChangeServer} className="min-h-11 max-w-full rounded-2xl border border-[#c8b182]/40 bg-[#183b35]/95 px-3 py-2 text-left text-xs text-[#fff3d8] shadow-[0_8px_24px_rgba(12,30,28,0.18)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c8b182]" aria-label={`Change server · ${map.name}`}>
           <span className="block truncate font-black">{map.name}</span>
-          {map.kind !== "home" && <span className="mt-0.5 hidden text-[10px] text-white/70 sm:block">Ambient residents · computer controlled</span>}
+          {map.kind !== "home" && <span className="mt-0.5 hidden text-[10px] text-white/70 sm:block">{map.id === "m25" || map.id === "rotherhithe" ? "Vehicle traffic · no pedestrians" : "Ambient residents · computer controlled"}</span>}
           <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-[#d8d4e0] sm:text-xs">
             <span className="size-2 rounded-full" style={{ background: status.dot }} aria-hidden />
             {status.text}

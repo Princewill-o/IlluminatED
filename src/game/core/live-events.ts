@@ -32,7 +32,8 @@ const weekIndex = (now: number) => Math.floor((now - Date.UTC(2026, 0, 5)) / WEE
 /**
  * The event running now. Seasonal events (every season and the big holidays,
  * all 2× XP) take priority; otherwise Hero Week runs every other week and the
- * other genres rotate in between.
+ * other genres rotate in between. The retired October scare event is not selected
+ * on any date; those weeks use this normal learning-event rotation.
  */
 export function currentEvent(now = Date.now()): { event: LiveEvent; endsAt: number } {
   const seasonal = seasonalEvent(now);

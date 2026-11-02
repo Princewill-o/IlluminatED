@@ -14,11 +14,11 @@ import {
 } from "lucide-react";
 
 import { NearbyPeople, PhoneMessages } from "./phone-messages";
-import type { NearbyPerson } from "@/game/core/city-social";
 import { CompanyLogo } from "../company-logo";
 
 import { AppIconArt, type AppIconName } from "@/components/app-icons";
 import { WORKPLACES } from "@/game/core/careers";
+import type { NearbyPerson } from "@/game/core/city-social";
 import { COMPANIES } from "@/game/core/companies";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +58,7 @@ function AppScreen({ title, onBack, children }: { title: string; onBack: () => v
 
 /** A fictional iPhone-style phone: calls open the game's contacts, never real phone numbers. */
 export function GamePhone({
-  initialApp="home", meId="", username="", mapId="city", nearby=[], onNearbyRequest, onVenture=()=>{}, onBank=()=>{},
+  initialApp="home", meId="", mapId="city", nearby=[], onNearbyRequest, onVenture=()=>{}, onBank=()=>{},
   onClose,
   onCall,
   onMap,
@@ -69,6 +69,7 @@ export function GamePhone({
   onAwards,
   onGarage = onMap,
   onUniversities = onMap,
+  onUKRoads = onMap,
   onBus,
   onEvents,
   time,
@@ -85,6 +86,7 @@ export function GamePhone({
   onAwards: () => void;
   onGarage?: () => void;
   onUniversities?: () => void;
+  onUKRoads?: () => void;
   /** Hail a bus and choose where it goes. */
   onBus?: () => void;
   onEvents?: () => void;
@@ -108,6 +110,7 @@ export function GamePhone({
     { name: "Venture", icon: "wallet", action: onVenture },
     { name: "Bank", icon: "wallet", action: onBank },
     { name: "Maps", icon: "maps", action: onMap },
+    { name: "UK roads", icon: "maps", action: onUKRoads },
     { name: "Bus", icon: "bus", action: onBus ?? onMap },
     { name: "Garage", icon: "garage", action: onGarage },
     { name: "Unis", icon: "unis", action: onUniversities },

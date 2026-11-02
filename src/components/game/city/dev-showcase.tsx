@@ -21,10 +21,10 @@ import { VoiceChat, localSignaller } from "@/components/game/world/voice-chat";
 import { WorldApp } from "@/components/game/world/world-app";
 import { ConversationPreview } from "@/components/landing/conversation-preview";
 import { affiliationFor } from "@/game/core/affiliation";
-import { uniformFor, workplaceById } from "@/game/core/careers";
-import { DEFAULT_AVATAR, type Avatar } from "@/game/core/cosmetics";
-import { CARS } from "@/game/core/cars";
 import { normaliseBlockyAvatar, PREVIEW_AVATAR_KEY, PREVIEW_AVATAR_EVENT } from "@/game/core/blocky-customization";
+import { uniformFor, workplaceById } from "@/game/core/careers";
+import { CARS } from "@/game/core/cars";
+import { DEFAULT_AVATAR, type Avatar } from "@/game/core/cosmetics";
 import { STARTER_LAYOUT } from "@/game/core/homes";
 import type { CitySnapshot } from "@/lib/game/city-server";
 const PREVIEW_PLAYER_ID = "88888888-8888-4888-8888-000000000099";
@@ -180,7 +180,7 @@ export function DevShowcase({
           />
         )}
         <div className="absolute bottom-3 left-1/2 z-[100020] flex max-w-[90vw] -translate-x-1/2 flex-wrap items-center gap-3 rounded-xl bg-[#13203a]/95 px-4 py-2 text-xs text-white">
-          <span>Actual game · offline preview · ambient residents</span>
+          <span>Actual game · offline preview</span>
           <Link href="/games/locker" className="min-h-9 rounded-lg border px-3 py-2">Customize character</Link>
           {!clean && (
             <button

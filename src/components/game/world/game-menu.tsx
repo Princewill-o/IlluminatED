@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
 
@@ -34,32 +34,34 @@ export function GameMenu({ place, onContinue, onLeave, onSwitch, onEvents }: { p
   const first = useRef<HTMLButtonElement>(null);
   useEffect(() => { first.current?.focus(); }, []);
   return (
-    <div className="absolute inset-0 z-[100012] grid place-items-center bg-[#07101f]/60 p-4 backdrop-blur-sm" onClick={onContinue}>
+    <div className="pixel-menu-backdrop absolute inset-0 z-[100012] grid place-items-center p-4" onClick={onContinue}>
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="game-menu-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-[2rem] border border-white/15 bg-[#13203a]/90 p-6 text-white shadow-[0_30px_80px_rgba(0,0,0,.5)] backdrop-blur-xl"
+        className="pixel-panel pixel-menu w-full max-w-sm"
       >
-        <p className="text-xs font-black tracking-[0.2em] text-[#f2d9a6] uppercase">Paused</p>
-        <h2 id="game-menu-title" className="mt-1 text-3xl font-black">Take a breather</h2>
-        <p className="mt-2 flex items-center gap-1.5 text-sm text-white/75"><MapPin className="size-4 shrink-0" aria-hidden />{place}</p>
+        <div className="pixel-ribbon text-center text-sm">Game paused</div>
+        <div className="pixel-menu-body">
+        <h2 id="game-menu-title" className="font-black">Take a breather</h2>
+        <p className="mt-2 flex items-center gap-1.5 text-sm font-bold"><MapPin className="size-4 shrink-0" aria-hidden />{place}</p>
         <div className="mt-6 grid gap-3">
-          <button ref={first} type="button" onClick={onContinue} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#f2d9a6] px-5 font-black text-[#0d1726] shadow-lg">
+          <button ref={first} type="button" onClick={onContinue} className="pixel-button pixel-button--green flex min-h-12 items-center justify-center gap-2 px-5">
             <Play className="size-4 fill-current" aria-hidden /> Continue playing
           </button>
-          {onEvents && <button type="button" onClick={onEvents} className="jelly min-h-12 rounded-full bg-[#7a5ce6] px-5 font-black text-white">Racing, Championship & What If</button>}
+          {onEvents && <button type="button" onClick={onEvents} className="pixel-button pixel-button--purple min-h-12 px-5">Racing, Championship & What If</button>}
           {onSwitch && (
-            <button type="button" onClick={onSwitch} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#2a3346] px-5 font-black text-white">
+            <button type="button" onClick={onSwitch} className="pixel-button flex min-h-12 items-center justify-center gap-2 px-5">
               <Globe2 className="size-4" aria-hidden /> Switch world
             </button>
           )}
-          <button type="button" onClick={onLeave} style={{ "--jelly": "#e5484d", "--jelly-hi": "#ff8a8d", "--jelly-edge": "#9b1c20", "--jelly-ink": "#fff" } as CSSProperties} className="jelly flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#e5484d] px-5 font-black text-white">
+          <button type="button" onClick={onLeave} className="pixel-button pixel-button--orange flex min-h-12 items-center justify-center gap-2 px-5">
             <LogOut className="size-4" aria-hidden /> Leave game
           </button>
         </div>
-        <p className="mt-4 text-center text-xs text-white/60">Your spot is saved. Pick up right here next time. Press Esc to close.</p>
+        <p className="mt-5 text-center text-xs font-semibold leading-5">Your spot is saved. Pick up right here next time. Press Esc to close.</p>
+        </div>
       </section>
     </div>
   );

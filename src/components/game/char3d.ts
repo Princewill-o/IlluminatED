@@ -3,13 +3,15 @@
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+
 import { eyewear3d, held3d, hat3d, pet3d } from "./accessories3d";
-import { ADVENTURERS, BLOCKY_BASE, adventurerFor } from "@/game/core/adventurers";
-import { cosmeticById, type Avatar, look } from "@/game/core/cosmetics";
-import { BRANDS } from "@/game/core/chibi-looks";
-import { logoFor } from "@/game/core/logos";
-import { blockyOutfitFor } from "@/game/core/blocky-outfits";
 import { attachBlockyOutfit, clothedBodyGeometry } from "./blocky-garments";
+
+import { ADVENTURERS, BLOCKY_BASE, adventurerFor } from "@/game/core/adventurers";
+import { blockyOutfitFor } from "@/game/core/blocky-outfits";
+import { BRANDS } from "@/game/core/chibi-looks";
+import { cosmeticById, type Avatar, look } from "@/game/core/cosmetics";
+import { logoFor } from "@/game/core/logos";
 import { outfitColours } from "@/game/core/outfits";
 
 const loader = new GLTFLoader();
@@ -35,6 +37,8 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   const source=await load(`${BLOCKY_BASE}/${model.file}.glb`);
   const outfit=blockyOutfitFor(a.top);
   const object=clone(source.scene) as THREE.Group;
+  const bakedPresetGarments:THREE.Object3D[]=[];
+  if(outfit)object.traverse(node=>{if(node.userData.presetGarment)bakedPresetGarments.push(node);});
   object.userData.characterModel=model.file;
   const skeletons=new Set<THREE.Skeleton>();
   const extraOutfitMaterials=new Set<THREE.Material>();
@@ -49,7 +53,7 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   play('idle');mixer.update(0);object.updateMatrixWorld(true);
   const bodyBounds = new THREE.Box3().setFromObject(object);
   if(outfit) {
-    try { await attachBlockyOutfit(object,outfit,a,load,extraOutfitMaterials,geometries); }
+    try { await attachBlockyOutfit(object,outfit,a,load,extraOutfitMaterials,geometries); for(const node of bakedPresetGarments)node.removeFromParent(); }
     catch {
       // Keep the supplied character visible if an outfit cannot be downloaded.
       for(const [mesh,original] of originalBodies){geometries.delete(mesh.geometry);mesh.geometry.dispose();mesh.geometry=original;}

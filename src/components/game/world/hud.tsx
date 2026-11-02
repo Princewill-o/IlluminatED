@@ -109,7 +109,7 @@ export function HudSlot({ area, order = 50, narrowArea, className, children }: {
   const el = rails[area];
   if (!el) return null;
   return createPortal(
-    <div className={cn("hud-item pointer-events-auto relative max-w-full", className)} style={{ order }}>
+    <div data-pixel-hud="widget" className={cn("hud-item pointer-events-auto relative max-w-full", className)} style={{ order }}>
       {children}
     </div>,
     el,

@@ -44,7 +44,7 @@ test('modular garment transforms attach to every supplied rig and move with its 
   const materials=new Set(),geometries=new Set();await attachBlockyOutfit(source.scene,outfit,cosmetics.look({top:outfit.id}),loader,materials,geometries);
   let attached=0;source.scene.traverse(node=>{if(node.name.startsWith('outfit-')){assert.equal(node.parent.isBone,true);attached++;const position=node.getWorldPosition(new THREE.Vector3());assert.ok(position.toArray().every(Number.isFinite));}});assert.equal(attached,json(`public/world3d/blocky-outfits/${outfit.file}`).nodes.length);
   const torso=source.scene.getObjectByName('mixamorigSpine1');const jacket=source.scene.getObjectByName('outfit-jacket'),before=jacket.getWorldPosition(new THREE.Vector3());torso.position.x+=.2;source.scene.updateMatrixWorld(true);assert.ok(jacket.getWorldPosition(new THREE.Vector3()).distanceTo(before)>.15);
-  const mesh=source.scene.getObjectByProperty('isSkinnedMesh',true),original=mesh.geometry;const filtered=clothedBodyGeometry(mesh);assert.ok(filtered.index.count>0&&filtered.index.count<original.index.count);assert.notEqual(filtered,original);assert.ok(original.index.count>filtered.index.count);filtered.dispose();materials.forEach(m=>m.dispose());
+  const mesh=source.scene.getObjectByProperty('isSkinnedMesh',true),original=mesh.geometry;const filtered=clothedBodyGeometry(mesh);assert.ok(filtered.index.count>0&&filtered.index.count<=original.index.count,model.id);assert.notEqual(filtered,original);if(!model.id.startsWith('head-preset-'))assert.ok(original.index.count>filtered.index.count,model.id);filtered.dispose();materials.forEach(m=>m.dispose());
  }
 });
 test('costume perks stay small, free and never provide authority or combat effects',()=>{

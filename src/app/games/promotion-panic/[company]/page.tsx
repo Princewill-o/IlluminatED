@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
 import { PromotionPanic } from "@/components/game/promotion-panic";
+import { PromotionPreview } from "@/components/game/promotion-preview";
 import { WORKPLACES } from "@/game/core/careers";
 import { companyById } from "@/game/core/companies";
 import { requireAccount } from "@/lib/account/server";
 import { loadCareer } from "@/lib/game/careers-server";
+import { gameWorldReturn, localGamePreview } from "@/lib/game/local-preview";
 import { gameSources, loadChallenge, loadPlayer } from "@/lib/game/server";
 
 type Params = { company: string };
@@ -32,6 +34,7 @@ export default async function PromotionPanicPage({
   const { challenge: code, returnTo } = await searchParams;
   const company = companyById(id);
   if (!company) notFound();
+  if (localGamePreview(process.env.NODE_ENV,process.env.ILLUMINATED_PREVIEW)) return <div id="game"><PromotionPreview companyId={company.id} workplace={null} currentlyEmployed={false} returnTo={gameWorldReturn(returnTo,true)} sources={gameSources(company)} dailyBonusReady={false} previousBest={0} challenge={null}/></div>;
   const account = await requireAccount(
     `/games/promotion-panic/${id}${code ? `?challenge=${encodeURIComponent(code)}` : ""}`,
   );
@@ -57,7 +60,7 @@ export default async function PromotionPanicPage({
         companyId={company.id}
         workplace={career.active && WORKPLACES.some((job) => job.id === career.active!.workplace && job.companyId === company.id) ? career.active.workplace : null}
         currentlyEmployed={Boolean(career.active)}
-        returnTo={returnTo && /^\/games\/world(?:\?[a-zA-Z0-9%=&._-]*)?$/.test(returnTo) ? returnTo : "/games/world?map=city"}
+        returnTo={gameWorldReturn(returnTo,false)}
         sources={sources}
         avatar={player.avatar}
         dailyBonusReady={player.dailyBonusReady}

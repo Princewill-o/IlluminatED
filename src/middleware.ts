@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
+import { localPreviewPath } from "@/lib/game/local-preview";
 import {
   SUPABASE_KEY,
   SUPABASE_URL,
@@ -62,7 +63,7 @@ const isPublic = (path: string) =>
  */
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
-  if (process.env.NODE_ENV === "development" && process.env.ILLUMINATED_PREVIEW === "1" && (["/games/city-showcase", "/games/locker"].includes(path) || path.startsWith("/world3d/"))) return NextResponse.next();
+  if (localPreviewPath(path,process.env.NODE_ENV,process.env.ILLUMINATED_PREVIEW)) return NextResponse.next();
   // API routes enforce their own account and webhook checks.
   if (path.startsWith("/api/")) return NextResponse.next();
   // Public pages don't need a verified session. Referral links and the landing

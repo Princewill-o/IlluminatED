@@ -26,7 +26,7 @@ export interface LifeState {
   /** Prison release time (ms), or 0. */
   jailUntil: number;
   /** A court hearing is waiting. */
-  hearing: { stars: number; charge: string; streetCase?: StreetCourtCase } | null;
+  hearing: { stars: number; charge: string; streetCase?: StreetCourtCase; custody?: import("./street-custody").StreetArrestProof } | null;
   cardsUsed: number;
   prisonWork: number;
   /** Prevents an overdue bank loan from reopening the same hearing. */

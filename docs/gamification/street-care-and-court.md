@@ -11,3 +11,10 @@ At zero energy outdoors, player movement stops and an ambulance sequence begins.
 Outfit perks are small changes to life needs: slower focus/energy decay or a one-point activity bonus. They do not change combat damage, defence evidence, police authority or court outcomes. Uniforms are cosmetic clothing.
 
 Validation covers actual hit provenance, no offence for a player who does not retaliate, court acquittal/payment/insufficient funds, duplicate fine protection, energy depletion and rescue initiation, rescue stages and loading coordinates, emergency door geometry/opacity and the existing car fleet mapping. The local preview starts directly in lse-1 and owns all existing garage cars for inspection. Production ownership remains controlled by the existing account paths.
+# Police response before street hearings
+
+Street reports now remain in their current district. Officers drive to the incident and approach on foot before an arrest can start. Both participants are detained if the recorded evidence includes attacks from both; a civilian who never attacked remains a victim/witness. The current allegation does not decide the later verdict.
+
+The custody state machine requires police contact, a three-second arrest stage and a completed transport journey before admitting the player to the hearing. Court arrival proof is attached to that particular case and saved with the existing local life state. Reloading a pending case restarts the police response rather than teleporting into court; entering the court building cannot bypass the arrest. Hospital rescue takes priority over custody.
+
+`tests/street-custody.test.mjs` verifies that absent police, early transport, mismatched cases and incomplete arrests cannot open a hearing. It also checks one-person and two-person detention from recorded hit evidence.

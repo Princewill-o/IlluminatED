@@ -1,0 +1,327 @@
+@font-face {
+  font-family: "IllumedPixel";
+  src: url("/fonts/pixel-gui/Silkscreen-Bold.ttf") format("truetype");
+  font-weight: 700 900;
+  font-display: swap;
+}
+/* Original pixel game UI. Scoped to the playable world; the iOS phone and
+   projected 3D nameplates deliberately retain their existing visual language. */
+.illumed-pixel-world {
+  --pixel-ink: #173e49;
+  --pixel-edge: #28616a;
+  --pixel-paper: #e4f4f8;
+  --pixel-shade: #b0d4de;
+  --pixel-cyan: #38c7ec;
+  --pixel-green: #88d94d;
+  --pixel-purple: #a779e2;
+  --pixel-orange: #ffb64b;
+}
+.illumed-pixel-world .pixel-panel {
+  color: var(--pixel-ink);
+  background: var(--pixel-paper);
+  border: 3px solid var(--pixel-edge);
+  border-radius: 0;
+  box-shadow:
+    inset 0 3px 0 #fff,
+    inset 0 -5px 0 var(--pixel-shade),
+    4px 4px 0 #153d46;
+  backdrop-filter: none;
+}
+.illumed-pixel-world .pixel-ribbon {
+  position: relative;
+  color: #113d4c;
+  background: var(--pixel-cyan);
+  border-bottom: 4px solid #188ca8;
+  box-shadow: inset 0 4px 0 #94e8fa;
+  padding: 13px 20px 10px;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 #b6edfa;
+}
+.illumed-pixel-world .pixel-button {
+  border: 3px solid #24515b !important;
+  border-radius: 0 !important;
+  color: #163c46 !important;
+  background: #c5e7ef !important;
+  box-shadow:
+    inset 0 3px 0 #ffffffa8,
+    inset 0 -5px 0 #7fb4c4,
+    0 3px 0 #173e49 !important;
+  font-weight: 900;
+  text-shadow: 0 1px 0 #ffffff80;
+  transition:
+    transform 100ms,
+    filter 100ms;
+  animation: none !important;
+  backdrop-filter: none !important;
+}
+.illumed-pixel-world .pixel-button::before,
+.illumed-pixel-world .pixel-button::after {
+  display: none !important;
+}
+.illumed-pixel-world .pixel-button:hover:not(:disabled) {
+  filter: brightness(1.07);
+}
+.illumed-pixel-world .pixel-button:active:not(:disabled) {
+  transform: translateY(3px);
+}
+.illumed-pixel-world .pixel-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+.illumed-pixel-world .pixel-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.illumed-pixel-world .pixel-button--green {
+  background: #94da55 !important;
+  box-shadow:
+    inset 0 3px 0 #c4f69a,
+    inset 0 -5px 0 #5fa73b,
+    0 3px 0 #173e49 !important;
+}
+.illumed-pixel-world .pixel-button--purple {
+  background: #b49beb !important;
+  box-shadow:
+    inset 0 3px 0 #d8c5ff,
+    inset 0 -5px 0 #8863bb,
+    0 3px 0 #173e49 !important;
+}
+.illumed-pixel-world .pixel-button--orange {
+  background: #ffc366 !important;
+  box-shadow:
+    inset 0 3px 0 #ffe0a8,
+    inset 0 -5px 0 #d79137,
+    0 3px 0 #173e49 !important;
+}
+.illumed-pixel-world .pixel-menu-backdrop {
+  background-color: #123e48e8;
+  background-image:
+    linear-gradient(
+      45deg,
+      #a9e1e709 25%,
+      transparent 25%,
+      transparent 75%,
+      #a9e1e709 75%
+    ),
+    linear-gradient(
+      45deg,
+      #a9e1e709 25%,
+      transparent 25%,
+      transparent 75%,
+      #a9e1e709 75%
+    );
+  background-position:
+    0 0,
+    8px 8px;
+  background-size: 16px 16px;
+  backdrop-filter: none;
+}
+.illumed-pixel-world .pixel-menu {
+  overflow: hidden;
+  clip-path: polygon(
+    0 9px,
+    9px 9px,
+    9px 0,
+    calc(100% - 9px) 0,
+    calc(100% - 9px) 9px,
+    100% 9px,
+    100% calc(100% - 9px),
+    calc(100% - 9px) calc(100% - 9px),
+    calc(100% - 9px) 100%,
+    9px 100%,
+    9px calc(100% - 9px),
+    0 calc(100% - 9px)
+  );
+}
+.illumed-pixel-world .pixel-menu .pixel-menu-body {
+  padding: 22px;
+}
+.illumed-pixel-world .pixel-menu h2 {
+  font-size: 29px;
+  line-height: 1.15;
+}
+.illumed-pixel-world .pixel-menu p {
+  color: #365c67;
+}
+.illumed-pixel-world .pixel-task-title {
+  color: #244857;
+  font-weight: 900;
+}
+.illumed-pixel-world .pixel-badge {
+  border: 2px solid #508cb0;
+  border-radius: 0;
+  background: #c2e6f4;
+  color: #234b65;
+}
+.illumed-pixel-world .pixel-meter {
+  border: 2px solid #3b6370;
+  border-radius: 0;
+  background: #a9cbd6;
+  box-shadow: inset 0 2px 0 #7cabb9;
+}
+.illumed-pixel-world .pixel-meter > * {
+  border-radius: 0;
+  box-shadow: inset 0 2px 0 #ffffff70;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent 11px,
+    #ffffff32 11px,
+    #ffffff32 13px
+  );
+}
+.illumed-pixel-world .pixel-energy {
+  border-top: 6px solid #7dcb46;
+}
+.illumed-pixel-world .pixel-needs {
+  border-top: 6px solid #b296e5;
+}
+.illumed-pixel-world .pixel-level {
+  border-left: 7px solid #ffb64b;
+}
+.illumed-pixel-world .pixel-level-number {
+  border: 2px solid #356e7b;
+  border-radius: 0;
+  background: #48bfdd;
+  color: #133e4b;
+}
+
+/* Existing HUD compositions receive the same squared pixel controls, without
+   styling the game phone or geometry-positioned player labels. */
+.illumed-pixel-world
+  .hud-item
+  :is(button, a[role="button"], summary):not(.iphone *):not(.pixel-task-title) {
+  border-radius: 3px !important;
+  text-shadow: none;
+}
+.illumed-pixel-world .hud-item :is(button, a)[class*="jelly"]:not(.iphone *) {
+  animation: none !important;
+  border: 2px solid #2c5966 !important;
+  border-radius: 2px !important;
+  box-shadow:
+    inset 0 2px 0 #ffffff55,
+    inset 0 -3px 0 #122e4b55,
+    2px 3px 0 #173e49 !important;
+  backdrop-filter: none !important;
+}
+.illumed-pixel-world
+  .hud-item
+  :is(button, a)[class*="jelly"]:not(.iphone *)::before,
+.illumed-pixel-world
+  .hud-item
+  :is(button, a)[class*="jelly"]:not(.iphone *)::after {
+  display: none !important;
+}
+.illumed-pixel-world
+  .hud-item
+  > :is(div, details)[class*="rounded"]:not(.iphone):not([role="img"]) {
+  border-radius: 3px !important;
+  backdrop-filter: none !important;
+  box-shadow:
+    inset 0 2px 0 #ffffff55,
+    3px 3px 0 #173e49 !important;
+}
+@media (max-width: 639px) {
+  .illumed-pixel-world .pixel-menu .pixel-menu-body {
+    padding: 18px;
+  }
+  .illumed-pixel-world .pixel-ribbon {
+    padding: 12px 16px 9px;
+  }
+  .illumed-pixel-world .pixel-menu h2 {
+    font-size: 25px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .illumed-pixel-world .pixel-button {
+    transition: none;
+  }
+}
+
+/* Bright original ribbon treatments inspired by the supplied game-GUI reference. */
+.illumed-pixel-world .pixel-ribbon {
+  background: #38bff0;
+  color: #fff;
+  border-color: #1978ac;
+  box-shadow:
+    inset 0 4px #b8edff,
+    inset 0 -3px #2da0d4;
+  font-family: IllumedPixel, ui-monospace, monospace;
+  text-shadow: 2px 2px #2289bb;
+}
+.illumed-pixel-world .pixel-ribbon h2 {
+  font-family: IllumedPixel, ui-monospace, monospace;
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+.illumed-pixel-world .pixel-menu .pixel-button {
+  font-family: IllumedPixel, ui-monospace, monospace;
+  font-size: 16px;
+  color: #fff !important;
+  text-shadow: 1px 2px #15494d66;
+}
+.illumed-pixel-world .pixel-button--green {
+  background: #18e992 !important;
+  box-shadow:
+    inset 0 3px #8dffd1,
+    inset 0 -5px #0ab579,
+    0 3px #173e49 !important;
+}
+.illumed-pixel-world .pixel-button--purple {
+  background: #bd82eb !important;
+  box-shadow:
+    inset 0 3px #e6b9ff,
+    inset 0 -5px #9560c7,
+    0 3px #173e49 !important;
+}
+.illumed-pixel-world .pixel-button--orange {
+  background: #ffad3e !important;
+  box-shadow:
+    inset 0 3px #ffdd8b,
+    inset 0 -5px #d88422,
+    0 3px #173e49 !important;
+}
+.illumed-pixel-world .uk-atlas {
+  background: #e4f4f8;
+}
+.illumed-pixel-world .uk-atlas button {
+  border: 2px solid #347783;
+  border-radius: 0 !important;
+  box-shadow:
+    inset 0 2px #ffffffa8,
+    inset 0 -3px #2e72842b,
+    2px 2px #174b55;
+}
+.illumed-pixel-world .uk-atlas button[aria-pressed="true"] {
+  background: #18e992;
+  color: #103d3a;
+  border-color: #14674d;
+}
+.illumed-pixel-world
+  .uk-atlas
+  :is([class*="rounded-2xl"], [class*="rounded-full"]) {
+  border-radius: 0;
+}
+.illumed-pixel-world .uk-atlas [aria-label="Close UK road atlas"] {
+  background: #15454f;
+  color: white;
+}
+.illumed-pixel-world .pixel-menu h2 {
+  font-size: 24px;
+}
+
+.illumed-pixel-world .hud-item :is(button, a)[class*="jelly"]:not(.iphone *) {
+  background-image: none !important;
+}
+.illumed-pixel-world
+  .pixel-menu
+  .pixel-button:not(.pixel-button--green):not(.pixel-button--purple):not(
+    .pixel-button--orange
+  ) {
+  color: var(--pixel-ink) !important;
+  text-shadow: none;
+}

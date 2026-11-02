@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,9 +15,10 @@ import { play, soundOn } from "./sound";
 import { buyItem, saveAvatar } from "@/app/games/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { usePass } from "@/components/game/season/pass-store";
-import { ADVENTURERS, adventurerFor } from "@/game/core/adventurers";
+import { ADVENTURERS, BLENDER_PRESETS, adventurerFor } from "@/game/core/adventurers";
 import { PREVIEW_AVATAR_KEY, PREVIEW_AVATAR_EVENT, normaliseBlockyAvatar } from "@/game/core/blocky-customization";
 import { BLOCKY_OUTFITS, blockyOutfitFor, outfitPerks } from "@/game/core/blocky-outfits";
+import { CHARACTER_STYLES, applyCharacterStyle, characterArchetype, stylesForCharacter, type StyleCollection } from "@/game/core/character-styles";
 import { BRANDS } from "@/game/core/chibi-looks";
 import { companyById } from "@/game/core/companies";
 import {
@@ -41,7 +43,9 @@ const PAIRED: Partial<Record<Slot, Slot>> = { hair: "hairColor", top: "topColor"
 
 /** Only controls that affect the supplied character meshes are offered. */
 const SLOT_GROUPS: {group:string;slots:{slot:Slot;label:string}[]}[]=[
+ {group:'Blender presets',slots:[{slot:'head',label:'Preset character'}]},
  {group:'Character',slots:[{slot:'head',label:'Character'}]},
+ {group:'Styled looks',slots:[{slot:'top',label:'Styled looks'}]},
  {group:'Colours',slots:[{slot:'topColor',label:'Outfit'},{slot:'bottomColor',label:'Legwear'},{slot:'shoesColor',label:'Footwear'}]},
  {group:'Wardrobe',slots:[{slot:'top',label:'Outfit sets'},{slot:'cape',label:'Capes'},{slot:'brand',label:'Labels'}]},
  {group:'Accessories',slots:[{slot:'hat',label:'Headwear'},{slot:'face',label:'Eyewear'},{slot:'held',label:'Equipment'}]},
@@ -81,6 +85,10 @@ export function Locker({
   const [collection, setCollection] = useState<'all'|'current'|'classic'>('all');
   const model = adventurerFor(avatar.head);
   const [outfitFamily,setOutfitFamily]=useState('all');
+  const [presetCollection,setPresetCollection]=useState('all');
+  const [styleCollection, setStyleCollection] = useState<StyleCollection | 'all'>('all');
+  const styles = stylesForCharacter(avatar.head).filter(style => styleCollection === 'all' || style.collection === styleCollection);
+  const archetype = characterArchetype(avatar.head);
   useEffect(() => {
     if (!localPreview) return;
     try {
@@ -108,13 +116,14 @@ export function Locker({
   }, [owned, pass.items]);
 
   const wear = (item: Cosmetic) => {
-    setAvatar((a) => ({ ...a, [item.slot]: item.id, ...(item.slot==='top'?{topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'}:{}) }));
+    const preset=BLENDER_PRESETS.find(p=>p.id===item.id);
+    setAvatar((a) => ({ ...a, ...(preset?{head:preset.id,top:preset.outfit,hat:"hat-none",face:"face-none",cape:"cape-none",held:"held-none",topColor:"topcol-auto",bottomColor:"botcol-auto",shoesColor:"shoecol-auto"}:{}), [item.slot]: item.id, ...(item.slot==='top'?{topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'}:{}) }));
     setMessage(null);
   };
 
   const randomise = () => {
     const next = { ...avatar };
-    for (const { slot: s } of SLOT_GROUPS.flatMap(g=>g.slots)) {
+    for (const s of new Set(SLOT_GROUPS.flatMap(g=>g.slots.map(item=>item.slot)))) {
       const options = COSMETICS.filter((c) => c.slot === s && has(c) && allowed(s,c.id));
       next[s] = options[Math.floor(Math.random() * options.length)].id;
     }
@@ -154,7 +163,7 @@ export function Locker({
     });
 
   const slots = SLOT_GROUPS.find((g) => g.group === group)!.slots;
-  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot !== 'head' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (slot!=='top'||outfitFamily==='all'||blockyOutfitFor(c.id)?.family===outfitFamily));
+  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot!=='head'||(group==='Blender presets'?c.id.startsWith('head-preset-'):!c.id.startsWith('head-preset-'))) && (slot !== 'head' || group === 'Blender presets' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (group !== 'Blender presets' || presetCollection === 'all' || BLENDER_PRESETS.find(preset=>preset.id===c.id)?.collection === presetCollection) && (slot!=='top'||outfitFamily==='all'||blockyOutfitFor(c.id)?.family===outfitFamily));
   const headView = HEAD_SLOTS.has(slot);
 
   return (
@@ -293,16 +302,51 @@ export function Locker({
           </div>
         )}
 
+        {group === "Blender presets" && <section className="mt-5 rounded-2xl border border-border bg-card p-4" aria-label="100 Blender character presets"><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals · made in Blender</p><h3 className="mt-1 text-2xl font-black">100 new character presets</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">Ten character collections, sculpted hair and headwear silhouettes, varied skin tones and complete coordinated outfits. Each is a real rigged Blender model, ready to walk, run, wave and customise.</p><p className="mt-2 text-xs text-muted-foreground">Choose a preset below, then change its clothes and accessories. Apply or save to use it in the game.</p><label className="mt-4 block text-sm font-bold">Preset collection<select value={presetCollection} onChange={event=>setPresetCollection(event.target.value)} className="mt-2 block w-full rounded-xl border border-border bg-background px-3 py-2"><option value="all">All 100 presets</option>{[...new Set(BLENDER_PRESETS.map(preset=>preset.collection))].map(name=><option key={name} value={name}>{name}</option>)}</select></label></section>}
         {group === "Character" && <div className="mt-5 rounded-2xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">The Blocky collection</p><h3 className="mt-1 text-lg font-black">16 designs. Make one yours.</h3></div>
+            <div><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">The Blocky collection</p><h3 className="mt-1 text-lg font-black">16 source designs. Make one yours.</h3></div>
             <div className="flex gap-1 rounded-full bg-secondary p-1" aria-label="Character collection">
               {([['all','All'],['current','Current'],['classic','Classic']] as const).map(([value,label])=><button key={value} type="button" aria-pressed={collection===value} onClick={()=>setCollection(value)} className={cn('rounded-full px-3 py-2 text-xs font-bold',collection===value?'bg-primary text-primary-foreground':'hover:bg-accent')}>{label}</button>)}
             </div>
           </div>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">Keep the character&apos;s original face and hair, then choose a Blender-made outfit, colours, cape and equipment.</p>
+          <button type="button" onClick={() => { setGroup('Styled looks'); setSlot('top'); }} className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">See looks for {model.name} →</button>
         </div>}
-        {slot === 'top' && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+        {group === 'Styled looks' && <section className="mt-5" aria-label="Character styled looks">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals</p>
+            <h3 className="mt-1 text-xl font-black">24 looks. Built around your character.</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Coordinated Blender clothing, original labels and accessories. Looks that complement {model.name} appear first. Try one on, then {localPreview ? 'Apply to local game' : 'Save outfit'} when you&apos;re ready.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Your character, face, hair and companion stay yours. All pieces in these looks are free.</p>
+            <div className="mt-4 flex flex-wrap gap-2" aria-label="Look collections">
+              {(['all', ...new Set(CHARACTER_STYLES.map(style => style.collection))] as const).map(collection => <button key={collection} type="button" aria-pressed={styleCollection === collection} onClick={() => setStyleCollection(collection)} className={cn('rounded-full border px-3 py-2 text-xs font-bold', styleCollection === collection ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-secondary')}>{collection === 'all' ? 'All looks' : collection}</button>)}
+            </div>
+          </div>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {styles.map(style => {
+              const outfit = blockyOutfitFor(style.wear.top)!;
+              const matched = style.archetypes.some(item => item === archetype);
+              const wearing = Object.entries(style.wear).every(([key, value]) => avatar[key as Slot] === value);
+              const label = BRANDS[style.wear.brand];
+              return <li key={style.id} className={cn('flex flex-col overflow-hidden rounded-2xl border-2 bg-card', wearing ? 'border-[#f2d9a6]' : 'border-border')}>
+                <div className="relative grid h-44 place-items-center bg-secondary/70">
+                  <span className="absolute top-3 left-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{style.collection}</span>
+                  <Image src={`/world3d/blocky-outfits/${outfit.thumbnail}`} alt={`${style.name} clothing`} width={176} height={176} className="h-44 w-44 object-contain" />
+                  <span className="absolute right-3 bottom-3 flex gap-1" aria-label="Clothing palette">{[outfit.primary, outfit.accent, outfit.pants].map((colour, index) => <span key={index} className="size-4 rounded-full border border-black/10" style={{background:colour}} />)}</span>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  {matched && <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink-mint">Matched to {model.name}</p>}
+                  <h4 className="text-base font-black">{style.name}</h4>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{style.description}</p>
+                  <p className="mt-2 text-[11px] font-bold text-muted-foreground">{label ? `${label.text} · ` : 'Unbranded · '}{style.wear.cape === 'cape-none' ? 'No cape' : COSMETICS.find(item=>item.id===style.wear.cape)?.name}</p>
+                  <button type="button" aria-label={`Try ${style.name}`} aria-pressed={wearing} onClick={() => { setAvatar(current=>applyCharacterStyle(current, style.id)); setMessage({tone:'ok',text:`Trying ${style.name}. ${localPreview ? 'Apply to local game' : 'Save outfit'} to keep this look.`}); play('click', soundOn()); }} className={cn('mt-4 rounded-full px-4 py-2.5 text-xs font-black', wearing ? 'bg-[#f2d9a6] text-[#0d1726]' : 'bg-primary text-primary-foreground')}>{wearing ? 'Trying on ✓' : 'Try this look'}</button>
+                </div>
+              </li>;
+            })}
+          </ul>
+        </section>}
+        {slot === 'top' && group !== 'Styled looks' && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
           <h3 className="text-lg font-black">120 outfit sets</h3>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">12 clothing styles in 10 palettes, made in Blender for this character rig. Each set includes its jacket or top, legwear, footwear and attached details. Uniforms are costumes; they do not grant powers or authority.</p>
           <label className="mt-3 block text-xs font-bold">Clothing style
@@ -313,7 +357,7 @@ export function Locker({
         </section>}
         {group === 'Colours' && <p className="mt-4 text-sm leading-6 text-muted-foreground">Choose Original to keep the character&apos;s own palette, or try a new colour below.</p>}
 
-        {(COLOUR_SLOTS.has(slot) || PAIRED[slot]) && (
+        {group !== 'Styled looks' && (COLOUR_SLOTS.has(slot) || PAIRED[slot]) && (
           <Swatches
             label={COLOUR_SLOTS.has(slot) ? (SLOTS.find((x) => x.slot === slot)?.label ?? "Colour") : "Colour"}
             items={COSMETICS.filter((c) => c.slot === (COLOUR_SLOTS.has(slot) ? slot : PAIRED[slot]))}
@@ -322,7 +366,7 @@ export function Locker({
           />
         )}
 
-        {!COLOUR_SLOTS.has(slot) && (
+        {group !== 'Styled looks' && !COLOUR_SLOTS.has(slot) && (
         <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" role="tabpanel">
           {items.map((item) => {
             const mine = has(item);
@@ -377,7 +421,7 @@ export function Locker({
                   </div>
                   <p className="mt-2 text-sm leading-tight font-bold">{item.id==="hat-none"?"Original headwear":clothingName(item.id,item.name)}</p>
                   {outfit && <><p className="mt-1 text-xs text-muted-foreground">{outfit.description}</p><p className="mt-1 text-[11px] font-bold text-ink-mint">{outfitPerks(item.id).label}</p></>}
-                  {item.slot === 'head' && <p className="mt-1 text-xs text-muted-foreground">{item.id.includes('-classic-')?'Classic design':'Current design'} · 10 animations</p>}
+                  {item.slot === 'head' && <p className="mt-1 text-xs text-muted-foreground">{item.id.startsWith('head-preset-')?'Blender original':item.id.includes('-classic-')?'Classic design':'Current design'} · 10 animations</p>}
                   {item.set && <p className="mt-0.5 text-[11px] text-muted-foreground">{setName(item.set)}</p>}
                   <div className="mt-auto pt-2">
                     {wearing ? (

@@ -26,7 +26,7 @@ export interface Quest {
   done?: boolean;
 }
 
-const card = "pointer-events-auto rounded-2xl border border-[#d4c7ad] bg-[#faf6ed]/[0.98] text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16),inset_0_1px_0_rgba(255,255,255,0.9)]";
+const card = "pixel-panel pointer-events-auto";
 
 /** The Sims-style overlay: today's tasks, the clock and weather, money, and your needs. */
 export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Avatar; name: string; clout: number; quests: Quest[]; onLocate?: (q: Quest) => boolean }) {
@@ -48,9 +48,9 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
     <>
       {/* Today's tasks */}
       <HudSlot area="tl" order={10}><div className={cn(card, "w-[min(248px,100%)] px-2.5 py-1 xl:w-[264px]")}>
-        <button type="button" onClick={() => setOpen((o) => !o)} className="flex min-h-11 w-full items-center gap-2 text-left text-xs font-black sm:text-sm" aria-expanded={open} aria-controls="city-quests">
+        <button type="button" onClick={() => setOpen((o) => !o)} className="pixel-task-title flex min-h-11 w-full items-center gap-2 text-left text-xs font-black sm:text-sm" aria-expanded={open} aria-controls="city-quests">
           Today's tasks
-          <span className="rounded-full bg-[#dde8fd] px-2 py-0.5 text-[10px] text-[#1f4fbf]">{todo} to do</span>
+          <span className="pixel-badge px-2 py-0.5 text-[10px]">{todo} to do</span>
           <span className="ml-auto">{open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</span>
         </button>
         {open && (
@@ -112,13 +112,13 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
         </div>
       </div></HudSlot>
 
-      <HudSlot area="tl" order={25}><div className={cn(card,"w-44 px-3 py-2")}>
+      <HudSlot area="tl" order={25}><div className={cn(card,"pixel-energy w-44 px-3 py-2")}>
         <div className="flex justify-between text-xs font-black"><span>Energy</span><span>{Math.round(needs.energy)} / 100</span></div>
-        <div className="mt-1 h-3 overflow-hidden rounded-full bg-[#e6dccb]" role="meter" aria-label="Player energy" aria-valuenow={Math.round(needs.energy)} aria-valuemin={0} aria-valuemax={100}><div className="h-full transition-[width]" style={{width:`${needs.energy}%`,background:needs.energy<20?"#c8322d":"#2b5fd9"}}/></div>
+        <div className="pixel-meter mt-1 h-3 overflow-hidden" role="meter" aria-label="Player energy" aria-valuenow={Math.round(needs.energy)} aria-valuemin={0} aria-valuemax={100}><div className="h-full transition-[width]" style={{width:`${needs.energy}%`,backgroundColor:needs.energy<20?"#e7844d":"#8dce49"}}/></div>
         {needs.energy<20&&<p className="mt-1 text-[10px] font-bold">Low energy · rest or get help</p>}
       </div></HudSlot>
       {/* You and your needs */}
-      <HudSlot area="bl" order={20} className="hidden lg:block [@media(max-height:650px)]:!hidden"><div className={cn(card, "flex max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 xl:max-w-[280px]")}>
+      <HudSlot area="bl" order={20} className="hidden lg:block [@media(max-height:650px)]:!hidden"><div className={cn(card, "pixel-needs flex max-w-[240px] items-center gap-2 py-1.5 pr-2.5 pl-1.5 xl:max-w-[280px]")}>
         <div className="flex size-12 shrink-0 justify-center overflow-hidden rounded-full border-4 border-white bg-[#8fb4ff]">
           <div className="-mt-1 shrink-0">
             <AvatarFigure avatar={avatar} size={76} showPet={false} />
@@ -132,8 +132,8 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
             {NEEDS.map((d) => (
               <div key={d.id} className="contents">
                 <span className="text-[10px] font-black">{d.label}</span>
-                <span className="h-2 overflow-hidden rounded-full bg-[#e6dccb]" role="meter" aria-label={d.label} aria-valuenow={Math.round(needs[d.id])} aria-valuemin={0} aria-valuemax={100}>
-                  <span className="block h-full rounded-full transition-[width] duration-500" style={{ width: `${needs[d.id]}%`, background: d.colour }} />
+                <span className="pixel-meter h-2.5 overflow-hidden" role="meter" aria-label={d.label} aria-valuenow={Math.round(needs[d.id])} aria-valuemin={0} aria-valuemax={100}>
+                  <span className="block h-full transition-[width] duration-500" style={{ width: `${needs[d.id]}%`, background: d.colour }} />
                 </span>
               </div>
             ))}
@@ -157,11 +157,11 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
 export function LevelBadge({ xp }: { xp: number }) {
   const lp = levelProgress(xp);
   return (
-    <HudSlot area="tc" order={0} className="pointer-events-none hidden lg:block"><div className="flex items-center gap-2 rounded-full border border-[#d4c7ad] bg-[#faf6ed]/[0.98] py-1.5 pr-3 pl-1.5 text-[#203b38] shadow-[0_8px_24px_rgba(12,30,28,0.16)]">
-      <span className="grid size-7 place-items-center rounded-full bg-[#254e46] text-sm font-black text-[#f7e3b6] ring-1 ring-[#c8b182]">{lp.level}</span>
+    <HudSlot area="tc" order={0} className="pointer-events-none hidden lg:block"><div className="pixel-panel pixel-level flex items-center gap-2 py-1.5 pr-3 pl-1.5">
+      <span className="pixel-level-number grid size-7 place-items-center text-sm font-black">{lp.level}</span>
       <span className="text-xs leading-tight font-black">
         {levelTitle(lp.level)}
-        <span className="mt-0.5 block h-1.5 w-20 xl:w-28 overflow-hidden rounded-full bg-[#13203a]/10">
+        <span className="pixel-meter mt-0.5 block h-2 w-20 xl:w-28 overflow-hidden">
           <span className="block h-full bg-[#477a65] transition-[width] duration-700" style={{ width: `${Math.round(lp.fraction * 100)}%` }} />
         </span>
       </span>

@@ -4,6 +4,7 @@ import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture }
 import { buildHome, buildLondon } from "./london";
 import { officeDesign } from "./office-design";
 import { buildHighlands } from "./regions";
+import { UK_GATEWAYS } from "./uk-world";
 import { UNIVERSITIES, universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
 
@@ -655,7 +656,10 @@ export function officeMap(org: OfficeOrg): WorldMap {
 /** London: the main world (3D art from Blender, layout from ./london.ts). */
 export function londonMap(): WorldMap {
   const L = buildLondon();
-  const portals: Portal[] = [];
+  const portals: Portal[] = UK_GATEWAYS.map(gate => ({
+    id: gate.id, rect: px(gate.x, gate.y, gate.w, gate.h), label: gate.label,
+    to: { kind: "map", mapId: gate.mapId, label: gate.label },
+  }));
   for (const th of L.things) {
     if (th.kind === "building" && ["district-campus-library", "district-campus-studios", "district-campus-labs", "district-wharf-gallery", "district-wharf-cafe", "district-conservatory"].includes(th.id)) {
       portals.push({id:th.id==="district-wharf-gallery"?"venture-yard":th.id,rect:px(th.x+Math.floor(th.w/2),th.y+th.h,1,1),label:th.id==="district-wharf-gallery"?"Venture Yard · run your own business":th.label ?? "Explore district",to:th.id==="district-wharf-gallery"?{kind:"map",mapId:"venture-hub",label:"Venture Yard"}:th.id==="district-wharf-cafe"?{kind:"act",activity:"eat"}:th.id==="district-conservatory"?{kind:"act",activity:"hike"}:{kind:"study-room"}});
