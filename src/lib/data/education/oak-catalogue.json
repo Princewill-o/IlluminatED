@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-19T10:54:22.652Z",
+  "generatedAt": "2026-10-26T11:14:43.447Z",
   "items": [
     {
       "slug": "maths-secondary-year-10-higher",
@@ -11,7 +11,7 @@
       "board": "",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-10-higher/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "algebraic-manipulation",
@@ -1222,7 +1222,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -1762,7 +1762,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -2252,7 +2252,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -2787,7 +2787,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -3272,7 +3272,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -3827,7 +3827,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "eukaryotic-and-prokaryotic-cells",
@@ -4332,7 +4332,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -4894,7 +4894,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -5381,7 +5381,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -5928,7 +5928,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -6410,7 +6410,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -6957,7 +6957,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -7424,7 +7424,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "geographical-skills",
@@ -8093,7 +8093,7 @@
       "board": "",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-10-foundation/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "algebraic-manipulation",
@@ -9077,7 +9077,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "british-depth-study-norman-england-c1066-c1100",
@@ -9904,7 +9904,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -11154,7 +11154,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -12324,7 +12324,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -13559,7 +13559,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -14709,7 +14709,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -15959,7 +15959,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "atomic-structure-and-the-periodic-table",
@@ -17129,7 +17129,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -17487,7 +17487,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -17835,7 +17835,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18198,7 +18198,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18551,7 +18551,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -18909,7 +18909,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-10-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "particle-explanations-of-density-and-pressure",
@@ -19257,7 +19257,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-10-gcse-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "programming-sequence",
@@ -19872,7 +19872,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-10-gcse-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "programming-sequence",
@@ -20477,7 +20477,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-10-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "thematic-studies-5160",
@@ -20976,7 +20976,7 @@
       "board": "Edexcel B",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-10-edexcelb/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "geographical-and-statistics-skills",
@@ -21564,6 +21564,11 @@
               "url": "https://www.thenational.academy/pupils/lessons/rural-fieldwork"
             },
             {
+              "slug": "using-2d-gis-for-physical-geography-fieldwork",
+              "title": "Using 2D GIS for physical geography fieldwork",
+              "url": "https://www.thenational.academy/pupils/lessons/using-2d-gis-for-physical-geography-fieldwork"
+            },
+            {
               "slug": "using-3d-gis-for-physical-geography-fieldwork",
               "title": "Using 3D GIS for physical geography fieldwork",
               "url": "https://www.thenational.academy/pupils/lessons/using-3d-gis-for-physical-geography-fieldwork"
@@ -21588,7 +21593,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-study-198",
@@ -23462,7 +23467,7 @@
       "board": "Eduqas",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-eduqas/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-study-4896",
@@ -25047,7 +25052,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-10-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-study-5140",
@@ -26591,7 +26596,7 @@
       "board": "",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-11-foundation/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "algebraic-fractions",
@@ -27100,7 +27105,7 @@
       "board": "",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/maths-secondary-year-11-higher/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "algebraic-fractions",
@@ -28144,7 +28149,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -28492,7 +28497,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -28805,7 +28810,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29163,7 +29168,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29481,7 +29486,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -29839,7 +29844,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/chemistry-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "using-earths-resources",
@@ -30152,7 +30157,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -30478,7 +30483,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -30759,7 +30764,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31090,7 +31095,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31376,7 +31381,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31702,7 +31707,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/physics-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "forces-make-things-change",
@@ -31978,7 +31983,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -32771,7 +32776,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -33504,7 +33509,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -34312,7 +34317,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -35050,7 +35055,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -35873,7 +35878,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/combined-science-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -36626,7 +36631,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "period-studies-5149",
@@ -37101,7 +37106,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -37509,7 +37514,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -37872,7 +37877,7 @@
       "board": "Edexcel",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -38280,7 +38285,7 @@
       "board": "Edexcel",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -38643,7 +38648,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Higher",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-higher-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -39081,7 +39086,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "Foundation",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/biology-secondary-year-11-foundation-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "defences-against-pathogens-the-human-immune-system-and-vaccination",
@@ -39469,7 +39474,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-11-gcse-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "programming-dictionaries-and-data-files",
@@ -39837,7 +39842,7 @@
       "board": "Oxford, Cambridge and RSA Examinations",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/computing-secondary-year-11-gcse-ocr/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "programming-dictionaries-and-data-files",
@@ -40205,7 +40210,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/history-secondary-year-11-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "period-study-superpower-relations-and-the-cold-war-1941-91",
@@ -40665,7 +40670,7 @@
       "board": "Edexcel B",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-11-edexcelb/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "global-inequalities",
@@ -40946,7 +40951,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/geography-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "fieldwork",
@@ -41002,6 +41007,11 @@
               "slug": "rural-fieldwork",
               "title": "Rural fieldwork",
               "url": "https://www.thenational.academy/pupils/lessons/rural-fieldwork"
+            },
+            {
+              "slug": "using-2d-gis-for-physical-geography-fieldwork",
+              "title": "Using 2D GIS for physical geography fieldwork",
+              "url": "https://www.thenational.academy/pupils/lessons/using-2d-gis-for-physical-geography-fieldwork"
             },
             {
               "slug": "using-3d-gis-for-physical-geography-fieldwork",
@@ -41284,7 +41294,7 @@
       "board": "Assessment and Qualifications Alliance",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-aqa/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-deep-dive-188",
@@ -42866,7 +42876,7 @@
       "board": "Edexcel",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-edexcel/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-deep-dive-5142",
@@ -44255,7 +44265,7 @@
       "board": "Eduqas",
       "tier": "",
       "sourceUrl": "https://www.thenational.academy/pupils/programmes/english-secondary-year-11-eduqas/units",
-      "checkedAt": "2026-10-19T10:54:22.652Z",
+      "checkedAt": "2026-10-26T11:14:43.447Z",
       "units": [
         {
           "slug": "modern-text-first-deep-dive-1719",
