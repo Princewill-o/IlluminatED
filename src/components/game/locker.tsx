@@ -43,7 +43,7 @@ const PAIRED: Partial<Record<Slot, Slot>> = { hair: "hairColor", top: "topColor"
 
 /** Only controls that affect the supplied character meshes are offered. */
 const SLOT_GROUPS: {group:string;slots:{slot:Slot;label:string}[]}[]=[
- {group:'Blender presets',slots:[{slot:'head',label:'Preset character'}]},
+ {group:'Character presets',slots:[{slot:'head',label:'Preset character'}]},
  {group:'Character',slots:[{slot:'head',label:'Character'}]},
  {group:'Styled looks',slots:[{slot:'top',label:'Styled looks'}]},
  {group:'Colours',slots:[{slot:'topColor',label:'Outfit'},{slot:'bottomColor',label:'Legwear'},{slot:'shoesColor',label:'Footwear'}]},
@@ -163,7 +163,7 @@ export function Locker({
     });
 
   const slots = SLOT_GROUPS.find((g) => g.group === group)!.slots;
-  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot!=='head'||(group==='Blender presets'?c.id.startsWith('head-preset-'):!c.id.startsWith('head-preset-'))) && (slot !== 'head' || group === 'Blender presets' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (group !== 'Blender presets' || presetCollection === 'all' || BLENDER_PRESETS.find(preset=>preset.id===c.id)?.collection === presetCollection) && (slot!=='top'||outfitFamily==='all'||blockyOutfitFor(c.id)?.family===outfitFamily));
+  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot!=='head'||(group==='Character presets'?c.id.startsWith('head-preset-'):!c.id.startsWith('head-preset-'))) && (slot !== 'head' || group === 'Character presets' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (group !== 'Character presets' || presetCollection === 'all' || BLENDER_PRESETS.find(preset=>preset.id===c.id)?.collection === presetCollection) && (slot!=='top'||outfitFamily==='all'||blockyOutfitFor(c.id)?.family===outfitFamily));
   const headView = HEAD_SLOTS.has(slot);
 
   return (
@@ -302,7 +302,7 @@ export function Locker({
           </div>
         )}
 
-        {group === "Blender presets" && <section className="mt-5 rounded-2xl border border-border bg-card p-4" aria-label="100 Blender character presets"><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals · made in Blender</p><h3 className="mt-1 text-2xl font-black">100 new character presets</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">Ten character collections, sculpted hair and headwear silhouettes, varied skin tones and complete coordinated outfits. Each is a real rigged Blender model, ready to walk, run, wave and customise.</p><p className="mt-2 text-xs text-muted-foreground">Choose a preset below, then change its clothes and accessories. Apply or save to use it in the game.</p><label className="mt-4 block text-sm font-bold">Preset collection<select value={presetCollection} onChange={event=>setPresetCollection(event.target.value)} className="mt-2 block w-full rounded-xl border border-border bg-background px-3 py-2"><option value="all">All 100 presets</option>{[...new Set(BLENDER_PRESETS.map(preset=>preset.collection))].map(name=><option key={name} value={name}>{name}</option>)}</select></label></section>}
+        {group === "Character presets" && <section className="mt-5 rounded-2xl border border-border bg-card p-4" aria-label="100 character presets"><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals</p><h3 className="mt-1 text-2xl font-black">100 new character presets</h3><p className="mt-2 text-sm leading-6 text-muted-foreground">Ten character collections, sculpted hair and headwear silhouettes, varied skin tones and complete coordinated outfits. Each character comes ready to walk, run, wave and customise.</p><p className="mt-2 text-xs text-muted-foreground">Choose a preset below, then change its clothes and accessories. Apply or save to use it in the game.</p><label className="mt-4 block text-sm font-bold">Preset collection<select value={presetCollection} onChange={event=>setPresetCollection(event.target.value)} className="mt-2 block w-full rounded-xl border border-border bg-background px-3 py-2"><option value="all">All 100 presets</option>{[...new Set(BLENDER_PRESETS.map(preset=>preset.collection))].map(name=><option key={name} value={name}>{name}</option>)}</select></label></section>}
         {group === "Character" && <div className="mt-5 rounded-2xl border border-border bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div><p className="text-xs font-black uppercase tracking-widest text-muted-foreground">The Blocky collection</p><h3 className="mt-1 text-lg font-black">16 source designs. Make one yours.</h3></div>
@@ -310,14 +310,14 @@ export function Locker({
               {([['all','All'],['current','Current'],['classic','Classic']] as const).map(([value,label])=><button key={value} type="button" aria-pressed={collection===value} onClick={()=>setCollection(value)} className={cn('rounded-full px-3 py-2 text-xs font-bold',collection===value?'bg-primary text-primary-foreground':'hover:bg-accent')}>{label}</button>)}
             </div>
           </div>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">Keep the character&apos;s original face and hair, then choose a Blender-made outfit, colours, cape and equipment.</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">Keep the character&apos;s original face and hair, then choose a custom outfit, colours, cape and equipment.</p>
           <button type="button" onClick={() => { setGroup('Styled looks'); setSlot('top'); }} className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">See looks for {model.name} →</button>
         </div>}
         {group === 'Styled looks' && <section className="mt-5" aria-label="Character styled looks">
           <div className="rounded-2xl border border-border bg-card p-4">
             <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals</p>
             <h3 className="mt-1 text-xl font-black">24 looks. Built around your character.</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">Coordinated Blender clothing, original labels and accessories. Looks that complement {model.name} appear first. Try one on, then {localPreview ? 'Apply to local game' : 'Save outfit'} when you&apos;re ready.</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Coordinated clothing, original labels and accessories. Looks that complement {model.name} appear first. Try one on, then {localPreview ? 'Apply to local game' : 'Save outfit'} when you&apos;re ready.</p>
             <p className="mt-2 text-xs text-muted-foreground">Your character, face, hair and companion stay yours. All pieces in these looks are free.</p>
             <div className="mt-4 flex flex-wrap gap-2" aria-label="Look collections">
               {(['all', ...new Set(CHARACTER_STYLES.map(style => style.collection))] as const).map(collection => <button key={collection} type="button" aria-pressed={styleCollection === collection} onClick={() => setStyleCollection(collection)} className={cn('rounded-full border px-3 py-2 text-xs font-bold', styleCollection === collection ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-secondary')}>{collection === 'all' ? 'All looks' : collection}</button>)}
@@ -348,7 +348,7 @@ export function Locker({
         </section>}
         {slot === 'top' && group !== 'Styled looks' && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
           <h3 className="text-lg font-black">120 outfit sets</h3>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">12 clothing styles in 10 palettes, made in Blender for this character rig. Each set includes its jacket or top, legwear, footwear and attached details. Uniforms are costumes; they do not grant powers or authority.</p>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">12 clothing styles in 10 palettes, designed for your character. Each set includes its jacket or top, legwear, footwear and attached details. Uniforms are costumes; they do not grant powers or authority.</p>
           <label className="mt-3 block text-xs font-bold">Clothing style
             <select aria-label="Clothing style" value={outfitFamily} onChange={e=>setOutfitFamily(e.target.value)} className="ml-3 rounded-full border border-border bg-background px-3 py-2">
               <option value="all">All styles</option>{[...new Set(BLOCKY_OUTFITS.map(o=>o.family))].map(family=><option key={family} value={family}>{family[0].toUpperCase()+family.slice(1)}</option>)}
@@ -421,7 +421,7 @@ export function Locker({
                   </div>
                   <p className="mt-2 text-sm leading-tight font-bold">{item.id==="hat-none"?"Original headwear":clothingName(item.id,item.name)}</p>
                   {outfit && <><p className="mt-1 text-xs text-muted-foreground">{outfit.description}</p><p className="mt-1 text-[11px] font-bold text-ink-mint">{outfitPerks(item.id).label}</p></>}
-                  {item.slot === 'head' && <p className="mt-1 text-xs text-muted-foreground">{item.id.startsWith('head-preset-')?'Blender original':item.id.includes('-classic-')?'Classic design':'Current design'} · 10 animations</p>}
+                  {item.slot === 'head' && <p className="mt-1 text-xs text-muted-foreground">{item.id.startsWith('head-preset-')?'Original preset':item.id.includes('-classic-')?'Classic design':'Current design'} · 10 animations</p>}
                   {item.set && <p className="mt-0.5 text-[11px] text-muted-foreground">{setName(item.set)}</p>}
                   <div className="mt-auto pt-2">
                     {wearing ? (

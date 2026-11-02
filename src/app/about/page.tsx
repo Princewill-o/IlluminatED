@@ -108,8 +108,7 @@ export default function AboutPage() {
         <p className="text-muted-foreground max-w-2xl leading-relaxed">
           The city, buildings, vehicles, trees and characters in IlluminatED&apos;s game world are built from{" "}
           <ExternalLink href="https://kenney.nl">Kenney</ExternalLink>&apos;s free CC0 3D kits (City Kit Commercial,
-          City Kit Suburban, City Kit Roads and Nature Kit), rendered and styled by us in
-          Blender. Thank you, Kenney.
+          City Kit Suburban, City Kit Roads and Nature Kit), rendered and styled by our team. Thank you, Kenney.
         </p>
         <p className="text-muted-foreground mt-4 max-w-2xl leading-relaxed">
           Selected shops and offices are adapted from <ExternalLink href="https://sketchfab.com/3d-models/low-poly-city-pack-c693dae1fe06403ea1e0bcf4e9db108a">Low Poly City-Pack by medmgames</ExternalLink> and <ExternalLink href="https://sketchfab.com/3d-models/low-poly-city-game-ready-c7e3a158515c4e9da31ae52c30403cef">Low Poly City Game-Ready by costoWRLD</ExternalLink>, licensed under <ExternalLink href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</ExternalLink>. We extracted individual buildings and adjusted their scale and signs.

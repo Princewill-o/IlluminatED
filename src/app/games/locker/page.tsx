@@ -13,7 +13,7 @@ export default async function LockerPage() {
       <div id="locker" className="mx-auto max-w-6xl px-4 pt-6 pb-10">
         <p className="text-xs font-black tracking-[0.3em] text-ink-lilac uppercase">Local preview</p>
         <h1 className="arcade-display mt-2 text-4xl md:text-5xl">Create your Blocky character</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">Choose from 100 new Blender presets and the original 16 Blocky characters. Try 120 outfit sets, capes and equipment, then apply your look to the local game.</p>
+        <p className="mt-2 max-w-2xl text-muted-foreground">Choose from 100 new character presets and the original 16 Blocky characters. Try 120 outfit sets, capes and equipment, then apply your look to the local game.</p>
         <div className="mt-8">
           <Locker initialAvatar={DEFAULT_AVATAR} initialOwned={COSMETICS.filter(isFree).map((item) => item.id)} initialClout={0} canSave={false} localPreview />
         </div>
