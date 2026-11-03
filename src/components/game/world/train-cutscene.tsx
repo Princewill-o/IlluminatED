@@ -88,7 +88,7 @@ export function TrainCutscene({ to, line, avatar, onArrive, onStudy }: { to: str
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.shadowMap.enabled = !mobile;
     el.appendChild(renderer.domElement);
-    const releaseCapture=registerSceneCapture(()=>{renderer.render(scene,camera);return renderer.domElement.toDataURL("image/jpeg",.85);});
+    const releaseCapture=registerSceneCapture(()=>null);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("#0c0b10");
     const camera = new THREE.PerspectiveCamera(58, 1, 0.05, 60);

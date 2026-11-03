@@ -73,3 +73,20 @@ test("incompatible, animated or partial geometry is safely left to the existing 
   assert.equal(staticScenerySignature(b), null);
   a.geometry.dispose(); b.geometry.dispose(); material.dispose();
 });
+
+test('building-local batches preserve world geometry and remain owned by the cutaway group',()=>{
+ const parent=new THREE.Group();parent.position.set(7,2,-5);parent.rotation.y=.4;parent.scale.set(1.2,.9,.8);
+ const material=new THREE.MeshStandardMaterial(),a=new THREE.Mesh(new THREE.BoxGeometry(),material),b=new THREE.Mesh(new THREE.BoxGeometry(),material);
+ a.position.set(2,3,1);b.position.set(-2,1,3);parent.add(a,b);parent.updateMatrixWorld(true);
+ const bounds=new THREE.Box3().setFromObject(a).union(new THREE.Box3().setFromObject(b));
+ const merged=mergeStaticScenery([a,b]);a.removeFromParent();b.removeFromParent();exports.attachWorldBatch(merged,parent);
+ const actual=new THREE.Box3().setFromObject(merged,true);assert.ok(actual.min.distanceTo(bounds.min)<1e-5);assert.ok(actual.max.distanceTo(bounds.max)<1e-5);assert.equal(merged.parent,parent);
+ parent.visible=false;assert.equal(merged.parent.visible,false);merged.geometry.dispose();a.geometry.dispose();b.geometry.dispose();material.dispose();
+});
+test('building-local instance matrices preserve transforms without mutating shared geometry',()=>{
+ const material=new THREE.MeshStandardMaterial(),geometry=new THREE.BoxGeometry(),parent=new THREE.Group();parent.position.set(12,2,5);parent.rotation.y=.3;parent.updateMatrixWorld(true);
+ const batch=new THREE.InstancedMesh(geometry,material,2),first=new THREE.Matrix4().makeTranslation(14,3,8),second=new THREE.Matrix4().makeTranslation(10,4,6);
+ batch.setMatrixAt(0,first);batch.setMatrixAt(1,second);const before=geometry.attributes.position.array.slice();exports.attachWorldBatch(batch,parent);
+ for(const [index,expected]of [first,second].entries()){const actual=new THREE.Matrix4();batch.getMatrixAt(index,actual);actual.premultiply(batch.matrixWorld);assert.ok(actual.elements.every((n,i)=>Math.abs(n-expected.elements[i])<1e-5));}
+ assert.deepEqual(geometry.attributes.position.array,before);geometry.dispose();material.dispose();
+});

@@ -96,3 +96,16 @@ export function mergeStaticScenery(meshes: THREE.Mesh[]): THREE.Mesh | null {
     for (const geometry of geometries) geometry.dispose();
   }
 }
+
+/** Reattach a world-baked batch inside one building so cutaways still own it. */
+export function attachWorldBatch(batch: THREE.Mesh,parent:THREE.Object3D){
+  parent.updateWorldMatrix(true,false);
+  const inverse=parent.matrixWorld.clone().invert();
+  if(batch instanceof THREE.InstancedMesh){
+    const transform=new THREE.Matrix4();
+    for(let index=0;index<batch.count;index++){batch.getMatrixAt(index,transform);transform.premultiply(inverse);batch.setMatrixAt(index,transform);}
+    batch.instanceMatrix.needsUpdate=true;batch.computeBoundingBox();batch.computeBoundingSphere();
+  } else {batch.geometry.applyMatrix4(inverse);batch.geometry.computeBoundingBox();batch.geometry.computeBoundingSphere();}
+  batch.matrix.identity();batch.matrixWorld.copy(parent.matrixWorld);
+  parent.add(batch);return batch;
+}

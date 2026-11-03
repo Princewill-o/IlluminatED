@@ -31,8 +31,9 @@ import { makeNameplate } from "./nameplate";
 import { createNavigationTrail } from "./navigation-trail";
 import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
+import { sceneryCulling } from "./scenery-culling";
 import { softSunShadows } from "./soft-sun-shadows";
-import { mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
+import { attachWorldBatch, mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
 import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
@@ -1989,6 +1990,7 @@ export function World3D({
   getPolice,
   onGround,
   onUnavailable,
+  onReady,
   getHomeAction,
   overview = false,
   immersive = false,
@@ -2008,6 +2010,7 @@ export function World3D({
   /** Real hackathons and tech events for the billboards. */
   ads?: TechEvent[];
   onUnavailable?:()=>void;
+  onReady?:()=>void;
   getHomeAction?: () => HomeAction | null;
   overview?: boolean;
   immersive?: boolean;
@@ -2015,6 +2018,7 @@ export function World3D({
   nearPortal: () => Portal | null;
   onGround?: (x: number, y: number) => void;
 }) {
+  const readyCallback=useRef(onReady);readyCallback.current=onReady;
   const host = useRef<HTMLDivElement>(null);
   const navigationRef=useRef(navigation);navigationRef.current=navigation;
   const news = useCityNews();
@@ -2052,7 +2056,10 @@ export function World3D({
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = graphicsBudget();
-    const visual = visualProfile(window.devicePixelRatio||1);
+    const visual = visualProfile(window.devicePixelRatio||1,mobile);
+    const culling=!indoors&&!ukScene?sceneryCulling():null;
+    const cullingRoots:THREE.Object3D[]=[];
+    let nextCull=0;
     // MSAA, sRGB output and soft PCF shadow maps (scene-setup.ts).
     try{renderer = createRenderer(visual);}catch{onUnavailable?.();return;}
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
@@ -2064,7 +2071,7 @@ export function World3D({
     sceneRef.current = scene;
     const navigationTrail=createNavigationTrail(scene,bend);
     let firstPaint = true;
-    const releaseCapture = registerSceneCapture(()=>{presentation.render();return renderer.domElement.toDataURL("image/jpeg",.85);});
+    const releaseCapture = registerSceneCapture(()=>null);
     const sky = highland ? "#c8e2ef" : "#dce6df";
     scene.background = new THREE.Color(sky);
     scene.fog = new THREE.Fog(sky, 34, 70);
@@ -2247,6 +2254,8 @@ export function World3D({
       for (const t of H.things) {
         const g = new THREE.Group();
         world.add(g);
+        cullingRoots.push(g);
+        culling?.register(g,new THREE.Box3(new THREE.Vector3(t.x-3,-2,t.y-3),new THREE.Vector3(t.x+("w" in t?t.w:3)+3,("height" in t?t.height:12)+4,t.y+("h" in t?t.h:3)+3)));
         if (t.kind === "building" || t.kind === "station") sightlineBuildings.push(g);
         if (t.kind === "mountain") {
           const fallback=()=>{
@@ -2306,6 +2315,8 @@ export function World3D({
       for (const t of L.things) {
         const g = new THREE.Group();
         world.add(g);
+        cullingRoots.push(g);
+        culling?.register(g,new THREE.Box3(new THREE.Vector3(t.x-3,-2,t.y-3),new THREE.Vector3(t.x+("w" in t?t.w:3)+3,("height" in t?t.height:12)+4,t.y+("h" in t?t.h:3)+3)));
         if (t.kind === "building" || t.kind === "station" || t.kind === "landmark") sightlineBuildings.push(g);
         if (t.kind === "building") {
           jobs.push(building(g, t));
@@ -2506,6 +2517,7 @@ export function World3D({
         const c = await buildCharacter(a, playerHeight, logo);
         if (disposed || removed) { c.dispose(); return; }
         bendAll(c.object);
+        if(ambient)c.object.traverse(node=>{if((node as THREE.Mesh).isMesh)node.castShadow=false;});
         c.object.position.y = 0.12;
         root.add(c.object);
         b.char = c;
@@ -3098,7 +3110,7 @@ export function World3D({
       playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
       playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
-      followSun(sun, focus);
+      followSun(sun,focus);
 
       // Other players.
       const seen = new Set<string>();
@@ -3324,8 +3336,10 @@ export function World3D({
         }
         if (n.defendUntil) { n.defendUntil = 0; n.body.char?.play("idle"); }
         const pose = residentPose(n.path, reduce ? 0 : residentMotionSeconds(i,Date.now()), n.offset);
-        n.body.root.visible = i < Math.max(24, residentLimit - Math.floor(onlineCount / 2));
-        if (!n.body.root.visible) { n.speech.visible = false; return; }
+        const residentActive = i < Math.max(24, residentLimit - Math.floor(onlineCount / 2));
+        n.body.root.visible = residentActive && n.body.root.position.distanceToSquared(me.root.position)<42*42;
+        if (!residentActive) { n.speech.visible = false; return; }
+        // Offscreen residents keep following their routes; hiding only skips drawing.
 
         // Local crowd AI: greet a nearby player at a natural pause, face them,
         // and then return to the resident's route. It is deterministic and runs
@@ -3522,6 +3536,7 @@ export function World3D({
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       updateUKScenery(mx,mz,overview);
+      if(culling && now>=nextCull){culling.update(camera,{x:mx,z:mz},overview);nextCull=now+80;}
       if (sightlinesReady && (london || highland || ukScene)) {
         sightlineTarget.copy(me.root.position); sightlineTarget.y += .9;
         // Keep the skyline solid in overview; normal play clears only the character's sightline.
@@ -3536,7 +3551,7 @@ export function World3D({
       if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
       presentation.render();releaseCapture.frame(renderer.domElement);
-      if(firstPaint){firstPaint=false;window.dispatchEvent(new CustomEvent("illuminated:scene-ready",{detail:{mapId:map.id}}));}
+      if(firstPaint&&((sightlinesReady&&me.char)||now-start>=5000)){firstPaint=false;releaseCapture.ready(map.id);readyCallback.current?.();}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
         Object.assign(renderer.domElement.dataset, {
           graphicsFps: (monitorFrames * 1000 / (now - monitorAt)).toFixed(1),
@@ -3556,20 +3571,23 @@ export function World3D({
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
+    const cullableBatches:THREE.Object3D[]=[];
     // Share repeated geometry instead of expanding every copy into vertex buffers.
     // Spatial batches retain useful frustum culling across the city.
     void Promise.allSettled(jobs).then(async () => {
       if (disposed) return;
       if(london) { const architecture=finishArchitecture(world,phase); disposeArchitecture=architecture; updateArchitecture=architecture.update; }
-      for (const group of sightlineBuildings) visibility.register(group);
-      sightlinesReady = true;
+      const buildingOwners=new Set<THREE.Object3D>(sightlineBuildings);
+      const owners=new Map<THREE.Mesh,THREE.Object3D>();
       world.updateMatrixWorld(true);
       const groups = new Map<string, THREE.Mesh[]>();
       world.traverse((o) => {
         const m = o as THREE.Mesh;
         if(m.isMesh&&m.castShadow&&!m.customDepthMaterial)m.customDepthMaterial=CURVED_DEPTH;
         if (!m.isMesh || (m as THREE.InstancedMesh).isInstancedMesh || m === water || m.userData.homeScreen || rings.includes(m) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || Array.isArray(m.material)) return;
-        for (let parent: THREE.Object3D | null = m; parent; parent = parent.parent) if (parent.userData.sightlineBuilding) return;
+        let owner:THREE.Object3D|null=null;
+        for(let parent=m.parent;parent;parent=parent.parent)if(buildingOwners.has(parent)){owner=parent;break;}
+        if(owner)owners.set(m,owner);
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train || a.userData.vehicleRig) spin = true;
         if (spin || m.geometry.attributes.color) return;
@@ -3581,7 +3599,7 @@ export function World3D({
         m.matrixAutoUpdate = false;
         m.matrixWorldAutoUpdate = false;
         const position = new THREE.Vector3().setFromMatrixPosition(m.matrixWorld);
-        const key = `${signature}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
+        const key = `${owner?.uuid??"world"}:${signature}:${Math.floor(position.x / 16)}:${Math.floor(position.z / 16)}`;
         const list = groups.get(key) ?? [];
         list.push(m);
         groups.set(key, list);
@@ -3589,6 +3607,7 @@ export function World3D({
       let batchStart = performance.now();
       for (const meshes of groups.values()) {
         if (disposed) return;
+        const owner=owners.get(meshes[0]);
         if (meshes.length > 1) {
           if(meshes.every(mesh=>mesh.geometry===meshes[0].geometry)) {
             const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
@@ -3601,12 +3620,12 @@ export function World3D({
             mesh.onBeforeShadow=meshes[0].onBeforeShadow;mesh.onAfterShadow=meshes[0].onAfterShadow;
             mesh.computeBoundingSphere();
             mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
-            scene.add(mesh);
+            if(owner)attachWorldBatch(mesh,owner);else{scene.add(mesh);cullableBatches.push(mesh);}
           } else {
             const merged=mergeStaticScenery(meshes);
             if(merged) {
               for(const source of meshes) { if(source.geometry!==BOX) retiredSceneryGeometry.add(source.geometry); source.removeFromParent(); }
-              scene.add(merged);
+              if(owner)attachWorldBatch(merged,owner);else{scene.add(merged);cullableBatches.push(merged);}
             }
           }
         }
@@ -3615,13 +3634,17 @@ export function World3D({
           batchStart = performance.now();
         }
       }
+      for (const group of sightlineBuildings) visibility.register(group);
+      sightlinesReady=true;
+      // Only authored static roots: ambient lights, leaves and meadows follow the player.
+      for(const object of [...cullingRoots,...cullableBatches])culling?.register(object);
     });
 
     return () => {
       cancelAnimationFrame(raf);
       releaseCapture();sparksGeometry.dispose();sparks.material.dispose();
       disposed = true;
-      visibility.dispose();
+      visibility.dispose();culling?.dispose();
       policeRig?.dispose();
       navigationTrail.dispose();
       disposeVehicle(scene);

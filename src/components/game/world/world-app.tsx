@@ -30,7 +30,6 @@ import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
-import { captureScene } from "./scene-continuity";
 import continuityStyles from "./scene-continuity.module.css";
 import { SceneMusic } from "./scene-music";
 import { TRAIN_CALL } from "./train-state";
@@ -41,6 +40,7 @@ import { useLifeJournal } from "./use-life-journal";
 import { useNavigation } from "./use-navigation";
 import { useNeeds, doActivity, setNeedsOutfit, damageEnergy } from "./use-needs";
 import { usePhoneLayout } from "./use-phone-layout";
+import { useSceneTransition } from "./use-scene-transition";
 import { useStreetEncounters } from "./use-street-encounters";
 import { type Me, useLobby } from "./use-world";
 import { VenturePanel } from "./venture-panel";
@@ -373,16 +373,7 @@ export function WorldApp({
   const [safety, setSafety] = useState(false);
   const [rescue, setRescue] = useState(false);
   const [medicalCustody,setMedicalCustody]=useState(false);
-  const [passage,setPassage]=useState<{image:string;label:string;destination:string;door:boolean;ready:boolean}|null>(null);
-  useEffect(()=>{
-    const destination=passage?.destination;
-    if(!destination)return;
-    let fade:ReturnType<typeof setTimeout>|undefined;
-    const reveal=(event:Event)=>{if((event as CustomEvent).detail?.mapId!==destination)return;setPassage(p=>p?{...p,ready:true}:null);fade=setTimeout(()=>setPassage(null),500);};
-    window.addEventListener("illuminated:scene-ready",reveal);
-    const timeout=setTimeout(()=>setPassage(null),8000);
-    return()=>{window.removeEventListener("illuminated:scene-ready",reveal);clearTimeout(timeout);if(fade)clearTimeout(fade);};
-  },[passage?.destination]);
+  const {passage,begin:beginTransition,pending:transitionPending}=useSceneTransition();
   const pendingStreetCase = useRef<StreetAssessment | null>(null);
   const say = useCallback((text: string, big = false) => {
     setToast({ text, big });
@@ -550,7 +541,8 @@ export function WorldApp({
   };
 
   /** Taken somewhere (arrest, prison, release): fade and arrive at a set spot or the map's start. */
-  const goTo = useCallback((dest: string, label: string, spot?: { x: number; y: number }) => {
+  const goTo = useCallback(async(dest: string, label: string, spot?: { x: number; y: number }) => {
+    if(transitionPending())return;
     const next = loadMap(dest, offices, me.id);
     if (!next) return;
     if (life.hearing?.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && streetCustody?.stage !== "transport" && map.kind !== "court" && dest !== "hospital") { say("The officers need to complete the street incident first."); return; }
@@ -563,12 +555,11 @@ export function WorldApp({
     setGames(false); setPhone(false); setHousing(false); setStudy(false); setInmate(null); setLearning(false); setAwardsOpen(false);
     setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false); setUKRoadsOpen(false);
     setDealer(false); setDock(false); setDesk(false); setBankOpen(false); setRoom(null);
-    const image=captureScene();
-    if(image)setPassage({image,label,destination:dest,door:false,ready:false});
+    if(!await beginTransition(dest,label))return;
     setSceneName(label);setFading(false);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     setArrive(arrival);setMapId(dest);setTrip(n=>n+1);
-  }, [offices, me.id, cars, driving, say, life.hearing, streetCustody?.stage, map.kind]);
+  }, [offices, me.id, cars, driving, say, life.hearing, streetCustody?.stage, map.kind, beginTransition, transitionPending]);
 
   useEffect(() => {
     if (!roadDestination) return;
@@ -672,7 +663,8 @@ export function WorldApp({
   }, [life.bankCourtSeen, life.hearing, updateLife, goTo, say]);
 
   const onPortal = useCallback(
-    (portal: Portal) => {
+    async(portal: Portal) => {
+      if(transitionPending())return;
       const to = portal.to;
       if (life.hearing?.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && map.kind !== "hospital") { say("Wait for the officers to finish responding to the incident."); return; }
       if (to.kind === "home-use") {
@@ -775,15 +767,14 @@ export function WorldApp({
         const spot = roadArrival ?? (back
           ? safeSpot(next, back.rect.x + back.rect.w / 2, back.rect.y + (back.rect.y + back.rect.h >= next.height - 4 ? -24 : back.rect.y > next.height / 2 ? -50 : back.rect.h + 50))
           : next.spawn);
-        const image=captureScene();
-        if(image)setPassage({image,label:to.label,destination:to.mapId,door:map.kind!=="city"||next.kind!=="city",ready:false});
+        if(!await beginTransition(to.mapId,to.label,map.kind!=="city"||next.kind!=="city"))return;
         if(map.kind!=="city"||next.kind!=="city")play("door",soundOn());
         setSceneName(to.label);setFading(false);setDesk(false);
         if(fadeTimer.current)clearTimeout(fadeTimer.current);
         setArrive({...spot,speed:keepCar?Math.min(Math.abs(PLAYER_VEHICLE.speed),isMotorway(to.mapId)?660:220):0});setMapId(to.mapId);setTrip(n=>n+1);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, medicalCustody],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, medicalCustody, beginTransition, transitionPending],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -973,8 +964,8 @@ export function WorldApp({
         // The player has already walked into a stopped train before choosing a destination.
         void gainXp("train"); setJourney({
           to: st.name,
-          go: () => {
-            const image=captureScene();if(image)setPassage({image,label:`Arriving at ${st.name}`,destination:`station-${t.id}`,door:false,ready:false});
+          go: async() => {
+            if(!await beginTransition(`station-${t.id}`,`Arriving at ${st.name}`))return;
             setJourney(null);
             setArrive(safeSpot(inside, inside.width / 2, (STATION_PLATFORM_Y + 0.5) * TILE));
             TRAIN_CALL.at = performance.now() - 6500;
@@ -991,14 +982,14 @@ export function WorldApp({
         spot = next.spawn;
         setBike(null);
         const arrival=spot;
-        setJourney({to:t.label,line:dest==="highlands"?"National Rail":"Revision",go:()=>{
-          const image=captureScene();if(image)setPassage({image,label:t.label,destination:dest,door:false,ready:false});
+        setJourney({to:t.label,line:dest==="highlands"?"National Rail":"Revision",go:async()=>{
+          if(!await beginTransition(dest,t.label))return;
           setJourney(null);setArrive(arrival);setMapId(dest);setTrip(n=>n+1);
         }});
         play("train",soundOn());
       }
     },
-    [offices, me.id, gainXp, map.kind, map.id],
+    [offices, me.id, gainXp, map.kind, map.id, beginTransition],
   );
 
   // Riding the bus: to another stop in London, home, or the Careers Campus.
@@ -1040,7 +1031,7 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
-  const busy = Boolean((creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
+  const busy = Boolean((passage&&!passage.ready) || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy || mobileLife;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1127,6 +1118,7 @@ export function WorldApp({
         key={`${mapId}:${server}:${trip}`}
         onNearby={setNearby}
         paused={busy || menu || rescue || ventureOpen}
+        transitioning={Boolean(passage&&!passage.ready)}
         homeAction={homeAction}
         navigation={navigation}
         police={pursuit}
@@ -1406,9 +1398,8 @@ export function WorldApp({
       {flightModal === "quiz" && <FlightSchoolQuiz onClose={() => setFlightModal(null)} onDone={() => { setFlightModal(null); setFlight(n => n === null ? n : n + 1); }} />}
       {flying && <PlaneCutscene onArrive={landInLondon} />}
       {passage&&<div className={continuityStyles.frame} data-ready={passage.ready} aria-label={passage.label}>
-        {/* eslint-disable-next-line @next/next/no-img-element -- local canvas snapshot, never a remote image */}
-        <img src={passage.image} alt=""/>{passage.door&&<><span className={continuityStyles.door}/><span className={continuityStyles.door}/></>}
-        <span className={continuityStyles.label}>{passage.label}</span>
+        <div className={continuityStyles.image} ref={node=>{if(node&&passage.image&&node.firstChild!==passage.image)node.replaceChildren(passage.image);}}/>
+        <span role="status" className={continuityStyles.label}>{passage.label}{!passage.ready&&<span className="mt-1 block text-xs font-normal opacity-75">Preparing scene…</span>}</span>
       </div>}
       <SceneWipe show={fading} label={sceneName} />
       <HudSlot area="br-nav" order={4}><button

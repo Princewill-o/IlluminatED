@@ -1,11 +1,72 @@
-let capture: (() => string | null) | null = null;
-export function registerSceneCapture(next: () => string | null) {
+export type SceneSnapshot = HTMLCanvasElement | string;
+let capture: (() => SceneSnapshot | null) | null = null;
+let serial = 0,
+  activeId = 0;
+let readyScene: { mapId: string; rendererId: number } | null = null;
+const requests = new Set<{
+  id: number;
+  finish: (canvas: HTMLCanvasElement | null) => void;
+}>();
+export const sceneCaptureId = () => activeId;
+export const readSceneReady = () => readyScene;
+/** Snapshot only a presented frame: no extra render, JPEG encoding or data URL. */
+export function requestSceneCapture(): Promise<HTMLCanvasElement | null> {
+  if (!capture) return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const request = {
+      id: activeId,
+      finish: (source: HTMLCanvasElement | null) => {
+        clearTimeout(timeout);
+        requests.delete(request);
+        if (!source) {
+          resolve(null);
+          return;
+        }
+        try {
+          const image = document.createElement("canvas"),
+            scale = Math.min(1, 960 / source.width);
+          image.width = Math.max(1, Math.round(source.width * scale));
+          image.height = Math.max(1, Math.round(source.height * scale));
+          const ctx = image.getContext("2d");
+          if (!ctx) {
+            resolve(null);
+            return;
+          }
+          ctx.drawImage(source, 0, 0, image.width, image.height);
+          resolve(image);
+        } catch {
+          resolve(null);
+        }
+      },
+    };
+    const timeout = setTimeout(() => request.finish(null), 180);
+    requests.add(request);
+  });
+}
+export function registerSceneCapture(next: () => SceneSnapshot | null) {
+  const id = ++serial;
   capture = next;
+  activeId = id;
   const release = () => {
-    if (capture === next) capture = null;
+    if (capture === next) {
+      capture = null;
+      activeId = 0;
+    }
+    for (const request of requests) if (request.id === id) request.finish(null);
   };
+  release.id = id;
   release.frame = (canvas: HTMLCanvasElement) => {
-    if (capture === next) publishSceneFrame(canvas);
+    if (capture !== next) return;
+    for (const request of requests)
+      if (request.id === id) request.finish(canvas);
+    publishSceneFrame(canvas);
+  };
+  release.ready = (mapId: string) => {
+    if (capture !== next) return;
+    readyScene = { mapId, rendererId: id };
+    window.dispatchEvent(
+      new CustomEvent("illuminated:scene-ready", { detail: readyScene }),
+    );
   };
   return release;
 }

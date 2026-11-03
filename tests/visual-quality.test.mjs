@@ -10,30 +10,26 @@ const {
   adaptivePixelRatio,
   readVisualQuality,
 } = projectData("src/game/core/visual-quality.ts");
-test("all displays use the single high graphics profile", () => {
+test("graphics retain lighting and materials within a bounded rendering budget", () => {
   for (const dpr of [1, 2, 4, NaN]) {
     const high = visualProfile(dpr);
     assert.equal(high.shadows, true);
-    assert.equal(high.shadowSize, 2048);
+    assert.equal(high.shadowSize, 1024);
     assert.equal(high.postProcessing, true);
     assert.equal(high.environment, true);
     assert.equal(high.bloom, true);
-    assert.equal(high.samples, 4);
+    assert.equal(high.samples, 2);
     assert.equal(high.ambientOcclusion, true);
-    assert.equal(high.occlusionSamples, 12);
-    assert.equal(high.depthOfField, true);
-    assert.equal(high.msaa, true);
-    assert.equal(high.adaptiveResolution, false);
-    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 2);
+    assert.equal(high.occlusionSamples, 8);
+    assert.equal(high.depthOfField, false);
+    assert.equal(high.msaa, false);
+    assert.equal(high.adaptiveResolution, true);
+    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 1.5);
   }
 });
-test("legacy preferences cannot enable lower graphics tiers or automatic downscaling", () => {
-  for (const stored of [null, "auto", "low", "medium", "high", "ultra", "cinematic", "obsolete"]) assert.equal(readVisualQuality(stored), "high");
-  const adapt = adaptivePixelRatio(2);
-  for (const now of [0, 100, 6000, 15000, 60000, 120000, NaN]) {
-    assert.equal(adapt(now), 2);
-    assert.equal(adapt(now, false), 2);
-  }
+test("legacy preferences retain the art profile and adaptation ignores invalid or suspended frames",()=>{
+ for(const stored of [null,"auto","low","medium","high","ultra","obsolete"])assert.equal(readVisualQuality(stored),"high");
+ const adapt=adaptivePixelRatio(2);assert.equal(adapt(0),1.5);assert.equal(adapt(NaN),1.5);assert.equal(adapt(60000,false),1.5);assert.equal(adapt(60016),1.5);
 });
 test("optional motion respects accessibility and cannot grow with vehicle speed", () => {
   for (const t of [0, 1, 100])

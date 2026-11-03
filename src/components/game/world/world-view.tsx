@@ -218,6 +218,7 @@ export function WorldView({
   car = null,
   ads = [],
   paused = false,
+  transitioning = false,
   police = null,
   homeAction = null,
   offlinePreview = false,
@@ -227,6 +228,7 @@ export function WorldView({
   homeAction?: HomeAction | null;
   offlinePreview?: boolean;
   paused?: boolean;
+  transitioning?: boolean;
   police?: Pursuit | null;
   /** Real tech events shown on billboards around the world. */
   ads?: TechEvent[];
@@ -262,7 +264,7 @@ export function WorldView({
   const els = useRef(new Map<string, HTMLDivElement>());
   const bubbles = useRef(new Map<string, HTMLDivElement>());
   const pausedRef = useRef(paused);
-  pausedRef.current = paused;
+
   const keys = useRef(new Set<string>());
   const stick = useRef({ x: 0, y: 0 });
   const gamepadMove = useRef({ x: 0, y: 0 });
@@ -277,13 +279,11 @@ export function WorldView({
   /** Every playable map uses the same fully modelled 3D scene. */
   const [immersive, setImmersive] = useState(false);
   const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
-  const is3d = graphicsState === "ready";
-  // Start the 3D renderer directly; the world never flashes a flat-map view.
-  useEffect(() => {
-    setGraphicsState("loading");
-    const timer = window.setTimeout(() => setGraphicsState("ready"), 180);
-    return () => window.clearTimeout(timer);
-  }, [map.id]);
+  const sceneFrozen=useRef(false);sceneFrozen.current=graphicsState!=="ready"||transitioning;
+  const is3d=graphicsState!=="unavailable";
+  pausedRef.current=paused||graphicsState!=="ready";
+  const sceneReady=useCallback(()=>setGraphicsState("ready"),[]);
+  useEffect(()=>setGraphicsState("loading"),[map.id]);
   const speedRef = useRef(speed);
   speedRef.current = speed;
   const carRef = useRef(car);
@@ -373,7 +373,7 @@ export function WorldView({
     return () => query.removeEventListener("change", changed);
   }, []);
 
-  const unavailable3d=useCallback(()=>setGraphicsState("unavailable"),[]);
+  const unavailable3d=useCallback(()=>{setGraphicsState("unavailable");window.dispatchEvent(new CustomEvent("illuminated:scene-failed",{detail:{mapId:map.id}}));},[map.id]);
   const getMe3d = useCallback(() => pos.current, []);
   const getOthers3d = useCallback(
     () => {
@@ -445,7 +445,7 @@ export function WorldView({
         keys.current.add(k);
         target.current = null;
       } else if (k === "e" || k === "enter") {
-        enter();
+        if(!e.repeat)enter();
       }
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
@@ -486,7 +486,7 @@ export function WorldView({
         keys.current.clear();
         stick.current = { x: 0, y: 0 };
         target.current = null;
-        pos.current.speed = 0;
+        if (!sceneFrozen.current || PLAYER.knockedUntil > now) pos.current.speed = 0;
       }
       const k = keys.current;
       let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
@@ -507,7 +507,7 @@ export function WorldView({
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
       // Hop-on bus: follow the planned road route, easing in and out of stops.
-      const auto = driving && AUTOPILOT.route.length > 0 ? (() => {
+      const auto = !sceneFrozen.current && driving && AUTOPILOT.route.length > 0 ? (() => {
         if (AUTOPILOT.leg === 0) { const first = AUTOPILOT.route[0]; p.x = first.x; p.y = first.y; AUTOPILOT.leg = 1; }
         const goal = AUTOPILOT.route[AUTOPILOT.leg];
         if (!goal) return null;
@@ -536,7 +536,7 @@ export function WorldView({
         }
         return { x, y, heading, speed: AUTOPILOT.speed };
       })() : null;
-      const driven = auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: roadCruiseSpeed(map.id, speedRef.current) }, dt,
+      const driven = sceneFrozen.current ? {x:p.x,y:p.y,heading:p.heading,speed:p.speed} : auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: roadCruiseSpeed(map.id, speedRef.current) }, dt,
         obstacles, (impact) => { collision = impact; }) : null);
       if (collision && !pausedRef.current) {
         const impact = crashImpact(collision.speed, collision.kind === "pedestrian");
@@ -850,6 +850,7 @@ export function WorldView({
           bike={bike}
           ads={ads}
           onUnavailable={unavailable3d}
+          onReady={sceneReady}
           getMe={getMe3d}
           getOthers={getOthers3d}
           getPolice={getPolice}
@@ -857,8 +858,8 @@ export function WorldView({
           getHomeAction={getHomeAction}
         />
       )}
-      {/* While the world loads, show a soft fade in the sky colour: no loading text. */}
-      {graphicsState === "loading" && <div aria-hidden className="pointer-events-none absolute inset-0 z-[100000] bg-[#d6e4df]" />}
+      {/* The handover covers this until the new renderer has a usable scene. */}
+      {graphicsState === "loading" && <div role="status" className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-sm font-bold text-[#17302c]">Preparing {map.name}…</div>}
       {graphicsState === "unavailable" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">
         <div className="max-w-sm rounded-3xl border border-[#c8b182]/50 bg-[#f7f1e6]/95 px-6 py-5 shadow-xl">
           <p className="text-sm font-black uppercase tracking-[0.18em]">3D graphics unavailable</p>

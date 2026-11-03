@@ -6,32 +6,82 @@ export function readVisualQuality(value: string | null): VisualQuality {
   return "high";
 }
 
-/** One high-detail profile on every display, including the latest composition effects. */
-export function visualProfile(dpr = 1) {
+/** Keep the art direction with bounded pixel, shadow and effect budgets. */
+export function visualProfile(dpr = 1, touch = false) {
   return {
-    pixelRatio: Math.min(2, Math.max(1, Number.isFinite(dpr) ? dpr : 1)),
+    pixelRatio: Math.min(
+      touch ? 1 : 1.5,
+      Math.max(0.75, Number.isFinite(dpr) ? dpr : 1),
+    ),
     shadows: true,
-    shadowSize: 2048,
+    shadowSize: touch ? 512 : 1024,
     postProcessing: true,
     environment: true,
-    samples: 4,
+    samples: touch ? 0 : 2,
     ambientOcclusion: true,
-    occlusionSamples: 12,
-    depthOfField: true,
-    msaa: true,
+    occlusionSamples: touch ? 4 : 8,
+    depthOfField: false,
+    msaa: false,
     bloom: true,
     bloomStrength: 0.18,
     exposure: 1.12,
-    adaptiveResolution: false,
+    adaptiveResolution: true,
   };
 }
 
-/** Renderer compatibility: keep the chosen high display ratio through slow or suspended frames. */
+/** Hysteresis avoids oscillation; suspension/long tasks never count as slow rendering. */
 export function adaptivePixelRatio(maximum: number) {
-  const ratio = Math.min(2, Math.max(1, Number.isFinite(maximum) ? maximum : 1));
-  return (_now: number, active = true) => {
-    // Keep the renderer callback signature without changing its fixed ratio.
-    void active;
+  const ceiling = Math.min(
+    1.5,
+    Math.max(0.65, Number.isFinite(maximum) ? maximum : 1),
+  );
+  let ratio = ceiling,
+    last: number | null = null,
+    windowAt = 0,
+    elapsed = 0,
+    frames = 0,
+    healthySince: number | null = null;
+  return (now: number, active = true) => {
+    if (!Number.isFinite(now)) return ratio;
+    if (!active) {
+      last = null;
+      frames = 0;
+      elapsed = 0;
+      windowAt = now;
+      healthySince = null;
+      return ratio;
+    }
+    if (last === null) {
+      last = now;
+      windowAt = now;
+      return ratio;
+    }
+    const interval = now - last;
+    last = now;
+    if (interval <= 0 || interval > 250) {
+      frames = 0;
+      elapsed = 0;
+      windowAt = now;
+      healthySince = null;
+      return ratio;
+    }
+    elapsed += interval;
+    frames++;
+    if (now - windowAt < 1200 || frames < 10) return ratio;
+    const average = elapsed / frames;
+    if (average > 30) {
+      ratio = Math.max(0.65, Math.round((ratio - 0.1) * 100) / 100);
+      healthySince = null;
+    } else if (average < 19) {
+      healthySince ??= windowAt;
+      if (now - healthySince >= 5000) {
+        ratio = Math.min(ceiling, Math.round((ratio + 0.05) * 100) / 100);
+        healthySince = now;
+      }
+    } else healthySince = null;
+    frames = 0;
+    elapsed = 0;
+    windowAt = now;
     return ratio;
   };
 }

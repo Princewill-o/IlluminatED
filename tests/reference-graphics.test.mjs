@@ -61,7 +61,5 @@ test("offline decoded branch meshes have valid indices, normals and canopy trans
 });
 
 test("miniature focus is opt-in Ultra desktop only", () => {
-  for (const quality of ["auto", "low", "medium", "high"]) assert.equal(visualProfile(quality, false).depthOfField, false);
-  assert.equal(visualProfile("ultra", false).depthOfField, true);
-  assert.equal(visualProfile("ultra", true).depthOfField, false);
+  for (const dpr of [1,2,4]) for (const touch of [false,true]) assert.equal(visualProfile(dpr,touch).depthOfField,false);
 });
