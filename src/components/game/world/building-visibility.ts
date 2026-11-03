@@ -3,6 +3,8 @@ import * as THREE from "three";
 const MAX_CUTAWAYS = 2;
 const CUTAWAY_OPACITY = .28;
 const SCAN_INTERVAL = .1;
+const STATIONARY_REFRESH = .5;
+const MOVEMENT_EPSILON_SQUARED = .02 * .02;
 
 /** Cut away the nearest real obstructions to the player, never a whole district. */
 export function buildingVisibility() {
@@ -18,6 +20,10 @@ export function buildingVisibility() {
   const hit = new THREE.Vector3();
   let selected: Building[] = [];
   let untilScan = 0;
+  let untilRefresh = 0;
+  let dirty = true;
+  const scannedCamera = new THREE.Vector3();
+  const scannedTargets: THREE.Vector3[] = [];
   let disposed = false;
 
   const opaque = (material: THREE.Material) => material.visible && !material.transparent && material.opacity >= .95 && material.depthWrite && ((material as THREE.Material & { transmission?: number }).transmission ?? 0) < .1;
@@ -112,16 +118,30 @@ export function buildingVisibility() {
       if (!meshes.length) return;
       registered.add(group);
       buildings.push({ group, bounds: new THREE.Box3().setFromObject(group), meshes, amount: 0 });
-      untilScan = 0;
+      dirty = true;
     },
     /** Call every frame with only player body/head targets and elapsed seconds. */
     update(camera: THREE.Vector3, targets: THREE.Vector3[], dt = 1 / 60) {
       if (disposed) return;
       const elapsed = Number.isFinite(dt) ? Math.max(0, Math.min(.1, dt)) : 0;
       untilScan -= elapsed;
-      if (untilScan <= 0 || !targets.length) {
+      untilRefresh -= elapsed;
+      const targetsChanged = targets.length !== scannedTargets.length;
+      const moved = targetsChanged || scannedCamera.distanceToSquared(camera) > MOVEMENT_EPSILON_SQUARED ||
+        targets.some((target, index) => target.distanceToSquared(scannedTargets[index]) > MOVEMENT_EPSILON_SQUARED);
+      // Camera settling must not re-raycast an unchanged street every 100 ms.
+      // The periodic refresh still catches visibility/material changes while idle.
+      if (dirty || targetsChanged || untilScan <= 0 && (moved || untilRefresh <= 0)) {
         scan(camera, targets);
+        scannedCamera.copy(camera);
+        targets.forEach((target, index) => {
+          if (!scannedTargets[index]) scannedTargets[index] = new THREE.Vector3();
+          scannedTargets[index].copy(target);
+        });
+        scannedTargets.length = targets.length;
+        dirty = false;
         untilScan = SCAN_INTERVAL;
+        untilRefresh = STATIONARY_REFRESH;
       }
       // Recover old blockers first. They keep their slot until fully restored,
       // so moving around a corner never makes four buildings transparent at once.

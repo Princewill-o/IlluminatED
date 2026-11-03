@@ -10,9 +10,9 @@ export const softSunShadows = start < 0 || end < 0 ? source : source.slice(0, st
     vec2 texelSize=1.0/shadowMapSize;
     float blockerSum=0.0;
     float blockerCount=0.0;
-    for(int i=0;i<8;i++){
+    for(int i=0;i<4;i++){
       float angle=float(i)*2.39996323;
-      vec2 offset=vec2(cos(angle),sin(angle))*sqrt((float(i)+.5)/8.0);
+      vec2 offset=vec2(cos(angle),sin(angle))*sqrt((float(i)+.5)/4.0);
       float depth=unpackRGBAToDepth(texture2D(shadowMap,shadowCoord.xy+offset*texelSize*shadowRadius*1.5));
       if(depth<shadowCoord.z-.00015){blockerSum+=depth;blockerCount+=1.0;}
     }
@@ -20,11 +20,11 @@ export const softSunShadows = start < 0 || end < 0 ? source : source.slice(0, st
       float separation=max(0.0,shadowCoord.z-blockerSum/blockerCount);
       float penumbra=clamp(separation*150.0,1.0,shadowRadius*3.0);
       shadow=0.0;
-      for(int i=0;i<12;i++){
+      for(int i=0;i<8;i++){
         float angle=float(i)*2.39996323;
-        vec2 offset=vec2(cos(angle),sin(angle))*sqrt((float(i)+.5)/12.0);
+        vec2 offset=vec2(cos(angle),sin(angle))*sqrt((float(i)+.5)/8.0);
         shadow+=texture2DCompare(shadowMap,shadowCoord.xy+offset*texelSize*penumbra,shadowCoord.z);
       }
-      shadow/=12.0;
+      shadow/=8.0;
     }
 ` + source.slice(end);

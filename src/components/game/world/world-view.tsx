@@ -44,6 +44,7 @@ import { isUKScene, loopRoadPosition } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
 import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, blocked, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
+import { retainNearbySnapshot } from "@/game/core/world-ui-snapshots";
 import { cn } from "@/lib/utils";
 
 
@@ -300,12 +301,15 @@ export function WorldView({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   useEffect(() => {
     if(!onNearby)return;
+    let previous:import("@/game/core/city-social").NearbyPerson[]|null=null;
     const refresh=()=>{
       const people:import("@/game/core/city-social").NearbyPerson[]=[
         ...NPC_SPOTS.filter(n=>n.id&&n.name).map(n=>({id:n.id!,name:n.name!,kind:"npc" as const,x:n.x,y:n.y,distance:Math.hypot(n.x-PLAYER.x,n.y-PLAYER.y)})),
         ...Array.from(world.players.current.values()).filter(p=>!hidden.has(p.id)).map(p=>({id:p.id,name:p.username,kind:"player" as const,x:p.x,y:p.y,distance:Math.hypot(p.x-PLAYER.x,p.y-PLAYER.y)})),
       ];
-      onNearby(people.filter(p=>p.distance<=64).sort((a,b)=>a.distance-b.distance).slice(0,8));
+      const next=people.filter(p=>p.distance<=64).sort((a,b)=>a.distance-b.distance).slice(0,8);
+      const snapshot=previous?retainNearbySnapshot(previous,next,true):next;
+      if(snapshot!==previous){previous=snapshot;onNearby(snapshot);}
     };
     refresh();const timer=setInterval(refresh,350);
     return()=>{clearInterval(timer);onNearby([]);};

@@ -81,6 +81,52 @@ test('moving between streets restores the old blockers before opening new cutawa
   assert.equal(originalDisposals,0);assert.equal(cloneDisposals,1);
   for(const site of sites)assert.equal(site.mesh.material,source);
 });
+test('stationary cutaways reuse raycasts while fades continue and periodically refresh hidden geometry',()=>{
+  const site=building(0,4),visibility=visibilityController();
+  let raycasts=0;
+  const raycast=site.mesh.raycast;
+  site.mesh.raycast=function(...args){raycasts++;return raycast.apply(this,args);};
+  visibility.register(site.group);
+  const camera=new THREE.Vector3(0,2,10),targets=[new THREE.Vector3(0,2,0)];
+  visibility.update(camera,targets,1/60);
+  assert.equal(raycasts,1);
+  const firstOpacity=site.mesh.material.opacity;
+  advance(visibility,camera,targets,20);
+  assert.equal(raycasts,1,'idle frames avoid another geometry raycast');
+  assert.ok(site.mesh.material.opacity<firstOpacity,'cached selection still fades each frame');
+  advance(visibility,camera,targets,12);
+  assert.equal(raycasts,2,'idle geometry is periodically rechecked');
+  site.mesh.visible=false;
+  advance(visibility,camera,targets,65);
+  assert.equal(site.mesh.material,site.material,'visibility changes restore material without camera movement');
+  visibility.dispose();
+});
+
+test('camera/target movement and newly registered blockers invalidate stationary cutaway selection',()=>{
+  const site=building(0,4),visibility=visibilityController();
+  let raycasts=0;
+  const raycast=site.mesh.raycast;
+  site.mesh.raycast=function(...args){raycasts++;return raycast.apply(this,args);};
+  visibility.register(site.group);
+  const camera=new THREE.Vector3(0,2,10),targets=[new THREE.Vector3(0,2,0)];
+  advance(visibility,camera,targets,10);
+  assert.equal(raycasts,1);
+  camera.x=.2;
+  visibility.update(camera,targets,1/60);
+  assert.equal(raycasts,2,'camera movement rescans after the regular scan budget');
+  advance(visibility,camera,targets,8);
+  targets[0].x=.2;
+  visibility.update(camera,targets,1/60);
+  assert.equal(raycasts,3,'in-place target movement invalidates a copied position');
+  const closer=building(0,7);visibility.register(closer.group);
+  visibility.update(camera,targets,1/60);
+  assert.notEqual(closer.mesh.material,closer.material,'registration rescans immediately');
+  visibility.update(camera,[],1/60);
+  advance(visibility,camera,[],60);
+  assert.equal(site.mesh.material,site.material);assert.equal(closer.mesh.material,closer.material);
+  visibility.dispose();
+});
+
 test('recorded music respects activation, scene changes, mute, background suspension and disposal',async()=>{
   let audio;
   class AudioMock {

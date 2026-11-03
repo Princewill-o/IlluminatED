@@ -31,9 +31,10 @@ import { makeNameplate } from "./nameplate";
 import { createNavigationTrail } from "./navigation-trail";
 import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
-import { sceneryCulling } from "./scenery-culling";
+import { curvedView, sceneryCulling } from "./scenery-culling";
 import { softSunShadows } from "./soft-sun-shadows";
-import { attachWorldBatch, mergeStaticScenery, staticScenerySignature } from "./static-scenery-batches";
+import { attachWorldBatch, mergeSolidScenery, mergeStaticScenery, registerSolidSceneryMaterial, solidScenerySignature, staticScenerySignature } from "./static-scenery-batches";
+import { createStaticShadowBatch, staticShadowEligible } from "./static-shadow-batches";
 import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
@@ -170,6 +171,7 @@ const mat = (c: string) => {
   if (!m) {
     m = new THREE.MeshStandardMaterial({ color: c, ...physicalSurface(c) });
     bend(m);
+    registerSolidSceneryMaterial(m, FOCUS);
     MATS.set(c, m);
   }
   return m;
@@ -2059,6 +2061,9 @@ export function World3D({
     const visual = visualProfile(window.devicePixelRatio||1,mobile);
     const culling=!indoors&&!ukScene?sceneryCulling():null;
     const cullingRoots:THREE.Object3D[]=[];
+    const batchedMaterials = new Set<THREE.Material>();
+    const shadowBatches:Array<()=>void>=[];
+    const bodyView=curvedView(), bodyBounds=new THREE.Box3();
     let nextCull=0;
     // MSAA, sRGB output and soft PCF shadow maps (scene-setup.ts).
     try{renderer = createRenderer(visual);}catch{onUnavailable?.();return;}
@@ -2069,6 +2074,8 @@ export function World3D({
 
     const scene = new THREE.Scene();
     sceneRef.current = scene;
+    const debugGraphics = {renderer,scene};
+    if(process.env.NODE_ENV === "development") (window as unknown as {__worldGraphics?:unknown}).__worldGraphics=debugGraphics;
     const navigationTrail=createNavigationTrail(scene,bend);
     let firstPaint = true;
     const releaseCapture = registerSceneCapture(()=>null);
@@ -2489,6 +2496,7 @@ export function World3D({
     const bodies = new Set<Body>();
     interface Body {
       root: THREE.Group;
+      ambient: boolean;
       char: Character3D | null;
       walking: boolean;
       motion?: { x: number; z: number; heading: number; speed: number };
@@ -2497,7 +2505,7 @@ export function World3D({
     const makeBody = (a: Avatar, logo: string | null = null, ambient = false): Body => {
       const root = new THREE.Group();
       let removed = false;
-      const b: Body = { root, char: null, walking: false, dispose: () => {
+      const b: Body = { root, ambient, char: null, walking: false, dispose: () => {
         if (removed) return;
         removed = true;
         bodies.delete(b);
@@ -2685,7 +2693,7 @@ export function World3D({
       }
     }
     const crossingNpcs = london ? crossingPedestrianPoses(Date.now()).map((pose, i) => {
-      const body = makeBody(npcLook(90 + i)); scene.add(body.root);
+      const body = makeBody(npcLook(90 + i), null, true); scene.add(body.root);
       return { id: pose.id, body };
     }) : [];
     const cyclists = london ? Array.from({ length: budget.cyclists }, (_, i) => {
@@ -2905,7 +2913,7 @@ export function World3D({
     let raf = 0;
     let last = performance.now();
     const start = last;
-    let monitorAt = start, monitorFrames = 0;
+    let monitorAt = start, monitorFrames = 0, monitorUpdate = 0, monitorRender = 0;
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let reduce = motionPreference.matches;
     const motionChanged = () => {reduce=motionPreference.matches;};
@@ -2915,12 +2923,13 @@ export function World3D({
     const frame = (now: number) => {
       if (document.hidden) {
         adaptResolution(now, false);
-        monitorAt = now; monitorFrames = 0;
+        monitorAt = now; monitorFrames = 0;monitorUpdate=0;monitorRender=0;
         last = now;
         raf = requestAnimationFrame(frame);
         return;
       }
       if (!renderDue(now)) { raf = requestAnimationFrame(frame); return; }
+      const workStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const secs = (now - start) / 1000;
@@ -3474,8 +3483,16 @@ export function World3D({
       }
       water.position.y = -0.3 + (reduce ? 0 : Math.sin(secs * 0.8) * 0.02);
       if(!reduce) river.texture.offset.x=secs*0.002;
+      // Cull character meshes, not their simulation roots or collision/witness records.
+      bodyView.update(camera);
+      for(const body of bodies)if(body.ambient&&body.char){
+        const position=body.root.position;
+        bodyBounds.min.set(position.x-1.5,position.y-.5,position.z-1.5);
+        bodyBounds.max.set(position.x+1.5,position.y+3,position.z+1.5);
+        body.char.object.visible=indoors||overview||bodyView.intersects(bodyBounds,{x:mx,z:mz},.5);
+      }
       // Animate nearby visible bodies only; distant residents still follow their routes.
-      for (const body of bodies) if (body.char && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
+      for (const body of bodies) if (body.char && body.char.object.visible && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
         const { x, z } = body.root.position, heading = body.root.rotation.y;
         const previous = body.motion;
         const distance = previous ? Math.hypot(x - previous.x, z - previous.z) : 0;
@@ -3537,6 +3554,7 @@ export function World3D({
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       updateUKScenery(mx,mz,overview);
       if(culling && now>=nextCull){culling.update(camera,{x:mx,z:mz},overview);nextCull=now+80;}
+      if(overview)for(const ring of rings)ring.visible=false;
       if (sightlinesReady && (london || highland || ukScene)) {
         sightlineTarget.copy(me.root.position); sightlineTarget.y += .9;
         // Keep the skyline solid in overview; normal play clears only the character's sightline.
@@ -3550,7 +3568,9 @@ export function World3D({
       const crashTime=(now-crashedAt)/1000;sparks.visible=!reduce&&crashTime>=0&&crashTime<.75;
       if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
+      const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
       presentation.render();releaseCapture.frame(renderer.domElement);
+      if(process.env.NODE_ENV === "development") { monitorUpdate+=renderStarted-workStarted;monitorRender+=performance.now()-renderStarted; }
       if(firstPaint&&((sightlinesReady&&me.char)||now-start>=5000)){firstPaint=false;releaseCapture.ready(map.id);readyCallback.current?.();}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
         Object.assign(renderer.domElement.dataset, {
@@ -3558,11 +3578,13 @@ export function World3D({
           graphicsDraws: String(renderer.info.render.calls),
           graphicsTriangles: String(renderer.info.render.triangles),
           graphicsRatio: renderer.getPixelRatio().toFixed(2),
+          graphicsUpdateMs: (monitorUpdate/monitorFrames).toFixed(2),
+          graphicsRenderMs: (monitorRender/monitorFrames).toFixed(2),
           graphicsPreset: "high",
           graphicsPhase: phase,
           graphicsWeather: weatherKind,
         });
-        monitorAt = now; monitorFrames = 0;
+        monitorAt = now; monitorFrames = 0;monitorUpdate=0;monitorRender=0;
       }
       if (visual.adaptiveResolution) {
         const ratio = adaptResolution(now);
@@ -3591,7 +3613,7 @@ export function World3D({
         let spin = false;
         for (let a: THREE.Object3D | null = m; a; a = a.parent) if (a.userData.spin || a.userData.train || a.userData.vehicleRig) spin = true;
         if (spin || m.geometry.attributes.color) return;
-        const signature = staticScenerySignature(m);
+        const signature = solidScenerySignature(m) ?? staticScenerySignature(m);
         if(signature === null) return;
         // These scenery meshes never move. Keep their baked world transforms
         // instead of rebuilding thousands of matrices on every render.
@@ -3609,7 +3631,7 @@ export function World3D({
         if (disposed) return;
         const owner=owners.get(meshes[0]);
         if (meshes.length > 1) {
-          if(meshes.every(mesh=>mesh.geometry===meshes[0].geometry)) {
+          if(meshes.every(mesh=>mesh.geometry===meshes[0].geometry && mesh.material===meshes[0].material)) {
             const mesh = new THREE.InstancedMesh(meshes[0].geometry, meshes[0].material, meshes.length);
             meshes.forEach((source, i) => { mesh.setMatrixAt(i, source.matrixWorld); source.removeFromParent(); });
             mesh.castShadow=meshes[0].castShadow;mesh.receiveShadow=meshes[0].receiveShadow;mesh.customDepthMaterial=meshes[0].customDepthMaterial ?? CURVED_DEPTH;
@@ -3622,8 +3644,10 @@ export function World3D({
             mesh.matrixAutoUpdate = false; mesh.matrixWorldAutoUpdate = false;
             if(owner)attachWorldBatch(mesh,owner);else{scene.add(mesh);cullableBatches.push(mesh);}
           } else {
-            const merged=mergeStaticScenery(meshes);
+            const solid = solidScenerySignature(meshes[0]) !== null;
+            const merged=solid ? mergeSolidScenery(meshes) : mergeStaticScenery(meshes);
             if(merged) {
+              if(solid)batchedMaterials.add(merged.material as THREE.Material);
               for(const source of meshes) { if(source.geometry!==BOX) retiredSceneryGeometry.add(source.geometry); source.removeFromParent(); }
               if(owner)attachWorldBatch(merged,owner);else{scene.add(merged);cullableBatches.push(merged);}
             }
@@ -3634,17 +3658,46 @@ export function World3D({
           batchStart = performance.now();
         }
       }
+      // Depth is independent of facade colours: keep exact static geometry but
+      // submit each building/cell once to the shadow map, with no main-pass draw.
+      const shadowGroups=new Map<string,{parent:THREE.Object3D;meshes:THREE.Mesh[]}>();
+      const shadowBounds=new THREE.Box3(),shadowCenter=new THREE.Vector3();
+      const collectShadow=(object:THREE.Object3D)=>{
+        const mesh=object as THREE.Mesh;
+        if(!mesh.isMesh||!staticShadowEligible(mesh,CURVED_DEPTH))return;
+        let parent:THREE.Object3D=scene;
+        for(let owner=mesh.parent;owner;owner=owner.parent)if(buildingOwners.has(owner)){parent=owner;break;}
+        shadowBounds.setFromObject(mesh);shadowBounds.getCenter(shadowCenter);
+        const key=`${parent.uuid}:${mesh.layers.mask}:${Math.floor(shadowCenter.x/16)}:${Math.floor(shadowCenter.z/16)}`;
+        const entry=shadowGroups.get(key)??{parent,meshes:[]};entry.meshes.push(mesh);shadowGroups.set(key,entry);
+      };
+      world.traverse(collectShadow);
+      for(const mesh of cullableBatches)collectShadow(mesh);
+      for(const entry of shadowGroups.values()){
+        if(disposed)return;
+        const batch=createStaticShadowBatch(entry.meshes,CURVED_DEPTH);
+        if(batch){
+          shadowBatches.push(batch.dispose);
+          if(entry.parent===scene){scene.add(batch.mesh);cullableBatches.push(batch.mesh);}else attachWorldBatch(batch.mesh,entry.parent);
+        }
+        if(performance.now()-batchStart>4){await new Promise<void>(resolve=>setTimeout(resolve,0));batchStart=performance.now();}
+      }
       for (const group of sightlineBuildings) visibility.register(group);
       sightlinesReady=true;
       // Only authored static roots: ambient lights, leaves and meadows follow the player.
-      for(const object of [...cullingRoots,...cullableBatches])culling?.register(object);
+      for(const object of [...cullingRoots,...cullableBatches,...rings])culling?.register(object);
     });
 
     return () => {
       cancelAnimationFrame(raf);
       releaseCapture();sparksGeometry.dispose();sparks.material.dispose();
       disposed = true;
+      if(process.env.NODE_ENV === "development") {
+        const debugWindow=window as unknown as {__worldGraphics?:unknown};
+        if(debugWindow.__worldGraphics===debugGraphics)delete debugWindow.__worldGraphics;
+      }
       visibility.dispose();culling?.dispose();
+      for(const dispose of shadowBatches)dispose();
       policeRig?.dispose();
       navigationTrail.dispose();
       disposeVehicle(scene);
@@ -3686,6 +3739,8 @@ export function World3D({
       });
       geometryToDispose.forEach(geometry=>geometry.dispose());
       retiredSceneryGeometry.clear();
+      for(const material of batchedMaterials)material.dispose();
+      batchedMaterials.clear();
       playerLabel.remove();
       for (const other of others.values()) { other.label.remove(); other.dispose(); }
       el.removeChild(renderer.domElement);

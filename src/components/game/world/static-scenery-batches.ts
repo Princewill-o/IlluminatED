@@ -3,6 +3,79 @@ import { deinterleaveGeometry, mergeGeometries } from "three/examples/jsm/utils/
 
 const TRANSFORMED = new Set(["position", "normal", "tangent"]);
 const MAX_VERTICES = 250_000;
+const solidShaderFamilies = new WeakMap<THREE.Material, object>();
+const shaderFamilyIds = new WeakMap<object, number>();
+let nextShaderFamilyId = 0;
+
+/** Opt in only immutable palette materials whose shader uniforms are shared.
+ * Clones deliberately do not inherit this registration: weather/window finishes
+ * may change their material colour after geometry has been built. */
+export function registerSolidSceneryMaterial(material: THREE.MeshStandardMaterial, shaderFamily: object) {
+  solidShaderFamilies.set(material, shaderFamily);
+}
+
+/** A strict material key excludes only its diffuse colour, which is baked below. */
+export function solidScenerySignature(mesh: THREE.Mesh): string | null {
+  const material = mesh.material;
+  if (Array.isArray(material) || !(material instanceof THREE.MeshStandardMaterial) ||
+      material.type !== "MeshStandardMaterial" || material.transparent || material.opacity !== 1 ||
+      material.vertexColors || material.alphaTest !== 0 || material.alphaHash || material.wireframe ||
+      material.emissive.r !== 0 || material.emissive.g !== 0 || material.emissive.b !== 0 ||
+      material.clippingPlanes?.length || mesh.geometry.getAttribute("color") ||
+      Object.values(material).some(value => value instanceof THREE.Texture)) return null;
+  const family = solidShaderFamilies.get(material), geometry = staticScenerySignature(mesh);
+  if (!family || geometry === null) return null;
+  let familyId = shaderFamilyIds.get(family);
+  if (familyId === undefined) { familyId = ++nextShaderFamilyId; shaderFamilyIds.set(family, familyId); }
+  const description = { ...material.toJSON() } as Record<string, unknown>;
+  for (const key of ["metadata", "uuid", "name", "color"]) delete description[key];
+  return JSON.stringify([familyId, material.customProgramCacheKey(), material.defines, material.precision, description, geometry.slice(material.uuid.length)]);
+}
+
+/** Merge differently coloured, otherwise identical solid materials into one draw.
+ * The result owns BOTH its geometry and its cloned material. Sources stay intact.
+ * Linear material colours become Float32 vertex colours, preserving the shader's
+ * lighting, reflections and output conversion without quantizing the palette. */
+export function mergeSolidScenery(meshes: THREE.Mesh[]): THREE.Mesh | null {
+  if (meshes.length < 2) return null;
+  const signature = solidScenerySignature(meshes[0]);
+  if (signature === null || meshes.some(mesh => solidScenerySignature(mesh) !== signature)) return null;
+  const sourceMaterial = meshes[0].material as THREE.MeshStandardMaterial;
+  const material = sourceMaterial.clone();
+  material.color.setRGB(1, 1, 1);
+  material.vertexColors = true;
+  material.onBeforeCompile = sourceMaterial.onBeforeCompile;
+  material.customProgramCacheKey = sourceMaterial.customProgramCacheKey;
+  const copies: THREE.Mesh[] = [];
+  let result: THREE.Mesh | null = null;
+  try {
+    for (const source of meshes) {
+      source.updateWorldMatrix(true, false);
+      const geometry = source.geometry.clone(), colour = (source.material as THREE.MeshStandardMaterial).color;
+      const colours = new Float32Array(geometry.attributes.position.count * 3);
+      for (let i = 0; i < colours.length; i += 3) {
+        colours[i] = colour.r; colours[i + 1] = colour.g; colours[i + 2] = colour.b;
+      }
+      geometry.setAttribute("color", new THREE.BufferAttribute(colours, 3));
+      const copy = new THREE.Mesh(geometry, material);
+      copy.matrixAutoUpdate = false; copy.matrixWorldAutoUpdate = false;
+      copy.matrixWorld.copy(source.matrixWorld);
+      copy.castShadow = source.castShadow; copy.receiveShadow = source.receiveShadow;
+      copy.customDepthMaterial = source.customDepthMaterial; copy.customDistanceMaterial = source.customDistanceMaterial;
+      copy.renderOrder = source.renderOrder; copy.layers.mask = source.layers.mask;
+      copy.visible = source.visible; copy.frustumCulled = source.frustumCulled;
+      copy.onBeforeRender = source.onBeforeRender; copy.onAfterRender = source.onAfterRender;
+      copy.onBeforeShadow = source.onBeforeShadow; copy.onAfterShadow = source.onAfterShadow;
+      copies.push(copy);
+    }
+    result = mergeStaticScenery(copies);
+    if (result) result.name = "Solid colour scenery cell";
+    return result;
+  } finally {
+    for (const copy of copies) copy.geometry.dispose();
+    if (!result) material.dispose();
+  }
+}
 
 /** Compatibility key for a caller-selected static mesh, excluding its location.
  * The caller adds a spatial cell so merged bounds still permit useful culling. */

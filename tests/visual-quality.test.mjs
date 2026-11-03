@@ -18,7 +18,7 @@ test("graphics retain lighting and materials within a bounded rendering budget",
     assert.equal(high.postProcessing, true);
     assert.equal(high.environment, true);
     assert.equal(high.bloom, true);
-    assert.equal(high.samples, 2);
+    assert.equal(high.samples, 0);
     assert.equal(high.ambientOcclusion, true);
     assert.equal(high.occlusionSamples, 8);
     assert.equal(high.depthOfField, false);

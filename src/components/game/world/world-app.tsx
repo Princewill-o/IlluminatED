@@ -107,6 +107,7 @@ import {
   hotelMap,
   safeSpot,
 } from "@/game/core/world";
+import { retainNearbySnapshot } from "@/game/core/world-ui-snapshots";
 import type { HomeState } from "@/lib/game/careers-server";
 import { cn } from "@/lib/utils";
 
@@ -304,14 +305,8 @@ export function WorldApp({
   const [interview, setInterview] = useState<{ stars: number; charge: string; area: string } | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
   const [bankLoan, setBankLoan] = useState<BankLoan>({ balance: 0, status: "none" });
-  const [gameDate, setGameDate] = useState(() => new Date());
+  const [gameDate, setGameDate] = useState(() => gameDateAt());
   const bankCourtSeen = useRef(false);
-  useEffect(() => {
-    const updateClock = () => setGameDate(gameDateAt());
-    updateClock();
-    const timer = window.setInterval(updateClock, 1000);
-    return () => window.clearInterval(timer);
-  }, [me.id]);
   const [dealer, setDealer] = useState(false);
   const boardedStation = useRef<string | null>(null);
   const [homeAction, setHomeAction] = useState<HomeAction | null>(null);
@@ -341,9 +336,18 @@ export function WorldApp({
   }, []);
   const [shop, setShop] = useState<"tescow" | "bootz" | null>(null);
   const [phone, setPhone] = useState(false);
+  // The HUD clock updates in its own component. Refresh this panel-only date
+  // only while a consumer is open, rather than reconciling the world every second.
+  useEffect(() => {
+    if(!mobileLife&&!phone&&!bankOpen)return;
+    const updateClock=()=>setGameDate(gameDateAt());updateClock();
+    const timer=window.setInterval(updateClock,1000);
+    return()=>window.clearInterval(timer);
+  },[mobileLife,phone,bankOpen]);
   const [menu, setMenu] = useState(false);
   const [phoneApp,setPhoneApp]=useState<"home"|"nearby">("home");
   const [nearby,setNearby]=useState<NearbyPerson[]>([]);
+  const refreshNearby=useCallback((people:NearbyPerson[])=>setNearby(previous=>retainNearbySnapshot(previous,people,phone)),[phone]);
   const [ventureOpen,setVentureOpen]=useState(false);
   useEffect(()=>{const open=()=>{setPhoneApp("nearby");setPhone(true);};window.addEventListener("illuminated:nearby",open);return()=>window.removeEventListener("illuminated:nearby",open);},[]);
   const [housing, setHousing] = useState(false);
@@ -1116,7 +1120,7 @@ export function WorldApp({
       {!mobileLife && !rescue && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
         offlinePreview={developerTeleport}
         key={`${mapId}:${server}:${trip}`}
-        onNearby={setNearby}
+        onNearby={refreshNearby}
         paused={busy || menu || rescue || ventureOpen}
         transitioning={Boolean(passage&&!passage.ready)}
         homeAction={homeAction}

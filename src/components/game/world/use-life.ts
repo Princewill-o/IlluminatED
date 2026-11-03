@@ -3,6 +3,7 @@ import {useCallback,useEffect,useState} from "react";
 
 import {freshLife,type LifeState} from "@/game/core/law";
 import {lifeStorageKey,readAccountLife,resetAccountWanted,type LifeStorage} from "@/game/core/life-storage";
+import {retainLifeSnapshot} from "@/game/core/world-ui-snapshots";
 
 const EVENT="illuminated:life";
 const memory=new Map<string,string>();
@@ -14,11 +15,12 @@ export function useLife(userId:string,resetWantedToken?:string){
  const [life,setLife]=useState<LifeState>(freshLife);
  useEffect(()=>{
   if(resetWantedToken)resetAccountWanted(store,userId,resetWantedToken,Date.now());
-  setLife(readLife(userId));
-  const timer=setInterval(()=>setLife(readLife(userId)),1000);
-  const on=()=>setLife(readLife(userId));window.addEventListener(EVENT,on);
+  const on=()=>{const next=readLife(userId);setLife(previous=>retainLifeSnapshot(previous,next));};
+  on();
+  const timer=setInterval(on,1000);
+  window.addEventListener(EVENT,on);
   return()=>{clearInterval(timer);window.removeEventListener(EVENT,on);};
  },[userId,resetWantedToken]);
- const update=useCallback((f:(state:LifeState)=>LifeState)=>{const next=f(readLife(userId));writeLife(userId,next);setLife(next);},[userId]);
+ const update=useCallback((f:(state:LifeState)=>LifeState)=>{const next=f(readLife(userId));writeLife(userId,next);setLife(previous=>retainLifeSnapshot(previous,next));},[userId]);
  return {life,update};
 }

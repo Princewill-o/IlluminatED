@@ -17,7 +17,8 @@ export function visualProfile(dpr = 1, touch = false) {
     shadowSize: touch ? 512 : 1024,
     postProcessing: true,
     environment: true,
-    samples: touch ? 0 : 2,
+    // FXAA handles edges without multisampling and resolving the HDR framebuffer.
+    samples: 0,
     ambientOcclusion: true,
     occlusionSamples: touch ? 4 : 8,
     depthOfField: false,
@@ -69,12 +70,12 @@ export function adaptivePixelRatio(maximum: number) {
     frames++;
     if (now - windowAt < 1200 || frames < 10) return ratio;
     const average = elapsed / frames;
-    if (average > 30) {
+    if (average > 17.5) {
       ratio = Math.max(0.65, Math.round((ratio - 0.1) * 100) / 100);
       healthySince = null;
-    } else if (average < 19) {
+    } else if (average < 17.1) {
       healthySince ??= windowAt;
-      if (now - healthySince >= 5000) {
+      if (now - healthySince >= 12000) {
         ratio = Math.min(ceiling, Math.round((ratio + 0.05) * 100) / 100);
         healthySince = now;
       }

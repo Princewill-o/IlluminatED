@@ -4,11 +4,11 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { FXAAShader } from "three/examples/jsm/shaders/FXAAShader.js";
 
 import { contactShadows } from "./contact-shadows";
 import { environmentPalette, type EnvironmentPhase } from "./environment-palette";
+import { LightweightBloomPass } from "./lightweight-bloom";
 import { miniatureFocus } from "./miniature-focus";
 import { outdoorEnvironment } from "./sky-environment";
 
@@ -102,12 +102,7 @@ export function cinematicRenderer(
     }
     const bloom =
       profile.bloom && hdr
-        ? new UnrealBloomPass(
-            new THREE.Vector2(1, 1),
-            profile.bloomStrength,
-            0.45,
-            1.45,
-          )
+        ? new LightweightBloomPass(profile.bloomStrength)
         : null;
     if (bloom) {
       composer.addPass(bloom);
