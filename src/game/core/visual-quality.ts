@@ -11,7 +11,7 @@ export function visualProfile(dpr = 1, touch = false) {
   return {
     pixelRatio: Math.min(
       touch ? 1 : 1.5,
-      Math.max(0.75, Number.isFinite(dpr) ? dpr : 1),
+      Math.max(1, Number.isFinite(dpr) ? dpr : 1),
     ),
     shadows: true,
     shadowSize: touch ? 512 : 1024,
@@ -30,28 +30,32 @@ export function visualProfile(dpr = 1, touch = false) {
   };
 }
 
-/** Hysteresis avoids oscillation; suspension/long tasks never count as slow rendering. */
+/** Adapt supersampling, never the native CSS-pixel image. Asset compilation and
+ * suspension are excluded so startup cannot leave the whole scene blurry. */
 export function adaptivePixelRatio(maximum: number) {
   const ceiling = Math.min(
     1.5,
-    Math.max(0.65, Number.isFinite(maximum) ? maximum : 1),
+    Math.max(1, Number.isFinite(maximum) ? maximum : 1),
   );
   let ratio = ceiling,
     last: number | null = null,
     windowAt = 0,
     elapsed = 0,
     frames = 0,
+    readySince: number | null = null,
     healthySince: number | null = null;
-  return (now: number, active = true) => {
+  return (now: number, active = true, ready = true) => {
     if (!Number.isFinite(now)) return ratio;
-    if (!active) {
+    if (!active || !ready) {
       last = null;
+      readySince = null;
       frames = 0;
       elapsed = 0;
       windowAt = now;
       healthySince = null;
       return ratio;
     }
+    readySince ??= now;
     if (last === null) {
       last = now;
       windowAt = now;
@@ -59,7 +63,7 @@ export function adaptivePixelRatio(maximum: number) {
     }
     const interval = now - last;
     last = now;
-    if (interval <= 0 || interval > 250) {
+    if (interval <= 0 || interval > 250 || now - readySince < 1000) {
       frames = 0;
       elapsed = 0;
       windowAt = now;
@@ -71,12 +75,12 @@ export function adaptivePixelRatio(maximum: number) {
     if (now - windowAt < 1200 || frames < 10) return ratio;
     const average = elapsed / frames;
     if (average > 17.5) {
-      ratio = Math.max(0.65, Math.round((ratio - 0.1) * 100) / 100);
+      ratio = Math.max(1, Math.round((ratio - 0.1) * 100) / 100);
       healthySince = null;
     } else if (average < 17.1) {
       healthySince ??= windowAt;
-      if (now - healthySince >= 12000) {
-        ratio = Math.min(ceiling, Math.round((ratio + 0.05) * 100) / 100);
+      if (now - healthySince >= 5000) {
+        ratio = Math.min(ceiling, Math.round((ratio + 0.1) * 100) / 100);
         healthySince = now;
       }
     } else healthySince = null;

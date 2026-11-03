@@ -55,3 +55,13 @@ Applied to the restored `16fed7a3` baseline on 3 November 2026:
 - Frame scheduling discards stale work after a hitch instead of bursting several updates on high-refresh displays. Walking no longer builds driving obstacles or reads sound preferences on every frame.
 
 Verification: 184 targeted tests pass. The production build, TypeScript and full source lint pass with the same 9 existing warnings. Credential scanning reports 0 findings. New tests cover the canvas resize/draw/publish lifecycle, shadow projection stability, repeated cutaway transitions and high-refresh hitch recovery. No fresh end-to-end frame-rate measurement was performed for this patch.
+
+## Scene clarity and character movement
+
+Follow-up on 3 November 2026, based on `569e2767`:
+
+- Keep the scene at least at its native CSS-pixel resolution. The previous adaptive floor could stretch a 65% render across the canvas, leaving the world visibly softer than its HTML interface. Desktop supersampling still adapts between 1 and 1.5; touch devices retain a ratio of 1. Loading and the first second of shader warm-up do not lower quality.
+- Increase anisotropic filtering on existing wall and roof textures, preserving their detail at the street camera's oblique angles. Texture sizes, shadow sizes and post-processing budgets remain unchanged.
+- Filter character velocity across repeated physics snapshots and use separate walk/run entry and exit thresholds. This prevents a steady walk from repeatedly switching animation clips. Stopping selects idle immediately; teleports and invalid timing samples reset measured velocity.
+
+Verification: 190 targeted tests pass, including loading guards, sustained slow-frame resolution limits, locomotion at 30/60/144 Hz, gait hysteresis and teleport recovery. The production build exits 0 and generates all 169 static pages, including TypeScript and full source lint (0 errors and the same 9 existing warnings). Credential scanning reports 0 findings and the whitespace check passes. The background London preview renders a 1280×720 canvas at ratio 1, supports movement and reports no console errors. Its embedded renderer measured approximately 30.7 FPS; this clarity change has not demonstrated 60 FPS and the earlier measurements at a lower render ratio do not establish native-resolution performance. The saved preview was visually reviewed.

@@ -68,7 +68,8 @@ function surfaceTexture(slate: boolean) {
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   // Roof extrusions already have UVs in model units; box walls have 0–1 UVs.
   if (slate) texture.repeat.set(0.25, 0.4);
-  texture.anisotropy = 2;
+  // Preserve courses at oblique street-camera angles; Three caps this to the GPU limit.
+  texture.anisotropy = 8;
   return texture;
 }
 

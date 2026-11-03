@@ -44,6 +44,7 @@ import { riverGeometry, riverSurface } from "./water-style3d";
 
 import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
 import type { WorldAffiliation } from "@/game/core/affiliation";
+import { characterSpeed, locomotionClip, type LocomotionClip } from "@/game/core/character-locomotion";
 import { residentIdentity } from "@/game/core/city-social";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
@@ -2500,6 +2501,7 @@ export function World3D({
       ambient: boolean;
       char: Character3D | null;
       walking: boolean;
+      locomotion?: LocomotionClip;
       motion?: { x: number; z: number; heading: number; speed: number };
       dispose: () => void;
     }
@@ -3497,8 +3499,8 @@ export function World3D({
         const { x, z } = body.root.position, heading = body.root.rotation.y;
         const previous = body.motion;
         const distance = previous ? Math.hypot(x - previous.x, z - previous.z) : 0;
-        const speed = previous && distance < 2 && dt > 0 ? distance / dt : 0;
-        const turn = previous && dt > 0 ? Math.atan2(Math.sin(heading - previous.heading), Math.cos(heading - previous.heading)) / dt : 0;
+        const speed = characterSpeed(previous?.speed??0,distance,dt);
+        const turn = previous && Number.isFinite(distance) && distance < 2 && dt > 0 ? Math.atan2(Math.sin(heading - previous.heading), Math.cos(heading - previous.heading)) / dt : 0;
         body.motion = { x, z, heading, speed };
         body.char.update(dt, reduce, { speed, turn });
       }
@@ -3515,7 +3517,10 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
-      else if (me.char && now > swingUntil && !getHomeAction?.()) me.char.play(p.walking ? (me.motion?.speed ?? 0) > 4.2 ? "sprint" : "walk" : "idle");
+      else if (me.char && now > swingUntil && !getHomeAction?.()) {
+        me.locomotion=locomotionClip(p.walking,me.motion?.speed??0,me.locomotion);
+        me.char.play(me.locomotion);
+      }
       const homeAction = getHomeAction?.();
       playerRing.visible = !overview && !homeAction;
       for (const screen of homeScreens) {
@@ -3570,7 +3575,7 @@ export function World3D({
       if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
       const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
-      presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now):null);
+      presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now,true,!firstPaint):null);
       if(process.env.NODE_ENV === "development") { monitorUpdate+=renderStarted-workStarted;monitorRender+=performance.now()-renderStarted; }
       if(firstPaint&&((sightlinesReady&&me.char)||now-start>=5000)){firstPaint=false;releaseCapture.ready(map.id);readyCallback.current?.();}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {

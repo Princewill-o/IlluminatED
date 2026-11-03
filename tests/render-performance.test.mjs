@@ -7,11 +7,13 @@ import * as THREE from "three";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const visual = projectData("src/game/core/visual-quality.ts");
 
-test("adaptation pursues sixty frames rather than accepting the mid-thirties", () => {
-  const adapt = visual.adaptivePixelRatio(1);
+test("adaptation reduces supersampling at thirty-five FPS without rendering below native size", () => {
+  const adapt = visual.adaptivePixelRatio(1.5);
   let ratio = adapt(0);
   for (let time = 1000 / 35; time < 5000; time += 1000 / 35) ratio = adapt(time);
-  assert.ok(ratio < 0.8, "35 FPS must trigger continued optimization");
+  assert.ok(ratio < 1.5, "35 FPS must reduce supersampling");
+  for (let time = 5000; time < 30000; time += 1000 / 35) ratio = adapt(time);
+  assert.equal(ratio, 1, "the native scene must not be enlarged from a smaller canvas");
   const steady = visual.adaptivePixelRatio(1);
   for (let frame = 0; frame < 600; frame++) assert.equal(steady(frame * 1000 / 60), 1);
 });
@@ -21,7 +23,7 @@ test("sustained slow rendering lowers resolution, stable frames recover it, susp
   let ratio = adapt(0);
   for (let time = 50; time <= 6000; time += 50) ratio = adapt(time);
   assert.ok(ratio < 1.5, "slow frames must reduce pixel work");
-  assert.ok(ratio >= 0.65);
+  assert.ok(ratio >= 1);
   const before = ratio;
   adapt(60000, false);
   assert.equal(adapt(60016), before, "suspension is not a slow frame");
@@ -29,6 +31,13 @@ test("sustained slow rendering lowers resolution, stable frames recover it, susp
   assert.ok(ratio > before, "sustained headroom can recover detail");
   assert.ok(ratio <= 1.5);
   assert.ok(Number.isFinite(adapt(NaN)));
+});
+
+test("loading and shader warmup cannot permanently reduce a sharp scene", () => {
+  const adapt=visual.adaptivePixelRatio(1.5);
+  for(let now=0;now<=10000;now+=50)assert.equal(adapt(now,true,false),1.5);
+  for(let now=10050;now<10950;now+=50)assert.equal(adapt(now,true,true),1.5);
+  for(let now=10960;now<20000;now+=1000/60)assert.equal(adapt(now,true,true),1.5);
 });
 
 test("default and touch profiles avoid redundant MSAA and unbounded high-DPI work while retaining lighting", () => {
