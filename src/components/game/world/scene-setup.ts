@@ -62,10 +62,23 @@ export function createLighting(scene: THREE.Scene, { phase, indoors, visual }: {
   return { ambient, hemi, sun };
 }
 
-/** Keeps the sun's shadow box centred on what the camera is looking at. */
+const lightDirection=new THREE.Vector3(),shadowRight=new THREE.Vector3(),shadowUp=new THREE.Vector3();
+const WORLD_UP=new THREE.Vector3(0,1,0);
+/** Anchor the moving shadow camera to its texel grid, rather than sliding its
+ * depth samples by fractions of a texel on every walking frame. */
 export function followSun(sun: THREE.DirectionalLight, focus: THREE.Vector3) {
-  sun.position.set(focus.x - 10, 22, focus.z + 12);
+  lightDirection.set(-10,22-focus.y,12).normalize();
+  shadowRight.crossVectors(WORLD_UP,lightDirection).normalize();
+  shadowUp.crossVectors(lightDirection,shadowRight).normalize();
+  const camera=sun.shadow.camera;
+  const texelX=(camera.right-camera.left)/Math.max(1,sun.shadow.mapSize.x);
+  const texelY=(camera.top-camera.bottom)/Math.max(1,sun.shadow.mapSize.y);
+  const x=focus.dot(shadowRight),y=focus.dot(shadowUp);
+  const dx=Math.round(x/texelX)*texelX-x,dy=Math.round(y/texelY)*texelY-y;
   sun.target.position.copy(focus);
+  sun.target.position.addScaledVector(shadowRight,dx).addScaledVector(shadowUp,dy);
+  sun.position.copy(sun.target.position);
+  sun.position.x-=10;sun.position.y+=22-focus.y;sun.position.z+=12;
 }
 
 /**

@@ -43,3 +43,15 @@ The standing daytime run had no frame intervals over 25 ms. Typical draw counts 
 - Stationary building cutaways reuse their obstruction scan. Equivalent storage/nearby polls keep React snapshot identity, and the panel-only clock updates only while one of its consumers is open. This removes periodic 350 ms/one-second reconciliation stalls without dropping real state changes.
 
 Browser checks also covered the phone, entering home and walking through its door back outside. No console errors were reported. Day and night were visually reviewed, including warm lamp pools and lit windows. Automated coverage adds geometry/colour/shadow equivalence, main-pass exclusion, camera re-entry, snapshot changes and bloom lifecycle checks. Final verification: 176 tests pass; the production build exits 0, including TypeScript and full source lint (0 errors, the same 9 existing warnings); credential scanning has 0 findings.
+
+## Flicker and frame-pacing fixes
+
+Applied to the restored `16fed7a3` baseline on 3 November 2026:
+
+- Resolution changes now resize the canvas before drawing and publishing the frame. Previously, resizing after rendering could clear the drawing buffer and leave a blank canvas until the next frame.
+- The following sun camera snaps to its shadow texel grid in light space, reducing fractional-sample shimmer while walking. Shadow resolution and the existing lighting budget remain unchanged.
+- Cutaways reuse faded materials until scene cleanup, avoiding repeated allocation and shader variant churn. A short loss hold prevents brief facade-edge misses from pulsing opacity; hidden geometry and overview still recover immediately.
+- Fine diffuse grain stays in the wall and ground colour maps, rather than also driving noisy bump normals. This reduces shimmer and removes the associated height-map reads.
+- Frame scheduling discards stale work after a hitch instead of bursting several updates on high-refresh displays. Walking no longer builds driving obstacles or reads sound preferences on every frame.
+
+Verification: 184 targeted tests pass. The production build, TypeScript and full source lint pass with the same 9 existing warnings. Credential scanning reports 0 findings. New tests cover the canvas resize/draw/publish lifecycle, shadow projection stability, repeated cutaway transitions and high-refresh hitch recovery. No fresh end-to-end frame-rate measurement was performed for this patch.

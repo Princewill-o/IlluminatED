@@ -5,7 +5,7 @@ export function frameBudget(fps = 60) {
   return (now: number) => {
     if (now + 0.1 < next) return false;
     // Retain fractional timing at 120/144/240Hz; discard backlog after a pause.
-    next = next && now - next < interval * 2 ? next + interval : now + interval;
+    next = next && now - next < interval ? next + interval : now + interval;
     return true;
   };
 }

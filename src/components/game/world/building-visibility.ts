@@ -5,10 +5,12 @@ const CUTAWAY_OPACITY = .28;
 const SCAN_INTERVAL = .1;
 const STATIONARY_REFRESH = .5;
 const MOVEMENT_EPSILON_SQUARED = .02 * .02;
+const LOSS_HOLD = .2;
+const SURFACE_UNIFORMS = ["emissiveIntensity", "roughness", "metalness", "envMapIntensity"] as const;
 
 /** Cut away the nearest real obstructions to the player, never a whole district. */
 export function buildingVisibility() {
-  type Building = { group: THREE.Group; bounds: THREE.Box3; meshes: THREE.Mesh[]; amount: number };
+  type Building = { group: THREE.Group; bounds: THREE.Box3; meshes: THREE.Mesh[]; amount: number; missingFor: number };
   type MaterialEntry = { original: THREE.Material | THREE.Material[]; faded: THREE.Material | THREE.Material[] };
   const buildings: Building[] = [];
   const registered = new Set<THREE.Group>();
@@ -35,15 +37,13 @@ export function buildingVisibility() {
     for (let node: THREE.Object3D | null = mesh; node; node = node.parent) if (!node.visible) return false;
     return true;
   };
+  const drawable = (building: Building) => visible(building.group) &&
+    building.meshes.some(mesh => visible(mesh) && originals(mesh).some(opaque));
   const restore = (building: Building) => {
     for (const mesh of building.meshes) {
       const entry = materials.get(mesh);
       if (entry) {
         mesh.material = entry.original;
-        for (const material of Array.isArray(entry.faded) ? entry.faded : [entry.faded]) {
-          if (clones.delete(material)) material.dispose();
-        }
-        materials.delete(mesh);
       }
     }
   };
@@ -69,7 +69,15 @@ export function buildingVisibility() {
       const source = Array.isArray(entry.original) ? entry.original : [entry.original];
       const faded = Array.isArray(entry.faded) ? entry.faded : [entry.faded];
       faded.forEach((material, index) => {
-        if (material !== source[index]) material.opacity = source[index].opacity * (1 - building.amount * (1 - CUTAWAY_OPACITY));
+        if (material === source[index]) return;
+        // Cached fade materials follow weather/time uniforms on their source.
+        const original = source[index] as THREE.MeshStandardMaterial;
+        const copy = material as THREE.MeshStandardMaterial;
+        if (copy.color && original.color) copy.color.copy(original.color);
+        if (copy.emissive && original.emissive) copy.emissive.copy(original.emissive);
+        for (const key of SURFACE_UNIFORMS)
+          if (typeof original[key] === "number") copy[key] = original[key];
+        material.opacity = original.opacity * (1 - building.amount * (1 - CUTAWAY_OPACITY));
       });
       mesh.material = entry.faded;
     }
@@ -117,7 +125,7 @@ export function buildingVisibility() {
       });
       if (!meshes.length) return;
       registered.add(group);
-      buildings.push({ group, bounds: new THREE.Box3().setFromObject(group), meshes, amount: 0 });
+      buildings.push({ group, bounds: new THREE.Box3().setFromObject(group), meshes, amount: 0, missingFor: 0 });
       dirty = true;
     },
     /** Call every frame with only player body/head targets and elapsed seconds. */
@@ -146,7 +154,14 @@ export function buildingVisibility() {
       // Recover old blockers first. They keep their slot until fully restored,
       // so moving around a corner never makes four buildings transparent at once.
       for (const building of active) {
-        if (selected.includes(building)) continue;
+        if (selected.includes(building) && drawable(building)) { building.missingFor = 0; continue; }
+        // Brief edge misses must not pulse a facade between opaque and faded.
+        // Overview/hidden geometry bypass the hold and start recovering now.
+        if (targets.length && drawable(building) && building.missingFor < LOSS_HOLD) {
+          building.missingFor += elapsed;
+          continue;
+        }
+        building.missingFor = LOSS_HOLD;
         building.amount *= Math.exp(-elapsed / .1);
         if (building.amount < .01) {
           building.amount = 0;
@@ -155,6 +170,8 @@ export function buildingVisibility() {
         } else blend(building);
       }
       for (const building of selected) {
+        if (!drawable(building)) continue;
+        building.missingFor = 0;
         if (!active.has(building)) {
           if (active.size >= MAX_CUTAWAYS) continue;
           active.add(building);

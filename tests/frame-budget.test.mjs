@@ -21,6 +21,17 @@ test("returning from a suspended tab cannot build a backlog of catch-up frames",
   assert.equal(due(60000),true);assert.equal(due(60001),false);assert.equal(due(60017),true);
 });
 
+test("a rendering hitch cannot trigger a burst of high-refresh catch-up work",()=>{
+  const due=frameBudget();
+  assert.equal(due(0),true);
+  assert.equal(due(1000/60),true);
+  assert.equal(due(65),true);
+  assert.equal(due(65+1000/144),false);
+  assert.equal(due(65+2000/144),false);
+  assert.equal(due(65+3000/144),true);
+  assert.equal(due(65+4000/144),false);
+});
+
 test("the single graphics budget retains all high-detail residents, cyclists and lights",()=>{
   const budget=graphicsBudget();
   assert.equal(budget.residents,64);

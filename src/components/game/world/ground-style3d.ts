@@ -125,8 +125,10 @@ export function applyGroundStyle(mesh: THREE.Mesh): () => void {
     if (material instanceof THREE.MeshLambertMaterial || material instanceof THREE.MeshStandardMaterial) {
       material.map = texture;
       if (material instanceof THREE.MeshStandardMaterial) {
-        material.bumpMap = texture;
-        material.bumpScale = 0.028;
+        // Aggregate is colour detail, not physical height; noisy height samples
+        // shimmer during motion and add three texture reads per lit pixel.
+        material.bumpMap = null;
+        material.bumpScale = 0;
       }
       material.needsUpdate = true;
     }

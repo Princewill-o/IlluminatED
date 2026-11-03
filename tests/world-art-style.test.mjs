@@ -95,3 +95,17 @@ test("ground atlas adds finite UVs without increasing geometry or material count
   for(const value of geometry.attributes.uv.array)assert.ok(Number.isFinite(value)&&value>=0&&value<=1);
   dispose();geometry.dispose();material.dispose();
 });
+
+test("masonry and ground retain colour textures without noisy per-pixel bump normals",()=>{
+  const world=new THREE.Group(),wall=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({color:"#b9634a"}));
+  world.add(wall);const finish=finishArchitecture(world,"day");
+  assert.equal(wall.material.map.image.width,128);
+  assert.equal(wall.material.bumpMap,null);assert.equal(wall.material.bumpScale,0);
+  assert.equal(wall.material.roughness,.91);
+  const geometry=new THREE.PlaneGeometry(1,1).toNonIndexed();geometry.rotateX(-Math.PI/2);geometry.translate(.5,.12,.5);
+  geometry.setAttribute("color",new THREE.Float32BufferAttribute(new Float32Array(geometry.attributes.position.count*3).fill(.6),3));
+  const material=new THREE.MeshStandardMaterial({vertexColors:true}),ground=new THREE.Mesh(geometry,material);
+  const dispose=applyGroundStyle(ground);
+  assert.equal(material.map.image.width,512);assert.equal(material.bumpMap,null);assert.equal(material.bumpScale,0);
+  dispose();finish();geometry.dispose();wall.geometry.dispose();material.dispose();
+});

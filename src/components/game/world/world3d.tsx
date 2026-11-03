@@ -29,6 +29,7 @@ import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
 import { createNavigationTrail } from "./navigation-trail";
+import { presentSceneFrame } from "./present-frame";
 import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { curvedView, sceneryCulling } from "./scenery-culling";
@@ -3569,7 +3570,7 @@ export function World3D({
       if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
       const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
-      presentation.render();releaseCapture.frame(renderer.domElement);
+      presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now):null);
       if(process.env.NODE_ENV === "development") { monitorUpdate+=renderStarted-workStarted;monitorRender+=performance.now()-renderStarted; }
       if(firstPaint&&((sightlinesReady&&me.char)||now-start>=5000)){firstPaint=false;releaseCapture.ready(map.id);readyCallback.current?.();}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
@@ -3585,10 +3586,6 @@ export function World3D({
           graphicsWeather: weatherKind,
         });
         monitorAt = now; monitorFrames = 0;monitorUpdate=0;monitorRender=0;
-      }
-      if (visual.adaptiveResolution) {
-        const ratio = adaptResolution(now);
-        if (Math.abs(ratio - renderer.getPixelRatio()) > .005) { renderer.setPixelRatio(ratio); fit(); }
       }
       raf = requestAnimationFrame(frame);
     };

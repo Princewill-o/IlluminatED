@@ -127,6 +127,54 @@ test('camera/target movement and newly registered blockers invalidate stationary
   visibility.dispose();
 });
 
+test('repeated cutaways reuse one fade clone, track source uniforms and dispose only at final cleanup',()=>{
+  const site=building(0,4),visibility=visibilityController();visibility.register(site.group);
+  const camera=new THREE.Vector3(0,2,10),targets=[new THREE.Vector3(0,2,0)];
+  advance(visibility,camera,targets);
+  const faded=site.mesh.material;let disposed=0;
+  faded.addEventListener('dispose',()=>disposed++);
+  for(let cycle=0;cycle<3;cycle++) {
+    advance(visibility,camera,[],60);
+    assert.equal(site.mesh.material,site.material);assert.equal(disposed,0);
+    site.material.opacity=.99;site.material.color.set('#456789');site.material.emissiveIntensity=.75;site.material.roughness=.4;
+    advance(visibility,camera,targets);
+    assert.equal(site.mesh.material,faded);
+    assert.ok(Math.abs(faded.opacity-site.material.opacity*.28)<.001);
+    assert.equal(faded.color.getHex(),site.material.color.getHex());
+    assert.equal(faded.emissiveIntensity,.75);assert.equal(faded.roughness,.4);
+  }
+  visibility.dispose();visibility.dispose();
+  assert.equal(disposed,1);assert.equal(site.mesh.material,site.material);
+});
+
+test('short edge misses hold a cutaway stable, but a sustained clear view recovers it',()=>{
+  const site=building(0,4),visibility=visibilityController();visibility.register(site.group);
+  const camera=new THREE.Vector3(0,2,10),targets=[new THREE.Vector3(0,2,0)];
+  advance(visibility,camera,targets);
+  const faded=site.mesh.material,opacity=faded.opacity;
+  const clearCamera=new THREE.Vector3(5,2,10),clearTargets=[new THREE.Vector3(5,2,0)];
+  advance(visibility,clearCamera,clearTargets,6);
+  assert.equal(site.mesh.material,faded);assert.equal(faded.opacity,opacity);
+  advance(visibility,camera,targets,8);
+  assert.ok(faded.opacity<=opacity,'a brief reacquisition never brightens the facade');
+  advance(visibility,clearCamera,clearTargets,65);
+  assert.equal(site.mesh.material,site.material);
+  visibility.dispose();
+});
+
+test('hidden geometry bypasses the edge hold even before the next cached scan',()=>{
+  for(const hide of [site=>{site.group.visible=false;},site=>{site.mesh.visible=false;}]){
+    const site=building(0,4),visibility=visibilityController();visibility.register(site.group);
+    const camera=new THREE.Vector3(0,2,10),targets=[new THREE.Vector3(0,2,0)];
+    advance(visibility,camera,targets);
+    const faded=site.mesh.material,opacity=faded.opacity;hide(site);
+    visibility.update(camera,targets,1/60);
+    assert.ok(faded.opacity>opacity,'hidden geometry immediately starts recovering');
+    advance(visibility,camera,targets,60);assert.equal(site.mesh.material,site.material);
+    visibility.dispose();
+  }
+});
+
 test('recorded music respects activation, scene changes, mute, background suspension and disposal',async()=>{
   let audio;
   class AudioMock {

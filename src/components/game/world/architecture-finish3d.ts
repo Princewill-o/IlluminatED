@@ -117,8 +117,10 @@ export function finishArchitecture(world: THREE.Group, phase: Phase) {
       if (masonry || slate) {
         material.map = getTexture(masonry ? "brick" : "slate");
         if (material instanceof THREE.MeshStandardMaterial) {
-          material.bumpMap = material.map;
-          material.bumpScale = slate ? 0.035 : 0.018;
+          // Keep the authored masonry colour without turning every grain in
+          // the diffuse texture into a moving specular/shadow normal.
+          material.bumpMap = null;
+          material.bumpScale = 0;
           material.roughness = slate ? 0.76 : 0.91;
         }
       }

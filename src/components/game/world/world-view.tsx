@@ -506,7 +506,7 @@ export function WorldView({
       const driving = Boolean(carRef.current);
       const before = { x: p.x, y: p.y, heading: p.heading, speed: p.speed };
       let collision: DrivingCollision | undefined;
-      const obstacles: VehicleObstacle[] = map.art === "london" || isUKScene(map.id) ? [
+      const obstacles: VehicleObstacle[] = driving && (map.art === "london" || isUKScene(map.id)) ? [
         ...TRAFFIC_BOXES.filter((t): t is NonNullable<typeof t> => Boolean(t)),
         ...NPC_SPOTS.map((person, i) => ({ ...person, hw: 5, hh: 5, kind: "pedestrian" as const, id: `resident-${i}` })),
       ] : [];
@@ -659,14 +659,13 @@ export function WorldView({
         if (fctx && !is3d) drawFx(fctx, fx, { x: Math.round(cam.x), y: Math.round(cam.y) }, vw, vh, now, dt, { x: p.x, y: p.y, walking: moved }, phaseRef.current, reduced);
       }
       // Ambient sound: footsteps, and birdsong outdoors.
-      const sound = soundOn();
       if (moved && !driving && now - lastStep > 330) {
         lastStep = now;
-        play("step", sound);
+        play("step", soundOn());
       }
       if (map.kind !== "office" && phaseRef.current !== "night" && now > nextChirp) {
         nextChirp = now + 4000 + Math.random() * 7000;
-        play("chirp", sound);
+        play("chirp", soundOn());
       }
       // Each figure turns smoothly towards where it's heading, and its walk cycle
       // advances with the distance covered, so fists swing in time with the feet.
