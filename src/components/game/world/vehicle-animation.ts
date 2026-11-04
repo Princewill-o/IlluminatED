@@ -219,6 +219,10 @@ export function animateVehicle(
     { x: number; z: number; heading: number } | undefined;
   const { x, z } = root.position,
     heading = -root.rotation.y;
+  root.userData.motionSample = { x, z, heading };
+  // Routes and collision still advance outside this cosmetic helper. Keep the
+  // sample current while culled so resuming cannot accumulate hidden travel.
+  if (!root.visible) return;
   const dx = previous ? x - previous.x : 0,
     dz = previous ? z - previous.z : 0;
   const distance =
@@ -233,7 +237,6 @@ export function animateVehicle(
           Math.cos(heading - previous.heading),
         ) / dt
       : 0;
-  root.userData.motionSample = { x, z, heading };
   root.traverse((object) =>
     (object.userData.vehicleRig as VehicleRig | undefined)?.update(
       distance,

@@ -10,6 +10,7 @@ import { contactShadows } from "./contact-shadows";
 import { environmentPalette, type EnvironmentPhase } from "./environment-palette";
 import { LightweightBloomPass } from "./lightweight-bloom";
 import { miniatureFocus } from "./miniature-focus";
+import { gradedOutputShader, sceneColourGrade } from "./scene-colour-grade";
 import { outdoorEnvironment } from "./sky-environment";
 
 import type { visualProfile } from "@/game/core/visual-quality";
@@ -108,27 +109,25 @@ export function cinematicRenderer(
       composer.addPass(bloom);
       cleanup.push(() => bloom.dispose());
     }
-    const grade = new ShaderPass({
-      uniforms: { tDiffuse: { value: null } },
-      vertexShader:
-        "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
-      fragmentShader: `uniform sampler2D tDiffuse;varying vec2 vUv;
-void main(){vec4 c=texture2D(tDiffuse,vUv);float l=dot(c.rgb,vec3(.2126,.7152,.0722));
-// Linear HDR split toning: warm highlights, blue-green shadow fill.
-float highlight=smoothstep(.25,1.8,l);
-c.rgb*=mix(vec3(.9,.93,1.1),vec3(1.07,1.01,.91),highlight);
-l=dot(c.rgb,vec3(.2126,.7152,.0722));
-c.rgb=mix(vec3(l),c.rgb,1.12);
-// Preserve black detail while giving the miniature scene more separation.
-c.rgb*=mix(.91,1.025,smoothstep(.04,.8,l));
-vec2 p=vUv*(1.0-vUv.yx);float edge=clamp(pow(16.0*p.x*p.y,.12),0.0,1.0);
-c.rgb*=mix(.91,1.0,edge);gl_FragColor=vec4(max(c.rgb,vec3(0.0)),c.a);}`,
-    });
-    composer.addPass(grade);
-    cleanup.push(() => grade.dispose());
     const focus = profile.depthOfField && scene.fog ? miniatureFocus() : null;
-    if (focus) { composer.addPass(focus); cleanup.push(() => focus.dispose()); }
+    // The optional focus pass samples already graded HDR colours. Preserve that
+    // order when enabled; the usual path grades directly in the output draw.
+    if (focus) {
+      const grade = new ShaderPass({
+        uniforms: { tDiffuse: { value: null } },
+        vertexShader:
+          "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
+        fragmentShader: `uniform sampler2D tDiffuse;varying vec2 vUv;
+${sceneColourGrade}
+void main(){gl_FragColor=sceneColourGrade(texture2D(tDiffuse,vUv),vUv);}`,
+      });
+      composer.addPass(grade);
+      cleanup.push(() => grade.dispose());
+      composer.addPass(focus);
+      cleanup.push(() => focus.dispose());
+    }
     const output = new OutputPass();
+    if (!focus) output.material.fragmentShader = gradedOutputShader(output.material.fragmentShader);
     composer.addPass(output);
     cleanup.push(() => output.dispose());
     const aa = target.samples === 0 ? new ShaderPass(FXAAShader) : null;

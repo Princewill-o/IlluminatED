@@ -10,7 +10,7 @@ export function readVisualQuality(value: string | null): VisualQuality {
 export function visualProfile(dpr = 1, touch = false) {
   return {
     pixelRatio: Math.min(
-      touch ? 1 : 1.5,
+      touch ? 1 : 1.25,
       Math.max(1, Number.isFinite(dpr) ? dpr : 1),
     ),
     shadows: true,
@@ -30,8 +30,8 @@ export function visualProfile(dpr = 1, touch = false) {
   };
 }
 
-/** Adapt supersampling, never the native CSS-pixel image. Asset compilation and
- * suspension are excluded so startup cannot leave the whole scene blurry. */
+/** Start sharp, but permit a bounded fallback on slower devices. Asset compilation
+ * and suspension do not count as slow rendering; stable frames recover detail. */
 export function adaptivePixelRatio(maximum: number) {
   const ceiling = Math.min(
     1.5,
@@ -75,12 +75,12 @@ export function adaptivePixelRatio(maximum: number) {
     if (now - windowAt < 1200 || frames < 10) return ratio;
     const average = elapsed / frames;
     if (average > 17.5) {
-      ratio = Math.max(1, Math.round((ratio - 0.1) * 100) / 100);
+      ratio = Math.max(0.75, Math.round((ratio - 0.1) * 100) / 100);
       healthySince = null;
     } else if (average < 17.1) {
       healthySince ??= windowAt;
-      if (now - healthySince >= 5000) {
-        ratio = Math.min(ceiling, Math.round((ratio + 0.1) * 100) / 100);
+      if (now - healthySince >= 12000) {
+        ratio = Math.min(ceiling, Math.round((ratio + 0.05) * 100) / 100);
         healthySince = now;
       }
     } else healthySince = null;

@@ -66,3 +66,30 @@ test("the existing bus uses its own longitudinal wheel axis",async()=>{
   assert.equal(wheels[0].rotation.x,0);
   rig.dispose();
 });
+
+test("hidden vehicles skip cosmetic work and resume with only the latest movement sample",()=>{
+  const root=new THREE.Group(),updates=[];
+  const rig={update:(...args)=>updates.push(args),dispose:()=>{}};
+  root.userData.vehicleRig=rig;
+  animateVehicle(root,1/60,0,false,false);
+  assert.equal(updates.length,1);
+  root.visible=false;
+  root.position.x=100;root.rotation.y=-Math.PI/2;
+  animateVehicle(root,1/60,1,false,false);
+  root.position.x=101;
+  animateVehicle(root,1/60,2,false,false);
+  assert.equal(updates.length,1,"hidden rigs receive no animation updates");
+  const attached=new THREE.Group(),attachedUpdates=[];
+  attached.userData.vehicleRig={update:(...args)=>attachedUpdates.push(args),dispose:()=>{}};
+  root.add(attached);
+  root.visible=true;root.position.z=.1;
+  animateVehicle(root,1/60,3,true,false);
+  assert.equal(updates.length,2);
+  assert.equal(attachedUpdates.length,1,"rigs attached while hidden are discovered on resume");
+  for(const sample of [updates.at(-1),attachedUpdates[0]]){
+    assert.ok(Math.abs(sample[0]-.1)<1e-9,"hidden travel does not accumulate into wheel rotation");
+    assert.ok(Math.abs(sample[1]-6)<1e-9);
+    assert.equal(sample[2],0,"hidden turns do not cause a steering jump");
+    assert.equal(sample[5],true,"current lamp phase reaches resumed rigs");
+  }
+});

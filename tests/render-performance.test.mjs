@@ -7,13 +7,13 @@ import * as THREE from "three";
 import { projectData } from "../scripts/lib/project-data.mjs";
 const visual = projectData("src/game/core/visual-quality.ts");
 
-test("adaptation reduces supersampling at thirty-five FPS without rendering below native size", () => {
+test("sustained thirty-five FPS can lower pixel work beyond native size on slower devices", () => {
   const adapt = visual.adaptivePixelRatio(1.5);
   let ratio = adapt(0);
   for (let time = 1000 / 35; time < 5000; time += 1000 / 35) ratio = adapt(time);
   assert.ok(ratio < 1.5, "35 FPS must reduce supersampling");
   for (let time = 5000; time < 30000; time += 1000 / 35) ratio = adapt(time);
-  assert.equal(ratio, 1, "the native scene must not be enlarged from a smaller canvas");
+  assert.equal(ratio, 0.75, "slow devices must have a bounded fallback instead of getting stuck at native resolution");
   const steady = visual.adaptivePixelRatio(1);
   for (let frame = 0; frame < 600; frame++) assert.equal(steady(frame * 1000 / 60), 1);
 });
@@ -23,7 +23,7 @@ test("sustained slow rendering lowers resolution, stable frames recover it, susp
   let ratio = adapt(0);
   for (let time = 50; time <= 6000; time += 50) ratio = adapt(time);
   assert.ok(ratio < 1.5, "slow frames must reduce pixel work");
-  assert.ok(ratio >= 1);
+  assert.ok(ratio >= 0.75);
   const before = ratio;
   adapt(60000, false);
   assert.equal(adapt(60016), before, "suspension is not a slow frame");
@@ -31,6 +31,18 @@ test("sustained slow rendering lowers resolution, stable frames recover it, susp
   assert.ok(ratio > before, "sustained headroom can recover detail");
   assert.ok(ratio <= 1.5);
   assert.ok(Number.isFinite(adapt(NaN)));
+});
+
+test("a slow device can recover native detail after sustained headroom without rapid quality cycling", () => {
+  const adapt = visual.adaptivePixelRatio(1);
+  for (let now = 0; now <= 10000; now += 50) adapt(now);
+  assert.equal(adapt(10000), .75);
+  for (let now = 10000 + 1000 / 60; now < 20000; now += 1000 / 60) {
+    assert.equal(adapt(now), .75, "brief headroom must not immediately undo the fallback");
+  }
+  let ratio;
+  for (let now = 20000; now < 100000; now += 1000 / 60) ratio = adapt(now);
+  assert.equal(ratio, 1, "the fallback must not leave recovered hardware permanently soft");
 });
 
 test("loading and shader warmup cannot permanently reduce a sharp scene", () => {
@@ -43,7 +55,7 @@ test("loading and shader warmup cannot permanently reduce a sharp scene", () => 
 test("default and touch profiles avoid redundant MSAA and unbounded high-DPI work while retaining lighting", () => {
   for (const touch of [false, true]) {
     const profile = visual.visualProfile(4, touch);
-    assert.ok(profile.pixelRatio <= 1.5);
+    assert.ok(profile.pixelRatio <= 1.25);
     assert.ok(profile.shadowSize <= 1024);
     assert.ok(profile.samples <= 2);
     assert.equal(profile.adaptiveResolution, true);

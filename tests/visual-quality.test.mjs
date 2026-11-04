@@ -24,16 +24,18 @@ test("graphics retain lighting and materials within a bounded rendering budget",
     assert.equal(high.depthOfField, false);
     assert.equal(high.msaa, false);
     assert.equal(high.adaptiveResolution, true);
-    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 1.5);
+    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 1.25);
   }
 });
 
-test("native resolution is the floor on desktop and touch even with browser zoom or invalid DPR",()=>{
+test("desktop and touch start sharp without unbounded supersampling",()=>{
  for(const touch of [false,true])for(const dpr of [.5,.75,1,3,NaN])assert.ok(visualProfile(dpr,touch).pixelRatio>=1);
+ assert.equal(visualProfile(3,false).pixelRatio,1.25);
+ assert.equal(visualProfile(3,true).pixelRatio,1);
  for(const maximum of [.5,.75,NaN]){
   const adapt=adaptivePixelRatio(maximum);let ratio=adapt(0);
   for(let now=50;now<20000;now+=50)ratio=adapt(now);
-  assert.equal(ratio,1);
+  assert.equal(ratio,.75);
  }
 });
 test("legacy preferences retain the art profile and adaptation ignores invalid or suspended frames",()=>{
