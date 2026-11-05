@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { BookOpen, Coins, Gavel, ShieldCheck, Siren, X } from "lucide-react";
 
-import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
+import { type QuizQuestion, recordPick, useBankQuestions } from "./use-bank-questions";
 
 import { ARCADE } from "@/game/core/arcade";
 import { adjudicateStreetCase, settleStreetVerdict, type StreetCourtCase, type StreetResolution, type StreetVerdict } from "@/game/core/civilian-conflict";
@@ -52,7 +52,7 @@ export function PoliceChallenge({
               key={o}
               type="button"
               disabled={picked !== null}
-              onClick={() => setPicked(i)}
+              onClick={() => { setPicked(i); recordPick(question, i); }}
               className={cn(
                 "rounded-2xl border-2 bg-white p-3 text-left font-bold",
                 picked !== null && i === question.answer
@@ -129,6 +129,7 @@ export function PrisonStudy({
               disabled={picked !== null || progress >= 3}
               onClick={() => {
                 setPicked(i);
+                recordPick(q, i);
                 if (i === q.answer) onCorrect();
               }}
               className={cn(

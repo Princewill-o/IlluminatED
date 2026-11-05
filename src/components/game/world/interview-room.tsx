@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ONLINE } from "./art";
-import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
+import { type QuizQuestion, recordPick, useBankQuestions } from "./use-bank-questions";
 
 import { answerBlameDeal, blameDealStatus, blameInbox, offerBlameDeal, type BlameOffer } from "@/app/games/world/actions";
 import { honestStars } from "@/game/core/law";
@@ -192,7 +192,7 @@ export function InterviewRoom({ charge, stars, area, wallet, onDone }: { charge:
               <p className="mt-2 text-lg leading-snug font-black">{alibi.prompt}</p>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {alibi.options.map((o, i) => (
-                  <button key={`${o}-${i}`} type="button" disabled={alibiPick !== null} onClick={() => setAlibiPick(i)}
+                  <button key={`${o}-${i}`} type="button" disabled={alibiPick !== null} onClick={() => { setAlibiPick(i); recordPick(alibi, i); }}
                     className={`gloss-off rounded-2xl p-3 text-left text-sm font-bold ring-1 ${alibiPick !== null && i === alibi.answer ? "bg-[#15987f] ring-[#15987f]" : alibiPick === i ? "bg-[#c8322d] ring-[#c8322d]" : "bg-white/10 ring-white/15"}`}>
                     {o}
                   </button>

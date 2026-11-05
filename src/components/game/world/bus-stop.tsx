@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Bus, Home, Briefcase, X } from "lucide-react";
 
 import { BusJourneyScene, BusRide } from "./transport";
+import { recordPick } from "./use-bank-questions";
 
 import { gameQuiz } from "@/app/games/world/actions";
 import { ARCADE } from "@/game/core/arcade";
@@ -197,7 +198,7 @@ export function Commute({
   }, []);
   // With homework due, the bus revises the same topics (different questions, so no spoilers).
   const [fromHomework, setFromHomework] = useState<
-    { prompt: string; options: string[]; answer: number }[] | null
+    { prompt: string; options: string[]; answer: number; key?: string }[] | null
   >(null);
   const answered = useRef(false);
   const advance = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -227,6 +228,7 @@ export function Commute({
               prompt: q.q,
               options: q.options,
               answer: q.answer,
+              key: q.key,
             })),
           );
       })
@@ -238,12 +240,12 @@ export function Commute({
     };
   }, [homework]);
   // No homework set: revise with real questions from the question bank instead.
-  const [fromBank, setFromBank] = useState<typeof quick | null>(null);
+  const [fromBank, setFromBank] = useState<(typeof quick[number] & { key?: string })[] | null>(null);
   useEffect(() => {
     if (homework.length) return;
     let disposed = false;
     void gameQuiz(3).then((qs) => {
-      if (!disposed && !answered.current && qs.length === 3) setFromBank(qs.map((q) => ({ prompt: q.prompt, options: q.options, answer: q.answer })));
+      if (!disposed && !answered.current && qs.length === 3) setFromBank(qs.map((q) => ({ prompt: q.prompt, options: q.options, answer: q.answer, key: q.key })));
     }).catch(() => { /* offline: the quick cards stay */ });
     return () => { disposed = true; };
   }, [homework]);
@@ -309,6 +311,7 @@ export function Commute({
                       if (advance.current) return;
                       answered.current = true;
                       setPicked(k);
+                      recordPick(q, k);
                       if (k === q.answer) setRight((r) => r + 1);
                       advance.current = setTimeout(() => {
                         advance.current = null;

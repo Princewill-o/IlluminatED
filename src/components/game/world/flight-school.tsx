@@ -6,7 +6,7 @@ import { BookOpen, Plane, X } from "lucide-react";
 
 import { PLAYER, TUTOR } from "./art";
 import { HudSlot } from "./hud";
-import { type QuizQuestion, useBankQuestions } from "./use-bank-questions";
+import { type QuizQuestion, recordPick, useBankQuestions } from "./use-bank-questions";
 
 import { ARCADE } from "@/game/core/arcade";
 import { createRng, newSeed } from "@/game/core/rng";
@@ -34,7 +34,7 @@ export const FLIGHT_STEPS: Step[] = [
   { path: [[15, 5]], goal: "interact", title: "Check in at the desk", keys: ["E"], say: "Stand in front of the check-in desk and press E (or tap the button that pops up). That's how you use anything in London: doors, tills, buses, desks." },
   { path: [[15, 12], [19, 13], [22, 13], [25, 6]], goal: "near", title: "Follow Ava to security", keys: ["W", "A", "S", "D"], say: "Bag checked in. Now follow me to security." },
   { path: [[25, 5]], goal: "study", title: "Answer the security question", keys: ["E"], say: "Security asks a quick question from your subjects, just like jobs, buses and the police do in London. Walk up to the scanner, press E and answer it." },
-  { path: [[27, 6], [31, 6], [34, 10]], goal: "near", title: "Into the departure lounge", keys: ["W", "A", "S", "D"], say: "Clever! Follow me into the departure lounge." },
+  { path: [[27, 6], [31, 6], [34, 10]], goal: "near", title: "Into the departure lounge", keys: ["W", "A", "S", "D"], say: "Clever! That answer just went on your learning dashboard. The Learn card at the top left always shows the topic to work on next, and every question you answer in London counts towards it. Follow me into the departure lounge." },
   { path: [[34, 11]], goal: "eat", title: "Grab a snack at the café", keys: ["E"], say: "Your needs (hunger, energy, mood) drop over time. Keep them topped up. Grab a snack at the café counter with E." },
   { path: [[38, 8]], goal: "phone", title: "Open your phone, then close it", keys: ["📱"], say: "Your phone has the map, buses, jobs, friends and calls. Tap the phone button (bottom right) to open it, then close it again." },
   { path: [[39, 5]], goal: "board", title: "Board at Gate 1", keys: ["E"], say: "You're ready! One rule: break the law and the police will chase you. Walk to Gate 1 and press E to fly to London." },
@@ -153,7 +153,7 @@ export function FlightSchoolQuiz({ onDone, onClose }: { onDone: () => void; onCl
         <p className="mt-3 text-xl font-black">{q.prompt}</p>
         <div className="mt-4 grid grid-cols-2 gap-2">
           {q.options.map((o, i) => (
-            <button key={i} type="button" disabled={picked !== null} onClick={() => setPicked(i)}
+            <button key={i} type="button" disabled={picked !== null} onClick={() => { setPicked(i); recordPick(q, i); }}
               className={cn("rounded-2xl border-2 bg-white p-3 font-bold", picked !== null && i === q.answer ? "border-[#15987f]" : picked === i ? "border-[#c8322d]" : "border-transparent")}>
               {o}
             </button>

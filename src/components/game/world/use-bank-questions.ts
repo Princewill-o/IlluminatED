@@ -2,10 +2,29 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { gameQuiz } from "@/app/games/world/actions";
+import { gameQuiz, recordWorldAnswers } from "@/app/games/world/actions";
 
 /** A multiple-choice question, from the Supabase question bank or a local fallback. */
-export type QuizQuestion = { prompt: string; options: readonly string[]; answer: number; explain?: string; subject?: string; topic?: string };
+export type QuizQuestion = { prompt: string; options: readonly string[]; answer: number; explain?: string; subject?: string; topic?: string; key?: string };
+
+let queue: { key: string; correct: boolean }[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * Call when the player picks an answer. Questions from their own topics are
+ * saved to their learning progress (batched), so learning in the world shows
+ * up on the dashboard, in estimated grades and in quests.
+ */
+export function recordPick(q: { key?: string; answer: number } | null | undefined, picked: number) {
+  if (!q?.key) return;
+  queue.push({ key: q.key, correct: picked === q.answer });
+  clearTimeout(flushTimer);
+  flushTimer = setTimeout(() => {
+    const batch = queue;
+    queue = [];
+    void recordWorldAnswers(batch).catch(() => {});
+  }, queue.length >= 5 ? 0 : 1500);
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent("illumed:learned", { detail: { correct: picked === q.answer } }));
+}
 
 /**
  * A small pool of real question-bank questions (from your subjects when

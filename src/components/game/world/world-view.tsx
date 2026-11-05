@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { ControllerLegend } from "./controller-legend";
 import { type Phase, createFx, drawFx, ukPhase } from "./fx";
 import { HudSlot } from "./hud";
+import { LearningTracker } from "./learning-tracker";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
@@ -930,6 +931,7 @@ export function WorldView({
           </span>
         </button>
       </HudSlot>
+      {!offlinePreview && <HudSlot area="tl" order={1}><LearningTracker /></HudSlot>}
       <HudSlot area="tr-tools" order={0}>
           <button
             type="button"

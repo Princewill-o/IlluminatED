@@ -160,27 +160,69 @@ export async function answerBlameDeal(deal: string, accept: boolean) {
 }
 
 // ── Quick quizzes from the question bank ────────────────────────────────────
-export type GameQuestion = { id: string; prompt: string; options: string[]; answer: number; explain: string; subject: string; topic: string; level: string };
+export type GameQuestion = { id: string; prompt: string; options: string[]; answer: number; explain: string; subject: string; topic: string; level: string; key?: string };
 
 /**
- * Multiple-choice questions from the Supabase question bank, from the player's
- * own subjects when possible. Used by police checks, the interview room,
- * airport security and prison study. Returns [] when offline (callers fall back).
+ * Multiple-choice questions for the world (police checks, the interview room,
+ * airport security, the bus, prison study). Signed-in learners get questions
+ * from their own subjects' topics, weighted towards topics they haven't
+ * secured yet, and every answer counts towards their dashboard progress.
+ * Otherwise it falls back to the general Supabase bank. Returns [] offline.
  */
 export async function gameQuiz(count = 1): Promise<GameQuestion[]> {
   const sb = await getSupabase();
   if (!sb) return [];
+  const n = Math.max(1, Math.min(10, Math.floor(count) || 1));
   const { data: auth } = await sb.auth.getUser();
   let subjects: string[] | null = null;
   if (auth.user) {
     const { data: details } = await sb.from("learner_details").select("subjects").eq("user_id", auth.user.id).maybeSingle();
-    const { COURSES } = await import("@/lib/data/courses");
-    const ids = Array.isArray(details?.subjects) ? (details.subjects as { courseId?: string }[]).map((s) => s.courseId) : [];
-    const titles = COURSES.filter((c) => ids.includes(c.id)).map((c) => c.register?.title ?? c.title.replace(/^(GCSE|A-level|BTEC|T Level)\s+/i, ""));
+    const mine = (Array.isArray(details?.subjects) ? details.subjects : []) as { courseId?: string; board?: string }[];
+    const [{ COURSES }, { QUESTION_BANK }, { matchesSubject }] = await Promise.all([
+      import("@/lib/data/courses"), import("@/lib/data/topics"), import("@/lib/account/readiness"),
+    ]);
+    const valid = mine.filter((m): m is { courseId: string; board: string } => typeof m.courseId === "string" && typeof m.board === "string");
+    const pool = QUESTION_BANK.filter((q) => valid.some((m) => matchesSubject(q, m as never)));
+    if (pool.length) {
+      const { data: progress } = await sb.from("question_progress").select("question_key,seen,correct").eq("user_id", auth.user.id).limit(5000);
+      const byKey = new Map((progress ?? []).map((p) => [p.question_key as string, p as { seen: number; correct: number }]));
+      // Unseen questions first, then ones they get wrong, and only now and then the ones they've mastered.
+      const weighted = pool.map((q) => {
+        const p = byKey.get(q.key);
+        const w = !p || !p.seen ? 3 : p.correct / p.seen < 0.8 ? 2 : 0.4;
+        return { q, r: Math.random() ** (1 / w) };
+      }).sort((a, b) => b.r - a.r).slice(0, n);
+      return weighted.map(({ q }) => ({
+        id: q.key, key: q.key, prompt: q.q, options: q.options, answer: q.answer, explain: q.explain,
+        subject: q.subject, topic: q.topicTitle, level: q.route,
+      }));
+    }
+    const titles = COURSES.filter((c) => valid.some((m) => m.courseId === c.id)).map((c) => c.register?.title ?? c.title.replace(/^(GCSE|A-level|BTEC|T Level)\s+/i, ""));
     subjects = titles.length ? titles : null;
   }
-  const { data, error } = await sb.rpc("game_quiz", { p_count: count, p_subjects: subjects });
+  const { data, error } = await sb.rpc("game_quiz", { p_count: n, p_subjects: subjects });
   return error ? [] : ((data ?? []) as GameQuestion[]);
+}
+
+/**
+ * Saves answers given in the world to the learner's progress, the same record
+ * the dashboard, the estimated grades and the quests read. Only questions from
+ * our own bank are recorded; anything else is ignored.
+ */
+export async function recordWorldAnswers(answers: { key: string; correct: boolean }[]) {
+  const sb = await getSupabase();
+  if (!sb || !Array.isArray(answers) || !answers.length) return false;
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) return false;
+  const { QUESTION_BANK } = await import("@/lib/data/topics");
+  const rows = answers.slice(0, 20).flatMap((a) => {
+    const q = typeof a?.key === "string" ? QUESTION_BANK.find((x) => x.key === a.key) : undefined;
+    return q ? [{ key: q.key, topicId: q.topicId, courseId: q.courseId, seen: 1, correct: a.correct === true ? 1 : 0 }] : [];
+  });
+  if (!rows.length) return false;
+  const { error } = await sb.rpc("record_quiz_round", { round_mode: "quick", answers: rows });
+  if (!error) revalidatePath("/games");
+  return !error;
 }
 
 // ── Deliveries ───────────────────────────────────────────────────────────────
@@ -255,4 +297,55 @@ export async function worldRules(code: string): Promise<{ settings: WorldRules; 
   if (!sb) return null;
   const { data } = await sb.from("player_worlds").select("settings, owner, name").eq("code", code).maybeSingle();
   return data ? { settings: data.settings as WorldRules, owner: data.owner as string, name: data.name as string } : null;
+}
+
+// ── Learning in the world ────────────────────────────────────────────────────
+export type LearningFocus = { topicId: string; topicTitle: string; courseId: string; subject: string; reason: string; answered: number; correct: number };
+
+/** The topic to work on next, from the learner's own subjects: the first untouched topic, else the weakest. */
+export async function learningFocus(): Promise<LearningFocus | null> {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) return null;
+  const [{ data: details }, { data: progress }, { COURSES }, { topicById }] = await Promise.all([
+    sb.from("learner_details").select("subjects").eq("user_id", auth.user.id).maybeSingle(),
+    sb.from("question_progress").select("topic_id,seen,correct,last_at").eq("user_id", auth.user.id).limit(5000),
+    import("@/lib/data/courses"), import("@/lib/data/topics"),
+  ]);
+  const ids = (Array.isArray(details?.subjects) ? details.subjects : []).map((s: { courseId?: string }) => s.courseId);
+  const courses = COURSES.filter((c) => ids.includes(c.id));
+  const byTopic = new Map<string, { seen: number; correct: number }>();
+  const today = new Date().toISOString().slice(0, 10);
+  let answered = 0, correct = 0;
+  for (const p of progress ?? []) {
+    const t = byTopic.get(p.topic_id) ?? { seen: 0, correct: 0 };
+    t.seen += p.seen; t.correct += p.correct;
+    byTopic.set(p.topic_id, t);
+    if (String(p.last_at).startsWith(today)) { answered++; if (p.correct > 0) correct++; }
+  }
+  let best: LearningFocus | null = null, bestScore = Infinity;
+  for (const c of courses) {
+    for (const [i, id] of c.topicIds.entries()) {
+      const topic = topicById(id);
+      if (!topic?.quiz.length) continue;
+      const p = byTopic.get(id);
+      const acc = p?.seen ? p.correct / p.seen : null;
+      // Untouched topics in course order come first, then the weakest started topic.
+      const score = acc === null ? i / 1000 : 1 + acc;
+      if (acc !== null && acc >= 0.8) continue;
+      if (score < bestScore) {
+        bestScore = score;
+        best = { topicId: id, topicTitle: topic.title, courseId: c.id, subject: c.subject, reason: acc === null ? "Not started yet" : `${Math.round(acc * 100)}% right so far`, answered, correct };
+      }
+    }
+  }
+  return best ?? (courses.length ? { topicId: "", topicTitle: "Everything is secure!", courseId: courses[0].id, subject: courses[0].subject, reason: "Keep topics fresh with a quick round", answered, correct } : null);
+}
+
+/** A few questions on one topic, for the in-world learning card. */
+export async function topicQuiz(topicId: string, count = 3): Promise<GameQuestion[]> {
+  const { QUESTION_BANK } = await import("@/lib/data/topics");
+  const pool = QUESTION_BANK.filter((q) => q.topicId === topicId).sort(() => Math.random() - 0.5).slice(0, Math.max(1, Math.min(5, count)));
+  return pool.map((q) => ({ id: q.key, key: q.key, prompt: q.q, options: q.options, answer: q.answer, explain: q.explain, subject: q.subject, topic: q.topicTitle, level: q.route }));
 }
