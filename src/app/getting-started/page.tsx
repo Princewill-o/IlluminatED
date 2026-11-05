@@ -16,7 +16,7 @@ export default async function GettingStartedPage({ searchParams }: {
   const sp = await searchParams;
   const requested = safeNext(sp.next);
   const next = ["/getting-started", "/personalising", "/onboarding"].some((path) => requested.startsWith(path))
-    ? "/dashboard"
+    ? "/games"
     : requested;
   const account = await getAccount();
   if (!account) redirect(`/sign-in?next=${encodeURIComponent("/getting-started")}`);

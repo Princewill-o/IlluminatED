@@ -24,7 +24,8 @@ const TABS = [
 /** Sub-tabs inside the Play tab of the app. Stats live in the app's top bar and side rail. */
 export function ArcadeHeader() {
   const path = usePathname();
-  if (path.startsWith("/games/challenge/") || path.startsWith("/games/promotion-panic/") || path.startsWith("/games/world"))
+  // The main menu (/games) is its own title screen; the world is full screen.
+  if (path === "/games" || path.startsWith("/games/challenge/") || path.startsWith("/games/promotion-panic/") || path.startsWith("/games/world"))
     return null;
   return (
     <nav aria-label="IllumED World" className="mx-auto max-w-6xl px-4 pt-4 md:pt-8">
@@ -54,7 +55,7 @@ export function ArcadeHeader() {
 /** Parody disclaimer under game screens (not over the full-screen world). */
 export function ArcadeFooter() {
   const path = usePathname();
-  if (path.startsWith("/games/world")) return null;
+  if (path === "/games" || path.startsWith("/games/world")) return null;
   return (
     <p className="mx-auto max-w-6xl px-4 pt-2 pb-6 text-xs leading-6 text-muted-foreground">
       Company activities are unofficial educational simulations. Brand names belong to their owners; no sponsorship or endorsement is implied.

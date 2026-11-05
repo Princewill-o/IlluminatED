@@ -8,8 +8,8 @@ const { safeNext } = await import(`data:text/javascript;base64,${Buffer.from(js)
 test('auth redirects preserve local destinations and reject external or parser-normalised hosts', () => {
   assert.equal(safeNext('/dashboard?tab=progress'), '/dashboard?tab=progress');
   for (const unsafe of ['https://example.org', '//example.org', '/\\example.org', '/\t/example.org', '/\n/example.org', '/foo\\bar', '/',null].filter(x => x !== '/')) {
-    assert.equal(safeNext(unsafe), '/dashboard');
+    assert.equal(safeNext(unsafe), '/games');
   }
   assert.equal(safeNext('/'), '/');
-  assert.equal(safeNext('/' + 'a'.repeat(2000)), '/dashboard');
+  assert.equal(safeNext('/' + 'a'.repeat(2000)), '/games');
 });

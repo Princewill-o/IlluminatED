@@ -67,7 +67,7 @@ async function afterSignIn(userId: string, next: string): Promise<never> {
   const { data: school } = await sb.rpc("school_access");
   const access = Array.isArray(school) ? school[0] : school;
   if (access && !access.active) redirect("/school-access");
-  if (access?.role === "teacher" && !next.startsWith("/games")) redirect("/teacher");
+  if (access?.role === "teacher" && !next.startsWith("/games/")) redirect("/teacher");
   const [{ data: profile }, { data: details }] = await Promise.all([
     sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
     sb
