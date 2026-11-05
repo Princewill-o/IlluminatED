@@ -1,7 +1,5 @@
 "use client";
 
-import type { RoomStyle } from "@/game/core/room-designs";
-
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./pixel-gui.css";
 
@@ -75,6 +73,7 @@ import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
+import type { RoomStyle } from "@/game/core/room-designs";
 import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";

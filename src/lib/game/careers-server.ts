@@ -1,8 +1,8 @@
-import { DEFAULT_ROOM, readRoomStyle, type RoomStyle } from "@/game/core/room-designs";
 import "server-only";
 
 import type { CareerRecord } from "@/game/core/careers";
 import { type Placed, STARTER_LAYOUT } from "@/game/core/homes";
+import { DEFAULT_ROOM, readRoomStyle, type RoomStyle } from "@/game/core/room-designs";
 import { getSupabase } from "@/lib/social/server";
 
 export interface CareerState {
