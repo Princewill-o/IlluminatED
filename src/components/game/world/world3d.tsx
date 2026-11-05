@@ -39,6 +39,7 @@ import { createStaticShadowBatch, staticShadowEligible } from "./static-shadow-b
 import { addStreetscape } from "./streetscape3d";
 import { TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
+import { universityLandmark } from "./university3d";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
@@ -73,6 +74,7 @@ import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVeh
 import { trainFrame } from "@/game/core/train";
 import { ukTrafficRoutes, ukTrafficOffset, ukAmbientPeople, ukTrafficCount } from "@/game/core/uk-traffic";
 import { buildUKScene, UK_GATEWAYS } from "@/game/core/uk-world";
+import { universityById } from "@/game/core/universities";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, lowerTier, physicalSurface, populationBudget, visualProfile, type GraphicsTier } from "@/game/core/visual-quality";
@@ -2405,6 +2407,11 @@ export function World3D({
         culling?.register(g,new THREE.Box3(new THREE.Vector3(t.x-3,-2,t.y-3),new THREE.Vector3(t.x+("w" in t?t.w:3)+3,("height" in t?t.height:12)+4,t.y+("h" in t?t.h:3)+3)));
         if (t.kind === "building" || t.kind === "station" || t.kind === "landmark") sightlineBuildings.push(g);
         if (t.kind === "building") {
+          if (t.id.startsWith("university-site-")) {
+            universityLandmark(g, t.id.slice(16), t, box, mat);
+            const uni = universityById(t.id.slice(16));
+            if (uni) { const sg = sign(uni.fullName, { bg: uni.colour, fg: "#ffffff", w: Math.min(t.w - 0.4, 6), h: 0.45 }); sg.position.set(t.x + t.w / 2, 0.9, t.y + t.h + 0.6); g.add(sg); }
+          } else
           jobs.push(building(g, t));
           if (!t.companyId && !t.id.startsWith("hotel-") && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
             artFrontage(g, t.x, t.y + t.h + 0.1, t.w, Math.floor((t.x + t.y) / 3) % 3);

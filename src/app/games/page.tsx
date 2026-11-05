@@ -1,14 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import {
-  BookOpen, CarFront, ChevronRight, ClipboardList, Gamepad2, Globe2, LayoutDashboard, MessageCircle, Settings, Shirt,
-  Sparkles, Target, Trophy, Users,
-} from "lucide-react";
+import { BookOpen, ChevronRight, ClipboardList, Globe2, LayoutDashboard, Shirt, Users } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
-import { QuestBoard } from "@/components/game/quests/quest-board";
 import { ContinuePlaying } from "@/components/game/world/game-menu";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { loadDashboard } from "@/lib/account/dashboard";
@@ -88,7 +84,6 @@ export default async function GamesHome() {
             </div>
             <div className="mt-3 grid gap-2">
               <MenuLink href="/games/locker" tone="violet"><Shirt className="size-4" aria-hidden /> Change your look</MenuLink>
-              <MenuLink href="/games/home"><Sparkles className="size-4" aria-hidden /> Your room</MenuLink>
             </div>
             {player.dailyBonusReady && <p className="mt-3 rounded-xl bg-[#ffd166]/15 p-2 text-center text-xs font-black text-[#ffd166]">Daily Grind ready: double Clout today</p>}
           </aside>
@@ -96,25 +91,12 @@ export default async function GamesHome() {
           {/* Middle: what you can do */}
           <nav className="order-1 mx-auto grid w-full max-w-md content-start gap-3 lg:order-2" aria-label="Main menu">
             <MenuLink href="/games/world" tone="gold" big><Globe2 className="size-5" aria-hidden /> Play World</MenuLink>
-            <MenuLink href="/games/world?map=city"><Globe2 className="size-4" aria-hidden /> Free roam London</MenuLink>
             <ContinuePlaying userId={account.id} className="gloss-off flex min-h-12 items-center justify-center gap-2 rounded-xl border-b-[5px] border-[#3f7a2a] bg-[#6cc04a] px-4 text-sm font-black text-[#0d1726] hover:bg-[#7bd158]" />
             <div className="grid grid-cols-2 gap-3">
               <MenuLink href="/courses"><BookOpen className="size-4" aria-hidden /> Learn</MenuLink>
-              <MenuLink href="/practice"><Target className="size-4" aria-hidden /> Practise</MenuLink>
               <MenuLink href="/games/quests"><ClipboardList className="size-4" aria-hidden /> Quests</MenuLink>
-              <MenuLink href="/homework"><ClipboardList className="size-4" aria-hidden /> Homework</MenuLink>
               <MenuLink href="/games/friends"><Users className="size-4" aria-hidden /> Friends</MenuLink>
-              <MenuLink href="/messages"><MessageCircle className="size-4" aria-hidden /> Messages</MenuLink>
-            </div>
-            <p className="pt-2 text-center text-[11px] font-black tracking-widest text-white/50 uppercase">Places in the world</p>
-            <div className="grid grid-cols-3 gap-3">
-              <MenuLink href="/games/world?map=city&goto=maths-racing"><CarFront className="size-4" aria-hidden /> Racing</MenuLink>
-              <MenuLink href="/games/world?map=city&goto=championship-arena"><Trophy className="size-4" aria-hidden /> League</MenuLink>
-              <MenuLink href="/games/world?map=city&goto=what-if-cinema"><Gamepad2 className="size-4" aria-hidden /> What If?</MenuLink>
-            </div>
-            <div className="grid grid-cols-2 gap-3 pt-1">
               <MenuLink href="/dashboard"><LayoutDashboard className="size-4" aria-hidden /> Dashboard</MenuLink>
-              <MenuLink href="/dashboard/settings"><Settings className="size-4" aria-hidden /> Settings</MenuLink>
             </div>
           </nav>
 
@@ -157,7 +139,7 @@ export default async function GamesHome() {
         </div>
 
         {/* Learning dashboard */}
-        <section className="mt-6 grid gap-4 lg:grid-cols-3" aria-label="Learning dashboard">
+        <section className="mt-6 grid gap-4 lg:grid-cols-2" aria-label="Learning dashboard">
           <div className={PANEL}>
             <h2 className="text-sm font-black tracking-widest text-[#9ec5ff] uppercase">Learn next</h2>
             {!next.length && <p className="mt-3 text-sm text-white/70">Pick a subject and try a few questions. We&apos;ll suggest topics from there.</p>}
@@ -187,7 +169,6 @@ export default async function GamesHome() {
             </div>
             <p className="mt-3 text-xs text-white/60">Every question you get right in the world or here earns XP and Clout.</p>
           </div>
-          <div className="[&_section]:!m-0 lg:col-span-1"><QuestBoard /></div>
         </section>
       </div>
     </div>

@@ -1,5 +1,7 @@
 import * as THREE from "three";
 
+import { universityLandmark } from "./university3d";
+
 import type { Built, Thing } from "@/game/core/london";
 import type { TrafficVehicle } from "@/game/core/traffic-rules";
 import type { WorldMap } from "@/game/core/world";
@@ -170,6 +172,11 @@ export function addUKScenery(
   for (const t of data.things) {
     const g = new THREE.Group();
     parent.add(g);
+    if (t.kind === "building" && t.id.startsWith("university-site-")) {
+      buildings.push(g);
+      universityLandmark(g, t.id.slice(16), t, box as never, mat as never);
+      continue;
+    }
     if (t.kind === "building") {
       const p = ukBuildingPlan(map.id, t),
         x = p.x,

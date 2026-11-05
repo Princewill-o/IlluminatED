@@ -15,6 +15,7 @@ import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { CivilianConversation } from "./civilian-conversation";
+import { CoachTrip } from "./coach-trip";
 import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
 import { EventArcade, type EventGame } from "./event-arcade";
@@ -79,6 +80,7 @@ import type { RoadViolation } from "@/game/core/traffic-rules";
 import { canBoardTrain } from "@/game/core/train";
 import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } from "@/game/core/uk-navigation";
 import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
+import { universityById } from "@/game/core/universities";
 import { venueMap } from "@/game/core/venues";
 import {
   CITY, ventureMap,
@@ -107,6 +109,7 @@ import {
   workplaceMap,
   hotelMap,
   safeSpot,
+  SERVERS,
 } from "@/game/core/world";
 import { retainNearbySnapshot } from "@/game/core/world-ui-snapshots";
 import type { HomeState } from "@/lib/game/careers-server";
@@ -489,6 +492,7 @@ export function WorldApp({
   };
   // Hop-on bus: choose anywhere on the map and the bus drives you there.
   const [busPick, setBusPick] = useState(false);
+  const [coachTrip, setCoachTrip] = useState(false);
   const [hop, setHop] = useState<{ to: string; route: string } | null>(null);
   const hopOn = useCallback((place: Place) => {
     setBusPick(false);
@@ -539,6 +543,9 @@ export function WorldApp({
       // Private browsing: use the time zone.
     }
     setRegion(r);
+    // Play World goes straight into the game: join the busiest server in your region.
+    // The server list is still one tap away from "Change server".
+    setServer((current) => current ?? SERVERS.find((x) => x.region === r)?.id ?? SERVERS[0]?.id ?? null);
   }, []);
 
   // Keep the address bar shareable: /games/world?map=campus&server=lse-1
@@ -739,6 +746,7 @@ export function WorldApp({
         if (to.href === "/learn") doActivity("study");
         // Games open as a pop-up right here instead of leaving the world.
         if (to.href === "/games" || to.href === "/games/hub" || to.href === "/games/arcade") setGames(true);
+        else if (to.href === "/coach") setCoachTrip(true);
         else if (to.href === "/games/racing") setEventGame("racing");
         else if (to.href === "/games/championship") setEventGame("championship");
         else if (to.href === "/games/what-if") setEventGame("what-if");
@@ -1050,7 +1058,7 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
-  const busy = Boolean((passage&&!passage.ready) || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
+  const busy = Boolean((passage&&!passage.ready) || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || coachTrip || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy || mobileLife;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1342,7 +1350,7 @@ export function WorldApp({
       {phone && <GamePhone onUKRoads={() => { setPhone(false); setUKRoadsOpen(true); }} mapId={mapId} initialApp={phoneApp} meId={me.id} username={me.username} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}}
         onHouses={() => { setPhone(false); if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setHousing(true); }}
         onStudio={channel=>{setPhone(false);setStudioFloating(false);setCreatorChannel(channel);}} onParty={()=>{setPhone(false);const place=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("party-"));if(place){setWaypoint({id:place.id,name:"Community social",kind:"view",x:place.rect.x+place.rect.w/2,y:place.rect.y+place.rect.h/2});say("Follow the marker to the community social.",true);}else setMapOpen(true);}}
-        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);if(outdoors&&!jailed&&life.stars<POLICE_STARS){setCoachTrip(true);return;}const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);
@@ -1438,6 +1446,16 @@ export function WorldApp({
           Decorate
         </Link></HudSlot>
       )}
+      {coachTrip&&<CoachTrip from={map.kind==="home"?"city":mapId} onClose={()=>setCoachTrip(false)} onGo={(city,uni)=>{
+        setCoachTrip(false);
+        const dest=loadMap(city,offices,me.id);
+        const gate=dest?.portals.find(p=>p.id===`university-site-${uni}`);
+        const spot=gate?{x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h+TILE*1.5}:undefined;
+        const label=universityById(uni)?.fullName??"University";
+        const arrive=()=>{if(gate)setWaypoint({id:gate.id,name:label,kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say(`Welcome to ${label}. Walk in through the front entrance.`,true);};
+        if(city===mapId&&spot){setArrive(spot);setTrip(n=>n+1);arrive();}
+        else void goTo(city,label,spot).then(arrive);
+      }}/>}
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
       {dailyJob&&<DailyShift active={map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:CITY} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
       {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else {setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}}} />}

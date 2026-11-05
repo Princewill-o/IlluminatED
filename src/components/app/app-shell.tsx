@@ -108,6 +108,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const inWorld = path === "/games/world";
   const phoneLayout = usePhoneLayout();
   const phoneGame = phoneLayout === true && inWorld;
+  // The main menu and the world are full-screen game screens: no side rail.
+  const noRail = inWorld || path === "/games";
 
   return (
     <PlayerContext.Provider value={player}>
@@ -116,8 +118,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Side rail: tablets and laptops (like Instagram on the web) */}
         <nav
           aria-label="App"
-          inert={phoneGame}
-          style={phoneGame ? { display: "none" } : undefined}
+          inert={phoneGame || noRail}
+          style={phoneGame || noRail ? { display: "none" } : undefined}
           className="fixed inset-y-0 left-0 z-40 hidden w-[76px] flex-col border-r border-border bg-background/70 px-3 py-4 backdrop-blur-xl md:flex 2xl:w-[224px]"
         >
           <Link prefetch={false} href="/dashboard" className="mb-5 flex items-center gap-3 px-2" aria-label="IlluminatED home">
@@ -195,7 +197,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main key={path} id="main" tabIndex={-1} data-world={inWorld ? "" : undefined} className={cn("min-h-[70dvh] min-w-0 outline-none md:pl-[76px] 2xl:pl-[224px]", !inWorld && "platform-page-enter", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
+        <main key={path} id="main" tabIndex={-1} data-world={inWorld ? "" : undefined} className={cn("min-h-[70dvh] min-w-0 outline-none", !noRail && "md:pl-[76px] 2xl:pl-[224px]", !inWorld && "platform-page-enter", inWorld ? "pb-0" : "pb-[calc(76px+env(safe-area-inset-bottom))] md:pb-10")}>
           {children}
         </main>
 
