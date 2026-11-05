@@ -96,6 +96,7 @@ export default async function GamesHome() {
           {/* Middle: what you can do */}
           <nav className="order-1 mx-auto grid w-full max-w-md content-start gap-3 lg:order-2" aria-label="Main menu">
             <MenuLink href="/games/world" tone="gold" big><Globe2 className="size-5" aria-hidden /> Play World</MenuLink>
+            <MenuLink href="/games/world?map=city"><Globe2 className="size-4" aria-hidden /> Free roam London</MenuLink>
             <ContinuePlaying userId={account.id} className="gloss-off flex min-h-12 items-center justify-center gap-2 rounded-xl border-b-[5px] border-[#3f7a2a] bg-[#6cc04a] px-4 text-sm font-black text-[#0d1726] hover:bg-[#7bd158]" />
             <div className="grid grid-cols-2 gap-3">
               <MenuLink href="/courses"><BookOpen className="size-4" aria-hidden /> Learn</MenuLink>
@@ -107,9 +108,9 @@ export default async function GamesHome() {
             </div>
             <p className="pt-2 text-center text-[11px] font-black tracking-widest text-white/50 uppercase">Places in the world</p>
             <div className="grid grid-cols-3 gap-3">
-              <MenuLink href="/games/world?go=racing"><CarFront className="size-4" aria-hidden /> Racing</MenuLink>
-              <MenuLink href="/games/championship"><Trophy className="size-4" aria-hidden /> League</MenuLink>
-              <MenuLink href="/games/what-if"><Gamepad2 className="size-4" aria-hidden /> What If?</MenuLink>
+              <MenuLink href="/games/world?map=city&goto=maths-racing"><CarFront className="size-4" aria-hidden /> Racing</MenuLink>
+              <MenuLink href="/games/world?map=city&goto=championship-arena"><Trophy className="size-4" aria-hidden /> League</MenuLink>
+              <MenuLink href="/games/world?map=city&goto=what-if-cinema"><Gamepad2 className="size-4" aria-hidden /> What If?</MenuLink>
             </div>
             <div className="grid grid-cols-2 gap-3 pt-1">
               <MenuLink href="/dashboard"><LayoutDashboard className="size-4" aria-hidden /> Dashboard</MenuLink>

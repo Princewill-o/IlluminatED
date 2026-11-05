@@ -182,7 +182,7 @@ function kindOf(p: Portal): PlaceKind | null {
     (t.kind === "map" && t.mapId === "study-lobby")
   )
     return "study";
-  if (t.kind === "games") return "games";
+  if (t.kind === "games" || (t.kind === "link" && ["/games/racing", "/games/championship", "/games/what-if"].includes(t.href))) return "games";
   if (
     (t.kind === "act" && t.activity === "study") ||
     (t.kind === "link" && t.href === "/learn")

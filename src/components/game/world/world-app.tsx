@@ -401,6 +401,20 @@ export function WorldApp({
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
   }, []);
   const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout]);
+  // From the main menu: /games/world?goto=maths-racing walks you to that place with a marker.
+  const gotoDone = useRef(false);
+  useEffect(() => {
+    if (gotoDone.current || typeof window === "undefined") return;
+    const go = new URLSearchParams(window.location.search).get("goto");
+    const gate = go ? map.portals.find((p) => p.id === go) : undefined;
+    if (!gate) return;
+    gotoDone.current = true;
+    const timer = window.setTimeout(() => {
+      setWaypoint({ id: gate.id, name: gate.label.split(":")[0], kind: "games", x: gate.rect.x + gate.rect.w / 2, y: gate.rect.y + gate.rect.h / 2 });
+      announceGameMoment({ kind: "arrival", title: gate.label.split(":")[0], message: "Follow the marker to get there. Free roam anywhere on the way." });
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, [map]);
   const navigation=useNavigation(map,waypoint,Boolean(driving),arrived);
   const inOffice = mapId.startsWith("office-");
   const outdoors = mapId === "city" || mapId === "highlands" || isUKScene(mapId);
