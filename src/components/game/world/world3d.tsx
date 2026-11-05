@@ -51,7 +51,7 @@ import { COMPANIES, type Company } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
 import { look } from "@/game/core/cosmetics";
 import { crayonBuildingAsset, pixelTreePlans, pixelAsset } from "@/game/core/crayon-vegetation";
-import { frameBudget, graphicsBudget } from "@/game/core/frame-budget";
+import { frameBudget } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
 import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
@@ -74,7 +74,7 @@ import { ukTrafficRoutes, ukTrafficOffset, ukAmbientPeople, ukTrafficCount } fro
 import { buildUKScene, UK_GATEWAYS } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
-import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, physicalSurface, visualProfile } from "@/game/core/visual-quality";
+import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, lowerTier, physicalSurface, populationBudget, visualProfile, type GraphicsTier } from "@/game/core/visual-quality";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -1999,7 +1999,13 @@ export function World3D({
   overview = false,
   immersive = false,
   navigation = null,
+  graphics = "high",
+  onSlow,
 }: {
+  /** Rendering tier (see visual-quality.ts). Changing it rebuilds the scene. */
+  graphics?: GraphicsTier;
+  /** Called once when frames stay slow at the lowest render resolution. */
+  onSlow?: (next: GraphicsTier) => void;
   navigation?: WorldNavigation | null;
   map: WorldMap;
   getMe: () => { x: number; y: number; walking: boolean; heading?: number; speed?: number };
@@ -2023,6 +2029,7 @@ export function World3D({
   onGround?: (x: number, y: number) => void;
 }) {
   const readyCallback=useRef(onReady);readyCallback.current=onReady;
+  const slowCallback=useRef(onSlow);slowCallback.current=onSlow;
   const host = useRef<HTMLDivElement>(null);
   const navigationRef=useRef(navigation);navigationRef.current=navigation;
   const news = useCityNews();
@@ -2059,8 +2066,8 @@ export function World3D({
     let renderer: THREE.WebGLRenderer;
     const mobile = window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 768;
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
-    const budget = graphicsBudget();
-    const visual = visualProfile(window.devicePixelRatio||1,mobile);
+    const budget = populationBudget(graphics, indoors);
+    const visual = visualProfile(window.devicePixelRatio||1,mobile,graphics);
     const culling=!indoors&&!ukScene?sceneryCulling():null;
     const cullingRoots:THREE.Object3D[]=[];
     const batchedMaterials = new Set<THREE.Material>();
@@ -2525,7 +2532,7 @@ export function World3D({
       bodies.add(b);
       const loadBody = async () => {
         if (disposed || removed) return;
-        const c = await buildCharacter(a, playerHeight, logo);
+        const c = await buildCharacter(a, playerHeight, logo, { outfit: !ambient || budget.outfits });
         if (disposed || removed) { c.dispose(); return; }
         bendAll(c.object);
         if(ambient)c.object.traverse(node=>{if((node as THREE.Mesh).isMesh)node.castShadow=false;});
@@ -2658,7 +2665,9 @@ export function World3D({
     };
 
     // Local ambient residents: not connected players. Keep the city lively, not crowded.
-    const residentLimit = ukAmbientPeople(map.id, map.kind === "home" ? 0 : Math.min(budget.residents, london || highland || map.kind === "station" || map.id === "study-lobby" ? 64 : 34));
+    // Interiors are small: a handful of residents reads as busy; dozens cost
+    // hundreds of draw calls and crowd the player out of the room.
+    const residentLimit = ukAmbientPeople(map.id, map.kind === "home" ? 0 : map.kind === "station" || map.id === "study-lobby" ? Math.max(budget.residents, 12) : budget.residents);
     const npcs = residentPaths(map, residentLimit).filter(path=>map.kind !== "prison" || path.x0<25&&path.x1<25).map((path, i) => {
       const body = makeBody(map.kind === "prison" ? {...npcLook(i),...PRISON_LOOK} : {...npcLook(i),held:i%5===0?"held-phone":i%5===1?"held-book":"held-none"}, null, true);
       const speech = speechMark(); body.root.add(speech);
@@ -2688,7 +2697,7 @@ export function World3D({
     });
     const officeWorkers: Body[] = [];
     if (map.kind === "office") {
-      for (let y = 1; y < map.rows - 1 && officeWorkers.length < 26; y++) for (let x = 1; x < map.cols - 1 && officeWorkers.length < 26; x++) {
+      for (let y = 1; y < map.rows - 1 && officeWorkers.length < budget.workers; y++) for (let x = 1; x < map.cols - 1 && officeWorkers.length < budget.workers; x++) {
         if (map.tiles[y]?.[x] !== "c" || !"dkt".includes(map.tiles[y - 1]?.[x] ?? "")) continue;
         const body = makeBody({...npcLook(130 + officeWorkers.length), top:"top-suit", held:"held-none"}, null, true);
         body.root.position.set(x + .5, 0, y + .5); body.root.rotation.y = Math.PI;
@@ -2923,6 +2932,19 @@ export function World3D({
     motionPreference.addEventListener("change",motionChanged);
     const renderDue = frameBudget(60);
     const adaptResolution = adaptivePixelRatio(visual.pixelRatio);
+    // Auto graphics: if frames stay slow even at the lowest resolution, ask the
+    // host to step down one tier (once per scene).
+    let slowWindowAt = 0, slowFrames = 0, slowWindows = 0, slowReported = false;
+    const watchSlow = (now: number) => {
+      if (slowReported || firstPaint || !slowCallback.current) return;
+      if (!slowWindowAt) { slowWindowAt = now; slowFrames = 0; return; }
+      slowFrames++;
+      if (now - slowWindowAt < 3000) return;
+      const fps = slowFrames * 1000 / (now - slowWindowAt);
+      slowWindowAt = now; slowFrames = 0;
+      slowWindows = fps < 30 && renderer.getPixelRatio() <= .8 ? slowWindows + 1 : 0;
+      if (slowWindows >= 2) { slowReported = true; const next = lowerTier(graphics); if (next) slowCallback.current(next); }
+    };
     const frame = (now: number) => {
       if (document.hidden) {
         adaptResolution(now, false);
@@ -3576,6 +3598,7 @@ export function World3D({
       renderer.info.reset();
       const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
       presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now,true,!firstPaint):null);
+      watchSlow(now);
       if(process.env.NODE_ENV === "development") { monitorUpdate+=renderStarted-workStarted;monitorRender+=performance.now()-renderStarted; }
       if(firstPaint&&((sightlinesReady&&me.char)||now-start>=5000)){firstPaint=false;releaseCapture.ready(map.id);readyCallback.current?.();}
       if (process.env.NODE_ENV === "development" && ++monitorFrames && now - monitorAt >= 2000) {
@@ -3586,7 +3609,7 @@ export function World3D({
           graphicsRatio: renderer.getPixelRatio().toFixed(2),
           graphicsUpdateMs: (monitorUpdate/monitorFrames).toFixed(2),
           graphicsRenderMs: (monitorRender/monitorFrames).toFixed(2),
-          graphicsPreset: "high",
+          graphicsPreset: graphics,
           graphicsPhase: phase,
           graphicsWeather: weatherKind,
         });
@@ -3749,7 +3772,7 @@ export function World3D({
     };
     // getMe/getOthers/getPolice/nearPortal/onGround are stable refs from the parent.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, avatarKey, overview, identityKey]);
+  }, [map, avatarKey, overview, identityKey, graphics]);
 
   // Billboards: real upcoming hackathons and tech events on big boards around town.
   const adKey = ads.map((a) => a.id).join(",");

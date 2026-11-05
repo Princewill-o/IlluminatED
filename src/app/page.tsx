@@ -145,7 +145,7 @@ export default async function Home() {
       {/* Scrolling ribbon of what's inside, then a few real numbers. */}
       <section className="relative mt-16" aria-label="What's inside">
         <Marquee pauseOnHover className="[--duration:35s] [--gap:0.75rem]">
-          {["Primary · Years 1–6", "Secondary · Years 7–11", "Sixth form · Years 12–13", "IllumED Slides", "GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
+          {["Primary · Years 1–6", "Secondary · Years 7–11", "Sixth form · Years 12–13", "IllumED Slides", "GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent (soon)", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
             <span key={t} className="rounded-full border-[3px] border-[#1d1a4a] px-4 py-2 text-sm font-black whitespace-nowrap text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]" style={{ background: ["#ffd23f", "#b9f0c9", "#c9d7ff", "#ffb3c7", "#e3c9ff"][i % 5] }}>
               {t}
             </span>
@@ -189,7 +189,7 @@ export default async function Home() {
       {/* The agent, with small product snippets rather than stock art. */}
       <section className="relative container pb-20" aria-labelledby="agent-title">
         <div className="max-w-2xl">
-          <p className={`text-sm font-bold ${accent}`}>The study agent</p>
+          <p className={`text-sm font-bold ${accent}`}>The study agent · <span className="rounded-full bg-[#ffd23f] px-2 py-0.5 text-[#1d1a4a]">Coming soon</span></p>
           <h2 id="agent-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>An agent that does the revision admin.</h2>
           <p className={`mt-4 text-lg leading-8 ${soft}`}>
             It works over your own homework, subjects and exam date, and asks before anything goes to your teacher. The same
@@ -229,9 +229,9 @@ export default async function Home() {
             </div>
           </article>
         </div>
-        <Link prefetch={false} href="/agent" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
-          Try the study agent <ArrowRight className="size-4" aria-hidden />
-        </Link>
+        <p className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-dashed border-[#1d1a4a]/60 px-6 font-bold text-[#1d1a4a] dark:border-white/60 dark:text-white">
+          The study agent is coming soon
+        </p>
       </section>
 
       {/* Pricing: learner plans with prices, and school licences by enquiry. */}
@@ -308,7 +308,7 @@ export default async function Home() {
       {/* Closing call to action. */}
       <section className="relative container pb-28 text-center" aria-labelledby="cta-title">
         <h2 id="cta-title" className={`${display} text-4xl sm:text-6xl`}>What should we revise first?</h2>
-        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Create your free account and ask the study agent. It already knows where to start.</p>
+        <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Create your free account and start with the topics you&apos;re studying. Your progress follows you into the game.</p>
         <Link prefetch={false} href="/sign-in?mode=sign-up" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
           Start free <ArrowRight className="size-4" aria-hidden />
         </Link>

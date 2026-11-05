@@ -142,6 +142,9 @@ export type BlameOffer = { id: string; from_username: string; charge: string; st
 export async function blameInbox(): Promise<BlameOffer[]> {
   const sb = await getSupabase();
   if (!sb) return [];
+  // Signed-out visitors (and the preview) have no inbox; skip the 401 round trip.
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth.user) return [];
   const { data, error } = await sb.rpc("blame_inbox");
   return error ? [] : ((data ?? []) as BlameOffer[]);
 }

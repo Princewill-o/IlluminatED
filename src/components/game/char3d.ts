@@ -34,9 +34,10 @@ export interface Character3D {
 const bone = (object: THREE.Object3D, name: string) => object.getObjectByName(`mixamorig${name}`) ?? object.getObjectByName(`mixamorig:${name}`);
 
 /** The supplied Blocky Characters have their own meshes, rig, texture atlas and clips. */
-async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|null,model:typeof ADVENTURERS[number]):Promise<Character3D>{
+async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|null,model:typeof ADVENTURERS[number],wantOutfit=true):Promise<Character3D>{
   const source=await load(`${BLOCKY_BASE}/${model.file}.glb`);
-  const outfit=blockyOutfitFor(a.top);
+  // Distant ambient residents can skip separate garment meshes (one draw call instead of many).
+  const outfit=wantOutfit?blockyOutfitFor(a.top):null;
   const object=clone(source.scene) as THREE.Group;
   const bakedPresetGarments:THREE.Object3D[]=[];
   if(outfit)object.traverse(node=>{if(node.userData.presetGarment)bakedPresetGarments.push(node);});
@@ -122,8 +123,8 @@ function blockyOutfitTexture(mesh:THREE.SkinnedMesh,source:THREE.Texture,a:Avata
 
 
 /** Players, portraits, residents and legacy avatar fallbacks share this supplied rig. */
-export async function buildCharacter(avatar: Avatar, height=1.15, workplaceLogo:string|null=null):Promise<Character3D>{
+export async function buildCharacter(avatar: Avatar, height=1.15, workplaceLogo:string|null=null, options:{outfit?:boolean}={}):Promise<Character3D>{
   const a = look(avatar);
-  return buildBlockyCharacter(a, height, workplaceLogo, adventurerFor(a.head));
+  return buildBlockyCharacter(a, height, workplaceLogo, adventurerFor(a.head), options.outfit!==false);
 }
 export const npcLook=(i:number)=>look({head:ADVENTURERS[((i%ADVENTURERS.length)+ADVENTURERS.length)%ADVENTURERS.length].id,topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'});

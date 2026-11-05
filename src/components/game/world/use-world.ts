@@ -566,6 +566,9 @@ export function useLobby(
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       try {
+        // Counts need a session; signed-out players would only collect 401s.
+        const { data: auth } = await sb.auth.getSession();
+        if (!auth.session) return;
         const { data, error } = await sb.rpc("world_counts");
         if (!disposed && !error && data?.counts) {
           setCounts(data.counts);

@@ -107,7 +107,7 @@ export const COMPANIES: Company[] = [
     revises: "Maths and money",
     boss: {
       name: "Sir Woofington III",
-      title: "Chief Treat Officer", look: { head: "head-dog", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-crown", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
+      title: "Chief Treat Officer", look: { head: "head-blocky-knight", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-crown", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
     courseIds: [
       "gcse-maths",
       "alevel-maths",
@@ -138,7 +138,7 @@ export const COMPANIES: Company[] = [
     tagline: "Big ideas, everyday essentials.",
     sector: "Retail",
     revises: "Business and Economics",
-    boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-cow", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
+    boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-blocky-princess", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
     courseIds: ["btec-business", "alevel-economics", "tlevel-accounting"],
     generators: ["best-buy", "profit", "percent", "ratio"],
     accent: "#ff8fd1",

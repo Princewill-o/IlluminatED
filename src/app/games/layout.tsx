@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 /** The Play tab. The app shell (or, for public challenge cards, the website chrome) wraps this. */
 export default async function GamesLayout({ children }: { children: React.ReactNode }) {
   const sb = await getSupabase();
-  const result = sb ? await sb.rpc("tiggy_status") : null;
+  const user = sb ? (await sb.auth.getUser()).data.user : null;
+  const result = sb && user ? await sb.rpc("tiggy_status") : null;
   const status = Array.isArray(result?.data) ? result.data[0] : result?.data;
   const vip = !result?.error && status?.plan === "premium";
   return (

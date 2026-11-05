@@ -6,8 +6,40 @@ export function readVisualQuality(value: string | null): VisualQuality {
   return "high";
 }
 
+/**
+ * Graphics tiers. "high" is the full art direction; "balanced" drops the
+ * screen-space occlusion pass and halves shadow resolution; "performance"
+ * renders straight to the screen with no post-processing or shadow maps.
+ */
+export type GraphicsTier = "high" | "balanced" | "performance";
+export type GraphicsSetting = "auto" | GraphicsTier;
+export const GRAPHICS_KEY = "world-graphics";
+export function readGraphicsSetting(value: string | null): GraphicsSetting {
+  return value === "high" || value === "balanced" || value === "performance" ? value : "auto";
+}
+const LOW_GPU = /swiftshader|llvmpipe|softpipe|mali|adreno \(tm\) [1-5]\d\d|powervr|intel\(r\) (hd|uhd) graphics( [1-6]\d\d)?\b|intel hd|gma|vivante|videocore/i;
+/** Pick a starting tier from what the device tells us. Unknown hardware starts balanced. */
+export function detectGraphicsTier({ touch = false, cores = 4, memory = 4, gpu = "" }: { touch?: boolean; cores?: number; memory?: number; gpu?: string }): GraphicsTier {
+  if (LOW_GPU.test(gpu) || cores <= 2 || memory <= 2) return "performance";
+  if (touch || cores <= 4 || memory <= 4 || /intel/i.test(gpu)) return "balanced";
+  return /nvidia|geforce|radeon|rtx|gtx|apple m\d|arc/i.test(gpu) ? "high" : "balanced";
+}
+/** One step down when frames stay slow even at the lowest render resolution. */
+export const lowerTier = (tier: GraphicsTier): GraphicsTier | null => (tier === "high" ? "balanced" : tier === "balanced" ? "performance" : null);
+/** How many ambient residents, cyclists and lit lamps each tier can afford. */
+export function populationBudget(tier: GraphicsTier, indoors: boolean) {
+  if (indoors) return { residents: tier === "performance" ? 4 : tier === "balanced" ? 6 : 8, workers: tier === "performance" ? 4 : 8, cyclists: 0, lights: 2, outfits: tier === "high" };
+  return { residents: tier === "performance" ? 12 : tier === "balanced" ? 24 : 40, workers: 8, cyclists: tier === "performance" ? 2 : tier === "balanced" ? 4 : 8, lights: tier === "high" ? 2 : 1, outfits: tier !== "performance" };
+}
+
 /** Keep the art direction with bounded pixel, shadow and effect budgets. */
-export function visualProfile(dpr = 1, touch = false) {
+export function visualProfile(dpr = 1, touch = false, tier: GraphicsTier = "high") {
+  const base = visualProfileHigh(dpr, touch);
+  if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1), shadowSize: touch ? 512 : 768, ambientOcclusion: false, occlusionSamples: 0 };
+  if (tier === "performance") return { ...base, pixelRatio: 1, shadows: false, shadowSize: 256, postProcessing: false, ambientOcclusion: false, occlusionSamples: 0, bloom: false, environment: false };
+  return base;
+}
+function visualProfileHigh(dpr: number, touch: boolean) {
   return {
     pixelRatio: Math.min(
       touch ? 1 : 1.25,

@@ -53,11 +53,14 @@ export function addUKGateways(
     const board = d.sign(gate.label, {
       bg: gate.id.includes("tunnel") ? "#e8dfca" : "#235591",
       fg: gate.id.includes("tunnel") ? "#2c4650" : "#ffffff",
-      w: 6.5,
-      h: 0.6,
+      w: 3.4,
+      h: 0.42,
     });
-    board.position.set(x, 4.6, z);
+    // Low and compact: a floating full-width banner blocked the view from Fountain Square.
+    board.position.set(x, 2.5, z);
     parent.add(board);
+    for (const side of [-1, 1])
+      d.box(parent, "#5d6670", x + side * 1.6 - 0.05, 0, z - 0.05, x + side * 1.6 + 0.05, 2.3, z + 0.05);
     for (const side of [-1, 1])
       d.box(
         parent,

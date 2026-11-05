@@ -42,6 +42,7 @@ import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
 import { freeRoadLoop, motorwayCarArrival } from "@/game/core/uk-navigation";
 import { isUKScene, loopRoadPosition } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
+import { GRAPHICS_KEY, detectGraphicsTier, readGraphicsSetting, type GraphicsSetting, type GraphicsTier } from "@/game/core/visual-quality";
 import { EMOTES, PHRASES, REGIONS, TILE, WALK_SPEED, blocked, chatText, elevationAt, levelMap, type Portal, type WorldMap, portalAt, roomAt, safeSpot, serverById, step } from "@/game/core/world";
 import { nearbyPlayers, VISIBLE_PLAYERS } from "@/game/core/world-network";
 import { retainNearbySnapshot } from "@/game/core/world-ui-snapshots";
@@ -279,6 +280,35 @@ export function WorldView({
   const activeZoom = useRef(zoom);
   /** Every playable map uses the same fully modelled 3D scene. */
   const [immersive, setImmersive] = useState(false);
+  // Graphics: Auto picks a tier from the device and steps down if frames stay slow.
+  const [graphicsSetting, setGraphicsSetting] = useState<GraphicsSetting>("auto");
+  const [autoTier, setAutoTier] = useState<GraphicsTier>("balanced");
+  const [graphicsNote, setGraphicsNote] = useState("");
+  const [graphicsDetected, setGraphicsDetected] = useState(false);
+  useEffect(() => {
+    try { setGraphicsSetting(readGraphicsSetting(localStorage.getItem(GRAPHICS_KEY))); } catch { /* Optional. */ }
+    let tier: GraphicsTier = "balanced";
+    try {
+      const saved = sessionStorage.getItem("world-graphics-auto");
+      if (saved === "high" || saved === "balanced" || saved === "performance") tier = saved;
+      else {
+        let gpu = "";
+        try { const gl = document.createElement("canvas").getContext("webgl"); const info = gl?.getExtension("WEBGL_debug_renderer_info"); gpu = String(info && gl ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : ""); gl?.getExtension("WEBGL_lose_context")?.loseContext(); } catch { /* Unknown GPU. */ }
+        const nav = navigator as Navigator & { deviceMemory?: number };
+        tier = detectGraphicsTier({ touch: window.matchMedia("(pointer: coarse)").matches, cores: navigator.hardwareConcurrency || 4, memory: nav.deviceMemory ?? 4, gpu });
+      }
+    } catch { /* Defaults to balanced. */ }
+    setAutoTier(tier);
+    setGraphicsDetected(true);
+  }, []);
+  const graphicsTier: GraphicsTier = graphicsSetting === "auto" ? autoTier : graphicsSetting;
+  const onSlowGraphics = useCallback((next: GraphicsTier) => {
+    if (graphicsSetting !== "auto") return;
+    setAutoTier(next);
+    try { sessionStorage.setItem("world-graphics-auto", next); } catch { /* Optional. */ }
+    setGraphicsNote(`Switched to ${next === "balanced" ? "Balanced" : "Performance"} graphics for smoother play. Change it in Settings.`);
+    window.setTimeout(() => setGraphicsNote(""), 6000);
+  }, [graphicsSetting]);
   const [graphicsState, setGraphicsState] = useState<"loading" | "ready" | "unavailable">("loading");
   const sceneFrozen=useRef(false);sceneFrozen.current=graphicsState!=="ready"||transitioning;
   const is3d=graphicsState!=="unavailable";
@@ -780,6 +810,14 @@ export function WorldView({
         <summary className="flex min-h-10 cursor-pointer items-center font-bold">Settings</summary>
         <div className="absolute bottom-full left-0 mb-2 flex w-max max-w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 shadow-xl">
         <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
+        <label className="flex min-h-9 items-center gap-1.5">Graphics
+          <select value={graphicsSetting} onChange={e=>{const v=readGraphicsSetting(e.target.value);setGraphicsSetting(v);try{localStorage.setItem(GRAPHICS_KEY,v);}catch{/* Optional. */}}} className="rounded-md bg-white/10 px-1.5 py-1 text-white">
+            <option value="auto" className="text-black">Auto ({autoTier === "high" ? "High" : autoTier === "balanced" ? "Balanced" : "Performance"})</option>
+            <option value="high" className="text-black">High: best looking</option>
+            <option value="balanced" className="text-black">Balanced</option>
+            <option value="performance" className="text-black">Performance: smoothest</option>
+          </select>
+        </label>
         </div>
       </details></HudSlot>
       <div
@@ -840,10 +878,12 @@ export function WorldView({
         />
       </div>
 
-      {is3d && (
+      {is3d && graphicsDetected && (
         <World3D
           navigation={navigation}
           immersive={immersive}
+          graphics={graphicsTier}
+          onSlow={onSlowGraphics}
           map={map}
           avatar={me.avatar}
           car={car}
@@ -861,6 +901,7 @@ export function WorldView({
           getHomeAction={getHomeAction}
         />
       )}
+      {graphicsNote && <div role="status" className="pointer-events-none absolute top-20 left-1/2 z-[100001] -translate-x-1/2 rounded-full bg-[#13203a] px-4 py-2 text-sm font-bold text-white shadow-lg">{graphicsNote}</div>}
       {/* The handover covers this until the new renderer has a usable scene. */}
       {graphicsState === "loading" && <div role="status" className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-sm font-bold text-[#17302c]">Preparing {map.name}…</div>}
       {graphicsState === "unavailable" && <div className="pointer-events-none absolute inset-0 z-[100000] grid place-items-center bg-[#d6e4df] text-center text-[#17302c]">

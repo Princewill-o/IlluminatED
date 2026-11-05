@@ -3,7 +3,6 @@ import {
   ClipboardList,
   Gamepad2,
   House,
-  Sparkles,
   type LucideIcon,
   UserRound,
 } from "lucide-react";
@@ -99,7 +98,6 @@ export const APP_TABS: AppTab[] = [
       "/companies",
     ],
   },
-  { id: "agent", label: "Agent", href: "/agent", icon: Sparkles, match: ["/agent"] },
   { id: "play", label: "IllumED World", href: "/games", icon: Gamepad2, match: ["/games"] },
   { id: "homework", label: "Homework", href: "/homework", icon: ClipboardList, match: ["/homework"] },
   {

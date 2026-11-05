@@ -15,8 +15,8 @@ const TABS = [
   },
   {
     id: "agent",
-    label: "Agent",
-    title: "Plans your week. Quizzes what was set.",
+    label: "Agent · soon",
+    title: "Coming soon: an agent that plans your week.",
     text: "Ask in plain English. It builds a revision plan around your homework and exam date, tests you on your teacher's topics and asks before anything is shared.",
     media: { kind: "video", src: "/landing/illumed-film.mp4", poster: "/landing/illumed-film-poster.jpg", alt: "The study agent planning a revision week" },
   },
