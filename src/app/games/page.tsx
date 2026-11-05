@@ -48,7 +48,7 @@ export default async function GamesHome() {
 
   return (
     <div className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#0b1220]">
-      <video className="world-menu-drift absolute inset-0 h-full w-full object-cover opacity-45" src="/landing/gameplay-crowd.mp4" poster="/landing/gameplay-crowd-poster.jpg" autoPlay muted loop playsInline aria-hidden tabIndex={-1} />
+      <video className="world-menu-drift absolute inset-0 h-full w-full object-cover opacity-45" src="/landing/menu-gameplay.mp4" poster="/landing/menu-gameplay-poster.jpg" autoPlay muted loop playsInline aria-hidden tabIndex={-1} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_25%,rgba(11,18,32,.1),rgba(11,18,32,.9)_70%)]" />
 
       <div className="relative mx-auto max-w-7xl px-4 pt-8 pb-12">
