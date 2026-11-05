@@ -77,7 +77,7 @@ export default async function AdminPage() {
             <input name="email" type="email" required placeholder="student@school.org.uk" className="w-full rounded-xl border bg-background px-3 py-2" />
             <input name="note" placeholder="Note (e.g. Kingston College, 12C)" className="w-full rounded-xl border bg-background px-3 py-2" />
             <label className="block text-sm font-bold">School licence<select name="schoolId" className="mt-1 w-full rounded-xl border bg-background p-3"><option value="">Individual invitation</option>{(schools??[]).map(s=><option key={s.id} value={s.id}>{s.name} · {s.status}</option>)}</select></label>
-            <label className="block text-sm font-bold">School role<select name="schoolRole" className="mt-1 w-full rounded-xl border bg-background p-3"><option value="student">Student</option><option value="teacher">Teacher</option></select></label>
+            <label className="block text-sm font-bold">School role<select name="schoolRole" className="mt-1 w-full rounded-xl border bg-background p-3"><option value="student">Student</option><option value="teacher">Teacher</option><option value="principal">Principal / headteacher</option></select></label>
             <button className="rounded-full bg-primary px-5 py-2 font-semibold text-primary-foreground">Invite</button>
           </form>
           <ul className="mt-4 space-y-1 text-sm">

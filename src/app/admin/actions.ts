@@ -15,9 +15,11 @@ export async function inviteEmail(formData: FormData) {
   if (!sb || !viewer) return;
   const {data:admin}=await sb.rpc("platform_admin_status");if(admin!==true)throw new Error("Administrator access required.");
   const schoolId=String(formData.get("schoolId")??"");
-  const role=String(formData.get("schoolRole")??"student");
+  const picked=String(formData.get("schoolRole")??"student");
+  // Principals sign in as teachers with a school-wide view on top.
+  const role=picked==="principal"?"teacher":picked;
   if(schoolId&&(!z.string().uuid().safeParse(schoolId).success||!["teacher","student"].includes(role)))throw new Error("Choose a school and role.");
-  const {error}=await sb.from("access_invites").upsert({ email: email.data, note: note || null, invited_by: viewer.id, school_id:schoolId||null, school_role:schoolId?role:null });
+  const {error}=await sb.from("access_invites").upsert({ email: email.data, note: note || null, invited_by: viewer.id, school_id:schoolId||null, school_role:schoolId?role:null, principal:Boolean(schoolId)&&picked==="principal" });
   if(error)throw new Error("The invitation could not be saved.");
   await sb.from("demo_requests").update({ status: "invited" }).eq("email", email.data);
   revalidatePath("/admin");
