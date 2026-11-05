@@ -26,6 +26,7 @@ import { uniformFor, workplaceById } from "@/game/core/careers";
 import { CARS } from "@/game/core/cars";
 import { DEFAULT_AVATAR, type Avatar } from "@/game/core/cosmetics";
 import { STARTER_LAYOUT } from "@/game/core/homes";
+import { DEFAULT_ROOM } from "@/game/core/room-designs";
 import type { CitySnapshot } from "@/lib/game/city-server";
 const PREVIEW_PLAYER_ID = "88888888-8888-4888-8888-000000000099";
 const state: CitySnapshot = {
@@ -170,6 +171,7 @@ export function DevShowcase({
               current: "studio",
               owned: ["studio"],
               layout: STARTER_LAYOUT,
+              room: DEFAULT_ROOM,
               furniture: {},
               style: 0,
             }}

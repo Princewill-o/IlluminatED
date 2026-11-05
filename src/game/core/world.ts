@@ -4,6 +4,7 @@ import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture }
 import { buildHome, buildLondon } from "./london";
 import { officeDesign } from "./office-design";
 import { buildHighlands } from "./regions";
+import type { RoomStyle } from "./room-designs";
 import { UK_GATEWAYS } from "./uk-world";
 import { universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
@@ -98,6 +99,8 @@ export interface WorldMap {
   art?: "london" | "highlands" | `home-${number}`;
   /** Furniture placement (homes only). */
   layout?: Placed[];
+  /** Your home's paint, wallpaper, floor and lights. */
+  room?: RoomStyle;
   name: string;
   cols: number;
   rows: number;
@@ -1013,7 +1016,7 @@ export function studyLobbyMap(): WorldMap {
 }
 
 /** Your home: a private room (single player). style picks the colourway. */
-export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): WorldMap {
+export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT, room?: RoomStyle): WorldMap {
   const h = buildHome();
   // The room shell, then your furniture wherever you put it.
   const t = h.tiles.map((r) => r.split("").map((c) => (c === "X" ? "." : c)));
@@ -1029,6 +1032,7 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT): World
     id: "home",
     kind: "home",
     art: `home-${style}`,
+    room,
     name: "Your house",
     cols: h.cols,
     rows: h.rows,

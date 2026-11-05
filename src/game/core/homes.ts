@@ -77,6 +77,21 @@ export const FURNITURE: Furniture[] = [
   { id: "sculpture", name: "Gallery sculpture", price: 1900, w: 1, h: 1, collection: "Decor" },
   { id: "pendant", name: "Brass globe lamp", price: 650, w: 1, h: 1, design: "lamp", collection: "Decor" },
   { id: "woven-rug", name: "Handwoven wool rug", price: 750, w: 3, h: 3, design: "rug", collection: "Decor" },
+  // Cosy cutaway collection, from the reference bedrooms.
+  { id: "clothes-rail", name: "Open clothes rail", price: 450, w: 3, h: 1, collection: "Bedroom", link: { href: "/games/locker", label: "Clothes rail: change your look" } },
+  { id: "tall-bookcase", name: "Tall bookcase", price: 600, w: 2, h: 1, collection: "Study" },
+  { id: "gaming-chair", name: "Gaming chair", price: 550, w: 1, h: 1, collection: "Study" },
+  { id: "pc-desk", name: "Monitor desk & PC", price: 1200, w: 4, h: 2, collection: "Study" },
+  { id: "bench-ottoman", name: "Upholstered bench", price: 400, w: 3, h: 1, collection: "Bedroom" },
+  { id: "long-dresser", name: "Long dresser with candles", price: 700, w: 4, h: 1, collection: "Bedroom" },
+  { id: "bedside", name: "Bedside table", price: 200, w: 1, h: 1, collection: "Bedroom" },
+  { id: "hanging-plant", name: "Trailing pothos", price: 250, w: 1, h: 1, collection: "Decor" },
+  { id: "palm", name: "Potted palm", price: 300, w: 1, h: 1, collection: "Decor" },
+  { id: "leaning-art", name: "Leaning canvas", price: 350, w: 1, h: 1, collection: "Decor" },
+  { id: "laundry-basket", name: "Woven laundry basket", price: 120, w: 1, h: 1, collection: "Decor" },
+  { id: "macrame", name: "Macramé hanging", price: 300, w: 1, h: 1, collection: "Decor" },
+  { id: "loveseat", name: "Mocha loveseat", price: 900, w: 3, h: 2, collection: "Living" },
+  { id: "stool", name: "Wooden stool", price: 150, w: 1, h: 1, collection: "Living" },
 ];
 
 export const furnitureById = (id: string) => FURNITURE.find((f) => f.id === id) ?? null;
@@ -151,6 +166,10 @@ export function homeUse(item: string): HomeUse {
     desk: ["read", "Study at your desk", "study", 7000], shelf: ["read", "Read a book", "study", 6000], gaming: ["play", "Play a game", "arcade", 6000], arcade: ["play", "Play the arcade", "arcade", 6000], piano: ["play", "Play the piano", "music", 7000],
     plant: ["water", "Water your plant", "relax", 4000], wardrobe: ["admire", "Choose an outfit", "relax", 4000], fishtank: ["admire", "Feed the fish", "relax", 5000], lamp: ["admire", "Enjoy the warm light", "relax", 4000],
     telescope: ["admire", "Look at the stars", "relax", 6000], trophies: ["admire", "Admire your achievements", "relax", 4000], petbed: ["sit", "Relax with your companion", "relax", 5000],
+    "clothes-rail": ["admire", "Pick an outfit", "relax", 4000], "tall-bookcase": ["read", "Read a book", "study", 6000], "gaming-chair": ["sit", "Take a seat", "relax", 5000],
+    "pc-desk": ["read", "Study at your PC", "study", 7000], "bench-ottoman": ["sit", "Sit on the bench", "relax", 5000], "long-dresser": ["admire", "Light the candles", "relax", 4000],
+    bedside: ["admire", "Set your alarm", "relax", 3000], "hanging-plant": ["water", "Water the pothos", "relax", 4000], palm: ["water", "Water the palm", "relax", 4000],
+    loveseat: ["sit", "Curl up on the loveseat", "relax", 6000], stool: ["sit", "Perch on the stool", "relax", 4000], "laundry-basket": ["admire", "Sort the laundry", "relax", 4000],
   };
   const [animation, label, effect, duration] = uses[design] ?? ["admire", "Enjoy your decor", "relax", 4000];
   return { animation, label, effect, duration };

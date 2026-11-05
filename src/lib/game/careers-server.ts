@@ -1,3 +1,4 @@
+import { DEFAULT_ROOM, readRoomStyle, type RoomStyle } from "@/game/core/room-designs";
 import "server-only";
 
 import type { CareerRecord } from "@/game/core/careers";
@@ -55,13 +56,15 @@ export interface HomeState {
   current: string;
   layout: Placed[];
   furniture: Record<string, number>;
+  /** Paint, wallpaper, floor and lights (see room-designs.ts). */
+  room: RoomStyle;
 }
 
 export async function loadHome(userId: string): Promise<HomeState> {
-  const fallback: HomeState = { claimed: false, owned: ["studio"], current: "studio", layout: STARTER_LAYOUT, furniture: {} };
+  const fallback: HomeState = { claimed: false, owned: ["studio"], current: "studio", layout: STARTER_LAYOUT, furniture: {}, room: DEFAULT_ROOM };
   const sb = await getSupabase();
   if (!sb) return fallback;
-  const { data } = await sb.from("player_homes").select("owned, current, layout, furniture").eq("user_id", userId).maybeSingle();
+  const { data } = await sb.from("player_homes").select("owned, current, layout, furniture, room").eq("user_id", userId).maybeSingle();
   if (!data) return fallback;
   return {
     claimed: true,
@@ -69,5 +72,6 @@ export async function loadHome(userId: string): Promise<HomeState> {
     current: String(data.current ?? "studio"),
     layout: Array.isArray(data.layout) ? (data.layout as Placed[]) : STARTER_LAYOUT,
     furniture: (data.furniture as Record<string, number>) ?? {},
+    room: readRoomStyle((data as { room?: unknown }).room),
   };
 }

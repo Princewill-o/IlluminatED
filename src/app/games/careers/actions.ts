@@ -125,3 +125,10 @@ export async function saveLayout(layout: { key: string; item: string; x: number;
   if (problem) return { ok: false as const, error: problem };
   return rpc("home_save_layout", { p_layout: layout.map(({ key, item, x, y }) => ({ key: key.slice(0, 40), item, x, y })) }, ["/games/home", "/games/world"]);
 }
+
+/** Saves your room's design: paint, wallpaper, floor, lights and plinth. */
+export async function saveRoom(room: object) {
+  const { readRoomStyle } = await import("@/game/core/room-designs");
+  const r = readRoomStyle(room);
+  return rpc("home_set_room", { p_room: { design: r.design, wall: r.wall, side: r.side ?? r.wall, pattern: r.pattern, wainscot: r.wainscot, floor: r.floor, trim: r.trim, lights: r.lights, plinth: r.plinth } }, ["/games/home", "/games/world"]);
+}

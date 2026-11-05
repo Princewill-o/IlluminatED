@@ -65,6 +65,7 @@ import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
@@ -188,6 +189,78 @@ function box(g: THREE.Group, colour: string, x0: number, y0: number, z0: number,
   m.receiveShadow = true;
   g.add(m);
   return m;
+}
+
+/** A canvas wallpaper, tiled across a wall. */
+function wallpaper(pattern: WallPattern, base: string, repeatX: number) {
+  const c = document.createElement("canvas"); c.width = c.height = 128;
+  const x = c.getContext("2d")!;
+  x.fillStyle = base; x.fillRect(0, 0, 128, 128);
+  const tone = new THREE.Color(base), light = tone.clone().lerp(new THREE.Color("#ffffff"), .28).getStyle(), dark = tone.clone().lerp(new THREE.Color("#000000"), .22).getStyle();
+  if (pattern === "leaf") {
+    for (let i = 0; i < 14; i++) {
+      const px = (i * 47) % 128, py = (i * 83) % 128, a = (i * 1.3) % Math.PI;
+      x.save(); x.translate(px, py); x.rotate(a); x.fillStyle = i % 2 ? light : dark;
+      x.beginPath(); x.ellipse(0, 0, 26, 9, 0, 0, Math.PI * 2); x.fill();
+      x.strokeStyle = dark; x.lineWidth = 1.5; x.beginPath(); x.moveTo(-24, 0); x.lineTo(24, 0); x.stroke(); x.restore();
+    }
+  } else if (pattern === "stripe") { x.fillStyle = light; for (let i = 0; i < 128; i += 32) x.fillRect(i, 0, 14, 128); }
+  else if (pattern === "panel") { x.strokeStyle = dark; x.lineWidth = 3; x.strokeRect(10, 10, 108, 108); x.strokeStyle = light; x.strokeRect(14, 14, 100, 100); }
+  else if (pattern === "check") { x.fillStyle = light; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if ((i + j) % 2) x.fillRect(i * 32, j * 32, 32, 32); }
+  else if (pattern === "grid") { x.strokeStyle = light; x.globalAlpha = .45; x.lineWidth = 2; for (let i = 0; i <= 128; i += 32) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 128); x.moveTo(0, i); x.lineTo(128, i); x.stroke(); } }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(repeatX, 2.2);
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: .9, metalness: 0 }); bend(m);
+  return m;
+}
+/** The cosy cutaway room: two walls, panelling, floorboards, string lights and an optional brick base. */
+function buildRoomShell(world: THREE.Group, room: RoomStyle) {
+  const backWall = box(world, room.wall, 1, 0.25, 1.92, 19, 3.1, 2.0);
+  const sideWall = box(world, room.side ?? room.wall, 0.92, 0.25, 2, 1.0, 3.1, 13);
+  if (room.pattern !== "plain") {
+    backWall.material = wallpaper(room.pattern, room.wall, 9);
+    sideWall.material = wallpaper(room.pattern, room.side ?? room.wall, 5.5);
+  }
+  if (room.wainscot) {
+    box(world, room.wainscot, 1, 0.02, 2.0, 19, 1.15, 2.05);
+    box(world, room.wainscot, 1.0, 0.02, 2, 1.05, 1.15, 13);
+    box(world, room.trim, 1, 1.15, 2.0, 19, 1.2, 2.07);
+    box(world, room.trim, 1.0, 1.15, 2, 1.07, 1.2, 13);
+  }
+  // Skirting and cornice.
+  box(world, room.trim, 1, 0.02, 2.0, 19, 0.16, 2.08);
+  box(world, room.trim, 1.0, 0.02, 2, 1.08, 0.16, 13);
+  box(world, room.trim, 1, 2.98, 1.96, 19, 3.1, 2.08);
+  box(world, room.trim, 0.92, 2.98, 2, 1.08, 3.1, 13);
+  // Floorboards.
+  const floor = new THREE.Color(room.floor);
+  for (let z = 2; z < 13; z += 0.5) {
+    const shade = floor.clone().offsetHSL(0, 0, ((z * 7) % 3 - 1) * 0.018).getStyle();
+    box(world, shade, 1, 0.005, z + 0.01, 19, 0.03, z + 0.49);
+  }
+  if (room.plinth) {
+    box(world, "#8a5446", 0.9, -0.7, 13, 19.1, 0.03, 13.25);
+    box(world, "#8a5446", 19, -0.7, 1.9, 19.25, 0.03, 13.25);
+    box(world, "#f1ece4", 0.9, 0.0, 13.0, 19.1, 0.06, 13.3);
+    for (let x = 1; x < 19; x += 0.6) for (const [y, off] of [[-0.25, 0], [-0.5, 0.3]] as const) box(world, "#6f4237", x + off, y, 13.25, x + off + 0.02, y + 0.2, 13.26);
+  }
+  if (room.lights !== "none") {
+    const colour = room.lights === "neon" ? "#7ff7ff" : "#ffe7a3";
+    const bulb = new THREE.MeshStandardMaterial({ color: colour, emissive: colour, emissiveIntensity: room.lights === "neon" ? 1.6 : 1.1 }); bend(bulb);
+    if (room.lights === "neon") {
+      const strip = new THREE.Mesh(BOX, bulb); strip.scale.set(18, 0.05, 0.05); strip.position.set(10, 2.85, 2.06); world.add(strip);
+      const side = new THREE.Mesh(BOX, bulb); side.scale.set(0.05, 0.05, 11); side.position.set(1.06, 2.85, 7.5); world.add(side);
+    } else {
+      const shape = room.lights === "stars" ? new THREE.OctahedronGeometry(0.07) : new THREE.SphereGeometry(0.045, 8, 6);
+      const count = 52, mesh = new THREE.InstancedMesh(shape, bulb, count), m4 = new THREE.Matrix4();
+      for (let i = 0; i < count; i++) {
+        const back = i < 34, t = back ? i / 33 : (i - 34) / 17;
+        const sag = Math.sin((t * (back ? 6 : 3)) % 1 * Math.PI) * 0.22;
+        m4.makeTranslation(back ? 1.3 + t * 17.4 : 1.08, 2.8 - sag, back ? 2.1 : 2.4 + t * 10);
+        mesh.setMatrixAt(i, m4);
+      }
+      world.add(mesh);
+    }
+  }
 }
 function cyl(g: THREE.Group, colour: string, x: number, z: number, y0: number, y1: number, r: number, seg = 16, r2?: number) {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(r2 ?? r, r, y1 - y0, seg), mat(colour));
@@ -2184,11 +2257,8 @@ export function World3D({
     if (indoors) {
       interior(world, map, jobs, station);
       if (map.kind === "home") {
-        const style = Number(map.art?.split("-")[1] ?? 0);
-        const wall = ["#e5dac9", "#b7c8bb", "#b49c8a", "#a9bda4", "#4c6063"][style % 5];
-        box(world, wall, 1, 0.25, 1.92, 19, 3.1, 2.0);
-        box(world, "#d9c5a1", 1, 2.96, 1.96, 19, 3.08, 2.06);
-        for (const x of [3, 10, 16]) {
+        buildRoomShell(world, map.room ?? DEFAULT_ROOM);
+        for (const x of [3, 16]) {
           box(world, "#29444a", x, 1.2, 2.03, x + 2, 2.65, 2.1);
           box(world, "#a9cfce", x + 0.08, 1.28, 2.1, x + 1.92, 2.57, 2.12);
           box(world, "#f2e6d0", x + 0.97, 1.2, 2.13, x + 1.03, 2.65, 2.17);

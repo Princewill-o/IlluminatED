@@ -1,5 +1,7 @@
 "use client";
 
+import type { RoomStyle } from "@/game/core/room-designs";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./pixel-gui.css";
 
@@ -133,7 +135,7 @@ const HIGHLANDS = highlandsMap();
 const SUPERMARKET = supermarketMap();
 const BUS_STOPS = busStops();
 
-let HOME: { style: number; layout: Placed[] } | null = null;
+let HOME: { style: number; layout: Placed[]; room?: RoomStyle } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if(id.startsWith("party-"))return partyMap(id.slice(6));
   const regional = ukWorldMap(id);
@@ -146,7 +148,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "universities") return CITY;
   if (id === "supermarket") return supermarketMap();
   if (id.startsWith("university-")) return universityInteriorMap(id.slice(11));
-  if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout) : homeMap(homeStyle(meId));
+  if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout, HOME.room) : homeMap(homeStyle(meId));
   if (id === "study-lobby") return studyLobbyMap();
   if (id === "campus") return campusMap(offices);
   if (id === "highlands") return HIGHLANDS;
@@ -400,7 +402,7 @@ export function WorldApp({
   useEffect(() => () => {
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
   }, []);
-  const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout]);
+  const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout, home.room) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout, home.room]);
   // From the main menu: /games/world?goto=maths-racing walks you to that place with a marker.
   const gotoDone = useRef(false);
   useEffect(() => {
@@ -1160,7 +1162,7 @@ export function WorldApp({
         setBankOpen(false);
         goTo(destination.mapId, destination.label, spot);
       }} />}
-      {building && mapId === "home" && <HomeEditor embedded onClose={() => setBuilding(false)} claimed={home.claimed} avatar={me.avatar} owned={home.owned} current={home.current} layout={home.layout} bought={home.furniture} clout={wallet} />}
+      {building && mapId === "home" && <HomeEditor embedded room={home.room} onClose={() => setBuilding(false)} claimed={home.claimed} avatar={me.avatar} owned={home.owned} current={home.current} layout={home.layout} bought={home.furniture} clout={wallet} />}
       {housing && <HomeMarket claimed={home.claimed} owned={home.owned} current={home.current} clout={wallet}
         onClose={() => setHousing(false)}
         onPurchased={(id, balance) => {

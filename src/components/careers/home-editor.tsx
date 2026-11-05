@@ -8,11 +8,12 @@ import { useRouter } from "next/navigation";
 
 import { FurnitureThumbnail } from "./furniture-thumbnail";
 
-import { buyFurniture, buyHome, saveLayout } from "@/app/games/careers/actions";
+import { buyFurniture, buyHome, saveLayout, saveRoom } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { HomeFloorPlan } from "@/components/game/world/home-floor-plan";
 import type { Avatar } from "@/game/core/cosmetics";
 import { FURNITURE, HOMES, type Placed, ROOM, STARTER_LAYOUT, furnitureById, furnitureCollection, validLayout } from "@/game/core/homes";
+import { DEFAULT_ROOM, FLOORS, LIGHTS, PATTERNS, ROOM_DESIGNS, WALL_PAINTS, type RoomStyle } from "@/game/core/room-designs";
 import { TILE, homeMap } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +33,9 @@ export function HomeEditor({
   clout,
   embedded = false,
   onClose,
+  room: savedRoom = DEFAULT_ROOM,
 }: {
+  room?: RoomStyle;
   embedded?: boolean;
   onClose?: () => void;
   claimed: boolean;
@@ -49,11 +52,13 @@ export function HomeEditor({
   const [pending, start] = useTransition();
   const [fallback, setFallback] = useState(false);
   const [category, setCategory] = useState("All");
-  const [tab, setTab] = useState<"shop" | "storage" | "houses">("shop");
+  const [tab, setTab] = useState<"shop" | "storage" | "room" | "houses">("shop");
+  const [room, setRoom] = useState<RoomStyle>(savedRoom);
+  const roomDirty = JSON.stringify(room) !== JSON.stringify(savedRoom);
   const [exitPrompt, setExitPrompt] = useState(false);
   const router = useRouter();
   const home = HOMES.find((h) => h.id === current) ?? HOMES[0];
-  const map = useMemo(() => homeMap(home.style, layout), [home.style, layout]);
+  const map = useMemo(() => homeMap(home.style, layout, room), [home.style, layout, room]);
   const dirty = JSON.stringify(layout) !== JSON.stringify(saved);
 
   // What you own but haven't put out.
@@ -143,14 +148,15 @@ export function HomeEditor({
       </div>
       <section aria-label="Build catalogue" className="absolute inset-x-0 bottom-0 h-[240px] border-t border-[#c8b182] bg-[#faf6ed] shadow-[0_-6px_30px_#183b3520] sm:h-[220px]">
         <div className="flex items-center gap-2 overflow-x-auto border-b border-[#d4c7ad] px-3 py-2">
-          {([['shop','Furniture'],['storage','Storage'],['houses','Houses']] as const).map(([value,label])=><button type="button" key={value} aria-pressed={tab===value} onClick={()=>setTab(value)} className={cn("min-h-10 shrink-0 rounded-full px-4 text-xs font-bold",tab===value?"bg-[#254e46] text-white":"bg-[#eee7d9]")}>{label}</button>)}
+          {([['shop','Furniture'],['storage','Storage'],['room','Walls & floor'],['houses','Houses']] as const).map(([value,label])=><button type="button" key={value} aria-pressed={tab===value} onClick={()=>setTab(value)} className={cn("min-h-10 shrink-0 rounded-full px-4 text-xs font-bold",tab===value?"bg-[#254e46] text-white":"bg-[#eee7d9]")}>{label}</button>)}
           {tab==="shop"&&<><span className="mx-1 h-6 w-px shrink-0 bg-[#d4c7ad]"/>{["All","Living","Bedroom","Kitchen","Bathroom","Decor","Study"].map(group=><button type="button" key={group} aria-pressed={category===group} onClick={()=>setCategory(group)} className={cn("min-h-10 shrink-0 rounded-full border px-3 text-xs",category===group?"border-[#254e46] bg-[#e1e8dc]":"border-transparent")}>{group}</button>)}</>}
         </div>
         <div className="flex h-[175px] items-stretch gap-2 overflow-x-auto px-3 py-2 sm:h-[155px]">
           {tab==="shop"&&FURNITURE.filter(f=>!f.starter&&(category==="All"||furnitureCollection(f)===category)).map(f=><button type="button" key={f.id} disabled={pending||clout<f.price} onClick={()=>act(()=>buyFurniture(f.id),`${f.name} bought. Select it in Storage to place it.`,()=>setTab("storage"))} className="flex w-36 shrink-0 flex-col rounded-xl border border-[#d4c7ad] bg-white p-2 text-left disabled:opacity-45"><div className="h-16 overflow-hidden [&>svg]:h-16"><FurnitureThumbnail item={f.id}/></div><span className="mt-1 text-xs font-bold">{f.name}</span><span className="mt-auto text-xs text-[#47745c]">{f.price.toLocaleString("en-GB")} Clout</span></button>)}
           {tab==="storage"&&spare.length===0&&<p className="self-center px-4 text-sm">Everything you own is placed. Select a furnishing in your room to move or store it.</p>}
           {tab==="storage"&&spare.map(([item,n])=><button key={item} type="button" disabled={pending} onClick={()=>{setSel(`new:${item}`);setMsg(null);}} className={cn("flex w-36 shrink-0 flex-col rounded-xl border bg-white p-2 text-left",sel===`new:${item}`?"border-[#254e46] ring-2 ring-[#254e46]":"border-[#d4c7ad]")}><div className="h-16 overflow-hidden [&>svg]:h-16"><FurnitureThumbnail item={item}/></div><span className="mt-1 text-xs font-bold">{furnitureById(item)?.name}</span><span className="mt-auto text-xs">Owned ×{n} · place</span></button>)}
-          {tab==="houses"&&HOMES.map(h=><button key={h.id} type="button" disabled={pending||(!owned.includes(h.id)&&clout<h.price)} onClick={()=>act(()=>buyHome(h.id),`${h.name} is now your home.`)} className={cn("flex w-52 shrink-0 flex-col rounded-xl border p-3 text-left disabled:opacity-45",current===h.id?"border-[#254e46] bg-[#e1e8dc]":"border-[#d4c7ad] bg-white")}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={`/homes/${h.id}.webp`} alt="" width={184} height={138} loading="lazy" onError={e=>{e.currentTarget.style.display="none";}} className="mb-2 aspect-[4/3] w-full rounded-lg bg-[#0d3a7a] object-cover"/><span className="text-sm font-bold">{h.name}</span><span className="mt-1 text-xs">{h.area} · {h.blurb}</span><span className="mt-auto text-xs font-bold">{h.id==="studio"&&!claimed?"Claim free starter house":h.id===current?"Current home":owned.includes(h.id)?"Move here":`Buy · ${h.price.toLocaleString("en-GB")} Clout`}</span></button>)}
+          {tab==="room"&&<RoomPanel room={room} onChange={setRoom} dirty={roomDirty} pending={pending} onSave={()=>act(()=>saveRoom(room),"Room design saved.")} />}
+          {tab==="houses"&&HOMES.map(h=><button key={h.id} type="button" disabled={pending||(!owned.includes(h.id)&&clout<h.price)} onClick={()=>act(()=>buyHome(h.id),`${h.name} is now your home.`)} className={cn("flex w-52 shrink-0 flex-col rounded-xl border p-3 text-left disabled:opacity-45",current===h.id?"border-[#254e46] bg-[#e1e8dc]":"border-[#d4c7ad] bg-white")}>{ }<img src={`/homes/${h.id}.webp`} alt="" width={184} height={138} loading="lazy" onError={e=>{e.currentTarget.style.display="none";}} className="mb-2 aspect-[4/3] w-full rounded-lg bg-[#0d3a7a] object-cover"/><span className="text-sm font-bold">{h.name}</span><span className="mt-1 text-xs">{h.area} · {h.blurb}</span><span className="mt-auto text-xs font-bold">{h.id==="studio"&&!claimed?"Claim free starter house":h.id===current?"Current home":owned.includes(h.id)?"Move here":`Buy · ${h.price.toLocaleString("en-GB")} Clout`}</span></button>)}
         </div>
       </section>
       {exitPrompt&&<div className="absolute inset-0 z-10 grid place-items-center bg-[#183b35]/50 p-4"><section aria-label="Unsaved room changes" className="max-w-sm rounded-3xl bg-[#faf6ed] p-6 shadow-xl"><h3 className="font-bold">Save your room before returning?</h3><p className="mt-2 text-sm">Your furniture moves haven’t been saved yet.</p>{msg && <p role="alert" className="mt-2 text-sm text-red-700">{msg}</p>}<div className="mt-4 flex flex-wrap gap-2"><button type="button" disabled={pending} ref={focusControl} onClick={()=>act(()=>saveLayout(layout),undefined,onClose)} className="min-h-11 rounded-full bg-[#254e46] px-4 text-sm text-white">Save & return</button><button type="button" disabled={pending} onClick={onClose} className="min-h-11 rounded-full bg-[#ead9b6] px-4 text-sm">Discard moves</button><button type="button" onClick={()=>setExitPrompt(false)} className="min-h-11 px-3 text-sm">Keep editing</button></div></section></div>}
@@ -308,6 +314,51 @@ export function HomeEditor({
             })}
           </ul>
         </section>
+      </div>
+    </div>
+  );
+}
+
+/** Pick a room design, then change the paint, wallpaper, floor and lights yourself. */
+function RoomPanel({ room, onChange, dirty, pending, onSave }: { room: RoomStyle; onChange: (r: RoomStyle) => void; dirty: boolean; pending: boolean; onSave: () => void }) {
+  const chip = (on: boolean) => cn("min-h-9 shrink-0 rounded-full border px-3 text-xs font-bold", on ? "border-[#254e46] bg-[#e1e8dc]" : "border-[#d4c7ad] bg-white");
+  return (
+    <div className="flex min-w-max gap-3">
+      <div className="flex gap-2">
+        {ROOM_DESIGNS.map((d) => (
+          <button key={d.design} type="button" aria-pressed={room.design === d.design} onClick={() => onChange({ ...d })}
+            className={cn("flex w-32 shrink-0 flex-col rounded-xl border bg-white p-1.5 text-left", room.design === d.design ? "border-[#254e46] ring-2 ring-[#254e46]" : "border-[#d4c7ad]")}>
+            <svg viewBox="0 0 60 40" className="h-14 w-full rounded-lg" aria-hidden>
+              <rect width="60" height="40" fill="#eee7d9" />
+              <path d="M6 30 30 18 54 30 30 38Z" fill={d.floor} />
+              <path d="M6 30V8l24-6v16Z" fill={d.side ?? d.wall} />
+              <path d="M30 18V2l24 6v22Z" fill={d.wall} />
+              {d.wainscot && <path d="M30 18v-5l24 6v6Z" fill={d.wainscot} />}
+              {d.pattern === "leaf" && <g fill="#ffffff" opacity=".25"><ellipse cx="38" cy="9" rx="3" ry="1.4" transform="rotate(30 38 9)" /><ellipse cx="47" cy="13" rx="3" ry="1.4" transform="rotate(-30 47 13)" /></g>}
+              {d.lights !== "none" && <path d="M7 9q12 3 23-6q12 6 24 6" fill="none" stroke={d.lights === "neon" ? "#7ff" : "#ffe9a8"} strokeWidth=".9" strokeDasharray="1 1.4" />}
+              {d.plinth && <path d="M6 30v3l24 8 24-8v-3L30 38Z" fill="#8a5446" />}
+            </svg>
+            <span className="mt-1 text-xs font-bold">{d.name}</span>
+            <span className="text-[10px] leading-3 text-[#203b38]/70">{d.blurb}</span>
+          </button>
+        ))}
+      </div>
+      <div className="grid w-80 shrink-0 content-start gap-1.5 text-xs">
+        <p className="font-bold">Paint</p>
+        <div className="flex flex-wrap gap-1">{WALL_PAINTS.map((c) => <button key={c} type="button" aria-label={`Paint ${c}`} aria-pressed={room.wall === c} onClick={() => onChange({ ...room, wall: c, side: c })} className={cn("size-7 rounded-full border-2", room.wall === c ? "border-[#254e46]" : "border-white")} style={{ background: c }} />)}</div>
+        <p className="font-bold">Wallpaper</p>
+        <div className="flex flex-wrap gap-1">{PATTERNS.map((p) => <button key={p.id} type="button" aria-pressed={room.pattern === p.id} onClick={() => onChange({ ...room, pattern: p.id })} className={chip(room.pattern === p.id)}>{p.name}</button>)}</div>
+      </div>
+      <div className="grid w-72 shrink-0 content-start gap-1.5 text-xs">
+        <p className="font-bold">Floor</p>
+        <div className="flex flex-wrap gap-1">{FLOORS.map((f) => <button key={f.colour} type="button" aria-pressed={room.floor === f.colour} onClick={() => onChange({ ...room, floor: f.colour })} className={chip(room.floor === f.colour)}><span className="mr-1 inline-block size-3 rounded-sm align-[-2px]" style={{ background: f.colour }} />{f.name}</button>)}</div>
+        <p className="font-bold">Lights and extras</p>
+        <div className="flex flex-wrap gap-1">
+          {LIGHTS.map((l) => <button key={l.id} type="button" aria-pressed={room.lights === l.id} onClick={() => onChange({ ...room, lights: l.id })} className={chip(room.lights === l.id)}>{l.name}</button>)}
+          <button type="button" aria-pressed={!!room.wainscot} onClick={() => onChange({ ...room, wainscot: room.wainscot ? null : "#f3efe6" })} className={chip(!!room.wainscot)}>Panelling</button>
+          <button type="button" aria-pressed={room.plinth} onClick={() => onChange({ ...room, plinth: !room.plinth })} className={chip(room.plinth)}>Brick base</button>
+        </div>
+        <button type="button" disabled={!dirty || pending} onClick={onSave} className="mt-1 min-h-10 rounded-full bg-[#254e46] px-4 text-xs font-bold text-white disabled:opacity-40">{pending ? "Saving…" : "Save walls & floor"}</button>
       </div>
     </div>
   );

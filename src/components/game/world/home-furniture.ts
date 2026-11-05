@@ -79,6 +79,67 @@ export function homeFurniture(p: Placed, style = 0) {
     else if (type === "lamp") { box(brass, w / 2, 0.95, d / 2, 0.05, 1.4, 0.05); soft("#f5db9c", w / 2, 1.7, d / 2, 0.3, 0.3, 0.3); }
     else if (type === "fishtank") { box("#5ea6b2", w / 2, 1.0, d / 2, w - 0.2, 0.85, d - 0.18); for (let i = 0; i < 4; i++) soft("#efb562", 0.4 + i * 0.6, 1 + i % 2 * 0.16, d * 0.95, 0.12, 0.07, 0.04); }
     else soft(brass, w / 2, 1.1, d / 2, 0.22, 0.5, 0.22);
+  } else if (type === "clothes-rail") {
+    for (const x of [0.15, w - 0.15]) box(dark, x, 1.05, d / 2, 0.07, 2.1, 0.07);
+    box(dark, w / 2, 2.05, d / 2, w - 0.2, 0.05, 0.05);
+    const hues = ["#efe6da", "#b9806a", "#6d7f95", "#d9b48c", "#46546b", "#a7b9a0", "#7b5a4c"];
+    for (let i = 0; i < 9; i++) box(hues[i % hues.length], 0.4 + i * (w - 0.8) / 8, 1.45, d / 2, 0.16, 1.1, 0.42);
+    box(oak, w / 2, 0.15, d / 2, w - 0.1, 0.12, d - 0.1);
+  } else if (type === "tall-bookcase") {
+    box(oak, w / 2, 1.3, d / 2, w - 0.1, 2.6, d - 0.1);
+    for (let r = 0; r < 5; r++) {
+      box(dark, w / 2, 0.35 + r * 0.5, d - 0.06, w - 0.25, 0.4, 0.02);
+      for (let i = 0; i < 6; i++) box(["#e7dccb", "#6d7f95", "#a26956", "#3f5f4f", "#d9b48c"][(i + r) % 5], 0.25 + i * (w - 0.5) / 6, 0.32 + r * 0.5, d - 0.1, 0.12, 0.3 + ((i * 7 + r) % 3) * 0.04, 0.3);
+    }
+  } else if (type === "gaming-chair") {
+    box(dark, w / 2, 0.08, d / 2, 0.7, 0.06, 0.7);
+    box(dark, w / 2, 0.3, d / 2, 0.08, 0.4, 0.08);
+    box("#7a6a66", w / 2, 0.55, d / 2, 0.62, 0.14, 0.62);
+    box("#7a6a66", w / 2, 1.15, d * 0.15, 0.6, 1.1, 0.14);
+    box(cream, w / 2, 1.35, d * 0.12, 0.3, 0.5, 0.15);
+  } else if (type === "pc-desk") {
+    box(cream, w / 2, 0.8, d / 2, w - 0.1, 0.08, d - 0.1);
+    box("#6f6a6a", 0.45, 0.4, d / 2, 0.75, 0.78, d - 0.3);
+    for (const x of [w - 0.2]) box(dark, x, 0.4, d / 2, 0.08, 0.78, d - 0.3);
+    box(dark, w * 0.55, 1.35, 0.35, 1.5, 0.85, 0.08);
+    const screen = box("#7fb3c9", w * 0.55, 1.35, 0.4, 1.38, 0.72, 0.02); screen.userData.homeScreen = true;
+    box(dark, w * 0.55, 0.95, 0.35, 0.1, 0.25, 0.1);
+    box("#e8e8e8", w * 0.85, 1.05, 0.4, 0.35, 0.45, 0.4);
+    box(cream, w * 0.55, 0.86, d * 0.65, 0.9, 0.03, 0.3);
+  } else if (type === "bench-ottoman") {
+    box("#7a645a", w / 2, 0.35, d / 2, w - 0.12, 0.45, d - 0.12);
+    box("#8a7266", w / 2, 0.62, d / 2, w - 0.16, 0.1, d - 0.16);
+    for (const x of [0.2, w - 0.2]) for (const z of [0.2, d - 0.2]) box(dark, x, 0.07, z, 0.08, 0.14, 0.08);
+  } else if (type === "long-dresser") {
+    box(cream, w / 2, 0.55, d / 2, w - 0.1, 1.0, d - 0.1);
+    for (let i = 0; i < 4; i++) for (const y of [0.3, 0.75]) box("#dcd6cb", 0.5 + i * (w - 1) / 3, y, d - 0.04, (w - 0.6) / 4.4, 0.32, 0.02);
+    box(oak, w / 2, 1.35, 0.12, w - 0.2, 0.06, 0.25);
+    for (const [x, h] of [[0.35, 0.35], [0.55, 0.25], [0.45, 0.18]] as const) { box("#efe2a2", x, 1.05 + h / 2, d / 2, 0.11, h, 0.11); soft("#ffd77a", x, 1.12 + h, d / 2, 0.04, 0.06, 0.04); }
+    box(brass, w - 0.6, 1.25, d / 2, 0.35, 0.45, 0.04);
+  } else if (type === "bedside") {
+    box(oak, w / 2, 0.32, d / 2, 0.7, 0.6, 0.6);
+    box(brass, w / 2, 0.75, d / 2, 0.04, 0.3, 0.04); soft("#f5db9c", w / 2, 0.95, d / 2, 0.14, 0.12, 0.14);
+  } else if (["hanging-plant", "palm"].includes(type)) {
+    box(cream, w / 2, 0.25, d / 2, 0.45, 0.45, 0.45);
+    if (type === "palm") for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2; soft(i % 2 ? "#5f8f4f" : "#3d6b3e", w / 2 + Math.cos(a) * 0.32, 1.05 + (i % 3) * 0.12, d / 2 + Math.sin(a) * 0.32, 0.3, 0.06, 0.12).rotation.y = -a; }
+    else { box(dark, w / 2, 1.0, d / 2, 0.04, 1.1, 0.04); for (let i = 0; i < 8; i++) soft(i % 2 ? "#6d9a5e" : "#4b7a4a", w / 2 + Math.sin(i * 1.7) * 0.22, 1.3 - i * 0.13, d / 2 + Math.cos(i * 1.7) * 0.2, 0.16, 0.12, 0.12); }
+  } else if (type === "leaning-art") {
+    const frame = box(oak, w / 2, 0.55, d * 0.3, 0.75, 1.0, 0.05); frame.rotation.x = -0.12;
+    const art = box("#c6b69a", w / 2, 0.55, d * 0.3 + 0.03, 0.62, 0.86, 0.02); art.rotation.x = -0.12;
+    box("#8fae9e", w / 2 - 0.12, 0.45, d * 0.3 + 0.05, 0.22, 0.3, 0.01).rotation.x = -0.12;
+  } else if (type === "laundry-basket") {
+    box("#5f5550", w / 2, 0.28, d / 2, 0.5, 0.55, 0.5); box("#4b433f", w / 2, 0.58, d / 2, 0.52, 0.05, 0.52);
+  } else if (type === "macrame") {
+    box(oak, w / 2, 2.3, 0.12, 0.8, 0.04, 0.04);
+    for (let i = 0; i < 7; i++) box("#eee6d7", w / 2 - 0.33 + i * 0.11, 1.7 - (i % 2) * 0.1, 0.13, 0.05, 1.1 - Math.abs(3 - i) * 0.12, 0.03);
+  } else if (type === "loveseat") {
+    legs(0.2); box("#6e5a52", w / 2, 0.42, d / 2, w - 0.12, 0.35, d - 0.12);
+    box("#7f6a60", w / 2, 0.68, d * 0.55, w - 0.4, 0.2, d * 0.6);
+    box("#7f6a60", w / 2, 0.95, 0.25, w - 0.12, 0.75, 0.35);
+    for (const x of [0.18, w - 0.18]) box("#7f6a60", x, 0.72, d / 2, 0.32, 0.5, d - 0.12);
+  } else if (type === "stool") {
+    for (const [x, z] of [[0.3, 0.3], [0.7, 0.3], [0.3, 0.7], [0.7, 0.7]]) box(oak, x * w, 0.35, z * d, 0.06, 0.7, 0.06);
+    soft(oak, w / 2, 0.72, d / 2, 0.3, 0.06, 0.3);
   } else if (type === "rug") {
     box(fabric, w / 2, 0.04, d / 2, w - 0.1, 0.035, d - 0.1);
     box("#cbb99b", w / 2, 0.065, d / 2, w * 0.75, 0.015, d * 0.75);
