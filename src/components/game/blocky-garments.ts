@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { BLOCKY_BASE } from "@/game/core/adventurers";
-import { blockyOutfitAsset, type BlockyOutfit } from "@/game/core/blocky-outfits";
+import { blockyOutfitAsset, wearSlotFor, type Wardrobe, type WearSlot } from "@/game/core/blocky-outfits";
 import { cosmeticById, type Avatar } from "@/game/core/cosmetics";
 
 const findBone=(object:THREE.Object3D,name:string)=>object.getObjectByName(`mixamorig${name}`)??object.getObjectByName(`mixamorig:${name}`);
@@ -21,16 +21,22 @@ export function clothedBodyGeometry(mesh:THREE.SkinnedMesh):THREE.BufferGeometry
 }
 /** Blender nodes retain source rest transforms; convert each piece into its supplied bone's local frame. */
 export async function attachBlockyOutfit(
-  object:THREE.Group,outfit:BlockyOutfit,avatar:Avatar,
+  object:THREE.Group,wardrobe:Wardrobe,avatar:Avatar,
   load:(url:string)=>Promise<GLTF>,
   materials:Set<THREE.Material>,
 ) {
-  const [garments,reference]=await Promise.all([load(blockyOutfitAsset(outfit.id)!),load(`${BLOCKY_BASE}/blocky_01_hero.glb`)]);
-  reference.scene.updateMatrixWorld(true);garments.scene.updateMatrixWorld(true);
+  // Mix and match: each slot can come from a different outfit set (one download per distinct set).
+  const sets=[...new Set([wardrobe.top.id,wardrobe.bottom.id,wardrobe.shoes.id])];
+  const [reference,...files]=await Promise.all([load(`${BLOCKY_BASE}/blocky_01_hero.glb`),...sets.map(id=>load(blockyOutfitAsset(id)!))]);
+  reference.scene.updateMatrixWorld(true);
   let attached=0;
+  sets.forEach((id,i)=>{
+  const garments=files[i];garments.scene.updateMatrixWorld(true);
+  const wanted=new Set<WearSlot>((["top","bottom","shoes"] as const).filter(slot=>wardrobe[slot].id===id));
   garments.scene.traverse(child=>{
     const source=child as THREE.Mesh;
     if(!source.isMesh||typeof source.userData.wearBone!=='string')return;
+    if(!wanted.has(wearSlotFor(source.userData.wearBone,String(source.userData.wearPart??''))))return;
     const rest=findBone(reference.scene,source.userData.wearBone),target=findBone(object,source.userData.wearBone);
     if(!rest||!target)return;
     const mesh=source.clone();
@@ -48,6 +54,7 @@ export async function attachBlockyOutfit(
     mesh.castShadow=mesh.receiveShadow=true;mesh.name=`outfit-${source.userData.wearPart}`;
     target.add(mesh);attached++;
   });
+  });
   if(!attached)throw new Error('The outfit has no compatible supplied bones');
-  object.userData.outfit=outfit.id;
+  object.userData.outfit=wardrobe.top.id;
 }

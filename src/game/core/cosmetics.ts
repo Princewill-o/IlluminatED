@@ -1,5 +1,5 @@
 import { ADVENTURERS, adventurerFor } from "./adventurers";
-import { BLOCKY_OUTFITS } from "./blocky-outfits";
+import { BLOCKY_BOTTOMS, BLOCKY_OUTFITS, BLOCKY_SHOES } from "./blocky-outfits";
 import { DYES } from "./looks";
 
 /**
@@ -130,6 +130,8 @@ export const COSMETICS: Cosmetic[] = [
   R("haircol-silver", "hairColor", "Silver", 250, { color: "#d8d4e0" }),
 
   ...BLOCKY_OUTFITS.map(outfit => C(outfit.id, "top", outfit.name, 0, { color: outfit.primary })),
+  ...BLOCKY_BOTTOMS.map(piece => C(piece.id, "bottom", piece.name, 0, { color: piece.color })),
+  ...BLOCKY_SHOES.map(piece => C(piece.id, "shoes", piece.name, 0, { color: piece.color })),
 
   // ── Clothes ────────────────────────────────────────────
   C("top-tee", "top", "IlluminatED tee", 0, { color: "#2d1b69" }),

@@ -9,7 +9,7 @@ import { activityPose } from "./activity-pose";
 import { attachBlockyOutfit, clothedBodyGeometry } from "./blocky-garments";
 
 import { ADVENTURERS, BLOCKY_BASE, adventurerFor } from "@/game/core/adventurers";
-import { blockyOutfitFor } from "@/game/core/blocky-outfits";
+import { wardrobeFor } from "@/game/core/blocky-outfits";
 import { BRANDS } from "@/game/core/chibi-looks";
 import { cosmeticById, type Avatar, look } from "@/game/core/cosmetics";
 import { logoFor } from "@/game/core/logos";
@@ -37,7 +37,7 @@ const bone = (object: THREE.Object3D, name: string) => object.getObjectByName(`m
 async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|null,model:typeof ADVENTURERS[number],wantOutfit=true):Promise<Character3D>{
   const source=await load(`${BLOCKY_BASE}/${model.file}.glb`);
   // Distant ambient residents can skip separate garment meshes (one draw call instead of many).
-  const outfit=wantOutfit?blockyOutfitFor(a.top):null;
+  const outfit=wantOutfit?wardrobeFor(a):null;
   const object=clone(source.scene) as THREE.Group;
   const bakedPresetGarments:THREE.Object3D[]=[];
   if(outfit)object.traverse(node=>{if(node.userData.presetGarment)bakedPresetGarments.push(node);});
@@ -59,7 +59,7 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
     catch {
       // Keep the supplied character visible if an outfit cannot be downloaded.
       for(const [mesh,original] of originalBodies){geometries.delete(mesh.geometry);mesh.geometry.dispose();mesh.geometry=original;}
-      object.userData.outfitUnavailable=outfit.id;
+      object.userData.outfitUnavailable=outfit.top.id;
     }
   }
   const head=bone(object,'Head'),hand=bone(object,'RightHand');

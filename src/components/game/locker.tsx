@@ -17,7 +17,7 @@ import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { usePass } from "@/components/game/season/pass-store";
 import { ADVENTURERS, BLENDER_PRESETS, adventurerFor } from "@/game/core/adventurers";
 import { PREVIEW_AVATAR_KEY, PREVIEW_AVATAR_EVENT, normaliseBlockyAvatar } from "@/game/core/blocky-customization";
-import { BLOCKY_OUTFITS, blockyOutfitFor, outfitPerks } from "@/game/core/blocky-outfits";
+import { BLOCKY_OUTFITS, blockyOutfitFor, blockyPieceOutfit, outfitPerks } from "@/game/core/blocky-outfits";
 import { CHARACTER_STYLES, applyCharacterStyle, characterArchetype, stylesForCharacter, type StyleCollection } from "@/game/core/character-styles";
 import { BRANDS } from "@/game/core/chibi-looks";
 import { companyById } from "@/game/core/companies";
@@ -163,7 +163,7 @@ export function Locker({
     });
 
   const slots = SLOT_GROUPS.find((g) => g.group === group)!.slots;
-  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot!=='head'||(group==='Character presets'?c.id.startsWith('head-preset-'):!c.id.startsWith('head-preset-'))) && (slot !== 'head' || group === 'Character presets' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (group !== 'Character presets' || presetCollection === 'all' || BLENDER_PRESETS.find(preset=>preset.id===c.id)?.collection === presetCollection) && (slot!=='top'||outfitFamily==='all'||blockyOutfitFor(c.id)?.family===outfitFamily));
+  const items = COSMETICS.filter((c) => c.slot === slot && allowed(slot,c.id) && (slot!=='head'||(group==='Character presets'?c.id.startsWith('head-preset-'):!c.id.startsWith('head-preset-'))) && (slot !== 'head' || group === 'Character presets' || collection === 'all' || c.id.includes('-classic-') === (collection === 'classic')) && (group !== 'Character presets' || presetCollection === 'all' || BLENDER_PRESETS.find(preset=>preset.id===c.id)?.collection === presetCollection) && (!['top','bottom','shoes'].includes(slot)||outfitFamily==='all'||blockyPieceOutfit(c.id)?.family===outfitFamily));
   const headView = HEAD_SLOTS.has(slot);
 
   return (
@@ -346,9 +346,9 @@ export function Locker({
             })}
           </ul>
         </section>}
-        {slot === 'top' && group !== 'Styled looks' && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
-          <h3 className="text-lg font-black">120 outfit sets</h3>
-          <p className="mt-1 text-sm leading-6 text-muted-foreground">12 clothing styles in 10 palettes, designed for your character. Each set includes its jacket or top, legwear, footwear and attached details. Uniforms are costumes; they do not grant powers or authority.</p>
+        {(slot === 'top' || slot === 'bottom' || slot === 'shoes') && group !== 'Styled looks' && <section className="mt-4 rounded-2xl border border-border bg-card p-4">
+          <h3 className="text-lg font-black">360-piece wardrobe</h3>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">120 tops, 120 bottoms and 120 pairs of shoes in 12 styles and 10 palettes. Mix any top with any bottoms and shoes (pick them in the Bottoms and Shoes tabs), then dye them in the colour tabs. Uniforms are costumes; they do not grant powers or authority.</p>
           <label className="mt-3 block text-xs font-bold">Clothing style
             <select aria-label="Clothing style" value={outfitFamily} onChange={e=>setOutfitFamily(e.target.value)} className="ml-3 rounded-full border border-border bg-background px-3 py-2">
               <option value="all">All styles</option>{[...new Set(BLOCKY_OUTFITS.map(o=>o.family))].map(family=><option key={family} value={family}>{family[0].toUpperCase()+family.slice(1)}</option>)}
@@ -375,7 +375,7 @@ export function Locker({
               : avatar[item.slot] === item.id;
             const preview = { ...avatar, [item.slot]: item.id };
             const r = RARITY[item.rarity];
-            const outfit = blockyOutfitFor(item.id);
+            const outfit = blockyPieceOutfit(item.id);
             return (
               <li key={item.id}>
                 <div className={cn("flex h-full flex-col rounded-2xl border-2 bg-card p-2.5", wearing ? "border-[#f2d9a6]" : "border-border")}>
@@ -393,8 +393,10 @@ export function Locker({
                     </span>
                     {item.slot === "head" ? (
                       <CharacterPickerThumb avatar={preview} size={152} label={item.name} />
+                    ) : outfit && item.slot !== "top" ? (
+                      <PieceIcon slot={item.slot} colour={item.color ?? outfit.pants} accent={outfit.accent} label={item.name} />
                     ) : outfit ? (
-                      <Image src={`/world3d/blocky-outfits/${outfit.thumbnail}`} alt={`${item.name} garment set`} width={152} height={152} className="size-[152px] object-contain" />
+                      <Image src={`/world3d/blocky-outfits/${outfit.thumbnail}`} alt={`${item.name}`} width={152} height={152} className="size-[152px] object-contain" />
                     ) : item.id==='top-tee' ? <CharacterPickerThumb avatar={preview} size={152} label="Original character outfit" /> : ['top','bottom','shoes'].includes(item.slot) ? (
                       <AvatarFigure avatar={preview} still size={152} showPet={false} title={clothingName(item.id,item.name)} />
                     ) : item.slot === "brand" ? (
@@ -504,5 +506,27 @@ function Swatches({ label, items, value, onPick }: { label: string; items: Cosme
         })}
       </div>
     </div>
+  );
+}
+
+/** A drawn icon for a mix-and-match bottoms or shoes piece, in its own colours. */
+function PieceIcon({ slot, colour, accent, label }: { slot: string; colour: string; accent: string; label: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className="size-[152px]" role="img" aria-label={label}>
+      {slot === "bottom" ? (
+        <g stroke="#0d1726" strokeWidth="3" strokeLinejoin="round">
+          <path d="M28 14h44l6 74H56l-6-46-6 46H22z" fill={colour} />
+          <path d="M28 14h44v9H28z" fill={accent} />
+          <path d="M50 23v19" fill="none" />
+          <path d="M23 80h20M57 80h20" stroke={accent} strokeWidth="4" />
+        </g>
+      ) : (
+        <g stroke="#0d1726" strokeWidth="3" strokeLinejoin="round">
+          <path d="M14 70V48h22l10 10h24c8 0 14 5 16 12z" fill={colour} />
+          <path d="M14 70h72v9H14z" fill={accent} />
+          <path d="M30 52l4 6M38 54l4 6" stroke={accent} strokeWidth="3" />
+        </g>
+      )}
+    </svg>
   );
 }
