@@ -354,6 +354,11 @@ export const ONLINE: { id: string; username: string }[] = [];
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
 export const TUTOR = { active: false, x: 0, y: 0 };
+/** Someone walking up to the player: a classmate with a study quest, a coworker before
+ *  a shift, or a mentor. The game sets where they start; the 3D world walks them over,
+ *  sets `arrived` when they reach you, and walks them off once `leaving` is set. */
+export type VisitorKind = "classmate" | "coworker" | "mentor";
+export const VISITOR = { active: false, id: 0, kind: "classmate" as VisitorKind, startX: 0, startY: 0, arrived: false, leaving: false };
 /** A delivery courier walking in from your front door (home map). Phase: arriving, waiting, leaving. */
 export const COURIER = { active: false, phase: "arriving" as "arriving" | "waiting" | "leaving", since: 0 };
 /** Fright Night: whether Scary Bots are out, and which ones you've scared off today. */

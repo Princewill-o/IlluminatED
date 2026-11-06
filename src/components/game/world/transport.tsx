@@ -324,7 +324,7 @@ export function BusJourneyScene({ route, to, className = "h-40" }: { route: stri
       </div>
       {/* The bus */}
       <div className="journey-bus absolute bottom-2 left-1/2 h-[96px] w-[172px] -translate-x-1/2">
-        <div className="absolute inset-x-0 top-0 bottom-3 rounded-t-[14px] rounded-b-md border-2 border-[#15151c] bg-[#d4241f]">
+        <div className="journey-body absolute inset-x-0 top-0 bottom-3 rounded-t-[14px] rounded-b-md border-2 border-[#15151c] bg-[#d4241f]">
           <div className="absolute inset-x-2 top-2.5 h-6 rounded-sm bg-[#1f2633]">
             {[10, 40, 70, 100, 130].map((x, k) => (
               <span key={x} className="absolute bottom-0 size-3 rounded-t-full" style={{ left: x, background: ["#f1c7a2", "#8d5a3b", "#c58c62", "#5a3a28", "#e8b48c"][k] }} />

@@ -12,10 +12,12 @@ import {
   type SceneTransition,
 } from "@/game/core/scene-transition";
 
+export type TravelMode = "walk" | "door" | "car" | "train";
 export type Passage = SceneTransition & {
   image: HTMLCanvasElement | null;
   label: string;
   door: boolean;
+  mode: TravelMode;
   ready: boolean;
 };
 export function useSceneTransition() {
@@ -32,7 +34,7 @@ export function useSceneTransition() {
     };
   }, []);
   const begin = useCallback(
-    async (destination: string, label: string, door = false) => {
+    async (destination: string, label: string, door = false, mode?: TravelMode) => {
       const trip = gate.current.begin(
         destination,
         sceneCaptureId(),
@@ -42,7 +44,7 @@ export function useSceneTransition() {
       const image = await requestSceneCapture();
       if (!alive.current || gate.current.current()?.id !== trip.id)
         return false;
-      setPassage({ ...trip, image, label, door, ready: false });
+      setPassage({ ...trip, image, label, door, mode: mode ?? (door ? "door" : "walk"), ready: false });
       return true;
     },
     [],
@@ -62,9 +64,9 @@ export function useSceneTransition() {
           setPassage((current) =>
             current?.id === trip.id ? { ...current, ready: true } : current,
           );
-          finishTimer = setTimeout(finish, 260);
+          finishTimer = setTimeout(finish, 520);
         },
-        Math.max(0, 220 - (performance.now() - trip.startedAt)),
+        Math.max(0, 1050 - (performance.now() - trip.startedAt)),
       );
     };
     const ready = (event: Event) => reveal((event as CustomEvent).detail);

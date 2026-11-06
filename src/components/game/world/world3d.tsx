@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES, cityRoadPaint, citySignalPosts } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
@@ -2931,6 +2931,22 @@ export function World3D({
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
     // Flight School: Ava walks ahead and the player follows her.
+    // People who walk up to you outdoors: a classmate, a coworker and a mentor (one at a time).
+    const visitors: Partial<Record<VisitorKind, Body>> = {};
+    if (!indoors && map.kind !== "home") {
+      const looks: [VisitorKind, Avatar, string, string][] = [
+        ["classmate", { ...npcLook(70), top: "top-blocky-student-navy", topColor: "topcol-auto", hat: "hat-none" }, "Classmate", "#2b5fd9"],
+        ["coworker", { ...npcLook(71), top: "top-blocky-chef-sand", topColor: "topcol-auto", hat: "hat-cap" }, "Coworker", "#d97a2b"],
+        ["mentor", { ...npcLook(72), top: "top-blocky-business-navy", topColor: "topcol-auto", hat: "hat-none" }, "Mentor", "#7a5ce6"],
+      ];
+      for (const [kind, look, label, colour] of looks) {
+        const body = makeBody(look, null, false);
+        const caption = sign(label, { bg: colour, fg: "#ffffff", w: 1.4, h: 0.32 });
+        caption.position.set(0, 2.05, 0); body.root.add(caption); body.root.userData.caption = caption;
+        body.root.visible = false; scene.add(body.root); visitors[kind] = body;
+      }
+    }
+    let visitorId = -1, visitorLeftAt = 0;
     const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
     const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
     if (tutor && tutorCaption) { tutorCaption.position.set(0,2.05,0); tutor.root.add(tutorCaption); tutor.root.position.set(TUTOR.x/TILE,0,TUTOR.y/TILE); scene.add(tutor.root); }
@@ -3153,7 +3169,7 @@ export function World3D({
         for (const m of DECK_FADE) m.opacity += (want - m.opacity) * Math.min(1, dt * 8);
       }
       me.root.rotation.x = 0;
-      carHolder.position.set(mx, 0.08, mz);
+      carHolder.position.set(mx, 0.004, mz);
       if (performance.now() > swingUntil) {
         if (swingUntil) {
           swingUntil = 0;
@@ -3189,7 +3205,7 @@ export function World3D({
         rideBike = null;
       }
       if (rideBike) {
-        rideBike.position.set(mx, 0.12, mz);
+        rideBike.position.set(mx, 0.004, mz);
         rideBike.rotation.y = me.root.rotation.y - Math.PI / 2;
         me.root.position.y = 0.42;
       }
@@ -3289,7 +3305,7 @@ export function World3D({
           else void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
         }
         if (vehicle) {
-          vehicle.root.position.set(b.x, 0.08, b.z);
+          vehicle.root.position.set(b.x, 0.004, b.z);
           vehicle.root.rotation.y = -(o.heading ?? 0);
         }
         setWalking(b, o.walking || Math.hypot(ddx, ddz) > 0.05);
@@ -3315,7 +3331,7 @@ export function World3D({
       if (pursuit && (london || highland || !!ukScene)) {
         const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;
         if(Math.hypot(cx-carLast.x,cz-carLast.z)>0.01)responseCar.rotation.y=Math.atan2(-(cz-carLast.z),cx-carLast.x);
-        responseCar.position.set(cx,0.05,cz); carLast.set(cx,0,cz);
+        responseCar.position.set(cx,0.004,cz); carLast.set(cx,0,cz);
       }
       responders.forEach((body,i)=>{
         const officer=pursuit?.officers[i];
@@ -3327,6 +3343,36 @@ export function World3D({
           setWalking(body,pursuit?.stage === "chasing");
         }
       });
+      for (const [kind, body] of Object.entries(visitors) as [VisitorKind, Body][]) {
+        const mine = VISITOR.active && VISITOR.kind === kind;
+        body.root.visible = mine;
+        if (!mine) continue;
+        const p = body.root.position;
+        if (visitorId !== VISITOR.id) { visitorId = VISITOR.id; p.set(VISITOR.startX / TILE, 0, VISITOR.startY / TILE); visitorLeftAt = 0; }
+        const dx = mx - p.x, dz = mz - p.z, d = Math.hypot(dx, dz) || 1;
+        if (VISITOR.leaving) {
+          // Walk away from the player, then disappear.
+          visitorLeftAt ||= secs;
+          const step = Math.min(0.08, dt * 3.2);
+          p.x -= dx / d * step; p.z -= dz / d * step;
+          body.root.rotation.y = Math.atan2(-dx, -dz);
+          setWalking(body, !reduce);
+          if (secs - visitorLeftAt > 3.5) { VISITOR.active = false; VISITOR.leaving = false; }
+        } else if (d > 1.2) {
+          // Walk up to the player at a brisk pace.
+          const step = Math.min(d - 1.2, dt * 3.4);
+          p.x += dx / d * step; p.z += dz / d * step;
+          body.root.rotation.y = Math.atan2(dx, dz);
+          setWalking(body, !reduce);
+        } else {
+          VISITOR.arrived = true;
+          body.root.rotation.y = Math.atan2(dx, dz);
+          setWalking(body, false);
+        }
+        // Keep the name tag facing the camera whichever way they walk.
+        const tag = body.root.userData.caption as THREE.Object3D | undefined;
+        if (tag) tag.rotation.y = -body.root.rotation.y;
+      }
       if (tutor) {
         const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
         const dx=tx-p.x, dz=tz-p.z, d=Math.hypot(dx,dz);
@@ -3390,7 +3436,7 @@ export function World3D({
         v.velocity=advance.speed;
         v.distance += advance.distance;
         const q = trafficPose(v), len = Math.hypot(q.dx, q.dz) || 1;
-        v.obj.position.set(q.x, .02, q.z);
+        v.obj.position.set(q.x, .004, q.z);
         v.obj.visible = Math.hypot(q.x-mx,q.z-mz)<75;
         own.x = q.x; own.y = q.z; own.heading = Math.atan2(q.dz, q.dx);
         if (v.commuter && commuter) {

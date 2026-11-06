@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CircleHelp, Crown, Feather, Gamepad2, MapPinned, Menu, Smartphone, Trophy, Users, X } from "lucide-react";
+import { BookOpen, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
@@ -29,6 +29,7 @@ import { ArrestOverlay, HearingDialog, PrisonHud, ShopDialog, WantedStars } from
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
+import { NpcVisits } from "./npc-visits";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
@@ -581,7 +582,7 @@ export function WorldApp({
     setGames(false); setPhone(false); setHousing(false); setStudy(false); setInmate(null); setLearning(false); setAwardsOpen(false);
     setShop(null); setWork(null); setTube(null); setBus(null); setMapOpen(false); setUKRoadsOpen(false);
     setDealer(false); setDock(false); setDesk(false); setBankOpen(false); setRoom(null);
-    if(!await beginTransition(dest,label))return;
+    if(!await beginTransition(dest,label,false,motorwayCar||driving?"car":undefined))return;
     setSceneName(label);setFading(false);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     setArrive(arrival);setMapId(dest);setTrip(n=>n+1);
@@ -992,7 +993,7 @@ export function WorldApp({
         void gainXp("train"); setJourney({
           to: st.name,
           go: async() => {
-            if(!await beginTransition(`station-${t.id}`,`Arriving at ${st.name}`))return;
+            if(!await beginTransition(`station-${t.id}`,`Arriving at ${st.name}`,false,"train"))return;
             setJourney(null);
             setArrive(safeSpot(inside, inside.width / 2, (STATION_PLATFORM_Y + 0.5) * TILE));
             TRAIN_CALL.at = performance.now() - 6500;
@@ -1284,6 +1285,9 @@ export function WorldApp({
       {!!nearby.length && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>{setPhoneApp("nearby");setPhone(true);}} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#42745e] px-4 py-2 text-sm font-bold text-white shadow-lg"><Users className="size-4"/>Say hello · {nearby.length}</button></HudSlot>}
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
+      <NpcVisits enabled={outdoors&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}
+        onReward={()=>{void gainXp("study");}}
+        onWaypoint={(portal,label)=>setWaypoint({id:portal.id,name:label,kind:"job",x:portal.rect.x+portal.rect.w/2,y:portal.rect.y+portal.rect.h/2})}/>
       {conversation&&<CivilianConversation person={conversation} onClose={()=>setConversation(null)} onShove={()=>{const person=conversation;setConversation(null);window.dispatchEvent(new CustomEvent("illuminated:fight",{detail:{npcId:person.id}}));}}/>}
       {nearPerson&&!driving&&!conversation&&<HudSlot area="bc" order={12}><button type="button" className="min-h-11 rounded-full bg-white px-4 text-sm font-bold text-[#13203a] shadow" onClick={()=>{const person=NPC_SPOTS.find(n=>n.id&&n.name&&/:resident:-?\d/.test(n.id)&&Math.hypot(n.x-PLAYER.x,n.y-PLAYER.y)<70);if(person)setConversation({id:person.id!,name:person.name!});}}>Talk to resident</button></HudSlot>}
       {mapId.startsWith("party-")&&<HudSlot area="bc" order={13}><button type="button" className="min-h-11 rounded-full bg-violet-600 px-4 text-sm font-bold text-white shadow" onClick={()=>window.dispatchEvent(new Event("illuminated:dance"))}>Dance</button></HudSlot>}
@@ -1428,7 +1432,19 @@ export function WorldApp({
       {flying && <PlaneCutscene onArrive={landInLondon} />}
       {passage&&<div className={continuityStyles.frame} data-ready={passage.ready} aria-label={passage.label}>
         <div className={continuityStyles.image} ref={node=>{if(node&&passage.image&&node.firstChild!==passage.image)node.replaceChildren(passage.image);}}/>
-        <span role="status" className={continuityStyles.label}>{passage.label}{!passage.ready&&<span className="mt-1 block text-xs font-normal opacity-75">Preparing scene…</span>}</span>
+        <div className={continuityStyles.panel}/>
+        <div className={continuityStyles.panel}/>
+        <div className={continuityStyles.card} aria-hidden>
+          <p className={continuityStyles.kicker}>{passage.mode==="car"?"Driving to":passage.mode==="train"?"Travelling to":passage.mode==="door"?"Stepping into":"Heading to"}</p>
+          <p className={continuityStyles.title}>{passage.label.split(" · ").at(-1)}</p>
+          <div className={continuityStyles.route}>
+            <span className={continuityStyles.dot}/>
+            <span className={continuityStyles.mover}>{passage.mode==="car"?<CarFront className="size-5"/>:passage.mode==="train"?<TrainFront className="size-5"/>:passage.mode==="door"?<DoorOpen className="size-5"/>:<Footprints className="size-5"/>}</span>
+            <span className={continuityStyles.pin}/>
+          </div>
+          <p className={continuityStyles.status}>{passage.label.split(" · ").slice(0,-1).join(" · ")||(passage.mode==="door"?"Going inside":"Arriving soon")}</p>
+        </div>
+        <span role="status" className={continuityStyles.label}>{passage.label}{!passage.ready&&" · Preparing scene"}</span>
       </div>}
       <SceneWipe show={fading} label={sceneName} />
       <HudSlot area="br-nav" order={4}><button
