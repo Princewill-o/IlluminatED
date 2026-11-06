@@ -2295,7 +2295,7 @@ export function World3D({
     const jobs: Promise<unknown>[] = [];
     // Mountains all round, with a tunnel mouth over every road that leaves the map.
     if (london && map.id === "city") jobs.push(addCarParks3D(world, cityCarParks(), map.tiles, { load, bend, sign }).catch(() => null));
-    if (!indoors) jobs.push(addMountainRing(world, map, { load, bend }).catch(() => null));
+    if (!indoors && map.id !== "rotherhithe") jobs.push(addMountainRing(world, map, { load, bend }).catch(() => null));
     const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
       lamps.push(position);
       jobs.push(model.then(object => {

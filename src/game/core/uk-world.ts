@@ -621,38 +621,29 @@ function motorwayScene(): Built {
     ],
   };
 }
+/** The A101 Rotherhithe Tunnel: one long straight bore. Two lanes, a raised walkway each side, then tiled walls. */
+export const TUNNEL_ROAD = { top: 8, bottom: 12 } as const;
 function tunnelScene(): Built {
-  const g = canvas(112, 40);
-  // A circuit includes the tunnel carriageway and an open return lane; both city portals remain reachable.
-  g.road(9, 14, 94, false, 4);
-  g.road(9, 26, 94, false, 4);
-  g.road(12, 12, 16, true, 4);
-  g.road(100, 12, 16, true, 4);
-  for (const y of [17, 29])
-    for (let yy = y; yy < y + 2; yy++)
-      for (let x = 9; x < 103; x++)
-        if (!"=:".includes(g.t[yy][x])) g.t[yy][x] = "-";
-  const things: Thing[] = [];
-  for (const [x, y] of [
-    [6, 8],
-    [102, 8],
-    [6, 29],
-    [102, 29],
-  ])
-    things.push({ kind: "lamp", id: `uk-tunnel-lamp-${x}-${y}`, x, y });
+  const L = 112;
+  const g = canvas(L, 20);
+  // Solid rock and concrete around the bore: no grass anywhere.
+  g.fill(0, 0, L, 20, "X");
+  g.fill(0, 7, L, 1, "-");
+  g.fill(0, 12, L, 1, "-");
+  g.fill(0, 8, L, 4, "=");
+  g.fill(0, 10, L, 1, ":");
   return {
     tiles: g.rows(),
-    things,
+    things: [],
     stations: [],
-    spawn: point(11.5, 18.5),
+    spawn: point(14.5, 7.5),
     river: [],
+    // Traffic runs both ways along the centre line (one lane each side).
     routes: [
       [
-        [12, 14],
-        [100, 14],
-        [100, 26],
-        [12, 26],
-        [12, 14],
+        [3, 10],
+        [L - 3, 10],
+        [3, 10],
       ],
     ],
   };
@@ -832,10 +823,10 @@ export function ukWorldMap(id: string): WorldMap | null {
     portals.push(
       portal(
         "rotherhithe-north",
-        9,
-        17,
-        3,
+        1,
+        8,
         2,
+        4,
         "A101 · Limehouse · back to London",
         "city",
       ),
@@ -843,10 +834,10 @@ export function ukWorldMap(id: string): WorldMap | null {
     portals.push(
       portal(
         "rotherhithe-south",
-        99,
-        17,
-        3,
+        109,
+        8,
         2,
+        4,
         "A101 · Rotherhithe · back to London",
         "city",
       ),
@@ -870,7 +861,7 @@ export function ukWorldMap(id: string): WorldMap | null {
     accent: place?.accent ?? "#35639a",
     sign: {
       x: id === "m25" ? 120 : 48,
-      y: id === "rotherhithe" ? 9 : id === "m25" ? 20 : 55,
+      y: id === "rotherhithe" ? 6 : id === "m25" ? 20 : 55,
       text:
         id === "m25"
           ? "M25 · three lanes each way · signed regional exits"
@@ -912,7 +903,7 @@ export function ukArrival(
     if(junction)return {x:junction.rect.x+junction.rect.w/2,y:42*TILE};
   }
   if (mapId === "rotherhithe" && fromMapId === "city")
-    return point(viaPortalId === "uk-tunnel-south" ? 97 : 14, 18.5);
+    return point(viaPortalId === "uk-tunnel-south" ? 97.5 : 14.5, viaPortalId === "uk-tunnel-south" ? 12.5 : 7.5);
   if (fromMapId.startsWith("uk-home-")) {
     const door = map.portals.find(
       (p) => p.to.kind === "map" && p.to.mapId === fromMapId,

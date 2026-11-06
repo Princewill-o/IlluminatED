@@ -403,67 +403,66 @@ export function addUKScenery(
     }
   }
   if (map.id === "rotherhithe") {
+    // One straight bore: tiled walls, a raised walkway each side, a vaulted ceiling with strip
+    // lights and jet fans. The ceiling lifts away over you so the camera can see in.
     const tunnel = new THREE.Group();
     parent.add(tunnel);
-    // The lower lane stays open; the covered north carriageway has stone portals.
-    for (const z of [11.5, 16.3]) {
-      box(tunnel, "#afa796", 22, 0, z, 90, z > 14 ? 1.1 : 4.2, z + 0.25);
-      box(tunnel, "#455f66", 22, 0.5, z + 0.26, 90, 0.62, z + 0.3);
+    const L = map.cols;
+    // The world is curved: long boxes would bend under the ground, so build them in short runs.
+    const run = (colour: string, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) => {
+      for (let x = x0; x < x1; x += 6) box(tunnel, colour, x, y0, z0, Math.min(x1, x + 6), y1, z1);
+    };
+    // Concrete mass either side, so above the bore reads as solid ground, not grass.
+    for (let z = -40; z < 6.8; z += 6) run("#4a4d52", -30, 0, z, L + 30, 4.6, Math.min(6.8, z + 6));
+    // Camera side is a low cutaway so you can see into the bore.
+    for (let z = 13.2; z < 60; z += 6) run("#3a3c40", -30, 0, z, L + 30, 0.9, Math.min(60, z + 6));
+    for (const [z0, z1, face, top] of [[6.8, 7.0, 7.0, 3.9], [13.0, 13.2, 13.0, 0.95]] as const) {
+      run("#e9e6dc", 0, 0, z0, L, top, z1); // white tiles
+      if (top > 2) run("#2d6e8f", 0, 0.9, face - 0.01, L, 1.15, face + 0.01); // blue band
+      run("#c9c3b4", 0, 0, face - 0.02, L, 0.35, face + 0.02); // kerb plinth
     }
-    for (let x = 24; x <= 88; x += 8) {
+    // Walkway rails beside the carriageway.
+    for (const z of [7.95, 12.05]) {
+      run("#b6bcc2", 0, 0.9, z - 0.03, L, 0.96, z + 0.03);
+      for (let x = 1; x < L; x += 3) box(tunnel, "#8e959c", x, 0.12, z - 0.03, x + 0.08, 0.96, z + 0.03);
+    }
+    for (let x = 4; x < L; x += 8) {
       const segment = new THREE.Group();
       segment.userData.spin = true;
       tunnel.add(segment);
-      const mesh = box(
-        segment,
-        "#92968e",
-        x - 4,
-        4.15,
-        11.5,
-        x + 4,
-        4.45,
-        16.6,
-      );
-      roofs.push({ x, mesh: segment });
-      const strip = box(
-        tunnel,
-        "#f3dfaa",
-        x - 0.8,
-        3.7,
-        11.84,
-        x + 0.8,
-        3.82,
-        12,
-      );
+      box(segment, "#cfcabd", x - 4, 3.9, 6.8, x + 4, 4.15, 13.2);
+      box(segment, "#3b3e44", x - 4, 4.15, 6.8, x + 4, 4.6, 13.2);
+      roofs.push({ x, mesh: segment, z0: 5.5, z1: 14.5 });
+      // Strip lights down the centre of the roof.
+      const strip = box(tunnel, "#ffe9b0", x - 1.2, 3.72, 9.9, x + 1.2, 3.82, 10.1);
       strip.castShadow = false;
-      lamps.push(new THREE.Vector3(x, 3.75, 12));
-      // A dark arch frames the vault without covering the playable camera.
-      const arch = new THREE.Mesh(
-        new THREE.TorusGeometry(2.35, 0.16, 6, 18, Math.PI),
-        mat("#c8c0ac"),
-      );
-      arch.rotation.y = Math.PI / 2;
-      arch.position.set(x, 1.7, 14.05);
-      arch.castShadow = true;
-      tunnel.add(arch);
-      mesh.userData.tunnelRoof = true;
+      lamps.push(new THREE.Vector3(x, 3.6, 10));
+      // Jet fans every other bay.
+      if ((x / 8) % 2 < 1) {
+        const fan = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.6, 10), mat("#6b7178"));
+        fan.rotation.z = Math.PI / 2;
+        fan.position.set(x + 2, 3.45, 8.6);
+        tunnel.add(fan);
+      }
+      // Emergency phone and exit sign on the walls.
+      if (x % 24 === 4) {
+        box(tunnel, "#c8322d", x, 1.1, 6.98, x + 0.35, 1.6, 7.08);
+        const exit = sign("EXIT →", { bg: "#1f8a4c", fg: "#ffffff", w: 0.9, h: 0.3 });
+        exit.position.set(x + 2, 2.6, 7.09);
+        tunnel.add(exit);
+      }
     }
-    for (const x of [21.7, 89.7]) {
-      for (const z of [10.5, 16.5])
-        box(tunnel, "#bdad91", x, 0, z, x + 0.65, 5.2, z + 1.2);
-      const board = sign("A101  ·  ROTHERHITHE TUNNEL", {
-        bg: "#f1ead7",
-        fg: "#233b43",
-        w: 7.8,
-        h: 0.55,
-      });
-      board.position.set(x + 0.3, 5.2, 17.8);
+    // Portal facades at each end.
+    for (const x of [0.2, L - 0.8]) {
+      box(tunnel, "#bdad91", x, 3.9, 6.6, x + 0.6, 5.2, 13.4);
+      const board = sign("A101  ·  ROTHERHITHE TUNNEL", { bg: "#f1ead7", fg: "#233b43", w: 5.6, h: 0.5 });
+      board.position.set(x + 0.3, 4.6, 13.42);
       tunnel.add(board);
     }
   }
   // Road furniture follows the map's authored route. Centre lines and verge strips
   // belong to this district; London-only zebras and signal posts are not copied.
-  for (const route of data.routes)
+  for (const route of map.id === "rotherhithe" ? [] : data.routes)
     for (let i = 1; i < route.length; i++) {
       const [a, b] = [route[i - 1], route[i]],
         length = Math.hypot(b[0] - a[0], b[1] - a[1]),
