@@ -349,3 +349,31 @@ export async function topicQuiz(topicId: string, count = 3): Promise<GameQuestio
   const pool = QUESTION_BANK.filter((q) => q.topicId === topicId).sort(() => Math.random() - 0.5).slice(0, Math.max(1, Math.min(5, count)));
   return pool.map((q) => ({ id: q.key, key: q.key, prompt: q.q, options: q.options, answer: q.answer, explain: q.explain, subject: q.subject, topic: q.topicTitle, level: q.route }));
 }
+
+// ── In-game learning dashboard (pause menu) ──────────────────────────────────
+export type InGameDashboard = {
+  subjects: { courseId: string; subject: string; started: number; topics: number; accuracy: number | null; grade: string | null; next: string | null }[];
+  learnNext: { courseId: string; topicId: string; title: string; subject: string; reason: string }[];
+  thisWeek: number;
+  mastery: { notStarted: number; needsWork: number; gettingThere: number; secure: number };
+};
+
+/** Your subjects, estimated grades and next topics, for the Learning tab in the pause menu. */
+export async function inGameDashboard(): Promise<InGameDashboard | null> {
+  const [{ getAccount }, { loadDashboard }, { estimateGrade }] = await Promise.all([
+    import("@/lib/account/server"), import("@/lib/account/dashboard"), import("@/lib/account/estimate"),
+  ]);
+  const account = await getAccount();
+  if (!account?.details) return null;
+  const dash = await loadDashboard(account.id, account.details);
+  return {
+    subjects: dash.subjects.map((s) => {
+      const answered = s.topics.reduce((n, t) => n + t.seen, 0);
+      const est = estimateGrade(s.course.route, { accuracy: s.accuracy, started: s.started, topics: s.topics.length, answered });
+      return { courseId: s.course.id, subject: s.course.subject, started: s.started, topics: s.topics.length, accuracy: s.accuracy, grade: est?.grade ?? null, next: est?.next ?? null };
+    }),
+    learnNext: dash.recommendations.slice(0, 4).map((r) => ({ courseId: r.stat.course.id, topicId: r.stat.topic.id, title: r.stat.topic.title, subject: r.stat.course.subject, reason: r.reason })),
+    thisWeek: dash.thisWeekAnswered,
+    mastery: { notStarted: dash.mastery["not-started"], needsWork: dash.mastery["needs-work"], gettingThere: dash.mastery["getting-there"], secure: dash.mastery.secure },
+  };
+}

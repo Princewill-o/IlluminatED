@@ -23,6 +23,14 @@ export function LearningTracker({ hidden }: { hidden?: boolean }) {
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState(0);
+  const [enabled, setEnabled] = useState(true);
+  // The Learn card can be switched off from the pause menu's Settings.
+  useEffect(() => {
+    try { setEnabled(localStorage.getItem("world-learn-card") !== "off"); } catch { /* Optional. */ }
+    const on = (e: Event) => { const v = (e as CustomEvent<{ learnCard?: boolean }>).detail?.learnCard; if (v !== undefined) setEnabled(v); };
+    window.addEventListener("illumed:world-settings", on);
+    return () => window.removeEventListener("illumed:world-settings", on);
+  }, []);
 
   const refresh = useCallback(() => {
     void learningFocus().then((f) => { setFocus(f); if (f) setToday({ answered: f.answered, correct: f.correct }); }).catch(() => {});
@@ -37,7 +45,7 @@ export function LearningTracker({ hidden }: { hidden?: boolean }) {
     return () => window.removeEventListener("illumed:learned", on);
   }, []);
 
-  if (hidden || !focus) return null;
+  if (hidden || !focus || !enabled) return null;
   const q = round?.[index];
   const start = async () => {
     if (!focus.topicId) return;

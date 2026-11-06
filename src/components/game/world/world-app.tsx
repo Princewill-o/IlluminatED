@@ -1072,9 +1072,11 @@ export function WorldApp({
   }, [remember]);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || e.defaultPrevented) return;
+      // Esc or Backspace opens and closes the pause menu (Backspace only when not typing).
+      if ((e.key !== "Escape" && e.key !== "Backspace") || e.defaultPrevented) return;
       if (e.target instanceof HTMLElement && e.target.closest("input, textarea, [contenteditable=true]")) return;
       if (busyRef.current) return;
+      if (e.key === "Backspace") e.preventDefault();
       setMenu(open => !open);
     };
     window.addEventListener("keydown", key);
@@ -1332,8 +1334,8 @@ export function WorldApp({
         updateLife(l => ({ ...l, hearing: { stars: deal.stars, charge: deal.charge } }));
         say(`Deal done: +${deal.clout} Clout from @${deal.from}. You're due in court for ${deal.charge.toLowerCase()}.`, true);
       }} />
-      <HudSlot area="br-nav" order={0}><button type="button" onClick={() => setMenu(true)} aria-label="Game menu" title="Menu (Esc)" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Menu className="size-5" aria-hidden /></button></HudSlot>
-      {menu && <GameMenu place={playerWorld ? `${worldInfo?.name ?? "Player world"} · ${map.name}` : map.name} onContinue={() => setMenu(false)} onLeave={leaveGame} onEvents={() => { setMenu(false); setEventGame("events"); }}
+      <HudSlot area="br-nav" order={0}><button type="button" onClick={() => setMenu(true)} aria-label="Game menu" title="Menu (Esc or Backspace)" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Menu className="size-5" aria-hidden /></button></HudSlot>
+      {menu && <GameMenu place={playerWorld ? `${worldInfo?.name ?? "Player world"} · ${map.name}` : map.name} onContinue={() => setMenu(false)} onLeave={leaveGame} onSave={remember} onEvents={() => { setMenu(false); setEventGame("events"); }}
         onSwitch={() => { remember(); setMenu(false); setSoaring(false); setWorldInfo(null); setServer(null); }} />}
       {isOwner && <HudSlot area="br-nav" order={2}><button type="button" onClick={() => setAdminOpen(true)} aria-label="World admin" title="World admin" className="jelly grid size-11 place-items-center rounded-2xl bg-[#7a5ce6] text-white shadow-lg"><Crown className="size-5" aria-hidden /></button></HudSlot>}
       {canFly && !driving && outdoors && <HudSlot area="br-nav" order={3}><button type="button" aria-pressed={soaring} onClick={() => { setSoaring((f) => !f); say(soaring ? "Landing." : "You're soaring! Glide anywhere, then press again to land.", true); }} aria-label={soaring ? "Land" : "Fly"} title={soaring ? "Land" : "Fly"} className={`jelly grid size-11 place-items-center rounded-2xl text-white shadow-lg ${soaring ? "bg-[#1aa3c4]" : "bg-[#13203a]"}`}><Feather className="size-5" aria-hidden /></button></HudSlot>}

@@ -286,6 +286,16 @@ export function WorldView({
   const [autoTier, setAutoTier] = useState<GraphicsTier>("balanced");
   const [graphicsNote, setGraphicsNote] = useState("");
   const [graphicsDetected, setGraphicsDetected] = useState(false);
+  // Settings now live in the pause menu (Esc); it tells us when they change.
+  useEffect(() => {
+    const on = (e: Event) => {
+      const d = (e as CustomEvent<{ graphics?: string; immersive?: boolean }>).detail ?? {};
+      if (d.graphics !== undefined) setGraphicsSetting(readGraphicsSetting(d.graphics));
+      if (d.immersive !== undefined) setImmersive(d.immersive);
+    };
+    window.addEventListener("illumed:world-settings", on);
+    return () => window.removeEventListener("illumed:world-settings", on);
+  }, []);
   useEffect(() => {
     try { setGraphicsSetting(readGraphicsSetting(localStorage.getItem(GRAPHICS_KEY))); } catch { /* Optional. */ }
     let tier: GraphicsTier = "balanced";
@@ -807,20 +817,6 @@ export function WorldView({
       ref={viewport}
       className="relative h-full w-full touch-none overflow-hidden bg-[#0d1726] select-none"
     >
-      <HudSlot area="bl-row" order={2}><details aria-label="Camera settings" className="group relative rounded-full border border-white/20 bg-[#13203a]/95 px-3 text-xs text-white" onPointerDown={e=>e.stopPropagation()}>
-        <summary className="flex min-h-10 cursor-pointer items-center font-bold">Settings</summary>
-        <div className="absolute bottom-full left-0 mb-2 flex w-max max-w-[min(20rem,calc(100vw-1.5rem))] flex-col gap-1 rounded-xl border border-white/20 bg-[#13203a]/95 px-3 py-2 shadow-xl">
-        <label title="Subtle camera movement; respects reduced-motion preferences" className="flex min-h-9 items-center gap-1.5"><input type="checkbox" checked={immersive} onChange={e=>{setImmersive(e.target.checked);try{localStorage.setItem("world-immersive-motion",e.target.checked?"on":"off");}catch{/* Optional. */}}}/>Immersive motion</label>
-        <label className="flex min-h-9 items-center gap-1.5">Graphics
-          <select value={graphicsSetting} onChange={e=>{const v=readGraphicsSetting(e.target.value);setGraphicsSetting(v);try{localStorage.setItem(GRAPHICS_KEY,v);}catch{/* Optional. */}}} className="rounded-md bg-white/10 px-1.5 py-1 text-white">
-            <option value="auto" className="text-black">Auto ({autoTier === "high" ? "High" : autoTier === "balanced" ? "Balanced" : "Performance"})</option>
-            <option value="high" className="text-black">High: best looking</option>
-            <option value="balanced" className="text-black">Balanced</option>
-            <option value="performance" className="text-black">Performance: smoothest</option>
-          </select>
-        </label>
-        </div>
-      </details></HudSlot>
       <div
         ref={layer}
         data-world
