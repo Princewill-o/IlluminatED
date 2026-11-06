@@ -7,10 +7,10 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, Briefcase, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
+import { BookOpen, Briefcase, CarFront, PawPrint, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
@@ -37,6 +37,7 @@ import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
 import { NpcVisits } from "./npc-visits";
 import { PanicFloor } from "./panic-floor";
+import { PetPanel, syncPet } from "./pet-panel";
 import { PolicePatrol } from "./police-patrol";
 import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
@@ -62,7 +63,7 @@ import { useTechEvents } from "../event-ads";
 const MobileLife = dynamic(() => import("./mobile-life").then((module) => module.MobileLife), { ssr: false, loading: () => <div className="absolute inset-0 grid place-items-center bg-[#f3f4f8] text-[#18202d]" role="status">Opening your life…</div> });
 
 import { cityAction } from "@/app/games/city-actions";
-import { earnWorldXp, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
+import { earnWorldXp, loadPets, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
@@ -295,6 +296,9 @@ export function WorldApp({
 
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
+  const [petsOpen,setPetsOpen]=useState(false);
+  // Your pet comes out with you as soon as the world loads.
+  useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
   const [university,setUniversity]=useState<{id:string;topic:"courses"|"events"|"networking"}|null>(null);
   const [bus, setBus] = useState<string | null>(null);
@@ -1396,6 +1400,9 @@ export function WorldApp({
         <button type="button" onClick={() => setAwardsOpen(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#ffd166] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div></HudSlot>}
       {!driving && !bike && <HudSlot area="br-act" order={2} className="md:hidden"><button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5">Jump</button></HudSlot>}
+      <HudSlot area="br-nav" order={1}><button type="button" onClick={() => setPetsOpen(true)} aria-label="Pets" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#8a5a1f] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <PawPrint className="size-4" aria-hidden /> <span className="hidden sm:inline">Pets</span>
+      </button></HudSlot>
       <HudSlot area="br-nav" order={2}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setJobsOpen(true); }} aria-label="Jobs" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#e4572e] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Briefcase className="size-4" aria-hidden /> <span className="hidden sm:inline">{roleShift ? roleShift.role.title : "Jobs"}</span>
       </button></HudSlot>
@@ -1420,6 +1427,7 @@ export function WorldApp({
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
       <RewardToasts/>
+      {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
       {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}

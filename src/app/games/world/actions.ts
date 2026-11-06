@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { bikeById } from "@/game/core/bikes";
 import { carById } from "@/game/core/cars";
+import { type Pet, PETS } from "@/game/core/pets";
 import { roleById } from "@/game/core/roles";
 import { getSupabase } from "@/lib/social/server";
 
@@ -424,4 +425,45 @@ export async function finishRoleJob(claim: string, steps: number, accuracy: numb
   revalidatePath("/games/world");
   const r = data as { pay: number; xp: number; total_xp: number; jobs: number; capped: boolean };
   return { ok: true as const, ...r };
+}
+
+// ── Pets (src/game/core/pets.ts) ────────────────────────────────────────────
+const PET_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to adopt a pet.",
+  not_enough_clout: "Not enough Clout yet. Work a shift or play a game to earn some.",
+  too_many_pets: "You've got a full house: six pets is the limit.",
+  invalid_name: "Names can use letters, numbers, spaces and hyphens (up to 20).",
+  unknown_item: "That pet isn't at the rescue centre.",
+};
+const petError = (m?: string) => PET_ERRORS[Object.keys(PET_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
+
+export async function loadPets(): Promise<Pet[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth?.user) return [];
+  const { data } = await sb.from("player_pets").select("id,kind,name,colour,accessory,equipped,fed_at,watered_at,washed_at,slept_at,played_at,care_done,care_day").eq("user_id", auth.user.id).order("adopted_at");
+  return (data ?? []) as Pet[];
+}
+export async function adoptPet(kind: string, name: string, colour: string) {
+  if (!PETS.some((p) => p.kind === kind) || !/^#[0-9a-f]{6}$/i.test(colour)) return { ok: false as const, error: PET_ERRORS.unknown_item };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: petError() };
+  const { data, error } = await sb.rpc("pet_adopt", { p_kind: kind, p_name: name.trim().slice(0, 20), p_colour: colour });
+  if (error) return { ok: false as const, error: petError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, id: data as string };
+}
+export async function updatePet(id: string, change: { name?: string; accessory?: string; equipped?: boolean }) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: petError() };
+  const { error } = await sb.rpc("pet_update", { p_pet: id, p_name: change.name ?? null, p_accessory: change.accessory ?? null, p_equipped: change.equipped ?? null });
+  return error ? { ok: false as const, error: petError(error.message) } : { ok: true as const };
+}
+export async function carePet(id: string, action: string) {
+  if (!["feed", "water", "wash", "sleep", "play"].includes(action)) return { ok: false as const, error: petError() };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: petError() };
+  const { data, error } = await sb.rpc("pet_care", { p_pet: id, p_action: action });
+  return error ? { ok: false as const, error: petError(error.message) } : { ok: true as const, paid: (data as number) ?? 0 };
 }

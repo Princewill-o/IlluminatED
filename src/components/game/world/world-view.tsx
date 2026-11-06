@@ -443,7 +443,7 @@ export function WorldView({
       // Local video capture can lift the on-screen player cap (development only).
       const limit = process.env.NODE_ENV === "development" ? (window as unknown as { __crowd?: { limit?: number } }).__crowd?.limit : undefined;
       const list = limit ? [...players.current.values()].filter(rp => !hidden.has(rp.id)).sort((a, b) => Math.hypot(a.x - pos.current.x, a.y - pos.current.y) - Math.hypot(b.x - pos.current.x, b.y - pos.current.y)).slice(0, limit) : nearbyPlayers(players.current.values(), pos.current, hidden);
-      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
+      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, pet: rp.pet ?? null, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
     },
     [players, hidden],
   );

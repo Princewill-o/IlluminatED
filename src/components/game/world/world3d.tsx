@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAR_PAINT, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAR_PAINT, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -31,6 +31,7 @@ import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
 import { createNavigationTrail } from "./navigation-trail";
+import { type Pet3D, makePet } from "./pet3d";
 import { presentSceneFrame } from "./present-frame";
 import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
@@ -68,6 +69,7 @@ import { logoFor } from "@/game/core/logos";
 import { buildLondon, cityCarParks } from "@/game/core/london";
 import type { WorldNavigation } from "@/game/core/navigation";
 import { weatherAt } from "@/game/core/needs";
+import { type PetAction, parsePetTag } from "@/game/core/pets";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { PAINT_MATERIALS } from "@/game/core/realistic-cars";
 import { buildHighlands } from "@/game/core/regions";
@@ -100,6 +102,7 @@ export { NPC_SPOTS } from "./art";
  */
 
 export interface Mover3D {
+  pet?: string | null;
   badge?: string | null;
   username?: string;
   affiliation?: WorldAffiliation | null;
@@ -3026,6 +3029,45 @@ export function World3D({
     // Live ambulance rescues (yours and other players'): an ambulance and two paramedics each.
     const ambulances = new Map<string, { rig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null; root: THREE.Group; medics: Body[]; heading: number | null }>();
     let rescueCam: { x: number; z: number } | null = null;
+    // Pets: yours follows you; other players' pets follow them.
+    type PetState = { tag: string; pet: Pet3D; x: number; z: number; heading: number };
+    const pets = new Map<string, PetState>();
+    const petFor = (id: string, tag: string | null, ox: number, oz: number) => {
+      let p = pets.get(id);
+      if (p && p.tag !== tag) { p.pet.dispose(); pets.delete(id); p = undefined; }
+      if (!tag) return null;
+      if (!p) {
+        const info = parsePetTag(tag);
+        if (!info) return null;
+        const pet = makePet(info.kind, info.colour, info.accessory, bend);
+        scene.add(pet.root);
+        p = { tag, pet, x: ox - 1, z: oz + 1, heading: 0 };
+        pets.set(id, p);
+      }
+      return p;
+    };
+    /** Walk the pet to a spot a little behind its owner, round walls, and animate it. */
+    const followPet = (p: PetState, ox: number, oz: number, ownerHeading: number, action: string | null, actionAt: number, dt: number, secs: number) => {
+      const tx = ox - Math.sin(ownerHeading) * 1.1 + Math.cos(ownerHeading) * 0.5, tz = oz - Math.cos(ownerHeading) * 1.1 - Math.sin(ownerHeading) * 0.5;
+      const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+      let speed = 0;
+      if (action) { /* stay put for care */ }
+      else if (d > 12) { p.x = tx; p.z = tz; }
+      else if (d > 0.35) {
+        const step = Math.min(d, dt * (d > 3 ? 5.5 : 3.2));
+        const nx = p.x + (dx / d) * step, nz = p.z + (dz / d) * step;
+        if (!blocked(map, nx * TILE, nz * TILE, 6)) { p.x = nx; p.z = nz; }
+        else if (!blocked(map, nx * TILE, p.z * TILE, 6)) p.x = nx;
+        else if (!blocked(map, p.x * TILE, nz * TILE, 6)) p.z = nz;
+        speed = Math.min(1, step / (dt * 3.2));
+        const want = Math.atan2(dx, dz);
+        let turn = want - p.heading; turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+        p.heading += turn * Math.min(1, dt * 8);
+      }
+      p.pet.root.position.set(p.x, 0.02 + (indoors ? 0 : 0.1), p.z);
+      p.pet.root.rotation.y = p.heading;
+      p.pet.update(secs, speed, action as PetAction | null, actionAt);
+    };
     // Wrecked cars left at crash scenes, with smoke rising.
     const wrecks = new Map<string, THREE.Group>();
     const smokeMat = new THREE.MeshStandardMaterial({ color: "#8a8f98", transparent: true, opacity: 0.55, roughness: 1, flatShading: true });
@@ -3641,6 +3683,21 @@ export function World3D({
         sus.x = p.x * TILE; sus.y = p.z * TILE;
       } else if (suspect) suspect.root.visible = false;
       for (const [id, crew] of ambulances) if (!RESCUES.has(id)) { crew.root.visible = false; crew.medics.forEach((m) => { m.root.visible = false; }); }
+      {
+        const mine = PET.tag && !carRef.current ? petFor("me", PET.tag, me.root.position.x, me.root.position.z) : petFor("me", null, 0, 0);
+        if (mine) {
+          if (PET.action && performance.now() - PET.actionAt > 4500) PET.action = null;
+          followPet(mine, me.root.position.x, me.root.position.z, me.root.rotation.y, PET.action, PET.actionAt / 1000, dt, performance.now() / 1000);
+        }
+        const seenPets = new Set(["me"]);
+        for (const o of getOthers()) {
+          const b = others.get(o.id);
+          if (!b || o.car) { petFor(o.id, null, 0, 0); continue; }
+          const p = petFor(o.id, o.pet ?? null, b.x, b.z);
+          if (p) { seenPets.add(o.id); followPet(p, b.x, b.z, b.root.rotation.y, null, 0, dt, performance.now() / 1000); }
+        }
+        for (const [id, p] of pets) if (!seenPets.has(id)) { p.pet.dispose(); pets.delete(id); }
+      }
       rescueCam = null;
       for (const [id, w] of wrecks) if (!RESCUES.has(id)) { scene.remove(w); disposeVehicle(w); wrecks.delete(id); }
       for (const [id, live] of RESCUES) {

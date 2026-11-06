@@ -4,13 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { CAR_PAINT, LAW_STATUS, RESCUES } from "./art";
+import { CAR_PAINT, LAW_STATUS, PET, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { uniformFor } from "@/game/core/careers";
 import { validCar } from "@/game/core/cars";
 import type { Avatar } from "@/game/core/cosmetics";
+import { parsePetTag } from "@/game/core/pets";
 import { CHAT_INTERVAL, roomChatText, type RoomMessage } from "@/game/core/room-chat";
 import { SERVER_CAPACITY, chatText } from "@/game/core/world";
 import {
@@ -63,6 +64,7 @@ export interface Me {
 
 export interface RemotePlayer {
   affiliation?: WorldAffiliation | null;
+  pet?: string | null;
   car?: string | null;
   heading?: number;
   id: string;
@@ -82,6 +84,7 @@ export interface RemotePlayer {
 
 interface Meta {
   car?: string | null;
+  pet?: string | null;
   heading?: number;
   /** Signed world pass. */
   p: string | null;
@@ -188,6 +191,7 @@ export function useWorld({
         d: pos.current.d,
         car: pos.current.car,
         heading: pos.current.heading,
+        pet: PET.tag,
       });
       const scheduleSync = () => {
         if (syncQueued || cancelled()) return;
@@ -259,6 +263,7 @@ export function useWorld({
             badge: who.badge,
             affiliation: who.affiliation ?? null,
             car: validCar(m.car) ? m.car : null,
+            pet: parsePetTag(m.pet) ? m.pet as string : null,
             heading: Number.isFinite(m.heading) ? m.heading : 0,
           };
           if (!p)
