@@ -38,7 +38,6 @@ import { NetworkingEvent } from "./networking-event";
 import { NpcVisits } from "./npc-visits";
 import { PanicFloor } from "./panic-floor";
 import { PolicePatrol } from "./police-patrol";
-import { PoliceTransportCutscene } from "./police-transport-cutscene";
 import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
