@@ -280,6 +280,64 @@ export function workplaceMap(id: string): WorldMap | null {
     }
     g.fill(20, 13, 4, 1, "k");
     g.set(24, 13, "F");
+  } else if (id === "macrosoft") {
+    // IT helpdesk: walk-up counter, two rows of support desks with screens, a glass server room.
+    g.fill(mid - 3, g.rows - 9, 6, 1, "A");
+    stations.push({ x: mid - 2, y: g.rows - 8, label: "Walk-up helpdesk · fix it in person" });
+    for (const y of [4, 8])
+      for (let x = 3; x < 17; x += 4) { g.fill(x, y, 3, 1, "d"); g.set(x + 1, y - 1, "v"); g.set(x + 1, y + 1, "c"); }
+    stations.push({ x: 4, y: 5, label: "Ticket queue · first-line support" }, { x: 12, y: 9, label: "Remote support desk" });
+    g.fill(19, 2, 1, 9, "G"); g.set(19, 6, ".");
+    for (const y of [3, 6, 9]) g.fill(21, y, g.cols - 23, 1, "b");
+    stations.push({ x: 22, y: 4, label: "Server room · check the racks" }, { x: 8, y: 9, label: "Password reset desk · verify the user" });
+  } else if (id === "goggle") {
+    // Tech floor: pods of four desks, glass meeting pods, a whiteboard wall and a lounge.
+    for (const [x, y] of [[3, 3], [10, 3], [3, 9], [10, 9]]) { g.fill(x, y, 2, 2, "d"); g.set(x - 1, y, "c"); g.set(x + 2, y + 1, "c"); g.set(x, y - 1, "v"); }
+    stations.push({ x: 3, y: 5, label: "Dev pod · fix the failing build" }, { x: 10, y: 11, label: "Dev pod · code review" });
+    g.fill(17, 2, 1, 6, "G"); g.fill(17, 7, g.cols - 19, 1, "G"); g.set(21, 7, ".");
+    g.fill(19, 3, 5, 2, "t"); g.set(18, 3, "c"); g.set(24, 4, "c");
+    g.fill(2, 13, 10, 1, "v");
+    stations.push({ x: 20, y: 5, label: "Meeting pod · sprint planning" }, { x: 4, y: 14, label: "Whiteboard wall · system design" });
+    g.fill(g.cols - 9, g.rows - 10, 6, 2, "l"); g.fill(g.cols - 8, g.rows - 9, 4, 1, "s");
+    stations.push({ x: g.cols - 8, y: g.rows - 11, label: "Lounge · pair programming" });
+  } else if (id === "barklays") {
+    // Bank branch: teller counters behind glass, a queue, advice desks and the vault.
+    g.fill(3, 4, g.cols - 6, 1, "G");
+    for (let x = 4; x < g.cols - 4; x += 5) { g.fill(x, 3, 3, 1, "r"); g.set(x + 1, 4, "."); }
+    stations.push({ x: 5, y: 5, label: "Teller counter · serve the queue" });
+    for (const y of [8, 10]) g.fill(mid - 4, y, 8, 1, "o");
+    for (const x of [3, g.cols - 7]) { g.fill(x, 12, 4, 1, "A"); g.set(x + 1, 13, "c"); }
+    stations.push({ x: 4, y: 13, label: "Mortgage & savings advice" }, { x: g.cols - 6, y: 13, label: "Fraud desk · check the account" }, { x: 10, y: 5, label: "Teller counter 2 · cash and change" }, { x: mid, y: 6, label: "Queue · greet the next customer" });
+    g.fill(g.cols - 6, 2, 4, 1, "b");
+    // Back office behind the advice desks.
+    for (const x of [mid - 6, mid + 2]) { g.fill(x, 15, 3, 1, "d"); g.set(x + 1, 16, "c"); g.set(x + 1, 14, "v"); }
+  } else if (id === "st-plasters") {
+    // Ward: reception, a nurses' station and two rows of patient bays.
+    g.fill(3, g.rows - 9, 5, 1, "r");
+    stations.push({ x: 4, y: g.rows - 8, label: "Ward reception · book the patient in" });
+    g.fill(mid - 3, 9, 6, 1, "A");
+    stations.push({ x: mid - 2, y: 10, label: "Nurses' station · triage the list" });
+    for (let x = 3; x < g.cols - 3; x += 5) { g.fill(x, 3, 2, 3, "t"); g.set(x + 2, 4, "c"); g.fill(x + 3, 2, 1, 5, "G"); }
+    stations.push({ x: 5, y: 6, label: "Bay 1 · take observations" }, { x: 10, y: 6, label: "Bay 2 · check on the patient" }, { x: 15, y: 6, label: "Bay 3 · update the chart" });
+    // Ward office with computers for notes.
+    for (const x of [g.cols - 10, g.cols - 6]) { g.fill(x, 13, 3, 1, "d"); g.set(x + 1, 12, "v"); g.set(x + 1, 14, "c"); }
+  } else if (id === "lawz") {
+    // Law firm: library stacks, a boardroom and fee-earner desks.
+    for (const y of [3, 6, 9]) g.fill(3, y, 8, 1, "b");
+    stations.push({ x: 4, y: 4, label: "Law library · research the case" });
+    g.fill(15, 3, 8, 3, "t"); for (let x = 15; x < 23; x += 2) { g.set(x, 2, "c"); g.set(x, 6, "c"); }
+    g.fill(14, 2, 1, 6, "G"); g.set(14, 4, ".");
+    stations.push({ x: 18, y: 7, label: "Boardroom · client meeting" });
+    for (let x = 4; x < g.cols - 6; x += 6) { g.fill(x, 12, 3, 1, "d"); g.set(x + 1, 13, "c"); }
+    stations.push({ x: 5, y: 13, label: "Paralegal desk · review the contract" }, { x: 11, y: 13, label: "Trainee desk · draft the letter" }, { x: 4, y: 10, label: "Archive · confidential files" });
+  } else if (id === "netflics") {
+    // Media studio: a wall of screens, edit suites and a green-room sofa.
+    g.fill(3, 2, g.cols - 6, 1, "v");
+    for (let x = 3; x < g.cols - 5; x += 5) { g.fill(x, 5, 3, 1, "d"); g.set(x + 1, 4, "v"); g.set(x + 1, 6, "c"); }
+    stations.push({ x: 4, y: 6, label: "Edit suite · cut the trailer" }, { x: 14, y: 6, label: "Social desk · write the post" });
+    g.fill(mid - 3, 10, 6, 1, "v"); g.fill(mid - 3, 11, 6, 2, "l");
+    stations.push({ x: mid - 2, y: 13, label: "Analytics screen · campaign results" }, { x: 9, y: 6, label: "Edit suite 2 · colour grade" }, { x: g.cols - 8, y: g.rows - 11, label: "Green room · brief the guest" });
+    g.fill(g.cols - 9, g.rows - 10, 6, 2, "l"); g.fill(g.cols - 8, g.rows - 9, 4, 1, "s");
   } else {
     const variant = (design.seed >>> 6) % 4;
     const xs =
