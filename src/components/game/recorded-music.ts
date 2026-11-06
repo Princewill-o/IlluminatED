@@ -24,6 +24,15 @@ export function createRecordedMusic() {
       audio.src = track;
       if (enabled && !document.hidden) void audio.play().catch(() => {});
     },
+    /** Play a named track directly (the in-car radio). */
+    track(name: string) {
+      const next = `/audio/${name}.ogg`;
+      if (closed || next === track) return;
+      track = next;
+      audio.pause();
+      audio.src = track;
+      if (enabled && !document.hidden) void audio.play().catch(() => {});
+    },
     volume(level: number) { audio.volume = Math.max(0, Math.min(1, level)); },
     async active(value: boolean) {
       enabled = value;

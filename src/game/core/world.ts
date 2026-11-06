@@ -151,7 +151,7 @@ export interface Prop {
  * - pavement, = road, : road with lane marking, T tree, B bench, L lamp,
  * w water, X building.
  */
-export const SOLID = new Set(["#", "W", "G", "O", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X", "|"]);
+export const SOLID = new Set(["Q", "#", "W", "G", "O", "d", "t", "s", "v", "k", "F", "A", "r", "b", "p", "o", "T", "B", "L", "w", "X", "|"]);
 
 class Grid {
   t: string[][];

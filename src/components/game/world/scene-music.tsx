@@ -11,7 +11,8 @@ import { HudSlot } from "./hud";
 const KEY = "illuminated-music";
 const LABELS: Record<MusicScene, string> = { city: "City grooves", nature: "Highland air", home: "Home comforts", study: "Quiet focus", station: "Platform pulse", journey: "Window seat", arcade: "Playtime", quiet: "A moment of calm", university: "Next chapter", work: "Finding your rhythm", shop: "Afternoon browse" };
 
-export function SceneMusic({ scene }: { scene: MusicScene }) {
+/** `station` is the in-car radio: a track id, "off" for silence, or null to follow the scene. */
+export function SceneMusic({ scene, station = null }: { scene: MusicScene; station?: string | null }) {
   const engine = useRef<ReturnType<typeof createMusic> | null>(null);
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
@@ -28,11 +29,11 @@ export function SceneMusic({ scene }: { scene: MusicScene }) {
       }
     } catch { /* Use quiet defaults if storage is unavailable. */ }
     const start = () => {
-      if (!settings.current.enabled || document.hidden) return;
+      if (!settings.current.enabled || document.hidden || stationRef.current === "off") return;
       try {
         if (!engine.current) {
           engine.current = createMusic();
-          engine.current.scene(sceneRef.current);
+          if (stationRef.current && stationRef.current !== "off") engine.current.track(stationRef.current); else engine.current.scene(sceneRef.current);
           engine.current.volume(settings.current.volume);
         }
         void engine.current.active(true).catch(() => {});
@@ -49,7 +50,15 @@ export function SceneMusic({ scene }: { scene: MusicScene }) {
       engine.current?.dispose(); engine.current = null;
     };
   }, []);
-  useEffect(() => { engine.current?.scene(scene); }, [scene]);
+  const stationRef = useRef(station);
+  stationRef.current = station;
+  useEffect(() => {
+    const e = engine.current;
+    if (!e) return;
+    if (station === "off") { e.suspend(); return; }
+    if (station) e.track(station); else e.scene(scene);
+    if (settings.current.enabled) void e.active(true).catch(() => {});
+  }, [scene, station]);
   const update = (on: boolean, level: number) => {
     settings.current = { enabled: on, volume: level };
     setEnabled(on); setVolume(level);

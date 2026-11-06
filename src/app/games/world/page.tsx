@@ -28,8 +28,8 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
   const carsRequest = (async () => {
     const sb = await getSupabase();
     if (!sb) return [] as string[];
-    const result = await sb.from("player_cars").select("car").eq("user_id", account.id);
-    return ((result.data ?? []) as {car:string}[]).map(row => row.car);
+    const [result, more] = await Promise.all([sb.from("player_cars").select("car").eq("user_id", account.id), sb.from("player_cars_more").select("car").eq("user_id", account.id)]);
+    return [...(result.data ?? []), ...(more.data ?? [])].map((row) => (row as { car: string }).car);
   })();
   const [player, orgs, membership, career, home, homework, learning, staff, cars, studyQuests] = await Promise.all([loadPlayer(account.id), organisations, myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id), staffRequest, carsRequest, loadSubjectQuests()]);
   const chosenStudyQuest = studyQuests.ok ? studyQuests.board.quests.find(quest => quest.active) : undefined;

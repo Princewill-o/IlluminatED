@@ -4,12 +4,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { LAW_STATUS, RESCUES } from "./art";
+import { CAR_PAINT, LAW_STATUS, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { uniformFor } from "@/game/core/careers";
-import { carById } from "@/game/core/cars";
+import { validCar } from "@/game/core/cars";
 import type { Avatar } from "@/game/core/cosmetics";
 import { CHAT_INTERVAL, roomChatText, type RoomMessage } from "@/game/core/room-chat";
 import { SERVER_CAPACITY, chatText } from "@/game/core/world";
@@ -258,7 +258,7 @@ export function useWorld({
             org: who.org,
             badge: who.badge,
             affiliation: who.affiliation ?? null,
-            car: typeof m.car === "string" && (carById(m.car) || /^bus:[A-Z0-9]{1,4}$/.test(m.car)) ? m.car : null,
+            car: validCar(m.car) ? m.car : null,
             heading: Number.isFinite(m.heading) ? m.heading : 0,
           };
           if (!p)
@@ -304,7 +304,7 @@ export function useWorld({
         p.dir = payload.d === -1 ? -1 : 1;
         p.walking = Boolean(payload.w);
         p.car =
-          typeof payload.car === "string" && (carById(payload.car) || /^bus:[A-Z0-9]{1,4}$/.test(payload.car))
+          validCar(payload.car)
             ? payload.car
             : null;
         p.heading = Number.isFinite(payload.heading) ? payload.heading : 0;
@@ -486,6 +486,8 @@ export function useWorld({
       car: string | null = null,
       heading = 0,
     ) => {
+      // Your own paint job goes out with the car, so the room sees the colour you picked.
+      if (car && !car.startsWith("bus:") && CAR_PAINT.colours[car]) car = `${car}@${CAR_PAINT.colours[car]}`;
       const vehicleChanged = pos.current.car !== car;
       pos.current = { x, y, d, car, heading };
       const ch = channelRef.current;

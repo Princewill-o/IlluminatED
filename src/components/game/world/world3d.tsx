@@ -11,9 +11,10 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAR_PAINT, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
+import { addCarParks3D } from "./car-parks3d";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
@@ -46,6 +47,7 @@ import { riverGeometry, riverSurface } from "./water-style3d";
 
 import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
 import type { WorldAffiliation } from "@/game/core/affiliation";
+import { paintedCar } from "@/game/core/cars";
 import { characterSpeed, locomotionClip, type LocomotionClip } from "@/game/core/character-locomotion";
 import { residentIdentity } from "@/game/core/city-social";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
@@ -61,10 +63,11 @@ import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-
 import { PRISON_LOOK } from "@/game/core/law";
 import { residentActivity, residentMotionSeconds } from "@/game/core/living-world";
 import { logoFor } from "@/game/core/logos";
-import { buildLondon } from "@/game/core/london";
+import { buildLondon, cityCarParks } from "@/game/core/london";
 import type { WorldNavigation } from "@/game/core/navigation";
 import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
+import { PAINT_MATERIALS } from "@/game/core/realistic-cars";
 import { buildHighlands } from "@/game/core/regions";
 import { rescueFrame } from "@/game/core/rescue";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
@@ -452,11 +455,29 @@ function fountainSpray(cx: number, cz: number, top: number) {
 }
 
 /** The kit's compact cars need a shared real footprint, including their mirrors. */
-async function placeCar(g: THREE.Group, model: string) {
+async function placeCar(g: THREE.Group, car: string) {
+  const { id: model, paint } = paintedCar(car);
   const fitted=await placeRealisticCar(g, model, load, bendAll);
   if(g.userData.vehicleRemoved){fitted.removeFromParent();return g;}
+  if (paint) repaint(fitted, paint);
   g.userData.vehicleRig=rigVehicle(fitted,1);
   return fitted;
+}
+
+/** Respray a car's body panels (the materials named in PAINT_MATERIALS), leaving glass, tyres and lights alone. */
+function repaint(car: THREE.Object3D, hex: string) {
+  const done = new Map<THREE.Material, THREE.Material>();
+  car.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const swap = (m: THREE.Material) => {
+      if (!PAINT_MATERIALS.has(m.name)) return m;
+      let fresh = done.get(m);
+      if (!fresh) { const c = m.clone() as THREE.MeshStandardMaterial; c.map = null; c.color?.set(hex); c.needsUpdate = true; fresh = c; done.set(m, fresh); }
+      return fresh;
+    };
+    mesh.material = Array.isArray(mesh.material) ? mesh.material.map(swap) : swap(mesh.material);
+  });
 }
 
 const GROUND: Record<string, [string, number]> = {
@@ -472,6 +493,10 @@ const GROUND: Record<string, [string, number]> = {
   L: ["#e9e1d0", 0.12],
   B: ["#ecd8a4", 0.08],
   k: ["#8fd16f", 0.05],
+  // Car parks: aisle, empty bay, bay with a parked car.
+  P: ["#5b6270", 0.015],
+  U: ["#5b6270", 0.015],
+  Q: ["#5b6270", 0.015],
 };
 
 function groundMesh(tiles: string[], highland: boolean, holes = new Set<string>()) {
@@ -2260,6 +2285,7 @@ export function World3D({
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
     // Mountains all round, with a tunnel mouth over every road that leaves the map.
+    if (london && map.id === "city") jobs.push(addCarParks3D(world, cityCarParks(), map.tiles, { load, bend, sign }).catch(() => null));
     if (!indoors) jobs.push(addMountainRing(world, map, { load, bend }).catch(() => null));
     const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
       lamps.push(position);
@@ -3271,7 +3297,8 @@ export function World3D({
         setWalking(me, p.walking && !bikeRef.current);
       }
       // Swap your character for your car when driving.
-      const want = carRef.current;
+      const base = carRef.current;
+      const want = base && !base.startsWith("bus:") && CAR_PAINT.colours[base] ? `${base}@${CAR_PAINT.colours[base]}` : base;
       if (want !== carLoaded) {
         carLoaded = want;
         disposeVehicle(carHolder);
@@ -3395,7 +3422,7 @@ export function World3D({
           otherCars.set(o.id, vehicle);
           scene.add(root);
           if (o.car.startsWith("bus:")) root.add(busModel(o.car.slice(4)));
-          else void placeCar(root, o.car === "cab" ? "taxi" : o.car).catch(() => {});
+          else void placeCar(root, o.car.startsWith("cab") ? o.car.replace(/^cab/, "taxi") : o.car).catch(() => {});
         }
         if (vehicle) {
           vehicle.root.position.set(b.x, 0.004, b.z);

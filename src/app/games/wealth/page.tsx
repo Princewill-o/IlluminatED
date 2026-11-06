@@ -16,8 +16,8 @@ export default async function WealthPage() {
     getSupabase(),
   ]);
   const cars = sb
-    ? ((await sb.from("player_cars").select("car").eq("user_id", account.id))
-        .data ?? [])
+    ? (await Promise.all([sb.from("player_cars").select("car").eq("user_id", account.id), sb.from("player_cars_more").select("car").eq("user_id", account.id)]))
+        .flatMap((r) => r.data ?? [])
     : [];
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">

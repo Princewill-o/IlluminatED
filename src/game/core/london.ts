@@ -1,3 +1,4 @@
+import { type Lot, addCarParks } from "./car-parks";
 import { buildCityCentre } from "./city-centre";
 import { COMPANIES } from "./companies";
 import { expandLondon } from "./london-districts";
@@ -126,6 +127,10 @@ function riverY(x: number) {
 }
 
 let cache: Built | null = null;
+
+let carParks: Lot[] = [];
+/** The city's car parks (tile rectangles and which way they face the road). */
+export function cityCarParks(): Lot[] { buildLondon(); return carParks; }
 
 export function buildLondon(): Built {
   if (cache) return cache;
@@ -853,6 +858,11 @@ export function buildLondon(): Built {
     routes,
   };
   cache = buildCityCentre(expandOutskirts(expandLondon(cache, 176, 136), LONDON_COLS, LONDON_ROWS));
+  // Car parks on spare grass beside the roads, each with a dropped kerb to drive in.
+  const occupied = cache.things.map((th) => ({ x: th.x, y: th.y, w: "w" in th ? th.w : 1, h: "h" in th ? th.h : 1 }));
+  const lotPlan = addCarParks(cache.tiles, 48, occupied);
+  carParks = lotPlan.lots;
+  cache = { ...cache, tiles: lotPlan.tiles };
   const plots = cache.things.filter((thing):thing is Extract<Thing,{kind:"building"}>=>thing.kind==="building"&&!thing.companyId&&["district-campus-labs","district-campus-library","district-campus-studios"].includes(thing.id));
   const extra = cache.things.find((thing):thing is Extract<Thing,{kind:"building"}>=>thing.kind==="building"&&!thing.companyId&&thing.style==="stone"&&thing.id.startsWith("district-")&&!thing.id.includes("hospital")&&!plots.includes(thing));
   if(extra)plots.push(extra);

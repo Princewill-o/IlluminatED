@@ -10,9 +10,10 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { AUTOPILOT, NPC_SPOTS, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
+import { CarRadio, type RadioStation, savedStation } from "./car-radio";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
 import { CivilianConversation } from "./civilian-conversation";
 import { CoachTrip } from "./coach-trip";
@@ -335,6 +336,8 @@ export function WorldApp({
   }, [homeAction, mapId]);
   const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
+  const [radio, setRadio] = useState<RadioStation>("track-3");
+  useEffect(() => { setRadio(savedStation()); loadCarPaint(); }, []);
   const [driving, setDriving] = useState<string | null>(() => isMotorway(initialMap) ? cars.find(id => carById(id)) ?? null : null);
   const [xpNow, setXpNow] = useState(xp);
   useEffect(()=>{if(waypoint)announceGameMoment({kind:"route",title:waypoint.name,message:"Destination marked. Follow the pink trail in the world. In a car, park at road access and finish on foot."});},[waypoint]);
@@ -1210,7 +1213,8 @@ export function WorldApp({
     </div>}
     <HudLayout hidden={mobileLife}>
       <GameFeedback playerId={me.id} avatar={me.avatar} floating={mobileLife} onSceneChange={setMissionScene}/>
-      <SceneMusic scene={
+      {driving && !bus && <CarRadio station={radio} onChange={setRadio} />}
+      <SceneMusic station={driving && !bus ? radio : null} scene={
         journey || bus ? "journey"
           : games || eventGame === "racing" || eventGame === "championship" ? "arcade"
             : study || learning || map.id === "study-lobby" ? "study"

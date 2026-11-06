@@ -358,6 +358,19 @@ export const COURT = { speaker: null as string | null, gavelAt: 0 };
 export const LAW_STATUS = new Map<string, { stars: number; police: boolean; at: number }>();
 /** A police patrol in progress: the suspect the player is chasing (world px). Moved by the 3D world. */
 export const PATROL = { active: false, suspect: null as null | { id: number; x: number; y: number; name: string; fleeing: boolean; cuffed: boolean; gone: boolean } };
+/** Paint colour per car the player owns (hex), saved in this browser and shown to the room. */
+export const CAR_PAINT: { colours: Record<string, string>; version: number } = { colours: {}, version: 0 };
+const PAINT_KEY = "illuminated:car-paint";
+export function loadCarPaint() {
+  try { const v = JSON.parse(localStorage.getItem(PAINT_KEY) ?? "{}"); if (v && typeof v === "object") CAR_PAINT.colours = v; } catch { /* Default paint. */ }
+  CAR_PAINT.version++;
+}
+export function setCarPaint(car: string, hex: string | null) {
+  if (hex) CAR_PAINT.colours[car] = hex; else delete CAR_PAINT.colours[car];
+  try { localStorage.setItem(PAINT_KEY, JSON.stringify(CAR_PAINT.colours)); } catch { /* This session only. */ }
+  CAR_PAINT.version++;
+  window.dispatchEvent(new CustomEvent("illumed:car-paint"));
+}
 export const PLAYER_WORK: { activity: string | null } = { activity: null };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */

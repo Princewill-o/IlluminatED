@@ -4,12 +4,13 @@ import { useEffect, useState, useTransition } from "react";
 
 import { Bike, X } from "lucide-react";
 
+import { CAR_PAINT, loadCarPaint, setCarPaint } from "./art";
 import { TubeBadge } from "./tube-map";
 
 import { buyCar, hireBike } from "@/app/games/world/actions";
 import { BIKES, type BikeBrand } from "@/game/core/bikes";
-import { CARS } from "@/game/core/cars";
-import { realisticCarPreview } from "@/game/core/realistic-cars";
+import { BLENDER_CARS, CARS } from "@/game/core/cars";
+import { CAR_PAINTS, realisticCarPreview } from "@/game/core/realistic-cars";
 import { STATION_PLATFORM_Y, TILE, type WorldMap } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -415,7 +416,8 @@ export function Dealership({
                 </div>
                 <p className="mt-3 font-black">{c.name}</p>
                 <p className="text-xs text-[#13203a]/70">{c.blurb}</p>
-                <p className="mt-1 text-xs font-bold">{c.speed}x walking speed</p>
+                <p className="mt-1 text-xs font-bold">{c.speed}x walking speed{BLENDER_CARS.has(c.id) ? " · new model" : ""}</p>
+                {(mine || BLENDER_CARS.has(c.id)) && <PaintPicker car={c.id} />}
                 <div className="mt-3 flex items-center gap-2">
                   {mine ? (
                     <button type="button" onClick={() => onDrive(on ? null : c.id)} className={`min-h-11 flex-1 rounded-full px-3 py-2.5 text-sm font-black ${on ? "bg-[#13203a] text-white" : "bg-[#2b5fd9] text-white"}`}>
@@ -438,12 +440,33 @@ export function Dealership({
                       Buy for {c.price} Clout
                     </button>
                   )}
+                  {!mine && BLENDER_CARS.has(c.id) && (
+                    <button type="button" onClick={() => onDrive(on ? null : c.id)} className="min-h-11 rounded-full bg-[#2b5fd9] px-3 py-2.5 text-sm font-black text-white">{on ? "Return it" : "Test drive"}</button>
+                  )}
                 </div>
               </li>
             );
           })}
         </ul>
         {error && <p className="px-5 pb-4 text-sm font-bold text-[#c8322d]">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** Paint shop: pick a body colour for a car (saved in this browser, seen by others in the room). */
+function PaintPicker({ car }: { car: string }) {
+  const [current, setCurrent] = useState<string | null>(null);
+  useEffect(() => { loadCarPaint(); setCurrent(CAR_PAINT.colours[car] ?? null); }, [car]);
+  return (
+    <div className="mt-2">
+      <p className="text-[11px] font-black tracking-wide uppercase text-[#13203a]/60">Paint</p>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        <button type="button" aria-label="Factory paint" onClick={() => { setCarPaint(car, null); setCurrent(null); }} className={`size-6 rounded-full border-2 bg-[conic-gradient(#ccc_0_25%,#fff_0_50%,#ccc_0_75%,#fff_0)] ${current === null ? "border-[#13203a]" : "border-white"}`} />
+        {CAR_PAINTS.map((p) => (
+          <button key={p.hex} type="button" title={p.name} aria-label={p.name} onClick={() => { setCarPaint(car, p.hex); setCurrent(p.hex); }}
+            className={`size-6 rounded-full border-2 shadow-sm ${current === p.hex ? "border-[#13203a] ring-2 ring-[#ffd166]" : "border-white"}`} style={{ background: p.hex }} />
+        ))}
       </div>
     </div>
   );

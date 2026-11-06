@@ -15,7 +15,7 @@ async function load(url){const raw=fs.readFileSync(`public${url}`);return new Pr
 
 test("garage and ambient cars use supplied models, with dedicated emergency vehicle assets",()=>{
   for(const id of [...CARS.map(c=>c.id),"hatchback","sports","taxi","police","ambulance","delivery","unknown-car"]){
-    const asset=core.realisticCarAsset(id);assert.match(asset,/^\/world3d\/(cars-realistic|emergency)\//);assert.ok(fs.existsSync(`public${asset}`),id);
+    const asset=core.realisticCarAsset(id);assert.match(asset,/^\/world3d\/(cars-realistic|cars-blender|emergency)\//);assert.ok(fs.existsSync(`public${asset}`),id);
   }
   assert.equal(core.realisticCarModel("van"),"NormalCar2");
   assert.equal(core.realisticCarModel("cab"),"Taxi");

@@ -80,7 +80,8 @@ export function nudgePedestrianFromTraffic(
   return { x, y, collided };
 }
 
-const ROAD = new Set(["=", ":"]);
+/** Roads, plus car-park aisles and empty bays (see car-parks.ts). */
+const ROAD = new Set(["=", ":", "P", "U"]);
 const PAVEMENT = new Set(["-", "_"]);
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 const approach = (value: number, target: number, amount: number) => value < target ? Math.min(target, value + amount) : Math.max(target, value - amount);
