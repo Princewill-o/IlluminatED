@@ -20,7 +20,7 @@ test("the furnished starter house has a clear entrance and usable furnishings", 
 
 test("all furnishings have an activity, finite duration and a valid need effect", () => {
   assert.equal(H.HOMES.length, 5);
-  assert.equal(H.FURNITURE.length, 36);
+  assert.equal(H.FURNITURE.length, 50);
   for (const f of H.FURNITURE) {
     const use = H.homeUse(f.id);
     assert.ok(use.duration >= 4000 && use.duration <= 8000);

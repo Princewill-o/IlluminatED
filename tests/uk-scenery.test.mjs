@@ -9,7 +9,7 @@ import {projectData} from '../scripts/lib/project-data.mjs';
 function sceneryModule(){
   const exports={};
   const js=ts.transpileModule(fs.readFileSync('src/components/game/world/uk-scenery.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-  vm.runInNewContext(js,{exports,require:name=>{if(name==='three')return THREE;throw new Error(name);}});
+  vm.runInNewContext(js,{exports,require:name=>{if(name==='three')return THREE;if(name==='./university3d')return {universityLandmark(){}};throw new Error(name);}});
   return exports;
 }
 const uk=projectData('src/game/core/uk-world.ts');

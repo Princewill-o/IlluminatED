@@ -57,6 +57,7 @@ function mountCommute() {
       if (name === "react") return react;
       if (name === "react/jsx-runtime") return { jsx, jsxs: jsx };
       if (name === "lucide-react" || name === "./transport") return {};
+      if (name === "./use-bank-questions") return { recordPick() {} };
       if (name === "@/lib/utils")
         return { cn: (...v) => v.filter(Boolean).join(" ") };
       if (name === "@/game/core/rng")

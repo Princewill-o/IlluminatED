@@ -711,11 +711,6 @@ export function londonMap(): WorldMap {
   const dealer = shops[1];
   // Shops are walk-in: go inside to the checkout (venues.ts).
   if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
-  // The other games are places you walk to: a racing circuit, the league arena and the What If cinema.
-  if (shops[4]) portals.push({ id: "maths-racing", rect: px(shops[4].x + 1, shops[4].y + shops[4].h, 2, 1), label: "Maths Racing Circuit: race on your answers", to: { kind: "link", href: "/games/racing" } });
-  if (shops[5]) portals.push({ id: "championship-arena", rect: px(shops[5].x + 1, shops[5].y + shops[5].h, 2, 1), label: "Championship Arena: this week's league", to: { kind: "link", href: "/games/championship" } });
-  if (shops[7]) portals.push({ id: "coach-stop", rect: px(shops[7].x + 1, shops[7].y + shops[7].h, 2, 1), label: "University coach: visit any university in the UK", to: { kind: "link", href: "/coach" } });
-  if (shops[6]) portals.push({ id: "what-if-cinema", rect: px(shops[6].x + 1, shops[6].y + shops[6].h, 2, 1), label: "What If? Cinema: live a whole life", to: { kind: "link", href: "/games/what-if" } });
   if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
@@ -738,6 +733,19 @@ export function londonMap(): WorldMap {
     {id:"study-club",rect:px(105,70,2,1),label:"Study Quarter: study room and awards",to:{kind:"map",mapId:"study-lobby",label:"Study Quarter"}},
     {id:"reading-garden",rect:px(87,80,2,2),label:"Reading garden: restore Focus",to:{kind:"act",activity:"study"}},
   );
+  // The other games are places you walk to: a racing circuit, the league arena, the What If cinema and the
+  // university coach stop. Each takes a free shop front: one with no other door within three tiles.
+  const freeFronts = shops.filter((b) => !portals.some((p) => Math.abs(p.rect.x / TILE - (b.x + 1)) < 3 && Math.abs(p.rect.y / TILE - (b.y + b.h)) < 3));
+  const places: [string, string, string][] = [
+    ["maths-racing", "Maths Racing Circuit: race on your answers", "/games/racing"],
+    ["championship-arena", "Championship Arena: this week's league", "/games/championship"],
+    ["what-if-cinema", "What If? Cinema: live a whole life", "/games/what-if"],
+    ["coach-stop", "University coach: visit any university in the UK", "/coach"],
+  ];
+  places.forEach(([id, label, href], i) => {
+    const b = freeFronts[i * 2 + 1] ?? freeFronts[i];
+    if (b) portals.push({ id, rect: px(b.x + 1, b.y + b.h, 2, 1), label, to: { kind: "link", href } });
+  });
   const rows = L.tiles.map((r) => r.split(""));
   // Doors are always walkable (bus stops are walked up to, not into).
   for (const p of portals.filter((q) => q.to.kind !== "bus"))

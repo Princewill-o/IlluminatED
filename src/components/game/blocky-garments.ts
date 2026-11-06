@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 import { BLOCKY_BASE } from "@/game/core/adventurers";
-import { blockyOutfitAsset, wearSlotFor, type Wardrobe, type WearSlot } from "@/game/core/blocky-outfits";
+import { blockyOutfitAsset, wearSlotFor, type BlockyOutfit, type Wardrobe, type WearSlot } from "@/game/core/blocky-outfits";
 import { cosmeticById, type Avatar } from "@/game/core/cosmetics";
 
 const findBone=(object:THREE.Object3D,name:string)=>object.getObjectByName(`mixamorig${name}`)??object.getObjectByName(`mixamorig:${name}`);
@@ -21,10 +21,12 @@ export function clothedBodyGeometry(mesh:THREE.SkinnedMesh):THREE.BufferGeometry
 }
 /** Blender nodes retain source rest transforms; convert each piece into its supplied bone's local frame. */
 export async function attachBlockyOutfit(
-  object:THREE.Group,wardrobe:Wardrobe,avatar:Avatar,
+  object:THREE.Group,pieces:Wardrobe|BlockyOutfit,avatar:Avatar,
   load:(url:string)=>Promise<GLTF>,
   materials:Set<THREE.Material>,
 ) {
+  // A single outfit set still works: every slot comes from that set.
+  const wardrobe:Wardrobe='file' in pieces?{top:pieces,bottom:pieces,shoes:pieces}:pieces;
   // Mix and match: each slot can come from a different outfit set (one download per distinct set).
   const sets=[...new Set([wardrobe.top.id,wardrobe.bottom.id,wardrobe.shoes.id])];
   const [reference,...files]=await Promise.all([load(`${BLOCKY_BASE}/blocky_01_hero.glb`),...sets.map(id=>load(blockyOutfitAsset(id)!))]);

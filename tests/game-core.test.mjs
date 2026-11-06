@@ -389,7 +389,7 @@ test("Careers and homes: database seeds match the game code", () => {
   const C = projectData("src/game/core/careers.ts");
   const H = projectData("src/game/core/homes.ts");
   const sql = fs.readFileSync("supabase/migrations/20261016100000_careers_and_homes.sql", "utf8");
-  const latest = sql + "\n" + fs.readFileSync("supabase/migrations/20261018090959_home_living_and_furnishings.sql", "utf8");
+  const latest = sql + "\n" + ["20261018090959_home_living_and_furnishings.sql", "20261105130000_home_room_designs.sql"].map((f) => fs.readFileSync(`supabase/migrations/${f}`, "utf8")).join("\n");
   for (const w of C.WORKPLACES) for (const r of w.roles) assert.ok(sql.includes(`('${w.id}', '${r.id}', ${r.rank}, ${r.pay})`), `${w.id}/${r.id} seeded`);
   const homes = new Map([...latest.matchAll(/\('([^']+)',\s*(\d+)\)/g)].map(m=>[m[1],Number(m[2])]));
   const furnishings = new Map([...latest.matchAll(/\('([^']+)',\s*(\d+),\s*(\d+),\s*(\d+),\s*(true|false)\)/g)].map(m=>[m[1],[Number(m[2]),Number(m[3]),Number(m[4]),m[5]==="true"]]));
