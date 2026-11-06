@@ -562,7 +562,7 @@ export function LearningDashboard({
         className="group relative mt-10 block overflow-hidden rounded-3xl bg-[#13203a] text-white"
       >
         <Image
-          src="/landing/game-city-life.webp"
+          src="/landing/world-square.webp"
           alt=""
           fill
           sizes="(max-width: 768px) 100vw, 1100px"

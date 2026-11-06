@@ -25,14 +25,14 @@ const TABS = [
     label: "Careers",
     title: "Use what you learn at work.",
     text: "Step into simulated workplaces and tackle practical numeracy, reading and problem-solving tasks. Records describe practice, not real employment.",
-    media: { kind: "image", src: "/landing/game-city-life.webp", alt: "Working a shift at Pizzazz in the game" },
+    media: { kind: "image", src: "/landing/world-street.webp", alt: "Shops and workplaces on a London high street in the game" },
   },
   {
     id: "schools",
     label: "Schools",
     title: "Homework that students actually open.",
     text: "Teachers set homework from the question bank and review their own classes' results. Seat pricing and pilot scope are agreed in writing before purchase.",
-    media: { kind: "image", src: "/landing/game-study-october.jpg", alt: "The Study Quarter in the game" },
+    media: { kind: "image", src: "/landing/world-study.webp", alt: "The study hall in the game" },
   },
 ] as const;
 

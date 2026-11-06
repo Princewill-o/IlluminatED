@@ -36,8 +36,8 @@ export function GameplayShowcase({ accent, soft, display, card }: { accent: stri
         <div className="mx-auto mt-10 max-w-5xl overflow-hidden rounded-3xl border-4 border-[#1d1a4a] bg-[#13203a] shadow-[10px_10px_0_#1d1a4a] dark:border-white/85 dark:shadow-[10px_10px_0_rgba(179,175,255,0.45)]">
           <video
             className="pointer-events-none block aspect-video w-full select-none"
-            src="/landing/gameplay-crowd.mp4"
-            poster="/landing/gameplay-crowd-poster.jpg"
+            src="/landing/menu-gameplay.mp4"
+            poster="/landing/menu-gameplay-poster.jpg"
             autoPlay
             muted
             loop
@@ -67,7 +67,7 @@ export function GameplayShowcase({ accent, soft, display, card }: { accent: stri
             action="none"
             width={300}
             files={[
-              { name: "Practice quizzes", meta: "4,400+", image: "/landing/game-study-october.jpg", href: "/practice" },
+              { name: "Practice quizzes", meta: "4,400+", image: "/landing/world-study.webp", href: "/practice" },
               { name: "Flashcards", meta: "Key terms", href: "/flashcards" },
               { name: "Revision guides", meta: "By subject", href: "/revision" },
             ]}
@@ -83,7 +83,7 @@ export function GameplayShowcase({ accent, soft, display, card }: { accent: stri
             width={300}
             appearDelay={140}
             files={[
-              { name: "Work a shift", meta: "In the game", image: "/landing/game-city-life.webp", href: "/games" },
+              { name: "Work a shift", meta: "In the game", image: "/landing/world-cafe.webp", href: "/games" },
               { name: "Career paths", meta: "Explore", href: "/careers" },
               { name: "Library", meta: "Resources", href: "/library" },
             ]}
@@ -98,7 +98,7 @@ export function GameplayShowcase({ accent, soft, display, card }: { accent: stri
             width={300}
             appearDelay={280}
             files={[
-              { name: "Your quests", meta: "Due soon", image: "/landing/game-hub.webp", href: "/homework" },
+              { name: "Your quests", meta: "Due soon", image: "/landing/world-square.webp", href: "/homework" },
               { name: "Quizzes", meta: "Marked instantly", href: "/quizzes" },
             ]}
           />
