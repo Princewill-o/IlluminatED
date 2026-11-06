@@ -18,7 +18,7 @@ import { addCarParks3D } from "./car-parks3d";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
-import { type Door, type DoorSpot, doorSpot, makeDoor } from "./door3d";
+import { type Door, type DoorSpot, doorSpot, makeDoor, tubeEntrance } from "./door3d";
 import { driftingLeaves } from "./drifting-leaves";
 import { createEmergencyVehicle } from "./emergency-vehicle3d";
 import { weatherLighting } from "./environment-palette";
@@ -2638,6 +2638,13 @@ export function World3D({
       // Building entrances get a real door (opens as you approach); open-ground spots keep a soft light pool.
       const spot = doorBuildings.length && (p.to.kind === "map" || p.to.kind === "game" || p.to.kind === "link") ? doorSpot(map, p, doorBuildings) : null;
       if (spot) { doorSpots.push(spot); continue; }
+      // Tube entrances are stairwells going down, not rings.
+      if (p.id.startsWith("tube-") && !indoors) {
+        const stair = tubeEntrance(p.label.replace(/ ?(station|underground|tube).*$/i, "").slice(0, 18) || "Underground", (p.rect.x + p.rect.w / 2) / TILE, (p.rect.y + p.rect.h / 2) / TILE, bend, sign);
+        stair.traverse((o) => { const mesh = o as THREE.Mesh; if (mesh.isMesh) { mesh.castShadow = false; mesh.receiveShadow = true; } });
+        world.add(stair);
+        continue;
+      }
       const r = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.42, 28), ringMat);
       r.rotation.x = -Math.PI / 2;
       r.position.set((p.rect.x + p.rect.w / 2) / TILE, 0.2, (p.rect.y + p.rect.h / 2) / TILE);

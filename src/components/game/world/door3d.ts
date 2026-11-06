@@ -106,3 +106,56 @@ export function makeDoor(spot: DoorSpot, accent: string, style: (m: THREE.Materi
     },
   };
 }
+
+/**
+ * A tube entrance: steps going down into a lit stairwell, parapet walls with railings on three
+ * sides, and a station roundel on a post. The ground can't be cut, so depth is suggested by
+ * steps that drop and darken toward the bottom, with warm light coming up from below.
+ */
+export function tubeEntrance(name: string, x: number, z: number, style: (m: THREE.Material) => void, sign: (text: string, o: { bg: string; fg: string; w: number; h: number }) => THREE.Object3D) {
+  const root = new THREE.Group();
+  root.position.set(x, 0, z);
+  const W = 1.7, L = 2.4;
+  const mats: THREE.Material[] = [];
+  const m = (colour: string, extra: Partial<THREE.MeshStandardMaterialParameters> = {}) => {
+    const mat = new THREE.MeshStandardMaterial({ color: colour, roughness: 0.8, flatShading: true, ...extra });
+    style(mat); mats.push(mat); return mat;
+  };
+  const add = (w: number, h: number, d: number, mat: THREE.Material, px: number, py: number, pz: number) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    mesh.position.set(px, py, pz);
+    root.add(mesh);
+    return mesh;
+  };
+  // Steps: eight treads, each a little lower and darker, leading down and away (toward -z).
+  for (let i = 0; i < 8; i++) {
+    const shade = new THREE.Color("#b9b2a4").lerp(new THREE.Color("#141821"), i / 7.5);
+    add(W, 0.04, L / 8, m(`#${shade.getHexString()}`), 0, 0.15 - i * 0.012, L / 2 - (i + 0.5) * (L / 8));
+    add(W, 0.02, 0.05, m("#f2c94c"), 0, 0.17 - i * 0.012, L / 2 - i * (L / 8)); // yellow step edges
+  }
+  // Glow from the bottom of the stairs.
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.9, 0.8), new THREE.MeshBasicMaterial({ color: "#ffd38a", transparent: true, opacity: 0.45, depthWrite: false }));
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.set(0, 0.18, -L / 2 + 0.4);
+  style(glow.material);
+  root.add(glow);
+  // Parapet walls with railings on the two sides and the back.
+  const wall = m("#d9d2c3"), rail = m("#2b3442", { metalness: 0.4 });
+  for (const side of [-1, 1]) {
+    add(0.14, 0.55, L, wall, side * (W / 2 + 0.07), 0.4, 0);
+    add(0.06, 0.06, L, rail, side * (W / 2 + 0.07), 0.95, 0);
+    for (let k = 0; k <= 4; k++) add(0.04, 0.3, 0.04, rail, side * (W / 2 + 0.07), 0.8, -L / 2 + (k * L) / 4);
+  }
+  add(W + 0.28, 0.55, 0.14, wall, 0, 0.4, -L / 2 - 0.07);
+  add(W + 0.28, 0.06, 0.06, rail, 0, 0.95, -L / 2 - 0.07);
+  // Station roundel on a post at the open end.
+  const post = add(0.08, 2.3, 0.08, m("#2b3442"), W / 2 + 0.35, 1.15, L / 2);
+  void post;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.08, 8, 24), m("#d8262a"));
+  ring.position.set(W / 2 + 0.35, 2.35, L / 2 + 0.06);
+  root.add(ring);
+  const bar = sign(name.toUpperCase(), { bg: "#1f3f8a", fg: "#ffffff", w: 1.1, h: 0.2 });
+  bar.position.set(W / 2 + 0.35, 2.35, L / 2 + 0.12);
+  root.add(bar);
+  return root;
+}
