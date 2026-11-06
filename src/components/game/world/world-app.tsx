@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Briefcase, CarFront, PawPrint, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { AUTOPILOT, CREW, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
@@ -19,6 +19,7 @@ import { CivilianConversation } from "./civilian-conversation";
 import { CoachTrip } from "./coach-trip";
 import { CourtTrial } from "./court-trial";
 import { CrashImpact } from "./crash-impact";
+import { CrewInvites } from "./crew";
 import { BookingIn, HoldingCellHud } from "./custody";
 import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
@@ -32,6 +33,7 @@ import { JobsPanel } from "./jobs-panel";
 import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
+import { LiftPanel } from "./lift-panel";
 import { LivePolicePickup } from "./live-police-pickup";
 import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
@@ -86,7 +88,7 @@ import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
-import { type PracticalRole } from "@/game/core/roles";
+import { type PracticalRole, ROLES } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
 import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -297,6 +299,7 @@ export function WorldApp({
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [petsOpen,setPetsOpen]=useState(false);
+  const [lift,setLift]=useState<{mapId:string;label:string;current:boolean}[]|null>(null);
   // Your pet comes out with you as soon as the world loads.
   useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
@@ -830,7 +833,8 @@ export function WorldApp({
         else if (to.href === "/games/championship") setEventGame("championship");
         else if (to.href === "/games/what-if") setEventGame("what-if");
         else router.push(to.href);
-      } else if (to.kind === "bus") setBus(to.stop);
+      } else if (to.kind === "lift") setLift(to.floors);
+      else if (to.kind === "bus") setBus(to.stop);
       else if (to.kind === "act") {
         play("door", soundOn());
         doActivity(to.activity);
@@ -1427,11 +1431,13 @@ export function WorldApp({
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
       <RewardToasts/>
+      <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) { setDailyJob(null); setRoleShift({ role, level: 1 }); } }} />
+      {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => { setLift(null); void goTo(f.mapId, f.label, { x: 13 * TILE, y: 3.6 * TILE }); }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
       {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
-      {roleShift && <RoleShift key={`${roleShift.role.id}-${mapId}`} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); }}/>}
+      {roleShift && <RoleShift key={`${roleShift.role.id}-${mapId}`} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); CREW.id = null; CREW.role = null; }}/>}
       {rescueCause && <CrashImpact key={rescueCause.key} kind={rescueCause.kind}/>}
       {patrol && outdoors && <PolicePatrol map={map} onTarget={setWaypoint} onEnd={() => { setPatrol(false); setWaypoint(null); }} say={say}/>}
       {panic && <PanicFloor companyId={panic} map={map} onExit={() => setPanic(null)}/>}

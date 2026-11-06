@@ -427,6 +427,43 @@ export async function finishRoleJob(claim: string, steps: number, accuracy: numb
   return { ok: true as const, ...r };
 }
 
+// ── Co-op crews: a team bonus for doing a role's jobs together ─────────────
+export type CrewStatus = { crew: string; role: string; paid: boolean; members: number; jobs: number; target: number; mine: number; bonus: number; open: boolean };
+const CREW_ERRORS: Record<string, string> = {
+  crew_closed: "That crew has finished or packed up.",
+  crew_full: "That crew is full: four is the limit.",
+  plus_required: ROLE_ERRORS.plus_required,
+  not_allowed: ROLE_ERRORS.not_allowed,
+  rate_limited: "You've started a lot of crews. Try again in a few minutes.",
+};
+const crewError = (m?: string) => CREW_ERRORS[Object.keys(CREW_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
+const isId = (v: unknown): v is string => typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v);
+async function crewCall(fn: string, args: Record<string, unknown>) {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: crewError() };
+  const { data, error } = await sb.rpc(fn, args);
+  if (error) return { ok: false as const, error: crewError(error.message) };
+  return { ok: true as const, status: data as CrewStatus };
+}
+export async function createCrew(role: string) {
+  if (!roleById(role)) return { ok: false as const, error: ROLE_ERRORS.unknown_role };
+  return crewCall("coop_create", { p_role: role });
+}
+export async function joinCrew(crew: string) {
+  if (!isId(crew)) return { ok: false as const, error: crewError("crew_closed") };
+  return crewCall("coop_join", { p_crew: crew });
+}
+export async function creditCrew(crew: string, claim: string) {
+  if (!isId(crew) || !isId(claim)) return { ok: false as const, error: crewError() };
+  const r = await crewCall("coop_credit", { p_crew: crew, p_claim: claim });
+  if (r.ok && r.status.paid) revalidatePath("/games/world");
+  return r;
+}
+export async function crewStatus(crew: string) {
+  if (!isId(crew)) return { ok: false as const, error: crewError() };
+  return crewCall("coop_get", { p_crew: crew });
+}
+
 // ── Pets (src/game/core/pets.ts) ────────────────────────────────────────────
 const PET_ERRORS: Record<string, string> = {
   not_allowed: "Log in with your IlluminatED account to adopt a pet.",

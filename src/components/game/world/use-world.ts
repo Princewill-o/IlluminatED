@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { CAR_PAINT, LAW_STATUS, PET, RESCUES } from "./art";
+import { CAR_PAINT, CREW, CREW_INVITES, LAW_STATUS, PET, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -83,6 +83,7 @@ export interface RemotePlayer {
 }
 
 interface Meta {
+  crew?: string | null;
   car?: string | null;
   pet?: string | null;
   heading?: number;
@@ -192,6 +193,7 @@ export function useWorld({
         car: pos.current.car,
         heading: pos.current.heading,
         pet: PET.tag,
+        crew: CREW.id && CREW.role ? `${CREW.id}:${CREW.role}` : null,
       });
       const scheduleSync = () => {
         if (syncQueued || cancelled()) return;
@@ -266,6 +268,9 @@ export function useWorld({
             pet: parsePetTag(m.pet) ? m.pet as string : null,
             heading: Number.isFinite(m.heading) ? m.heading : 0,
           };
+          const crew = typeof m.crew === "string" ? /^([0-9a-f-]{36}):([a-z-]{2,30})$/i.exec(m.crew) : null;
+          if (crew) CREW_INVITES.set(id, { name: who.username, crew: crew[1], role: crew[2], x: m.x, y: m.y });
+          else CREW_INVITES.delete(id);
           if (!p)
             map.set(id, {
               ...identity,
@@ -288,6 +293,7 @@ export function useWorld({
           }
         }
         for (const id of map.keys()) if (!seen.has(id)) map.delete(id);
+        for (const id of CREW_INVITES.keys()) if (!seen.has(id)) CREW_INVITES.delete(id);
         for (const pass of checked.keys())
           if (!activePasses.has(pass)) checked.delete(pass);
         bump();
@@ -358,6 +364,7 @@ export function useWorld({
           bump();
         }
       });
+      let trackedCrew: string | null = null;
       const track = async () => {
         if (cancelled()) return;
         const wait = PRESENCE_INTERVAL_MS - (Date.now() - lastTrack);
@@ -375,6 +382,7 @@ export function useWorld({
           return;
         }
         trackedPosition = { x: pos.current.x, y: pos.current.y };
+        trackedCrew = CREW.id;
         setPing(Math.round(performance.now() - t0));
         setStatus(navigator.onLine ? "live" : "offline");
       };
@@ -401,10 +409,10 @@ export function useWorld({
         }
         if (
           channel.state === "joined" &&
-          Math.hypot(
+          (Math.hypot(
             pos.current.x - trackedPosition.x,
             pos.current.y - trackedPosition.y,
-          ) > 8
+          ) > 8 || trackedCrew !== CREW.id)
         )
           void track();
       }, PRESENCE_INTERVAL_MS);

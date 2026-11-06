@@ -7,6 +7,7 @@ import { Bot, Building2, Crown, Dice5, Grid3x3, Hash, Swords, Trophy, Users, Wif
 
 import { EventAdStrip, useTechEvents } from "../event-ads";
 import { GameCover } from "./game-covers";
+import { GAME_ROLES, GameRoleJob } from "./game-role-job";
 import { GamesHall } from "../world/games-hall";
 
 
@@ -135,11 +136,12 @@ const ARCADE: { id: "racing" | "championship" | "what-if"; name: string; blurb: 
   { id: "championship", name: "Championship", blurb: "Weekly tournament. Climb the table, win the trophy.", players: "Everyone" },
   { id: "what-if", name: "What If?", blurb: "Big choices, branching stories. See where your decisions lead.", players: "1" },
 ];
-const CATEGORY: Record<string, "Board" | "Live" | "Arcade"> = { tycoon: "Board", c4: "Board", draughts: "Board", ttt: "Board", quiz: "Live", racing: "Arcade", championship: "Live", "what-if": "Arcade" };
+const CATEGORY: Record<string, "Board" | "Live" | "Arcade"> = { tycoon: "Board", c4: "Board", draughts: "Board", ttt: "Board", quiz: "Live", racing: "Arcade", championship: "Live", "what-if": "Arcade", panic: "Live" };
 
 export function GamesHub({ me, serverId, onClose, initialGame = null, onIsland, onPlay }: { me: Me; serverId?: string | null; onClose?: () => void; /** Open straight into one game (Games Island pavilions). */ initialGame?: string | null; /** Take the ferry to Games Island. */ onIsland?: () => void; /** Start an arcade game that runs in the world. */ onPlay?: (id: string) => void }) {
   const [game, setGame] = useState<GameId | null>(() => (GAMES.some((g) => g.id === initialGame) ? initialGame as GameId : null));
   const [category, setCategory] = useState<"All" | "Board" | "Live" | "Arcade">("All");
+  const [roleJob, setRoleJob] = useState<(typeof GAME_ROLES)[number] | null>(null);
   const [mode, setMode] = useState<Mode>("cpu");
   const [room, setRoom] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
@@ -216,8 +218,21 @@ export function GamesHub({ me, serverId, onClose, initialGame = null, onIsland, 
                 </li>
               ))}
           </ul>
+          <h3 className="mt-8 text-lg font-black">Work at the games</h3>
+          <p className="text-xs text-[#13203a]/70">Every game needs a crew. Do a real job behind the scenes and earn Clout and career XP.</p>
+          <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {GAME_ROLES.filter((r) => category === "All" || CATEGORY[r.game] === category).map((r) => (
+              <li key={`${r.game}-${r.role}`}>
+                <button type="button" onClick={() => setRoleJob(r)} className="flex w-full items-center gap-3 rounded-2xl border-[3px] border-[#141020] bg-white p-2 text-left shadow-[0_4px_0_#141020] transition hover:-translate-y-0.5">
+                  <GameCover id={r.game} className="h-14 w-20 shrink-0 rounded-xl" />
+                  <span className="min-w-0"><span className="block text-sm font-black">{r.title}</span><span className="block text-[11px] text-[#13203a]/70">{r.blurb}</span></span>
+                </button>
+              </li>
+            ))}
+          </ul>
         </>
       )}
+      {roleJob && <GameRoleJob entry={roleJob} onClose={() => setRoleJob(null)} />}
 
       {!game && <EventAdStrip events={events} />}
 

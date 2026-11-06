@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Coins, Sparkles } from "lucide-react";
 
-import { PLAYER, PLAYER_WORK } from "./art";
+import { CREW, PLAYER, PLAYER_WORK } from "./art";
 import type { Place } from "./city-map";
+import { CrewBar } from "./crew";
 
-import { finishRoleJob, startRoleJob } from "@/app/games/world/actions";
+import { creditCrew, finishRoleJob, startRoleJob } from "@/app/games/world/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { TaskCard } from "@/components/careers/task-card";
 import { WorkInterface } from "@/components/careers/work-interface";
@@ -121,6 +122,17 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
     setReward({ pay: r.pay, xp: r.xp, level: newLevel, levelUp: newLevel > level, tierUp, practice: false, note: r.capped ? "Daily Clout cap reached: XP still counts." : undefined });
     setShiftPay((n) => n + r.pay);
     if (r.pay) onPaid(r.pay);
+    // Count the paid job towards your crew; the server pays the team bonus when the target is met.
+    if (CREW.id && CREW.role === role.id) {
+      const c = await creditCrew(CREW.id, claim).catch(() => null);
+      if (c?.ok) {
+        window.dispatchEvent(new CustomEvent("illumed:crew", { detail: c.status }));
+        if (c.status.paid && c.status.bonus) {
+          onPaid(c.status.bonus);
+          window.dispatchEvent(new CustomEvent("illumed:reward", { detail: { clout: c.status.bonus, label: "Team bonus", xp: 15, role: role.title } }));
+        }
+      }
+    }
     notifyPlayerChanged();
     window.dispatchEvent(new CustomEvent("illumed:reward", { detail: { clout: r.pay, label: role.done, xp: r.xp, role: role.title } }));
     setLevel(newLevel);
@@ -210,6 +222,7 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
             </div>
           )}
           {phase !== "done" && <button type="button" onClick={onEnd} className="mt-2 text-xs text-white/60 underline">End shift</button>}
+          {!practice && <CrewBar role={role.id} colour={role.colour} />}
         </div>
       </aside>
       {phase === "task" && realTask && (

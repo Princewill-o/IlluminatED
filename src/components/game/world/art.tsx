@@ -360,6 +360,10 @@ export const LAW_STATUS = new Map<string, { stars: number; police: boolean; at: 
 export const PATROL = { active: false, suspect: null as null | { id: number; x: number; y: number; name: string; fleeing: boolean; cuffed: boolean; gone: boolean } };
 /** Your pet out with you: its tag ("dog:#c8955c:bow") for the 3D world and the room, and a care animation. */
 export const PET: { tag: string | null; action: "feed" | "water" | "wash" | "sleep" | "play" | null; actionAt: number } = { tag: null, action: null, actionAt: 0 };
+/** Your co-op crew for a practical role: shown to the room so nearby players can join. */
+export const CREW: { id: string | null; role: string | null } = { id: null, role: null };
+/** Crews other players nearby are running, by player id. */
+export const CREW_INVITES = new Map<string, { name: string; crew: string; role: string; x: number; y: number }>();
 /** Paint colour per car the player owns (hex), saved in this browser and shown to the room. */
 export const CAR_PAINT: { colours: Record<string, string>; version: number } = { colours: {}, version: 0 };
 const PAINT_KEY = "illuminated:car-paint";

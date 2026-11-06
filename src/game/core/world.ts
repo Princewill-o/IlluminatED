@@ -33,6 +33,7 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "lift"; floors: { mapId: string; label: string; current: boolean }[] }
   | { kind: "venture"; staff?: string }
   | { kind: "study-room" }
   | { kind: "home-use"; key: string }
@@ -234,6 +235,9 @@ export function hotelMap(id: string): WorldMap | null {
   if (floor < 2) portals.push({id:"stairs-up",rect:px(15,4,2,1),label:`Take stairs to floor ${floor+1}`,to:{kind:"map",mapId:`${base}-floor-${floor+1}`,label:`${hotel.label} · Floor ${floor+1}`}});
   if (floor > 0) portals.push({id:"stairs-down",rect:px(15,7,2,1),label:floor===1?"Stairs to lobby":"Stairs to floor 1",to:{kind:"map",mapId:floor===1?base:`${base}-floor-1`,label:floor===1?"Hotel lobby":"First floor"}});
   if (floor === 0) portals.push({id:"exit",rect:px(9,14,2,1),label:"Leave hotel",to:{kind:"map",mapId:"city",label:"London"}});
+  // The lift: press a floor button and ride up or down.
+  g.fill(12, 1, 2, 1, "#");
+  portals.push({ id: "lift", rect: px(12, 2, 2, 1), label: "Lift: choose a floor", to: { kind: "lift", floors: [0, 1, 2].map((f) => ({ mapId: f ? `${base}-floor-${f}` : base, label: f ? `Floor ${f}` : "Lobby", current: f === floor })) } });
   return finish({id,kind:"office",name:`${hotel.label} · ${floor === 0 ? "Lobby" : `Floor ${floor}`}`,structures:[],rooms:[],portals,spawn:centre(10,13),accent:hotel.accent ?? "#315b50",sign:{x:10,y:8,text:floor===0?"Reception · lounge · upstairs":floor===1?"Guest lounge · reading room":"Sky lounge · quiet workspace"}},g);
 }
 

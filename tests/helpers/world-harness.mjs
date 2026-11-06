@@ -180,7 +180,7 @@ export function worldHarness({
         return projectData("src/game/core/careers.ts");
       if (name.includes("cars")) return projectData("src/game/core/cars.ts");
       if (name.includes("core/pets")) return projectData("src/game/core/pets.ts");
-      if (name === "./art") return { RESCUES: new Map(), LAW_STATUS: new Map(), CAR_PAINT: { colours: {}, version: 0 }, PET: { tag: null, action: null, actionAt: 0 } };
+      if (name === "./art") return { RESCUES: new Map(), LAW_STATUS: new Map(), CAR_PAINT: { colours: {}, version: 0 }, PET: { tag: null, action: null, actionAt: 0 }, CREW: { id: null, role: null }, CREW_INVITES: new Map() };
       if (name.includes("realtime"))
         return {
           joinGameChannel: async (_sb, ch, _id, fn, cancelled) => {
