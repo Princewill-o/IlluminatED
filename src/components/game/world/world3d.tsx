@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PANIC, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
@@ -82,7 +82,7 @@ import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, lowerTier, physicalSurface, populationBudget, visualProfile, type GraphicsTier } from "@/game/core/visual-quality";
 import { ROLE_TOP, workforceFor } from "@/game/core/workforce";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
-import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
+import { TILE, blocked, policeBuilding, type Portal, type WorldMap } from "@/game/core/world";
 
 export { NPC_SPOTS } from "./art";
 
@@ -1744,7 +1744,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   for (let y = 0; y < H; y++)
     for (let x = 0; x < Wd; x++) {
       const ch = rows[y][x];
-      if (ch === "G" && map.kind === "prison") {
+      if (ch === "G" && (map.kind === "prison" || map.id === "police-station")) {
         // Cell bars.
         for (let k = 0; k < 4; k++) {
           const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.4, 8), mat("#5d6070"));
@@ -2419,6 +2419,7 @@ export function World3D({
       updateUKScenery=regional.update;
     } else {
       const L = buildLondon();
+      const policeId = policeBuilding()?.id;
       for (const t of L.things) {
         const g = new THREE.Group();
         world.add(g);
@@ -2432,6 +2433,12 @@ export function World3D({
             if (uni) { const sg = sign(uni.fullName, { bg: uni.colour, fg: "#ffffff", w: Math.min(t.w - 0.4, 6), h: 0.45 }); sg.position.set(t.x + t.w / 2, 0.9, t.y + t.h + 0.6); g.add(sg); }
           } else
           jobs.push(building(g, t));
+          if (t.id === policeId) {
+            const ps = sign("POLICE", { bg: "#1f3f8a", fg: "#ffffff", w: Math.min(t.w - 0.6, 4), h: 0.55 });
+            ps.position.set(t.x + t.w / 2, 2.3, t.y + t.h + 0.06); g.add(ps);
+            const lamp = box(g, "#2b6fe0", t.x + t.w / 2 - 0.2, 2.75, t.y + t.h + 0.02, t.x + t.w / 2 + 0.2, 3.05, t.y + t.h + 0.25);
+            lamp.material = (lamp.material as THREE.MeshStandardMaterial).clone(); (lamp.material as THREE.MeshStandardMaterial).emissive?.set("#2b6fe0");
+          }
           if (!t.companyId && !t.id.startsWith("hotel-") && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
             artFrontage(g, t.x, t.y + t.h + 0.1, t.w, Math.floor((t.x + t.y) / 3) % 3);
           }
@@ -2687,7 +2694,7 @@ export function World3D({
     // People who work here: the judge in court, guards in prison, a doctor at the hospital.
     const staff: [Avatar, number, number, number][] =
       map.kind === "court"
-        ? [[look({ top: "top-suit", topColor: "topcol-black", hair: "hair-short", hairColor: "haircol-silver", skin: "skin-3" }), 11, 1.9, 0]]
+        ? []
         : map.kind === "prison"
           ? [
               [look({ top: "top-suit", topColor: "topcol-navy", bottom: "bottom-smart", bottomColor: "botcol-navy", hat: "hat-cap", hair: "hair-buzz", skin: "skin-6" }), 8, 9.4, 0.3],
@@ -3013,6 +3020,17 @@ export function World3D({
     }
     let visitorId = -1, visitorLeftAt = 0;
     let meWorking = false;
+    let suspect: Body | null = null, suspectId = -1, fleeFrom = 0;
+    // Handcuffs, shown behind the player's back while under arrest.
+    const cuffs = new THREE.Group();
+    for (const side of [-0.09, 0.09]) {
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.022, 6, 12), mat("#c9ced6"));
+      ring.position.set(side, 0.62, -0.2); ring.rotation.y = Math.PI / 2;
+      cuffs.add(ring);
+    }
+    const chain = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.02), mat("#9aa0a8"));
+    chain.position.set(0, 0.62, -0.2); cuffs.add(chain);
+    cuffs.visible = false; bendAll(cuffs); me.root.add(cuffs);
     // In-world Promotion Panic: coloured answer pads, with coworkers racing you to them.
     const panicRoot = new THREE.Group(); panicRoot.visible = false; scene.add(panicRoot);
     let panicVersion = -1;
@@ -3384,6 +3402,23 @@ export function World3D({
           vehicle.root.rotation.y = -(o.heading ?? 0);
         }
         setWalking(b, o.walking || Math.hypot(ddx, ddz) > 0.05);
+        // WANTED / POLICE tags over other players, from the room's law broadcasts.
+        const law = LAW_STATUS.get(o.id);
+        const lawKey = law ? (law.stars >= 3 ? `w${law.stars}` : law.police ? "p" : "") : "";
+        if (b.root.userData.lawKey !== lawKey) {
+          const old = b.root.userData.lawTag as THREE.Object3D | undefined;
+          if (old) b.root.remove(old);
+          b.root.userData.lawKey = lawKey;
+          b.root.userData.lawTag = undefined;
+          if (lawKey) {
+            const tag = sign(lawKey === "p" ? "POLICE" : `WANTED ${"★".repeat(law!.stars)}`, { bg: lawKey === "p" ? "#1f3f8a" : "#c8322d", fg: "#ffffff", w: 1.7, h: 0.32 });
+            tag.position.set(0, 2.5, 0);
+            b.root.add(tag);
+            b.root.userData.lawTag = tag;
+          }
+        }
+        const lawTag = b.root.userData.lawTag as THREE.Object3D | undefined;
+        if (lawTag) lawTag.rotation.y = -b.root.rotation.y;
       }
       for (const [id, b] of others)
         if (!seen.has(id)) {
@@ -3496,6 +3531,36 @@ export function World3D({
         if (d > 0.08) { const step = Math.min(d, dt * 3.6); p.x += dx / d * step; p.z += dz / d * step; b.body.root.rotation.y = Math.atan2(dx, dz); }
         setWalking(b.body, d > 0.08 && !reduce);
       }
+      // A patrol suspect: waits at the incident, runs from you, tires, then gets cuffed.
+      const sus = PATROL.suspect;
+      if (sus && !sus.gone && PATROL.active) {
+        if (!suspect || suspectId !== sus.id) {
+          suspect?.dispose();
+          suspect = makeBody({ ...npcLook(200 + (sus.id % 17)), top: "top-blocky-hoodie-slate", topColor: "topcol-auto", hat: "hat-none", held: "held-none" }, null, true);
+          scene.add(suspect.root);
+          suspect.root.position.set(sus.x / TILE, 0, sus.y / TILE);
+          suspectId = sus.id; fleeFrom = 0;
+        }
+        const p = suspect.root.position;
+        suspect.root.visible = true;
+        if (sus.cuffed) {
+          setWalking(suspect, false);
+          suspect.char?.play("cuffed");
+          suspect.root.rotation.y = Math.atan2(mx - p.x, mz - p.z) + Math.PI;
+        } else if (sus.fleeing) {
+          fleeFrom ||= secs;
+          const tired = secs - fleeFrom > 7;
+          const speed = (tired ? 1.7 : 3.2) * Math.min(dt, 0.1);
+          const away = Math.atan2(p.x - mx, p.z - mz);
+          for (const turn of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4]) {
+            const a = away + turn, nx = p.x + Math.sin(a) * speed, nz = p.z + Math.cos(a) * speed;
+            if (blocked(map, nx * TILE, nz * TILE)) continue;
+            p.x = nx; p.z = nz; suspect.root.rotation.y = a; break;
+          }
+          setWalking(suspect, true);
+        } else { setWalking(suspect, false); suspect.root.rotation.y = Math.atan2(mx - p.x, mz - p.z); }
+        sus.x = p.x * TILE; sus.y = p.z * TILE;
+      } else if (suspect) suspect.root.visible = false;
       for (const [id, crew] of ambulances) if (!RESCUES.has(id)) { crew.root.visible = false; crew.medics.forEach((m) => { m.root.visible = false; }); }
       for (const [id, live] of RESCUES) {
         const f = rescueFrame(performance.now() - live.startedAt);
@@ -3628,13 +3693,18 @@ export function World3D({
         NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
         body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
       });
+      cuffs.visible = PLAYER_WORK.activity === "cuffed";
       if (PLAYER_WORK.activity) { me.walking = false; me.char?.play(PLAYER_WORK.activity); meWorking = true; } else if (meWorking) { meWorking = false; me.char?.play("idle"); }
       officeWorkers.forEach(body => { body.char?.play((body.root.userData.work as string | undefined) ?? "typing"); });
       for (const w of workers) {
         const far = !indoors && Math.hypot(w.spot.x - mx, w.spot.z - mz) > 34;
         w.body.root.visible = !far; w.props.visible = !far;
         if (far) continue;
-        w.body.char?.play(w.spot.activity === "lie" ? "idle" : w.spot.activity);
+        const speaking = map.id === "court" && COURT.speaker === w.spot.id;
+        const gavel = w.spot.id === "judge" && now - COURT.gavelAt < 1400;
+        if (w.spot.activity === "walk") setWalking(w.body, !reduce);
+        else w.body.char?.play(gavel ? "hammer" : speaking ? "serve" : w.spot.activity === "lie" ? "idle" : w.spot.activity);
+        if (w.spot.seatY !== undefined && w.spot.role === "juror") w.body.root.position.y = speaking ? 0 : w.spot.seatY;
         if (w.spot.patrol && !reduce) {
           // Sweep slowly up and down the concourse.
           w.t = (w.t + dt * 0.06) % 2;

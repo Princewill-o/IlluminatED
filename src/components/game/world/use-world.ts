@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { RESCUES } from "./art";
+import { LAW_STATUS, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -319,6 +319,20 @@ export function useWorld({
         const axisX = payload.axisX === 0 ? 0 : 1, axisY = axisX ? 0 : 1;
         RESCUES.set(payload.i, { startedAt: performance.now() - elapsed, stopX, stopY, axisX, axisY });
       });
+      // Wanted stars and police patrols, so officers can find wanted players (and everyone sees the tags).
+      channel.on("broadcast", { event: "law" }, ({ payload }) => {
+        if (cancelled() || !payload || typeof payload.i !== "string" || !map.has(payload.i)) return;
+        const stars = Number.isInteger(payload.s) ? Math.max(0, Math.min(5, payload.s)) : 0;
+        LAW_STATUS.set(payload.i, { stars, police: payload.p === 1, at: Date.now() });
+      });
+      // An officer arrests you: only honoured if you really are wanted and they're right beside you.
+      channel.on("broadcast", { event: "arrest" }, ({ payload }) => {
+        if (cancelled() || !payload || typeof payload.i !== "string" || payload.t !== me.id) return;
+        const officer = map.get(payload.i), status = LAW_STATUS.get(payload.i);
+        if (!officer || !status?.police) return;
+        if (Math.hypot(officer.tx - pos.current.x, officer.ty - pos.current.y) > 32 * 3) return;
+        window.dispatchEvent(new CustomEvent("illumed:arrested", { detail: { by: officer.username } }));
+      });
       const heardChat = new Map<string, number>();
       channel.on("broadcast", { event: "chat" }, ({ payload }) => {
         if (cancelled() || !payload || typeof payload.i !== "string" || typeof payload.id !== "string" || payload.id.length>80) return;
@@ -548,6 +562,18 @@ export function useWorld({
     finally { sendingChat.current=false; }
   },[me.id,me.username]);
 
+  /** Share your wanted stars / patrol status with the room. */
+  const reportLaw = useCallback((stars: number, police: boolean) => {
+    const ch = channelRef.current;
+    if (!ch || ch.state !== "joined") return;
+    void ch.send({ type: "broadcast", event: "law", payload: { i: me.id, s: stars, p: police ? 1 : 0 } });
+  }, [me.id]);
+  /** As a patrol officer, arrest a wanted player beside you. */
+  const reportArrest = useCallback((target: string) => {
+    const ch = channelRef.current;
+    if (!ch || ch.state !== "joined") return;
+    void ch.send({ type: "broadcast", event: "arrest", payload: { i: me.id, t: target } });
+  }, [me.id]);
   /** Tell the room you're being taken away by ambulance, so they see it too. */
   const reportRescue = useCallback((r: { stopX: number; stopY: number; axisX: number; axisY: number; elapsed: number }) => {
     const ch = channelRef.current;
@@ -557,6 +583,8 @@ export function useWorld({
 
   return {
     reportRescue,
+    reportLaw,
+    reportArrest,
     messages,
     sendChat,
     status,

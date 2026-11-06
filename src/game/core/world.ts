@@ -719,6 +719,8 @@ export function londonMap(): WorldMap {
   const court = near(44, 28, hosp);
   if (hosp && hosp.kind === "building") portals.push({ id: "hospital", rect: px(hosp.x + Math.floor(hosp.w/2) - 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
   if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
+  const police = policeBuilding();
+  if (police) portals.push({ id: "police-station", rect: px(police.x + Math.floor(police.w / 2) - 1, police.y + police.h, 2, 1), label: "Police station: report, custody and patrols", to: { kind: "map", mapId: "police-station", label: "Police station" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
   for (const venue of L.things) {
@@ -895,6 +897,65 @@ export function courtMap(): WorldMap {
       spawn: centre(11, 8),
       accent: "#7a4f32",
       sign: { x: 11, y: 4, text: "Crown Court" },
+    },
+    g,
+  );
+}
+
+/** The building that houses the police station: a big civic block near the court, not the court itself. */
+export function policeBuilding() {
+  const L = buildLondon();
+  const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && t.id !== "city-hospital" && (t.style === "office" || t.style === "stone") ? [t] : []));
+  const court = [...bigs].sort((a, b) => Math.hypot(a.x - 44, a.y - 28) - Math.hypot(b.x - 44, b.y - 28))[0];
+  return bigs.filter((b) => b !== court).sort((a, b) => Math.hypot(a.x - 72, a.y - 34) - Math.hypot(b.x - 72, b.y - 34))[0] ?? null;
+}
+
+/** Holding cells (tile rects) in the custody suite; detainees are placed in the first. */
+export const POLICE_CELLS = [{ x: 14, y: 1 }, { x: 18, y: 1 }, { x: 22, y: 1 }];
+/**
+ * The police station: public front desk, officers' room, interview room and a custody suite
+ * with three barred holding cells. Detainees wait in a cell before transport to court.
+ */
+export function policeStationMap(): WorldMap {
+  const g = new Grid(27, 18, ".");
+  g.border("#");
+  for (let x = 1; x < 26; x++) g.set(x, 0, "W");
+  // Holding cells along the back wall: solid side walls, a barred front with no gap.
+  for (const c of POLICE_CELLS) {
+    g.fill(c.x + 3, 1, 1, 4, "#");
+    g.fill(c.x, 5, 3, 1, "G");
+    g.set(c.x, 2, "s");
+  }
+  g.fill(13, 1, 1, 5, "#");
+  // Custody desk facing the cells.
+  g.fill(15, 8, 6, 1, "k");
+  // Interview room, top left, with its own doorway.
+  g.fill(1, 6, 9, 1, "#");
+  g.fill(9, 1, 1, 6, "#");
+  g.set(9, 4, ".");
+  g.fill(3, 3, 3, 1, "t");
+  g.set(2, 3, "c");
+  g.set(6, 3, "c");
+  // Officers' desks and the public front desk.
+  for (const x of [3, 8]) { g.fill(x, 9, 3, 1, "d"); g.set(x + 1, 10, "c"); }
+  g.fill(4, 13, 6, 1, "r");
+  g.fill(16, 13, 5, 1, "s");
+  g.set(1, 7, "p");
+  g.set(25, 7, "p");
+  return finish(
+    {
+      id: "police-station",
+      kind: "court",
+      name: "Police station",
+      structures: [],
+      portals: [
+        { id: "exit", rect: px(12, 17, 3, 1), label: "Leave the station", to: { kind: "map", mapId: "city", label: "London" } },
+        { id: "patrol-desk", rect: px(6, 14, 2, 1), label: "Front desk: sign on for patrol (Special Constable)", to: { kind: "act", activity: "study" } },
+      ],
+      rooms: [{ name: "Interview room", rect: px(1, 1, 8, 5) }, { name: "Custody suite · holding cells", rect: px(13, 1, 13, 8) }, { name: "Front desk and waiting area", rect: px(1, 11, 25, 6) }],
+      spawn: centre(13, 15),
+      accent: "#1f3f8a",
+      sign: { x: 13, y: 11, text: "Police station" },
     },
     g,
   );

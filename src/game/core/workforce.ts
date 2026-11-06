@@ -10,10 +10,11 @@ import type { WorldMap } from "./world";
  */
 export type WorkActivity =
   | "typing" | "laptop" | "eat" | "cook" | "treat" | "sweep" | "direct"
-  | "hammer" | "clipboard" | "serve" | "carry" | "lie" | "phone" | "sit-read";
+  | "hammer" | "clipboard" | "serve" | "carry" | "lie" | "phone" | "sit-read" | "sit" | "cuffed" | "walk" | "keyboard";
 export type WorkRole =
   | "office" | "nurse" | "doctor" | "patient" | "chef" | "diner" | "cleaner"
-  | "staff" | "roadworker" | "marshal" | "student" | "passenger";
+  | "staff" | "roadworker" | "marshal" | "student" | "passenger"
+  | "police" | "judge" | "barrister" | "juror" | "detainee" | "witness";
 export type WorkProp = "laptop" | "grill" | "plate" | "broom" | "cones" | "van" | "tray" | "drill";
 export type WorkSpot = {
   id: string;
@@ -40,8 +41,14 @@ export const ROLE_TOP: Record<WorkRole, string> = {
   diner: "top-blocky-student-navy",
   cleaner: "top-blocky-chef-sand",
   staff: "top-blocky-business-navy",
-  roadworker: "top-blocky-paramedic-emerald",
-  marshal: "top-blocky-paramedic-emerald",
+  roadworker: "top-blocky-workwear-amber",
+  marshal: "top-blocky-workwear-amber",
+  police: "top-blocky-police-navy",
+  judge: "top-blocky-business-slate",
+  barrister: "top-blocky-business-navy",
+  juror: "top-blocky-casual-teal",
+  detainee: "top-blocky-hoodie-slate",
+  witness: "top-blocky-raincoat-sand",
   student: "top-blocky-student-navy",
   passenger: "top-blocky-business-navy",
 };
@@ -141,7 +148,37 @@ function motorway(): WorkSpot[] {
   return out;
 }
 
+/** The custody suite: desk sergeant, custody officer, officers writing up, someone already in a cell. */
+function policeStation(): WorkSpot[] {
+  return [
+    { id: "desk-sergeant", x: 6.5, z: 12.4, heading: 0, activity: "typing", role: "police", seatY: 0.45 },
+    { id: "custody-officer", x: 17.5, z: 7.3, heading: 0, activity: "clipboard", role: "police" },
+    { id: "officer-1", x: 4.5, z: 10.4, heading: Math.PI, activity: "typing", role: "police", seatY: 0.45 },
+    { id: "officer-2", x: 9.5, z: 10.4, heading: Math.PI, activity: "typing", role: "police", seatY: 0.45 },
+    { id: "detainee", x: 18.5, z: 2.5, heading: 0, activity: "sit", role: "detainee", seatY: 0.42 },
+    { id: "interview", x: 4, z: 4.4, heading: Math.PI, activity: "clipboard", role: "police" },
+    { id: "patrol", x: 12, z: 15.2, heading: Math.PI / 2, activity: "walk", role: "police", patrol: { x: 23, z: 15.2 } },
+  ];
+}
+
+/** The Crown Court in session: judge, clerk, barristers, usher, witness and the jury. Ids match COURT.speaker. */
+function court(): WorkSpot[] {
+  const jury: WorkSpot[] = Array.from({ length: 6 }, (_, i) => ({ id: `jury-${i + 1}`, x: 2.5 + (i % 2), z: 3.2 + Math.floor(i / 2) * 1.1, heading: Math.PI / 2, activity: "sit", role: "juror", seatY: 0.42 }));
+  return [
+    { id: "judge", x: 10.5, z: 1.6, heading: 0, activity: "clipboard", role: "judge" },
+    { id: "clerk", x: 10.5, z: 3.7, heading: 0, activity: "typing", role: "staff", seatY: 0.45 },
+    { id: "prosecution", x: 6, z: 5.6, heading: Math.PI, activity: "clipboard", role: "barrister" },
+    { id: "defence", x: 15, z: 5.6, heading: Math.PI, activity: "clipboard", role: "barrister" },
+    { id: "witness", x: 18.5, z: 3.4, heading: -Math.PI / 2, activity: "idle" as WorkActivity, role: "witness" },
+    { id: "usher", x: 19.5, z: 8.5, heading: -Math.PI / 2, activity: "clipboard", role: "staff" },
+    { id: "dock-officer", x: 13.6, z: 8.4, heading: Math.PI, activity: "idle" as WorkActivity, role: "police" },
+    ...jury,
+  ];
+}
+
 export function workforceFor(map: WorldMap, things: readonly Thing[] = []): WorkSpot[] {
+  if (map.id === "police-station") return policeStation();
+  if (map.id === "court") return court();
   if (map.kind === "hospital") return hospital(map);
   if (map.kind === "station") return station(map);
   if (map.id === "m25") return motorway();

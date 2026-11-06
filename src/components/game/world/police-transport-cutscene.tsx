@@ -8,7 +8,7 @@ import { CutsceneBrand } from "./cutscene-brand";
 
 const RIDE_MS = 3200;
 
-export function PoliceTransportCutscene({ onArrive, destination = "prison", people }: { onArrive: () => void; destination?: "court" | "prison"; people?: string }) {
+export function PoliceTransportCutscene({ onArrive, destination = "prison", people }: { onArrive: () => void; destination?: "court" | "prison" | "station"; people?: string }) {
   const finish = useRef(onArrive);
   const finished = useRef(false);
   finish.current = onArrive;
@@ -42,8 +42,8 @@ export function PoliceTransportCutscene({ onArrive, destination = "prison", peop
     </div>
     <div className="absolute inset-x-4 bottom-8 mx-auto max-w-xl rounded-3xl border border-white/15 bg-[#111a2a]/90 p-5 text-center shadow-xl">
       <div className="flex items-center justify-center gap-2 text-[#b8d6f4]"><Siren className="size-5"/><span className="text-xs font-black uppercase tracking-[.18em]">Police escort · {RIDE_MS / 1000}s journey</span></div>
-      <p className="mt-2 text-2xl font-black">{destination === "court" ? "Transport to Crown Court" : "Transport to HMP Thames"}</p>
-      <p className="mt-1 text-sm text-white/70">{destination === "court" ? `${people ?? "The arrested participants"} are in police custody. The hearing starts after arrival.` : "Police escort in progress. Prison sentence begins on arrival."}</p>
+      <p className="mt-2 text-2xl font-black">{destination === "court" ? "Transport to Crown Court" : destination === "station" ? "Transport to the police station" : "Transport to HMP Thames"}</p>
+      <p className="mt-1 text-sm text-white/70">{destination === "court" ? `${people ?? "The arrested participants"} are in police custody. The hearing starts after arrival.` : destination === "station" ? "Handcuffed in the back of the van. You will be booked into custody on arrival." : "Police escort in progress. Prison sentence begins on arrival."}</p>
       {destination !== "court" && <button type="button" onClick={finishOnce} className="pointer-events-auto mt-4 min-h-10 rounded-full border border-white/35 px-5 text-xs font-bold hover:bg-white/10">Skip journey</button>}
     </div>
   </div>;

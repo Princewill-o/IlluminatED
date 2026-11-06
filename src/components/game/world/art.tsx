@@ -350,8 +350,14 @@ export const WORLD_RULES = {
   owner: false,
   fly: false,
 };
-export const ONLINE: { id: string; username: string }[] = [];
+export const ONLINE: { id: string; username: string; x?: number; y?: number }[] = [];
 /** While the player is doing hands-on work, the work animation they play (null when free). */
+/** Who is speaking in the courtroom (a workforce id such as "judge" or "defence"), and when the gavel last fell. */
+export const COURT = { speaker: null as string | null, gavelAt: 0 };
+/** Live law status of other players in the room: wanted stars and whether they're on police patrol. */
+export const LAW_STATUS = new Map<string, { stars: number; police: boolean; at: number }>();
+/** A police patrol in progress: the suspect the player is chasing (world px). Moved by the 3D world. */
+export const PATROL = { active: false, suspect: null as null | { id: number; x: number; y: number; name: string; fleeing: boolean; cuffed: boolean; gone: boolean } };
 export const PLAYER_WORK: { activity: string | null } = { activity: null };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */

@@ -369,13 +369,22 @@ export function WorldView({
     window.addEventListener("illumed:rescue-start", on);
     return () => window.removeEventListener("illumed:rescue-start", on);
   }, [reportRescue]);
+  // Wanted stars and patrol status go to the room; patrol officers can arrest wanted players.
+  const { reportLaw, reportArrest } = world;
+  useEffect(() => {
+    const law = (e: Event) => { const d = (e as CustomEvent<{ stars: number; police: boolean }>).detail; reportLaw(d.stars, d.police); };
+    const arrest = (e: Event) => reportArrest((e as CustomEvent<{ target: string }>).detail.target);
+    window.addEventListener("illumed:law", law);
+    window.addEventListener("illumed:arrest-player", arrest);
+    return () => { window.removeEventListener("illumed:law", law); window.removeEventListener("illumed:arrest-player", arrest); };
+  }, [reportLaw, reportArrest]);
   // Every map starts you on the ground floor.
   useEffect(() => { PLAYER.level = 0; PLAYER.z = 0; }, [map]);
   // Share who's in this server with the rest of the game (interview-room deals).
   useEffect(() => {
-    const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username })));
+    const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username, x: p.tx, y: p.ty })));
     sync();
-    const timer = setInterval(sync, 2000);
+    const timer = setInterval(sync, 700);
     return () => { clearInterval(timer); ONLINE.length = 0; };
   }, [players, hidden]);
   const fxCanvas = useRef<HTMLCanvasElement>(null);
