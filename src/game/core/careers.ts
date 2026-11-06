@@ -39,6 +39,8 @@ export const SKILLS = {
   "stock-control": "Stock control",
   "it-support": "IT support troubleshooting",
   "cyber-security": "Cyber security basics",
+  "vehicle-maintenance": "Vehicle maintenance",
+  "health-and-safety": "Health and safety",
 } as const;
 export type SkillId = keyof typeof SKILLS;
 
@@ -553,6 +555,9 @@ for (const w of WORKPLACES) {
 
 export const workplaceById = (id: string) => WORKPLACES.find((w) => w.id === id) ?? null;
 export const roleOf = (workplace: string, role: string) => workplaceById(workplace)?.roles.find((r) => r.id === role) ?? null;
+
+/** One task of a given kind (the practical roles reuse these alongside their own). */
+export const careerTask = (kind: string, rng: Rng): Task | null => (GEN[kind] ? GEN[kind](rng) : null);
 
 // ── Shifts ──────────────────────────────────────────────────────────────────
 export const SHIFT_TASKS = 5;

@@ -9,10 +9,15 @@ import type { Place } from "./city-map";
 
 import { finishRoleJob, startRoleJob } from "@/app/games/world/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
+import { TaskCard } from "@/components/careers/task-card";
+import { WorkInterface } from "@/components/careers/work-interface";
+import { workplaceRoute } from "@/game/core/daily-jobs";
+import { createRng } from "@/game/core/rng";
+import { roleStepTask } from "@/game/core/role-tasks";
 import { type PracticalRole, jobSteps, jobSpots, levelForXp, payFor, roleTiers, skillScore, tierIndex } from "@/game/core/roles";
 import { TILE, type WorldMap } from "@/game/core/world";
 
-type Phase = "walk" | "skill" | "doing" | "paying" | "done";
+type Phase = "walk" | "skill" | "task" | "doing" | "paying" | "done";
 type Reward = { pay: number; xp: number; level: number; levelUp: boolean; tierUp: string | null; practice: boolean; note?: string };
 
 /**
@@ -36,7 +41,12 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
   const [practice, setPractice] = useState(false);
   const [seed] = useState(() => Math.floor(Math.random() * 1e6));
    
-  const spots = useMemo(() => jobSpots(map, { x: PLAYER.x, y: PLAYER.y }, steps.length, seed + job * 97), [map, steps.length, seed, job]);
+  const spots = useMemo(() => {
+    // Indoors, work happens at the furniture: desks, counters, tills, beds. Outdoors, spread nearby.
+    const furniture = map.kind !== "city" && map.kind !== "campus" ? workplaceRoute(map) : [];
+    if (furniture.length >= 3) return steps.map((_, i) => furniture[(i + job) % furniture.length]);
+    return jobSpots(map, { x: PLAYER.x, y: PLAYER.y }, steps.length, seed + job * 97);
+  }, [map, steps, seed, job]);
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<Phase>("walk");
   const [distance, setDistance] = useState(Infinity);
@@ -46,6 +56,9 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
   const [error, setError] = useState("");
   const xpRef = useRef<number | null>(null);
   const step = steps[index], spot = spots[index];
+  // Some steps are a real decision in the job's own tool (till, ticket rail, monitor, tablet...).
+  const realTask = useMemo(() => roleStepTask(role.id, index, createRng(seed + job * 131 + index * 17)), [role.id, index, seed, job]);
+  const begin = useCallback(() => setPhase(realTask ? "task" : "skill"), [realTask]);
 
   // Clock in for each job.
   useEffect(() => {
@@ -132,12 +145,12 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
     const key = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLElement && ["INPUT", "TEXTAREA"].includes(e.target.tagName)) return;
       if (e.key !== "e" && e.key !== "E" && e.key !== " ") return;
-      if (phase === "walk" && near) { e.preventDefault(); setPhase("skill"); }
+      if (phase === "walk" && near) { e.preventDefault(); begin(); }
       else if (phase === "skill") { e.preventDefault(); lock(); }
     };
     window.addEventListener("keydown", key, true);
     return () => window.removeEventListener("keydown", key, true);
-  }, [phase, near, lock]);
+  }, [phase, near, lock, begin]);
 
   const nextJob = () => { scores.current = []; setIndex(0); setReward(null); setError(""); setPhase("walk"); setJob((j) => j + 1); };
   const quality = (v: number) => v >= 0.9 ? "Perfect" : v >= 0.7 ? "Good" : v >= 0.4 ? "OK" : "Sloppy";
@@ -160,7 +173,7 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
               )}
               {phase === "walk" && <p className="mt-3 text-sm">{near ? "You're at the spot." : `${Math.ceil(distance / TILE)} tiles away · follow the glowing pin`}</p>}
               {phase === "walk" && (
-                <button type="button" disabled={!near} onClick={() => setPhase("skill")} className="mt-3 min-h-11 w-full rounded-full bg-[#ffd166] px-4 font-black text-[#13203a] disabled:opacity-40">{near ? "Start (E)" : "Walk to the spot"}</button>
+                <button type="button" disabled={!near} onClick={begin} className="mt-3 min-h-11 w-full rounded-full bg-[#ffd166] px-4 font-black text-[#13203a] disabled:opacity-40">{near ? (realTask ? `Open: ${realTask.title} (E)` : "Start (E)") : "Walk to the spot"}</button>
               )}
               {phase === "skill" && (
                 <div className="mt-3">
@@ -199,6 +212,16 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
           {phase !== "done" && <button type="button" onClick={onEnd} className="mt-2 text-xs text-white/60 underline">End shift</button>}
         </div>
       </aside>
+      {phase === "task" && realTask && (
+        <div className="fixed inset-0 z-[100008] grid place-items-center overflow-y-auto bg-black/60 p-3">
+          <section role="dialog" aria-label={realTask.title} className="my-4 w-full max-w-3xl [color-scheme:light]">
+            <p className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-black tracking-widest text-white uppercase" style={{ background: role.colour }}>{role.title} · {step.label}</p>
+            <WorkInterface taskKind={String(realTask.kind)} place={role.id}>
+              <TaskCard bare task={realTask} index={index} total={steps.length} onDone={(correct) => lock(correct ? 1 : 0.15)} />
+            </WorkInterface>
+          </section>
+        </div>
+      )}
     </>
   );
 }

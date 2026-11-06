@@ -10,7 +10,7 @@ import { SKILLS, type Task, checkAnswer } from "@/game/core/careers";
 import { cn } from "@/lib/utils";
 
 /** One work task: the material, the question, and what you learn from it. */
-export function TaskCard({ task, index, total, onDone }: { task: Task; index: number; total: number; onDone: (correct: boolean, answer: number | string) => void }) {
+export function TaskCard({ task, index, total, onDone, bare = false }: { task: Task; index: number; total: number; onDone: (correct: boolean, answer: number | string) => void; /** Inside a work interface: no card of its own. */ bare?: boolean }) {
   const [submitted, setSubmitted] = useState<number | string>("");
   const [picked, setPicked] = useState<number | null>(null);
   const [typed, setTyped] = useState("");
@@ -24,7 +24,7 @@ export function TaskCard({ task, index, total, onDone }: { task: Task; index: nu
   };
 
   return (
-    <div className="rounded-3xl border border-border bg-card p-5 md:p-6">
+    <div className={cn(bare ? "p-4 text-[#13203a] md:p-5" : "rounded-3xl border border-border bg-card p-5 md:p-6")}>
       <div className="flex items-center justify-between gap-3 text-xs font-bold text-muted-foreground">
         <span className="tracking-widest uppercase">
           Task {index + 1} of {total}

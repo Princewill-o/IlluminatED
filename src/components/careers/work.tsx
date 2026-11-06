@@ -9,6 +9,7 @@ import { Briefcase, GraduationCap, Sparkles, Trophy, X } from "lucide-react";
 
 import { ShiftStage } from "./shift-stage";
 import { TaskCard } from "./task-card";
+import { WorkInterface } from "./work-interface";
 
 import { startCareerSession, completeCareerSession } from "@/app/games/careers/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
@@ -248,18 +249,21 @@ export function Shift({ job, avatar, onClose }: { job: ActiveJob; avatar: Avatar
     return (
       <Panel onClose={onClose} title={`${role.title} shift`} workplace={workplace}>
         <ShiftStage workplace={workplace} avatar={uniformed} progress={i} />
-        <TaskCard
-          key={i}
-          task={tasks[i]}
-          index={i}
-          total={tasks.length}
-          onDone={(ok, answer) => {
-            answers.current[i] = answer;
-            results.current[i] = ok;
-            if (i + 1 === tasks.length) finish();
-            setI(i + 1);
-          }}
-        />
+        <WorkInterface taskKind={String(tasks[i].kind)} place={workplace.id}>
+          <TaskCard
+            bare
+            key={i}
+            task={tasks[i]}
+            index={i}
+            total={tasks.length}
+            onDone={(ok, answer) => {
+              answers.current[i] = answer;
+              results.current[i] = ok;
+              if (i + 1 === tasks.length) finish();
+              setI(i + 1);
+            }}
+          />
+        </WorkInterface>
       </Panel>
     );
 
