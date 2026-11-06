@@ -694,7 +694,7 @@ export function londonMap(): WorldMap {
     if (th.kind === "landmark" && th.name === "battersea")
       portals.push(
         { id: "games-hall", rect: px(th.x + 4, th.y + th.h, 2, 1), label: "Games Hall: play live with others", to: { kind: "games" } },
-        { id: "games-island-ferry", rect: px(th.x + 8, th.y + th.h, 2, 1), label: "Ferry to Games Island", to: { kind: "map", mapId: "games-island", label: "Games Island" } },
+        { id: "games-island-ferry", rect: px(th.x + 10, th.y + th.h, 2, 1), label: "Ferry to Games Island", to: { kind: "map", mapId: "games-island", label: "Games Island" } },
       );
   }
   const partyBuilding=L.things.find(th=>th.kind === "building" && th.id === "district-wharf-cafe");
