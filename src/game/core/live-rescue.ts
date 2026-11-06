@@ -90,6 +90,8 @@ export function rescuePlan(
   px: number,
   py: number,
   route: (from: { x: number; y: number }, to: { x: number; y: number }) => { x: number; y: number }[],
+  /** The map the vehicle heads for: hospital for an ambulance, police-station or court for an arrest. */
+  destination = "hospital",
 ) {
   const road = rescueRoad(map, px, py);
   if (!road) return null;
@@ -102,7 +104,7 @@ export function rescuePlan(
   // Drive the last part only (about 34 tiles), ending exactly at the stop.
   const reverse = (p: number[]) => { const o: number[] = []; for (let i = p.length - 2; i >= 0; i -= 2) o.push(p[i], p[i + 1]); return o; };
   inPath = reverse(trimPath(reverse([...inPath, stop.x / TILE, stop.y / TILE]), 34));
-  const hospital = map.portals.find((p) => p.to.kind === "map" && p.to.mapId === "hospital");
+  const hospital = map.portals.find((p) => p.to.kind === "map" && p.to.mapId === destination);
   let outPath: number[] = [];
   if (hospital) outPath = flat(route(stop, { x: hospital.rect.x + hospital.rect.w / 2, y: hospital.rect.y + hospital.rect.h / 2 }));
   if (outPath.length < 4) outPath = [stop.x / TILE, stop.y / TILE, stop.x / TILE + road.axisX * 30, stop.y / TILE + road.axisY * 30];

@@ -32,6 +32,7 @@ import { JobsPanel } from "./jobs-panel";
 import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
+import { LivePolicePickup } from "./live-police-pickup";
 import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
 import { NpcVisits } from "./npc-visits";
@@ -650,7 +651,7 @@ export function WorldApp({
   // A crash in the last few seconds means the rescue starts with the impact and the wreck stays on the road.
   const lastCrash=useRef<{at:number;car:string|null}>({at:0,car:null});
   const drivingNow=useRef(driving);drivingNow.current=driving;
-  useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__rescue?:(car?:string)=>void}).__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};},[]);
+  useEffect(()=>{if(process.env.NODE_ENV!=="production"){const w=window as unknown as {__rescue?:(car?:string)=>void;__arrest?:()=>void};w.__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};w.__arrest=()=>{transportStars.current=4;setDriving(null);setPoliceTransport(true);};}},[]);
   const [rescueCause,setRescueCause]=useState<{kind:"crash"|"collapse";key:number}|null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const liveRoad=useMemo(()=>rescue&&outdoors?rescuePlan(map,PLAYER.x,PLAYER.y,(a,b)=>roadRoute(map,a,b)):null,[rescue]);
@@ -678,8 +679,10 @@ export function WorldApp({
       const now = Date.now(); if (now - last < 2500 || rescue) return; last = now;
       const damage = (event as CustomEvent<{ damage: number }>).detail?.damage;
       if (!Number.isFinite(damage) || damage <= 0) return;
-      lastCrash.current = { at: now, car: drivingNow.current };
+      const onBike = Boolean((event as CustomEvent<{ bike?: string }>).detail?.bike);
+      lastCrash.current = { at: now, car: onBike ? "bike" : drivingNow.current };
       damageEnergy(Math.min(55, damage));
+      if (onBike) { setBike(null); setRescue(true); return; }
       say("Collision · check on others, stop safely and exchange details. Your condition has dropped.", true);
     };
     window.addEventListener("illuminated:vehicle-crash", crash);
@@ -1432,7 +1435,7 @@ export function WorldApp({
         }
       }}/ >}
       {streetCustody && streetCustody.stage !== "transport" && !rescue && <HudSlot area="tc" order={5}><section role="status" aria-live="polite" className="pixel-panel max-w-md p-4 text-center"><p className="font-black">{streetCustody.stage === "responding" ? "Police responding to the incident" : streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName} are under arrest` : "You are under arrest"}</p><p className="mt-2 text-xs">{streetCustody.stage === "responding" ? "Officers are approaching to stop the people involved. The hearing has not started." : "Officers are completing the arrest before escorting the detained participants to court. Arrest does not decide the case."}</p></section></HudSlot>}
-      {streetCustody?.stage === "transport" && !rescue && <PoliceTransportCutscene destination="court" people={streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName}` : "You"} onArrive={() => {
+      {streetCustody?.stage === "transport" && !rescue && <LivePolicePickup map={map} destination="court" people={streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName}` : "You"} onArrive={() => {
         const proof=finishStreetTransport(streetCustody,Date.now());if(!proof)return;
         updateLife(current=>current.hearing?.streetCase?.id===proof.caseId?{...current,hearing:{...current.hearing,custody:proof}}:current);
         pursuitRef.current=null;setPursuit(null);setStreetCustody(null);
@@ -1504,7 +1507,7 @@ export function WorldApp({
           }}
         />
       )}
-      {custody?.stage === "van" && <PoliceTransportCutscene destination="station" onArrive={() => { setCustody({ stage: "booking", until: 0, solicitor: false }); goTo("police-station", "Police custody", { x: (POLICE_CELLS[0].x + 1.5) * TILE, y: (POLICE_CELLS[0].y + 2.5) * TILE }); }} />}
+      {custody?.stage === "van" && <LivePolicePickup map={map} destination="police-station" onArrive={() => { setCustody({ stage: "booking", until: 0, solicitor: false }); goTo("police-station", "Police custody", { x: (POLICE_CELLS[0].x + 1.5) * TILE, y: (POLICE_CELLS[0].y + 2.5) * TILE }); }} />}
       {custody?.stage === "booking" && mapId === "police-station" && <BookingIn charge={life.hearing?.charge ?? "an offence"} onDone={() => setCustody((c) => (c && c.stage === "booking" ? { ...c, stage: "cell", until: Date.now() + 25_000 } : c))} />}
       {custody?.stage === "cell" && mapId === "police-station" && <HoldingCellHud until={custody.until} solicitor={custody.solicitor} onSolicitor={() => { setTrialSolicitor(true); setCustody((c) => (c ? { ...c, solicitor: true, until: Math.max(Date.now() + 6000, c.until - 8000) } : c)); say("The duty solicitor visits your cell and goes through the evidence with you.", true); }} />}
       {custody?.stage === "transport" && <PoliceTransportCutscene destination="court" people="You" onArrive={() => { setCustody(null); goTo("court", "Police escort · Crown Court"); }} />}
@@ -1544,7 +1547,7 @@ export function WorldApp({
         </div>
       )}
       {journey && <TrainCutscene onStudy={()=>setLearning(true)} to={journey.to} line={journey.line??"Revision"} avatar={me.avatar} onArrive={journey.go} />}
-      {policeTransport && <PoliceTransportCutscene destination="station" onArrive={() => {
+      {policeTransport && <LivePolicePickup map={map} destination="police-station" onArrive={() => {
         const stars = transportStars.current;
         updateLife(life => ({ ...clearWanted(life), hearing: { stars, charge: wantedCharge(life) }, prisonWork: 0 }));
         setPoliceTransport(false); setArrest(false);

@@ -448,6 +448,8 @@ export function WorldView({
     [players, hidden],
   );
   const nearPortal3d = useCallback(() => nearRef.current, []);
+  const bikeNow = useRef(bike);
+  bikeNow.current = bike;
   const enter = useCallback(() => {
     if (pausedRef.current) return;
     // Station trains are boarded by walking through an open doorway.
@@ -644,6 +646,8 @@ export function WorldView({
         if (corrected.collided) {
           next = { x: corrected.x, y: corrected.y };
           target.current = null;
+          // Riding into traffic on a hire bike is a crash: the ambulance comes for you.
+          if (bikeNow.current && !pausedRef.current && (dx || dy) && now > bumpUntil) window.dispatchEvent(new CustomEvent("illuminated:vehicle-crash", { detail: { damage: 60, speed: 1, bike: bikeNow.current } }));
           if (now > bumpUntil) {
             bumpUntil = now + 1_500;
             myChat.current = { text: "Oof! Watch the road.", until: Date.now() + 1_800 };

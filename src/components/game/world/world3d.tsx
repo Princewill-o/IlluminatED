@@ -3017,7 +3017,7 @@ export function World3D({
     }
     scene.add(...responders.map(body=>body.root));
     // Live ambulance rescues (yours and other players'): an ambulance and two paramedics each.
-    const ambulances = new Map<string, { rig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null; root: THREE.Group; medics: Body[] }>();
+    const ambulances = new Map<string, { rig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null; root: THREE.Group; medics: Body[]; heading: number | null }>();
     let rescueCam: { x: number; z: number } | null = null;
     // Wrecked cars left at crash scenes, with smoke rising.
     const wrecks = new Map<string, THREE.Group>();
@@ -3032,7 +3032,8 @@ export function World3D({
       const body = new THREE.Group();
       body.rotation.z = 0.06; body.rotation.x = -0.05; // knocked askew
       w.add(body);
-      void placeCar(body, car).catch(() => {});
+      if (car === "bike") { const b = lymeBike(); b.rotation.z = Math.PI / 2; b.position.y = 0.25; bendAll(b); body.add(b); }
+      else void placeCar(body, car).catch(() => {});
       const puffs: THREE.Mesh[] = [];
       for (let i = 0; i < 7; i++) { const p = new THREE.Mesh(smokeGeo, smokeMat); p.userData.seed = i / 7; w.add(p); puffs.push(p); }
       w.userData.puffs = puffs;
@@ -3040,15 +3041,18 @@ export function World3D({
       wrecks.set(id, w);
       return w;
     };
-    const rescueCrew = (id: string) => {
+    const rescueCrew = (id: string, vehicle: "ambulance" | "police" = "ambulance") => {
       let crew = ambulances.get(id);
       if (crew) return crew;
       const root = new THREE.Group(); root.visible = false; scene.add(root);
-      const medics = [62, 63].map((seed) => makeBody({ ...npcLook(seed), top: "top-blocky-paramedic-emerald", topColor: "topcol-auto", hat: "hat-none" }, null, true));
+      // Paramedics in green, or two officers for an arrest.
+      const medics = (vehicle === "police" ? [55, 56] : [62, 63]).map((seed) => makeBody(vehicle === "police"
+        ? { ...npcLook(seed), top: "top-blocky-police-navy", topColor: "topcol-auto", hat: "hat-cap" }
+        : { ...npcLook(seed), top: "top-blocky-paramedic-emerald", topColor: "topcol-auto", hat: "hat-none" }, null, true));
       medics.forEach((m) => { m.root.visible = false; scene.add(m.root); });
-      crew = { rig: null, root, medics };
+      crew = { rig: null, root, medics, heading: null };
       const made = crew;
-      void createEmergencyVehicle("ambulance", load, bendAll).then((rig) => { if (disposed) { rig.dispose(); return; } made.rig = rig; root.add(rig.root); }).catch(() => {});
+      void createEmergencyVehicle(vehicle, load, bendAll).then((rig) => { if (disposed) { rig.dispose(); return; } made.rig = rig; root.add(rig.root); }).catch(() => {});
       ambulances.set(id, crew);
       return crew;
     };
@@ -3634,26 +3638,39 @@ export function World3D({
       for (const [id, w] of wrecks) if (!RESCUES.has(id)) { scene.remove(w); disposeVehicle(w); wrecks.delete(id); }
       for (const [id, live] of RESCUES) {
         const pathed = Boolean(live.inPath && live.outPath);
+        const police = live.vehicle === "police";
         const f = pathed ? liveRescueFrame(performance.now() - live.startedAt) : rescueFrame(performance.now() - live.startedAt);
-        const crew = rescueCrew(id);
+        const crew = rescueCrew(id, police ? "police" : "ambulance");
         const sx = live.stopX / TILE, sz = live.stopY / TILE;
-        // Where the ambulance is and which way it faces.
         let ax = live.axisX, az = live.axisY, cx: number, cz: number;
         if (pathed) {
-          const leg = f.phase === "departing" || f.phase === "arrived" ? pathPoint(live.outPath!, f.depart) : pathPoint(live.inPath!, f.phase === "downed" ? 0 : f.approach);
-          cx = leg.x; cz = leg.y;
+          const moving = f.phase === "departing" || f.phase === "arrived" ? "out" : "in";
+          const path = moving === "out" ? live.outPath! : live.inPath!;
+          const t = moving === "out" ? f.depart : f.phase === "downed" ? 0 : f.approach;
+          const here = pathPoint(path, t);
+          // Look a little ahead so corners turn smoothly instead of snapping.
+          const ahead = pathPoint(path, Math.min(1, t + 0.04));
+          const dx = ahead.x - here.x, dz = ahead.y - here.y, len = Math.hypot(dx, dz);
+          if (len > 0.05) { ax = dx / len; az = dz / len; } else { ax = here.dx; az = here.dy; }
+          // Keep left while driving; pull in to the kerb at the stop.
+          const cruising = f.phase === "approaching" ? 1 - Math.max(0, (f.approach - 0.85) / 0.15) : f.phase === "departing" ? Math.min(1, f.depart * 8) : 0;
+          cx = here.x + az * 0.7 * cruising; cz = here.y - ax * 0.7 * cruising;
           if (f.phase === "loading") { const end = pathPoint(live.inPath!, 1); ax = end.dx; az = end.dy; }
-          else { ax = leg.dx; az = leg.dy; }
         } else {
           const along = f.phase === "downed" ? -14 : f.phase === "approaching" ? -14 + f.approach * 14 : f.depart * 18;
           cx = sx + ax * along; cz = sz + az * along;
         }
+        const want = -Math.atan2(az, ax);
+        if (crew.heading === null) crew.heading = want;
+        let turn = want - crew.heading; turn = Math.atan2(Math.sin(turn), Math.cos(turn));
+        crew.heading += turn * Math.min(1, dt * 5);
         crew.root.visible = f.phase !== "downed" && !f.complete;
         crew.root.position.set(cx, 0.004, cz);
-        crew.root.rotation.y = -Math.atan2(az, ax);
-        crew.rig?.update(secs, f.phase !== "loading");
+        crew.root.rotation.y = crew.heading;
+        crew.rig?.update(secs, f.phase !== "loading" || police);
+        crew.rig?.openRearDoors(f.doors);
         if (id === "me" && pathed) {
-          // Frame you and the ambulance together as it arrives; once you're aboard, ride with it.
+          // Frame you and the vehicle together as it arrives; once you're aboard, ride with it.
           const aboard = f.phase === "departing" || f.playerInAmbulance;
           const near = Math.hypot(cx - me.root.position.x, cz - me.root.position.z) < 22;
           if (aboard) rescueCam = { x: cx, z: cz };
@@ -3662,35 +3679,46 @@ export function World3D({
         const patient = id === "me" ? me : others.get(id);
         const end = pathed ? pathPoint(live.inPath!, 1) : { dx: ax, dy: az };
         const rearX = sx - end.dx * 1.9, rearZ = sz - end.dy * 1.9;
-        // The wrecked car stays where it crashed, smoking, until the ambulance has gone.
+        // A crashed car stays where it was, smoking, until the ambulance has gone.
         if (live.wreck && patient) {
           const w = wreckFor(id, live.wreck, patient.root.position.x, patient.root.position.z, -Math.atan2(end.dy, end.dx));
           (w.userData.puffs as THREE.Mesh[]).forEach((p, i) => {
+            p.visible = live.wreck !== "bike";
             const t = (secs * 0.35 + p.userData.seed) % 1;
             p.position.set(0.9 + Math.sin(i * 2.1 + secs) * 0.25 * t, 0.9 + t * 2.6, Math.cos(i * 1.7) * 0.3 * t);
             p.scale.setScalar(0.5 + t * 1.6);
           });
-          smokeMat.opacity = 0.5;
         }
         if (patient) {
           const px = patient.root.position.x, pz = patient.root.position.z;
-          // Lying down until the stretcher arrives, carried to the ambulance, then inside it.
-          patient.root.rotation.z = f.playerInAmbulance ? 0 : Math.PI / 2;
-          patient.root.position.y = f.playerInAmbulance ? 0 : 0.28;
+          // Hurt people lie still until the paramedics reach them; then they get up and are helped
+          // to the doors on foot. Arrested people stand, cuffed, and are walked to the car.
+          const lying = !police && f.playerOnGround;
+          patient.root.rotation.z = lying ? Math.PI / 2 : 0;
+          patient.root.position.y = lying ? 0.28 : 0;
           patient.root.visible = !f.playerInAmbulance;
-          if (!f.playerOnGround && !f.playerInAmbulance) { patient.root.position.x = px + (rearX - px) * f.loading; patient.root.position.z = pz + (rearZ - pz) * f.loading; }
+          if (id === "me") cuffs.visible = police && !f.playerInAmbulance;
+          const walking = !f.playerOnGround && !f.playerInAmbulance;
+          if (walking) {
+            patient.root.position.x = px + (rearX - px) * f.loading;
+            patient.root.position.z = pz + (rearZ - pz) * f.loading;
+            patient.root.rotation.y = Math.atan2(rearX - px, rearZ - pz);
+            setWalking(patient, f.loading > 0.02 && f.loading < 0.98);
+          }
           crew.medics.forEach((m, i) => {
             m.root.visible = f.crewVisible;
             if (!f.crewVisible) return;
-            const toPatient = Math.min(1, f.stretcherApproach * (1 - f.loading));
             const side = i ? 0.55 : -0.55;
-            const tx = rearX + (patient.root.position.x - rearX) * toPatient + end.dy * side, tz = rearZ + (patient.root.position.z - rearZ) * toPatient - end.dx * side;
+            // Walk from the vehicle to the patient, then walk beside them back to the doors.
+            const reach = Math.min(1, f.stretcherApproach);
+            const bx = walking ? patient.root.position.x : rearX + (px - rearX) * reach, bz = walking ? patient.root.position.z : rearZ + (pz - rearZ) * reach;
+            const tx = bx + end.dy * side, tz = bz - end.dx * side;
             m.root.position.set(tx, 0, tz);
-            m.root.rotation.y = Math.atan2(patient.root.position.x - tx, patient.root.position.z - tz);
-            setWalking(m, f.stretcherApproach > 0 && f.stretcherApproach < 1 || f.loading > 0 && f.loading < 1);
+            m.root.rotation.y = walking ? patient.root.rotation.y : Math.atan2(px - tx, pz - tz);
+            setWalking(m, (reach > 0 && reach < 1) || (walking && f.loading > 0.02 && f.loading < 0.98));
           });
         }
-        if (f.complete) { RESCUES.delete(id); if (patient) { patient.root.rotation.z = 0; patient.root.position.y = 0; patient.root.visible = true; } }
+        if (f.complete) { RESCUES.delete(id); ambulances.get(id)?.medics.forEach((m) => { m.root.visible = false; }); if (patient) { patient.root.rotation.z = 0; patient.root.position.y = 0; patient.root.visible = true; } if (id === "me") cuffs.visible = false; }
       }
       if (tutor) {
         const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
