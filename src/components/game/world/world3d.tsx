@@ -386,6 +386,18 @@ async function place(g: THREE.Group, url: string, x: number, z: number, w: numbe
   return o;
 }
 
+/** The university's Blender model (blender/universities), fitted to its plot and facing the street.
+ *  Falls back to the code-built landmark if the model can't load. */
+async function placeUniversity(g: THREE.Group, id: string, t: { x: number; y: number; w: number; h: number; height?: number }) {
+  try {
+    const o = await place(g, `/world3d/universities/${id}.glb`, t.x + 0.1, t.y + 0.1, t.w - 0.2, t.h - 0.2, 0, Math.PI);
+    o.traverse((c) => { const m = c as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return o;
+  } catch {
+    return universityLandmark(g, id, t, box, mat);
+  }
+}
+
 /** IlluminatED's own Blender London kit (art/blender/london_kit.py). */
 const LONDON_KIT = "/world3d/london/";
 /** Places a kit model in a footprint, turned in quarter turns (0 = facing south). */
@@ -2394,7 +2406,7 @@ export function World3D({
         }
       }
     } else if (ukScene) {
-      const regional = addUKScenery(world,map,ukScene,{box,roof,sign,mat});
+      const regional = addUKScenery(world,map,ukScene,{box,roof,sign,mat,landmark:(g,id,t)=>{jobs.push(placeUniversity(g,id,t));}});
       sightlineBuildings.push(...regional.buildings);
       lamps.push(...regional.lamps);
       updateUKScenery=regional.update;
@@ -2408,7 +2420,7 @@ export function World3D({
         if (t.kind === "building" || t.kind === "station" || t.kind === "landmark") sightlineBuildings.push(g);
         if (t.kind === "building") {
           if (t.id.startsWith("university-site-")) {
-            universityLandmark(g, t.id.slice(16), t, box, mat);
+            jobs.push(placeUniversity(g, t.id.slice(16), t));
             const uni = universityById(t.id.slice(16));
             if (uni) { const sg = sign(uni.fullName, { bg: uni.colour, fg: "#ffffff", w: Math.min(t.w - 0.4, 6), h: 0.45 }); sg.position.set(t.x + t.w / 2, 0.9, t.y + t.h + 0.6); g.add(sg); }
           } else

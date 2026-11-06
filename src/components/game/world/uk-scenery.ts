@@ -33,6 +33,8 @@ type Drawing = {
     options: { bg: string; fg: string; w: number; h: number },
   ) => THREE.Object3D;
   mat: (colour: string) => THREE.Material;
+  /** Draws a university by id into its plot (the Blender model, when the game supplies one). */
+  landmark?: (g: THREE.Group, id: string, t: { x: number; y: number; w: number; h: number; height?: number }) => void;
 };
 
 export function addUKGateways(
@@ -174,7 +176,8 @@ export function addUKScenery(
     parent.add(g);
     if (t.kind === "building" && t.id.startsWith("university-site-")) {
       buildings.push(g);
-      universityLandmark(g, t.id.slice(16), t, box as never, mat as never);
+      if (d.landmark) d.landmark(g, t.id.slice(16), t);
+      else universityLandmark(g, t.id.slice(16), t, box as never, mat as never);
       continue;
     }
     if (t.kind === "building") {
