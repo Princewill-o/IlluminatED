@@ -9,7 +9,7 @@ import { ROLES, type PracticalRole, jobSteps, levelForXp, roleTiers, tierIndex, 
 import { cn } from "@/lib/utils";
 
 export type RoleCareers = Record<string, { xp: number; jobs: number; earned: number }>;
-const SECTORS = ["All", ...Array.from(new Set(ROLES.map((r) => r.sector)))];
+const SECTORS = ["All", "Free", ...Array.from(new Set(ROLES.map((r) => r.sector)))];
 
 /**
  * The Jobs panel: every practical role with its pay, kit, the steps of a job at your
@@ -27,7 +27,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose }: {
   const [sector, setSector] = useState("All");
   const [pick, setPick] = useState<string>(activeRole ?? ROLES[0].id);
   useEffect(() => { void loadRoleCareers().then(setCareers).catch(() => {}); }, []);
-  const list = useMemo(() => ROLES.filter((r) => sector === "All" || r.sector === sector), [sector]);
+  const list = useMemo(() => ROLES.filter((r) => sector === "All" || (sector === "Free" ? !r.plus : r.sector === sector)), [sector]);
   const role = ROLES.find((r) => r.id === pick) ?? ROLES[0];
   const mine = careers[role.id] ?? { xp: 0, jobs: 0, earned: 0 };
   const level = levelForXp(mine.xp);
@@ -63,7 +63,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose }: {
                         <span className="block truncate text-sm font-black">{r.title}{activeRole === r.id && <span className="ml-1 rounded bg-[#6cc04a] px-1 text-[9px] text-white">ON SHIFT</span>}</span>
                         <span className="block truncate text-[11px] text-black/60">Lv {lv} · {t.title}</span>
                       </span>
-                      <span className="shrink-0 text-[11px] font-black text-[#a8742b]">{r.pay[0]}–{r.pay[1]}</span>
+                      <span className="shrink-0 text-right text-[11px] font-black text-[#a8742b]">{r.pay[0]}–{r.pay[1]}<span className={cn("mt-0.5 block rounded px-1 text-[9px] tracking-wide uppercase", r.plus ? "bg-[#7a5ce6] text-white" : "bg-[#6cc04a] text-white")}>{r.plus ? "Plus" : "Free"}</span></span>
                     </button>
                   </li>
                 );
@@ -74,7 +74,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose }: {
             <div className="flex flex-wrap items-start gap-4">
               <span className="grid size-14 place-items-center rounded-2xl text-2xl font-black text-white shadow" style={{ background: role.colour }}>{role.title.slice(0, 1)}</span>
               <div className="min-w-0 flex-1">
-                <h3 className="text-2xl font-black">{role.title}</h3>
+                <h3 className="flex flex-wrap items-center gap-2 text-2xl font-black">{role.title}<span className={cn("rounded-full px-2 py-0.5 text-[10px] tracking-wide text-white uppercase", role.plus ? "bg-[#7a5ce6]" : "bg-[#6cc04a]")}>{role.plus ? "Plus Experience" : "Free for everyone"}</span></h3>
                 <p className="mt-0.5 text-sm text-black/70">{role.summary}</p>
                 <p className="mt-1 flex items-center gap-1 text-xs font-bold text-black/60"><MapPin className="size-3.5" /> {role.place.label}</p>
               </div>

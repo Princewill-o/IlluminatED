@@ -155,6 +155,9 @@ export function RoleShift({ role, level: startLevel, map, onTarget, onBusy, onPa
               <p className="text-[11px] font-bold text-white/60">Job {job + 1} · step {index + 1} of {steps.length}</p>
               <p className="mt-1 text-lg leading-tight font-black">{step.label}</p>
               <div className="mt-2 flex gap-1">{steps.map((_, i) => <span key={i} className="h-1.5 flex-1 rounded-full" style={{ background: i < index ? role.colour : i === index ? "#ffd166" : "rgba(255,255,255,.15)" }} />)}</div>
+              {practice && error && index === 0 && phase === "walk" && (
+                <p className="mt-2 rounded-xl bg-white/10 p-2 text-xs">{error} Practice jobs don't pay.{role.plus && <> <a href="/pricing" className="font-black text-[#ffd166] underline">See Plus</a></>}</p>
+              )}
               {phase === "walk" && <p className="mt-3 text-sm">{near ? "You're at the spot." : `${Math.ceil(distance / TILE)} tiles away · follow the glowing pin`}</p>}
               {phase === "walk" && (
                 <button type="button" disabled={!near} onClick={() => setPhase("skill")} className="mt-3 min-h-11 w-full rounded-full bg-[#ffd166] px-4 font-black text-[#13203a] disabled:opacity-40">{near ? "Start (E)" : "Walk to the spot"}</button>

@@ -383,6 +383,7 @@ export async function inGameDashboard(): Promise<InGameDashboard | null> {
 const ROLE_ERRORS: Record<string, string> = {
   not_allowed: "Log in with your IlluminatED account to work and earn Clout.",
   unknown_role: "That role isn't hiring right now.",
+  plus_required: "This role is part of Plus Experience. Local and automotive roles are free for everyone.",
   rate_limited: "Take a breather: you've started a lot of jobs in the last minute.",
   too_fast: "That was too quick to be real work. Do each step properly to get paid.",
   already_claimed: "This job has already been paid.",

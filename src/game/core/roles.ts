@@ -32,6 +32,8 @@ export interface PracticalRole {
   /** Shown on the reward toast: "+40 Clout — Pizza order completed". */
   done: string;
   colour: string;
+  /** Professional roles need Plus Experience; local and automotive roles are free for everyone. */
+  plus?: boolean;
 }
 
 /** Career levels from the brief: Trainee 1–4, Junior 5–9, Experienced 10–19, Specialist 20–34, Expert 35–49, Master 50+. */
@@ -98,7 +100,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Workshop Trainee", "Tyres and fluids"], ["Junior Mechanic", "Batteries and diagnostics"], ["Mechanic", "Brakes and the lift"], ["Engine Specialist", "Engine repairs"], ["Master Technician", "Bodywork respray booth"], ["Garage Master", "Prestige: custom tool chest"]],
   },
   {
-    id: "doctor", title: "Doctor", sector: "Health", colour: "#1d7ed8", done: "Patient treated",
+    id: "doctor", plus: true, title: "Doctor", sector: "Health", colour: "#1d7ed8", done: "Patient treated",
     place: { label: "St Tomas' Hospital", mapId: "hospital" }, pay: [40, 90],
     summary: "Hear the symptoms, check vitals, examine, decide the treatment, give it and write it up.",
     equipment: ["Stethoscope", "Thermometer", "Bandages", "Patient notes"],
@@ -107,7 +109,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Foundation Doctor", "Minor injuries"], ["Junior Doctor", "Scans and wound care"], ["Registrar", "Ward rounds"], ["Consultant", "Complex cases"], ["Clinical Lead", "White coat with your name"], ["Chief of Medicine", "Prestige: the hospital wing plaque"]],
   },
   {
-    id: "nurse", title: "Nurse", sector: "Health", colour: "#4cc9f0", done: "Patient care task completed",
+    id: "nurse", plus: true, title: "Nurse", sector: "Health", colour: "#4cc9f0", done: "Patient care task completed",
     place: { label: "St Tomas' Hospital ward", mapId: "hospital" }, pay: [20, 50],
     summary: "Prepare beds, take observations, change dressings and wheel patients where they need to go.",
     equipment: ["Wheelchair", "Obs monitor", "Dressings"],
@@ -116,7 +118,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Student Nurse", "Beds and obs"], ["Staff Nurse", "Wheelchair transfers"], ["Senior Staff Nurse", "Assisting doctors"], ["Nurse Specialist", "Wound care clinics"], ["Ward Sister", "Navy uniform"], ["Matron", "Prestige: ward named in your honour"]],
   },
   {
-    id: "police", title: "Police Officer", sector: "Emergency", colour: "#22408a", done: "Incident resolved",
+    id: "police", plus: true, title: "Police Officer", sector: "Emergency", colour: "#22408a", done: "Incident resolved",
     place: { label: "Police station and city streets", mapId: null }, pay: [30, 90],
     summary: "Take the dispatch call, patrol, gather evidence, talk to witnesses and file the report. No powers over other players outside opt-in modes.",
     equipment: ["Radio", "Notebook", "Evidence bags", "Patrol car"],
@@ -125,7 +127,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Special Constable", "Lost property and reports"], ["Police Constable", "Traffic control"], ["Response Officer", "CCTV checks"], ["Detective Constable", "Investigations"], ["Sergeant", "Sergeant's stripes"], ["Inspector", "Prestige: station commendation"]],
   },
   {
-    id: "firefighter", title: "Firefighter", sector: "Emergency", colour: "#d62828", done: "Emergency handled",
+    id: "firefighter", plus: true, title: "Firefighter", sector: "Emergency", colour: "#d62828", done: "Emergency handled",
     place: { label: "Fire station", mapId: null }, pay: [50, 100],
     summary: "Kit up, ride the engine, connect the hose, put the fire out and help people to safety.",
     equipment: ["Fire kit and helmet", "Hose", "Fire engine", "Breathing set"],
@@ -134,7 +136,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Trainee Firefighter", "Bin and car fires"], ["Firefighter", "Rescues"], ["Crew Member", "Breathing apparatus"], ["Rescue Specialist", "Building fires"], ["Crew Commander", "White helmet"], ["Station Commander", "Prestige: engine named after you"]],
   },
   {
-    id: "builder", title: "Builder", sector: "Trades", colour: "#e9a03b", done: "Construction contract finished",
+    id: "builder", plus: true, title: "Builder", sector: "Trades", colour: "#e9a03b", done: "Construction contract finished",
     place: { label: "City building site", mapId: null }, pay: [75, 150],
     summary: "Carry materials, lay the foundation, stack the bricks, fit the beams and windows, paint and sign off.",
     equipment: ["Hard hat", "Trowel", "Hammer", "Drill", "Wheelbarrow"],
@@ -161,7 +163,7 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Salon Junior", "Washes and trims"], ["Stylist", "Colour"], ["Senior Stylist", "Fades"], ["Colour Specialist", "Bold colours"], ["Top Stylist", "Your own chair"], ["Salon Master", "Prestige: signature cut"]],
   },
   {
-    id: "teacher", title: "Teacher", sector: "Education", colour: "#7b2cbf", done: "Lesson taught",
+    id: "teacher", plus: true, title: "Teacher", sector: "Education", colour: "#7b2cbf", done: "Lesson taught",
     place: { label: "Study Quarter classroom", mapId: "study-lobby" }, pay: [30, 60],
     summary: "Pick the lesson, write on the board, explain, hand out worksheets and mark the work.",
     equipment: ["Whiteboard pens", "Worksheets", "Register"],
@@ -233,6 +235,9 @@ export const ROLES: PracticalRole[] = [
     tiers: [["Security Trainee", "Pass checks"], ["Security Officer", "Helping visitors"], ["Patrol Officer", "CCTV"], ["Control Room Specialist", "Alarms and logs"], ["Security Supervisor", "Supervisor jacket"], ["Head of Security", "Prestige: master keys"]],
   },
 ];
+
+/** Free roles: local jobs and everything automotive. */
+export const isFreeRole = (role: PracticalRole) => !role.plus;
 
 export const roleById = (id: string) => ROLES.find((r) => r.id === id) ?? null;
 
