@@ -6,6 +6,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Bot, Building2, Crown, Dice5, Grid3x3, Hash, Swords, Trophy, Users, Wifi, X } from "lucide-react";
 
 import { EventAdStrip, useTechEvents } from "../event-ads";
+import { GameCover } from "./game-covers";
 import { GamesHall } from "../world/games-hall";
 
 
@@ -128,8 +129,17 @@ function useRoom<T>(code: string | null, me: Me, make: (seats: { id: string; nam
   return { seats, state, status, push, start, mySeat: seats.findIndex((s) => s.id === me.id) };
 }
 
-export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string | null; onClose?: () => void }) {
-  const [game, setGame] = useState<GameId | null>(null);
+/** Arcade games that live in the world (they open as their own scene). */
+const ARCADE: { id: "racing" | "championship" | "what-if"; name: string; blurb: string; players: string }[] = [
+  { id: "racing", name: "Maths Racing", blurb: "Answer to accelerate. Race the clock round London.", players: "1 to 8" },
+  { id: "championship", name: "Championship", blurb: "Weekly tournament. Climb the table, win the trophy.", players: "Everyone" },
+  { id: "what-if", name: "What If?", blurb: "Big choices, branching stories. See where your decisions lead.", players: "1" },
+];
+const CATEGORY: Record<string, "Board" | "Live" | "Arcade"> = { tycoon: "Board", c4: "Board", draughts: "Board", ttt: "Board", quiz: "Live", racing: "Arcade", championship: "Live", "what-if": "Arcade" };
+
+export function GamesHub({ me, serverId, onClose, initialGame = null, onIsland, onPlay }: { me: Me; serverId?: string | null; onClose?: () => void; /** Open straight into one game (Games Island pavilions). */ initialGame?: string | null; /** Take the ferry to Games Island. */ onIsland?: () => void; /** Start an arcade game that runs in the world. */ onPlay?: (id: string) => void }) {
+  const [game, setGame] = useState<GameId | null>(() => (GAMES.some((g) => g.id === initialGame) ? initialGame as GameId : null));
+  const [category, setCategory] = useState<"All" | "Board" | "Live" | "Arcade">("All");
   const [mode, setMode] = useState<Mode>("cpu");
   const [room, setRoom] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
@@ -140,8 +150,8 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
     <div className="mx-auto w-full max-w-5xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black tracking-[0.25em] text-[#2b5fd9] uppercase">Games Hub</p>
-          <h2 className="mt-1 text-3xl font-black">{info ? info.name : "Pick a game"}</h2>
+          <p className="text-xs font-black tracking-[0.25em] text-[#e4572e] uppercase">Games</p>
+          <h2 className="mt-1 text-3xl font-black">{info ? info.name : "What are we playing?"}</h2>
           <p className="text-sm text-[#13203a]/70">{info ? info.blurb : "Play the computer, pass the device round, or start an online room for friends."}</p>
         </div>
         <div className="flex gap-2">
@@ -166,26 +176,47 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
       </div>
 
       {!game && (
-        <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {GAMES.map((g) => (
-            <li key={g.id}>
-              <button type="button" onClick={() => setGame(g.id)} className="group flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 border-white bg-white text-left shadow-[0_4px_0_rgba(19,32,58,0.08)] transition hover:-translate-y-1">
-                <span className="relative grid h-28 place-items-center overflow-hidden" style={{ background: g.colour }}>
-                  <span className="absolute -right-6 -bottom-8 size-28 rounded-full bg-white/15 transition group-hover:scale-125" />
-                  <g.Icon className="size-12 text-white" aria-hidden />
-                </span>
-                <span className="flex flex-1 flex-col p-4">
-                  <span className="font-black">{g.name}</span>
-                  <span className="mt-1 text-xs text-[#13203a]/70">{g.blurb}</span>
-                  <span className="mt-auto pt-3 text-[11px] font-black text-[#2b5fd9]">
-                    <Users className="mr-1 inline size-3.5" aria-hidden />
-                    {g.players === "Everyone" ? "Everyone on your server" : `${g.players} players`}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          {onIsland && (
+            <button type="button" onClick={onIsland} className="group relative mt-5 flex w-full items-center gap-4 overflow-hidden rounded-3xl border-b-8 border-[#0e6f63] bg-[linear-gradient(120deg,#15987f,#2fa8a0_55%,#6bc6ff)] p-4 text-left text-white shadow-lg">
+              <svg viewBox="0 0 120 70" className="h-20 w-32 shrink-0 drop-shadow" aria-hidden><ellipse cx="60" cy="52" rx="56" ry="14" fill="#1b7fae" /><ellipse cx="60" cy="44" rx="44" ry="16" fill="#7fc65a" stroke="#141020" strokeWidth="2.5" /><rect x="34" y="24" width="14" height="14" fill="#ffd166" stroke="#141020" strokeWidth="2" /><path d="M32 24 L41 15 L50 24Z" fill="#c8322d" stroke="#141020" strokeWidth="2" /><rect x="62" y="20" width="18" height="18" fill="#7a5ce6" stroke="#141020" strokeWidth="2" /><path d="M60 20 L71 10 L82 20Z" fill="#2b5fd9" stroke="#141020" strokeWidth="2" /><path d="M88 46 V32 L98 36 L88 40" fill="#ff5a7a" stroke="#141020" strokeWidth="2" /></svg>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[11px] font-black tracking-[0.25em] uppercase opacity-80">New</span>
+                <span className="block text-2xl font-black">Games Island</span>
+                <span className="block text-sm opacity-90">Take the ferry: every game has its own pavilion. Walk in to play.</span>
+              </span>
+              <span className="rounded-full bg-white px-4 py-2 text-sm font-black text-[#0e6f63] transition group-hover:scale-105">Catch the ferry</span>
+            </button>
+          )}
+          <div className="mt-5 flex flex-wrap gap-2" role="tablist">
+            {(["All", "Board", "Live", "Arcade"] as const).map((c) => (
+              <button key={c} type="button" role="tab" aria-selected={category === c} onClick={() => setCategory(c)} className={cn("rounded-full border-b-4 px-4 py-1.5 text-sm font-black", category === c ? "border-black/40 bg-[#13203a] text-white" : "border-black/10 bg-white")}>{c}</button>
+            ))}
+          </div>
+          <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...GAMES.map((g) => ({ id: g.id as string, name: g.name, blurb: g.blurb, players: g.players, arcade: false })), ...(onPlay ? ARCADE.map((a) => ({ ...a, arcade: true })) : [])]
+              .filter((g) => category === "All" || CATEGORY[g.id] === category)
+              .map((g, i) => (
+                <li key={g.id} className={cn(i === 0 && category === "All" && "sm:col-span-2")}>
+                  <button type="button" onClick={() => (g.arcade ? onPlay?.(g.id) : setGame(g.id as GameId))} className="group flex h-full w-full flex-col overflow-hidden rounded-3xl border-[3px] border-[#141020] bg-white text-left shadow-[0_6px_0_#141020] transition hover:-translate-y-1 hover:shadow-[0_10px_0_#141020] active:translate-y-0.5">
+                    <span className="relative block overflow-hidden border-b-[3px] border-[#141020]">
+                      <GameCover id={g.id} className={cn("block w-full transition duration-500 group-hover:scale-105", i === 0 && category === "All" ? "h-44" : "h-32")} />
+                      <span className="absolute top-2 left-2 rounded-full border-2 border-[#141020] bg-white px-2 py-0.5 text-[10px] font-black tracking-wide uppercase">{CATEGORY[g.id]}</span>
+                      {i === 0 && category === "All" && <span className="absolute top-2 right-2 rounded-full border-2 border-[#141020] bg-[#ffd166] px-2 py-0.5 text-[10px] font-black uppercase">Featured</span>}
+                    </span>
+                    <span className="flex flex-1 flex-col p-4">
+                      <span className="text-lg font-black">{g.name}</span>
+                      <span className="mt-1 text-xs text-[#13203a]/70">{g.blurb}</span>
+                      <span className="mt-auto flex items-center justify-between pt-3">
+                        <span className="text-[11px] font-black text-[#2b5fd9]"><Users className="mr-1 inline size-3.5" aria-hidden />{g.players === "Everyone" ? "Everyone on your server" : `${g.players} players`}</span>
+                        <span className="rounded-full bg-[#13203a] px-3 py-1 text-xs font-black text-white transition group-hover:bg-[#e4572e]">Play</span>
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </>
       )}
 
       {!game && <EventAdStrip events={events} />}
@@ -232,7 +263,7 @@ export function GamesHub({ me, serverId, onClose }: { me: Me; serverId?: string 
   if (!onClose) return <div className="rounded-3xl bg-[#f7f1e6] p-5 text-[#13203a] [color-scheme:light]">{body}</div>;
   return (
     <div className="absolute inset-0 z-[100004] overflow-y-auto bg-black/60 p-3 md:p-6" onClick={onClose}>
-      <div role="dialog" aria-label="Games Hub" onClick={(e) => e.stopPropagation()} className="mx-auto max-w-5xl rounded-3xl bg-[#f7f1e6] p-5 text-[#13203a]">
+      <div role="dialog" aria-label="Games Hub" onClick={(e) => e.stopPropagation()} className="mx-auto max-w-5xl rounded-3xl border-b-8 border-black/20 bg-[radial-gradient(circle_at_20%_0%,#fff7e6,#f7e3c4_70%)] p-5 text-[#13203a]">
         {body}
       </div>
     </div>

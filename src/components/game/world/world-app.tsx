@@ -102,6 +102,7 @@ import {
   TILE,
   stationMap,
   studyLobbyMap,
+  gamesIslandMap,
   type OfficeOrg,
   type Portal,
   type RegionId,
@@ -167,6 +168,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id.startsWith("university-")) return universityInteriorMap(id.slice(11));
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout, HOME.room) : homeMap(homeStyle(meId));
   if (id === "study-lobby") return studyLobbyMap();
+  if (id === "games-island") return gamesIslandMap();
   if (id === "campus") return campusMap(offices);
   if (id === "highlands") return HIGHLANDS;
   if (id === "hospital") return hospitalMap();
@@ -288,6 +290,7 @@ export function WorldApp({
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
   const [university,setUniversity]=useState<{id:string;topic:"courses"|"events"|"networking"}|null>(null);
   const [bus, setBus] = useState<string | null>(null);
+  const [gamesStart, setGamesStart] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
   const [fading, setFading] = useState(false);
   const [sceneName, setSceneName] = useState("London");
@@ -809,6 +812,7 @@ export function WorldApp({
         if (to.href === "/learn") doActivity("study");
         // Games open as a pop-up right here instead of leaving the world.
         if (to.href === "/games" || to.href === "/games/hub" || to.href === "/games/arcade") setGames(true);
+        else if (to.href.startsWith("/games/hub?game=")) { setGamesStart(to.href.split("=")[1]); setGames(true); }
         else if (to.href === "/coach") setCoachTrip(true);
         else if (to.href === "/games/racing") setEventGame("racing");
         else if (to.href === "/games/championship") setEventGame("championship");
@@ -1327,7 +1331,7 @@ export function WorldApp({
         recordLife(`You completed a study quest and earned ${reward.xp} XP and ${reward.clout} Clout.`);
         router.refresh();
       }} />}
-      {games && <GamesHub serverId={server} me={{ id: me.id, username: me.username }} onClose={() => setGames(false)} />}
+      {games && <GamesHub serverId={server} me={{ id: me.id, username: me.username }} initialGame={gamesStart} onClose={() => { setGames(false); setGamesStart(null); }} onIsland={mapId === "games-island" ? undefined : () => { setGames(false); void goTo("games-island", "Ferry · Games Island"); }} onPlay={(id) => { if (id === "racing" || id === "championship" || id === "what-if") { setGames(false); setEventGame(id); } }} />}
       {learning && <StudyRoom courses={studyCourses} onClose={() => { setLearning(false); router.refresh(); }} onReward={reward => {
         setWallet(value=>value+reward.clout);
         doActivity("study");

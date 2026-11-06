@@ -692,7 +692,10 @@ export function londonMap(): WorldMap {
       portals.push({ id: `bike-${th.id}`, rect: px(th.x + th.w + 1, th.y + th.h, 1, 1), label: "Hire a bike", to: { kind: "bike", dock: th.id } });
     }
     if (th.kind === "landmark" && th.name === "battersea")
-      portals.push({ id: "games-hall", rect: px(th.x + 4, th.y + th.h, 2, 1), label: "Games Hall: play live with others", to: { kind: "games" } });
+      portals.push(
+        { id: "games-hall", rect: px(th.x + 4, th.y + th.h, 2, 1), label: "Games Hall: play live with others", to: { kind: "games" } },
+        { id: "games-island-ferry", rect: px(th.x + 8, th.y + th.h, 2, 1), label: "Ferry to Games Island", to: { kind: "map", mapId: "games-island", label: "Games Island" } },
+      );
   }
   const partyBuilding=L.things.find(th=>th.kind === "building" && th.id === "district-wharf-cafe");
   if(partyBuilding&&partyBuilding.kind==="building")portals.unshift({id:"party-city",rect:px(partyBuilding.x+1,partyBuilding.y+partyBuilding.h,2,1),label:"Community social · music and challenges",to:{kind:"map",mapId:"party-city",label:"London community social"}});
@@ -1064,6 +1067,56 @@ export function tutorialMap(): WorldMap {
 }
 
 /** A shared learning space: real subject practice, simulated careers and earned awards. */
+/** Games on Games Island: each pavilion opens the real game. */
+export const ISLAND_GAMES: { id: string; name: string; accent: string; to: PortalTarget }[] = [
+  { id: "tycoon", name: "London Tycoon", accent: "#2b5fd9", to: { kind: "link", href: "/games/hub?game=tycoon" } },
+  { id: "racing", name: "Maths Racing", accent: "#e4572e", to: { kind: "link", href: "/games/racing" } },
+  { id: "quiz", name: "Quiz Battle Arena", accent: "#7a5ce6", to: { kind: "games" } },
+  { id: "c4", name: "Connect Four", accent: "#c8322d", to: { kind: "link", href: "/games/hub?game=c4" } },
+  { id: "championship", name: "Championship", accent: "#f2a541", to: { kind: "link", href: "/games/championship" } },
+  { id: "draughts", name: "Draughts Club", accent: "#13203a", to: { kind: "link", href: "/games/hub?game=draughts" } },
+  { id: "what-if", name: "What If?", accent: "#15987f", to: { kind: "link", href: "/games/what-if" } },
+  { id: "ttt", name: "Noughts & Crosses", accent: "#2fa8a0", to: { kind: "link", href: "/games/hub?game=ttt" } },
+  { id: "panic", name: "Promotion Panic", accent: "#ff5a7a", to: { kind: "game", companyId: "goggle" } },
+];
+
+/** Games Island: a round island off London with a pavilion for every game and a pier home. */
+export function gamesIslandMap(): WorldMap {
+  const cols = 64, rows = 48, cx = 32, cy = 22;
+  const g = new Grid(cols, rows, "w");
+  for (let y = 0; y < rows; y++)
+    for (let x = 0; x < cols; x++) {
+      const d = Math.hypot((x - cx) / 27, (y - cy) / 19);
+      if (d < 1) g.set(x, y, d > 0.93 ? "_" : "g");
+    }
+  // Ring path, spokes and a plaza with a fountain.
+  for (let a = 0; a < 360; a += 1) {
+    const x = Math.round(cx + Math.cos((a * Math.PI) / 180) * 15), y = Math.round(cy + Math.sin((a * Math.PI) / 180) * 10);
+    g.fill(x - 1, y, 2, 1, "_");
+  }
+  g.fill(cx - 5, cy - 3, 10, 6, "_");
+  g.fill(cx - 1, cy - 1, 2, 2, "w");
+  for (const [x, y] of [[cx - 4, cy - 2], [cx + 3, cy - 2], [cx - 4, cy + 2], [cx + 3, cy + 2]]) g.set(x, y, "B");
+  g.fill(cx - 1, cy + 3, 2, 18, "_"); // spoke south to the pier
+  g.fill(cx - 2, rows - 7, 4, 7, "_"); // the pier over the water
+  const structures: Structure[] = [];
+  const portals: Portal[] = [];
+  ISLAND_GAMES.forEach((game, i) => {
+    const a = (i / ISLAND_GAMES.length) * Math.PI * 2 - Math.PI / 2;
+    const bx = Math.round(cx + Math.cos(a) * 21) - 3, by = Math.round(cy + Math.sin(a) * 13.5) - 2;
+    const below = by + 2 < cy;
+    const s: Structure = { x: bx, y: by, w: 6, h: 4, label: game.name, accent: game.accent, door: below ? "bottom" : "top" };
+    structures.push(s);
+    building(g, s);
+    const dy = below ? by + 4 : by - 1;
+    g.fill(bx + 2, dy, 2, 1, "_");
+    portals.push({ id: `island-${game.id}`, rect: px(bx + 2, dy, 2, 1), label: `${game.name}: play`, to: game.to });
+  });
+  scatterTrees(g, 0, 0, cols, rows, 9, 0.08);
+  portals.push({ id: "island-pier", rect: px(cx - 2, rows - 2, 4, 2), label: "Ferry back to London", to: { kind: "map", mapId: "city", label: "London" } });
+  return finish({ id: "games-island", kind: "campus", name: "Games Island", structures, portals, rooms: [], spawn: centre(cx, rows - 9), accent: "#ffd166", sign: { x: cx, y: cy - 5, text: "Games Island · walk into a pavilion to play" } }, g);
+}
+
 export function studyLobbyMap(): WorldMap {
   const g = new Grid(26, 22, "."); g.border("#");
   for(let x=2;x<24;x+=4)g.set(x,0,"W");
