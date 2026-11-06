@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
@@ -517,7 +517,7 @@ export function WorldApp({
   }, [map, mapId, say, gainXp]);
   useEffect(() => {
     // Local debugging only: lets automated walkthroughs read positions.
-    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id), network: (venue = "town-hall") => setNetworking(venue) };
+    if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, PLAYER_WORK, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id), network: (venue = "town-hall") => setNetworking(venue) };
   }, []);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
@@ -1502,8 +1502,8 @@ export function WorldApp({
         else void goTo(city,label,spot).then(arrive);
       }}/>}
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
-      {dailyJob&&<DailyShift active={map.id===(dailyJob.workplace==="tescow"?"supermarket":"city")} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:CITY} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
-      {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else {setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}}} />}
+      {dailyJob&&<DailyShift key={dailyJob.workplace} active={map.id===(dailyJob.workplace==="tescow"?"supermarket":dailyJob.workplace==="pizzazz"?"city":`workplace-${dailyJob.workplace}`)} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:dailyJob.workplace==="pizzazz"?CITY:(workplaceMap(dailyJob.workplace)??CITY)} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
+      {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else if(next.workplace==="pizzazz"){setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}else{setDailyJob(next);say("Your shift has started. Walk to each work point and do the job.");}}} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} onPickOnMap={() => { setBus(null); setBusPick(true); }} />}
       {!mobileLife && <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
         quests={quests}

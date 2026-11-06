@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PANIC, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PANIC, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
@@ -3012,6 +3012,7 @@ export function World3D({
       }
     }
     let visitorId = -1, visitorLeftAt = 0;
+    let meWorking = false;
     // In-world Promotion Panic: coloured answer pads, with coworkers racing you to them.
     const panicRoot = new THREE.Group(); panicRoot.visible = false; scene.add(panicRoot);
     let panicVersion = -1;
@@ -3627,6 +3628,7 @@ export function World3D({
         NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
         body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
       });
+      if (PLAYER_WORK.activity) { me.walking = false; me.char?.play(PLAYER_WORK.activity); meWorking = true; } else if (meWorking) { meWorking = false; me.char?.play("idle"); }
       officeWorkers.forEach(body => { body.char?.play((body.root.userData.work as string | undefined) ?? "typing"); });
       for (const w of workers) {
         const far = !indoors && Math.hypot(w.spot.x - mx, w.spot.z - mz) > 34;

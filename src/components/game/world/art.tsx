@@ -351,6 +351,8 @@ export const WORLD_RULES = {
   fly: false,
 };
 export const ONLINE: { id: string; username: string }[] = [];
+/** While the player is doing hands-on work, the work animation they play (null when free). */
+export const PLAYER_WORK: { activity: string | null } = { activity: null };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */
 export const TUTOR = { active: false, x: 0, y: 0 };

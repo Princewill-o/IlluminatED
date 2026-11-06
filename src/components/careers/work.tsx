@@ -330,7 +330,7 @@ export function WorkplaceDoor({
     <Panel onClose={onClose} title={workplace.name} workplace={workplace}>
       <Ladder workplace={workplace} job={mine} />
       <div className="mt-4 grid gap-2">
-        {station === "terminal"&&mine&&onPracticalShift&&["pizzazz","tescow"].includes(workplace.id)&&<button type="button" onClick={()=>onPracticalShift(mine)} className="rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white">{workplace.id==="pizzazz"?"Start a pizza delivery route":"Work on the supermarket floor"}</button>}
+        {station === "terminal"&&mine&&onPracticalShift&&<button type="button" onClick={()=>onPracticalShift(mine)} className="rounded-full bg-[#2b5fd9] px-4 py-3 font-black text-white">{workplace.id==="pizzazz"?"Start a pizza delivery route":workplace.id==="tescow"?"Work on the supermarket floor":"Start a hands-on shift on the floor"}</button>}
         {mine && station === "terminal" ? (
           <button type="button" onClick={() => setMode("shift")} className="flex items-center justify-center gap-2 rounded-full bg-[#f2d9a6] py-3 font-black text-[#0d1726]">
             <Briefcase className="size-5" aria-hidden /> Clock in at this station: {roleOf(workplace.id, mine.role)?.title}

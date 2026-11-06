@@ -26,9 +26,12 @@ export function activityPose(
           null,
       );
     const joint = bones!.get(name);
+    // Local turns on top of the clip's pose (the mixer rewrites it every frame). Measured on the
+    // blocky rig: -x swings arms, forearms and thighs forward; +x bends knees and leans spine/head
+    // forward; z raises an arm sideways (left -z, right +z).
     if (joint) {
-      joint.rotation.x = x;
-      joint.rotation.z = z;
+      if (x) joint.rotateX(x);
+      if (z) joint.rotateZ(z);
     }
   };
   const wave = (speed: number, phase = 0) => (reduced ? 0 : Math.sin(seconds * speed + phase));
@@ -39,85 +42,94 @@ export function activityPose(
     set("RightLeg", 1.4);
   };
   // Work poses for the people who run the world: offices, wards, kitchens, stations and roads.
+  const k = (speed: number, phase = 0) => 0.5 + 0.5 * wave(speed, phase);
   switch (activity) {
     case "laptop":
       seatedLegs();
-      set("LeftArm", -0.35, -0.3);
-      set("RightArm", -0.35, 0.3);
-      set("LeftForeArm", -0.65 + sway);
-      set("RightForeArm", -0.7 - sway);
+      set("LeftArm", -0.55, -0.12);
+      set("RightArm", -0.55, 0.12);
+      set("LeftForeArm", -0.75 + sway * 2);
+      set("RightForeArm", -0.8 - sway * 2);
       set("Head", 0.4);
       return;
     case "eat":
       seatedLegs();
-      set("LeftArm", -0.45, -0.25);
+      set("LeftArm", -0.5, -0.1);
       set("LeftForeArm", -0.9);
-      set("RightArm", -0.7, 0.35);
-      set("RightForeArm", -1.1 - 0.7 * (0.5 + 0.5 * wave(2.2)));
-      set("Head", 0.12 - 0.08 * (0.5 + 0.5 * wave(2.2)));
+      set("RightArm", -0.75 - 0.35 * k(2.2), 0.15);
+      set("RightForeArm", -1.0 - 0.9 * k(2.2));
+      set("Head", 0.15 - 0.12 * k(2.2));
       return;
     case "cook":
       set("Spine", 0.15);
-      set("LeftArm", -0.5, -0.3);
-      set("LeftForeArm", -0.8);
-      set("RightArm", -0.6 + wave(6) * 0.15, 0.3 + wave(6, 1.6) * 0.15);
-      set("RightForeArm", -1.05 + wave(6) * 0.25);
+      set("LeftArm", -0.75, -0.1);
+      set("LeftForeArm", -0.6);
+      set("RightArm", -0.85 + wave(6) * 0.2, 0.15 + wave(6, 1.6) * 0.15);
+      set("RightForeArm", -0.9 + wave(6) * 0.3);
       set("Head", 0.35);
       return;
     case "treat":
-      set("Spine", 0.45);
+      set("Spine", 0.5);
       set("Head", 0.3);
-      set("LeftArm", -0.75 + wave(2.5) * 0.12, -0.3);
-      set("RightArm", -0.75 - wave(2.5) * 0.12, 0.3);
-      set("LeftForeArm", -0.55 + wave(3.1) * 0.15);
-      set("RightForeArm", -0.55 - wave(3.1) * 0.15);
+      set("LeftArm", -1.0 + wave(2.5) * 0.15, -0.1);
+      set("RightArm", -1.0 - wave(2.5) * 0.15, 0.1);
+      set("LeftForeArm", -0.45 + wave(3.1) * 0.2);
+      set("RightForeArm", -0.45 - wave(3.1) * 0.2);
       return;
     case "sweep":
-      set("Spine", 0.25, wave(3) * 0.12);
-      set("LeftArm", -0.6, -0.4 + wave(3) * 0.4);
-      set("RightArm", -0.75, 0.4 + wave(3) * 0.4);
-      set("LeftForeArm", -0.5);
-      set("RightForeArm", -0.4);
+      set("Spine", 0.3);
+      set("LeftArm", -0.7, wave(3) * 0.45);
+      set("RightArm", -0.85, wave(3) * 0.45);
+      set("LeftForeArm", -0.4);
+      set("RightForeArm", -0.3);
       return;
     case "direct":
       set("LeftArm", -0.2, -1.2);
-      set("RightArm", -0.2, 2.1 + wave(4) * 0.5);
+      set("RightArm", -2.6 + wave(4) * 0.35, 0.25);
       set("RightForeArm", -0.3 + wave(4) * 0.3);
-      set("Head", 0.05, wave(1.2) * 0.2);
+      set("Head", 0.05);
       return;
     case "hammer":
       set("Spine", 0.4);
       set("Head", 0.35);
-      set("LeftArm", -0.6, -0.3);
-      set("LeftForeArm", -0.7);
-      set("RightArm", -1.2 + (0.5 + 0.5 * wave(7)) * 0.9, 0.3);
-      set("RightForeArm", -0.9 + (0.5 + 0.5 * wave(7)) * 0.4);
+      set("LeftArm", -0.8, -0.1);
+      set("LeftForeArm", -0.6);
+      set("RightArm", -0.4 - 1.5 * k(7), 0.1);
+      set("RightForeArm", -0.3 - 0.5 * k(7));
       return;
     case "clipboard":
-      set("LeftArm", -0.6, -0.3);
-      set("LeftForeArm", -1.3);
-      set("RightArm", -0.5, 0.3);
-      set("RightForeArm", -1.0 + sway * 3);
-      set("Head", 0.35, wave(0.7) * 0.15);
+      set("LeftArm", -0.8, -0.15);
+      set("LeftForeArm", -1.2);
+      set("RightArm", -0.6, 0.1);
+      set("RightForeArm", -1.0 + sway * 4);
+      set("Head", 0.35);
       return;
     case "serve":
-      set("LeftArm", -0.45, -0.3);
+      set("LeftArm", -0.5, -0.1);
       set("LeftForeArm", -0.8);
-      set("RightArm", -0.85 - (0.5 + 0.5 * wave(1.6)) * 0.35, 0.25);
-      set("RightForeArm", -0.4);
+      set("RightArm", -0.9 - 0.45 * k(1.6), 0.1);
+      set("RightForeArm", -0.3);
       set("Head", 0.1);
       return;
+    case "keyboard":
+      set("Spine", 0.15);
+      set("LeftArm", -0.65, 0.12);
+      set("RightArm", -0.65, -0.12);
+      set("LeftForeArm", -0.8 + sway * 3);
+      set("RightForeArm", -0.85 - sway * 3);
+      set("Head", 0.3);
+      return;
     case "carry":
-      set("LeftArm", -0.9, -0.25);
-      set("RightArm", -0.9, 0.25);
-      set("LeftForeArm", -0.7);
-      set("RightForeArm", -0.7);
+      set("LeftArm", -1.0, 0.1);
+      set("RightArm", -1.0, -0.1);
+      set("LeftForeArm", -0.8);
+      set("RightForeArm", -0.8);
       return;
     case "cuffed":
-      set("LeftArm", 0.5, -1.0);
-      set("RightArm", 0.5, 1.0);
-      set("LeftForeArm", -0.2);
-      set("RightForeArm", -0.2);
+      set("LeftArm", 0.45, 0.2);
+      set("RightArm", 0.45, -0.2);
+      set("LeftForeArm", -0.9);
+      set("RightForeArm", -0.9);
       set("Head", 0.25);
       return;
   }
@@ -140,11 +152,11 @@ export function activityPose(
       set("Head", 0.2);
     }
   } else if (activity === "stretch") {
-    set("LeftArm", -0.1, -2.5 + sway);
-    set("RightArm", -0.1, 2.5 - sway);
+    set("LeftArm", -2.8 + sway, 0);
+    set("RightArm", -2.8 - sway, 0);
   } else if (activity === "dance") {
-    set("LeftArm", -0.4, -0.7 + sway * 6);
-    set("RightArm", -0.4, 0.7 + sway * 6);
+    set("LeftArm", -0.4, -0.9 + sway * 6);
+    set("RightArm", -0.4, 0.9 + sway * 6);
     set("Spine", sway * 2, sway * 2);
   }
 }
