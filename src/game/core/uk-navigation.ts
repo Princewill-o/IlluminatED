@@ -5,6 +5,7 @@ import {
   type DrivingState,
   type VehicleObstacle,
 } from "./driving";
+import { edgeLoop } from "./edge-loop";
 import {
   isUKScene,
   UK_PLACES,
@@ -163,7 +164,7 @@ export function freeRoadLoop(
   heading: number,
   vehicles: readonly VehicleObstacle[],
 ) {
-  const next = loopRoadPosition(map.id, at.x, at.y);
+  const next = loopRoadPosition(map.id, at.x, at.y) ?? edgeLoop(map, at.x, at.y);
   if (!next || !vehicleFits(map, { ...next, heading }, true)) return null;
   const c = Math.abs(Math.cos(heading)),
     s = Math.abs(Math.sin(heading));

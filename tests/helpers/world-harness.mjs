@@ -179,6 +179,7 @@ export function worldHarness({
       if (name.includes("careers"))
         return projectData("src/game/core/careers.ts");
       if (name.includes("cars")) return projectData("src/game/core/cars.ts");
+      if (name === "./art") return { RESCUES: new Map() };
       if (name.includes("realtime"))
         return {
           joinGameChannel: async (_sb, ch, _id, fn, cancelled) => {

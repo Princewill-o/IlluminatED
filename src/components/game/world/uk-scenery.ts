@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { universityLandmark } from "./university3d";
+import { M25_TUNNELS } from "../../../game/core/m25-layout";
 
 import type { Built, Thing } from "@/game/core/london";
 import type { TrafficVehicle } from "@/game/core/traffic-rules";
@@ -169,7 +170,7 @@ export function addUKScenery(
 ) {
   const buildings: THREE.Group[] = [],
     lamps: THREE.Vector3[] = [],
-    roofs: { x: number; mesh: THREE.Object3D }[] = [];
+    roofs: { x: number; mesh: THREE.Object3D; z0?: number; z1?: number }[] = [];
   const { box, roof, sign, mat } = d;
   for (const t of data.things) {
     const g = new THREE.Group();
@@ -491,11 +492,48 @@ export function addUKScenery(
     for (const z of [26.1, 33.8, 38.1, 45.8])
       box(parent, "#eee9d9", 0, 0.035, z, map.cols, 0.045, z + 0.075);
     for (const z of [34.25, 37.55]) {
-      box(parent, "#b0b4ae", 24, 0, z, 336, 0.35, z + 0.22);
-      box(parent, "#a6b7bc", 24, 0.66, z, 336, 0.86, z + 0.16);
-      for (let x = 26; x < 335; x += 5) {
+      box(parent, "#b0b4ae", 24, 0, z, map.cols - 24, 0.35, z + 0.22);
+      box(parent, "#a6b7bc", 24, 0.66, z, map.cols - 24, 0.86, z + 0.16);
+      for (let x = 26; x < map.cols - 25; x += 5) {
         box(parent, "#7e9098", x, 0.15, z + 0.04, x + 0.12, 0.8, z + 0.16);
         box(parent, "#e1bc57", x, 0.87, z - 0.02, x + 0.16, 0.98, z + 0.2);
+      }
+    }
+    // Cut-and-cover tunnels: stone portals, a grassed roof that lifts away near you, lamps inside.
+    for (const [x0, x1] of M25_TUNNELS) {
+      const t = new THREE.Group();
+      parent.add(t);
+      for (const x of [x0, x1]) {
+        const face = x === x0 ? -1 : 1;
+        // Portal wall over both carriageways, with the openings left dark.
+        box(t, "#b9ae9c", x - 0.6, 0, 22.5, x + 0.6, 6.4, 25.6);
+        box(t, "#b9ae9c", x - 0.6, 0, 33.9, x + 0.6, 6.4, 38.1);
+        box(t, "#b9ae9c", x - 0.6, 0, 46.4, x + 0.6, 6.4, 49.5);
+        box(t, "#a39883", x - 0.6, 4.6, 22.5, x + 0.6, 6.6, 49.5);
+        box(t, "#8f8676", x - 0.7, 6.3, 22.3, x + 0.7, 6.7, 49.7);
+        const lbl = sign(face < 0 ? "M25 · Tunnel" : "M25 · Tunnel", { bg: "#16243a", fg: "#ffd479", w: 6, h: 0.7 });
+        lbl.position.set(x + face * 0.62, 5.6, 36);
+        lbl.rotation.y = face < 0 ? -Math.PI / 2 : Math.PI / 2;
+        t.add(lbl);
+        // Grassy embankments rising to the portal.
+        for (const [z0, z1] of [[17, 22.5], [49.5, 55]] as const)
+          box(t, "#6f9b4c", x - 2.5, 0, z0, x + 2.5, 5.6, z1);
+      }
+      for (let x = x0 + 4; x < x1; x += 8) {
+        const seg = new THREE.Group();
+        seg.userData.spin = true;
+        t.add(seg);
+        box(seg, "#8a8d86", x - 4, 4.6, 22.5, x + 4, 5.0, 49.5);
+        box(seg, "#6f9b4c", x - 4, 5.0, 21.5, x + 4, 5.5, 50.5);
+        roofs.push({ x, mesh: seg, z0: 21, z1: 51 });
+        for (const z of [26.6, 45.2]) {
+          const strip = box(t, "#ffe0a0", x - 1, 4.35, z, x + 1, 4.5, z + 0.25);
+          strip.castShadow = false;
+          lamps.push(new THREE.Vector3(x, 4.3, z));
+        }
+        // Tunnel walls either side of each carriageway.
+        box(t, "#d5d0c4", x - 4, 0, 25.4, x + 4, 4.6, 25.7);
+        box(t, "#d5d0c4", x - 4, 0, 46.3, x + 4, 4.6, 46.6);
       }
     }
     const boards = map.portals.filter((portal) => portal.rect.y / 32 < 36);
@@ -522,12 +560,9 @@ export function addUKScenery(
     lamps,
     update: (playerX: number, playerZ: number, overview = false) => {
       for (const roof of roofs)
-        roof.mesh.visible = tunnelRoofVisible(
-          roof.x,
-          playerX,
-          playerZ,
-          overview,
-        );
+        roof.mesh.visible = roof.z0 === undefined
+          ? tunnelRoofVisible(roof.x, playerX, playerZ, overview)
+          : overview || Math.abs(roof.x - playerX) > 22 || playerZ < roof.z0 || playerZ > (roof.z1 ?? 0);
     },
   };
 }

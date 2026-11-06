@@ -37,6 +37,7 @@ import { SceneMusic } from "./scene-music";
 import { TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
+import { TunnelFlash } from "./tunnel-flash";
 import { useLife } from "./use-life";
 import { useLifeJournal } from "./use-life-journal";
 import { useNavigation } from "./use-navigation";
@@ -1304,6 +1305,7 @@ export function WorldApp({
       {!!nearby.length && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>{setPhoneApp("nearby");setPhone(true);}} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#42745e] px-4 py-2 text-sm font-bold text-white shadow-lg"><Users className="size-4"/>Say hello · {nearby.length}</button></HudSlot>}
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
+      <TunnelFlash/>
       <NpcVisits enabled={outdoors&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}
         onReward={()=>{void gainXp("study");}}
         onWaypoint={(portal,label)=>setWaypoint({id:portal.id,name:label,kind:"job",x:portal.rect.x+portal.rect.w/2,y:portal.rect.y+portal.rect.h/2})}/>

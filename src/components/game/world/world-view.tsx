@@ -33,6 +33,7 @@ import { TRAIN_CALL } from "./train-state";
 import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
+import { edgeLoop } from "@/game/core/edge-loop";
 import { frameBudget } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import { roadCruiseSpeed, crashImpact } from "@/game/core/living-world";
@@ -643,7 +644,7 @@ export function WorldView({
         }
       }
       if (!pausedRef.current && !flying && (dx || dy)) {
-        const wrapped = driving ? freeRoadLoop(map, next, driven?.heading ?? p.heading, obstacles) : loopRoadPosition(map.id, next.x, next.y);
+        const wrapped = driving ? freeRoadLoop(map, next, driven?.heading ?? p.heading, obstacles) : (loopRoadPosition(map.id, next.x, next.y) ?? (map.kind === "city" || map.kind === "campus" ? edgeLoop(map, next.x, next.y) : null));
         if (wrapped && (driving ? vehicleFits(map, { ...wrapped, heading: driven?.heading ?? p.heading }, true) : !blocked(map, wrapped.x, wrapped.y))) {
           next = wrapped;
           target.current = null;

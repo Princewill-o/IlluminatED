@@ -37,6 +37,7 @@ import { softSunShadows } from "./soft-sun-shadows";
 import { attachWorldBatch, mergeSolidScenery, mergeStaticScenery, registerSolidSceneryMaterial, solidScenerySignature, staticScenerySignature } from "./static-scenery-batches";
 import { createStaticShadowBatch, staticShadowEligible } from "./static-shadow-batches";
 import { addStreetscape } from "./streetscape3d";
+import { addMountainRing } from "./terrain3d";
 import { TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
 import { universityLandmark } from "./university3d";
@@ -2257,6 +2258,8 @@ export function World3D({
     const spinners: THREE.Object3D[] = [];
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
+    // Mountains all round, with a tunnel mouth over every road that leaves the map.
+    if (!indoors) jobs.push(addMountainRing(world, map, { load, bend }).catch(() => null));
     const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
       lamps.push(position);
       jobs.push(model.then(object => {

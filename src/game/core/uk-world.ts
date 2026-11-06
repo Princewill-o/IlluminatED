@@ -1,4 +1,5 @@
 import type { Built, Thing } from "./london";
+import { M25_COLS, M25_TUNNELS } from "./m25-layout";
 import { MOTORWAY_CORRIDORS, corridorScene, corridorMap } from "./motorway-corridors";
 import { universitiesInCity } from "./universities";
 import type { Portal, WorldMap } from "./world";
@@ -536,26 +537,32 @@ function regionScene(id: string): Built {
 }
 /** Long three-lane dual carriageway. End turn bays exist beyond the signed central motorway. */
 function motorwayScene(): Built {
-  const g = canvas(360, 72),
+  const L = M25_COLS;
+  const g = canvas(L, 72),
     things: Thing[] = [];
   // Three two-tile lanes plus hard shoulders, in each direction. UK left-hand flow.
-  g.fill(0, 24, 360, 24, "-");
-  g.fill(0, 26, 360, 8, "=");
-  g.fill(0, 38, 360, 8, "=");
-  for (const y of [28, 30, 32, 40, 42, 44]) g.fill(0, y, 360, 1, ":");
-  g.fill(24, 34, 312, 4, "X"); // Physical central reservation, never a pedestrian shortcut.
+  g.fill(0, 24, L, 24, "-");
+  g.fill(0, 26, L, 8, "=");
+  g.fill(0, 38, L, 8, "=");
+  for (const y of [28, 30, 32, 40, 42, 44]) g.fill(0, y, L, 1, ":");
+  g.fill(24, 34, L - 48, 4, "X"); // Physical central reservation, never a pedestrian shortcut.
   g.fill(0, 34, 24, 4, "=");
-  g.fill(336, 34, 24, 4, "=");
+  g.fill(L - 24, 34, 24, 4, "=");
   const serviceLabels = [
     "M25 J21 · M1 · The North",
     "M25 J2 · A2 · Kent",
     "M25 J23 · A1(M)",
+    "M25 J15 · M4 · Heathrow",
+    "M25 J10 · A3 · Guildford",
+    "M25 J28 · A12 · Brentwood",
   ];
-  for (let i = 0; i < 3; i++) {
-    const x = 68 + i * 100,
+  const services: [number, number][] = [];
+  for (let i = 0; i < serviceLabels.length; i++) {
+    const x = 68 + i * 100 + (i >= 2 ? 20 : 0),
       y = i % 2 ? 54 : 7,
       w = 24,
       h = 9;
+    services.push([x, y]);
     g.fill(x, y, w, h, "X");
     things.push({
       kind: "building",
@@ -574,6 +581,15 @@ function motorwayScene(): Built {
     // Off-road service yards; no urban footpath, residence or people on motorway lanes.
     g.fill(x - 3, y + h, w + 6, 3, "-");
   }
+  // Verge planting either side, kept clear of the service yards and the tunnel roofs.
+  for (let x = 6; x < L - 6; x += 7) {
+    if (M25_TUNNELS.some(([a, b]) => x > a - 4 && x < b + 4)) continue;
+    for (const [y, step] of [[3, 0], [19, 3], [52, 1], [66, 4]] as const) {
+      const tx = x + step;
+      if (services.some(([sx, sy]) => tx > sx - 5 && tx < sx + 29 && Math.abs(y - sy - 4) < 9)) continue;
+      things.push({ kind: "tree", id: `uk-m25-verge-${tx}-${y}`, x: tx, y });
+    }
+  }
   return {
     tiles: g.rows(),
     things,
@@ -583,22 +599,22 @@ function motorwayScene(): Built {
     routes: [
       [
         [12, 28],
-        [348, 28],
-        [348, 44],
+        [L - 12, 28],
+        [L - 12, 44],
         [12, 44],
         [12, 28],
       ],
       [
         [16, 30],
-        [344, 30],
-        [344, 42],
+        [L - 16, 30],
+        [L - 16, 42],
         [16, 42],
         [16, 30],
       ],
       [
         [20, 32],
-        [340, 32],
-        [340, 40],
+        [L - 20, 32],
+        [L - 20, 40],
         [20, 40],
         [20, 32],
       ],
@@ -795,11 +811,11 @@ export function ukWorldMap(id: string): WorldMap | null {
   } else if (id === "m25") {
     const exits = [
       { id: "city", x: 52 },
-      { id: "kent", x: 102 },
-      { id: "nottingham", x: 152 },
-      { id: "birmingham", x: 202 },
-      { id: "manchester", x: 252 },
-      { id: "edinburgh", x: 302 },
+      { id: "kent", x: 152 },
+      { id: "nottingham", x: 302 },
+      { id: "birmingham", x: 392 },
+      { id: "manchester", x: 552 },
+      { id: "edinburgh", x: 652 },
     ];
     for (const exit of exits) {
       const route = UK_ROUTES.find((r) =>
@@ -853,7 +869,7 @@ export function ukWorldMap(id: string): WorldMap | null {
     spawn: scene.spawn,
     accent: place?.accent ?? "#35639a",
     sign: {
-      x: id === "m25" ? 180 : 48,
+      x: id === "m25" ? 120 : 48,
       y: id === "rotherhithe" ? 9 : id === "m25" ? 20 : 55,
       text:
         id === "m25"
@@ -929,7 +945,7 @@ export function loopRoadPosition(
     region = regionIds.has(mapId),
     motorway = mapId === "m25";
   if (!city && !region && !motorway) return null;
-  const cols = city ? 256 : motorway ? 360 : 96,
+  const cols = city ? 256 : motorway ? M25_COLS : 96,
     rows = city ? 200 : motorway ? 72 : 80,
     width = cols * TILE,
     height = rows * TILE;

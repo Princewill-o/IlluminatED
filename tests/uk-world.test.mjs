@@ -183,10 +183,10 @@ test("Rotherhithe entries and exits retain north and south physical endpoints", 
 test("M25 is a long six-lane separated motorway, with reversible exits and endless carriageways", () => {
   const map = uk.ukWorldMap("m25"),
     scene = uk.buildUKScene("m25");
-  assert.equal(map.cols, 360);
+  assert.equal(map.cols, 720);
   assert.equal(map.rows, 72);
   assert.equal(scene.routes.length, 3);
-  for (let x = 24; x < 336; x++) {
+  for (let x = 24; x < 696; x++) {
     for (const y of [28, 30, 32, 40, 42, 44])
       assert.ok("=:".includes(map.tiles[y][x]));
     for (let y = 34; y < 38; y++) assert.equal(map.tiles[y][x], "X");
