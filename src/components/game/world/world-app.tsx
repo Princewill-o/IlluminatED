@@ -46,7 +46,7 @@ import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
 import { SceneMusic } from "./scene-music";
-import { TRAIN_CALL } from "./train-state";
+import { RIDE, TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
 import { TunnelFlash } from "./tunnel-flash";
@@ -94,7 +94,7 @@ import { type PracticalRole, ROLES } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
 import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
-import { canBoardTrain } from "@/game/core/train";
+import { ARRIVE_DOCK_S, RIDE_SWAP_S, arriveFrame, canBoardTrain, trainStop } from "@/game/core/train";
 import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } from "@/game/core/uk-navigation";
 import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
 import { universityById } from "@/game/core/universities";
@@ -301,6 +301,10 @@ export function WorldApp({
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [petsOpen,setPetsOpen]=useState(false);
+  const [tunnelBlink,setTunnelBlink]=useState(0);
+  // Leaving the Underground some other way takes you off the train.
+  useEffect(()=>{if(!mapId.startsWith("station-"))RIDE.active=false;},[mapId]);
+  useEffect(()=>{const off=()=>setTube(null);window.addEventListener("illumed:ride-off",off);return()=>window.removeEventListener("illumed:ride-off",off);},[]);
   const [hotelBooking,setHotelBooking]=useState<HotelBooking|null>(null);
   const [hotelDesk,setHotelDesk]=useState<string|null>(null);
   useEffect(()=>{void loadHotelBooking().then(setHotelBooking).catch(()=>{});},[]);
@@ -874,8 +878,10 @@ export function WorldApp({
       else if (to.kind === "desk") {setDesk(true);}
       else if (to.kind === "tube") {
         if (map.kind === "station") {
-          if (!canBoardTrain(performance.now() - TRAIN_CALL.at, map.cols, PLAYER.x / TILE, PLAYER.y / TILE)) return;
+          if (!RIDE.active && !canBoardTrain(performance.now() - TRAIN_CALL.at, map.cols, PLAYER.x / TILE, PLAYER.y / TILE)) return;
           boardedStation.current = map.id;
+          // You're on board: you stay in the carriage, free to walk about, until you get off.
+          if (!RIDE.active) Object.assign(RIDE, { active: true, phase: "boarded", at: performance.now(), rel: PLAYER.x / TILE - trainStop(map.cols), dest: "" });
         }
         setTube(to.station);
       }
@@ -1155,6 +1161,25 @@ export function WorldApp({
         if (!st || !inside) return;
         // Ride inside the carriage, then step off onto the other station's platform.
         setBike(null);
+        if (RIDE.active && map.kind === "station") {
+          // The real thing: the doors close, the train pulls out with you on it, through the
+          // tunnel and into the next station, where the doors open and you walk off.
+          void gainXp("train");
+          Object.assign(RIDE, { phase: "departing", at: performance.now(), dest: t.id });
+          play("train", soundOn());
+          say(`This is a Revision line train to ${st.name}. Stand clear of the closing doors.`);
+          window.setTimeout(() => {
+            if (!RIDE.active || RIDE.dest !== t.id) return;
+            Object.assign(RIDE, { phase: "arriving", at: performance.now() });
+            setTunnelBlink(Date.now());
+            setArrive({ x: (trainStop(inside.cols) + arriveFrame(0).offset + RIDE.rel) * TILE, y: PLAYER.y });
+            setMapId(`station-${t.id}`);
+            setTrip((n) => n + 1);
+            window.setTimeout(() => say(`${st.name}. Mind the gap between the train and the platform.`), 5000);
+            window.setTimeout(() => { if (RIDE.active && RIDE.phase === "arriving") RIDE.phase = "docked"; }, (ARRIVE_DOCK_S + 1) * 1000);
+          }, RIDE_SWAP_S * 1000);
+          return;
+        }
         // The player has already walked into a stopped train before choosing a destination.
         void gainXp("train"); setJourney({
           to: st.name,
@@ -1170,6 +1195,7 @@ export function WorldApp({
         play("train", soundOn());
         return;
       } else {
+        RIDE.active = false;
         dest = t.mapId;
         const next = loadMap(dest, offices, me.id);
         if (!next) return;
@@ -1183,9 +1209,11 @@ export function WorldApp({
         play("train",soundOn());
       }
     },
-    [offices, me.id, gainXp, map.kind, map.id, beginTransition],
+    [offices, me.id, gainXp, map.kind, map.id, beginTransition, say],
   );
 
+  // Preview builds: hop on the train at this station and ride to another one.
+  useEffect(()=>{if(process.env.NODE_ENV==="production")return;(window as unknown as {__ride?:(id:string)=>void}).__ride=(id)=>{if(map.kind!=="station")return;Object.assign(RIDE,{active:true,phase:"boarded",at:performance.now(),rel:7.4,dest:""});boardedStation.current=map.id;window.setTimeout(()=>ride({kind:"station",id}),1500);};},[ride,map.kind,map.id]);
   // Riding the bus: to another stop in London, home, or the Careers Campus.
   const busRide = useCallback(
     (t: BusTrip, revised: boolean) => {
@@ -1461,6 +1489,7 @@ export function WorldApp({
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
       <RewardToasts/>
+      {tunnelBlink > 0 && <div key={tunnelBlink} aria-hidden className="pointer-events-none fixed inset-0 z-[100003] bg-[#07060b]" style={{ animation: "tunnel-blink 1.4s ease-out forwards" }}><style>{"@keyframes tunnel-blink{0%,45%{opacity:1}100%{opacity:0;visibility:hidden}}"}</style></div>}
       {hotelDesk && <HotelDesk hotel={hotelDesk} booking={hotelBooking} wallet={wallet} onClose={() => setHotelDesk(null)}
         onBooking={(b, change) => { setHotelBooking(b); setWallet((w) => Math.max(0, w + change)); }}
         onGoToRoom={(b) => { setHotelDesk(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }} />}

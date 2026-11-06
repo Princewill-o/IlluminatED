@@ -28,7 +28,7 @@ import { AvatarFigure } from "../avatar";
 import { npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { play, soundOn } from "../sound";
-import { TRAIN_CALL } from "./train-state";
+import { RIDE, TRAIN_CALL } from "./train-state";
 
 import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -40,7 +40,7 @@ import { roadCruiseSpeed, crashImpact } from "@/game/core/living-world";
 import type { WorldNavigation } from "@/game/core/navigation";
 import type { Pursuit } from "@/game/core/pursuit";
 import { acceptRoadViolation, checkRoadViolation, createRoadCooldown, trafficMoveDistance, type RoadViolation, type TrafficVehicle } from "@/game/core/traffic-rules";
-import { canBoardTrain, trainDoorOpenAt } from "@/game/core/train";
+import { CARRIAGE, arriveFrame, canBoardTrain, departFrame, doorCentres, trainDoorOpenAt, trainStop } from "@/game/core/train";
 import { freeRoadLoop, motorwayCarArrival } from "@/game/core/uk-navigation";
 import { isUKScene, loopRoadPosition } from "@/game/core/uk-world";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH } from "@/game/core/vehicles";
@@ -625,7 +625,26 @@ export function WorldView({
         return { x: Math.max(TILE, Math.min(map.width - TILE, p.x + dx / len * sp)), y: Math.max(TILE, Math.min(map.height - TILE, p.y + dy / len * sp)) };
       };
       let next = driven ?? (flying ? glide() : step(walkMap, p, dx, dy, dt, speedRef.current));
-      if (map.kind === "station") {
+      if (map.kind === "station" && RIDE.active) {
+        // On the train: you move about inside the carriage while it carries you along.
+        const frame = RIDE.phase === "departing" ? departFrame((now - RIDE.at) / 1000) : RIDE.phase === "arriving" || RIDE.phase === "docked" ? arriveFrame((now - RIDE.at) / 1000) : { offset: 0, doorOpen: 1 };
+        const trainX = trainStop(map.cols) + frame.offset;
+        const length = Math.hypot(dx, dy) || 1;
+        const distance = pausedRef.current ? 0 : WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
+        const rel = Math.max(CARRIAGE.minX, Math.min(CARRIAGE.maxX, RIDE.rel + (dx / length) * distance / TILE));
+        let y = p.y / TILE + (dy / length) * distance / TILE;
+        const atDoor = doorCentres(trainX).some((d) => Math.abs(trainX + rel - d) <= 0.5);
+        if (y < CARRIAGE.minY && !(atDoor && frame.doorOpen > 0.8 && (RIDE.phase === "boarded" || RIDE.phase === "docked"))) y = CARRIAGE.minY;
+        y = Math.min(CARRIAGE.maxY, y);
+        RIDE.rel = rel;
+        next = { x: (trainX + rel) * TILE, y: y * TILE };
+        // Stepping back onto the platform: off the train.
+        if (y < CARRIAGE.doorY - 0.3) {
+          RIDE.active = false;
+          if (RIDE.phase === "docked") TRAIN_CALL.at = now - 6500;
+          window.dispatchEvent(new CustomEvent("illumed:ride-off"));
+        }
+      } else if (map.kind === "station") {
         const elapsed = now - TRAIN_CALL.at;
         const distance = WALK_SPEED * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
         const length = Math.hypot(dx, dy) || 1;
@@ -668,6 +687,7 @@ export function WorldView({
       if ((dx || dy) && !moved) target.current = null;
       if (dx) p.d = dx > 0 ? 1 : -1;
       if (p.walking && !moved) stopped();
+      if (RIDE.active && map.kind === "station" && p.walking && !(dx || dy)) stopped();
       p.x = next.x;
       p.y = next.y;
       if (driven) {
@@ -683,6 +703,8 @@ export function WorldView({
       PLAYER.level = flying ? PLAYER.level : rise.level;
       Object.assign(PLAYER_VEHICLE, { active: driving && (map.art === "london" || isUKScene(map.id)), x: p.x, y: p.y, heading: p.heading, speed: p.speed, length: carRef.current?.startsWith("bus:") ? BUS_LENGTH : CAR_LENGTH, width: carRef.current?.startsWith("bus:") ? BUS_WIDTH : CAR_WIDTH });
       p.walking = moved;
+      // On a moving train you only walk when you choose to.
+      if (RIDE.active && map.kind === "station") p.walking = Boolean(dx || dy) && !pausedRef.current;
       // Driving: turn the car sprite to face where you're going.
       const cs = is3d ? null : meEl.current?.querySelector<HTMLElement>(".car-sprite");
       if (cs?.dataset.car) {
@@ -773,7 +795,7 @@ export function WorldView({
       }
 
       const portal = portalAt(levelMap(map, PLAYER.level), p.x, p.y);
-      if (!pausedRef.current && moved && dy > 0 && map.kind === "station" &&
+      if (!pausedRef.current && moved && dy > 0 && map.kind === "station" && !RIDE.active &&
           canBoardTrain(now - TRAIN_CALL.at, map.cols, p.x / TILE, p.y / TILE)) {
         const boardingPortal = map.portals.find(item => item.id === "board");
         if (boardingPortal) {

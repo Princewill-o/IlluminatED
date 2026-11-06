@@ -3,14 +3,17 @@
 import { useEffect, useState } from "react";
 
 import { HudSlot } from "./hud";
-import { TRAIN_CALL } from "./train-state";
+import { RIDE, TRAIN_CALL } from "./train-state";
 
 import { trainTimes } from "@/game/core/train";
 
 export function TrainTimes() {
   const [times, setTimes] = useState<ReturnType<typeof trainTimes> | null>(null);
+  const [onBoard, setOnBoard] = useState<string | null>(null);
   useEffect(() => {
     const update = () => {
+      const ride = RIDE.active ? RIDE.phase : null;
+      setOnBoard((was) => (was === ride ? was : ride));
       if (TRAIN_CALL.at >= 0 && !document.hidden) {
         const next = trainTimes(performance.now() - TRAIN_CALL.at);
         setTimes(previous => previous && JSON.stringify(previous) === JSON.stringify(next) ? previous : next);
@@ -21,6 +24,19 @@ export function TrainTimes() {
     return () => window.clearInterval(timer);
   }, []);
 
+  if (onBoard) {
+    const text = onBoard === "boarded" ? ["On board", "Choose where you're going, or step back off through the doors."]
+      : onBoard === "departing" ? ["Next stop coming up", "Walk about the carriage or chat while you ride."]
+        : onBoard === "arriving" ? ["Arriving", "Mind the gap when the doors open."]
+          : ["Doors open", "Walk out through an open red doorway."];
+    return (
+      <HudSlot area="tl" order={30}><section aria-label="On the train" className="pointer-events-none max-w-full rounded-2xl border border-[#ffd400]/40 bg-[#13203a]/95 px-4 py-3 text-xs text-[#ffd400] shadow-lg">
+        <h2 className="font-black tracking-wider uppercase">Revision line · on the train</h2>
+        <p className="mt-1 font-bold" role="status">{text[0]}</p>
+        <p className="mt-1 max-w-64 text-[10px] text-white/80">{text[1]}</p>
+      </section></HudSlot>
+    );
+  }
   if (!times) return null;
   const status = times.phase === "arriving" ? `Arriving in ${times.arrivalSeconds}s`
     : times.phase === "opening" ? `Doors opening · board in ${times.boardingSeconds}s`

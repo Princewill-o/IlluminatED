@@ -41,7 +41,7 @@ import { attachWorldBatch, mergeSolidScenery, mergeStaticScenery, registerSolidS
 import { createStaticShadowBatch, staticShadowEligible } from "./static-shadow-batches";
 import { addStreetscape } from "./streetscape3d";
 import { addMountainRing } from "./terrain3d";
-import { TRAIN_CALL } from "./train-state";
+import { RIDE, TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
 import { universityLandmark } from "./university3d";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
@@ -80,7 +80,7 @@ import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
-import { trainFrame } from "@/game/core/train";
+import { arriveFrame, departFrame, trainFrame, trainStop } from "@/game/core/train";
 import { ukTrafficRoutes, ukTrafficOffset, ukAmbientPeople, ukTrafficCount } from "@/game/core/uk-traffic";
 import { buildUKScene, UK_GATEWAYS } from "@/game/core/uk-world";
 import { universityById } from "@/game/core/universities";
@@ -2095,39 +2095,86 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   return g;
 }
 
-/** A deep-level tube train: red cab ends, white and blue cars, red doors. */
+/**
+ * A walk-through tube train, cut away like a doll's house so you can see in from above:
+ * a full wall with sliding doors on the platform side, a low window sill on the far side,
+ * moquette seats, grab poles and lights. You walk on and ride it to the next station.
+ */
 function tubeTrain() {
   const g = new THREE.Group();
+  const N = -1.3, S = 1.3; // platform side, far side (z, relative to the track centre)
   for (let c = 0; c < 4; c++) {
     const x0 = c * 6.2;
-    box(g, "#eef0f4", x0, 0.3, -0.75, x0 + 6, 2.4, 0.75);
-    box(g, "#1f3fa8", x0, 0.45, -0.77, x0 + 6, 0.95, 0.77);
-    for (let w = 0; w < 4; w++) box(g, "#2a3346", x0 + 0.5 + w * 1.4, 1.35, -0.78, x0 + 1.4 + w * 1.4, 2.0, 0.78);
-    // Split platform doors slide apart over a dark doorway, with inset glass.
-    for (const side of [-1, 1]) {
-      box(g, "#192536", x0 + 2.45, 0.4, side * 0.81 - 0.015, x0 + 3.55, 2.25, side * 0.81 + 0.015);
-      for (const direction of [-1, 1]) {
-        const door = new THREE.Group();
-        door.position.x = x0 + 3 + direction * 0.26;
-        door.userData = { slidingDoor: true, restX: door.position.x, direction };
-        box(door, "#e63b38", -0.25, 0.45, side * 0.84 - 0.025, 0.25, 2.25, side * 0.84 + 0.025);
-        box(door, "#8dc5d8", -0.17, 1.35, side * 0.88 - 0.01, 0.17, 2.02, side * 0.88 + 0.01);
-        g.add(door);
-      }
+    // Floor and underframe.
+    box(g, "#2a2733", x0, 0.0, N + 0.1, x0 + 6, 0.12, S - 0.1);
+    box(g, "#9aa1ad", x0 + 0.05, 0.12, N + 0.15, x0 + 5.95, 0.16, S - 0.15);
+    box(g, "#c8b23a", x0 + 2.45, 0.161, N + 0.15, x0 + 3.55, 0.17, N + 0.45);
+    // Platform-side wall: white body, blue band, windows, and a doorway with sliding doors.
+    for (const [a, b] of [[x0, x0 + 2.45], [x0 + 3.55, x0 + 6]]) {
+      box(g, "#eef0f4", a, 0.12, N, b, 2.4, N + 0.12);
+      box(g, "#1f3fa8", a, 0.45, N - 0.02, b, 0.85, N + 0.14);
+      box(g, "#2a3346", a + 0.3, 1.3, N - 0.03, b - 0.3, 2.0, N + 0.15);
     }
-    box(g, "#c8d3df", x0 + 0.12, 2.4, -0.7, x0 + 5.88, 2.56, 0.7);
+    box(g, "#eef0f4", x0 + 2.45, 2.25, N, x0 + 3.55, 2.4, N + 0.12);
+    for (const direction of [-1, 1]) {
+      const door = new THREE.Group();
+      door.position.x = x0 + 3 + direction * 0.27;
+      door.userData = { slidingDoor: true, restX: door.position.x, direction };
+      box(door, "#e63b38", -0.27, 0.16, N - 0.04, 0.27, 2.25, N + 0.04);
+      box(door, "#8dc5d8", -0.18, 1.3, N - 0.06, 0.18, 2.0, N + 0.06);
+      g.add(door);
+    }
+    // Far side: a low sill with windows above cut away, so the camera sees in.
+    box(g, "#eef0f4", x0, 0.12, S - 0.12, x0 + 6, 0.75, S);
+    box(g, "#1f3fa8", x0, 0.45, S - 0.14, x0 + 6, 0.7, S + 0.02);
+    // Carriage ends with gangway.
+    for (const ex of [x0, x0 + 5.88]) { box(g, "#dfe3ea", ex, 0.12, N, ex + 0.12, 2.4, N + 0.8); box(g, "#dfe3ea", ex, 0.12, S - 0.8, ex + 0.12, 0.75, S); }
+    // Moquette benches along the far side, leaving the door bay clear, and facing seats.
+    for (const [a, b] of [[x0 + 0.25, x0 + 2.3], [x0 + 3.7, x0 + 5.75]]) {
+      box(g, "#24305a", a, 0.16, S - 0.62, b, 0.5, S - 0.14);
+      box(g, "#c8322d", a + 0.05, 0.5, S - 0.6, b - 0.05, 0.56, S - 0.16);
+      box(g, "#24305a", a, 0.5, S - 0.24, b, 0.95, S - 0.14);
+      // Grab rail over the seats.
+      box(g, "#d7dbe2", a, 1.85, S - 0.45, b, 1.89, S - 0.41);
+    }
+    // Grab poles in the door bay.
+    for (const z of [-0.3, 0.35]) {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 2.2, 8), mat("#ffd400"));
+      pole.position.set(x0 + 3, 1.26, z);
+      g.add(pole);
+    }
+    // Ceiling light strip along the top of the platform wall.
+    box(g, "#fff8d8", x0 + 0.2, 2.3, N + 0.12, x0 + 5.8, 2.36, N + 0.3);
     for (const axle of [1, 5]) for (const side of [-1, 1]) {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.12, 12), new THREE.MeshStandardMaterial({color: "#293449", roughness: 0.65}));
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.12, 12), mat("#293449"));
       wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(x0 + axle, 0.2, side * 0.58);
+      wheel.position.set(x0 + axle, 0.05, side * 1.0);
       g.add(wheel);
     }
-    box(g, "#2a2733", x0, 0.05, -0.6, x0 + 6, 0.3, 0.6);
   }
-  box(g, "#d72a22", 24.2, 0.3, -0.75, 25.4, 2.4, 0.75);
-  box(g, "#1c2430", 25.2, 1.2, -0.55, 25.42, 2.1, 0.55);
-  for (const z of [-0.5, 0.5]) box(g, "#fff5c4", 25.4, 0.75, z - 0.1, 25.45, 0.95, z + 0.1);
+  // The driver's cab at the front.
+  box(g, "#d72a22", 24.2, 0.12, N, 25.4, 2.4, S);
+  box(g, "#1c2430", 25.2, 1.2, N + 0.3, 25.42, 2.1, S - 0.3);
+  for (const z of [-0.8, 0.8]) box(g, "#fff5c4", 25.4, 0.6, z - 0.12, 25.46, 0.85, z + 0.12);
   return g;
+}
+
+/** Tunnels beyond both ends of the platform, so a train you're riding has somewhere to go. */
+function tubeTunnels(world: THREE.Group, cols: number, ty: number) {
+  for (const [from, to] of [[-210, 1.4], [cols - 1.4, cols + 210]] as const) {
+    for (let x = from; x < to; x += 6) {
+      const x1 = Math.min(to, x + 6);
+      box(world, "#24222b", x, -0.45, ty - 0.6, x1, -0.05, ty + 3.6);
+      box(world, "#3a3742", x, -0.05, ty - 0.6, x1, 2.9, ty - 0.2);
+      box(world, "#3a3742", x, -0.05, ty + 3.2, x1, 0.6, ty + 3.6);
+      box(world, "#6d6a74", x, 0.0, ty + 0.85, x1, 0.06, ty + 0.95);
+      box(world, "#6d6a74", x, 0.0, ty + 2.05, x1, 0.06, ty + 2.15);
+      // Cables and a lamp every few metres: they stream past the windows as you ride.
+      box(world, "#15141a", x, 1.6, ty - 0.22, x1, 1.68, ty - 0.18);
+      box(world, "#15141a", x, 1.8, ty - 0.22, x1, 1.86, ty - 0.18);
+      box(world, "#ffe6a3", x + 2.6, 2.3, ty - 0.24, x + 3.2, 2.4, ty - 0.16);
+    }
+  }
 }
 
 export function World3D({
@@ -2374,10 +2421,10 @@ export function World3D({
         // Tunnel mouths at both ends of the platform.
         for (const tx of [1, map.cols - 2.6]) {
           box(world, "#4a4552", tx, -0.45, ty - 0.1, tx + 1.6, 2.8, ty + 0.1);
-          box(world, "#0b0a0f", tx + (tx < 5 ? 0 : 0.1), -0.45, ty + 0.1, tx + 1.5, 2.6, map.rows - 1);
           box(world, "#d9d2c3", tx - 0.1, 2.6, ty - 0.15, tx + 1.7, 2.9, ty + 0.15);
         }
-        train.position.set(-30, -0.05, ty + 1.5);
+        train.position.set(-30, -0.05, ty + 1.45);
+        tubeTunnels(world, map.cols, ty);
         train.userData.train = true;
         world.add(train);
         spinners.push(train);
@@ -3454,9 +3501,11 @@ export function World3D({
       }
       const followed = followPlayerCamera(focus, { x: camX, z: camZ }, dt);
       focus.set(followed.x, 0, followed.z);
+      const onTrain = RIDE.active && map.kind === "station";
+      if (onTrain) focus.set(camX, 0, camZ);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : cameraZoom, true, map.kind === "hospital");
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial" && !onTrain, { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : cameraZoom, true, map.kind === "hospital");
       FOCUS.value.set(framing.x, 0, framing.z);
       const view=viewRef.current;
       camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
@@ -4086,11 +4135,15 @@ export function World3D({
 
       for (const s of spinners) {
         if (s.userData.train) {
-          const train = trainFrame(now - TRAIN_CALL.at, map.cols);
+          // Riding: the train carries you; otherwise it runs to the station timetable.
+          const riding = RIDE.active;
+          const ride = !riding ? null : RIDE.phase === "departing" ? departFrame((now - RIDE.at) / 1000) : RIDE.phase === "boarded" ? { offset: 0, doorOpen: 1 } : arriveFrame((now - RIDE.at) / 1000);
+          const train = ride ? { x: trainStop(map.cols) + ride.offset, visible: true, doorOpen: ride.doorOpen } : trainFrame(now - TRAIN_CALL.at, map.cols);
+          renderer.localClippingEnabled = !riding;
           s.position.x = train.x;
           s.visible = train.visible;
           for (const door of s.children.filter(child => child.userData.slidingDoor)) {
-            door.position.x = door.userData.restX + door.userData.direction * train.doorOpen * 0.48;
+            door.position.x = door.userData.restX + door.userData.direction * train.doorOpen * 0.5;
           }
         } else if (typeof s.userData.update === "function") s.userData.update(reduce ? 0 : secs);
         else s.rotation.z += dt * 0.05;
