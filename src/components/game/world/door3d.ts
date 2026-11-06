@@ -10,12 +10,20 @@ import { SOLID, TILE, type Portal, type WorldMap } from "@/game/core/world";
 type Facing = "n" | "s" | "w" | "e";
 export type DoorSpot = { portal: Portal; x: number; z: number; facing: Facing; width: number };
 
-/** Where a portal's door sits: on the wall face beside it, facing away from the wall. Null for open-ground portals. */
-export function doorSpot(map: WorldMap, portal: Portal): DoorSpot | null {
+type Rect = { x: number; y: number; w: number; h: number };
+/**
+ * Where a portal's door sits: on a building's wall face beside it, facing out. Null unless the
+ * portal is right at the front of one of `buildings` (tile rects), so stations, trains, parks
+ * and interiors keep no door.
+ */
+export function doorSpot(map: WorldMap, portal: Portal, buildings: readonly Rect[]): DoorSpot | null {
   const r = portal.rect;
+  const px = (r.x + r.w / 2) / TILE, py = (r.y + r.h / 2) / TILE;
+  const onBuilding = buildings.some((b) => px > b.x - 0.6 && px < b.x + b.w + 0.6 && py > b.y - 0.6 && py < b.y + b.h + 1.6);
+  if (!onBuilding) return null;
   const cx = Math.floor((r.x + r.w / 2) / TILE), cy = Math.floor((r.y + r.h / 2) / TILE);
   const solid = (x: number, y: number) => SOLID.has(map.tiles[y]?.[x] ?? "") && map.tiles[y]?.[x] !== "T" && map.tiles[y]?.[x] !== "B" && map.tiles[y]?.[x] !== "L";
-  const width = Math.min(1.6, Math.max(0.9, Math.max(r.w, r.h) / TILE * 0.8));
+  const width = 0.78;
   const top = Math.floor(r.y / TILE) - 1, bottom = Math.floor((r.y + r.h) / TILE), left = Math.floor(r.x / TILE) - 1, right = Math.floor((r.x + r.w) / TILE);
   if (solid(cx, top)) return { portal, x: (r.x + r.w / 2) / TILE, z: r.y / TILE, facing: "s", width };
   if (solid(cx, bottom)) return { portal, x: (r.x + r.w / 2) / TILE, z: (r.y + r.h) / TILE, facing: "n", width };
@@ -49,7 +57,7 @@ export function makeDoor(spot: DoorSpot, accent: string, style: (m: THREE.Materi
   const root = new THREE.Group();
   root.position.set(spot.x, 0, spot.z);
   root.rotation.y = ROT[spot.facing];
-  const w = spot.width, h = 1.75;
+  const w = spot.width, h = 1.28;
   const leafMat = new THREE.MeshStandardMaterial({ color: accent, roughness: 0.6, flatShading: true });
   const glowMat = GLOW.clone();
   const spillMat = new THREE.MeshBasicMaterial({ map: SPILL_TEXTURE, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -76,7 +84,7 @@ export function makeDoor(spot: DoorSpot, accent: string, style: (m: THREE.Materi
   add(new THREE.BoxGeometry(w * 0.5, h * 0.22, 0.08), GLASS, w / 2, h * 0.74, 0.005, hinge);
   add(new THREE.SphereGeometry(0.05, 8, 6), HANDLE, w - 0.12, h * 0.48, 0.06, hinge);
   // Light spilling onto the ground in front.
-  const spill = add(new THREE.PlaneGeometry(w * 2.2, 2.2), spillMat, 0, 0.16, 1.15);
+  const spill = add(new THREE.PlaneGeometry(w * 2.2, 1.6), spillMat, 0, 0.16, 0.85);
   spill.rotation.x = -Math.PI / 2;
   spill.renderOrder = 2;
   let open = 0;
@@ -84,7 +92,7 @@ export function makeDoor(spot: DoorSpot, accent: string, style: (m: THREE.Materi
     spot,
     root,
     update(px, pz, dt) {
-      const near = Math.hypot(px - spot.x, pz - spot.z) < 2.6;
+      const near = Math.hypot(px - spot.x, pz - spot.z) < 2.2;
       open += ((near ? 1 : 0) - open) * Math.min(1, dt * 6);
       hinge.rotation.y = -open * 1.75;
       glowMat.opacity = 0.15 + open * 0.85;

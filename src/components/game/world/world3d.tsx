@@ -2619,6 +2619,8 @@ export function World3D({
     // Portal markers: doors at entrances, soft glowing rings elsewhere.
     const rings: THREE.Mesh[] = [];
     const doorSpots: DoorSpot[] = [];
+    // Doors only on the fronts of real buildings outdoors (never stations, trains or interiors).
+    const doorBuildings = indoors ? [] : (london ? buildLondon().things : ukScene?.things ?? []).flatMap((t) => t.kind === "building" ? [{ x: t.x, y: t.y, w: t.w, h: t.h }] : []);
     const doors = new Map<string, Door>();
     const doorAccents = ["#2f6b5a", "#7b2d3b", "#22408a", "#8a5a1f", "#3d5360", "#5b3a8a"];
     const ringMat = new THREE.MeshBasicMaterial({ color: "#f2d9a6", transparent: true, opacity: 0.55 });
@@ -2634,7 +2636,7 @@ export function World3D({
         world.add(b);
       }
       // Building entrances get a real door (opens as you approach); open-ground spots keep a soft light pool.
-      const spot = p.to.kind === "map" || p.to.kind === "game" || p.to.kind === "link" ? doorSpot(map, p) : null;
+      const spot = doorBuildings.length && (p.to.kind === "map" || p.to.kind === "game" || p.to.kind === "link") ? doorSpot(map, p, doorBuildings) : null;
       if (spot) { doorSpots.push(spot); continue; }
       const r = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.42, 28), ringMat);
       r.rotation.x = -Math.PI / 2;
