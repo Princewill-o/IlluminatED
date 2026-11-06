@@ -12,6 +12,7 @@ import { LightweightBloomPass } from "./lightweight-bloom";
 import { miniatureFocus } from "./miniature-focus";
 import { gradedOutputShader, sceneColourGrade } from "./scene-colour-grade";
 import { outdoorEnvironment } from "./sky-environment";
+import { sizeOutline, toonOutline } from "./toon-outline";
 
 import type { visualProfile } from "@/game/core/visual-quality";
 
@@ -85,7 +86,7 @@ export function cinematicRenderer(
     cleanup.push(() => target.dispose());
     const composer = new EffectComposer(renderer, target);
     cleanup.push(() => composer.dispose());
-    if (profile.ambientOcclusion) {
+    if (profile.ambientOcclusion || profile.outlines) {
       // Both ping-pong buffers can become the next frame's scene input.
       for (const buffer of [composer.renderTarget1, composer.renderTarget2]) {
         const depth = new THREE.DepthTexture(1, 1, THREE.UnsignedIntType);
@@ -96,10 +97,19 @@ export function cinematicRenderer(
     const render = new RenderPass(scene, camera);
     composer.addPass(render);
     cleanup.push(() => render.dispose());
+    let outlined: ShaderPass | null = null;
     if (profile.ambientOcclusion) {
-      const contact = contactShadows(camera, profile.occlusionSamples);
+      const contact = contactShadows(camera, profile.occlusionSamples, profile.outlines);
+      outlined = contact;
       composer.addPass(contact);
       cleanup.push(() => contact.dispose());
+    }
+    // Black cartoon outlines for the low-poly look.
+    const outline = profile.outlines && !outlined ? toonOutline(camera) : null;
+    outlined ??= outline;
+    if (outline) {
+      composer.addPass(outline);
+      cleanup.push(() => outline.dispose());
     }
     const bloom =
       profile.bloom && hdr
@@ -141,6 +151,7 @@ void main(){gl_FragColor=sceneColourGrade(texture2D(tDiffuse,vUv),vUv);}`,
       resize: (width: number, height: number) => {
         composer.setPixelRatio(renderer.getPixelRatio());
         composer.setSize(Math.max(1, width), Math.max(1, height));
+        if (outlined) sizeOutline(outlined, width, height, renderer.getPixelRatio());
         if (focus) focus.uniforms.resolution.value.set(Math.max(1, width) * renderer.getPixelRatio(), Math.max(1, height) * renderer.getPixelRatio());
         if (aa)
           aa.uniforms.resolution.value.set(

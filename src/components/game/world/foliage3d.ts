@@ -78,22 +78,25 @@ export function createFoliage() {
       uvs.push(u, v);
     }
   }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    "position",
-    new THREE.Float32BufferAttribute(positions, 3),
-  );
-  geometry.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  // Low-poly look: one faceted crown (a slightly irregular icosahedron with
+  // flat faces) instead of leaf cards. It outlines cleanly and costs fewer triangles.
+  void positions; void normals; void uvs;
+  const crown = new THREE.IcosahedronGeometry(0.86, 1);
+  const p = crown.getAttribute("position");
+  for (let i = 0; i < p.count; i++) {
+    const wobble = 1 + Math.sin(i * 12.9898) * 0.07;
+    p.setXYZ(i, p.getX(i) * wobble, p.getY(i) * wobble * 1.05, p.getZ(i) * wobble);
+  }
+  const geometry = crown.toNonIndexed();
+  crown.dispose();
+  geometry.computeVertexNormals();
   const time = { value: 0 },
     materials = new Map<string, THREE.MeshStandardMaterial>();
   let released = false;
-  let referenceMask: THREE.Texture | null = null;
   const screenFocus = { value: new THREE.Vector2(-10, -10) };
   const screenSize = { value: new THREE.Vector2(1, 1) };
   const depth = new THREE.MeshDepthMaterial({
     depthPacking: THREE.RGBADepthPacking,
-    map: texture,
     alphaTest: 0.45,
     side: THREE.DoubleSide,
   });
@@ -103,15 +106,10 @@ export function createFoliage() {
     if (!material) {
       material = new THREE.MeshStandardMaterial({
         color: colour,
-        map: texture,
         alphaTest: 0.45,
-        side: THREE.DoubleSide,
         roughness: 0.9,
+        flatShading: true,
       });
-      if (referenceMask) {
-        material.map = null;
-        material.alphaMap = referenceMask;
-      }
       vegetationShader(material, time);
       const prepare = material.onBeforeCompile;
       material.onBeforeCompile = (shader, renderer) => {
@@ -149,34 +147,6 @@ export function createFoliage() {
     }
     return material;
   };
-  // folio-2025 stores leaf coverage in RGB (SDF), not the PNG alpha channel.
-  // Alpha-map sampling keeps the black background from becoming opaque cards.
-  if (typeof window !== "undefined")
-    new THREE.TextureLoader().load(
-      "/world3d/folio-reference/foliage-mask.png",
-      (loaded) => {
-        if (released) {
-          loaded.dispose();
-          return;
-        }
-        loaded.colorSpace = THREE.NoColorSpace;
-        loaded.minFilter = THREE.LinearMipmapLinearFilter;
-        loaded.magFilter = THREE.LinearFilter;
-        referenceMask = loaded;
-        depth.map = null;
-        depth.alphaMap = loaded;
-        depth.needsUpdate = true;
-        materials.forEach((material) => {
-          material.map = null;
-          material.alphaMap = loaded;
-          material.needsUpdate = true;
-        });
-      },
-      undefined,
-      () => {
-        /* Retain the local leaf mask if loading fails. */
-      },
-    );
   return {
     mesh: (colour: string) => {
       const mesh = new THREE.Mesh(geometry, materialFor(colour));
@@ -196,7 +166,6 @@ export function createFoliage() {
     dispose: () => {
       if (released) return;
       released = true;
-      referenceMask?.dispose();
       geometry.dispose();
       texture.dispose();
       depth.dispose();

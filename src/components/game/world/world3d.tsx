@@ -113,6 +113,8 @@ const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
+  // Low-poly look: flat-shaded facets instead of smoothed curves.
+  if ((m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) && !m.userData.smooth) m.flatShading = true;
   const prepare = m.onBeforeCompile;
   const programKey = m.customProgramCacheKey();
   m.onBeforeCompile = (sh, renderer) => {

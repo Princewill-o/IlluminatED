@@ -1,17 +1,20 @@
 import * as THREE from "three";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
+import { OUTLINE_GLSL, outlineUniforms } from "./toon-outline";
+
 /** Sample the actual rendered depth, so curved roads, instancing and animated
  * characters agree with their contact shadows. No override-material scene pass. */
-export function contactShadows(camera: THREE.Camera, samples: number) {
+export function contactShadows(camera: THREE.Camera, samples: number, outlines = false) {
   const pass = new ShaderPass({
-    defines: { OCCLUSION_SAMPLES: samples },
+    defines: outlines ? { OCCLUSION_SAMPLES: samples, OUTLINES: 1 } : { OCCLUSION_SAMPLES: samples },
     uniforms: {
       tDiffuse: { value: null },
       tDepth: { value: null },
       projectionInverse: { value: camera.projectionMatrixInverse },
       projection: { value: camera.projectionMatrix },
       radius: { value: 0.65 },
+      ...outlineUniforms(),
     },
     vertexShader: `varying vec2 vUv;
       void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
@@ -20,6 +23,7 @@ export function contactShadows(camera: THREE.Camera, samples: number) {
       uniform mat4 projectionInverse, projection;
       uniform float radius;
       varying vec2 vUv;
+      ${OUTLINE_GLSL}
       vec3 viewPosition(vec2 uv, float depth) {
         vec4 p=projectionInverse*vec4(uv*2.0-1.0,depth*2.0-1.0,1.0);
         return p.xyz/p.w;
@@ -50,6 +54,9 @@ export function contactShadows(camera: THREE.Camera, samples: number) {
         if(depth>=0.99999) shade=1.0;
         // Slightly cool occlusion preserves the warm sunlit surfaces.
         colour.rgb*=mix(vec3(0.86,0.91,1.0),vec3(1.0),shade)*shade;
+        #ifdef OUTLINES
+        colour.rgb=applyOutline(colour.rgb,tDepth,projectionInverse,vUv);
+        #endif
         gl_FragColor=colour;
       }`,
   });

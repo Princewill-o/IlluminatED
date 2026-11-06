@@ -28,8 +28,8 @@ export function detectGraphicsTier({ touch = false, cores = 4, memory = 4, gpu =
 export const lowerTier = (tier: GraphicsTier): GraphicsTier | null => (tier === "high" ? "balanced" : tier === "balanced" ? "performance" : null);
 /** How many ambient residents, cyclists and lit lamps each tier can afford. */
 export function populationBudget(tier: GraphicsTier, indoors: boolean) {
-  if (indoors) return { residents: tier === "performance" ? 4 : tier === "balanced" ? 6 : 8, workers: tier === "performance" ? 4 : 8, cyclists: 0, lights: 2, outfits: tier === "high" };
-  return { residents: tier === "performance" ? 12 : tier === "balanced" ? 24 : 40, workers: 8, cyclists: tier === "performance" ? 2 : tier === "balanced" ? 4 : 8, lights: tier === "high" ? 2 : 1, outfits: tier !== "performance" };
+  if (indoors) return { residents: tier === "performance" ? 6 : tier === "balanced" ? 9 : 12, workers: tier === "performance" ? 4 : 8, cyclists: 0, lights: 2, outfits: tier === "high" };
+  return { residents: tier === "performance" ? 20 : tier === "balanced" ? 40 : 64, workers: 8, cyclists: tier === "performance" ? 2 : tier === "balanced" ? 4 : 8, lights: tier === "high" ? 2 : 1, outfits: tier !== "performance" };
 }
 
 /** Keep the art direction with bounded pixel, shadow and effect budgets. */
@@ -59,6 +59,8 @@ function visualProfileHigh(dpr: number, touch: boolean) {
     bloomStrength: 0.18,
     exposure: 1.12,
     adaptiveResolution: true,
+    /** Black cartoon outlines (one depth pass) for the low-poly look. */
+    outlines: true,
   };
 }
 
