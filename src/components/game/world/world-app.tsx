@@ -30,6 +30,7 @@ import { LevelBadge, LifeHud, type Quest } from "./life-hud";
 import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
 import { NpcVisits } from "./npc-visits";
+import { PanicFloor } from "./panic-floor";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
@@ -383,6 +384,7 @@ export function WorldApp({
   const [conversation,setConversation]=useState<{id:string;name:string}|null>(null);
   const [safety, setSafety] = useState(false);
   const [rescue, setRescue] = useState(false);
+  const [panic, setPanic] = useState<string | null>(null);
   const [medicalCustody,setMedicalCustody]=useState(false);
   const {passage,begin:beginTransition,pending:transitionPending}=useSceneTransition();
   const pendingStreetCase = useRef<StreetAssessment | null>(null);
@@ -618,9 +620,10 @@ export function WorldApp({
     }
     say(assessment.message,true);
   },[updateLife,say,jailed]);
-  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
+  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
     setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
   });
+  useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__panic?:(id:string)=>void}).__panic=(id)=>setPanic(id);},[]);
   useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__rescue?:()=>void}).__rescue=()=>{setBike(null);setDriving(null);setRescue(true);};},[]);
   // Outdoors, the rescue plays live on the road beside you (and everyone in the room sees it).
   const [liveRescue,setLiveRescue]=useState<string|null>(null);
@@ -760,7 +763,9 @@ export function WorldApp({
         const returnParams = new URLSearchParams({ map: mapId, x: String(Math.round(outside.x)), y: String(Math.round(outside.y)) });
         if (server) returnParams.set("server", server);
         const params = new URLSearchParams({ returnTo: `${developerTeleport ? "/games/city-showcase" : "/games/world"}?${returnParams}` });
-        router.push(`/games/promotion-panic/${to.companyId}?${params}`);
+        // Played right here on the floor (musical colours), not on a separate page.
+        void params;
+        setPanic(to.companyId);
       }
       else if (to.kind === "link") {
         if (to.href === "/learn") doActivity("study");
@@ -1306,7 +1311,8 @@ export function WorldApp({
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
-      <NpcVisits enabled={outdoors&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}
+      {panic && <PanicFloor companyId={panic} map={map} onExit={() => setPanic(null)}/>}
+      <NpcVisits enabled={outdoors&&!panic&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}
         onReward={()=>{void gainXp("study");}}
         onWaypoint={(portal,label)=>setWaypoint({id:portal.id,name:label,kind:"job",x:portal.rect.x+portal.rect.w/2,y:portal.rect.y+portal.rect.h/2})}/>
       {conversation&&<CivilianConversation person={conversation} onClose={()=>setConversation(null)} onShove={()=>{const person=conversation;setConversation(null);window.dispatchEvent(new CustomEvent("illuminated:fight",{detail:{npcId:person.id}}));}}/>}

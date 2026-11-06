@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PANIC, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
@@ -2967,6 +2967,15 @@ export function World3D({
       }
     }
     let visitorId = -1, visitorLeftAt = 0;
+    // In-world Promotion Panic: coloured answer pads, with coworkers racing you to them.
+    const panicRoot = new THREE.Group(); panicRoot.visible = false; scene.add(panicRoot);
+    let panicVersion = -1;
+    let panicPads: { disc: THREE.Mesh; ring: THREE.Mesh; label: THREE.Object3D; x: number; z: number }[] = [];
+    const panicBots = ([[90, "top-blocky-chef-sand"], [91, "top-blocky-student-navy"], [92, "top-blocky-business-navy"]] as const).map(([seed, top]) => {
+      const body = makeBody({ ...npcLook(seed), top, topColor: "topcol-auto", hat: "hat-none" }, null, true);
+      body.root.visible = false; scene.add(body.root);
+      return { body, pad: 0, wait: 0, ox: 0, oz: 0 };
+    });
     const tutor = map.id === "tutorial" ? makeBody({...npcLook(80),top:"top-suit",topColor:"topcol-navy",hat:"hat-cap"}, null, true) : null;
     const tutorCaption = tutor ? sign("Ava · your guide",{bg:"#2b5fd9",fg:"#ffffff",w:2.2,h:0.36}) : null;
     if (tutor && tutorCaption) { tutorCaption.position.set(0,2.05,0); tutor.root.add(tutorCaption); tutor.root.position.set(TUTOR.x/TILE,0,TUTOR.y/TILE); scene.add(tutor.root); }
@@ -3392,6 +3401,54 @@ export function World3D({
         // Keep the name tag facing the camera whichever way they walk.
         const tag = body.root.userData.caption as THREE.Object3D | undefined;
         if (tag) tag.rotation.y = -body.root.rotation.y;
+      }
+      if (PANIC.version !== panicVersion) {
+        panicVersion = PANIC.version;
+        for (const p of panicPads) { panicRoot.remove(p.disc, p.ring, p.label); p.disc.geometry.dispose(); }
+        panicPads = PANIC.pads.map((pad) => {
+          const x = pad.x / TILE, z = pad.y / TILE;
+          const m = new THREE.MeshStandardMaterial({ color: pad.colour, emissive: pad.colour, emissiveIntensity: 0.35, roughness: 0.6, transparent: true, opacity: 0.92, flatShading: true });
+          bend(m);
+          const disc = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.35, 0.12, 8), m);
+          disc.position.set(x, 0.06, z); disc.receiveShadow = true;
+          const rm = new THREE.MeshBasicMaterial({ color: "#ffffff", transparent: true, opacity: 0.8 });
+          bend(rm);
+          const ring = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.06, 4, 8), rm);
+          ring.rotation.x = Math.PI / 2; ring.position.set(x, 0.14, z);
+          const label = sign(pad.label, { bg: pad.colour, fg: "#ffffff", w: 2.6, h: 0.38 });
+          label.position.set(x, 2.3, z);
+          panicRoot.add(disc, ring, label);
+          return { disc, ring, label, x, z };
+        });
+        // Coworkers scramble from where you stand; most head for the right answer, some guess.
+        panicBots.forEach((b, i) => {
+          const pick = Math.random() < 0.55 && PANIC.answer >= 0 ? PANIC.answer : Math.floor(Math.random() * Math.max(1, PANIC.pads.length));
+          b.pad = pick; b.wait = secs + 0.6 + Math.random() * 4.5;
+          const a = Math.random() * Math.PI * 2; b.ox = Math.cos(a) * 0.6; b.oz = Math.sin(a) * 0.6;
+          b.body.root.position.set(mx + (i - 1) * 0.9, 0, mz + 0.9);
+        });
+      }
+      panicRoot.visible = PANIC.active;
+      panicPads.forEach((p, i) => {
+        const right = i === PANIC.answer;
+        const m = p.disc.material as THREE.MeshStandardMaterial;
+        const on = Math.hypot(mx - p.x, mz - p.z) < 1.35;
+        m.emissiveIntensity = PANIC.reveal ? (right ? 0.9 + 0.3 * Math.sin(secs * 8) : 0.05) : on ? 0.75 : 0.3 + 0.12 * Math.sin(secs * 4 + i);
+        m.opacity = PANIC.reveal && !right ? 0.35 : 0.92;
+        p.ring.scale.setScalar(PANIC.reveal && right ? 1 + 0.08 * Math.sin(secs * 10) : on ? 1.08 : 1);
+        p.ring.rotation.z = secs * (on ? 2 : 0.6);
+        p.label.quaternion.copy(camera.quaternion);
+        p.label.position.y = 1.7 + 0.08 * Math.sin(secs * 2 + i);
+      });
+      for (const b of panicBots) {
+        b.body.root.visible = PANIC.active && panicPads.length > 0;
+        if (!b.body.root.visible) continue;
+        const pad = panicPads[b.pad];
+        if (!pad || secs < b.wait) { setWalking(b.body, false); b.body.root.rotation.y = Math.atan2(mx - b.body.root.position.x, mz - b.body.root.position.z); continue; }
+        const p = b.body.root.position, tx = pad.x + b.ox, tz = pad.z + b.oz;
+        const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+        if (d > 0.08) { const step = Math.min(d, dt * 3.6); p.x += dx / d * step; p.z += dz / d * step; b.body.root.rotation.y = Math.atan2(dx, dz); }
+        setWalking(b.body, d > 0.08 && !reduce);
       }
       for (const [id, crew] of ambulances) if (!RESCUES.has(id)) { crew.root.visible = false; crew.medics.forEach((m) => { m.root.visible = false; }); }
       for (const [id, live] of RESCUES) {

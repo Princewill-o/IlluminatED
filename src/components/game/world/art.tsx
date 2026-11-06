@@ -363,6 +363,10 @@ export type VisitorKind = "classmate" | "coworker" | "mentor";
  *  world plays the 15-second rescue timeline from `startedAt` along the road axis. */
 export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number };
 export const RESCUES = new Map<string, LiveRescue>();
+/** In-world Promotion Panic: coloured answer pads on the ground (world px). `answer` lets the
+ *  coworker bots pick; `reveal` is set once the round locks so the right pad lights up. */
+export type PanicPad = { x: number; y: number; colour: string; label: string };
+export const PANIC = { active: false, version: 0, pads: [] as PanicPad[], answer: -1, reveal: false };
 export const VISITOR = { active: false, id: 0, kind: "classmate" as VisitorKind, startX: 0, startY: 0, arrived: false, leaving: false };
 /** A delivery courier walking in from your front door (home map). Phase: arriving, waiting, leaving. */
 export const COURIER = { active: false, phase: "arriving" as "arriving" | "waiting" | "leaving", since: 0 };

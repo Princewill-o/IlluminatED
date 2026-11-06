@@ -174,3 +174,32 @@ export async function createChallenge(
     return { ok: false, error: friendly(error?.message) };
   return { ok: true, code: data };
 }
+
+/** Everything the in-world Promotion Panic needs to start a shift without leaving the world. */
+export async function panicDeck(companyId: string): Promise<{
+  sources: import("@/game/core/deck").DeckSources;
+  previousBest: number;
+  canSave: boolean;
+  workplace: string | null;
+  currentlyEmployed: boolean;
+} | null> {
+  const company = companyById(companyId);
+  if (!company) return null;
+  const { gameSources, loadPlayer } = await import("@/lib/game/server");
+  const { localGamePreview } = await import("@/lib/game/local-preview");
+  if (localGamePreview(process.env.NODE_ENV, process.env.ILLUMINATED_PREVIEW))
+    return { sources: gameSources(company), previousBest: 0, canSave: false, workplace: null, currentlyEmployed: false };
+  const { getAccount } = await import("@/lib/account/server");
+  const account = await getAccount();
+  if (!account) return { sources: gameSources(company), previousBest: 0, canSave: false, workplace: null, currentlyEmployed: false };
+  const { loadCareer } = await import("@/lib/game/careers-server");
+  const { WORKPLACES } = await import("@/game/core/careers");
+  const [player, career] = await Promise.all([loadPlayer(account.id), loadCareer(account.id)]);
+  return {
+    sources: gameSources(company, (account.details?.subjects ?? []).map((s) => s.courseId)),
+    previousBest: player.companies[company.id]?.bestScore ?? 0,
+    canSave: player.ready,
+    workplace: career.active && WORKPLACES.some((j) => j.id === career.active!.workplace && j.companyId === company.id) ? career.active.workplace : null,
+    currentlyEmployed: Boolean(career.active),
+  };
+}
