@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { bikeById } from "@/game/core/bikes";
 import { carById } from "@/game/core/cars";
+import { MAX_NIGHTS, ROOM_TYPES, isHotel } from "@/game/core/hotels";
 import { type Pet, PETS } from "@/game/core/pets";
 import { roleById } from "@/game/core/roles";
 import { getSupabase } from "@/lib/social/server";
@@ -462,6 +463,65 @@ export async function creditCrew(crew: string, claim: string) {
 export async function crewStatus(crew: string) {
   if (!isId(crew)) return { ok: false as const, error: crewError() };
   return crewCall("coop_get", { p_crew: crew });
+}
+
+// ── Hotels (src/game/core/hotels.ts) ────────────────────────────────────────
+export type HotelBooking = { id: string; hotel: string; room: string; room_type: string; rate: number; nights: number; paid: number; check_in: string; check_out: string };
+const HOTEL_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to book a room.",
+  not_enough_clout: "Not enough Clout for that stay. Work a shift or play a game to earn some.",
+  already_booked: "You already have a room booked. Check out first, or extend your stay.",
+  no_rooms: "Sorry, that room type is fully booked right now. Try another.",
+  no_booking: "You don't have a room booked.",
+  too_long: "Stays can be up to 14 nights.",
+  invalid: "Something went wrong with that booking. Try again.",
+};
+const hotelError = (m?: string) => HOTEL_ERRORS[Object.keys(HOTEL_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
+const HOTEL_COLUMNS = "id,hotel,room,room_type,rate,nights,paid,check_in,check_out";
+
+/** Your current stay, if you have one. */
+export async function loadHotelBooking(): Promise<HotelBooking | null> {
+  const sb = await getSupabase();
+  if (!sb) return null;
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth?.user) return null;
+  const { data } = await sb.from("hotel_bookings").select(HOTEL_COLUMNS).eq("user_id", auth.user.id).is("ended_at", null)
+    .gt("check_out", new Date().toISOString()).order("check_out", { ascending: false }).limit(1).maybeSingle();
+  return (data as HotelBooking | null) ?? null;
+}
+/** Nightly rates and free rooms of each type. */
+export async function hotelAvailability(hotel: string): Promise<Record<string, { rate: number; free: number }>> {
+  if (!isHotel(hotel)) return {};
+  const sb = await getSupabase();
+  if (!sb) return {};
+  const { data } = await sb.rpc("hotel_availability", { p_hotel: hotel });
+  return (data as Record<string, { rate: number; free: number }>) ?? {};
+}
+export async function bookHotel(hotel: string, type: string, nights: number) {
+  if (!isHotel(hotel) || !(type in ROOM_TYPES) || !Number.isInteger(nights) || nights < 1 || nights > MAX_NIGHTS) return { ok: false as const, error: HOTEL_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: hotelError() };
+  const { data, error } = await sb.rpc("hotel_book", { p_hotel: hotel, p_type: type, p_nights: nights });
+  if (error) return { ok: false as const, error: hotelError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, booking: data as HotelBooking };
+}
+export async function extendHotel(nights: number) {
+  if (!Number.isInteger(nights) || nights < 1 || nights > MAX_NIGHTS) return { ok: false as const, error: HOTEL_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: hotelError() };
+  const { data, error } = await sb.rpc("hotel_extend", { p_nights: nights });
+  if (error) return { ok: false as const, error: hotelError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, booking: data as HotelBooking };
+}
+export async function checkOutHotel() {
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: hotelError() };
+  const { data, error } = await sb.rpc("hotel_checkout");
+  if (error) return { ok: false as const, error: hotelError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, refund: (data as number) ?? 0 };
 }
 
 // ── Pets (src/game/core/pets.ts) ────────────────────────────────────────────

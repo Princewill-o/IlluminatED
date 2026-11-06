@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { PLAYER, RESCUES } from "./art";
+import { PLAYER, POLICE_CAR, RESCUES } from "./art";
 import { HudSlot } from "./hud";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
 
@@ -17,16 +17,22 @@ import type { WorldMap } from "@/game/core/world";
  * With no road nearby it falls back to the transport cutscene.
  */
 export function LivePolicePickup({ map, destination, people = "You", onArrive }: { map: WorldMap; destination: "police-station" | "court" | "prison"; people?: string; onArrive: () => void }) {
+   
+  const plan = useMemo(() => {
+    if (!(map.kind === "city" || map.art === "london")) return null;
+    // The car that caught you is the one that takes you in; for a transfer it's waiting at the kerb outside.
+    const chased = POLICE_CAR.map === map.id && performance.now() - POLICE_CAR.at < 60_000 ? { x: POLICE_CAR.x, y: POLICE_CAR.y } : null;
+    return rescuePlan(map, PLAYER.x, PLAYER.y, (a, b) => roadRoute(map, a, b), destination, chased ?? (destination === "police-station" ? undefined : "parked"));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const plan = useMemo(() => (map.kind === "city" || map.art === "london" ? rescuePlan(map, PLAYER.x, PLAYER.y, (a, b) => roadRoute(map, a, b), destination) : null), []);
-  const [status, setStatus] = useState(destination === "police-station" ? "You're under arrest. Stay where you are." : "Cuffed on the steps, waiting for the police car.");
+  }, []);
+  const [status, setStatus] = useState(destination === "police-station" ? "You're under arrest. Stay where you are." : "Cuffed on the steps. The same officers are bringing the car round.");
   useEffect(() => {
     if (!plan) return;
     const live = { ...plan, wreck: null, vehicle: "police" as const };
     RESCUES.set("me", { startedAt: performance.now(), ...live });
     window.dispatchEvent(new CustomEvent("illumed:rescue-start", { detail: { ...live, elapsed: 0 } }));
     const where = destination === "court" ? "the Crown Court" : destination === "prison" ? "HMP Thames" : "the police station";
-    const steps: [number, string][] = [[2500, "Blue lights: a police car is coming for you."], [10000, "The officers cuff you and walk you to the car."], [14000, `In the back of the police car, on the way to ${where}.`]];
+    const steps: [number, string][] = [[2500, destination === "police-station" ? "The officers pull the patrol car up beside you." : "Your arresting officers pull the patrol car up to the kerb."], [10000, "The officers cuff you and walk you to the car."], [14000, `In the back of the police car, on the way to ${where}.`]];
     const timers = steps.map(([at, text]) => window.setTimeout(() => setStatus(text), at));
     const done = window.setTimeout(() => { RESCUES.delete("me"); onArrive(); }, LIVE_RESCUE_MS + 200);
     return () => { timers.forEach(clearTimeout); clearTimeout(done); RESCUES.delete("me"); };

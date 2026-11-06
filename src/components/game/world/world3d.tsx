@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAR_PAINT, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAR_PAINT, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -1776,7 +1776,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
   const furn = "dctosvkFArbpLO";
   const home = map.kind === "home";
   const office = map.kind === "office";
-  const hotel = map.id.startsWith("hotel-");
+  const hotel = map.id.startsWith("hotel-") && map.kind !== "home";
   const deskOffice = office && !["workplace-pizzazz", "workplace-tescow"].includes(map.id);
   for (let y = 0; y < H; y++)
     for (let x = 0; x < Wd; x++) {
@@ -2060,6 +2060,28 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       }
     }
   if (hotel) {
+    // Numbered guest-room doors on the side walls, each with a key-card reader.
+    for (const portal of map.portals.filter(p=>p.id.startsWith("room-"))) {
+      const tx=portal.rect.x/TILE, z=portal.rect.y/TILE, west=tx<10;
+      const wx=west?tx:tx+1, o=west?1:-1;
+      const slab=(c:string,d0:number,d1:number,z0:number,y0:number,z1:number,y1:number)=>box(g,c,Math.min(wx+o*d0,wx+o*d1),y0,z0,Math.max(wx+o*d0,wx+o*d1),y1,z1);
+      slab("#e9dcc2",-0.02,0.05,z-0.12,0,z+1.12,2.35);
+      slab(map.accent,0.05,0.1,z+0.04,0,z+0.96,2.15);
+      slab("#d9b45a",0.1,0.13,z+0.78,1.0,z+0.86,1.08);
+      slab("#1d2430",0.1,0.13,z+0.08,1.05,z+0.2,1.3);
+      slab("#5fe08a",0.13,0.14,z+0.11,1.24,z+0.17,1.27);
+      const plate=sign(portal.id.slice(5),{bg:"#13203a",fg:"#ffd166",w:0.6,h:0.26});
+      plate.position.set(wx+o*0.14,2.3,z+0.5);plate.rotation.y=west?Math.PI/2:-Math.PI/2;g.add(plate);
+    }
+    // Lift doors and the floor display over them.
+    for (const portal of map.portals.filter(p=>p.id==="lift")) {
+      const x=portal.rect.x/TILE, z=portal.rect.y/TILE;
+      box(g,"#8d949d",x-0.1,0,z-0.1,x+2.1,2.5,z);
+      box(g,"#c9ced6",x+0.05,0,z-0.14,x+0.98,2.25,z-0.08);
+      box(g,"#c9ced6",x+1.02,0,z-0.14,x+1.95,2.25,z-0.08);
+      box(g,"#141020",x+0.7,2.3,z-0.15,x+1.3,2.45,z-0.1);
+      box(g,"#e6e9ee",x+2.15,1.0,z-0.12,x+2.3,1.35,z-0.08);
+    }
     for (const portal of map.portals.filter(p=>p.id.startsWith("stairs-"))) {
       const x=portal.rect.x/TILE, z=portal.rect.y/TILE;
       for(let step=0;step<6;step++) box(g,"#c7b69a",x,0.03,z-2+step/3,x+2,1.05-step*0.15,z-2+(step+1)/3);
@@ -3072,12 +3094,12 @@ export function World3D({
     const wrecks = new Map<string, THREE.Group>();
     const smokeMat = new THREE.MeshStandardMaterial({ color: "#8a8f98", transparent: true, opacity: 0.55, roughness: 1, flatShading: true });
     const smokeGeo = new THREE.IcosahedronGeometry(0.35, 0);
-    const wreckFor = (id: string, car: string, x: number, z: number, heading: number) => {
+    const wreckFor = (id: string, car: string, x: number, z: number, heading: number, exact = false) => {
       let w = wrecks.get(id);
       if (w) return w;
       w = new THREE.Group();
       w.position.set(x, 0.004, z);
-      w.rotation.y = heading + 0.5;
+      w.rotation.y = heading + (exact ? 0 : 0.5);
       const body = new THREE.Group();
       body.rotation.z = 0.06; body.rotation.x = -0.05; // knocked askew
       w.add(body);
@@ -3558,7 +3580,9 @@ export function World3D({
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
       policeRig?.update(secs,!!pursuit);
-      responseCar.visible = !!pursuit && (london || highland || !!ukScene);
+      // While the arrest plays live, the chasing car becomes the transport car (drawn by the rescue crew).
+      responseCar.visible = !!pursuit && (london || highland || !!ukScene) && RESCUES.get("me")?.vehicle !== "police";
+      if (pursuit) { POLICE_CAR.x = pursuit.car.x; POLICE_CAR.y = pursuit.car.y; POLICE_CAR.map = map.id; POLICE_CAR.at = performance.now(); }
       if (pursuit && (london || highland || !!ukScene)) {
         const cx=pursuit.car.x/TILE, cz=pursuit.car.y/TILE;
         if(Math.hypot(cx-carLast.x,cz-carLast.z)>0.01)responseCar.rotation.y=Math.atan2(-(cz-carLast.z),cx-carLast.x);
@@ -3745,7 +3769,10 @@ export function World3D({
         const rearX = sx - end.dx * 1.9, rearZ = sz - end.dy * 1.9;
         // A crashed car stays where it was, smoking, until the ambulance has gone.
         if (live.wreck && patient) {
-          const w = wreckFor(id, live.wreck, patient.root.position.x, patient.root.position.z, -Math.atan2(end.dy, end.dx));
+          // The wreck stays exactly where the vehicle stopped, facing the way it was going.
+          const exact = Number.isFinite(live.wreckX) && Number.isFinite(live.wreckY);
+          const w = wreckFor(id, live.wreck, exact ? live.wreckX! / TILE : patient.root.position.x, exact ? live.wreckY! / TILE : patient.root.position.z,
+            Number.isFinite(live.wreckHeading) ? -live.wreckHeading! : -Math.atan2(end.dy, end.dx), Number.isFinite(live.wreckHeading));
           (w.userData.puffs as THREE.Mesh[]).forEach((p, i) => {
             p.visible = live.wreck !== "bike";
             const t = (secs * 0.35 + p.userData.seed) % 1;

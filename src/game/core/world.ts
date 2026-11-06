@@ -1,10 +1,11 @@
 import { WORKPLACES } from "./careers";
 import { COMPANIES } from "./companies";
 import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture } from "./homes";
+import { HOTELS, HOTEL_ROOMS, type HotelId, ROOM_LAYOUTS, ROOM_TYPES, parseRoomMap, roomInfo, roomMapId } from "./hotels";
 import { buildHome, buildLondon } from "./london";
 import { officeDesign } from "./office-design";
 import { buildHighlands } from "./regions";
-import type { RoomStyle } from "./room-designs";
+import { ROOM_DESIGNS, type RoomStyle } from "./room-designs";
 import { UK_GATEWAYS } from "./uk-world";
 import { universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
@@ -33,6 +34,8 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "hotel-desk"; hotel: string }
+  | { kind: "hotel-room"; hotel: string; room: string; type: string }
   | { kind: "lift"; floors: { mapId: string; label: string; current: boolean }[] }
   | { kind: "venture"; staff?: string }
   | { kind: "study-room" }
@@ -206,6 +209,8 @@ function finish(
 
 /** Walk-in game workplaces, separate from verified employers' advice offices. */
 export function hotelMap(id: string): WorldMap | null {
+  const stay = parseRoomMap(id);
+  if (stay) return hotelRoomMap(stay.hotel, stay.room);
   const match = /^hotel-([01])(?:-floor-([12]))?$/.exec(id);
   if (!match) return null;
   const hotel = buildLondon().things.find(t => t.kind === "building" && t.id === `hotel-${match[1]}`);
@@ -231,14 +236,35 @@ export function hotelMap(id: string): WorldMap | null {
   // The stair landing remains walkable; each floor is a real destination.
   g.fill(15, 2, 2, 2, "e");
   const portals: Portal[] = [];
-  if (floor === 1) portals.push({id:"guest-bed",rect:px(3,5,2,1),label:"Rest in the guest room",to:{kind:"act",activity:"sleep"}});
+  // Guest rooms: a numbered door each along the corridor. Your key card opens the one you booked.
+  if (floor > 0) for (const r of HOTEL_ROOMS.filter((room) => room.floor === floor))
+    portals.push({ id: `room-${r.room}`, rect: px(r.door.x, r.door.y, 1, 1), label: `Room ${r.room} · ${ROOM_TYPES[r.type].name}`, to: { kind: "hotel-room", hotel: base, room: r.room, type: r.type } });
+  // Reception: check in, book a room, see the nightly rates.
+  if (floor === 0) portals.push({ id: "reception", rect: px(3, 7, 4, 1), label: "Reception: book a room", to: { kind: "hotel-desk", hotel: base } });
   if (floor < 2) portals.push({id:"stairs-up",rect:px(15,4,2,1),label:`Take stairs to floor ${floor+1}`,to:{kind:"map",mapId:`${base}-floor-${floor+1}`,label:`${hotel.label} · Floor ${floor+1}`}});
   if (floor > 0) portals.push({id:"stairs-down",rect:px(15,7,2,1),label:floor===1?"Stairs to lobby":"Stairs to floor 1",to:{kind:"map",mapId:floor===1?base:`${base}-floor-1`,label:floor===1?"Hotel lobby":"First floor"}});
   if (floor === 0) portals.push({id:"exit",rect:px(9,14,2,1),label:"Leave hotel",to:{kind:"map",mapId:"city",label:"London"}});
   // The lift: press a floor button and ride up or down.
   g.fill(12, 1, 2, 1, "#");
   portals.push({ id: "lift", rect: px(12, 2, 2, 1), label: "Lift: choose a floor", to: { kind: "lift", floors: [0, 1, 2].map((f) => ({ mapId: f ? `${base}-floor-${f}` : base, label: f ? `Floor ${f}` : "Lobby", current: f === floor })) } });
-  return finish({id,kind:"office",name:`${hotel.label} · ${floor === 0 ? "Lobby" : `Floor ${floor}`}`,structures:[],rooms:[],portals,spawn:centre(10,13),accent:hotel.accent ?? "#315b50",sign:{x:10,y:8,text:floor===0?"Reception · lounge · upstairs":floor===1?"Guest lounge · reading room":"Sky lounge · quiet workspace"}},g);
+  return finish({id,kind:"office",name:`${hotel.label} · ${floor === 0 ? "Lobby" : `Floor ${floor}`}`,structures:[],rooms:[],portals,spawn:centre(10,13),accent:hotel.accent ?? "#315b50",sign:{x:10,y:8,text:floor===0?`Reception · rooms from ${Math.min(...Object.values(HOTELS[base as HotelId].rates))} Clout a night`:floor===1?"Rooms 101 to 104 · guest lounge":"Rooms 201 to 204 · sky lounge"}},g);
+}
+
+/** A booked hotel room: the furnished room for its type, with the door back to its floor. */
+export function hotelRoomMap(hotel: HotelId, room: string): WorldMap | null {
+  const info = roomInfo(room);
+  if (!info) return null;
+  const h = HOTELS[hotel];
+  const style = ROOM_DESIGNS[h.design[["standard", "deluxe", "suite"].indexOf(info.type)]] ?? ROOM_DESIGNS[0];
+  const base = homeMap(0, ROOM_LAYOUTS[info.type], style);
+  const floorId = `${hotel}-floor-${info.floor}`;
+  return {
+    ...base,
+    id: roomMapId(hotel, room),
+    name: `${h.name} · Room ${room}`,
+    portals: base.portals.map((p) => (p.id === "front-door" ? { ...p, label: `Back to floor ${info.floor}`, to: { kind: "map", mapId: floorId, label: `${h.name} · Floor ${info.floor}` } } : p)),
+    accent: hotel === "hotel-0" ? "#315b50" : "#704c47",
+  };
 }
 
 export function workplaceMap(id: string): WorldMap | null {

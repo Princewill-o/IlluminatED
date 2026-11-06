@@ -360,6 +360,8 @@ export const LAW_STATUS = new Map<string, { stars: number; police: boolean; at: 
 export const PATROL = { active: false, suspect: null as null | { id: number; x: number; y: number; name: string; fleeing: boolean; cuffed: boolean; gone: boolean } };
 /** Your pet out with you: its tag ("dog:#c8955c:bow") for the 3D world and the room, and a care animation. */
 export const PET: { tag: string | null; action: "feed" | "water" | "wash" | "sleep" | "play" | null; actionAt: number } = { tag: null, action: null, actionAt: 0 };
+/** The police car that last chased you (world px): the same car then drives you away. */
+export const POLICE_CAR = { x: 0, y: 0, map: "", at: 0 };
 /** Your co-op crew for a practical role: shown to the room so nearby players can join. */
 export const CREW: { id: string | null; role: string | null } = { id: null, role: null };
 /** Crews other players nearby are running, by player id. */
@@ -390,7 +392,7 @@ export type VisitorKind = "classmate" | "coworker" | "mentor";
  *  world plays the 15-second rescue timeline from `startedAt` along the road axis. */
 /** A live ambulance rescue. With paths (tile coords, flat x,y pairs) the ambulance drives in along
  *  `inPath` to the stop and away along `outPath` towards the hospital; `wreck` is the car left behind. */
-export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number; inPath?: number[]; outPath?: number[]; wreck?: string | null; /** Ambulance (default) or a police car for an arrest. */ vehicle?: "ambulance" | "police" };
+export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number; inPath?: number[]; outPath?: number[]; wreck?: string | null; /** Ambulance (default) or a police car for an arrest. */ vehicle?: "ambulance" | "police"; /** Exactly where the crashed vehicle came to rest (world px) and which way it faced (radians). */ wreckX?: number; wreckY?: number; wreckHeading?: number | null };
 export const RESCUES = new Map<string, LiveRescue>();
 /** In-world Promotion Panic: coloured answer pads on the ground (world px). `answer` lets the
  *  coworker bots pick; `reveal` is set once the round locks so the right pad lights up. */

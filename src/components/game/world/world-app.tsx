@@ -27,6 +27,7 @@ import { EventArcade, type EventGame } from "./event-arcade";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { GameFeedback } from "./game-feedback";
 import { GameMenu, saveResume } from "./game-menu";
+import { HotelDesk } from "./hotel-desk";
 import { HudLayout, HudSlot } from "./hud";
 import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
 import { JobsPanel } from "./jobs-panel";
@@ -65,7 +66,7 @@ import { useTechEvents } from "../event-ads";
 const MobileLife = dynamic(() => import("./mobile-life").then((module) => module.MobileLife), { ssr: false, loading: () => <div className="absolute inset-0 grid place-items-center bg-[#f3f4f8] text-[#18202d]" role="status">Opening your life…</div> });
 
 import { cityAction } from "@/app/games/city-actions";
-import { earnWorldXp, loadPets, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
+import { earnWorldXp, type HotelBooking, loadHotelBooking, loadPets, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
@@ -81,6 +82,7 @@ import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/d
 import { gameDateAt } from "@/game/core/game-clock";
 import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
+import { parseRoomMap, roomMapId } from "@/game/core/hotels";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
@@ -299,6 +301,9 @@ export function WorldApp({
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [petsOpen,setPetsOpen]=useState(false);
+  const [hotelBooking,setHotelBooking]=useState<HotelBooking|null>(null);
+  const [hotelDesk,setHotelDesk]=useState<string|null>(null);
+  useEffect(()=>{void loadHotelBooking().then(setHotelBooking).catch(()=>{});},[]);
   const [lift,setLift]=useState<{mapId:string;label:string;current:boolean}[]|null>(null);
   // Your pet comes out with you as soon as the world loads.
   useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
@@ -667,7 +672,7 @@ export function WorldApp({
   const [liveRescue,setLiveRescue]=useState<string|null>(null);
   const arriveFromRescue=useCallback(()=>{setMedicalCustody(jailed);doActivity("hospital");updateLife(l=>({...l,sick:false}));setRescue(false);setLiveRescue(null);RESCUES.delete("me");goTo("hospital","Ambulance arrival · St Tomas’ Hospital");},[jailed,updateLife,goTo]);
   // A crash in the last few seconds means the rescue starts with the impact and the wreck stays on the road.
-  const lastCrash=useRef<{at:number;car:string|null}>({at:0,car:null});
+  const lastCrash=useRef<{at:number;car:string|null;x?:number;y?:number;heading?:number|null}>({at:0,car:null});
   const drivingNow=useRef(driving);drivingNow.current=driving;
   useEffect(()=>{if(process.env.NODE_ENV!=="production"){const w=window as unknown as {__rescue?:(car?:string)=>void;__arrest?:()=>void};w.__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};w.__arrest=()=>{transportStars.current=4;setDriving(null);setPoliceTransport(true);};}},[]);
   const [rescueCause,setRescueCause]=useState<{kind:"crash"|"collapse";key:number}|null>(null);
@@ -679,7 +684,8 @@ export function WorldApp({
     const crashed=Date.now()-lastCrash.current.at<8000;
     const wreck=crashed&&lastCrash.current.car&&!lastCrash.current.car.startsWith("bus:")?lastCrash.current.car:null;
     setRescueCause({kind:crashed?"crash":"collapse",key:Date.now()});
-    const plan={...road,wreck};
+    const at=lastCrash.current;
+    const plan={...road,wreck,...(wreck&&Number.isFinite(at.x)&&Number.isFinite(at.y)?{wreckX:at.x,wreckY:at.y,wreckHeading:Number.isFinite(at.heading)?at.heading:null}:{})};
     RESCUES.set("me",{startedAt:performance.now(),...plan});
     window.dispatchEvent(new CustomEvent("illumed:rescue-start",{detail:{...plan,elapsed:0}}));
     const hospital=road.toHospital?"St Tomas' Hospital":"hospital";
@@ -698,7 +704,10 @@ export function WorldApp({
       const damage = (event as CustomEvent<{ damage: number }>).detail?.damage;
       if (!Number.isFinite(damage) || damage <= 0) return;
       const onBike = Boolean((event as CustomEvent<{ bike?: string }>).detail?.bike);
-      lastCrash.current = { at: now, car: onBike ? "bike" : drivingNow.current };
+      // Remember exactly where and which way the vehicle came to rest, so the wreck stays put.
+      lastCrash.current = PLAYER_VEHICLE.active
+        ? { at: now, car: onBike ? "bike" : drivingNow.current, x: PLAYER_VEHICLE.x, y: PLAYER_VEHICLE.y, heading: PLAYER_VEHICLE.heading }
+        : { at: now, car: onBike ? "bike" : drivingNow.current, x: PLAYER.x, y: PLAYER.y, heading: null };
       damageEnergy(Math.min(55, damage));
       if (onBike) { setBike(null); setRescue(true); return; }
       say("Collision · check on others, stop safely and exchange details. Your condition has dropped.", true);
@@ -763,6 +772,21 @@ export function WorldApp({
     return () => { active = false; window.clearInterval(timer); };
   }, [life.bankCourtSeen, life.hearing, updateLife, goTo, say]);
 
+  // When a stay ends, the key card stops working: you're shown back out to the corridor.
+  useEffect(() => {
+    const stay = parseRoomMap(mapId);
+    if (!stay) return;
+    const check = () => {
+      // Preview builds can look round a room without a booking.
+      if (process.env.NODE_ENV !== "production" && (() => { try { return localStorage.getItem("illuminated:dev-hotel") === "1"; } catch { return false; } })()) return;
+      if (hotelBooking && hotelBooking.hotel === stay.hotel && hotelBooking.room === stay.room && Date.parse(hotelBooking.check_out) > Date.now()) return;
+      say("Your stay has ended. Thanks for staying with us!");
+      void goTo(`${stay.hotel}-floor-${stay.room[0]}`, "Hotel corridor");
+    };
+    check();
+    const t = setInterval(check, 30000);
+    return () => clearInterval(t);
+  }, [mapId, hotelBooking, goTo, say]);
   const onPortal = useCallback(
     async(portal: Portal) => {
       if(transitionPending())return;
@@ -834,6 +858,12 @@ export function WorldApp({
         else if (to.href === "/games/what-if") setEventGame("what-if");
         else router.push(to.href);
       } else if (to.kind === "lift") setLift(to.floors);
+      else if (to.kind === "hotel-desk") setHotelDesk(to.hotel);
+      else if (to.kind === "hotel-room") {
+        const mine = hotelBooking && hotelBooking.hotel === to.hotel && hotelBooking.room === to.room && Date.parse(hotelBooking.check_out) > Date.now();
+        if (mine) { play("door", soundOn()); void goTo(roomMapId(to.hotel, to.room), `Room ${to.room}`); }
+        else say(hotelBooking && hotelBooking.hotel === to.hotel ? `That's not your room. Yours is ${hotelBooking.room}.` : `Room ${to.room} is locked. Book a room at reception for a key card.`);
+      }
       else if (to.kind === "bus") setBus(to.stop);
       else if (to.kind === "act") {
         play("door", soundOn());
@@ -884,7 +914,7 @@ export function WorldApp({
         setArrive({...spot,speed:keepCar?Math.min(Math.abs(PLAYER_VEHICLE.speed),isMotorway(to.mapId)?660:220):0});setMapId(to.mapId);setTrip(n=>n+1);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -1431,6 +1461,9 @@ export function WorldApp({
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
       <RewardToasts/>
+      {hotelDesk && <HotelDesk hotel={hotelDesk} booking={hotelBooking} wallet={wallet} onClose={() => setHotelDesk(null)}
+        onBooking={(b, change) => { setHotelBooking(b); setWallet((w) => Math.max(0, w + change)); }}
+        onGoToRoom={(b) => { setHotelDesk(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }} />}
       <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) { setDailyJob(null); setRoleShift({ role, level: 1 }); } }} />
       {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => { setLift(null); void goTo(f.mapId, f.label, { x: 13 * TILE, y: 3.6 * TILE }); }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}

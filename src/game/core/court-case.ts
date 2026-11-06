@@ -6,7 +6,7 @@
 import { type Rng, createRng, pick, shuffle } from "./rng";
 
 export type Question = { id: string; ask: string; answer: string; /** Does this answer help the defence? */ helps: number };
-export type Exhibit = { id: string; name: string; detail: string; strength: number; why: string };
+export type Exhibit = { id: string; name: string; detail: string; strength: number; why: string; /** What you would say on the stand if this is your story. */ claim: string; /** How that story lands with the jury on its own. */ claimWeight: number };
 export interface CourtCase {
   time: string;
   place: string;
@@ -42,10 +42,10 @@ export function courtCase(seed: number): CourtCase {
   const cctvTime = rng() < 0.5 ? clock(at) : clock(at + 27);
   const strongAt = at + Math.floor(rng() * 9) - 4;
   const locker: Exhibit[] = shuffle(rng, [
-    { id: "ticket", name: "Bus ticket", detail: `Route 24, touched in at Canary Wharf at ${clock(strongAt)}.`, strength: 0.22, why: `It puts you miles away from ${place} at ${clock(strongAt)}, within minutes of the offence.` },
-    { id: "receipt", name: "Shop receipt", detail: `Corner shop next to ${place}, ${clock(at - 3)}.`, strength: -0.18, why: `It puts you right next to ${place} three minutes before. That helps the prosecution!` },
-    { id: "text", name: "Text from a friend", detail: `"See you later" sent at ${clock(at - 140)}.`, strength: 0.02, why: "It's hours before and doesn't say where you were. It barely helps." },
-    { id: "photo", name: "Gym check-in", detail: `Checked in at Brixton leisure centre at ${clock(at + 95)}.`, strength: 0.03, why: "It's well after the offence, so it can't show where you were at the time." },
+    { id: "ticket", name: "Bus ticket", detail: `Route 24, touched in at Canary Wharf at ${clock(strongAt)}.`, strength: 0.22, why: `It puts you miles away from ${place} at ${clock(strongAt)}, within minutes of the offence.`, claim: `I was on the number 24 bus from Canary Wharf around ${clock(strongAt)}.`, claimWeight: 0.04 },
+    { id: "receipt", name: "Shop receipt", detail: `Corner shop next to ${place}, ${clock(at - 3)}.`, strength: -0.18, why: `It puts you right next to ${place} three minutes before. That helps the prosecution!`, claim: `I was in the corner shop by ${place}, but I left before anything happened.`, claimWeight: -0.1 },
+    { id: "text", name: "Text from a friend", detail: `"See you later" sent at ${clock(at - 140)}.`, strength: 0.02, why: "It's hours before and doesn't say where you were. It barely helps.", claim: "I was meeting a friend. We'd been texting.", claimWeight: 0 },
+    { id: "photo", name: "Gym check-in", detail: `Checked in at Brixton leisure centre at ${clock(at + 95)}.`, strength: 0.03, why: "It's well after the offence, so it can't show where you were at the time.", claim: "I was at the gym in Brixton.", claimWeight: 0 },
   ]);
   return {
     time: clock(at),

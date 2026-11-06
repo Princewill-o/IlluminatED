@@ -92,14 +92,18 @@ export function rescuePlan(
   route: (from: { x: number; y: number }, to: { x: number; y: number }) => { x: number; y: number }[],
   /** The map the vehicle heads for: hospital for an ambulance, police-station or court for an arrest. */
   destination = "hospital",
+  /** Where the vehicle already is (world px), e.g. the police car that made the arrest, or "parked" right at the kerb. */
+  start?: { x: number; y: number } | "parked",
 ) {
   const road = rescueRoad(map, px, py);
   if (!road) return null;
   const stop = { x: road.stopX, y: road.stopY };
   const flat = (pts: { x: number; y: number }[]) => pts.flatMap((p) => [p.x / TILE, p.y / TILE]);
   const clampIn = (x: number, y: number) => ({ x: Math.max(TILE * 4, Math.min(map.width - TILE * 4, x)), y: Math.max(TILE * 4, Math.min(map.height - TILE * 4, y)) });
-  const from = clampIn(stop.x - road.axisX * TILE * 30, stop.y - road.axisY * TILE * 30);
+  const from = start === "parked" ? clampIn(stop.x - road.axisX * TILE * 5, stop.y - road.axisY * TILE * 5)
+    : start ? clampIn(start.x, start.y) : clampIn(stop.x - road.axisX * TILE * 30, stop.y - road.axisY * TILE * 30);
   let inPath = flat(route(from, stop));
+  if (start && inPath.length < 4) inPath = [from.x / TILE, from.y / TILE, stop.x / TILE, stop.y / TILE];
   if (inPath.length < 4) inPath = [stop.x / TILE - road.axisX * 14, stop.y / TILE - road.axisY * 14, stop.x / TILE, stop.y / TILE];
   // Drive the last part only (about 34 tiles), ending exactly at the stop.
   const reverse = (p: number[]) => { const o: number[] = []; for (let i = p.length - 2; i >= 0; i -= 2) o.push(p[i], p[i + 1]); return o; };
