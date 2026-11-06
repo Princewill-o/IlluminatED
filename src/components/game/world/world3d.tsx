@@ -61,6 +61,7 @@ import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, int
 import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
 import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
 import { PRISON_LOOK } from "@/game/core/law";
+import { liveRescueFrame, pathPoint } from "@/game/core/live-rescue";
 import { residentActivity, residentMotionSeconds } from "@/game/core/living-world";
 import { logoFor } from "@/game/core/logos";
 import { buildLondon, cityCarParks } from "@/game/core/london";
@@ -3001,6 +3002,28 @@ export function World3D({
     scene.add(...responders.map(body=>body.root));
     // Live ambulance rescues (yours and other players'): an ambulance and two paramedics each.
     const ambulances = new Map<string, { rig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null; root: THREE.Group; medics: Body[] }>();
+    let rescueCam: { x: number; z: number } | null = null;
+    // Wrecked cars left at crash scenes, with smoke rising.
+    const wrecks = new Map<string, THREE.Group>();
+    const smokeMat = new THREE.MeshStandardMaterial({ color: "#8a8f98", transparent: true, opacity: 0.55, roughness: 1, flatShading: true });
+    const smokeGeo = new THREE.IcosahedronGeometry(0.35, 0);
+    const wreckFor = (id: string, car: string, x: number, z: number, heading: number) => {
+      let w = wrecks.get(id);
+      if (w) return w;
+      w = new THREE.Group();
+      w.position.set(x, 0.004, z);
+      w.rotation.y = heading + 0.5;
+      const body = new THREE.Group();
+      body.rotation.z = 0.06; body.rotation.x = -0.05; // knocked askew
+      w.add(body);
+      void placeCar(body, car).catch(() => {});
+      const puffs: THREE.Mesh[] = [];
+      for (let i = 0; i < 7; i++) { const p = new THREE.Mesh(smokeGeo, smokeMat); p.userData.seed = i / 7; w.add(p); puffs.push(p); }
+      w.userData.puffs = puffs;
+      scene.add(w);
+      wrecks.set(id, w);
+      return w;
+    };
     const rescueCrew = (id: string) => {
       let crew = ambulances.get(id);
       if (crew) return crew;
@@ -3331,16 +3354,18 @@ export function World3D({
       }
 
       // Keep outdoor gameplay centred on the player, including at map edges.
-      if (first || Math.hypot(mx-focus.x,mz-focus.z)>24) {
+      // During your own ambulance ride the camera rides with the ambulance.
+      const camX = rescueCam?.x ?? mx, camZ = rescueCam?.z ?? mz;
+      if (first || Math.hypot(camX-focus.x,camZ-focus.z)>24) {
         // Edge-road loops must not sweep the camera through the entire city.
-        focus.set(mx, 0, mz);
+        focus.set(camX, 0, camZ);
         first = false;
       }
-      const followed = followPlayerCamera(focus, { x: mx, z: mz }, dt);
+      const followed = followPlayerCamera(focus, { x: camX, z: camZ }, dt);
       focus.set(followed.x, 0, followed.z);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: mx, z: mz }, map.kind === "hospital" ? cameraZoom * 0.62 : cameraZoom, true, map.kind === "hospital");
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial", { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : cameraZoom, true, map.kind === "hospital");
       FOCUS.value.set(framing.x, 0, framing.z);
       const view=viewRef.current;
       camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
@@ -3589,18 +3614,48 @@ export function World3D({
         sus.x = p.x * TILE; sus.y = p.z * TILE;
       } else if (suspect) suspect.root.visible = false;
       for (const [id, crew] of ambulances) if (!RESCUES.has(id)) { crew.root.visible = false; crew.medics.forEach((m) => { m.root.visible = false; }); }
+      rescueCam = null;
+      for (const [id, w] of wrecks) if (!RESCUES.has(id)) { scene.remove(w); disposeVehicle(w); wrecks.delete(id); }
       for (const [id, live] of RESCUES) {
-        const f = rescueFrame(performance.now() - live.startedAt);
+        const pathed = Boolean(live.inPath && live.outPath);
+        const f = pathed ? liveRescueFrame(performance.now() - live.startedAt) : rescueFrame(performance.now() - live.startedAt);
         const crew = rescueCrew(id);
-        const sx = live.stopX / TILE, sz = live.stopY / TILE, ax = live.axisX, az = live.axisY;
-        // Approach from 14 tiles down the road, stop beside the patient, then drive on.
-        const along = f.phase === "downed" ? -14 : f.phase === "approaching" ? -14 + f.approach * 14 : f.depart * 18;
+        const sx = live.stopX / TILE, sz = live.stopY / TILE;
+        // Where the ambulance is and which way it faces.
+        let ax = live.axisX, az = live.axisY, cx: number, cz: number;
+        if (pathed) {
+          const leg = f.phase === "departing" || f.phase === "arrived" ? pathPoint(live.outPath!, f.depart) : pathPoint(live.inPath!, f.phase === "downed" ? 0 : f.approach);
+          cx = leg.x; cz = leg.y;
+          if (f.phase === "loading") { const end = pathPoint(live.inPath!, 1); ax = end.dx; az = end.dy; }
+          else { ax = leg.dx; az = leg.dy; }
+        } else {
+          const along = f.phase === "downed" ? -14 : f.phase === "approaching" ? -14 + f.approach * 14 : f.depart * 18;
+          cx = sx + ax * along; cz = sz + az * along;
+        }
         crew.root.visible = f.phase !== "downed" && !f.complete;
-        crew.root.position.set(sx + ax * along, 0.004, sz + az * along);
+        crew.root.position.set(cx, 0.004, cz);
         crew.root.rotation.y = -Math.atan2(az, ax);
-        crew.rig?.update(secs, true);
+        crew.rig?.update(secs, f.phase !== "loading");
+        if (id === "me" && pathed) {
+          // Frame you and the ambulance together as it arrives; once you're aboard, ride with it.
+          const aboard = f.phase === "departing" || f.playerInAmbulance;
+          const near = Math.hypot(cx - me.root.position.x, cz - me.root.position.z) < 22;
+          if (aboard) rescueCam = { x: cx, z: cz };
+          else if (f.phase !== "downed" && near) rescueCam = { x: (cx + me.root.position.x) / 2, z: (cz + me.root.position.z) / 2 };
+        }
         const patient = id === "me" ? me : others.get(id);
-        const rearX = sx - ax * 1.9, rearZ = sz - az * 1.9;
+        const end = pathed ? pathPoint(live.inPath!, 1) : { dx: ax, dy: az };
+        const rearX = sx - end.dx * 1.9, rearZ = sz - end.dy * 1.9;
+        // The wrecked car stays where it crashed, smoking, until the ambulance has gone.
+        if (live.wreck && patient) {
+          const w = wreckFor(id, live.wreck, patient.root.position.x, patient.root.position.z, -Math.atan2(end.dy, end.dx));
+          (w.userData.puffs as THREE.Mesh[]).forEach((p, i) => {
+            const t = (secs * 0.35 + p.userData.seed) % 1;
+            p.position.set(0.9 + Math.sin(i * 2.1 + secs) * 0.25 * t, 0.9 + t * 2.6, Math.cos(i * 1.7) * 0.3 * t);
+            p.scale.setScalar(0.5 + t * 1.6);
+          });
+          smokeMat.opacity = 0.5;
+        }
         if (patient) {
           const px = patient.root.position.x, pz = patient.root.position.z;
           // Lying down until the stretcher arrives, carried to the ambulance, then inside it.
@@ -3613,7 +3668,7 @@ export function World3D({
             if (!f.crewVisible) return;
             const toPatient = Math.min(1, f.stretcherApproach * (1 - f.loading));
             const side = i ? 0.55 : -0.55;
-            const tx = rearX + (patient.root.position.x - rearX) * toPatient + az * side, tz = rearZ + (patient.root.position.z - rearZ) * toPatient - ax * side;
+            const tx = rearX + (patient.root.position.x - rearX) * toPatient + end.dy * side, tz = rearZ + (patient.root.position.z - rearZ) * toPatient - end.dx * side;
             m.root.position.set(tx, 0, tz);
             m.root.rotation.y = Math.atan2(patient.root.position.x - tx, patient.root.position.z - tz);
             setWalking(m, f.stretcherApproach > 0 && f.stretcherApproach < 1 || f.loading > 0 && f.loading < 1);

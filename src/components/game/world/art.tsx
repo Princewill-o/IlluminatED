@@ -382,7 +382,9 @@ export type VisitorKind = "classmate" | "coworker" | "mentor";
 /** Live ambulance rescues on the road beside a player, outdoors: "me" for you and a
  *  player id for anyone else in the room (so everyone sees them taken away). The 3D
  *  world plays the 15-second rescue timeline from `startedAt` along the road axis. */
-export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number };
+/** A live ambulance rescue. With paths (tile coords, flat x,y pairs) the ambulance drives in along
+ *  `inPath` to the stop and away along `outPath` towards the hospital; `wreck` is the car left behind. */
+export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number; inPath?: number[]; outPath?: number[]; wreck?: string | null };
 export const RESCUES = new Map<string, LiveRescue>();
 /** In-world Promotion Panic: coloured answer pads on the ground (world px). `answer` lets the
  *  coworker bots pick; `reveal` is set once the round locks so the right pad lights up. */

@@ -18,6 +18,7 @@ import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map"
 import { CivilianConversation } from "./civilian-conversation";
 import { CoachTrip } from "./coach-trip";
 import { CourtTrial } from "./court-trial";
+import { CrashImpact } from "./crash-impact";
 import { BookingIn, HoldingCellHud } from "./custody";
 import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
@@ -76,7 +77,7 @@ import { gameDateAt } from "@/game/core/game-clock";
 import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
-import { rescueRoad } from "@/game/core/live-rescue";
+import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
 import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
@@ -637,21 +638,31 @@ export function WorldApp({
     setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
   });
   useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__panic?:(id:string)=>void}).__panic=(id)=>setPanic(id);},[]);
-  useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__rescue?:()=>void}).__rescue=()=>{setBike(null);setDriving(null);setRescue(true);};},[]);
   // Outdoors, the rescue plays live on the road beside you (and everyone in the room sees it).
   const [liveRescue,setLiveRescue]=useState<string|null>(null);
   const arriveFromRescue=useCallback(()=>{setMedicalCustody(jailed);doActivity("hospital");updateLife(l=>({...l,sick:false}));setRescue(false);setLiveRescue(null);RESCUES.delete("me");goTo("hospital","Ambulance arrival · St Tomas’ Hospital");},[jailed,updateLife,goTo]);
+  // A crash in the last few seconds means the rescue starts with the impact and the wreck stays on the road.
+  const lastCrash=useRef<{at:number;car:string|null}>({at:0,car:null});
+  const drivingNow=useRef(driving);drivingNow.current=driving;
+  useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__rescue?:(car?:string)=>void}).__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};},[]);
+  const [rescueCause,setRescueCause]=useState<{kind:"crash"|"collapse";key:number}|null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const liveRoad=useMemo(()=>rescue&&outdoors?rescueRoad(map,PLAYER.x,PLAYER.y):null,[rescue]);
+  const liveRoad=useMemo(()=>rescue&&outdoors?rescuePlan(map,PLAYER.x,PLAYER.y,(a,b)=>roadRoute(map,a,b)):null,[rescue]);
   useEffect(()=>{
     const road=liveRoad;
     if(!road)return;
-    RESCUES.set("me",{startedAt:performance.now(),...road});
-    window.dispatchEvent(new CustomEvent("illumed:rescue-start",{detail:{...road,elapsed:0}}));
-    const steps:[number,string][]=[[0,"You collapsed. Help is on its way."],[3000,"The ambulance is arriving."],[7000,"Paramedics are helping you onto the stretcher."],[11000,"You're on your way to St Tomas' Hospital."]];
+    const crashed=Date.now()-lastCrash.current.at<8000;
+    const wreck=crashed&&lastCrash.current.car&&!lastCrash.current.car.startsWith("bus:")?lastCrash.current.car:null;
+    setRescueCause({kind:crashed?"crash":"collapse",key:Date.now()});
+    const plan={...road,wreck};
+    RESCUES.set("me",{startedAt:performance.now(),...plan});
+    window.dispatchEvent(new CustomEvent("illumed:rescue-start",{detail:{...plan,elapsed:0}}));
+    const hospital=road.toHospital?"St Tomas' Hospital":"hospital";
+    const steps:[number,string][]=[[0,crashed?"You crashed! Stay still. Someone has called 999.":"You collapsed. Someone has called 999."],[2500,"Blue lights: the ambulance is racing to you."],[10000,"Paramedics are lifting you onto the stretcher."],[14000,`Sirens on: heading to ${hospital}.`]];
     const timers=steps.map(([at,text])=>window.setTimeout(()=>setLiveRescue(text),at));
-    const done=window.setTimeout(arriveFromRescue,15200);
-    return()=>{timers.forEach(clearTimeout);clearTimeout(done);};
+    const done=window.setTimeout(arriveFromRescue,LIVE_RESCUE_MS+200);
+    const clearCause=window.setTimeout(()=>setRescueCause(null),4500);
+    return()=>{timers.forEach(clearTimeout);clearTimeout(done);clearTimeout(clearCause);};
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[liveRoad]);
   useEffect(()=>{if(needs && needs.energy<=12 && !rescue && map.kind !== "hospital" && !fading){setRescue(true);setBike(null);setDriving(null);}},[needs,map.kind,rescue,fading]);
@@ -661,6 +672,7 @@ export function WorldApp({
       const now = Date.now(); if (now - last < 2500 || rescue) return; last = now;
       const damage = (event as CustomEvent<{ damage: number }>).detail?.damage;
       if (!Number.isFinite(damage) || damage <= 0) return;
+      lastCrash.current = { at: now, car: drivingNow.current };
       damageEnergy(Math.min(55, damage));
       say("Collision · check on others, stop safely and exchange details. Your condition has dropped.", true);
     };
@@ -1371,6 +1383,7 @@ export function WorldApp({
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
+      {rescueCause && <CrashImpact key={rescueCause.key} kind={rescueCause.kind}/>}
       {patrol && outdoors && <PolicePatrol map={map} onTarget={setWaypoint} onEnd={() => { setPatrol(false); setWaypoint(null); }} say={say}/>}
       {panic && <PanicFloor companyId={panic} map={map} onExit={() => setPanic(null)}/>}
       <NpcVisits enabled={outdoors&&!panic&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}

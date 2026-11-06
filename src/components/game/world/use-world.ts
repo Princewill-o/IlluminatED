@@ -315,9 +315,11 @@ export function useWorld({
         if (cancelled() || !payload || typeof payload.i !== "string" || !map.has(payload.i)) return;
         const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
         const stopX = n(payload.stopX), stopY = n(payload.stopY), elapsed = n(payload.elapsed);
-        if (stopX === null || stopY === null || elapsed === null || elapsed < 0 || elapsed > 15000) return;
+        if (stopX === null || stopY === null || elapsed === null || elapsed < 0 || elapsed > 26000) return;
         const axisX = payload.axisX === 0 ? 0 : 1, axisY = axisX ? 0 : 1;
-        RESCUES.set(payload.i, { startedAt: performance.now() - elapsed, stopX, stopY, axisX, axisY });
+        const path = (v: unknown) => Array.isArray(v) && v.length >= 4 && v.length <= 400 && v.length % 2 === 0 && v.every((x) => typeof x === "number" && Number.isFinite(x) && Math.abs(x) < 2000) ? (v as number[]) : undefined;
+        const wreck = typeof payload.wreck === "string" && validCar(payload.wreck) ? payload.wreck : null;
+        RESCUES.set(payload.i, { startedAt: performance.now() - elapsed, stopX, stopY, axisX, axisY, inPath: path(payload.inPath), outPath: path(payload.outPath), wreck });
       });
       // Wanted stars and police patrols, so officers can find wanted players (and everyone sees the tags).
       channel.on("broadcast", { event: "law" }, ({ payload }) => {
@@ -577,7 +579,7 @@ export function useWorld({
     void ch.send({ type: "broadcast", event: "arrest", payload: { i: me.id, t: target } });
   }, [me.id]);
   /** Tell the room you're being taken away by ambulance, so they see it too. */
-  const reportRescue = useCallback((r: { stopX: number; stopY: number; axisX: number; axisY: number; elapsed: number }) => {
+  const reportRescue = useCallback((r: { stopX: number; stopY: number; axisX: number; axisY: number; elapsed: number; inPath?: number[]; outPath?: number[]; wreck?: string | null }) => {
     const ch = channelRef.current;
     if (!ch || ch.state !== "joined") return;
     void ch.send({ type: "broadcast", event: "rescue", payload: { i: me.id, ...r } });
