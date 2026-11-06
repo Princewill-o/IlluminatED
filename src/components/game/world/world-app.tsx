@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { AUTOPILOT, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
@@ -70,6 +70,7 @@ import { gameDateAt } from "@/game/core/game-clock";
 import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
+import { rescueRoad } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
 import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
@@ -619,6 +620,23 @@ export function WorldApp({
   const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
     setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
   });
+  useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__rescue?:()=>void}).__rescue=()=>{setBike(null);setDriving(null);setRescue(true);};},[]);
+  // Outdoors, the rescue plays live on the road beside you (and everyone in the room sees it).
+  const [liveRescue,setLiveRescue]=useState<string|null>(null);
+  const arriveFromRescue=useCallback(()=>{setMedicalCustody(jailed);doActivity("hospital");updateLife(l=>({...l,sick:false}));setRescue(false);setLiveRescue(null);RESCUES.delete("me");goTo("hospital","Ambulance arrival · St Tomas’ Hospital");},[jailed,updateLife,goTo]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const liveRoad=useMemo(()=>rescue&&outdoors?rescueRoad(map,PLAYER.x,PLAYER.y):null,[rescue]);
+  useEffect(()=>{
+    const road=liveRoad;
+    if(!road)return;
+    RESCUES.set("me",{startedAt:performance.now(),...road});
+    window.dispatchEvent(new CustomEvent("illumed:rescue-start",{detail:{...road,elapsed:0}}));
+    const steps:[number,string][]=[[0,"You collapsed. Help is on its way."],[3000,"The ambulance is arriving."],[7000,"Paramedics are helping you onto the stretcher."],[11000,"You're on your way to St Tomas' Hospital."]];
+    const timers=steps.map(([at,text])=>window.setTimeout(()=>setLiveRescue(text),at));
+    const done=window.setTimeout(arriveFromRescue,15200);
+    return()=>{timers.forEach(clearTimeout);clearTimeout(done);};
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[liveRoad]);
   useEffect(()=>{if(needs && needs.energy<=12 && !rescue && map.kind !== "hospital" && !fading){setRescue(true);setBike(null);setDriving(null);}},[needs,map.kind,rescue,fading]);
   useEffect(() => {
     let last = 0;
@@ -1143,7 +1161,7 @@ export function WorldApp({
                           : map.kind === "prison" || map.kind === "hospital" || map.kind === "court" ? "quiet"
                             : map.kind === "campus" ? "university" : "city"
       } />
-      {!mobileLife && !rescue && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
+      {!mobileLife && !(rescue && !liveRoad) && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
         offlinePreview={developerTeleport}
         key={`${mapId}:${server}:${trip}`}
         onNearby={refreshNearby}
@@ -1272,7 +1290,8 @@ export function WorldApp({
       </button></HudSlot>
       <WantedStars stars={life.stars} />
       {street.warning && !rescue && <HudSlot area="tc" order={40}><div role="alert" className="max-w-sm rounded-2xl bg-[#7b342b] px-4 py-3 text-sm font-bold text-white">{street.warning}</div></HudSlot>}
-      {rescue && <AmbulanceRescue avatar={me.avatar} onArrive={()=>{setMedicalCustody(jailed);doActivity("hospital");updateLife(l=>({...l,sick:false}));setRescue(false);goTo("hospital","Ambulance arrival · St Tomas’ Hospital");}}/>}
+      {rescue && !liveRoad && <AmbulanceRescue avatar={me.avatar} onArrive={arriveFromRescue}/>}
+      {liveRescue && <HudSlot area="bc" order={0}><p role="status" className="rounded-full bg-[#c8322d] px-5 py-2.5 text-sm font-black text-white shadow-lg">{liveRescue}</p></HudSlot>}
       {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
         <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>

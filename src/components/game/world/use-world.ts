@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
+import { RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -309,6 +310,15 @@ export function useWorld({
         p.heading = Number.isFinite(payload.heading) ? payload.heading : 0;
         p.heardAt = Date.now();
       });
+      // Someone else in the room is being taken away by ambulance: play it here too.
+      channel.on("broadcast", { event: "rescue" }, ({ payload }) => {
+        if (cancelled() || !payload || typeof payload.i !== "string" || !map.has(payload.i)) return;
+        const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+        const stopX = n(payload.stopX), stopY = n(payload.stopY), elapsed = n(payload.elapsed);
+        if (stopX === null || stopY === null || elapsed === null || elapsed < 0 || elapsed > 15000) return;
+        const axisX = payload.axisX === 0 ? 0 : 1, axisY = axisX ? 0 : 1;
+        RESCUES.set(payload.i, { startedAt: performance.now() - elapsed, stopX, stopY, axisX, axisY });
+      });
       const heardChat = new Map<string, number>();
       channel.on("broadcast", { event: "chat" }, ({ payload }) => {
         if (cancelled() || !payload || typeof payload.i !== "string" || typeof payload.id !== "string" || payload.id.length>80) return;
@@ -538,7 +548,15 @@ export function useWorld({
     finally { sendingChat.current=false; }
   },[me.id,me.username]);
 
+  /** Tell the room you're being taken away by ambulance, so they see it too. */
+  const reportRescue = useCallback((r: { stopX: number; stopY: number; axisX: number; axisY: number; elapsed: number }) => {
+    const ch = channelRef.current;
+    if (!ch || ch.state !== "joined") return;
+    void ch.send({ type: "broadcast", event: "rescue", payload: { i: me.id, ...r } });
+  }, [me.id]);
+
   return {
+    reportRescue,
     messages,
     sendChat,
     status,

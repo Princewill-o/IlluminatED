@@ -361,6 +361,13 @@ export function WorldView({
   const nearRef = useRef<Portal | null>(null);
   const roomRef = useRef<string | null>(null);
   const { players, reportMove, stopped, say } = world;
+  // Your live ambulance rescue is shared with everyone in the room.
+  const reportRescue = world.reportRescue;
+  useEffect(() => {
+    const on = (e: Event) => reportRescue((e as CustomEvent).detail);
+    window.addEventListener("illumed:rescue-start", on);
+    return () => window.removeEventListener("illumed:rescue-start", on);
+  }, [reportRescue]);
   // Every map starts you on the ground floor.
   useEffect(() => { PLAYER.level = 0; PLAYER.z = 0; }, [map]);
   // Share who's in this server with the rest of the game (interview-room deals).

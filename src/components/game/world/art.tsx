@@ -358,6 +358,11 @@ export const TUTOR = { active: false, x: 0, y: 0 };
  *  a shift, or a mentor. The game sets where they start; the 3D world walks them over,
  *  sets `arrived` when they reach you, and walks them off once `leaving` is set. */
 export type VisitorKind = "classmate" | "coworker" | "mentor";
+/** Live ambulance rescues on the road beside a player, outdoors: "me" for you and a
+ *  player id for anyone else in the room (so everyone sees them taken away). The 3D
+ *  world plays the 15-second rescue timeline from `startedAt` along the road axis. */
+export type LiveRescue = { startedAt: number; stopX: number; stopY: number; axisX: number; axisY: number };
+export const RESCUES = new Map<string, LiveRescue>();
 export const VISITOR = { active: false, id: 0, kind: "classmate" as VisitorKind, startX: 0, startY: 0, arrived: false, leaving: false };
 /** A delivery courier walking in from your front door (home map). Phase: arriving, waiting, leaving. */
 export const COURIER = { active: false, phase: "arriving" as "arriving" | "waiting" | "leaving", since: 0 };

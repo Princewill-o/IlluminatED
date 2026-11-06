@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, PLAYER_VEHICLE, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { cinematicRenderer } from "./cinematic-renderer";
@@ -65,6 +65,7 @@ import type { WorldNavigation } from "@/game/core/navigation";
 import { weatherAt } from "@/game/core/needs";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { buildHighlands } from "@/game/core/regions";
+import { rescueFrame } from "@/game/core/rescue";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
@@ -2917,6 +2918,20 @@ export function World3D({
       scene.add(responseCar);
     }
     scene.add(...responders.map(body=>body.root));
+    // Live ambulance rescues (yours and other players'): an ambulance and two paramedics each.
+    const ambulances = new Map<string, { rig: Awaited<ReturnType<typeof createEmergencyVehicle>> | null; root: THREE.Group; medics: Body[] }>();
+    const rescueCrew = (id: string) => {
+      let crew = ambulances.get(id);
+      if (crew) return crew;
+      const root = new THREE.Group(); root.visible = false; scene.add(root);
+      const medics = [62, 63].map((seed) => makeBody({ ...npcLook(seed), top: "top-blocky-paramedic-emerald", topColor: "topcol-auto", hat: "hat-none" }, null, true));
+      medics.forEach((m) => { m.root.visible = false; scene.add(m.root); });
+      crew = { rig: null, root, medics };
+      const made = crew;
+      void createEmergencyVehicle("ambulance", load, bendAll).then((rig) => { if (disposed) { rig.dispose(); return; } made.rig = rig; root.add(rig.root); }).catch(() => {});
+      ambulances.set(id, crew);
+      return crew;
+    };
     const carLast = new THREE.Vector3();
     // Delivery courier (home only): hi-vis, cap, carrying a parcel.
     const courier = map.kind === "home" ? makeBody({ ...npcLook(61), hat: "hat-cap", topColor: "topcol-orange" }) : null;
@@ -3374,6 +3389,39 @@ export function World3D({
         // Keep the name tag facing the camera whichever way they walk.
         const tag = body.root.userData.caption as THREE.Object3D | undefined;
         if (tag) tag.rotation.y = -body.root.rotation.y;
+      }
+      for (const [id, crew] of ambulances) if (!RESCUES.has(id)) { crew.root.visible = false; crew.medics.forEach((m) => { m.root.visible = false; }); }
+      for (const [id, live] of RESCUES) {
+        const f = rescueFrame(performance.now() - live.startedAt);
+        const crew = rescueCrew(id);
+        const sx = live.stopX / TILE, sz = live.stopY / TILE, ax = live.axisX, az = live.axisY;
+        // Approach from 14 tiles down the road, stop beside the patient, then drive on.
+        const along = f.phase === "downed" ? -14 : f.phase === "approaching" ? -14 + f.approach * 14 : f.depart * 18;
+        crew.root.visible = f.phase !== "downed" && !f.complete;
+        crew.root.position.set(sx + ax * along, 0.004, sz + az * along);
+        crew.root.rotation.y = -Math.atan2(az, ax);
+        crew.rig?.update(secs, true);
+        const patient = id === "me" ? me : others.get(id);
+        const rearX = sx - ax * 1.9, rearZ = sz - az * 1.9;
+        if (patient) {
+          const px = patient.root.position.x, pz = patient.root.position.z;
+          // Lying down until the stretcher arrives, carried to the ambulance, then inside it.
+          patient.root.rotation.z = f.playerInAmbulance ? 0 : Math.PI / 2;
+          patient.root.position.y = f.playerInAmbulance ? 0 : 0.28;
+          patient.root.visible = !f.playerInAmbulance;
+          if (!f.playerOnGround && !f.playerInAmbulance) { patient.root.position.x = px + (rearX - px) * f.loading; patient.root.position.z = pz + (rearZ - pz) * f.loading; }
+          crew.medics.forEach((m, i) => {
+            m.root.visible = f.crewVisible;
+            if (!f.crewVisible) return;
+            const toPatient = Math.min(1, f.stretcherApproach * (1 - f.loading));
+            const side = i ? 0.55 : -0.55;
+            const tx = rearX + (patient.root.position.x - rearX) * toPatient + az * side, tz = rearZ + (patient.root.position.z - rearZ) * toPatient - ax * side;
+            m.root.position.set(tx, 0, tz);
+            m.root.rotation.y = Math.atan2(patient.root.position.x - tx, patient.root.position.z - tz);
+            setWalking(m, f.stretcherApproach > 0 && f.stretcherApproach < 1 || f.loading > 0 && f.loading < 1);
+          });
+        }
+        if (f.complete) { RESCUES.delete(id); if (patient) { patient.root.rotation.z = 0; patient.root.position.y = 0; patient.root.visible = true; } }
       }
       if (tutor) {
         const tx=TUTOR.x/TILE, tz=TUTOR.y/TILE, p=tutor.root.position;
