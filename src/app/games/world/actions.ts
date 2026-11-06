@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { bikeById } from "@/game/core/bikes";
 import { carById } from "@/game/core/cars";
+import { roleById } from "@/game/core/roles";
 import { getSupabase } from "@/lib/social/server";
 
 /** The payment functions aren't on the database yet: let people play for free until they are. */
@@ -376,4 +377,50 @@ export async function inGameDashboard(): Promise<InGameDashboard | null> {
     thisWeek: dash.thisWeekAnswered,
     mastery: { notStarted: dash.mastery["not-started"], needsWork: dash.mastery["needs-work"], gettingThere: dash.mastery["getting-there"], secure: dash.mastery.secure },
   };
+}
+
+// ── Practical roles (src/game/core/roles.ts) ────────────────────────────────
+const ROLE_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to work and earn Clout.",
+  unknown_role: "That role isn't hiring right now.",
+  rate_limited: "Take a breather: you've started a lot of jobs in the last minute.",
+  too_fast: "That was too quick to be real work. Do each step properly to get paid.",
+  already_claimed: "This job has already been paid.",
+  expired: "This job timed out. Start a new one.",
+  invalid: "Something went wrong with that job. Start a new one.",
+};
+const roleError = (m?: string) => ROLE_ERRORS[Object.keys(ROLE_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
+
+/** Your XP and jobs done in every practical role. */
+export async function loadRoleCareers(): Promise<Record<string, { xp: number; jobs: number; earned: number }>> {
+  const sb = await getSupabase();
+  if (!sb) return {};
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth?.user) return {};
+  const { data } = await sb.from("role_careers").select("role,xp,jobs,clout_earned").eq("user_id", auth.user.id);
+  return Object.fromEntries((data ?? []).map((r) => [r.role as string, { xp: r.xp as number, jobs: r.jobs as number, earned: r.clout_earned as number }]));
+}
+
+/** Clock in for one job: the server records the start time. */
+export async function startRoleJob(role: string) {
+  if (!roleById(role)) return { ok: false as const, error: ROLE_ERRORS.unknown_role };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: roleError() };
+  const { data, error } = await sb.rpc("role_job_start", { p_role: role });
+  if (error && notSetUp(error)) return { ok: true as const, claim: null };
+  if (error) return { ok: false as const, error: roleError(error.message) };
+  return { ok: true as const, claim: data as string };
+}
+
+/** Hand in a finished job: the server checks it and sets the pay. */
+export async function finishRoleJob(claim: string, steps: number, accuracy: number) {
+  if (typeof claim !== "string" || !/^[0-9a-f-]{36}$/i.test(claim) || !Number.isInteger(steps) || !Number.isFinite(accuracy))
+    return { ok: false as const, error: ROLE_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: roleError() };
+  const { data, error } = await sb.rpc("role_job_finish", { p_claim: claim, p_steps: steps, p_accuracy: Math.max(0, Math.min(1, accuracy)) });
+  if (error) return { ok: false as const, error: roleError(error.message) };
+  revalidatePath("/games/world");
+  const r = data as { pay: number; xp: number; total_xp: number; jobs: number; capped: boolean };
+  return { ok: true as const, ...r };
 }

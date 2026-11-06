@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
+import { BookOpen, Briefcase, CarFront, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { AUTOPILOT, NPC_SPOTS, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
@@ -28,6 +28,7 @@ import { GameFeedback } from "./game-feedback";
 import { GameMenu, saveResume } from "./game-menu";
 import { HudLayout, HudSlot } from "./hud";
 import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
+import { JobsPanel } from "./jobs-panel";
 import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
@@ -37,6 +38,7 @@ import { NpcVisits } from "./npc-visits";
 import { PanicFloor } from "./panic-floor";
 import { PolicePatrol } from "./police-patrol";
 import { PoliceTransportCutscene } from "./police-transport-cutscene";
+import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
 import { SceneMusic } from "./scene-music";
@@ -83,6 +85,7 @@ import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
+import { type PracticalRole } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
 import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -279,6 +282,9 @@ export function WorldApp({
   const [workStation, setWorkStation] = useState<"reception" | "terminal">("reception");
   const [dailyJob,setDailyJob]=useState<ActiveJob|null>(null);
   const [dailyBusy,setDailyBusy]=useState(false);
+  // Practical roles: the Jobs panel and the shift you're on.
+  const [jobsOpen,setJobsOpen]=useState(false);
+  const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
   const [university,setUniversity]=useState<{id:string;topic:"courses"|"events"|"networking"}|null>(null);
   const [bus, setBus] = useState<string | null>(null);
   const [room, setRoom] = useState<string | null>(null);
@@ -1363,6 +1369,9 @@ export function WorldApp({
         <button type="button" onClick={() => setAwardsOpen(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#ffd166] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div></HudSlot>}
       {!driving && !bike && <HudSlot area="br-act" order={2} className="md:hidden"><button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5">Jump</button></HudSlot>}
+      <HudSlot area="br-nav" order={2}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setJobsOpen(true); }} aria-label="Jobs" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#e4572e] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Briefcase className="size-4" aria-hidden /> <span className="hidden sm:inline">{roleShift ? roleShift.role.title : "Jobs"}</span>
+      </button></HudSlot>
       <HudSlot area="br-nav" order={3}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} aria-label="Games" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Gamepad2 className="size-4" aria-hidden /> <span className="hidden sm:inline">Games</span>
       </button></HudSlot>
@@ -1383,6 +1392,11 @@ export function WorldApp({
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}
       <TunnelFlash/>
+      <RewardToasts/>
+      {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
+        onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
+        onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
+      {roleShift && <RoleShift key={`${roleShift.role.id}-${mapId}`} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); }}/>}
       {rescueCause && <CrashImpact key={rescueCause.key} kind={rescueCause.kind}/>}
       {patrol && outdoors && <PolicePatrol map={map} onTarget={setWaypoint} onEnd={() => { setPatrol(false); setWaypoint(null); }} say={say}/>}
       {panic && <PanicFloor companyId={panic} map={map} onExit={() => setPanic(null)}/>}
