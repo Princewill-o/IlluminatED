@@ -18,6 +18,7 @@ import { addCarParks3D } from "./car-parks3d";
 import { cinematicRenderer } from "./cinematic-renderer";
 import { CityBroadcast, useCityNews } from "./city-broadcast";
 import { coachModel } from "./coach3d";
+import { type Door, type DoorSpot, doorSpot, makeDoor } from "./door3d";
 import { driftingLeaves } from "./drifting-leaves";
 import { createEmergencyVehicle } from "./emergency-vehicle3d";
 import { weatherLighting } from "./environment-palette";
@@ -135,10 +136,12 @@ function bend(m: THREE.Material) {
     // Low-poly facets: each flat face takes a slightly different tone, like hand-cut paper.
     sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_begin>", `#include <normal_fragment_begin>
       #ifdef FLAT_SHADED
+      // Sliver triangles give a zero-length face normal (NaN), which bloom smears into a dark halo.
+      if (!(dot(normal, normal) > 0.25)) normal = vec3(0.0, 0.0, 1.0);
       diffuseColor.rgb *= 0.94 + 0.12 * fract(sin(dot(floor(normal * 6.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
       #endif`);
   };
-  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v5`;
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v6`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -2613,8 +2616,11 @@ export function World3D({
 
     if (map.id === "study-lobby") learningLobby(world, map);
 
-    // Portal markers: soft glowing rings on the ground.
+    // Portal markers: doors at entrances, soft glowing rings elsewhere.
     const rings: THREE.Mesh[] = [];
+    const doorSpots: DoorSpot[] = [];
+    const doors = new Map<string, Door>();
+    const doorAccents = ["#2f6b5a", "#7b2d3b", "#22408a", "#8a5a1f", "#3d5360", "#5b3a8a"];
     const ringMat = new THREE.MeshBasicMaterial({ color: "#f2d9a6", transparent: true, opacity: 0.55 });
     bend(ringMat);
     for (const p of map.portals) {
@@ -2627,6 +2633,9 @@ export function World3D({
         bendAll(b);
         world.add(b);
       }
+      // Building entrances get a real door (opens as you approach); open-ground spots keep a soft light pool.
+      const spot = p.to.kind === "map" || p.to.kind === "game" || p.to.kind === "link" ? doorSpot(map, p) : null;
+      if (spot) { doorSpots.push(spot); continue; }
       const r = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.42, 28), ringMat);
       r.rotation.x = -Math.PI / 2;
       r.position.set((p.rect.x + p.rect.w / 2) / TILE, 0.2, (p.rect.y + p.rect.h / 2) / TILE);
@@ -3964,6 +3973,18 @@ export function World3D({
           }
         } else if (typeof s.userData.update === "function") s.userData.update(reduce ? 0 : secs);
         else s.rotation.z += dt * 0.05;
+      }
+      // Doors near you are built and animated; far ones are put away.
+      for (const spot of doorSpots) {
+        const d = Math.hypot(spot.x - mx, spot.z - mz), id = spot.portal.id;
+        let door = doors.get(id);
+        if (!door && d < 22) {
+          door = makeDoor(spot, doorAccents[Math.abs(Math.round(spot.x * 7 + spot.z * 13)) % doorAccents.length], bend);
+          door.root.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = false; m.receiveShadow = true; m.customDepthMaterial = CURVED_DEPTH; } });
+          world.add(door.root);
+          doors.set(id, door);
+        } else if (door && d > 30) { door.dispose(); doors.delete(id); door = undefined; }
+        door?.update(mx, mz, dt);
       }
       const near = nearPortal();
       for (const r of rings) {
