@@ -36,7 +36,8 @@ export interface Rect {
 export type PortalTarget =
   | { kind: "hotel-desk"; hotel: string }
   | { kind: "hotel-room"; hotel: string; room: string; type: string }
-  | { kind: "lift"; floors: { mapId: string; label: string; current: boolean }[] }
+  | { kind: "lift"; floors: { mapId: string; label: string; current: boolean; level?: 0 | 1; x?: number; y?: number }[] }
+  | { kind: "hotel-leave"; hotel: string; room: string }
   | { kind: "venture"; staff?: string }
   | { kind: "study-room" }
   | { kind: "home-use"; key: string }
@@ -207,47 +208,76 @@ function finish(
   return { ...base, cols: g.cols, rows: g.rows, width: g.cols * TILE, height: g.rows * TILE, tiles: g.rows_() };
 }
 
-/** Walk-in game workplaces, separate from verified employers' advice offices. */
+/**
+ * A hotel in one building: the lobby with reception on the ground floor and a gallery of guest
+ * rooms upstairs on a raised floor in the same room. Walk up the stairs or ride the lift.
+ */
+export const HOTEL_W = 24, HOTEL_H = 16;
+export const HOTEL_DECK = { height: 1.9, ramp: { x: 18, y: 6, w: 2, h: 4 } } as const;
+/** The lift shaft (tiles): its doors face the lobby below and the gallery above. */
+export const HOTEL_LIFT = { x: 3, y: 4, w: 2, h: 2 } as const;
 export function hotelMap(id: string): WorldMap | null {
   const stay = parseRoomMap(id);
   if (stay) return hotelRoomMap(stay.hotel, stay.room);
-  const match = /^hotel-([01])(?:-floor-([12]))?$/.exec(id);
+  // Old floor links lead to the same building.
+  const match = /^(hotel-[01])(?:-floor-[12])?$/.exec(id);
   if (!match) return null;
-  const hotel = buildLondon().things.find(t => t.kind === "building" && t.id === `hotel-${match[1]}`);
+  const base = match[1] as HotelId;
+  const hotel = buildLondon().things.find(t => t.kind === "building" && t.id === base);
   if (!hotel || hotel.kind !== "building") return null;
-  const floor = Number(match[2] ?? 0);
-  const base = `hotel-${match[1]}`;
-  const g = new Grid(20, 16, ".");
-  g.border("#");
-  for (let x = 2; x < 18; x++) g.set(x, 0, "W");
-  g.set(2, 2, "p"); g.set(17, 12, "p");
-  g.fill(3, 6, 4, 1, floor === 0 ? "r" : "b");
-  g.fill(3, 10, 4, 1, "s"); g.set(5, 12, "o");
-  if (floor > 0) {
-    g.fill(10, 5, 2, 1, "d");
-    g.fill(10, 10, 3, 1, "s");
-    g.set(12, 7, "c");
+  const W = HOTEL_W, H = HOTEL_H, ramp = HOTEL_DECK.ramp, lift = HOTEL_LIFT;
+  const blank = (): string[][] => Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => (x === 0 || y === 0 || x === W - 1 || y === H - 1 ? "#" : ".")));
+  const t = blank(), u = blank().map((row, y) => row.map((c, x) => (x >= 1 && x < W - 1 && y >= 1 && y <= 5 ? "." : "#")));
+  for (let x = 2; x < W - 2; x++) t[0][x] = "W";
+  type HotelProp = Prop & { deck?: boolean };
+  const P = (model: string, x: number, y: number, w: number, d: number, extra: Partial<HotelProp> = {}): HotelProp => ({ model, x, y, w, d, ...extra });
+  const props: HotelProp[] = [
+    // Reception desk and the lobby lounge.
+    P("hall-desk", 3, 10, 4, 1), P("tall-plant", 1, 9, 1, 1), P("tall-plant", 8, 9, 1, 1),
+    P("cafe-sofa", 10, 11, 2, 1, { turn: 2 }), P("cafe-table", 10, 10, 2, 1), P("cafe-armchair", 9, 10, 1, 1, { turn: 1 }), P("cafe-armchair", 12, 10, 1, 1, { turn: 3 }),
+    P("cafe-sofa", 14, 11, 2, 1, { turn: 2 }), P("cafe-table", 14, 10, 2, 1),
+    P("tall-plant", 1, 13, 1, 1), P("tall-plant", 22, 13, 1, 1), P("tall-plant", 22, 9, 1, 1),
+    // Under the gallery: a quiet seating nook.
+    P("hall-bench", 7, 3, 2, 1), P("hall-bench", 12, 3, 2, 1), P("tall-plant", 21, 1, 1, 1),
+    // Up on the gallery: plants and benches between the room doors.
+    P("tall-plant", 22, 2, 1, 1, { deck: true, lift: HOTEL_DECK.height }), P("hall-bench", 7, 4, 2, 1, { deck: true, lift: HOTEL_DECK.height }),
+    P("hall-bench", 13, 4, 2, 1, { deck: true, lift: HOTEL_DECK.height }),
+  ];
+  for (const p of props) {
+    if (p.model === "pendant") continue;
+    const grid = p.deck ? u : t;
+    for (let y = p.y; y < p.y + p.d; y++) for (let x = p.x; x < p.x + p.w; x++) grid[y][x] = "t";
   }
-  if (floor === 1) {
-    g.fill(8,1,1,6,"#");
-    g.fill(3,3,2,1,"d");
-    g.fill(3,4,2,1,"X");
+  // The staircase rising north onto the gallery, with balustrades.
+  for (let y = ramp.y; y < ramp.y + ramp.h; y++) {
+    for (let x = ramp.x; x < ramp.x + ramp.w; x++) { t[y][x] = "."; u[y][x] = "."; }
+    for (const x of [ramp.x - 1, ramp.x + ramp.w]) { t[y][x] = "X"; u[y][x] = "#"; }
   }
-  // The stair landing remains walkable; each floor is a real destination.
-  g.fill(15, 2, 2, 2, "e");
-  const portals: Portal[] = [];
-  // Guest rooms: a numbered door each along the corridor. Your key card opens the one you booked.
-  if (floor > 0) for (const r of HOTEL_ROOMS.filter((room) => room.floor === floor))
-    portals.push({ id: `room-${r.room}`, rect: px(r.door.x, r.door.y, 1, 1), label: `Room ${r.room} · ${ROOM_TYPES[r.type].name}`, to: { kind: "hotel-room", hotel: base, room: r.room, type: r.type } });
-  // Reception: check in, book a room, see the nightly rates.
-  if (floor === 0) portals.push({ id: "reception", rect: px(3, 7, 4, 1), label: "Reception: book a room", to: { kind: "hotel-desk", hotel: base } });
-  if (floor < 2) portals.push({id:"stairs-up",rect:px(15,4,2,1),label:`Take stairs to floor ${floor+1}`,to:{kind:"map",mapId:`${base}-floor-${floor+1}`,label:`${hotel.label} · Floor ${floor+1}`}});
-  if (floor > 0) portals.push({id:"stairs-down",rect:px(15,7,2,1),label:floor===1?"Stairs to lobby":"Stairs to floor 1",to:{kind:"map",mapId:floor===1?base:`${base}-floor-1`,label:floor===1?"Hotel lobby":"First floor"}});
-  if (floor === 0) portals.push({id:"exit",rect:px(9,14,2,1),label:"Leave hotel",to:{kind:"map",mapId:"city",label:"London"}});
-  // The lift: press a floor button and ride up or down.
-  g.fill(12, 1, 2, 1, "#");
-  portals.push({ id: "lift", rect: px(12, 2, 2, 1), label: "Lift: choose a floor", to: { kind: "lift", floors: [0, 1, 2].map((f) => ({ mapId: f ? `${base}-floor-${f}` : base, label: f ? `Floor ${f}` : "Lobby", current: f === floor })) } });
-  return finish({id,kind:"office",name:`${hotel.label} · ${floor === 0 ? "Lobby" : `Floor ${floor}`}`,structures:[],rooms:[],portals,spawn:centre(10,13),accent:hotel.accent ?? "#315b50",sign:{x:10,y:8,text:floor===0?`Reception · rooms from ${Math.min(...Object.values(HOTELS[base as HotelId].rates))} Clout a night`:floor===1?"Rooms 101 to 104 · guest lounge":"Rooms 201 to 204 · sky lounge"}},g);
+  for (let x = ramp.x; x < ramp.x + ramp.w; x++) { t[ramp.y - 1][x] = "X"; u[ramp.y - 1][x] = "."; }
+  // The lift shaft runs through both floors.
+  for (let y = lift.y; y < lift.y + lift.h; y++) for (let x = lift.x; x < lift.x + lift.w; x++) { t[y][x] = "#"; u[y][x] = "#"; }
+  // Front door.
+  t[H - 1][11] = t[H - 1][12] = "e"; t[H - 2][11] = t[H - 2][12] = "e";
+  const floors = (here: 0 | 1) => [
+    { mapId: base, label: "Lobby · reception", current: here === 0, level: 0 as const, x: lift.x + 1, y: lift.y + lift.h + 0.6 },
+    { mapId: base, label: "Gallery · rooms 101 to 204", current: here === 1, level: 1 as const, x: lift.x + 1, y: lift.y - 0.6 },
+  ];
+  const portals: Portal[] = [
+    { id: "exit", rect: px(11, H - 2, 2, 1), label: "Leave hotel", to: { kind: "map", mapId: "city", label: "London" } },
+    { id: "reception", rect: px(3, 11, 4, 1), label: "Reception: book a room", to: { kind: "hotel-desk", hotel: base } },
+    { id: "lift", rect: px(lift.x, lift.y + lift.h, lift.w, 1), label: "Lift: call it up to the rooms", to: { kind: "lift", floors: floors(0) } },
+    { id: "lift-up", level: 1, rect: px(lift.x, lift.y - 1, lift.w, 1), label: "Lift: down to the lobby", to: { kind: "lift", floors: floors(1) } },
+    // Guest rooms open off the gallery, along the back wall. Your key card opens yours.
+    ...HOTEL_ROOMS.map((r): Portal => ({ id: `room-${r.room}`, level: 1, rect: px(r.door.x, 1, 1, 1), label: `Room ${r.room} · ${ROOM_TYPES[r.type].name}`, to: { kind: "hotel-room", hotel: base, room: r.room, type: r.type } })),
+  ];
+  return finish({
+    id: base, kind: "office", name: hotel.label ?? HOTELS[base].name, structures: [], rooms: [], portals,
+    spawn: { x: 11.5 * TILE, y: (H - 3) * TILE }, accent: hotel.accent ?? "#315b50",
+    sign: { x: 12, y: 8, text: `Reception · rooms from ${Math.min(...Object.values(HOTELS[base].rates))} Clout a night` },
+    props: props.map((p) => ({ model: p.model, x: p.x, y: p.y, w: p.w, d: p.d, lift: p.lift, turn: p.turn })),
+    theme: { floor: ["#d9cbb5", "#d1c0a4"], wall: "#efe6d4", skirting: hotel.accent ?? "#315b50" },
+    deck: { tiles: u.map((r) => r.join("")), height: HOTEL_DECK.height, ramp },
+  }, Object.assign(new Grid(W, H, "."), { t }));
 }
 
 /** A booked hotel room: the furnished room for its type, with the door back to its floor. */
@@ -257,12 +287,11 @@ export function hotelRoomMap(hotel: HotelId, room: string): WorldMap | null {
   const h = HOTELS[hotel];
   const style = ROOM_DESIGNS[h.design[["standard", "deluxe", "suite"].indexOf(info.type)]] ?? ROOM_DESIGNS[0];
   const base = homeMap(0, ROOM_LAYOUTS[info.type], style);
-  const floorId = `${hotel}-floor-${info.floor}`;
   return {
     ...base,
     id: roomMapId(hotel, room),
     name: `${h.name} · Room ${room}`,
-    portals: base.portals.map((p) => (p.id === "front-door" ? { ...p, label: `Back to floor ${info.floor}`, to: { kind: "map", mapId: floorId, label: `${h.name} · Floor ${info.floor}` } } : p)),
+    portals: base.portals.map((p) => (p.id === "front-door" ? { ...p, label: "Back out to the gallery", to: { kind: "hotel-leave", hotel, room } } : p)),
     accent: hotel === "hotel-0" ? "#315b50" : "#704c47",
   };
 }
@@ -424,7 +453,7 @@ export function workplaceMap(id: string): WorldMap | null {
       });
     }
   }
-  return finish(
+  return withUpperFloor(finish(
     {
       id: `workplace-${id}`,
       kind: "office",
@@ -462,7 +491,62 @@ export function workplaceMap(id: string): WorldMap | null {
       ],
     },
     g,
-  );
+  ));
+}
+
+/**
+ * Every office gets a second storey in the same building: an east wing with a breakout kitchen
+ * downstairs and meeting rooms on a raised floor above, reached by real stairs or a working lift.
+ */
+export const UPPER_FLOOR_HEIGHT = 1.9;
+function withUpperFloor(m: WorldMap): WorldMap {
+  const c = m.cols, W = c + 8, H = m.rows, D = 7; // wing x c..c+6, wall at c+7; deck rows 1..D
+  const t = m.tiles.map((row, y) => [...row, ...Array.from({ length: 8 }, (_, i) => (y === 0 ? (i > 0 && i < 7 ? "W" : "#") : y === H - 1 || i === 7 ? "#" : "."))]);
+  // Open the old east wall into the wing.
+  for (let y = 9; y <= 12 && y < H - 2; y++) t[y][c - 1] = ".";
+  const u = t.map((row, y) => row.map((_, x) => (x >= c && x < c + 7 && y >= 1 && y <= D ? "." : "#")));
+  const ramp = { x: c + 5, y: D + 1, w: 2, h: 4 };
+  const lift = { x: c, y: D - 1, w: 2, h: 2 };
+  type Upper = Prop & { deck?: boolean };
+  const U = (model: string, x: number, y: number, w: number, d: number, turn = 0): Upper => ({ model, x, y, w, d, turn, lift: UPPER_FLOOR_HEIGHT, deck: true });
+  const G = (model: string, x: number, y: number, w: number, d: number, turn = 0): Upper => ({ model, x, y, w, d, turn });
+  const props: Upper[] = [
+    // Upstairs meeting room: a table with chairs, a sofa and plants.
+    U("cafe-table", c + 3, 2, 1, 1), U("cafe-chair", c + 3, 1, 1, 1), U("cafe-chair", c + 3, 3, 1, 1, 2), U("cafe-chair", c + 2, 2, 1, 1, 1), U("cafe-chair", c + 4, 2, 1, 1, 3),
+    U("cafe-sofa", c + 2, 6, 2, 1, 2), U("tall-plant", c + 6, 1, 1, 1), U("tall-plant", c + 2, 5, 1, 1),
+    // Downstairs breakout: tables and plants.
+    G("cafe-table", c + 2, H - 5, 1, 1), G("cafe-chair", c + 2, H - 6, 1, 1), G("cafe-chair", c + 2, H - 4, 1, 1, 2),
+    G("cafe-table", c + 5, H - 5, 1, 1), G("cafe-chair", c + 5, H - 6, 1, 1), G("cafe-chair", c + 5, H - 4, 1, 1, 2), G("tall-plant", c + 6, H - 2, 1, 1),
+  ];
+  // Footprints: solid but not drawn again as tile furniture downstairs; part of the floor upstairs.
+  for (const p of props) for (let y = p.y; y < p.y + p.d; y++) for (let x = p.x; x < p.x + p.w; x++) (p.deck ? u : t)[y][x] = p.deck ? "t" : "X";
+  // Kitchen counter on the wing's back wall, under the meeting room.
+  for (let x = c + 2; x < c + 5; x++) t[1][x] = "k";
+  t[1][c + 5] = "F";
+  for (let y = ramp.y; y < ramp.y + ramp.h; y++) {
+    for (let x = ramp.x; x < ramp.x + ramp.w; x++) { t[y][x] = "."; u[y][x] = "."; }
+    t[y][ramp.x - 1] = "X"; u[y][ramp.x - 1] = "#";
+  }
+  for (let x = ramp.x; x < ramp.x + ramp.w; x++) { t[ramp.y - 1][x] = "X"; u[ramp.y - 1][x] = "."; }
+  for (let y = lift.y; y < lift.y + lift.h; y++) for (let x = lift.x; x < lift.x + lift.w; x++) { t[y][x] = "#"; u[y][x] = "#"; }
+  const floors = (here: 0 | 1) => [
+    { mapId: m.id, label: "Ground · main office", current: here === 0, level: 0 as const, x: lift.x + 1, y: lift.y + lift.h + 0.6 },
+    { mapId: m.id, label: "First floor · meeting rooms", current: here === 1, level: 1 as const, x: lift.x + 1, y: lift.y - 0.6 },
+  ];
+  return {
+    ...m,
+    cols: W, width: W * TILE,
+    tiles: t.map((r) => r.join("")),
+    portals: [
+      ...m.portals,
+      { id: "lift", rect: px(lift.x, lift.y + lift.h, lift.w, 1), label: "Lift: up to the meeting rooms", to: { kind: "lift", floors: floors(0) } },
+      { id: "lift-up", level: 1, rect: px(lift.x, lift.y - 1, lift.w, 1), label: "Lift: down to the main office", to: { kind: "lift", floors: floors(1) } },
+      { id: "meeting-room", level: 1, rect: px(c + 2, 4, 3, 1), label: "Meeting room: plan the week with the team", to: { kind: "act", activity: "study" } },
+      { id: "breakout", rect: px(c + 2, 2, 3, 1), label: "Breakout kitchen: make a drink and a snack", to: { kind: "act", activity: "eat" } },
+    ],
+    props: [...(m.props ?? []), ...props.map((p) => ({ model: p.model, x: p.x, y: p.y, w: p.w, d: p.d, lift: p.lift, turn: p.turn }))],
+    deck: { tiles: u.map((r) => r.join("")), height: UPPER_FLOOR_HEIGHT, ramp },
+  };
 }
 
 /** A walkable shared business club, with three distinct practical spaces. */

@@ -15,7 +15,7 @@ import { LearningTracker } from "./learning-tracker";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { AUTOPILOT, ArtScenery, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -259,7 +259,7 @@ export function WorldView({
   policeRef.current = police;
   const getPolice = useCallback(() => policeRef.current, []);
   const wasFlying = useRef(false);
-  const start = useRef(safeSpot(map, arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
+  const start = useRef(safeSpot(levelMap(map, ARRIVE_LEVEL.level), arriveAt?.x ?? map.spawn.x, arriveAt?.y ?? map.spawn.y));
   const world = useWorld({ mapId: map.id, serverId: offlinePreview ? "solo" : serverId, me, start: start.current });
   const viewport = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
@@ -379,7 +379,7 @@ export function WorldView({
     return () => { window.removeEventListener("illumed:law", law); window.removeEventListener("illumed:arrest-player", arrest); };
   }, [reportLaw, reportArrest]);
   // Every map starts you on the ground floor.
-  useEffect(() => { PLAYER.level = 0; PLAYER.z = 0; }, [map]);
+  useEffect(() => { PLAYER.level = ARRIVE_LEVEL.level; PLAYER.z = map.deck && ARRIVE_LEVEL.level ? map.deck.height : 0; ARRIVE_LEVEL.level = 0; }, [map]);
   // Share who's in this server with the rest of the game (interview-room deals).
   useEffect(() => {
     const sync = () => ONLINE.splice(0, ONLINE.length, ...[...players.current.values()].filter(p => !hidden.has(p.id)).map(p => ({ id: p.id, username: p.username, x: p.tx, y: p.ty })));
@@ -614,7 +614,6 @@ export function WorldView({
         }
       }
       // Two-level rooms: walk on the grid of the level you're on (ground or deck).
-      const walkMap = levelMap(map, PLAYER.level);
       // Sandbox flight (player worlds): glide over everything, inside the map's edges.
       const flying = WORLD_RULES.fly && !driving;
       // Landing: come down on the nearest open ground.
@@ -624,7 +623,9 @@ export function WorldView({
         const len = Math.hypot(dx, dy) || 1, sp = WALK_SPEED * 2.2 * speedRef.current * dt * Math.min(1, Math.hypot(dx, dy));
         return { x: Math.max(TILE, Math.min(map.width - TILE, p.x + dx / len * sp)), y: Math.max(TILE, Math.min(map.height - TILE, p.y + dy / len * sp)) };
       };
-      let next = driven ?? (flying ? glide() : step(walkMap, p, dx, dy, dt, speedRef.current));
+      // The lift: you come out on the other floor, at its doors.
+      if (LEVEL_JUMP.pending) { LEVEL_JUMP.pending = false; PLAYER.level = LEVEL_JUMP.level; p.x = LEVEL_JUMP.x; p.y = LEVEL_JUMP.y; }
+      let next = driven ?? (flying ? glide() : step(levelMap(map, PLAYER.level), p, dx, dy, dt, speedRef.current));
       if (map.kind === "station" && RIDE.active) {
         // On the train: you move about inside the carriage while it carries you along.
         const frame = RIDE.phase === "departing" ? departFrame((now - RIDE.at) / 1000) : RIDE.phase === "arriving" || RIDE.phase === "docked" ? arriveFrame((now - RIDE.at) / 1000) : { offset: 0, doorOpen: 1 };

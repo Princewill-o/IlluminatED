@@ -20,12 +20,13 @@ export const ROOM_TYPES: Record<RoomType, { name: string; perks: string[]; sleep
 };
 
 /** Room numbers on floors 1 and 2: the same mix on each. */
-export const HOTEL_ROOMS: { room: string; type: RoomType; floor: 1 | 2; door: { x: number; y: number; side: "west" | "east" } }[] = [1, 2].flatMap((floor) => ([
-  { room: `${floor}01`, type: "standard", door: { x: 1, y: 9, side: "west" } },
-  { room: `${floor}02`, type: "standard", door: { x: 1, y: 12, side: "west" } },
-  { room: `${floor}03`, type: "deluxe", door: { x: 18, y: 9, side: "east" } },
-  { room: `${floor}04`, type: "suite", door: { x: 18, y: 12, side: "east" } },
-] as const).map((r) => ({ ...r, floor: floor as 1 | 2 })));
+/** Guest rooms along the gallery's back wall (door x in tiles). Floor is the room number's first digit. */
+export const HOTEL_ROOMS: { room: string; type: RoomType; floor: 1 | 2; door: { x: number } }[] = [
+  { room: "101", type: "standard", floor: 1, door: { x: 2 } }, { room: "102", type: "standard", floor: 1, door: { x: 6 } },
+  { room: "103", type: "deluxe", floor: 1, door: { x: 9 } }, { room: "104", type: "suite", floor: 1, door: { x: 11 } },
+  { room: "201", type: "standard", floor: 2, door: { x: 13 } }, { room: "202", type: "standard", floor: 2, door: { x: 16 } },
+  { room: "203", type: "deluxe", floor: 2, door: { x: 18 } }, { room: "204", type: "suite", floor: 2, door: { x: 20 } },
+];
 
 export const MAX_NIGHTS = 7;
 /** The seventh night is on the house. */

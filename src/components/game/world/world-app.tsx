@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Briefcase, CarFront, PawPrint, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { AUTOPILOT, CREW, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
@@ -82,7 +82,7 @@ import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/d
 import { gameDateAt } from "@/game/core/game-clock";
 import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
-import { parseRoomMap, roomMapId } from "@/game/core/hotels";
+import { parseRoomMap, roomInfo, roomMapId } from "@/game/core/hotels";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
@@ -308,7 +308,7 @@ export function WorldApp({
   const [hotelBooking,setHotelBooking]=useState<HotelBooking|null>(null);
   const [hotelDesk,setHotelDesk]=useState<string|null>(null);
   useEffect(()=>{void loadHotelBooking().then(setHotelBooking).catch(()=>{});},[]);
-  const [lift,setLift]=useState<{mapId:string;label:string;current:boolean}[]|null>(null);
+  const [lift,setLift]=useState<{mapId:string;label:string;current:boolean;level?:0|1;x?:number;y?:number}[]|null>(null);
   // Your pet comes out with you as soon as the world loads.
   useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
@@ -776,6 +776,13 @@ export function WorldApp({
     return () => { active = false; window.clearInterval(timer); };
   }, [life.bankCourtSeen, life.hearing, updateLife, goTo, say]);
 
+  // Out of your room onto the hotel gallery, at your door.
+  const leaveHotelRoom = useCallback((hotel: string, room: string) => {
+    const door = roomInfo(room)?.door.x ?? 11;
+    ARRIVE_LEVEL.level = 1;
+    play("door", soundOn());
+    void goTo(hotel, "Hotel gallery", { x: (door + 0.5) * TILE, y: 2.4 * TILE });
+  }, [goTo]);
   // When a stay ends, the key card stops working: you're shown back out to the corridor.
   useEffect(() => {
     const stay = parseRoomMap(mapId);
@@ -785,12 +792,12 @@ export function WorldApp({
       if (process.env.NODE_ENV !== "production" && (() => { try { return localStorage.getItem("illuminated:dev-hotel") === "1"; } catch { return false; } })()) return;
       if (hotelBooking && hotelBooking.hotel === stay.hotel && hotelBooking.room === stay.room && Date.parse(hotelBooking.check_out) > Date.now()) return;
       say("Your stay has ended. Thanks for staying with us!");
-      void goTo(`${stay.hotel}-floor-${stay.room[0]}`, "Hotel corridor");
+      leaveHotelRoom(stay.hotel, stay.room);
     };
     check();
     const t = setInterval(check, 30000);
     return () => clearInterval(t);
-  }, [mapId, hotelBooking, goTo, say]);
+  }, [mapId, hotelBooking, leaveHotelRoom, say]);
   const onPortal = useCallback(
     async(portal: Portal) => {
       if(transitionPending())return;
@@ -863,6 +870,7 @@ export function WorldApp({
         else router.push(to.href);
       } else if (to.kind === "lift") setLift(to.floors);
       else if (to.kind === "hotel-desk") setHotelDesk(to.hotel);
+      else if (to.kind === "hotel-leave") leaveHotelRoom(to.hotel, to.room);
       else if (to.kind === "hotel-room") {
         const mine = hotelBooking && hotelBooking.hotel === to.hotel && hotelBooking.room === to.room && Date.parse(hotelBooking.check_out) > Date.now();
         if (mine) { play("door", soundOn()); void goTo(roomMapId(to.hotel, to.room), `Room ${to.room}`); }
@@ -920,7 +928,7 @@ export function WorldApp({
         setArrive({...spot,speed:keepCar?Math.min(Math.abs(PLAYER_VEHICLE.speed),isMotorway(to.mapId)?660:220):0});setMapId(to.mapId);setTrip(n=>n+1);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking, leaveHotelRoom],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -1494,7 +1502,12 @@ export function WorldApp({
         onBooking={(b, change) => { setHotelBooking(b); setWallet((w) => Math.max(0, w + change)); }}
         onGoToRoom={(b) => { setHotelDesk(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }} />}
       <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) { setDailyJob(null); setRoleShift({ role, level: 1 }); } }} />
-      {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => { setLift(null); void goTo(f.mapId, f.label, { x: 13 * TILE, y: 3.6 * TILE }); }} />}
+      {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => {
+        setLift(null);
+        // Same building: the lift just takes you to the other floor. Otherwise it's another map.
+        if (f.mapId === mapId && f.level !== undefined) Object.assign(LEVEL_JUMP, { pending: true, level: f.level, x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
+        else void goTo(f.mapId, f.label, { x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
+      }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
       {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}

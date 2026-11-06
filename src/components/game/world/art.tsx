@@ -336,6 +336,10 @@ type VehicleKind = CoachId | "bus" | "cab" | "boat" | "sedan" | "van" | "suv" | 
 // Everyone on a route keeps the same speed so nobody drives through anybody.
 /** Where the traffic is right now (world px, centre and half-size) and where you are: shared with the game loop. */
 export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx: number; dy: number; speed?: number; id?: string } | undefined)[] = [];
+/** Move between floors in the same building: the lift sets this, the walk loop applies it. */
+export const LEVEL_JUMP = { pending: false, level: 0 as 0 | 1, x: 0, y: 0 };
+/** The floor the next map starts you on (e.g. stepping out of a hotel room onto the gallery). */
+export const ARRIVE_LEVEL = { level: 0 as 0 | 1 };
 export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 /**

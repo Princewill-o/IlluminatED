@@ -1838,7 +1838,8 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
     if (deck) buildDeck(g, map, jobs);
   }
   // Office / station furniture from tile runs.
-  if (!home && !map.props)
+  // (Offices with an upper floor have both: Blender props in the wing and tile furniture elsewhere.)
+  if (!home && (!map.props || map.design))
     for (let y = 0; y < H; y++) {
       let x = 0;
       while (x < Wd) {
@@ -2060,27 +2061,17 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       }
     }
   if (hotel) {
-    // Numbered guest-room doors on the side walls, each with a key-card reader.
+    // Guest-room doors along the gallery's back wall, up at gallery height, with key-card readers.
+    const h=map.deck?.height ?? 0;
     for (const portal of map.portals.filter(p=>p.id.startsWith("room-"))) {
-      const tx=portal.rect.x/TILE, z=portal.rect.y/TILE, west=tx<10;
-      const wx=west?tx:tx+1, o=west?1:-1;
-      const slab=(c:string,d0:number,d1:number,z0:number,y0:number,z1:number,y1:number)=>box(g,c,Math.min(wx+o*d0,wx+o*d1),y0,z0,Math.max(wx+o*d0,wx+o*d1),y1,z1);
-      slab("#e9dcc2",-0.02,0.05,z-0.12,0,z+1.12,2.35);
-      slab(map.accent,0.05,0.1,z+0.04,0,z+0.96,2.15);
-      slab("#d9b45a",0.1,0.13,z+0.78,1.0,z+0.86,1.08);
-      slab("#1d2430",0.1,0.13,z+0.08,1.05,z+0.2,1.3);
-      slab("#5fe08a",0.13,0.14,z+0.11,1.24,z+0.17,1.27);
+      const x=portal.rect.x/TILE, z=1;
+      box(g,"#e9dcc2",x-0.12,h,z,x+1.12,h+2.35,z+0.05);
+      box(g,map.accent,x+0.04,h,z+0.05,x+0.96,h+2.15,z+0.1);
+      box(g,"#d9b45a",x+0.78,h+1.0,z+0.1,x+0.86,h+1.08,z+0.13);
+      box(g,"#1d2430",x+0.08,h+1.05,z+0.1,x+0.2,h+1.3,z+0.13);
+      box(g,"#5fe08a",x+0.11,h+1.24,z+0.13,x+0.17,h+1.27,z+0.14);
       const plate=sign(portal.id.slice(5),{bg:"#13203a",fg:"#ffd166",w:0.6,h:0.26});
-      plate.position.set(wx+o*0.14,2.3,z+0.5);plate.rotation.y=west?Math.PI/2:-Math.PI/2;g.add(plate);
-    }
-    // Lift doors and the floor display over them.
-    for (const portal of map.portals.filter(p=>p.id==="lift")) {
-      const x=portal.rect.x/TILE, z=portal.rect.y/TILE;
-      box(g,"#8d949d",x-0.1,0,z-0.1,x+2.1,2.5,z);
-      box(g,"#c9ced6",x+0.05,0,z-0.14,x+0.98,2.25,z-0.08);
-      box(g,"#c9ced6",x+1.02,0,z-0.14,x+1.95,2.25,z-0.08);
-      box(g,"#141020",x+0.7,2.3,z-0.15,x+1.3,2.45,z-0.1);
-      box(g,"#e6e9ee",x+2.15,1.0,z-0.12,x+2.3,1.35,z-0.08);
+      plate.position.set(x+0.5,h+2.3,z+0.12);g.add(plate);
     }
     for (const portal of map.portals.filter(p=>p.id.startsWith("stairs-"))) {
       const x=portal.rect.x/TILE, z=portal.rect.y/TILE;
@@ -2090,6 +2081,22 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       }
       const board=sign(portal.label,{bg:map.accent,fg:"#f6ead0",w:2.3,h:0.32});
       board.position.set(x+1,2.1,z-1.8);g.add(board);
+    }
+  }
+  {
+    const h=map.deck?.height ?? 0;
+    // The lift shaft through both floors, with doors and a floor display on each.
+    const shaft=map.deck ? map.portals.find(p=>p.id==="lift") : undefined;
+    if (shaft) {
+      const x=shaft.rect.x/TILE, w=shaft.rect.w/TILE, top=shaft.rect.y/TILE-2;
+      box(g,"#8d949d",x,0,top,x+w,h+2.9,top+2);
+      for (const [y0,face,dir] of [[0,top+2,1],[h,top,-1]] as const) {
+        box(g,"#c9ced6",x+0.08,y0,face+dir*0.02,x+w/2-0.02,y0+2.2,face+dir*0.08);
+        box(g,"#c9ced6",x+w/2+0.02,y0,face+dir*0.02,x+w-0.08,y0+2.2,face+dir*0.08);
+        box(g,"#141020",x+w/2-0.3,y0+2.3,face+dir*0.02,x+w/2+0.3,y0+2.5,face+dir*0.09);
+        box(g,"#ff9f43",x+w/2-0.12,y0+2.35,face+dir*0.09,x+w/2+0.12,y0+2.45,face+dir*0.1);
+        box(g,"#e6e9ee",x+w+0.02,y0+1.0,face+dir*0.02,x+w+0.16,y0+1.35,face+dir*0.08);
+      }
     }
   }
   return g;

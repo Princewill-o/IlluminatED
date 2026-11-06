@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 
-type Floor = { mapId: string; label: string; current: boolean };
+type Floor = { mapId: string; label: string; current: boolean; level?: 0 | 1; x?: number; y?: number };
 
 /** Inside the lift: press a floor, the doors close, the display counts, ding, and out you step. */
 export function LiftPanel({ floors, onClose, onArrive }: { floors: Floor[]; onClose: () => void; onArrive: (f: Floor) => void }) {
