@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Globe2, GraduationCap, Home, LayoutDashboard, LogOut, MapPin, Play, Save, Settings } from "lucide-react";
 
 import { inGameDashboard, type InGameDashboard } from "@/app/games/world/actions";
+import { DailyGoals } from "@/components/game/engagement";
 import { GRAPHICS_KEY, readGraphicsSetting } from "@/game/core/visual-quality";
 import { browserSupabase } from "@/lib/supabase-browser";
 
@@ -112,6 +113,7 @@ function LearningTab() {
   if (!data) return <p className="text-sm">Sign in and pick your subjects to see your progress here. <a href="/dashboard/settings" className="font-black underline">Add subjects</a></p>;
   return (
     <div className="grid gap-4 text-sm">
+      <section><h3 className="mb-2 font-black">Today&apos;s goals</h3><DailyGoals tone="light" /></section>
       <div className="grid grid-cols-4 gap-1.5 text-center text-[11px] font-bold">
         <div className="pixel-panel p-1.5"><p className="text-lg font-black">{data.thisWeek}</p>This week</div>
         <div className="pixel-panel p-1.5"><p className="text-lg font-black text-[#c8322d]">{data.mastery.needsWork}</p>Needs work</div>

@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { BookOpen, ChevronRight, ClipboardList, Globe2, LayoutDashboard, Shirt, Users } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 
 import { AvatarFigure } from "@/components/game/avatar";
+import { Achievements, DailyGoals, StreakWeek } from "@/components/game/engagement";
+import { GameIcon } from "@/components/game/game-icons";
 import { ContinuePlaying } from "@/components/game/world/game-menu";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { loadDashboard } from "@/lib/account/dashboard";
@@ -79,30 +81,31 @@ export default async function GamesHome() {
               <div className="h-full bg-[#6cc04a]" style={{ width: `${lp.fraction * 100}%` }} />
             </div>
             <div className="mt-3 grid grid-cols-2 gap-1.5 text-center text-[11px] font-bold text-white/70">
-              <div className="rounded-xl bg-white/10 p-2"><p className="text-lg font-black text-[#ffd166]">{fmt(player.clout)}</p>Clout</div>
-              <div className="rounded-xl bg-white/10 p-2"><p className="text-lg font-black text-[#ff8fa3]">{player.streak}</p>Day streak</div>
+              <div className="rounded-xl bg-white/10 p-2"><p className="flex items-center justify-center gap-1 text-lg font-black text-[#ffd166]"><GameIcon name="coin" size={20} />{fmt(player.clout)}</p>Clout</div>
+              <div className="rounded-xl bg-white/10 p-2"><p className="flex items-center justify-center gap-1 text-lg font-black text-[#ff8fa3]"><GameIcon name="flame" size={20} />{player.streak}</p>Day streak</div>
             </div>
+            <div className="mt-3 rounded-xl bg-white/5 p-2"><StreakWeek streak={player.streak} /></div>
             <div className="mt-3 grid gap-2">
-              <MenuLink href="/games/locker" tone="violet"><Shirt className="size-4" aria-hidden /> Change your look</MenuLink>
+              <MenuLink href="/games/locker" tone="violet"><GameIcon name="shirt" size={26} /> Change your look</MenuLink>
             </div>
             {player.dailyBonusReady && <p className="mt-3 rounded-xl bg-[#ffd166]/15 p-2 text-center text-xs font-black text-[#ffd166]">Daily Grind ready: double Clout today</p>}
           </aside>
 
           {/* Middle: what you can do */}
           <nav className="order-1 mx-auto grid w-full max-w-md content-start gap-3 lg:order-2" aria-label="Main menu">
-            <MenuLink href="/games/world" tone="gold" big><Globe2 className="size-5" aria-hidden /> Play World</MenuLink>
+            <MenuLink href="/games/world" tone="gold" big><GameIcon name="planet" size={34} /> Play World</MenuLink>
             <ContinuePlaying userId={account.id} className="gloss-off flex min-h-12 items-center justify-center gap-2 rounded-xl border-b-[5px] border-[#3f7a2a] bg-[#6cc04a] px-4 text-sm font-black text-[#0d1726] hover:bg-[#7bd158]" />
             <div className="grid grid-cols-2 gap-3">
-              <MenuLink href="/courses"><BookOpen className="size-4" aria-hidden /> Learn</MenuLink>
-              <MenuLink href="/games/quests"><ClipboardList className="size-4" aria-hidden /> Quests</MenuLink>
-              <MenuLink href="/games/friends"><Users className="size-4" aria-hidden /> Friends</MenuLink>
-              <MenuLink href="/dashboard"><LayoutDashboard className="size-4" aria-hidden /> Dashboard</MenuLink>
+              <MenuLink href="/courses"><GameIcon name="book" size={26} /> Learn</MenuLink>
+              <MenuLink href="/games/quests"><GameIcon name="scroll" size={26} /> Quests</MenuLink>
+              <MenuLink href="/games/friends"><GameIcon name="friends" size={26} /> Friends</MenuLink>
+              <MenuLink href="/dashboard"><GameIcon name="stats" size={26} /> Dashboard</MenuLink>
             </div>
           </nav>
 
           {/* Right: subjects and estimated grades */}
           <aside className={`${PANEL} order-3`} aria-labelledby="subjects-title">
-            <h2 id="subjects-title" className="text-sm font-black tracking-widest text-[#9ec5ff] uppercase">Your subjects</h2>
+            <h2 id="subjects-title" className="flex items-center gap-2 text-sm font-black tracking-widest text-[#9ec5ff] uppercase"><GameIcon name="cap" size={22} /> Your subjects</h2>
             {!dash.subjects.length && (
               <p className="mt-3 text-sm text-white/70">You haven&apos;t picked any subjects yet. <Link href="/dashboard/settings" className="font-black text-[#f2d9a6] underline">Add your subjects</Link> to see your progress and an estimated grade.</p>
             )}
@@ -139,9 +142,9 @@ export default async function GamesHome() {
         </div>
 
         {/* Learning dashboard */}
-        <section className="mt-6 grid gap-4 lg:grid-cols-2" aria-label="Learning dashboard">
+        <section className="mt-6 grid gap-4 lg:grid-cols-3" aria-label="Learning dashboard">
           <div className={PANEL}>
-            <h2 className="text-sm font-black tracking-widest text-[#9ec5ff] uppercase">Learn next</h2>
+            <h2 className="flex items-center gap-2 text-sm font-black tracking-widest text-[#9ec5ff] uppercase"><GameIcon name="target" size={22} /> Learn next</h2>
             {!next.length && <p className="mt-3 text-sm text-white/70">Pick a subject and try a few questions. We&apos;ll suggest topics from there.</p>}
             <ul className="mt-3 grid gap-2">
               {next.map((r) => (
@@ -158,16 +161,13 @@ export default async function GamesHome() {
             </ul>
           </div>
           <div className={PANEL}>
-            <h2 className="text-sm font-black tracking-widest text-[#9ec5ff] uppercase">This week</h2>
-            <p className="mt-3 text-4xl font-black">{dash.thisWeekAnswered}<span className="text-base text-white/60"> / {weekGoal} questions</span></p>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15" aria-hidden><div className="h-full bg-[#ffd166]" style={{ width: `${Math.min(100, (dash.thisWeekAnswered / weekGoal) * 100)}%` }} /></div>
-            <div className="mt-4 grid grid-cols-4 gap-1.5 text-center text-[10px] font-bold text-white/65">
-              <div className="rounded-lg bg-white/5 p-1.5"><p className="text-base font-black text-white">{dash.mastery["not-started"]}</p>New</div>
-              <div className="rounded-lg bg-white/5 p-1.5"><p className="text-base font-black text-[#ff8fa3]">{dash.mastery["needs-work"]}</p>Needs work</div>
-              <div className="rounded-lg bg-white/5 p-1.5"><p className="text-base font-black text-[#ffd166]">{dash.mastery["getting-there"]}</p>Getting there</div>
-              <div className="rounded-lg bg-white/5 p-1.5"><p className="text-base font-black text-[#6cc04a]">{dash.mastery.secure}</p>Secure</div>
-            </div>
-            <p className="mt-3 text-xs text-white/60">Every question you get right in the world or here earns XP and Clout.</p>
+            <h2 className="flex items-center gap-2 text-sm font-black tracking-widest text-[#9ec5ff] uppercase"><GameIcon name="calendar" size={22} /> Today&apos;s goals</h2>
+            <div className="mt-3"><DailyGoals /></div>
+            <p className="mt-3 text-xs text-white/60">This week: {dash.thisWeekAnswered}/{weekGoal} questions · {dash.mastery.secure} topics secure</p>
+          </div>
+          <div className={PANEL}>
+            <h2 className="flex items-center gap-2 text-sm font-black tracking-widest text-[#9ec5ff] uppercase"><GameIcon name="trophy" size={22} /> Achievements</h2>
+            <div className="mt-3"><Achievements stats={{ answered: dash.subjects.reduce((n, sub) => n + sub.topics.reduce((m, t) => m + t.seen, 0), 0), secure: dash.mastery.secure, streak: player.streak, level: lp.level, subjects: dash.subjects.length, subjectsStarted: dash.subjects.filter((sub) => sub.started > 0).length }} /></div>
           </div>
         </section>
       </div>

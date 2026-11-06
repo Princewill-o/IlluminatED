@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { gameQuiz, recordWorldAnswers } from "@/app/games/world/actions";
+import { trackDaily } from "@/components/game/engagement";
 
 /** A multiple-choice question, from the Supabase question bank or a local fallback. */
 export type QuizQuestion = { prompt: string; options: readonly string[]; answer: number; explain?: string; subject?: string; topic?: string; key?: string };
@@ -17,6 +18,7 @@ let flushTimer: ReturnType<typeof setTimeout> | undefined;
 export function recordPick(q: { key?: string; answer: number } | null | undefined, picked: number) {
   if (!q?.key) return;
   queue.push({ key: q.key, correct: picked === q.answer });
+  trackDaily({ answered: 1 });
   clearTimeout(flushTimer);
   flushTimer = setTimeout(() => {
     const batch = queue;

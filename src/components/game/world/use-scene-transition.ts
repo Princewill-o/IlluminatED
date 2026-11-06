@@ -7,6 +7,7 @@ import {
   sceneCaptureId,
 } from "./scene-continuity";
 
+import { trackDaily } from "@/components/game/engagement";
 import {
   sceneTransitionGate,
   type SceneTransition,
@@ -45,6 +46,7 @@ export function useSceneTransition() {
       if (!alive.current || gate.current.current()?.id !== trip.id)
         return false;
       setPassage({ ...trip, image, label, door, mode: mode ?? (door ? "door" : "walk"), ready: false });
+      trackDaily({ place: destination });
       return true;
     },
     [],

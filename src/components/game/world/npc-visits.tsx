@@ -9,6 +9,7 @@ import { recordPick, type QuizQuestion } from "./use-bank-questions";
 
 import { learningFocus, topicQuiz, type LearningFocus } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
+import { trackDaily } from "@/components/game/engagement";
 import { workplaceById } from "@/game/core/careers";
 import { gameDateAt } from "@/game/core/game-clock";
 import { safeSpot, TILE, type Portal, type WorldMap } from "@/game/core/world";
@@ -197,7 +198,7 @@ export function NpcVisits({ enabled, map, job, playerName, onReward, onWaypoint,
                   ? visit.kind === "classmate" ? `“Thanks ${playerName}, that really helped!” You got ${score}/${questions.length}.` : `“Great work. That's how grades go up.” You got ${score}/${questions.length}.`
                   : `You got ${score}/${questions.length}. ${visit.focus.topicTitle} is worth another look; it's saved on your dashboard.`}
               </p>
-              <button type="button" className="mt-3 min-h-11 w-full rounded-full font-black text-white" style={{ background: colour }} onClick={() => { if (score >= 2) onReward(); leave(); }}>
+              <button type="button" className="mt-3 min-h-11 w-full rounded-full font-black text-white" style={{ background: colour }} onClick={() => { if (score >= 2) { onReward(); trackDaily({ quest: true }); } leave(); }}>
                 {score >= 2 ? "Claim XP" : "Thanks"}
               </button>
             </div>
