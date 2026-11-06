@@ -7,6 +7,7 @@ import type { Metadata } from "next";
 import { AvatarFigure } from "@/components/game/avatar";
 import { Achievements, DailyGoals, StreakWeek } from "@/components/game/engagement";
 import { GameIcon } from "@/components/game/game-icons";
+import { WelcomeVideo } from "@/components/game/welcome-video";
 import { ContinuePlaying } from "@/components/game/world/game-menu";
 import { levelProgress, levelTitle } from "@/game/core/progression";
 import { loadDashboard } from "@/lib/account/dashboard";
@@ -50,6 +51,7 @@ export default async function GamesHome() {
 
   return (
     <div className="relative min-h-[calc(100dvh-4rem)] overflow-hidden bg-[#0b1220]">
+      <WelcomeVideo userId={account.id} />
       <video className="world-menu-drift absolute inset-0 h-full w-full object-cover opacity-45" src="/landing/menu-gameplay.mp4" poster="/landing/menu-gameplay-poster.jpg" autoPlay muted loop playsInline aria-hidden tabIndex={-1} />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_25%,rgba(11,18,32,.1),rgba(11,18,32,.9)_70%)]" />
 
@@ -87,6 +89,7 @@ export default async function GamesHome() {
             <div className="mt-3 rounded-xl bg-white/5 p-2"><StreakWeek streak={player.streak} /></div>
             <div className="mt-3 grid gap-2">
               <MenuLink href="/games/locker" tone="violet"><GameIcon name="shirt" size={26} /> Change your look</MenuLink>
+              <a href="/games?welcome=1" className="text-center text-xs font-bold text-white/60 underline">Watch the welcome video</a>
             </div>
             {player.dailyBonusReady && <p className="mt-3 rounded-xl bg-[#ffd166]/15 p-2 text-center text-xs font-black text-[#ffd166]">Daily Grind ready: double Clout today</p>}
           </aside>
