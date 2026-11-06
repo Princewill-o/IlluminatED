@@ -127,4 +127,7 @@ export async function buildCharacter(avatar: Avatar, height=1.15, workplaceLogo:
   const a = look(avatar);
   return buildBlockyCharacter(a, height, workplaceLogo, adventurerFor(a.head), options.outfit!==false);
 }
-export const npcLook=(i:number)=>look({head:ADVENTURERS[((i%ADVENTURERS.length)+ADVENTURERS.length)%ADVENTURERS.length].id,topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'});
+/** Everyday people only: casual, campus, office, workwear and sport looks. No costumes (knights,
+ *  wizards, pirates, robots, zombies, royals, astronauts), and no uniforms unless someone is on duty. */
+const EVERYDAY = ADVENTURERS.filter((m) => m.id === "head-blocky-hero" || m.id === "head-blocky-classic-hero" || /^(City Creative|Campus Coder|Studio Founder|Workshop Maker|Track Captain|Design Student|Trail Explorer)/.test(m.name));
+export const npcLook=(i:number)=>look({head:EVERYDAY[((i%EVERYDAY.length)+EVERYDAY.length)%EVERYDAY.length].id,topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'});

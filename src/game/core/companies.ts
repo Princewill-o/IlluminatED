@@ -107,7 +107,7 @@ export const COMPANIES: Company[] = [
     revises: "Maths and money",
     boss: {
       name: "Sir Woofington III",
-      title: "Chief Treat Officer", look: { head: "head-blocky-knight", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-crown", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
+      title: "Chief Treat Officer", look: { head: "head-preset-021", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-none", held: "held-briefcase", eyes: "eyes-sparkle", mouth: "mouth-cheeky", face: "face-monocle" } },
     courseIds: [
       "gcse-maths",
       "alevel-maths",
@@ -138,7 +138,7 @@ export const COMPANIES: Company[] = [
     tagline: "Big ideas, everyday essentials.",
     sector: "Retail",
     revises: "Business and Economics",
-    boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-blocky-princess", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
+    boss: { name: "Daisy", title: "Regional Manager (Dairy)", look: { head: "head-preset-005", top: "top-apron", bottom: "bottom-skirt", shoes: "shoes-boots", eyes: "eyes-sparkle", mouth: "mouth-smile", held: "held-phone" } },
     courseIds: ["btec-business", "alevel-economics", "tlevel-accounting"],
     generators: ["best-buy", "profit", "percent", "ratio"],
     accent: "#ff8fd1",
@@ -371,7 +371,7 @@ export const COMPANIES: Company[] = [
     tagline: "Small people. Big feelings. Glitter everywhere.",
     sector: "Education",
     revises: "Early Years and Education",
-    boss: { name: "Miss Crayola", title: "Head of Snack Time", look: { skin: "skin-2", hair: "hair-buns", hairColor: "haircol-blue", hat: "hat-party", top: "top-stripes", bottom: "bottom-skirt", shoes: "shoes-skates", extras: "extras-star", eyes: "eyes-sparkle", mouth: "mouth-laugh" } },
+    boss: { name: "Miss Crayola", title: "Head of Snack Time", look: { skin: "skin-2", hair: "hair-buns", hairColor: "haircol-blue", hat: "hat-none", top: "top-stripes", bottom: "bottom-skirt", shoes: "shoes-skates", extras: "extras-star", eyes: "eyes-sparkle", mouth: "mouth-laugh" } },
     courseIds: [
       "tlevel-education-early-years",
       "btec-health-social-care",
