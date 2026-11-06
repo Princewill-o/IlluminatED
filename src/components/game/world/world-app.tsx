@@ -184,6 +184,13 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   return null;
 }
 
+/** Starts a live transfer once (the custody stage only signals it). */
+function LiveTransferStart({ onStart }: { onStart: () => void }) {
+  const go = useRef(onStart);
+  useEffect(() => { go.current(); }, []);
+  return null;
+}
+
 export interface OfficeStaff {
   userId: string;
   username: string;
@@ -285,6 +292,8 @@ export function WorldApp({
   const [workStation, setWorkStation] = useState<"reception" | "terminal">("reception");
   const [dailyJob,setDailyJob]=useState<ActiveJob|null>(null);
   const [dailyBusy,setDailyBusy]=useState(false);
+  const [liveTransfer, setLiveTransfer] = useState<{ destination: "court" | "prison"; ready: boolean } | null>(null);
+
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
@@ -644,7 +653,7 @@ export function WorldApp({
     }
     say(assessment.message,true);
   },[updateLife,say,jailed]);
-  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !custody && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
+  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !custody && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !liveTransfer && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
     setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
   });
   useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__panic?:(id:string)=>void}).__panic=(id)=>setPanic(id);},[]);
@@ -887,6 +896,17 @@ export function WorldApp({
     const p = CITY.portals.find((q) => q.id === "court");
     return p ? safeSpot(CITY, p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h + 40) : undefined;
   }, []);
+  // Station to court, and court to prison: you're walked out in cuffs and driven there live.
+  const stationSteps = useMemo(() => {
+    const p = CITY.portals.find((q) => q.id === "police-station");
+    return p ? safeSpot(CITY, p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h + 40) : undefined;
+  }, []);
+  useEffect(() => {
+    if (!liveTransfer || liveTransfer.ready || mapId !== "city") return;
+    // Give the world a moment to place you on the steps before the car is sent.
+    const t = window.setTimeout(() => setLiveTransfer((l) => (l ? { ...l, ready: true } : l)), 900);
+    return () => clearTimeout(t);
+  }, [liveTransfer, mapId]);
   const takeIntoCustody = useCallback(() => { setTrialSolicitor(false); setCustody({ stage: "van", until: 0, solicitor: false }); }, []);
   // Tell the room your wanted stars and whether you're on patrol (and keep newcomers up to date).
   useEffect(() => {
@@ -998,7 +1018,7 @@ export function WorldApp({
     if (life.stars < policeStars || jailed || life.hearing) {
       pursuitRef.current = null; setPursuit(null); return;
     }
-    if (arrest || policeTransport || rescue) return;
+    if (arrest || policeTransport || rescue || liveTransfer) return;
     const timer = setInterval(() => {
       const current = pursuitRef.current ?? startPursuit(map, PLAYER);
       const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
@@ -1027,13 +1047,14 @@ export function WorldApp({
       }
     }, 200);
     return () => clearInterval(timer);
-  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, rescue, updateLife, say, policeStars]);
+  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, rescue, updateLife, say, policeStars, liveTransfer]);
 
   useEffect(() => {
     if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
       updateLife(l=>releaseFromPrison(l)); return;
     }
-    if (jailed && mapId !== "prison" && !rescue && !(medicalCustody && mapId === "hospital")) goTo("prison", "HMP Thames");
+    if (jailed && mapId === "court" && !liveTransfer) { setLiveTransfer({ destination: "prison", ready: false }); void goTo("city", "Taken down in cuffs", courtSteps); return; }
+    if (jailed && mapId !== "prison" && !rescue && !liveTransfer && !(medicalCustody && mapId === "hospital")) goTo("prison", "HMP Thames");
     if (!jailed && mapId === "prison" && releaseReason.current === "escaped") {
       // Broke out: keep the wanted stars so the police chase starts outside.
       say("You're out, but the alarm is raised. The police are coming: get out of the search area to lose them. If they catch you, it's back inside for longer.", true);
@@ -1049,7 +1070,7 @@ export function WorldApp({
       goTo("city", "London", courtSteps);
       releaseReason.current = "released";
     }
-  }, [jailed, life, mapId, goTo, say, courtSteps, updateLife, rescue, medicalCustody]);
+  }, [jailed, life, mapId, goTo, say, courtSteps, updateLife, rescue, medicalCustody, liveTransfer]);
 
   useEffect(() => {
     if (!jailed || mapId !== "prison" || study || inmate) return;
@@ -1167,7 +1188,7 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
-  const busy = Boolean((passage&&!passage.ready) || (custody && custody.stage !== "cell") || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || coachTrip || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
+  const busy = Boolean((passage&&!passage.ready) || (custody && custody.stage !== "cell") || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || coachTrip || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || Boolean(liveTransfer) || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy || mobileLife;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1514,7 +1535,13 @@ export function WorldApp({
       {custody?.stage === "van" && <LivePolicePickup map={map} destination="police-station" onArrive={() => { setCustody({ stage: "booking", until: 0, solicitor: false }); goTo("police-station", "Police custody", { x: (POLICE_CELLS[0].x + 1.5) * TILE, y: (POLICE_CELLS[0].y + 2.5) * TILE }); }} />}
       {custody?.stage === "booking" && mapId === "police-station" && <BookingIn charge={life.hearing?.charge ?? "an offence"} onDone={() => setCustody((c) => (c && c.stage === "booking" ? { ...c, stage: "cell", until: Date.now() + 25_000 } : c))} />}
       {custody?.stage === "cell" && mapId === "police-station" && <HoldingCellHud until={custody.until} solicitor={custody.solicitor} onSolicitor={() => { setTrialSolicitor(true); setCustody((c) => (c ? { ...c, solicitor: true, until: Math.max(Date.now() + 6000, c.until - 8000) } : c)); say("The duty solicitor visits your cell and goes through the evidence with you.", true); }} />}
-      {custody?.stage === "transport" && <PoliceTransportCutscene destination="court" people="You" onArrive={() => { setCustody(null); goTo("court", "Police escort · Crown Court"); }} />}
+      {custody?.stage === "transport" && !liveTransfer && <LiveTransferStart onStart={() => { setLiveTransfer({ destination: "court", ready: false }); void goTo("city", "Walked out in cuffs", stationSteps); }} />}
+      {liveTransfer?.ready && mapId === "city" && <LivePolicePickup key={liveTransfer.destination} map={CITY} destination={liveTransfer.destination} onArrive={() => {
+        const to = liveTransfer.destination;
+        setLiveTransfer(null);
+        if (to === "court") { setCustody(null); void goTo("court", "Police escort · Crown Court"); }
+        else void goTo("prison", "HMP Thames");
+      }} />}
       {jailed && mapId === "prison" && (
         <PrisonHud
           leftMs={life.jailUntil - Date.now()}
