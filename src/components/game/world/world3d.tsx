@@ -80,6 +80,7 @@ import { universityById } from "@/game/core/universities";
 import { BUS_LENGTH, BUS_WIDTH, CAR_LENGTH, CAR_WIDTH, ROAD_LANE_OFFSET } from "@/game/core/vehicles";
 import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, lowerTier, physicalSurface, populationBudget, visualProfile, type GraphicsTier } from "@/game/core/visual-quality";
+import { ROLE_TOP, workforceFor } from "@/game/core/workforce";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
 import { TILE, blocked, type Portal, type WorldMap } from "@/game/core/world";
 
@@ -2799,6 +2800,50 @@ export function World3D({
         scene.add(body.root); officeWorkers.push(body);
       }
     }
+    // Office workers alternate desktops and laptops.
+    officeWorkers.forEach((body, i) => { if (i % 3 === 1) { body.root.userData.work = "laptop"; const lap = new THREE.Group(); box(lap, "#3b4250", -0.22, 0.86, 0.12, 0.22, 0.89, 0.42); const scr = box(lap, "#9fd3ff", -0.22, 0.89, 0.4, 0.22, 1.16, 0.43); scr.material = (scr.material as THREE.MeshStandardMaterial).clone(); (scr.material as THREE.MeshStandardMaterial).emissive?.set("#4a90d9"); body.root.add(lap); } });
+    // The people who keep the place running: nurses, chefs, cleaners, road crews (core/workforce).
+    const workforce = workforceFor(map, london ? buildLondon().things : ukScene?.things ?? []).slice(0, indoors ? 16 : 26);
+    const own = <T extends THREE.Mesh>(m: T) => { m.material = (m.material as THREE.MeshStandardMaterial).clone(); return m; };
+    const workers = workforce.map((spot, i) => {
+      const body = makeBody({ ...npcLook(150 + i), top: ROLE_TOP[spot.role], topColor: "topcol-auto", hat: spot.role === "roadworker" || spot.role === "marshal" ? "hat-cap" : "hat-none", held: "held-none" }, null, true);
+      body.root.position.set(spot.x, spot.seatY ?? 0, spot.z);
+      body.root.rotation.y = spot.heading;
+      if (spot.activity === "lie") { body.root.rotation.set(-Math.PI / 2, 0, 0); body.root.position.z += 0.5; }
+      scene.add(body.root);
+      const props = new THREE.Group();
+      world.add(props);
+      const x = spot.x, z = spot.z;
+      if (spot.prop === "laptop" || spot.prop === "plate") {
+        const dz = Math.cos(spot.heading) * 0.35, dx = Math.sin(spot.heading) * 0.35;
+        if (spot.prop === "laptop") { box(props, "#3b4250", x + dx - 0.2, 0.86, z + dz - 0.14, x + dx + 0.2, 0.89, z + dz + 0.14); box(props, "#9fd3ff", x + dx - 0.2, 0.89, z + dz + 0.12, x + dx + 0.2, 1.12, z + dz + 0.15); }
+        else { cyl(props, "#f4f1ea", x + dx, z + dz, 0.84, 0.87, 0.2, 10); cyl(props, "#d9822b", x + dx, z + dz, 0.87, 0.93, 0.12, 8); }
+      } else if (spot.prop === "grill") {
+        box(props, "#c8452f", x - 0.75, 0.05, z + 0.25, x + 0.75, 0.92, z + 0.95);
+        box(props, "#2b2b30", x - 0.65, 0.92, z + 0.3, x + 0.65, 0.98, z + 0.9);
+        const glow = own(box(props, "#ff9a3c", x - 0.5, 0.98, z + 0.4, x + 0.5, 1.0, z + 0.8));
+        (glow.material as THREE.MeshStandardMaterial).emissive?.set("#ff7a1a");
+        cyl(props, "#5d6670", x + 0.7, z + 0.6, 0.9, 2.3, 0.04, 6);
+        cyl(props, "#f2d36b", x + 0.7, z + 0.6, 2.2, 2.65, 0.02, 8, 1.05);
+        const lbl = sign("Street food", { bg: "#c8452f", fg: "#ffffff", w: 1.4, h: 0.28 });
+        lbl.position.set(x, 0.6, z + 0.96); props.add(lbl);
+        for (let k = 0; k < 3; k++) { const steam = own(cyl(props, "#ffffff", x - 0.3 + k * 0.3, z + 0.6, 1.15, 1.3, 0.06, 6)); steam.userData.steam = k; (steam.material as THREE.Material).transparent = true; }
+      } else if (spot.prop === "cones") {
+        for (const [ox, oz] of [[-1.6, -0.2], [-0.4, 0.75], [1.2, 0.75], [2.4, -0.2]]) { cyl(props, "#ff6a13", x + ox, z + oz, 0, 0.55, 0.02, 8, 0.16); cyl(props, "#ffffff", x + ox, z + oz, 0.28, 0.36, 0.1, 8, 0.12); }
+        box(props, "#f7c948", x - 1.4, 0.35, z + 0.85, x + 2.2, 0.45, z + 0.9);
+        box(props, "#4a4f57", x - 0.4, 0.0, z - 0.35, x + 0.6, 0.06, z + 0.35);
+      } else if (spot.prop === "van") {
+        box(props, "#f1f2ee", x - 3.6, 0.15, z - 0.55, x - 1.2, 1.55, z + 0.55);
+        box(props, "#ff7a1a", x - 3.6, 0.7, z - 0.56, x - 1.2, 0.85, z + 0.56);
+        box(props, "#9fc7e6", x - 1.25, 0.85, z - 0.45, x - 1.15, 1.35, z + 0.45);
+        for (const wx of [x - 3.1, x - 1.7]) for (const wz of [z - 0.55, z + 0.55]) cyl(props, "#1e1f24", wx, wz, 0, 0.36, 0.18, 10);
+        const beacon = own(box(props, "#ffb21a", x - 2.5, 1.55, z - 0.12, x - 2.2, 1.7, z + 0.12));
+        (beacon.material as THREE.MeshStandardMaterial).emissive?.set("#ff9a00");
+      }
+      if (spot.prop === "broom") { const broom = new THREE.Group(); box(broom, "#8b6a43", -0.03, 0.1, 0.3, 0.03, 1.2, 0.36); box(broom, "#d8c27a", -0.2, 0.02, 0.32, 0.2, 0.14, 0.48); body.root.add(broom); }
+      bendAll(props);
+      return { spot, body, props, t: (i * 0.37) % 1 };
+    });
     const crossingNpcs = london ? crossingPedestrianPoses(Date.now()).map((pose, i) => {
       const body = makeBody(npcLook(90 + i), null, true); scene.add(body.root);
       return { id: pose.id, body };
@@ -3582,7 +3627,22 @@ export function World3D({
         NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
         body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
       });
-      officeWorkers.forEach(body => { body.char?.play("typing"); });
+      officeWorkers.forEach(body => { body.char?.play((body.root.userData.work as string | undefined) ?? "typing"); });
+      for (const w of workers) {
+        const far = !indoors && Math.hypot(w.spot.x - mx, w.spot.z - mz) > 34;
+        w.body.root.visible = !far; w.props.visible = !far;
+        if (far) continue;
+        w.body.char?.play(w.spot.activity === "lie" ? "idle" : w.spot.activity);
+        if (w.spot.patrol && !reduce) {
+          // Sweep slowly up and down the concourse.
+          w.t = (w.t + dt * 0.06) % 2;
+          const k = w.t < 1 ? w.t : 2 - w.t;
+          w.body.root.position.x = w.spot.x + (w.spot.patrol.x - w.spot.x) * k;
+          w.body.root.position.z = w.spot.z + (w.spot.patrol.z - w.spot.z) * k;
+          w.body.root.rotation.y = Math.atan2(w.spot.patrol.x - w.spot.x, w.spot.patrol.z - w.spot.z) + (w.t < 1 ? 0 : Math.PI);
+        }
+        for (const c of w.props.children) if (c.userData.steam !== undefined) { const k = ((secs * 0.6 + c.userData.steam * 0.33) % 1); c.position.y = 1.2 + k * 0.9; c.scale.setScalar(1 + k * 1.5); ((c as THREE.Mesh).material as THREE.MeshStandardMaterial).opacity = 0.55 * (1 - k); }
+      }
       const onlineCount = seen.size;
       npcs.forEach((n, i) => {
         if (n.body.root.visible) NPC_SPOTS.push({ x: n.body.root.position.x * TILE, y: n.body.root.position.z * TILE, ...n.identity });
