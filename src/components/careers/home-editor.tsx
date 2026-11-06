@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -46,7 +46,30 @@ export function HomeEditor({
   bought: Record<string, number>;
   clout: number;
 }) {
-  const [layout, setLayout] = useState<Placed[]>(saved);
+  const [layout, setLayoutRaw] = useState<Placed[]>(saved);
+  // Build mode history: every change can be undone (Ctrl+Z) and redone (Ctrl+Y).
+  const [past, setPast] = useState<Placed[][]>([]);
+  const [future, setFuture] = useState<Placed[][]>([]);
+  const setLayout = useCallback((next: Placed[]) => {
+    setLayoutRaw((cur) => { if (JSON.stringify(cur) !== JSON.stringify(next)) { setPast((p) => [...p.slice(-40), cur]); setFuture([]); } return next; });
+  }, []);
+  const undo = useCallback(() => setPast((p) => { if (!p.length) return p; const prev = p[p.length - 1]; setLayoutRaw((cur) => { setFuture((f) => [cur, ...f]); return prev; }); return p.slice(0, -1); }), []);
+  const redo = useCallback(() => setFuture((f) => { if (!f.length) return f; const [next, ...rest] = f; setLayoutRaw((cur) => { setPast((p) => [...p, cur]); return next; }); return rest; }), []);
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key.toLowerCase() === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey)) { e.preventDefault(); redo(); }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [undo, redo]);
+  // Three saved layouts to switch between (kept in this browser).
+  const SLOTS_KEY = "illuminated:home-layout-slots";
+  const [slots, setSlots] = useState<(Placed[] | null)[]>([null, null, null]);
+  useEffect(() => { try { const v = JSON.parse(localStorage.getItem(SLOTS_KEY) ?? "null"); if (Array.isArray(v) && v.length === 3) setSlots(v); } catch { /* None saved. */ } }, []);
+  const saveSlot = (i: number) => { const next = slots.map((s, k) => (k === i ? layout : s)); setSlots(next); try { localStorage.setItem(SLOTS_KEY, JSON.stringify(next)); } catch { /* This session only. */ } setMsg(`Layout ${i + 1} saved.`); };
+  const loadSlot = (i: number) => { const l = slots[i]; if (!l) return; const problem = validLayout(l); if (problem) { setMsg(problem); return; } setLayout(l); setSel(null); setMsg(`Layout ${i + 1} loaded. Save room to keep it.`); };
   const [sel, setSel] = useState<string | null>(null); // placed key, or "new:<item>"
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -135,7 +158,10 @@ export function HomeEditor({
         <div className="pointer-events-auto flex flex-wrap gap-1.5 rounded-2xl border border-[#c8b182] bg-[#faf6ed]/95 p-2 shadow-lg">
           <button ref={focusControl} type="button" disabled={pending} onClick={close} className="min-h-11 rounded-full bg-[#254e46] px-4 text-xs font-bold text-white">Live mode</button>
           <button type="button" disabled={!dirty||pending} onClick={()=>act(()=>saveLayout(layout),"Room saved. Ready to live in.")} className="min-h-11 rounded-full bg-[#ead9b6] px-4 text-xs font-bold disabled:opacity-40">{pending?"Saving…":"Save room"}</button>
-          {dirty&&<button type="button" disabled={pending} onClick={()=>{setLayout(saved);setSel(null);}} className="min-h-11 rounded-full px-3 text-xs font-bold">Undo</button>}
+          <button type="button" disabled={!past.length||pending} onClick={undo} title="Undo (Ctrl+Z)" className="min-h-11 rounded-full px-3 text-xs font-bold disabled:opacity-40">Undo</button>
+          <button type="button" disabled={!future.length||pending} onClick={redo} title="Redo (Ctrl+Y)" className="min-h-11 rounded-full px-3 text-xs font-bold disabled:opacity-40">Redo</button>
+          {dirty&&<button type="button" disabled={pending} onClick={()=>{setLayout(saved);setSel(null);}} className="min-h-11 rounded-full px-3 text-xs font-bold">Reset</button>}
+          <span className="flex items-center gap-1 rounded-full bg-[#ead9b6]/60 px-2 py-1 text-[11px] font-bold" aria-label="Saved layouts">Layouts {[0,1,2].map(i=><span key={i} className="flex"><button type="button" onClick={()=>loadSlot(i)} disabled={!slots[i]} className="rounded-l-full bg-white px-2 py-1 disabled:opacity-40">{i+1}</button><button type="button" onClick={()=>saveSlot(i)} title={`Save as layout ${i+1}`} className="rounded-r-full bg-[#254e46] px-1.5 py-1 text-white">+</button></span>)}</span>
         </div>
       </header>
       <div className="pointer-events-none absolute inset-x-3 bottom-[252px] flex flex-wrap items-end justify-between gap-2 sm:bottom-[232px]">
