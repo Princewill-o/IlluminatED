@@ -55,7 +55,7 @@ export function contactShadows(camera: THREE.Camera, samples: number, outlines =
         // Slightly cool occlusion preserves the warm sunlit surfaces.
         colour.rgb*=mix(vec3(0.86,0.91,1.0),vec3(1.0),shade)*shade;
         #ifdef OUTLINES
-        colour.rgb=applyOutline(colour.rgb,tDepth,projectionInverse,vUv);
+        colour.rgb=applyOutline(colour.rgb,tDiffuse,tDepth,projectionInverse,vUv);
         #endif
         gl_FragColor=colour;
       }`,

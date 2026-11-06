@@ -132,8 +132,13 @@ function bend(m: THREE.Material) {
     atmosphereShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
     sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
+    // Low-poly facets: each flat face takes a slightly different tone, like hand-cut paper.
+    sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_begin>", `#include <normal_fragment_begin>
+      #ifdef FLAT_SHADED
+      diffuseColor.rgb *= 0.94 + 0.12 * fract(sin(dot(floor(normal * 6.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+      #endif`);
   };
-  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v4`;
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v5`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});

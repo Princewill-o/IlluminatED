@@ -17,7 +17,11 @@ float outlineViewZ(sampler2D depthTex, mat4 inverseProjection, vec2 uv){
   vec4 p=inverseProjection*vec4(uv*2.0-1.0,d*2.0-1.0,1.0);
   return -p.z/p.w;
 }
-vec3 applyOutline(vec3 colour, sampler2D depthTex, mat4 inverseProjection, vec2 uv){
+float outlineInkDiff(vec3 a, vec3 b){
+  vec3 d=abs(a-b);
+  return max(max(d.r,d.g),d.b)+abs(dot(a-b,vec3(0.299,0.587,0.114)))*0.5;
+}
+vec3 applyOutline(vec3 colour, sampler2D colourTex, sampler2D depthTex, mat4 inverseProjection, vec2 uv){
   vec2 o=outlineTexel*outlineThickness;
   float c=outlineViewZ(depthTex,inverseProjection,uv);
   if(c>140.0) return colour;
@@ -26,6 +30,13 @@ vec3 applyOutline(vec3 colour, sampler2D depthTex, mat4 inverseProjection, vec2 
   float jump=max(max(abs(l-c),abs(r-c)),max(abs(u-c),abs(d-c)))/max(c,0.5);
   float crease=(abs(l+r-2.0*c)+abs(u+d-2.0*c))/max(c,0.5);
   float edge=max(smoothstep(0.07,0.13,jump),smoothstep(0.03,0.06,crease)*0.7);
+  // Colour boundaries too, so flat ground gets inked: road against pavement, kerbs, grass edges,
+  // road paint and the facets of leaves. Only strong changes, so soft shading stays clean.
+  vec3 cl=texture2D(colourTex,uv-vec2(o.x,0.0)).rgb, cr=texture2D(colourTex,uv+vec2(o.x,0.0)).rgb;
+  vec3 cu=texture2D(colourTex,uv+vec2(0.0,o.y)).rgb, cd=texture2D(colourTex,uv-vec2(0.0,o.y)).rgb;
+  vec3 cc=texture2D(colourTex,uv).rgb;
+  float tone=max(max(outlineInkDiff(cl,cc),outlineInkDiff(cr,cc)),max(outlineInkDiff(cu,cc),outlineInkDiff(cd,cc)));
+  edge=max(edge,smoothstep(0.2,0.34,tone)*0.7*(1.0-smoothstep(30.0,70.0,c)));
   edge*=1.0-smoothstep(45.0,120.0,c);
   return mix(colour,outlineInk*0.06+colour*0.12,edge*0.9);
 }`;
@@ -49,7 +60,7 @@ export function toonOutline(camera: THREE.Camera) {
     vertexShader: "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}",
     fragmentShader: `uniform sampler2D tDiffuse, tDepth; uniform mat4 projectionInverse; varying vec2 vUv;
 ${OUTLINE_GLSL}
-void main(){ vec4 colour=texture2D(tDiffuse,vUv); gl_FragColor=vec4(applyOutline(colour.rgb,tDepth,projectionInverse,vUv),colour.a); }`,
+void main(){ vec4 colour=texture2D(tDiffuse,vUv); gl_FragColor=vec4(applyOutline(colour.rgb,tDiffuse,tDepth,projectionInverse,vUv),colour.a); }`,
   });
   const render = pass.render.bind(pass);
   pass.render = (renderer, writeBuffer, readBuffer, deltaTime, maskActive) => {
