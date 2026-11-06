@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { COURT, PLAYER_WORK } from "./art";
 
+import { type CourtCase, courtCase, scoreClosing } from "@/game/core/court-case";
 import { acquittalChance, sentenceMs } from "@/game/core/law";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,11 @@ type Beat =
   | { kind: "say"; line: Line; ms?: number }
   | { kind: "plea" }
   | { kind: "choose"; prompt: Line; choices: Choice[] }
+  | { kind: "file" }
+  | { kind: "cross" }
+  | { kind: "contradiction" }
+  | { kind: "alibi" }
+  | { kind: "closing" }
   | { kind: "escape" }
   | { kind: "deliberate" }
   | { kind: "verdict" };
@@ -28,54 +34,45 @@ const WHO: Record<string, string> = {
 };
 const say = (speaker: string, text: string, ms?: number): Beat => ({ kind: "say", line: { who: WHO[speaker] ?? speaker, speaker, text }, ms });
 
-function script(charge: string, solicitor: boolean): Beat[] {
+function script(charge: string, solicitor: boolean, c: CourtCase): Beat[] {
   return [
     say("usher", "All rise."),
     say("judge", "Please be seated. Call the case."),
     say("clerk", `The defendant is charged with ${charge.charAt(0).toLowerCase()}${charge.slice(1)}. How do you plead?`, 2600),
     { kind: "plea" },
-    say("prosecution", "Your Honour, the prosecution will show the defendant was at the scene and acted on purpose.", 3000),
-    {
-      kind: "choose",
-      prompt: { who: WHO.defence, speaker: "defence", text: "How do you want me to open your defence?" },
-      choices: [
-        { label: "\"The prosecution must prove it beyond reasonable doubt. Let's test their evidence.\"", effect: 0.12, reply: { who: WHO.judge, speaker: "judge", text: "Quite right. The burden of proof is on the prosecution." } },
-        { label: "\"My client is a good person, so they couldn't have done it.\"", effect: -0.04, reply: { who: WHO.judge, speaker: "judge", text: "Character alone doesn't answer the evidence. Carry on." } },
-        { label: "Shout across the court that it's all a stitch-up", effect: -0.15, reply: { who: WHO.judge, speaker: "judge", text: "Order! Any more of that and you'll be in contempt of court." } },
-      ],
-    },
+    say("prosecution", `Your Honour, the prosecution says the defendant was at ${c.place} at ${c.time}. We have a witness and CCTV.`, 3200),
+    { kind: "file" },
     say("prosecution", "I call our witness."),
-    say("witness", "I saw someone in a dark jacket near the shops. I think it was them.", 2800),
-    {
-      kind: "choose",
-      prompt: { who: WHO.defence, speaker: "defence", text: "Cross-examination. What should I ask the witness?" },
-      choices: [
-        { label: "\"How far away were you, how long did you look, and was it dark?\"", effect: 0.14, reply: { who: WHO.witness, speaker: "witness", text: "Erm… across the road. A few seconds. It was getting dark." } },
-        { label: "\"Lots of people wear dark jackets, don't they?\"", effect: 0.06, reply: { who: WHO.witness, speaker: "witness", text: "I suppose they do, yes." } },
-        { label: "\"You're lying and everyone knows it!\"", effect: -0.12, reply: { who: WHO.judge, speaker: "judge", text: "Counsel will not badger the witness." } },
-      ],
-    },
+    say("witness", c.statement, 3200),
+    { kind: "cross" },
+    { kind: "contradiction" },
     say("usher", "Your Honour, I'll fetch exhibit B from the store room.", 2400),
     { kind: "escape" },
-    say("prosecution", "Exhibit B: CCTV from the high street at 6:14 pm.", 2600),
     {
       kind: "choose",
-      prompt: { who: WHO.defence, speaker: "defence", text: "The CCTV is blurry. How do we answer it?" },
+      prompt: { who: WHO.prosecution, speaker: "prosecution", text: `Exhibit B: CCTV from near ${c.place}, timed at ${c.cctv.time}. It's ${c.cctv.quality}. How do you answer it?` },
       choices: [
-        { label: "Ask for the full, timestamped footage and the camera's location", effect: 0.13, reply: { who: WHO.prosecution, speaker: "prosecution", text: "…The full footage is still being retrieved, Your Honour." } },
-        { label: "Admit it was you but say a friend made you do it", effect: -0.2, reply: { who: WHO.judge, speaker: "judge", text: "That is an admission. The jury will note it." } },
-        { label: "Say nothing about it", effect: 0, reply: { who: WHO.judge, speaker: "judge", text: "Very well. Closing speeches." } },
+        { label: `"The offence was at ${c.time}. Look at the time on that footage."`, effect: c.cctv.matches ? -0.06 : 0.16, reply: c.cctv.matches ? { who: WHO.judge, speaker: "judge", text: "The times match exactly. That point doesn't help you." } : { who: WHO.judge, speaker: "judge", text: `Noted: the footage is ${c.cctv.time}, not ${c.time}. The jury will bear that in mind.` } },
+        { label: "\"You can't see a face. It could be anyone.\"", effect: 0.08, reply: { who: WHO.prosecution, speaker: "prosecution", text: "…The face isn't visible, Your Honour, no." } },
+        { label: "Accept it and move on", effect: -0.05, reply: { who: WHO.judge, speaker: "judge", text: "Very well. The footage stands unchallenged." } },
       ],
     },
-    say("defence", solicitor ? "Members of the jury: the duty solicitor's notes show gaps in every piece of evidence. If you're not sure, you must acquit." : "Members of the jury: if you are not sure, you must find my client not guilty.", 3200),
-    say("judge", "Members of the jury, please retire and consider your verdict."),
+    { kind: "alibi" },
+    { kind: "closing" },
+    say("judge", solicitor ? "Thank you. The duty solicitor's notes are with the jury too. Members of the jury, please retire." : "Members of the jury, please retire and consider your verdict."),
     { kind: "deliberate" },
     { kind: "verdict" },
   ];
 }
 
 export function CourtTrial({ charge, stars, cards, solicitor, onVerdict }: { charge: string; stars: number; cards: number; solicitor: boolean; onVerdict: (v: TrialVerdict) => void }) {
-  const beats = useMemo(() => script(charge, solicitor), [charge, solicitor]);
+  const [seed] = useState(() => Math.floor(Math.random() * 1e9));
+  const file = useMemo(() => courtCase(seed), [seed]);
+  const beats = useMemo(() => script(charge, solicitor, file), [charge, solicitor, file]);
+  const [asked, setAsked] = useState<string[]>([]);
+  const [exhibit, setExhibit] = useState<string | null>(null);
+  const [speech, setSpeech] = useState("");
+  const [heard, setHeard] = useState<string[]>([]);
   const [at, setAt] = useState(0);
   const [lean, setLean] = useState(() => Math.min(0.85, acquittalChance(stars) + (solicitor ? 0.12 : 0)));
   const [reply, setReply] = useState<Line | null>(null);
@@ -87,7 +84,7 @@ export function CourtTrial({ charge, stars, cards, solicitor, onVerdict }: { cha
   const beat = beats[Math.min(at, beats.length - 1)];
   const next = useCallback(() => { setReply(null); setAt((n) => n + 1); }, []);
 
-  const line: Line | null = useMemo(() => reply ?? (beat.kind === "say" ? beat.line : beat.kind === "choose" ? beat.prompt : beat.kind === "plea" ? { who: WHO.clerk, speaker: "clerk", text: "How do you plead?" } : beat.kind === "deliberate" ? { who: "Narrator", speaker: "", text: "The jury leaves to talk it over…" } : beat.kind === "escape" ? { who: "Narrator", speaker: "", text: "The usher has left the room. The side door is unguarded…" } : null), [reply, beat]);
+  const line: Line | null = useMemo(() => reply ?? (beat.kind === "say" ? beat.line : beat.kind === "choose" ? beat.prompt : beat.kind === "plea" ? { who: WHO.clerk, speaker: "clerk", text: "How do you plead?" } : beat.kind === "deliberate" ? { who: "Narrator", speaker: "", text: "The jury leaves to talk it over…" } : beat.kind === "escape" ? { who: "Narrator", speaker: "", text: "The usher has left the room. The side door is unguarded…" } : beat.kind === "file" ? { who: WHO.defence, speaker: "defence", text: "Here's the case file. Read it carefully: what don't they know for sure?" } : beat.kind === "cross" ? { who: WHO.defence, speaker: "defence", text: `Cross-examine the witness. You can ask three questions (${3 - asked.length} left).` } : beat.kind === "contradiction" ? { who: WHO.defence, speaker: "defence", text: "Did the witness contradict themselves? Only say so if you heard it." } : beat.kind === "alibi" ? { who: WHO.defence, speaker: "defence", text: "Your evidence locker. Show the court one item, or none. Choose carefully: the wrong thing can hurt you." } : beat.kind === "closing" ? { who: WHO.judge, speaker: "judge", text: "Closing speech. In your own words, tell the jury why they can't be sure you did it." } : null), [reply, beat, asked.length]);
 
   // Whoever is talking gestures in the 3D courtroom; you stand in the dock.
   useEffect(() => { COURT.speaker = line?.speaker || null; }, [line]);
@@ -102,10 +99,11 @@ export function CourtTrial({ charge, stars, cards, solicitor, onVerdict }: { cha
   // Spoken lines and replies move on by themselves.
   useEffect(() => {
     if (result) return;
-    if (reply) { const t = window.setTimeout(next, 2600); return () => clearTimeout(t); }
+    // Replies stay up long enough to read; you keep cross-examining until you're done.
+    if (reply) { const t = window.setTimeout(() => (beat.kind === "cross" && asked.length < 3 ? setReply(null) : next()), Math.min(6000, Math.max(2600, 1400 + reply.text.length * 32))); return () => clearTimeout(t); }
     if (beat.kind === "say") { const t = window.setTimeout(next, beat.ms ?? 2100); return () => clearTimeout(t); }
     if (beat.kind === "deliberate") { const t = window.setTimeout(next, 3200); return () => clearTimeout(t); }
-  }, [beat, reply, next, result]);
+  }, [beat, reply, next, result, asked.length]);
 
   // The escape window closes after a few seconds.
   useEffect(() => {
@@ -129,6 +127,30 @@ export function CourtTrial({ charge, stars, cards, solicitor, onVerdict }: { cha
     if (p === "card") { COURT.gavelAt = performance.now(); onVerdict("dismissed"); return; }
     if (p === "guilty") { setReply({ who: WHO.judge, speaker: "judge", text: "You have pleaded guilty. I'll take that into account when sentencing." }); COURT.gavelAt = performance.now(); window.setTimeout(() => setResult("guilty"), 2300); return; }
     setReply({ who: WHO.judge, speaker: "judge", text: "A plea of not guilty. The trial will begin." });
+  };
+  const ask = (q: CourtCase["questions"][number]) => {
+    setAsked((a) => [...a, q.id]);
+    setHeard((h) => [...h, `${q.ask} → ${q.answer}`]);
+    setLean((l) => Math.max(0.05, Math.min(0.9, l + q.helps)));
+    setReply({ who: q.id === "lead" ? WHO.judge : WHO.witness, speaker: q.id === "lead" ? "judge" : "witness", text: q.id === "lead" ? "Counsel will not badger the witness. Ask a proper question." : q.answer });
+  };
+  const spot = (claim: "clothes" | "none" | "time") => {
+    const heardClothes = asked.includes("clothes");
+    const real = file.contradiction !== null;
+    const right = claim === "clothes" ? real && heardClothes : claim === "none" ? !real || !heardClothes : false;
+    setLean((l) => Math.max(0.05, Math.min(0.9, l + (right ? (claim === "clothes" ? 0.16 : 0.02) : -0.08))));
+    setReply(claim === "clothes" && right ? { who: WHO.judge, speaker: "judge", text: "Yes: first one item of clothing, now another. The jury will note the witness isn't consistent." } : right ? { who: WHO.judge, speaker: "judge", text: "Fair enough. Let's move on." } : { who: WHO.prosecution, speaker: "prosecution", text: "The witness said no such thing, Your Honour. Check your notes." });
+  };
+  const present = (id: string | null) => {
+    setExhibit(id);
+    const e = file.locker.find((x) => x.id === id);
+    setLean((l) => Math.max(0.05, Math.min(0.9, l + (e?.strength ?? 0))));
+    setReply(e ? { who: WHO.judge, speaker: "judge", text: `${e.name}: ${e.why}` } : { who: WHO.judge, speaker: "judge", text: "No evidence from the defence. That's your right." });
+  };
+  const close = () => {
+    const r = scoreClosing(speech, file, { exhibit: exhibit ?? undefined, askedFound: asked });
+    setLean((l) => Math.max(0.05, Math.min(0.92, l + r.score)));
+    setReply({ who: WHO.judge, speaker: "judge", text: r.notes.length ? `Thank you. ${r.notes.join(" ")}` : "Thank you. The jury has heard you." });
   };
   const choose = (c: Choice) => { setLean((l) => Math.max(0.05, Math.min(0.9, l + c.effect))); setReply(c.reply); };
   const run = () => {
@@ -174,6 +196,42 @@ export function CourtTrial({ charge, stars, cards, solicitor, onVerdict }: { cha
             <div className="mt-3 grid gap-2">
               {beat.choices.map((c) => <button key={c.label} type="button" onClick={() => choose(c)} className="pixel-button px-3 py-2.5 text-left text-sm">{c.label}</button>)}
             </div>
+          )}
+          {!reply && !result && beat.kind === "file" && (
+            <div className="mt-3 grid gap-2 text-sm sm:grid-cols-3">
+              <div className="rounded-xl bg-white/80 p-3"><p className="text-[11px] font-black uppercase opacity-60">Offence</p><p className="font-bold">{file.time} at {file.place}</p></div>
+              <div className="rounded-xl bg-white/80 p-3"><p className="text-[11px] font-black uppercase opacity-60">Witness statement</p><p className="font-bold">&ldquo;{file.statement}&rdquo;</p></div>
+              <div className="rounded-xl bg-white/80 p-3"><p className="text-[11px] font-black uppercase opacity-60">CCTV</p><p className="font-bold">Timed {file.cctv.time} · {file.cctv.quality}</p></div>
+              <button type="button" onClick={next} className="pixel-button px-3 py-2.5 text-sm sm:col-span-3">I&apos;ve read it</button>
+            </div>
+          )}
+          {!reply && !result && beat.kind === "cross" && (
+            <div className="mt-3 grid gap-2">
+              {heard.length > 0 && <ul className="max-h-24 overflow-y-auto rounded-xl bg-white/70 p-2 text-xs">{heard.map((h) => <li key={h}>• {h}</li>)}</ul>}
+              {asked.length < 3 ? file.questions.filter((q) => !asked.includes(q.id)).map((q) => <button key={q.id} type="button" onClick={() => ask(q)} className="pixel-button px-3 py-2 text-left text-sm">{q.ask}</button>) : null}
+              <button type="button" onClick={next} className="pixel-button px-3 py-2 text-sm">{asked.length ? "No more questions" : "No questions for this witness"}</button>
+            </div>
+          )}
+          {!reply && !result && beat.kind === "contradiction" && (
+            <div className="mt-3 grid gap-2">
+              {heard.length > 0 && <ul className="rounded-xl bg-white/70 p-2 text-xs"><li>• Statement: {file.statement}</li>{heard.map((h) => <li key={h}>• {h}</li>)}</ul>}
+              <button type="button" onClick={() => spot("clothes")} className="pixel-button px-3 py-2 text-left text-sm">&ldquo;Your Honour, the witness has described different clothes.&rdquo;</button>
+              <button type="button" onClick={() => spot("time")} className="pixel-button px-3 py-2 text-left text-sm">&ldquo;The witness changed the time.&rdquo;</button>
+              <button type="button" onClick={() => spot("none")} className="pixel-button px-3 py-2 text-left text-sm">Say nothing: no contradiction</button>
+            </div>
+          )}
+          {!reply && !result && beat.kind === "alibi" && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {file.locker.map((e) => <button key={e.id} type="button" onClick={() => present(e.id)} className="pixel-button px-3 py-2 text-left text-sm"><span className="block font-black">{e.name}</span><span className="block text-xs opacity-80">{e.detail}</span></button>)}
+              <button type="button" onClick={() => present(null)} className="pixel-button px-3 py-2 text-sm sm:col-span-2">Show nothing</button>
+            </div>
+          )}
+          {!reply && !result && beat.kind === "closing" && (
+            <form className="mt-3 grid gap-2" onSubmit={(e) => { e.preventDefault(); if (speech.trim().length >= 10) close(); }}>
+              <textarea value={speech} onChange={(e) => setSpeech(e.target.value)} rows={3} maxLength={600} placeholder="Members of the jury…" className="w-full rounded-xl border-2 border-[#13203a]/20 bg-white p-3 text-sm text-[#13203a] outline-none focus:border-[#13203a]" />
+              <p className="text-[11px] text-[#13203a]/70">Tip: the prosecution has to prove it so the jury is sure. Use what you found: the witness&apos;s view, the CCTV time, your evidence.</p>
+              <button type="submit" disabled={speech.trim().length < 10} className="pixel-button px-3 py-2.5 text-sm disabled:opacity-40">Deliver closing speech</button>
+            </form>
           )}
           {!result && beat.kind === "escape" && !running && (
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
