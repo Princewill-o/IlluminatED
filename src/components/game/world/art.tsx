@@ -366,6 +366,11 @@ export const PATROL = { active: false, suspect: null as null | { id: number; x: 
 export const PET: { tag: string | null; action: "feed" | "water" | "wash" | "sleep" | "play" | null; actionAt: number } = { tag: null, action: null, actionAt: 0 };
 /** The police car that last chased you (world px): the same car then drives you away. */
 export const POLICE_CAR = { x: 0, y: 0, map: "", at: 0 };
+/** NPC clients in the world for jobs: yours, and other players' (shared over presence). */
+export type JobClient = { id: string; x: number; y: number; seed: number; bubble: string; mood: "waiting" | "happy" | "unhappy" | "riding"; colour: string };
+export const JOB_CLIENTS = new Map<string, JobClient>();
+/** Glowing work stations for your current job (tile-centre px), with what's needed next highlighted. */
+export const JOB_STATIONS: { id: string; x: number; y: number; label: string; colour: string; needed: boolean; done: boolean }[] = [];
 /** Your co-op crew for a practical role: shown to the room so nearby players can join. */
 export const CREW: { id: string | null; role: string | null } = { id: null, role: null };
 /** Crews other players nearby are running, by player id. */

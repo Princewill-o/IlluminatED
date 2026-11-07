@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Briefcase, Check, Coins, Lock, MapPin, Play, Wrench, X } from "lucide-react";
 
 import { loadRoleCareers } from "@/app/games/world/actions";
-import { ROLES, type PracticalRole, jobSteps, levelForXp, roleTiers, tierIndex, xpForLevel } from "@/game/core/roles";
+import { WORKPLACES } from "@/game/core/careers";
+import { clientJob } from "@/game/core/client-jobs";
+import { ROLES, type PracticalRole, levelForXp, roleTiers, tierIndex, xpForLevel } from "@/game/core/roles";
 import { cn } from "@/lib/utils";
 
 export type RoleCareers = Record<string, { xp: number; jobs: number; earned: number }>;
@@ -16,7 +18,9 @@ const SECTORS = ["All", "Free", ...Array.from(new Set(ROLES.map((r) => r.sector)
  * level and its own six-tier career ladder. Start a shift where you are, or travel to
  * the workplace first.
  */
-export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embedded = false }: {
+export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCompany, embedded = false }: {
+  /** Company careers: go to the company's office to apply at reception and work shifts. */
+  onCompany?: (workplace: string, name: string) => void;
   /** Shown as a page inside the in-game browser rather than a pop-up. */
   embedded?: boolean;
   mapId: string;
@@ -36,7 +40,6 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embed
   const tiers = roleTiers(role);
   const current = tierIndex(level);
   const nextXp = xpForLevel(level + 1), thisXp = xpForLevel(level);
-  const steps = jobSteps(role, level);
   const here = !role.place.mapId || role.place.mapId === mapId;
   return (
     <div className={embedded ? "h-full" : "fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3"} role="dialog" aria-label="Jobs">
@@ -70,6 +73,21 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embed
                   </li>
                 );
               })}
+            </ul>
+            <p className="mt-4 mb-1 px-1 text-[11px] font-black tracking-widest text-black/50 uppercase">Company careers</p>
+            <ul className="grid gap-1.5">
+              {WORKPLACES.map((w) => (
+                <li key={w.id}>
+                  <button type="button" onClick={() => onCompany?.(w.id, w.name)} className="flex w-full items-center gap-2.5 rounded-xl p-2 text-left hover:bg-white/70">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg text-sm font-black text-white" style={{ background: w.accent }}>{w.name.slice(0, 1)}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-black">{w.name}</span>
+                      <span className="block truncate text-[11px] text-black/60">{w.roles.map((r) => r.title).slice(0, 2).join(" · ")}</span>
+                    </span>
+                    <span className="shrink-0 text-[11px] font-black text-[#2b5fd9]">Apply →</span>
+                  </button>
+                </li>
+              ))}
             </ul>
           </nav>
           <div className="min-h-0 overflow-y-auto p-5">
@@ -117,10 +135,9 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embed
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               <div>
-                <h4 className="text-xs font-black tracking-widest text-black/60 uppercase">One job at your level</h4>
-                <ol className="mt-2 grid gap-1 text-sm">
-                  {steps.map((st, i) => <li key={st.label} className="flex gap-2"><span className="w-5 shrink-0 font-black text-black/40">{i + 1}.</span>{st.label}</li>)}
-                </ol>
+                <h4 className="text-xs font-black tracking-widest text-black/60 uppercase">How the job works</h4>
+                <p className="mt-2 text-sm">{(() => { const d = clientJob(role.id); return d ? `At ${d.building}, each ${d.clientKind} asks for something different. Walk onto the right stations to use them, then ${d.mode === "counter" ? "hand it over at the counter" : d.mode === "ride" ? "pick up your passenger in the city and drive them to their stop" : "take it out to them in the city"}.` : ""; })()}</p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">{(clientJob(role.id)?.stations ?? []).map((st) => <li key={st.id} className="rounded-full bg-white px-2.5 py-1 text-xs font-bold shadow-sm">{st.label}</li>)}</ul>
               </div>
               <div>
                 <h4 className="flex items-center gap-1 text-xs font-black tracking-widest text-black/60 uppercase"><Wrench className="size-3.5" /> Equipment</h4>
@@ -130,7 +147,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embed
 
             <div className="mt-6 flex flex-wrap gap-2">
               <button type="button" onClick={() => onStart(role, level)} className="jelly flex min-h-12 items-center gap-2 rounded-full border-b-4 border-black/30 px-5 font-black text-white" style={{ background: role.colour }}>
-                <Play className="size-4" /> {activeRole === role.id ? "Back to shift" : here ? "Start shift here" : "Start shift where I am"}
+                <Play className="size-4" /> {activeRole === role.id ? "Back to shift" : "Start shift"}
               </button>
               {!here && role.place.mapId && (
                 <button type="button" onClick={() => onTravel(role)} className="jelly flex min-h-12 items-center gap-2 rounded-full border-b-4 border-black/20 bg-white px-5 font-black">

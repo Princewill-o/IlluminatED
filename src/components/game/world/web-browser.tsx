@@ -34,11 +34,12 @@ const SITES: Record<Site, { url: string; title: string }> = {
  * shopping delivered to your door, AutoHub for cars, HomeFinder for houses, WorkNet for jobs,
  * StayLondon for hotels and PetPals for pets. Bank, games, fashion and the map open their own screens.
  */
-export function WebBrowser({ start = "start", renderCars, renderHouses, wallet, mapId, activeRole, hotelBooking, onWallet, onHotelBooking, onGoToRoom, onStartJob, onTravelJob, onOpen, onClose }: {
+export function WebBrowser({ start = "start", renderCars, renderHouses, onCompany, wallet, mapId, activeRole, hotelBooking, onWallet, onHotelBooking, onGoToRoom, onStartJob, onTravelJob, onOpen, onClose }: {
   start?: Site;
   /** Existing shop screens shown as websites (their pop-up is contained inside the page). */
   renderCars: (back: () => void) => ReactNode;
   renderHouses: (back: () => void) => ReactNode;
+  onCompany: (workplace: string, name: string) => void;
   wallet: number;
   mapId: string;
   activeRole: string | null;
@@ -83,7 +84,7 @@ export function WebBrowser({ start = "start", renderCars, renderHouses, wallet, 
         <div key={`${site}-${reload}`} className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white">
           {site === "start" && <StartPage go={go} onOpen={onOpen} />}
           {site === "megamart" && <MegaMart wallet={wallet} onWallet={onWallet} />}
-          {site === "worknet" && <JobsPanel embedded mapId={mapId} activeRole={activeRole} onClose={() => go("start")} onStart={onStartJob} onTravel={onTravelJob} />}
+          {site === "worknet" && <JobsPanel embedded onCompany={onCompany} mapId={mapId} activeRole={activeRole} onClose={() => go("start")} onStart={onStartJob} onTravel={onTravelJob} />}
           {site === "stays" && (
             <div className="flex h-full flex-col">
               <div className="flex gap-2 border-b border-black/10 bg-[#f7f1e6] px-4 py-2">

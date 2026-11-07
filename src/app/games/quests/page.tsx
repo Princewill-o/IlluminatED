@@ -1,6 +1,7 @@
+import Link from "next/link";
+
 import type { Metadata } from "next";
 
-import Link from "next/link";
 
 import { QuestBoard } from "@/components/game/quests/quest-board";
 

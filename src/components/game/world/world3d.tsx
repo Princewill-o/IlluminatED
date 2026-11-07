@@ -11,7 +11,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAR_PAINT, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -3194,6 +3194,47 @@ export function World3D({
       courier.root.visible = false;
       scene.add(courier.root);
     }
+    // Job clients (yours and other players') and the glowing work stations for your job.
+    const clientBodies = new Map<string, { body: ReturnType<typeof makeBody>; bubble: THREE.Mesh; text: string; seed: number }>();
+    const stationGroup = new THREE.Group(); scene.add(stationGroup);
+    let stationKey = "";
+    const syncJobs = (secs: number) => {
+      for (const [id, c] of JOB_CLIENTS) {
+        let e = clientBodies.get(id);
+        if (e && e.seed !== c.seed) { scene.remove(e.body.root); clientBodies.delete(id); e = undefined; }
+        if (!e) { const body = makeBody({ ...npcLook(c.seed), held: "held-none" }); scene.add(body.root); e = { body, bubble: new THREE.Mesh(), text: "", seed: c.seed }; clientBodies.set(id, e); }
+        if (e.text !== c.bubble) {
+          e.body.root.remove(e.bubble);
+          const label = c.bubble.length > 46 ? `${c.bubble.slice(0, 44)}…` : c.bubble;
+          e.bubble = sign(label, { bg: c.mood === "unhappy" ? "#ffe1dc" : c.mood === "happy" ? "#dff5e3" : "#ffffff", fg: "#13203a", w: Math.min(4.2, 0.6 + label.length * 0.085), h: 0.42 });
+          e.bubble.position.set(0, 2.25, 0); e.body.root.add(e.bubble); e.text = c.bubble;
+        }
+        const x = c.x / TILE, z = c.y / TILE;
+        e.body.root.visible = c.mood !== "riding";
+        e.body.root.position.set(x, c.mood === "happy" ? Math.abs(Math.sin(secs * 6)) * 0.15 : 0, z);
+        e.body.root.rotation.y = Math.atan2(PLAYER.x / TILE - x, PLAYER.y / TILE - z);
+        e.bubble.lookAt(camera.position);
+        setWalking(e.body, false);
+      }
+      for (const [id, e] of clientBodies) if (!JOB_CLIENTS.has(id)) { scene.remove(e.body.root); clientBodies.delete(id); }
+      const key = JOB_STATIONS.map((st) => `${st.id}${st.needed ? 1 : 0}${st.done ? 1 : 0}`).join("|");
+      if (key !== stationKey) {
+        stationKey = key;
+        for (const ch of [...stationGroup.children]) { stationGroup.remove(ch); ch.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) m.geometry.dispose(); }); }
+        for (const st of JOB_STATIONS) {
+          const ring = new THREE.Mesh(new THREE.RingGeometry(0.42, 0.56, 24), new THREE.MeshBasicMaterial({ color: st.done ? "#5fe08a" : st.needed ? "#ffd166" : "#ffffff", transparent: true, opacity: st.needed ? 0.95 : 0.45, side: THREE.DoubleSide, depthWrite: false }));
+          ring.rotation.x = -Math.PI / 2; ring.position.set(st.x / TILE, 0.04, st.y / TILE); ring.userData.pulse = st.needed;
+          stationGroup.add(ring);
+          const tag = sign(st.label, { bg: st.needed ? "#ffd166" : "#13203a", fg: st.needed ? "#13203a" : "#ffffff", w: Math.min(3.4, 0.5 + st.label.length * 0.07), h: 0.32 });
+          tag.position.set(st.x / TILE, 1.55, st.y / TILE); tag.userData.face = true;
+          stationGroup.add(tag);
+        }
+      }
+      for (const ch of stationGroup.children) {
+        if (ch.userData.pulse) ch.scale.setScalar(1 + Math.sin(secs * 5) * 0.12);
+        if (ch.userData.face) ch.lookAt(camera.position);
+      }
+    };
     const guardBodies = map.kind === "prison" ? [makeBody({...npcLook(53),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"}),makeBody({...npcLook(54),top:"top-blocky-police-navy",topColor:"topcol-auto",hat:"hat-cap"})] : [];
     guardBodies.forEach(b=>scene.add(b.root));
     // Flight School: Ava walks ahead and the player follows her.
@@ -3891,6 +3932,7 @@ export function World3D({
         tutor.root.visible=TUTOR.active;
         setWalking(tutor,moving&&!reduce);
       }
+      syncJobs(performance.now() / 1000);
       if (courier) {
         // The courier comes in from the front door, waits by you to be signed for, then leaves.
         const door = { x: 10, z: 13.4 };

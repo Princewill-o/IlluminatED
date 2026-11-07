@@ -78,6 +78,7 @@ import { WORKPLACES, roleOf, workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import type { NearbyPerson } from "@/game/core/city-social";
 import type { StreetAssessment } from "@/game/core/civilian-conflict";
+import { roleWorkplaceMap } from "@/game/core/client-jobs";
 import { COMPANIES } from "@/game/core/companies";
 import {courtFineTotal,recordCourtFine} from "@/game/core/court-wallet";
 import { nearestDrivingSpot, nearestParkingSpot, roadRoute } from "@/game/core/driving";
@@ -93,7 +94,7 @@ import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
 import { attend, cellSearch, coolHeat, coverHole, cutFence, detector, dig, doJob, frontGate, has as hasItem, judgePrevious, prisonClock, searchDesk, sendToSolitary, takeKeyImpression, train as trainStat, vent } from "@/game/core/prison-life";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
-import { type PracticalRole, ROLES } from "@/game/core/roles";
+import { type PracticalRole, ROLES, ROLE_UNIFORMS } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
 import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
@@ -168,6 +169,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id.startsWith("venue-")) return venueMap(id);
   if (id.startsWith("hotel-")) return hotelMap(id);
   if (id.startsWith("workplace-")) return workplaceMap(id.slice(10));
+  if (id.startsWith("role-")) { const role = ROLES.find((r) => `role-${r.id}` === id); return role ? roleWorkplaceMap(id, role.title, role.colour) : null; }
   if (id === "city") return CITY;
   if (id === "venture-hub") return ventureMap();
   if (id === "universities") return CITY;
@@ -810,6 +812,7 @@ export function WorldApp({
     const t = setInterval(check, 30000);
     return () => clearInterval(t);
   }, [mapId, hotelBooking, leaveHotelRoom, say]);
+  useEffect(()=>{const on=(e:Event)=>{const t=(e as CustomEvent<string>).detail;if(t)say(t,true);};window.addEventListener("illumed:say",on);return()=>window.removeEventListener("illumed:say",on);},[say]);
   /** Everything you can do around the prison. */
   const prisonAction = useCallback((action: string, to: { desk?: string; loot?: string; job?: string }) => {
     const now = Date.now();
@@ -1432,7 +1435,7 @@ export function WorldApp({
         onChangeServer={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity before changing servers."); else setServer(null); }}
         onDrivingOffence={drivingOffence}
         ads={events}
-        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : patrol ? { ...me, avatar: { ...me.avatar, top: "top-blocky-police-navy", bottom: "bottom-blocky-police-navy", shoes: "shoes-blocky-police-navy", hat: "hat-cap", held: "held-none" } } : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : me}
+        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : patrol ? { ...me, avatar: { ...me.avatar, top: "top-blocky-police-navy", bottom: "bottom-blocky-police-navy", shoes: "shoes-blocky-police-navy", hat: "hat-cap", held: "held-none" } } : roleShift && ROLE_UNIFORMS[roleShift.role.id] ? {...me,avatar:{...me.avatar,...(ROLE_UNIFORMS[roleShift.role.id] as Partial<typeof me.avatar>)}} : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
         car={hop ? `bus:${hop.route}` : driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
@@ -1578,7 +1581,7 @@ export function WorldApp({
         else void goTo(f.mapId, f.label, { x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
       }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
-      {browser && <WebBrowser start={browser} wallet={wallet}
+      {browser && <WebBrowser start={browser} wallet={wallet} onCompany={(w, name) => { setBrowser(null); void goTo(`workplace-${w}`, name); }}
         renderCars={(back) => <Dealership clout={wallet} owned={garage} driving={driving} onClose={back} onDrive={(c) => { setBrowser(null); driveCar(c); }}
           onBought={(c, left) => { setWallet(left); setGarage((g) => g.includes(c) ? g : [...g, c]); setBrowser(null); driveCar(c); router.refresh(); }} />}
         renderHouses={(back) => <HomeMarket claimed={home.claimed} owned={home.owned} current={home.current} clout={wallet} onClose={back}
@@ -1595,10 +1598,10 @@ export function WorldApp({
           else if (mapId === "home") { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }
           else { say("Opening HomeStyle at your house: arrange and buy furniture there.", true); void goTo("home", "Your house"); }
         }} />}
-      {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
+      {jobsOpen && <JobsPanel onCompany={(w, name) => { setJobsOpen(false); void goTo(`workplace-${w}`, name); }} mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
-      {roleShift && <RoleShift key={`${roleShift.role.id}-${mapId}`} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); CREW.id = null; CREW.role = null; }}/>}
+      {roleShift && <RoleShift key={roleShift.role.id} onTravel={(id, label) => void goTo(id, label)} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); CREW.id = null; CREW.role = null; }}/>}
       {rescueCause && <CrashImpact key={rescueCause.key} kind={rescueCause.kind}/>}
       {patrol && outdoors && <PolicePatrol map={map} onTarget={setWaypoint} onEnd={() => { setPatrol(false); setWaypoint(null); }} say={say}/>}
       {panic && <PanicFloor companyId={panic} map={map} onExit={() => setPanic(null)}/>}

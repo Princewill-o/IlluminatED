@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { CAR_PAINT, CREW, CREW_INVITES, LAW_STATUS, PET, RESCUES } from "./art";
+import { CAR_PAINT, CREW, CREW_INVITES, JOB_CLIENTS, type JobClient, LAW_STATUS, PET, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -82,7 +82,12 @@ export interface RemotePlayer {
   heardAt: number;
 }
 
+/** Your current job client, compact for presence: "x,y,seed,mood|bubble". */
+// Only position, look and mood are shared: never free text, so nobody can make a client "say" anything.
+const clientTag = () => { const c = JOB_CLIENTS.get("mine"); return c ? `${Math.round(c.x)},${Math.round(c.y)},${c.seed},${c.mood}` : null; };
+const SHARED_BUBBLE: Record<JobClient["mood"], string> = { waiting: "Waiting to be served…", happy: "Thank you!", unhappy: "Hmm, not quite right…", riding: "" };
 interface Meta {
+  client?: string | null;
   crew?: string | null;
   car?: string | null;
   pet?: string | null;
@@ -194,6 +199,7 @@ export function useWorld({
         heading: pos.current.heading,
         pet: PET.tag,
         crew: CREW.id && CREW.role ? `${CREW.id}:${CREW.role}` : null,
+        client: clientTag(),
       });
       const scheduleSync = () => {
         if (syncQueued || cancelled()) return;
@@ -271,6 +277,10 @@ export function useWorld({
           const crew = typeof m.crew === "string" ? /^([0-9a-f-]{36}):([a-z-]{2,30})$/i.exec(m.crew) : null;
           if (crew) CREW_INVITES.set(id, { name: who.username, crew: crew[1], role: crew[2], x: m.x, y: m.y });
           else CREW_INVITES.delete(id);
+          // The NPC client another player is serving: everyone sees them.
+          const job = typeof m.client === "string" ? /^(-?\d+),(-?\d+),(\d{1,4}),(waiting|happy|unhappy|riding)$/.exec(m.client) : null;
+          if (job) JOB_CLIENTS.set(`p:${id}`, { id: `p:${id}`, x: +job[1], y: +job[2], seed: +job[3], mood: job[4] as JobClient["mood"], bubble: SHARED_BUBBLE[job[4] as JobClient["mood"]], colour: "#ffd166" });
+          else JOB_CLIENTS.delete(`p:${id}`);
           if (!p)
             map.set(id, {
               ...identity,
@@ -294,6 +304,7 @@ export function useWorld({
         }
         for (const id of map.keys()) if (!seen.has(id)) map.delete(id);
         for (const id of CREW_INVITES.keys()) if (!seen.has(id)) CREW_INVITES.delete(id);
+        for (const id of JOB_CLIENTS.keys()) if (id.startsWith("p:") && !seen.has(id.slice(2))) JOB_CLIENTS.delete(id);
         for (const pass of checked.keys())
           if (!activePasses.has(pass)) checked.delete(pass);
         bump();
@@ -366,6 +377,7 @@ export function useWorld({
         }
       });
       let trackedCrew: string | null = null;
+      let trackedClient: string | null = null;
       const track = async () => {
         if (cancelled()) return;
         const wait = PRESENCE_INTERVAL_MS - (Date.now() - lastTrack);
@@ -384,6 +396,7 @@ export function useWorld({
         }
         trackedPosition = { x: pos.current.x, y: pos.current.y };
         trackedCrew = CREW.id;
+        trackedClient = clientTag();
         setPing(Math.round(performance.now() - t0));
         setStatus(navigator.onLine ? "live" : "offline");
       };
@@ -413,7 +426,7 @@ export function useWorld({
           (Math.hypot(
             pos.current.x - trackedPosition.x,
             pos.current.y - trackedPosition.y,
-          ) > 8 || trackedCrew !== CREW.id)
+          ) > 8 || trackedCrew !== CREW.id || trackedClient !== clientTag())
         )
           void track();
       }, PRESENCE_INTERVAL_MS);
