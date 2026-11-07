@@ -41,3 +41,17 @@ test("upstairs is a real deck in the same room, reached by walking up the stairs
   assert.equal(portalAt(levelMap(map, 1), cx, cy)?.id, up.id);
   assert.notEqual(portalAt(levelMap(map, 0), cx, cy)?.id, up.id);
 });
+
+test("restaurants: kitchen behind the counter, and every ground-floor door and counter reachable on foot", () => {
+  const { walkRoute } = projectData("src/game/core/pursuit.ts");
+  for (const id of ["mcdonalds", "kfc", "pizzazz", "starbucks"]) {
+    const map = venueMap(`venue-${id}`), ground = levelMap(map, 0);
+    for (const p of map.portals.filter((q) => !q.level)) {
+      const point = { x: p.rect.x + p.rect.w / 2, y: p.rect.y + p.rect.h / 2 };
+      assert.ok(!blocked(ground, point.x, point.y), `${id}: ${p.id} is standable`);
+      assert.ok(walkRoute(ground, map.spawn, point).length || Math.hypot(point.x - map.spawn.x, point.y - map.spawn.y) < TILE, `${id}: ${p.id} reachable`);
+    }
+    if (id !== "starbucks") assert.ok(blocked(ground, 6 * TILE, 1.5 * TILE), `${id}: customers can't walk into the kitchen`);
+  }
+  assert.equal(venueMap("venue-pizzazz").portals.find((p) => p.id === "staff")?.to.workplace, "pizzazz");
+});

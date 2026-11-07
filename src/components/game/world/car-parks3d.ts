@@ -23,7 +23,8 @@ const rand = (n: number) => {
   return x - Math.floor(x);
 };
 
-export async function addCarParks3D(parent: THREE.Group, lots: Lot[], tiles: string[], h: Helpers) {
+/** Returns a culler: give it a visibility test and only the parked cars in view are drawn. */
+export async function addCarParks3D(parent: THREE.Group, lots: Lot[], tiles: string[], h: Helpers): Promise<((visible: (bounds: THREE.Box3) => boolean) => void) | undefined> {
   if (!lots.length) return;
   const root = new THREE.Group();
   root.name = "car-parks";
@@ -120,6 +121,7 @@ export async function addCarParks3D(parent: THREE.Group, lots: Lot[], tiles: str
   root.traverse((o) => { const mesh = o as THREE.Mesh; if (mesh.isMesh) for (const m of [mesh.material].flat()) h.bend(m); });
 
   // Parked cars: one instanced mesh per model, materials as groups.
+  const fleets: { inst: THREE.InstancedMesh; matrices: THREE.Matrix4[]; bounds: THREE.Box3[] }[] = [];
   await Promise.all([...parked].map(async ([model, spots]) => {
     const gltf = await h.load(realisticCarAsset(model)).catch(() => null);
     if (!gltf) return;
@@ -162,14 +164,26 @@ export async function addCarParks3D(parent: THREE.Group, lots: Lot[], tiles: str
     geometry.scale(s, s, s);
     const inst = new THREE.InstancedMesh(geometry, mats, spots.length);
     const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), one = new THREE.Vector3(1, 1, 1);
+    const matrices: THREE.Matrix4[] = [], bounds: THREE.Box3[] = [];
     spots.forEach((spot, i) => {
       // Car length along v: n/s lots run v along z, so no turn; e/w lots turn a quarter.
       q.setFromAxisAngle(up, spot.rot - Math.PI / 2);
       inst.setMatrixAt(i, m4.compose(new THREE.Vector3(spot.x, 0.135, spot.z), q, one));
+      matrices.push(m4.clone());
+      bounds.push(new THREE.Box3(new THREE.Vector3(spot.x - 1.4, 0, spot.z - 1.4), new THREE.Vector3(spot.x + 1.4, 1.8, spot.z + 1.4)));
     });
+    fleets.push({ inst, matrices, bounds });
     inst.castShadow = true;
     inst.receiveShadow = true;
     inst.frustumCulled = false;
     root.add(inst);
   }));
+  return (visible) => {
+    for (const { inst, matrices, bounds } of fleets) {
+      let n = 0;
+      for (let i = 0; i < matrices.length; i++) if (visible(bounds[i])) inst.setMatrixAt(n++, matrices[i]);
+      if (n !== inst.count || n) { inst.count = n; inst.instanceMatrix.needsUpdate = true; }
+      inst.visible = n > 0;
+    }
+  };
 }

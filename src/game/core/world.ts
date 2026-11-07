@@ -125,7 +125,7 @@ export interface WorldMap {
   /** Blender furniture placed in an interior (tiles; models in /world3d/interiors). */
   props?: Prop[];
   /** Interior colours: floor (two alternating), walls and skirting. */
-  theme?: { floor: [string, string]; wall: string; skirting: string };
+  theme?: { floor: [string, string]; wall: string; skirting: string; zones?: { x: number; y: number; w: number; h: number; floor: [string, string] }[] };
   /** Stairs drawn in this room: going up from here, or the opening down to the floor below. */
   stairs?: { x: number; y: number; down: boolean };
   /**
@@ -898,7 +898,7 @@ export function londonMap(): WorldMap {
   const police = policeBuilding();
   if (police) portals.push({ id: "police-station", rect: px(police.x + Math.floor(police.w / 2) - 1, police.y + police.h, 2, 1), label: "Police station: report, custody and patrols", to: { kind: "map", mapId: "police-station", label: "Police station" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
-  if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: jobs", to: { kind: "work", workplace: "pizzazz" } });
+  if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: eat in, or work here", to: { kind: "map", mapId: "venue-pizzazz", label: "Pizzazz Pizza" } });
   for (const venue of L.things) {
     if (venue.kind !== "building" || !["mcdonalds", "kfc", "starbucks"].includes(venue.id)) continue;
     portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "map", mapId: `venue-${venue.id}`, label: venue.label ?? "Inside" } });

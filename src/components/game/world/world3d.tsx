@@ -428,7 +428,10 @@ async function placeTurned(g: THREE.Group, url: string, x: number, z: number, w:
   const o = new THREE.Group();
   o.add(inner);
   const size = new THREE.Box3().setFromObject(o).getSize(new THREE.Vector3());
-  o.scale.set(w / size.x, Math.min(w / size.x, d / size.z), d / size.z);
+  // Kit models are authored 1 unit = 1 tile: fit them into the footprint, but never blow a
+  // small piece (a stool, a lamp) up to fill it; it sits centred at its real size instead.
+  const sx = Math.min(1, w / size.x), sz = Math.min(1, d / size.z);
+  o.scale.set(sx, Math.min(sx, sz), sz);
   const bb = new THREE.Box3().setFromObject(o);
   const c = bb.getCenter(new THREE.Vector3());
   o.position.set(x + w / 2 - c.x, y - bb.min.y, z + d / 2 - c.z);
@@ -559,6 +562,46 @@ function groundMesh(tiles: string[], highland: boolean, holes = new Set<string>(
   const mesh = new THREE.Mesh(geo, m);
   mesh.receiveShadow = true;
   return mesh;
+}
+
+/** Split the merged ground (six vertices per quad) into square chunks that share its
+ * material, so the camera only draws the part of the city it can see. */
+function chunkGround(mesh: THREE.Mesh, size = 32) {
+  const g = mesh.geometry, pos = g.getAttribute("position");
+  const names = Object.keys(g.attributes);
+  const buckets = new Map<string, number[]>();
+  for (let start = 0; start < pos.count; start += 6) {
+    let x = Infinity, z = Infinity;
+    for (let i = start; i < Math.min(start + 6, pos.count); i++) { x = Math.min(x, pos.getX(i)); z = Math.min(z, pos.getZ(i)); }
+    const key = `${Math.floor(x / size)},${Math.floor(z / size)}`;
+    const list = buckets.get(key) ?? [];
+    list.push(start);
+    buckets.set(key, list);
+  }
+  const group = new THREE.Group();
+  group.name = "ground";
+  for (const starts of buckets.values()) {
+    const chunk = new THREE.BufferGeometry();
+    for (const name of names) {
+      const src = g.getAttribute(name) as THREE.BufferAttribute, n = src.itemSize;
+      const out = new Float32Array(starts.length * 6 * n);
+      let o = 0;
+      for (const start of starts) {
+        const end = Math.min(start + 6, src.count);
+        out.set((src.array as Float32Array).subarray(start * n, end * n), o);
+        o += (end - start) * n;
+      }
+      chunk.setAttribute(name, new THREE.BufferAttribute(o === out.length ? out : out.slice(0, o), n));
+    }
+    chunk.computeBoundingBox(); chunk.computeBoundingSphere();
+    const part = new THREE.Mesh(chunk, mesh.material);
+    part.receiveShadow = mesh.receiveShadow;
+    // The curved-world culler decides visibility; three's flat frustum test would clip the bend.
+    part.frustumCulled = false;
+    group.add(part);
+  }
+  g.dispose();
+  return group;
 }
 
 /** Current lane markings, zebras and stop lines use the same world positions
@@ -1893,7 +1936,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       if (station && y >= STATION_PLATFORM_Y + 3 && ch === "X") continue; // track pit
       // The stair opening on an upper floor has no floor: you look down the stairs.
       if (map.stairs?.down && x >= map.stairs.x && x < map.stairs.x + 2 && y >= map.stairs.y && y < map.stairs.y + 4) continue;
-      if(map.theme){const [a,b]=map.theme.floor;box(g,(x+y)%2?a:b,x,-.05,y,x+1,.01,y+1);
+      if(map.theme){const zone=map.theme.zones?.find(z=>x>=z.x&&x<z.x+z.w&&y>=z.y&&y<z.y+z.h);const [a,b]=zone?.floor??map.theme.floor;box(g,(x+y)%2?a:b,x,-.05,y,x+1,.01,y+1);continue;
       } else if((map.id==='venture-hub'||map.id==='study-lobby')&&ch==='m'){
         jobs.push(kaykitPlatform(g,x,y,map.id).catch(()=>{box(g,map.design?.floor??'#c7d3cb',x,-.05,y,x+1,.025,y+1);}));
         continue;
@@ -2355,6 +2398,7 @@ export function World3D({
     const shadowBatches:Array<()=>void>=[];
     const bodyView=curvedView(), bodyBounds=new THREE.Box3();
     let nextCull=0;
+    const parkView=curvedView();
     // MSAA, sRGB output and soft PCF shadow maps (scene-setup.ts).
     try{renderer = createRenderer(visual);}catch{onUnavailable?.();return;}
     const contextLost=(e:Event)=>{e.preventDefault();onUnavailable?.();};
@@ -2424,7 +2468,9 @@ export function World3D({
       if(ground.material instanceof THREE.MeshStandardMaterial) groundSurface=ground.material;
       const disposeTexture=london?applyGroundStyle(ground):()=>{};
       disposeGroundStyle=()=>{disposeTexture();ground.material.dispose();};
-      world.add(ground);
+      // Big outdoor maps: draw only the chunks in view.
+      if(tiles.length*(tiles[0]?.length??0)>4096){const chunks=chunkGround(ground);world.add(chunks);cullingRoots.push(...chunks.children);}
+      else world.add(ground);
     }
     const signals = london ? streetSignals(world) : [];
     if (!indoors && !ukScene && !london) {
@@ -2449,8 +2495,9 @@ export function World3D({
     const lamps: THREE.Vector3[] = [];
     const jobs: Promise<unknown>[] = [];
     // Mountains all round, with a tunnel mouth over every road that leaves the map.
-    if (london && map.id === "city") jobs.push(addCarParks3D(world, cityCarParks(), map.tiles, { load, bend, sign }).catch(() => null));
-    if (!indoors && map.id !== "rotherhithe") jobs.push(addMountainRing(world, map, { load, bend }).catch(() => null));
+    let cullParked:((visible:(b:THREE.Box3)=>boolean)=>void)|null=null;
+    if (london && map.id === "city") jobs.push(addCarParks3D(world, cityCarParks(), map.tiles, { load, bend, sign }).then(cull=>{cullParked=cull??null;}).catch(() => null));
+    if (!indoors && map.id !== "rotherhithe") jobs.push(addMountainRing(world, map, { load, bend }).then(({ring})=>{for(const part of ring.children)if((part as THREE.Mesh).geometry?.boundingSphere)cullingRoots.push(part);}).catch(() => null));
     const registerLamp = (model: Promise<THREE.Object3D>, position: THREE.Vector3) => {
       lamps.push(position);
       jobs.push(model.then(object => {
@@ -4380,7 +4427,7 @@ export function World3D({
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       updateUKScenery(mx,mz,overview);
-      if(culling && now>=nextCull){culling.update(camera,{x:mx,z:mz},overview);nextCull=now+80;}
+      if(culling && now>=nextCull){culling.update(camera,{x:mx,z:mz},overview);if(cullParked){parkView.update(camera);const focus={x:mx,z:mz};cullParked(b=>overview||parkView.intersects(b,focus,3));}nextCull=now+80;}
       if(overview)for(const ring of rings)ring.visible=false;
       if (sightlinesReady && (london || highland || ukScene)) {
         sightlineTarget.copy(me.root.position); sightlineTarget.y += .9;

@@ -7,7 +7,7 @@ import { TILE, type Portal, type PortalTarget, type Prop, type WorldMap } from "
  *
  * Map ids: `venue-<id>` is the ground floor, `venue-<id>-up` the floor above.
  */
-type Theme = "cafe" | "burger" | "chicken" | "shop" | "pharmacy" | "hall";
+type Theme = "cafe" | "burger" | "chicken" | "pizza" | "shop" | "pharmacy" | "hall";
 export interface Venue {
   id: string;
   name: string;
@@ -17,6 +17,8 @@ export interface Venue {
   counter: { label: string; to: PortalTarget };
   /** The upstairs floor, when there is one. */
   upstairs?: { name: string; label: string; to: PortalTarget };
+  /** A staff-only door (the restaurant's jobs). */
+  staff?: { label: string; to: PortalTarget };
 }
 
 export const VENUES: Venue[] = [
@@ -29,6 +31,10 @@ export const VENUES: Venue[] = [
   { id: "kfc", name: "Cluck & Co.", theme: "chicken", accent: "#b72025",
     counter: { label: "Order at the counter: grab a meal", to: { kind: "act", activity: "eat" } },
     upstairs: { name: "Cluck & Co. · Upstairs seating", label: "Booth: eat with friends", to: { kind: "act", activity: "eat" } } },
+  { id: "pizzazz", name: "Pizzazz Pizza", theme: "pizza", accent: "#1f6b45",
+    counter: { label: "Order at the counter: a slice and a drink", to: { kind: "act", activity: "eat" } },
+    upstairs: { name: "Pizzazz Pizza · Upstairs dining room", label: "Window table: share a pizza", to: { kind: "act", activity: "eat" } },
+    staff: { label: "Staff door: work at Pizzazz", to: { kind: "work", workplace: "pizzazz" } } },
   { id: "tescow", name: "Tesco Express", theme: "shop", accent: "#1f5fa8",
     counter: { label: "Checkout: drinks and meal deals", to: { kind: "shop", shop: "tescow" } } },
   { id: "bootz", name: "Bootz Pharmacy", theme: "pharmacy", accent: "#1d4e9e",
@@ -39,10 +45,14 @@ export const VENUES: Venue[] = [
 ];
 export const venueById = (id: string) => VENUES.find((v) => v.id === id);
 
+/** Restaurants: the kitchen floor behind the counter, the queue in front of it and the doormat. */
+const KITCHEN = { x: 1, y: 1, w: 13, h: 2 }, QUEUE = { x: 1, y: 3, w: 13, h: 3 }, MAT = { x: 9, y: 13, w: 4, h: 2 };
+const zones = (kitchen: [string, string], queue: [string, string]) => [{ ...KITCHEN, floor: kitchen }, { ...QUEUE, floor: queue }, { ...MAT, floor: ["#3b3b3d", "#333335"] as [string, string] }];
 const THEMES: Record<Theme, NonNullable<WorldMap["theme"]>> = {
-  cafe: { floor: ["#8a6446", "#7f5c40"], wall: "#3d2c24", skirting: "#2a1d17" },
-  burger: { floor: ["#e9e3d8", "#d6452a"], wall: "#f4efe6", skirting: "#c23a22" },
-  chicken: { floor: ["#ece6da", "#9e1c22"], wall: "#f6f0e4", skirting: "#9e1c22" },
+  cafe: { floor: ["#8a6446", "#7f5c40"], wall: "#3d2c24", skirting: "#2a1d17", zones: [{ x: 1, y: 1, w: 7, h: 3, floor: ["#d9d2c3", "#3d3b38"] }, { ...MAT, floor: ["#3b3b3d", "#333335"] }] },
+  burger: { floor: ["#b9875a", "#ae7d52"], wall: "#f4efe6", skirting: "#c23a22", zones: zones(["#b8babc", "#aeb0b2"], ["#ece6da", "#d6452a"]) },
+  chicken: { floor: ["#ece6da", "#e1d9cb"], wall: "#f6f0e4", skirting: "#9e1c22", zones: zones(["#b8babc", "#aeb0b2"], ["#ece6da", "#9e1c22"]) },
+  pizza: { floor: ["#8a5a3a", "#7f5335"], wall: "#efe4cf", skirting: "#1f5e3c", zones: zones(["#e9e4d8", "#2f2f30"], ["#c9734a", "#bd6942"]) },
   shop: { floor: ["#e9ecef", "#dfe3e8"], wall: "#f4f6f8", skirting: "#1f5fa8" },
   pharmacy: { floor: ["#eef2f6", "#e3e9f0"], wall: "#f6f8fb", skirting: "#1d4e9e" },
   hall: { floor: ["#ece6da", "#bdb3a4"], wall: "#d9cbb3", skirting: "#4a2f22" },
@@ -70,6 +80,8 @@ function layout(v: Venue): Placed[] {
         ]),
         P("cafe-armchair", 9, 8, 1, 1, { turn: 1 }), P("cafe-table", 10, 8, 1, 1), P("cafe-armchair", 11, 8, 1, 1, { turn: 3 }),
         P("cafe-sofa", 9, 11, 2, 1, { turn: 2 }), P("cafe-armchair", 18, 3, 1, 1, { turn: 3 }), P("cafe-table", 17, 3, 1, 1),
+        P("bookcase", 8, 1, 2, 1), P("bookcase", 10, 1, 2, 1), P("tall-plant", 12, 1, 1, 1),
+        P("bar-cafe", 2, 13, 4, 1), ...[2, 3, 4, 5].map((x) => P("stool-pizza", x, 12, 1, 1)),
         ...plants,
         // Upstairs lounge.
         U("cafe-sofa", 17, 1, 2, 1), U("cafe-table", 17, 2, 1, 1), U("cafe-armchair", 19, 2, 1, 1, { turn: 3 }),
@@ -81,14 +93,39 @@ function layout(v: Venue): Placed[] {
     case "chicken": {
       const t = v.theme;
       return [
-        P(`counter-${t}`, 2, 2, 4, 1), P(`counter-${t}`, 7, 2, 4, 1),
-        ...[[2, 7], [5, 7], [8, 7], [2, 10], [5, 10], [8, 10]].map(([x, y]) => P(`booth-${t}`, x, y, 2, 2)),
-        P(`booth-${t}`, 17, 2, 2, 2), P(`booth-${t}`, 17, 5, 2, 2),
-        ...[17, 18, 19, 20].map((x) => P(`stool-${t}`, x, 12, 1, 1)),
-        ...plants,
-        U(`booth-${t}`, 17, 1, 2, 2), U(`booth-${t}`, 17, 4, 2, 2), U(`stool-${t}`, 20, 7, 1, 1), U(`stool-${t}`, 20, 8, 1, 1),
+        // Open kitchen behind the counter: fryers, grill, hood and the pass.
+        P(`kitchen-${t}`, 2, 1, 4, 2), P(`kitchen-${t}`, 6, 1, 4, 2), P(`kitchen-${t}`, 10, 1, 4, 2),
+        P(`counter-${t}`, 2, 3, 4, 1), P(`counter-${t}`, 6, 3, 4, 1), P(`drinks-${t}`, 10, 3, 2, 1), P("tall-plant", 13, 3, 1, 1),
+        // Order kiosks by the door side wall, facing the room.
+        ...[5, 6, 7].map((y) => P(`order-kiosk-${t}`, 1, y, 1, 1, { turn: 1 })),
+        // Tables for four in the middle, booths along the wall, a window bar with stools.
+        ...[[4, 6], [7, 6], [10, 6], [4, 9], [7, 9], [10, 9]].map(([x, y]) => P(`table-${t}`, x, y, 2, 2)),
+        P(`booth-${t}`, 1, 9, 2, 2), P(`booth-${t}`, 1, 12, 2, 2),
+        P(`bar-${t}`, 4, 13, 4, 1), ...[4, 5, 6, 7].map((x) => P(`stool-${t}`, x, 12, 1, 1)),
+        // Under the mezzanine.
+        P(`booth-${t}`, 19, 1, 2, 2), P(`booth-${t}`, 19, 4, 2, 2), P(`booth-${t}`, 19, 7, 2, 2),
+        P(`table-${t}`, 16, 2, 2, 2), P(`table-${t}`, 16, 5, 2, 2),
+        P(`bar-${t}`, 17, 13, 4, 1), ...[17, 18, 19, 20].map((x) => P(`stool-${t}`, x, 12, 1, 1)), P("tall-plant", 20, 10, 1, 1),
+        // Upstairs seating.
+        U(`booth-${t}`, 19, 1, 2, 2), U(`booth-${t}`, 19, 4, 2, 2), U(`booth-${t}`, 19, 7, 2, 2),
+        U(`table-${t}`, 15, 1, 2, 2), U(`table-${t}`, 15, 4, 2, 2), U("tall-plant", 14, 8, 1, 1),
       ];
     }
+    case "pizza":
+      return [
+        // Open kitchen: the wood-fired oven and the prep line, behind the counter.
+        P("pizza-oven", 2, 1, 3, 2), P("kitchen-pizza", 5, 1, 4, 2), P("kitchen-pizza", 9, 1, 4, 2),
+        P("pizza-counter", 2, 3, 4, 1), P("pizza-counter", 6, 3, 4, 1), P("drinks-burger", 10, 3, 2, 1),
+        // Booths along the wall, checked-cloth tables, a window bar.
+        P("booth-pizza", 1, 5, 2, 2), P("booth-pizza", 1, 8, 2, 2), P("booth-pizza", 1, 11, 2, 2),
+        ...[[4, 6], [7, 6], [10, 6], [4, 9], [7, 9], [10, 9]].flatMap(([x, y]) => [P("pizza-table", x, y, 2, 2), P("pendant", x, y, 2, 2, { lift: 1.55, solid: false })]),
+        P("bar-cafe", 4, 13, 4, 1), ...[4, 5, 6, 7].map((x) => P("stool-pizza", x, 12, 1, 1)),
+        P("booth-pizza", 19, 1, 2, 2), P("booth-pizza", 19, 4, 2, 2), P("booth-pizza", 19, 7, 2, 2),
+        P("pizza-table", 16, 2, 2, 2), P("pizza-table", 16, 5, 2, 2),
+        P("bar-cafe", 17, 13, 4, 1), ...[17, 18, 19, 20].map((x) => P("stool-pizza", x, 12, 1, 1)), P("tall-plant", 20, 10, 1, 1),
+        U("booth-pizza", 19, 1, 2, 2), U("booth-pizza", 19, 4, 2, 2), U("booth-pizza", 19, 7, 2, 2),
+        U("pizza-table", 15, 1, 2, 2), U("pizza-table", 15, 4, 2, 2), U("tall-plant", 14, 8, 1, 1),
+      ];
     case "shop":
     case "pharmacy":
       return [
@@ -118,6 +155,8 @@ export function venueMap(mapId: string): WorldMap | null {
   const deck = Boolean(v.upstairs);
   // Upstairs grid: only the deck and the stairs are walkable.
   const u: string[][] = blank().map((row, y) => row.map((c, x) => (x >= DECK.x && x < DECK.x + DECK.w && y >= DECK.y && y < DECK.y + DECK.h ? "." : "#")));
+  // Restaurants: nobody but staff walks into the kitchen.
+  if (["burger", "chicken", "pizza"].includes(v.theme)) for (const [x, y] of [[1, 1], [1, 2], [1, 3], [12, 3], [13, 1], [13, 2], [13, 3]]) t[y][x] = "X";
   for (const p of props) {
     if (!p.solid) continue;
     const grid = p.deck ? u : t;
@@ -141,6 +180,7 @@ export function venueMap(mapId: string): WorldMap | null {
     const spot = first.model === "shop-checkout" ? { x: first.x - 1, y: first.y, w: 1 } : { x: first.x, y: first.y + first.d, w: Math.min(first.w, 3) };
     portals.push({ id: "counter", rect: px(spot.x, spot.y, spot.w, 1), label: v.counter.label, to: v.counter.to });
   }
+  if (v.staff) portals.push({ id: "staff", rect: px(12, 4, 1, 1), label: v.staff.label, to: v.staff.to });
   if (v.upstairs) portals.push({ id: "upstairs", level: 1, rect: px(15, 7, 2, 1), label: v.upstairs.label, to: v.upstairs.to });
   // The café lounge also hosts networking meet-ups by the window.
   if (v.id === "starbucks") portals.push({ id: "networking", level: 1, rect: px(19, 4, 2, 1), label: "Networking meet-up: swap cards over coffee", to: { kind: "networking", venue: "starbucks" } });

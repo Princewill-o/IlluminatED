@@ -35,13 +35,14 @@ export async function addMountainRing(parent: THREE.Group, map: WorldMap, h: Hel
   const kit: Kit = { strips: [a.scene, b.scene, c.scene], tunnel: t.scene };
   const runs = edgeRoadRuns(map);
   const buckets = new Map<string, { material: THREE.Material; parts: THREE.BufferGeometry[] }>();
-  const addModel = (model: THREE.Object3D, matrix: THREE.Matrix4) => {
+  // One bucket per side and material: only the sides in view are drawn.
+  const addModel = (model: THREE.Object3D, matrix: THREE.Matrix4, side: Side) => {
     model.updateMatrixWorld(true);
     model.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       const material = mesh.material as THREE.MeshStandardMaterial;
-      const key = material.name || material.uuid;
+      const key = `${side}:${material.name || material.uuid}`;
       let bucket = buckets.get(key);
       if (!bucket) buckets.set(key, (bucket = { material, parts: [] }));
       const g = new THREE.BufferGeometry();
@@ -59,7 +60,7 @@ export async function addMountainRing(parent: THREE.Group, map: WorldMap, h: Hel
       new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), f.rot),
       new THREE.Vector3(sx, sy, sz),
     );
-    addModel(model, m);
+    addModel(model, m, side);
   };
   const sides: [Side, number][] = [["n", map.cols], ["s", map.cols], ["w", map.rows], ["e", map.rows]];
   let n = 0;

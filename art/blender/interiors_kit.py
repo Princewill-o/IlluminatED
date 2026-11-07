@@ -130,6 +130,173 @@ def stool(name, seat):
     cyl(C("steel", (0.75, 0.76, 0.78), 0.2), 0.5, 0.5, 0, 0.05, 0.22, v=16)
     K.export(name)
 
+# ── Restaurant kitchens, kiosks and dining (fast food and the pizzeria) ─────
+STEEL = (0.75, 0.76, 0.78)
+
+def kitchen_line(name, accent, food):
+    """4 x 2 open kitchen seen over the counter: fryers, grill and a hood at the
+    back wall, a stainless pass with a heat lamp and orders waiting at the front."""
+    st, dark, a = C("steel", STEEL, 0.2), C("grill", (0.12, 0.12, 0.13), 0.5), C(f"accent_{name}", accent, 0.35)
+    tile = C("kitchentile", (0.95, 0.95, 0.93), 0.3)
+    # Back wall splash tiles, so the kitchen reads as a kitchen from above.
+    for i in range(8):
+        for j in range(4): box(tile if (i + j) % 2 else C("kitchentile2", (0.88, 0.89, 0.88), 0.3), i * 0.5, 1.92, 0.9 + j * 0.3, i * 0.5 + 0.49, 2.0, 0.9 + j * 0.3 + 0.29)
+    # Back line: two fryers, a flat grill, a bun toaster.
+    box(st, 0.05, 1.3, 0, 3.95, 1.95, 0.9, bevel=0.02)
+    for fx in (0.15, 0.85):
+        box(dark, fx, 1.38, 0.88, fx + 0.6, 1.88, 0.92)
+        box(C("oil", (0.85, 0.62, 0.2), 0.15), fx + 0.05, 1.42, 0.9, fx + 0.55, 1.84, 0.93)
+        for bx in (fx + 0.08, fx + 0.32):
+            box(C("basket", (0.55, 0.56, 0.58), 0.4), bx, 1.45, 0.93, bx + 0.2, 1.75, 1.05)
+            box("iron", bx + 0.08, 1.3, 1.02, bx + 0.12, 1.5, 1.05)
+    box(dark, 1.6, 1.35, 0.9, 2.9, 1.9, 0.95)
+    for k in range(4): cyl(C(f"patty", (0.35, 0.2, 0.12), 0.7), 1.8 + k * 0.3, 1.6, 0.95, 0.98, 0.1, v=10)
+    box(st, 3.05, 1.4, 0.9, 3.85, 1.85, 1.35, bevel=0.02)
+    box(C("toastslot", (0.9, 0.5, 0.15), 0.4), 3.15, 1.39, 1.05, 3.75, 1.4, 1.2)
+    # Extraction hood with an accent stripe.
+    box(st, 0, 1.15, 1.95, 4, 2.0, 2.35, bevel=0.02)
+    box(a, 0, 1.13, 2.25, 4, 1.16, 2.33)
+    # Pass: shelf, heat lamp, orders waiting.
+    box(st, 0.05, 0.0, 0, 3.95, 0.55, 0.92, bevel=0.02)
+    box(st, 0.05, 0.05, 1.45, 3.95, 0.5, 1.5)
+    for lx in (0.1, 3.85): box(st, lx, 0.25, 0.92, lx + 0.05, 0.3, 1.45)
+    box(C("heatlamp", (1.0, 0.45, 0.15), 0.3), 0.15, 0.15, 1.42, 3.85, 0.4, 1.45)
+    for i in range(6):
+        x = 0.25 + i * 0.6
+        if food == "burger":
+            box(C(f"wrap_{name}", accent, 0.5), x, 0.15, 0.92, x + 0.3, 0.4, 1.04, bevel=0.02)
+        elif food == "chicken":
+            cyl(C(f"wrap_{name}", accent, 0.5), x + 0.15, 0.28, 0.92, 1.12, 0.13, v=12, r2=0.15)
+            cyl(C("crumb", (0.82, 0.55, 0.22), 0.8), x + 0.15, 0.28, 1.12, 1.16, 0.12, v=10)
+        else:
+            box(C("pizzabox", (0.86, 0.78, 0.62), 0.8), x, 0.12, 0.92, x + 0.45, 0.45, 0.98 + (i % 3) * 0.05)
+        box(C("fries", (0.98, 0.82, 0.3), 0.6), x + 0.32, 0.2, 0.92, x + 0.42, 0.3, 1.05)
+    K.export(name)
+
+def order_kiosk(name, accent):
+    a, body = C(f"accent_{name}", accent, 0.35), C("kioskwhite", (0.95, 0.95, 0.94), 0.3)
+    box(body, 0.25, 0.35, 0, 0.75, 0.65, 0.08, bevel=0.02)
+    box(a, 0.4, 0.45, 0.08, 0.6, 0.6, 1.0)
+    box(body, 0.22, 0.38, 0.95, 0.78, 0.58, 1.95, bevel=0.03)
+    box(C("kscreen", (0.15, 0.17, 0.2), 0.2), 0.27, 0.37, 1.05, 0.73, 0.38, 1.85)
+    for r in range(3):
+        for c in range(2): box(C(f"tile_{name}_{(r + c) % 2}", accent if (r + c) % 2 else (0.98, 0.84, 0.3), 0.3), 0.31 + c * 0.21, 0.365, 1.3 + r * 0.17, 0.5 + c * 0.21, 0.37, 1.44 + r * 0.17)
+    box(a, 0.27, 0.365, 1.72, 0.73, 0.37, 1.82)
+    box("iron", 0.4, 0.33, 0.98, 0.6, 0.38, 1.02)
+    box(a, 0.22, 0.38, 1.95, 0.78, 0.58, 2.05, bevel=0.02)
+    K.export(name)
+
+def drinks_station(name, accent):
+    a, st = C(f"accent_{name}", accent, 0.35), C("steel", STEEL, 0.2)
+    box(a, 0.05, 0.3, 0, 1.95, 1.0, 0.95, bevel=0.02)
+    box(st, 0.0, 0.25, 0.95, 2.0, 1.0, 1.0)
+    box(st, 0.15, 0.6, 1.0, 1.25, 0.98, 1.75, bevel=0.03)
+    for i, c in enumerate([(0.2, 0.1, 0.05), (0.95, 0.6, 0.1), (0.3, 0.75, 0.3), (0.85, 0.15, 0.2), (0.95, 0.95, 0.9)]):
+        box(C(f"syrup{i}", c, 0.3), 0.22 + i * 0.2, 0.585, 1.35, 0.36 + i * 0.2, 0.6, 1.6)
+        cyl("iron", 0.29 + i * 0.2, 0.55, 1.22, 1.32, 0.025, v=6)
+    box("iron", 0.18, 0.4, 1.0, 1.22, 0.6, 1.03)
+    for k in range(3): cyl(C("cup", (0.97, 0.97, 0.95), 0.5), 1.45 + (k % 2) * 0.22, 0.55 + (k // 2) * 0.2, 1.0, 1.35 + k * 0.05, 0.08, v=10, r2=0.1)
+    box(C("napkin", (0.98, 0.98, 0.96), 0.8), 1.4, 0.75, 1.0, 1.85, 0.95, 1.15)
+    box("iron", 1.5, 0.29, 0.55, 1.85, 0.3, 0.7)   # bin flap
+    K.export(name)
+
+def diner_table(name, seat):
+    s, top, st = C(f"seat_{name}", seat, 0.35), C("formica", (0.95, 0.93, 0.88), 0.3), C("steel", STEEL, 0.2)
+    box(top, 0.45, 0.45, 0.72, 1.55, 1.55, 0.77, bevel=0.02)
+    cyl(st, 1.0, 1.0, 0, 0.72, 0.05, v=10); cyl(st, 1.0, 1.0, 0, 0.03, 0.3, v=14)
+    for cx, cy, rot in ((1.0, 0.18, 0), (1.0, 1.82, math.pi), (0.18, 1.0, -math.pi / 2), (1.82, 1.0, math.pi / 2)):
+        dx, dy = math.sin(rot), -math.cos(rot)
+        box(s, cx - 0.22, cy - 0.22, 0.42, cx + 0.22, cy + 0.22, 0.48, bevel=0.04)
+        bx, by = cx + dx * 0.2, cy + dy * 0.2
+        box(s, bx - (0.22 if dx == 0 else 0.03), by - (0.03 if dx == 0 else 0.22), 0.48, bx + (0.22 if dx == 0 else 0.03), by + (0.03 if dx == 0 else 0.22), 0.88, bevel=0.02)
+        for lx in (-0.17, 0.17):
+            for ly in (-0.17, 0.17): cyl(st, cx + lx, cy + ly, 0, 0.42, 0.02, v=6)
+    box(C(f"tray_{name}", seat, 0.4), 0.7, 0.7, 0.77, 1.15, 1.05, 0.79)
+    cyl(C("bun", (0.85, 0.55, 0.22), 0.6), 0.9, 0.88, 0.79, 0.88, 0.09, v=12, r2=0.07)
+    K.export(name)
+
+def window_bar(name, accent):
+    st, top = C("steel", STEEL, 0.2), C(f"bar_{name}", accent, 0.4)
+    box(top, 0, 0.45, 1.0, 4, 0.95, 1.06, bevel=0.015)
+    for x in (0.1, 1.95, 3.8): box(st, x, 0.85, 0, x + 0.1, 0.95, 1.0)
+    box(st, 0, 0.6, 0.25, 4, 0.64, 0.29)   # footrest
+    K.export(name)
+
+def bookcase():
+    wood = C("walnut", (0.34, 0.2, 0.11), 0.5)
+    box(wood, 0, 0.95, 0, 2, 1, 2.1)
+    for sx in (0, 1.94): box(wood, sx, 0.55, 0, sx + 0.06, 1, 2.1)
+    box(wood, 0, 0.55, 2.04, 2, 1, 2.1)
+    for z in (0.0, 0.5, 1.0, 1.5): box(wood, 0.06, 0.55, z, 1.94, 0.95, z + 0.05)
+    for z in (0.05, 0.55, 1.05, 1.55):
+        box(C("shelfback", (0.22, 0.13, 0.08), 0.6), 0.06, 0.92, z, 1.94, 0.95, z + 0.45)
+        x = 0.1
+        k = 0
+        while x < 1.8:
+            w = 0.08 + (k * 37 % 5) * 0.02
+            c = [(0.6, 0.2, 0.2), (0.2, 0.35, 0.55), (0.85, 0.7, 0.3), (0.25, 0.5, 0.3), (0.9, 0.88, 0.8)][k % 5]
+            box(C(f"book{k % 5}", c, 0.7), x, 0.65, z, x + w, 0.95, z + 0.3 + (k % 3) * 0.05)
+            x += w + 0.01; k += 1
+    K.export("bookcase")
+
+def pizza_oven():
+    """3 x 2 wood-fired oven: a brick dome on a tiled base, fire glowing in the mouth."""
+    brick, tile, ash = C("ovenbrick", (0.68, 0.32, 0.2), 0.85), C("oventile", (0.16, 0.36, 0.42), 0.4), C("ash", (0.2, 0.18, 0.17), 0.9)
+    box(tile, 0.1, 0.2, 0, 2.9, 1.95, 0.95, bevel=0.03)
+    for i in range(7): box(C("grout", (0.9, 0.88, 0.82), 0.6), 0.1 + i * 0.4, 0.19, 0, 0.12 + i * 0.4, 0.2, 0.95)
+    for k in range(3): cyl(C("logs", (0.42, 0.27, 0.15), 0.8), 0.5 + k * 0.25, 0.25, 0.15 + (k % 2) * 0.15, 0.3 + (k % 2) * 0.15, 0.1, v=8)
+    sphere(brick, 1.5, 1.15, 0.95, 1.05, sub=3, sz=0.75)
+    box(brick, 1.0, 0.05, 0.95, 2.0, 0.4, 1.65, bevel=0.05)
+    box(ash, 1.15, 0.03, 0.97, 1.85, 0.06, 1.45)
+    box("lit", 1.25, 0.06, 0.98, 1.75, 0.3, 1.25)
+    sphere(C("flame", (1.0, 0.45, 0.1), 0.3), 1.5, 0.5, 1.05, 0.22, sub=2, sz=0.8)
+    cyl(C("flue", (0.15, 0.15, 0.16), 0.4), 1.5, 1.2, 1.6, 3.0, 0.16, v=12)
+    box(C("ovenlabel", (0.95, 0.85, 0.55), 0.5), 1.1, 0.02, 1.5, 1.9, 0.05, 1.62)
+    # A peel leaning on the side.
+    box(C("peel", (0.75, 0.55, 0.32), 0.6), 2.55, 0.25, 0.95, 2.6, 0.35, 2.1)
+    box(C("peel", (0.75, 0.55, 0.32), 0.6), 2.4, 0.22, 0.95, 2.75, 0.38, 1.25)
+    K.export("pizza-oven")
+
+def pizza_counter():
+    """4 x 1 prep counter: marble top, sauce and topping bins, dough, boxes, a chalk menu."""
+    wood, top = C("pizzawood", (0.45, 0.28, 0.16), 0.55), C("marble", (0.9, 0.88, 0.84), 0.25)
+    box(C("pizzagreen", (0.15, 0.42, 0.28), 0.5), 0, 0.3, 0, 4, 1, 1.0, bevel=0.02)
+    for k in range(8): box(wood, 0.1 + k * 0.48, 0.28, 0.1, 0.42 + k * 0.48, 0.3, 0.9)
+    box(top, -0.05, 0.25, 1.0, 4.05, 1.0, 1.07, bevel=0.015)
+    box("glass", 0.2, 0.3, 1.25, 2.6, 0.33, 1.5)
+    for i, c in enumerate([(0.8, 0.12, 0.08), (0.98, 0.95, 0.85), (0.25, 0.55, 0.2), (0.9, 0.75, 0.2), (0.55, 0.15, 0.12), (0.2, 0.18, 0.18)]):
+        box(C("binsteel", STEEL, 0.2), 0.25 + i * 0.38, 0.5, 1.07, 0.58 + i * 0.38, 0.85, 1.12)
+        box(C(f"topping{i}", c, 0.7), 0.28 + i * 0.38, 0.53, 1.1, 0.55 + i * 0.38, 0.82, 1.14)
+    for k in range(4): sphere(C("dough", (0.96, 0.9, 0.78), 0.8), 2.85 + (k % 2) * 0.25, 0.55 + (k // 2) * 0.22, 1.12, 0.1, sub=2, sz=0.6)
+    cyl(C("pizzabase", (0.92, 0.72, 0.4), 0.7), 3.5, 0.7, 1.07, 1.1, 0.3, v=16)
+    cyl(C("topping0", (0.8, 0.12, 0.08), 0.7), 3.5, 0.7, 1.1, 1.11, 0.25, v=16)
+    for k in range(5): box(C("pizzabox", (0.86, 0.78, 0.62), 0.8), 3.2, 0.3, 1.07 + k * 0.06, 3.85, 0.48, 1.12 + k * 0.06)
+    # Chalk menu on the back, on two posts.
+    for x in (0.45, 3.45): box(wood, x, 0.9, 1.07, x + 0.1, 1.0, 1.9)
+    box(C("chalk", (0.12, 0.14, 0.13), 0.9), 0.4, 0.97, 1.9, 3.6, 1.0, 2.75)
+    box(wood, 0.35, 0.99, 1.85, 3.65, 1.02, 2.8)
+    for r in range(4): box("trim", 0.6, 0.955, 2.05 + r * 0.17, 2.0 + (r % 2) * 0.8, 0.965, 2.09 + r * 0.17)
+    K.export("pizza-counter")
+
+def pizza_table():
+    cloth_r, cloth_w = C("clothred", (0.78, 0.12, 0.12), 0.8), C("clothwhite", (0.97, 0.95, 0.9), 0.8)
+    wood = C("bentwood", (0.3, 0.18, 0.1), 0.55)
+    cyl("iron", 1.0, 1.0, 0, 0.7, 0.05, v=10); cyl("iron", 1.0, 1.0, 0, 0.04, 0.3, v=14)
+    box(wood, 0.42, 0.42, 0.64, 1.58, 1.58, 0.7)
+    for i in range(6):
+        for j in range(6): box(cloth_r if (i + j) % 2 else cloth_w, 0.4 + i * 0.2, 0.4 + j * 0.2, 0.7, 0.6 + i * 0.2, 0.6 + j * 0.2, 0.76)
+    cyl("glass", 1.0, 1.0, 0.76, 0.98, 0.04, v=8)
+    sphere("lit", 1.0, 1.0, 1.0, 0.03, sub=1)
+    cyl(C("pizzabase", (0.92, 0.72, 0.4), 0.7), 0.75, 0.8, 0.76, 0.78, 0.2, v=14)
+    cyl(C("topping0", (0.8, 0.12, 0.08), 0.7), 0.75, 0.8, 0.78, 0.79, 0.17, v=14)
+    for cx, cy, back in ((1.0, 0.12, (0, -1)), (1.0, 1.88, (0, 1))):
+        box(wood, cx - 0.22, cy - 0.2, 0.42, cx + 0.22, cy + 0.2, 0.47, bevel=0.03)
+        by = cy + back[1] * 0.18
+        box(wood, cx - 0.2, by - 0.03, 0.47, cx + 0.2, by + 0.03, 0.95, bevel=0.02)
+        for lx in (-0.17, 0.17):
+            for ly in (-0.15, 0.15): cyl(wood, cx + lx, cy + ly, 0, 0.42, 0.025, v=6)
+    K.export("pizza-table")
+
 # ── Shop ────────────────────────────────────────────────────────────────────
 def shelf():
     white = C("shelfwhite", (0.93, 0.94, 0.95), 0.4)
@@ -288,6 +455,22 @@ MODELS = {
     "hall-desk": hall_desk, "hall-bench": hall_bench, "stairs": stairs,
     "checkin-desk": checkin_desk, "kiosk": kiosk, "departures": departures, "gate-seats": gate_seats,
     "security-arch": security_arch, "tall-plant": tall_plant,
+    "kitchen-burger": lambda: kitchen_line("kitchen-burger", (0.85, 0.16, 0.12), "burger"),
+    "kitchen-chicken": lambda: kitchen_line("kitchen-chicken", (0.72, 0.1, 0.13), "chicken"),
+    "kitchen-pizza": lambda: kitchen_line("kitchen-pizza", (0.15, 0.42, 0.28), "pizza"),
+    "order-kiosk-burger": lambda: order_kiosk("order-kiosk-burger", (0.85, 0.16, 0.12)),
+    "order-kiosk-chicken": lambda: order_kiosk("order-kiosk-chicken", (0.72, 0.1, 0.13)),
+    "drinks-burger": lambda: drinks_station("drinks-burger", (0.85, 0.16, 0.12)),
+    "drinks-chicken": lambda: drinks_station("drinks-chicken", (0.72, 0.1, 0.13)),
+    "table-burger": lambda: diner_table("table-burger", (0.98, 0.78, 0.18)),
+    "table-chicken": lambda: diner_table("table-chicken", (0.72, 0.1, 0.13)),
+    "bar-burger": lambda: window_bar("bar-burger", (0.98, 0.78, 0.18)),
+    "bar-chicken": lambda: window_bar("bar-chicken", (0.95, 0.92, 0.85)),
+    "bar-cafe": lambda: window_bar("bar-cafe", (0.34, 0.2, 0.11)),
+    "bookcase": bookcase,
+    "pizza-oven": pizza_oven, "pizza-counter": pizza_counter, "pizza-table": pizza_table,
+    "booth-pizza": lambda: booth("booth-pizza", (0.15, 0.42, 0.28), (0.95, 0.85, 0.55)),
+    "stool-pizza": lambda: stool("stool-pizza", (0.15, 0.42, 0.28)),
 }
 
 if __name__ == "__main__":

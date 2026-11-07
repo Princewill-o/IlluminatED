@@ -329,7 +329,10 @@ test("London: every HQ and station has a door, Tube exits are walkable, homes wo
   const L = W.CITY;
   assert.equal(L.name, "London");
   assert.equal(L.portals.filter((p) => p.id.startsWith("hq-")).length, 13, "13 company HQs");
-  const work = L.portals.filter((p) => p.to.kind === "work").map((p) => p.to.workplace).sort();
+  // Pizzazz's staff door is inside the restaurant.
+  const { venueMap } = projectData("src/game/core/venues.ts");
+  const inside = L.portals.filter((p) => p.to.kind === "map" && p.to.mapId?.startsWith("venue-")).flatMap((p) => venueMap(p.to.mapId)?.portals ?? []);
+  const work = [...L.portals, ...inside].filter((p) => p.to.kind === "work").map((p) => p.to.workplace).sort();
   assert.equal(work.join(), "barklays,goggle,lawz,macrosoft,netflics,pizzazz,st-plasters,tescow", "every workplace has a door in London");
   const stations = W.tubeStations();
   assert.ok(stations.length >= 8);
