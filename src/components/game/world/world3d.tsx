@@ -759,6 +759,78 @@ function facadeWindow(g: THREE.Group, x: number, y: number, z: number, w: number
   pane(ARCH.ink, x - 0.08, y - 0.08, z - 0.03, x + w + 0.08, y - 0.02, z + 0.12);
 }
 
+type CityBuilding = Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>;
+/**
+ * High-street and office exteriors in a London style: a brick supermarket with a white arched
+ * canopy and glass doors, a bronze-framed glass shopfront, a grey rendered local store, and a
+ * white office block with ribbon glazing. Signs carry the game's own names, never real logos.
+ */
+function streetExterior(g: THREE.Group, t: CityBuilding, kind: "supermarket" | "glass" | "local" | "office") {
+  const x0 = t.x + 0.06, z0 = t.y + 0.06, w = t.w - 0.12, d = t.h - 0.12, front = z0 + d, cx = x0 + w / 2;
+  const accent = t.accent ?? "#c8322d";
+  const label = (text: string, y: number, bg: string, fg: string, width = w - 0.5, h = 0.42) => { const s = sign(text, { bg, fg, w: width, h }); s.position.set(cx, y, front + 0.14); g.add(s); };
+  if (kind === "supermarket") {
+    const brick = "#8a4b3a", mortar = "#a8624f";
+    box(g, brick, x0, 0, z0, x0 + w, 4.2, front);
+    for (let y = 0.3; y < 4.2; y += 0.3) box(g, mortar, x0 - 0.01, y, front - 0.01, x0 + w + 0.01, y + 0.025, front + 0.01);
+    // White canopy with a soft arch, glass doors and windows underneath.
+    box(g, "#f4f3ef", x0 + 0.25, 2.05, front, x0 + w - 0.25, 2.75, front + 0.55);
+    for (let i = 0; i < 9; i++) { const a = (i / 8) * Math.PI, ax = cx + Math.cos(a) * (w / 2 - 0.55), ay = 2.05 - Math.sin(a) * 0.28; box(g, "#f4f3ef", ax - 0.16, ay, front + 0.36, ax + 0.16, 2.06, front + 0.55); }
+    box(g, "#d9dde3", x0 + 0.4, 0, front + 0.02, x0 + w - 0.4, 1.95, front + 0.05);
+    for (let x = x0 + 0.45; x < x0 + w - 0.5; x += 0.62) box(g, "#a8d4e6", x, 0.08, front + 0.06, x + 0.54, 1.85, front + 0.08);
+    box(g, "#3d434d", cx - 0.5, 0, front + 0.085, cx + 0.5, 1.75, front + 0.1);
+    box(g, "#c9e8f2", cx - 0.46, 0.04, front + 0.1, cx - 0.02, 1.7, front + 0.11); box(g, "#c9e8f2", cx + 0.02, 0.04, front + 0.1, cx + 0.46, 1.7, front + 0.11);
+    // White piers either side and a dark roof line.
+    for (const px of [x0, x0 + w - 0.3]) box(g, "#efede7", px, 1.6, front - 0.02, px + 0.3, 2.8, front + 0.35);
+    box(g, "#3a2a24", x0 - 0.05, 4.2, z0 - 0.05, x0 + w + 0.05, 4.35, front + 0.05);
+    label(t.label ?? "Supermarket", 3.35, "#8a4b3a", "#e8322b", w - 0.4, 0.6);
+    box(g, "#2b5fd9", x0 + w - 0.2, 0, front - 0.6, x0 + w + 0.02, 1.9, front + 0.02); // side info board
+    return;
+  }
+  if (kind === "glass") {
+    const bronze = "#5b4636";
+    box(g, "#cfd3d6", x0, 0, z0, x0 + w, 3.6, front - 0.1);
+    box(g, bronze, x0, 0, front - 0.1, x0 + w, 3.6, front);
+    box(g, "#8fbcd0", x0 + 0.12, 0.25, front + 0.005, x0 + w - 0.12, 2.75, front + 0.02);
+    for (let x = x0 + 0.12; x <= x0 + w - 0.1; x += (w - 0.24) / 3) box(g, bronze, x - 0.04, 0.25, front + 0.02, x + 0.04, 2.75, front + 0.06);
+    box(g, bronze, x0, 2.75, front - 0.02, x0 + w, 2.9, front + 0.06);
+    box(g, "#a4d65e", x0 + 0.12, 1.0, front + 0.025, x0 + w - 0.12, 1.12, front + 0.04); // a bright band across the glass
+    box(g, "#3a2f27", cx + 0.2, 0, front + 0.02, cx + 0.95, 2.2, front + 0.05);
+    for (let y = 3.0; y < 3.55; y += 0.12) box(g, "#6b5545", x0 + 0.1, y, front + 0.01, x0 + w - 0.1, y + 0.05, front + 0.04);
+    label(t.label ?? "Market", 2.05, "#8fbcd0", "#a4d65e", Math.min(2.4, w - 0.6), 0.42);
+    return;
+  }
+  if (kind === "local") {
+    const grey = "#8c8f9a", dark = "#4a4c55";
+    box(g, grey, x0, 0, z0, x0 + w, 3.4, front);
+    box(g, grey, x0 - 0.05, 2.85, front, x0 + w + 0.05, 3.4, front + 0.45); // deep overhang
+    box(g, dark, x0 + 0.15, 2.25, front + 0.01, x0 + w - 0.15, 2.8, front + 0.04);
+    for (let x = x0 + 0.15; x < x0 + w - 0.2; x += 1.0) {
+      box(g, "#2f3138", x, 0.05, front + 0.01, x + 0.92, 2.2, front + 0.03);
+      box(g, "#a9c8d6", x + 0.05, 0.1, front + 0.03, x + 0.87, 2.15, front + 0.045);
+    }
+    box(g, "#e98a1f", x0 + 0.25, 0.1, front + 0.045, x0 + 0.95, 1.95, front + 0.05); // the open door, warm inside
+    label(t.label ?? "Local", 2.52, dark, "#f2a541", Math.min(2.6, w - 0.4), 0.4);
+    return;
+  }
+  // A white office block with dark ribbon windows and a coloured sign high on the front.
+  const white = "#f3f3f1";
+  const floors = 5;
+  box(g, "#3d4752", x0 + 0.1, 0, z0 + 0.1, x0 + w - 0.1, 1.2, front - 0.1);
+  box(g, "#8fc1d6", x0 + 0.12, 0.05, front - 0.1, x0 + w - 0.12, 1.15, front - 0.08);
+  for (let f = 0; f < floors; f++) {
+    const y = 1.2 + f * 0.95;
+    box(g, white, x0, y, z0, x0 + w, y + 0.32, front);
+    box(g, "#2c3e50", x0 + 0.04, y + 0.32, z0 + 0.04, x0 + w - 0.04, y + 0.95, front - 0.04);
+    for (let x = x0 + 0.3; x < x0 + w - 0.2; x += 0.55) box(g, "#7fa6bd", x, y + 0.36, front - 0.035, x + 0.42, y + 0.9, front - 0.02);
+  }
+  const top = 1.2 + floors * 0.95;
+  box(g, white, x0, top, z0, x0 + w, top + 0.35, front);
+  box(g, white, x0 - 0.04, 0, front - 0.6, x0 + 0.3, top + 0.35, front + 0.02); // a white fin at the corner
+  const s = sign(t.label ?? "Offices", { bg: white, fg: accent, w: Math.min(2.6, w - 0.2), h: 0.5 });
+  s.position.set(cx + 0.1, top - 0.45, front + 0.05); g.add(s);
+}
+
 function entrance(g: THREE.Group, cx: number, front: number, accent: string, width = 0.9) {
   box(g, ARCH.stone, cx - width / 2 - 0.1, 0.14, front - 0.04, cx + width / 2 + 0.1, 1.35, front + 0.06);
   box(g, ARCH.ink, cx - width / 2, 0.15, front + 0.065, cx + width / 2, 1.27, front + 0.09);
@@ -1207,6 +1279,10 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const seed = t.x * 7 + t.y * 13;
   box(g, "#e9e1d0", x0 - 0.05, 0, z0 - 0.05, x0 + w + 0.05, 0.13, z0 + d + 0.05);
   if (t.id === "city-hospital") { hospitalExterior(g,t); return; }
+  // London high-street and office fronts, modelled on the real thing.
+  const street = t.companyId === "tescow" ? "supermarket" : ["macrosoft", "goggle", "netflics", "barklays", "lawz", "atlas"].includes(t.companyId ?? "") ? "office"
+    : t.style === "shop" && !t.label ? (["glass", "local", "supermarket"] as const)[t.x % 3] : null;
+  if (street) return streetExterior(g, t, street);
   const selected = suppliedCityBuilding(t);
   const crayon=selected ? null : crayonBuildingAsset(t);
   if(crayon){
