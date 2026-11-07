@@ -16,7 +16,9 @@ const SECTORS = ["All", "Free", ...Array.from(new Set(ROLES.map((r) => r.sector)
  * level and its own six-tier career ladder. Start a shift where you are, or travel to
  * the workplace first.
  */
-export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose }: {
+export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, embedded = false }: {
+  /** Shown as a page inside the in-game browser rather than a pop-up. */
+  embedded?: boolean;
   mapId: string;
   activeRole: string | null;
   onStart: (role: PracticalRole, level: number) => void;
@@ -37,8 +39,8 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose }: {
   const steps = jobSteps(role, level);
   const here = !role.place.mapId || role.place.mapId === mapId;
   return (
-    <div className="fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3" role="dialog" aria-label="Jobs">
-      <section className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border-b-8 border-black/30 bg-[#f7f1e6] text-[#13203a] shadow-2xl [color-scheme:light]">
+    <div className={embedded ? "h-full" : "fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3"} role="dialog" aria-label="Jobs">
+      <section className={embedded ? "flex h-full w-full flex-col overflow-hidden bg-[#f7f1e6] text-[#13203a] [color-scheme:light]" : "flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border-b-8 border-black/30 bg-[#f7f1e6] text-[#13203a] shadow-2xl [color-scheme:light]"}>
         <header className="flex items-center gap-3 border-b border-black/10 bg-[#13203a] px-5 py-3 text-white">
           <Briefcase className="size-5 text-[#ffd166]" />
           <h2 className="text-lg font-black">Jobs</h2>

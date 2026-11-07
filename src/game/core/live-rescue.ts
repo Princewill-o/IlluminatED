@@ -95,8 +95,10 @@ export function rescuePlan(
   /** Where the vehicle already is (world px), e.g. the police car that made the arrest, or "parked" right at the kerb. */
   start?: { x: number; y: number } | "parked",
 ) {
-  const road = rescueRoad(map, px, py);
-  if (!road) return null;
+  // The nearest road; failing that, the ambulance comes straight to where you are.
+  const road = rescueRoad(map, px, py) ?? rescueRoad(map, px, py, 40) ?? {
+    stopX: Math.max(TILE * 2, Math.min(map.width - TILE * 2, px + TILE * 1.5)), stopY: Math.max(TILE * 2, Math.min(map.height - TILE * 2, py)), axisX: 1, axisY: 0,
+  };
   const stop = { x: road.stopX, y: road.stopY };
   const flat = (pts: { x: number; y: number }[]) => pts.flatMap((p) => [p.x / TILE, p.y / TILE]);
   const clampIn = (x: number, y: number) => ({ x: Math.max(TILE * 4, Math.min(map.width - TILE * 4, x)), y: Math.max(TILE * 4, Math.min(map.height - TILE * 4, y)) });

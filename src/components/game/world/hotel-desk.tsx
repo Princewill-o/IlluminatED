@@ -13,7 +13,8 @@ const TYPES: RoomType[] = ["standard", "deluxe", "suite"];
 const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /** Hotel reception: nightly rates, room types and availability, book and pay, then your key card. */
-export function HotelDesk({ hotel, booking, wallet, onBooking, onGoToRoom, onClose }: {
+export function HotelDesk({ hotel, booking, wallet, onBooking, onGoToRoom, onClose, embedded = false }: {
+  embedded?: boolean;
   hotel: string;
   booking: HotelBooking | null;
   wallet: number;
@@ -57,8 +58,8 @@ export function HotelDesk({ hotel, booking, wallet, onBooking, onGoToRoom, onClo
   });
 
   return (
-    <div className="fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3" role="dialog" aria-label={`${h.name} reception`}>
-      <section className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border-[3px] border-[#141020] bg-[#f7f1e6] text-[#13203a] shadow-[0_8px_0_#141020] [color-scheme:light]">
+    <div className={embedded ? "h-full" : "fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3"} role="dialog" aria-label={`${h.name} reception`}>
+      <section className={embedded ? "flex h-full w-full flex-col overflow-hidden bg-[#f7f1e6] text-[#13203a] [color-scheme:light]" : "flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border-[3px] border-[#141020] bg-[#f7f1e6] text-[#13203a] shadow-[0_8px_0_#141020] [color-scheme:light]"}>
         <header className="flex items-center gap-3 px-5 py-3 text-white" style={{ background: hotel === "hotel-1" ? "#704c47" : "#315b50" }}>
           <BedDouble className="size-5 text-[#ffd166]" />
           <div><h2 className="text-lg leading-tight font-black">{h.name} · Reception</h2><p className="text-xs text-white/75">{h.tagline}</p></div>

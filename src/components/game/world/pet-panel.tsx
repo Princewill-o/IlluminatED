@@ -44,7 +44,7 @@ function PetFace({ kind, colour, size = 56 }: { kind: PetKind; colour: string; s
   );
 }
 
-export function PetPanel({ onClose, onClout }: { onClose: () => void; onClout: (n: number) => void }) {
+export function PetPanel({ onClose, onClout, embedded = false }: { onClose: () => void; onClout: (n: number) => void; embedded?: boolean }) {
   const [pets, setPets] = useState<Pet[] | null>(null);
   const [tab, setTab] = useState<"mine" | "adopt">("mine");
   const [pick, setPick] = useState<PetKind>("dog");
@@ -66,8 +66,8 @@ export function PetPanel({ onClose, onClout }: { onClose: () => void; onClout: (
   });
 
   return (
-    <div className="fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3" role="dialog" aria-label="Pets">
-      <section className="flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border-b-8 border-black/30 bg-[radial-gradient(circle_at_10%_0%,#fff7e6,#f7e3c4_70%)] text-[#13203a] shadow-2xl [color-scheme:light]">
+    <div className={embedded ? "h-full" : "fixed inset-0 z-[100010] grid place-items-center bg-black/55 p-3"} role="dialog" aria-label="Pets">
+      <section className={embedded ? "flex h-full w-full flex-col overflow-hidden bg-[#f7f1e6] text-[#13203a] [color-scheme:light]" : "flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border-b-8 border-black/30 bg-[radial-gradient(circle_at_10%_0%,#fff7e6,#f7e3c4_70%)] text-[#13203a] shadow-2xl [color-scheme:light]"}>
         <header className="flex items-center gap-3 bg-[#8a5a1f] px-5 py-3 text-white">
           <PawPrint className="size-5" />
           <h2 className="text-lg font-black">Pets</h2>

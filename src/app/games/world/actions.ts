@@ -7,6 +7,7 @@ import { carById } from "@/game/core/cars";
 import { MAX_NIGHTS, ROOM_TYPES, isHotel } from "@/game/core/hotels";
 import { type Pet, PETS } from "@/game/core/pets";
 import { roleById } from "@/game/core/roles";
+import { DELIVERY, MAX_QTY, type Speed, shopItem } from "@/game/core/shop";
 import { getSupabase } from "@/lib/social/server";
 
 /** The payment functions aren't on the database yet: let people play for free until they are. */
@@ -229,20 +230,67 @@ export async function recordWorldAnswers(answers: { key: string; correct: boolea
 }
 
 // ── Deliveries ───────────────────────────────────────────────────────────────
-export type Delivery = { id: string; kind: "car" | "outfit" | "furniture"; item: string; created_at: string };
-/** Parcels on their way to your front door (oldest first). */
+export type Delivery = { id: string; kind: "car" | "outfit" | "furniture" | "shopping"; item: string; created_at: string };
+/** Parcels on their way to your front door (oldest first), including MegaMart orders that have arrived. */
 export async function pendingDeliveries(): Promise<Delivery[]> {
   const sb = await getSupabase();
   if (!sb) return [];
-  const { data, error } = await sb.from("deliveries").select("id,kind,item,created_at").eq("status", "on_the_way").order("created_at").limit(10);
-  return error ? [] : ((data ?? []) as Delivery[]);
+  const [{ data, error }, shop] = await Promise.all([
+    sb.from("deliveries").select("id,kind,item,created_at").eq("status", "on_the_way").order("created_at").limit(10),
+    sb.from("shop_orders").select("id,lines,created_at").eq("status", "on_the_way").lte("arrives_at", new Date().toISOString()).order("created_at").limit(10),
+  ]);
+  const parcels = error ? [] : ((data ?? []) as Delivery[]);
+  const shopping = (shop.data ?? []).map((o): Delivery => ({ id: `shop:${o.id}`, kind: "shopping", item: (o.lines as { id: string; qty: number }[]).map((l) => `${l.qty}× ${shopItem(l.id)?.name ?? l.id}`).join(", "), created_at: o.created_at as string }));
+  return [...parcels, ...shopping];
 }
 /** Sign for a parcel at the door. */
 export async function signDelivery(id: string) {
   const sb = await getSupabase();
   if (!sb) return false;
-  const { error } = await sb.rpc("delivery_sign", { p_id: id });
+  const { error } = id.startsWith("shop:") ? await sb.rpc("shop_order_sign", { p_id: id.slice(5) }) : await sb.rpc("delivery_sign", { p_id: id });
   return !error;
+}
+
+// ── MegaMart, the online superstore (src/game/core/shop.ts) ──────────────────
+export type ShopOrder = { id: string; lines: { id: string; qty: number }[]; total: number; speed: Speed; status: "on_the_way" | "delivered"; created_at: string; arrives_at: string };
+const MEGAMART_ERRORS: Record<string, string> = {
+  not_allowed: "Log in with your IlluminatED account to shop.",
+  not_enough_clout: "Not enough Clout for this basket.",
+  rate_limited: "That's a lot of orders this hour. Try again a bit later.",
+  none_left: "You've run out of that. Order more from MegaMart.",
+  invalid: "Something in your basket wasn't right. Try again.",
+};
+const megamartError = (m?: string) => MEGAMART_ERRORS[Object.keys(MEGAMART_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach MegaMart. Try again in a moment.";
+export async function checkoutShop(lines: { id: string; qty: number }[], speed: Speed) {
+  const clean = lines.filter((l) => shopItem(l.id) && Number.isInteger(l.qty) && l.qty >= 1 && l.qty <= MAX_QTY).slice(0, 16);
+  if (!clean.length || !(speed in DELIVERY)) return { ok: false as const, error: MEGAMART_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: megamartError() };
+  const { data, error } = await sb.rpc("shop_checkout", { p_lines: clean, p_speed: speed });
+  if (error) return { ok: false as const, error: megamartError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, order: data as ShopOrder };
+}
+/** Your recent orders and what's in your pantry. */
+export async function loadShopAccount(): Promise<{ orders: ShopOrder[]; pantry: Record<string, number> }> {
+  const sb = await getSupabase();
+  if (!sb) return { orders: [], pantry: {} };
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth?.user) return { orders: [], pantry: {} };
+  const [orders, pantry] = await Promise.all([
+    sb.from("shop_orders").select("id,lines,total,speed,status,created_at,arrives_at").eq("user_id", auth.user.id).order("created_at", { ascending: false }).limit(12),
+    sb.from("player_pantry").select("item,qty").eq("user_id", auth.user.id).gt("qty", 0),
+  ]);
+  return { orders: (orders.data ?? []) as ShopOrder[], pantry: Object.fromEntries((pantry.data ?? []).map((r) => [r.item as string, r.qty as number])) };
+}
+/** Use one item from your pantry: returns the everyday activity it counts as. */
+export async function consumePantryItem(item: string) {
+  if (!shopItem(item)) return { ok: false as const, error: MEGAMART_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: megamartError() };
+  const { data, error } = await sb.rpc("pantry_use", { p_item: item });
+  if (error) return { ok: false as const, error: megamartError(error.message) };
+  return { ok: true as const, activity: data as string };
 }
 
 // ── IllumED World: player worlds ─────────────────────────────────────────────

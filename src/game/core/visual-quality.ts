@@ -9,7 +9,7 @@ export function readVisualQuality(value: string | null): VisualQuality {
 /**
  * Graphics tiers. "high" is the full art direction; "balanced" drops the
  * screen-space occlusion pass and halves shadow resolution; "performance"
- * renders straight to the screen with no post-processing or shadow maps.
+ * drops shadow maps, bloom and occlusion but keeps the black outlines.
  */
 export type GraphicsTier = "high" | "balanced" | "performance";
 export type GraphicsSetting = "auto" | GraphicsTier;
@@ -36,7 +36,8 @@ export function populationBudget(tier: GraphicsTier, indoors: boolean) {
 export function visualProfile(dpr = 1, touch = false, tier: GraphicsTier = "high") {
   const base = visualProfileHigh(dpr, touch);
   if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1), shadowSize: touch ? 512 : 768, ambientOcclusion: false, occlusionSamples: 0 };
-  if (tier === "performance") return { ...base, pixelRatio: 1, shadows: false, shadowSize: 256, postProcessing: false, ambientOcclusion: false, occlusionSamples: 0, bloom: false, environment: false };
+  // Performance keeps the one cheap pass that defines the look: the black low-poly outlines.
+  if (tier === "performance") return { ...base, pixelRatio: 1, shadows: false, shadowSize: 256, postProcessing: true, ambientOcclusion: false, occlusionSamples: 0, bloom: false, environment: false, outlines: true };
   return base;
 }
 function visualProfileHigh(dpr: number, touch: boolean) {

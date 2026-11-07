@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, Briefcase, CarFront, PawPrint, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
+import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
@@ -59,6 +59,7 @@ import { useSceneTransition } from "./use-scene-transition";
 import { useStreetEncounters } from "./use-street-encounters";
 import { type Me, useLobby } from "./use-world";
 import { VenturePanel } from "./venture-panel";
+import { type Site, WebBrowser } from "./web-browser";
 import { DEFAULT_RULES, WorldAdmin, WorldMenu } from "./world-menu";
 const HomeMarket = dynamic(() => import("./home-market").then(module=>module.HomeMarket),{ssr:false});
 import { WorldView } from "./world-view";
@@ -136,7 +137,6 @@ import type { HomeState } from "@/lib/game/careers-server";
 import { cn } from "@/lib/utils";
 
 const CreatorStudio = dynamic(()=>import("./creator-studio").then(module=>module.CreatorStudio),{ssr:false});
-const AmbulanceRescue = dynamic(() => import("./ambulance-rescue").then(m => m.AmbulanceRescue), {ssr:false});
 const GamesHub = dynamic(() => import("../hub/games-hub").then((module) => module.GamesHub), { ssr: false, loading: () => null });
 const StudyRoom = dynamic(() => import("../study/study-room").then((module) => module.StudyRoom), { ssr: false, loading: () => null });
 const GamePhone = dynamic(() => import("./game-phone").then((module) => module.GamePhone), { ssr: false, loading: () => null });
@@ -301,6 +301,7 @@ export function WorldApp({
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [petsOpen,setPetsOpen]=useState(false);
+  const [browser,setBrowser]=useState<Site|null>(null);
   const [tunnelBlink,setTunnelBlink]=useState(0);
   // Leaving the Underground some other way takes you off the train.
   useEffect(()=>{if(!mapId.startsWith("station-"))RIDE.active=false;},[mapId]);
@@ -700,6 +701,8 @@ export function WorldApp({
     return()=>{timers.forEach(clearTimeout);clearTimeout(done);clearTimeout(clearCause);};
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[liveRoad]);
+  // Indoors there's no street for the ambulance: the paramedics carry you out and you wake up in hospital.
+  useEffect(()=>{if(!rescue||liveRoad)return;setLiveRescue("Paramedics are carrying you out to the ambulance.");const t=window.setTimeout(arriveFromRescue,1600);return()=>clearTimeout(t);},[rescue,liveRoad,arriveFromRescue]);
   useEffect(()=>{if(needs && needs.energy<=12 && !rescue && map.kind !== "hospital" && !fading){setRescue(true);setBike(null);setDriving(null);}},[needs,map.kind,rescue,fading]);
   useEffect(() => {
     let last = 0;
@@ -809,6 +812,8 @@ export function WorldApp({
       if (life.hearing?.streetCase && !canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && map.kind !== "hospital") { say("Wait for the officers to finish responding to the incident."); return; }
       if (to.kind === "home-use") {
         const placed = map.layout?.find(item => item.key === to.key);
+        // A computer at home: open the web browser.
+        if (placed?.item === "pc-desk") { setBrowser("start"); return; }
         const furniture = placed && furnitureById(placed.item);
         if (placed && furniture) {
           const use = homeUse(placed.item);
@@ -899,7 +904,7 @@ export function WorldApp({
       else if (to.kind === "workstation" && map.id === `workplace-${to.workplace}`) {setWorkStation(to.station);setWork(to.workplace);}
       else if (to.kind === "bike") {setDock(true);}
       else if (to.kind === "games") {setGames(true);}
-      else if (to.kind === "dealer") setDealer(true);
+      else if (to.kind === "dealer") setBrowser("autohub");
       else if (to.kind === "shop") setShop(to.shop);
       else if (to.kind === "doctor") {
         play("door", soundOn());
@@ -907,7 +912,7 @@ export function WorldApp({
         updateLife((l) => ({ ...l, sick: false }));
         say("The doctor sorted you out. Feeling much better.", true);
       } else if (to.kind === "map") {
-        if (to.mapId === "m25" && !driving) { say("Take a car from Garage before joining the motorway.", true); setDealer(true); return; }
+        if (to.mapId === "m25" && !driving) { say("Take a car from your garage on AutoHub before joining the motorway.", true); setBrowser("autohub"); return; }
         const next = loadMap(to.mapId, offices, me.id);
         if (!next) return;
         const roadLink = isUKScene(mapId) || isUKScene(to.mapId) || mapId.startsWith("uk-home-") || to.mapId.startsWith("uk-home-");
@@ -1321,11 +1326,11 @@ export function WorldApp({
         onExplore={() => setMobileExplore(true)}
         onStudy={() => mobileAction(() => setLearning(true))}
         onWork={id => mobileAction(() => setMobileWork(id))}
-        onHouses={() => mobileAction(() => setHousing(true))}
+        onHouses={() => mobileAction(() => { setMobileExplore(true); setBrowser("homefinder"); })}
         onHome={() => mobileAction(() => { setMobileExplore(true); goTo("home", "Your house"); })}
         onAwards={() => setAwardsOpen(true)}
         onArcade={() => mobileAction(() => setGames(true))}
-        onGarage={() => mobileAction(() => setDealer(true))}
+        onGarage={() => mobileAction(() => { setMobileExplore(true); setBrowser("autohub"); })}
         onStudio={()=>{setMobileExplore(true);setStudioFloating(false);setCreatorChannel("tiktok");}} onParty={()=>{setMobileExplore(true);setMapOpen(true);say("Look for Community social on your city map.",true);}}
         onLeave={leaveGame}
       />
@@ -1346,7 +1351,7 @@ export function WorldApp({
                           : map.kind === "prison" || map.kind === "hospital" || map.kind === "court" ? "quiet"
                             : map.kind === "campus" ? "university" : "city"
       } />
-      {!mobileLife && !(rescue && !liveRoad) && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
+      {!mobileLife && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
         offlinePreview={developerTeleport}
         key={`${mapId}:${server}:${trip}`}
         onNearby={refreshNearby}
@@ -1470,10 +1475,10 @@ export function WorldApp({
         <button type="button" onClick={() => setAwardsOpen(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#ffd166] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div></HudSlot>}
       {!driving && !bike && <HudSlot area="br-act" order={2} className="md:hidden"><button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5">Jump</button></HudSlot>}
-      <HudSlot area="br-nav" order={1}><button type="button" onClick={() => setPetsOpen(true)} aria-label="Pets" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#8a5a1f] px-3 py-1.5 text-xs font-black text-white shadow-lg">
-        <PawPrint className="size-4" aria-hidden /> <span className="hidden sm:inline">Pets</span>
+      <HudSlot area="br-nav" order={1}><button type="button" onClick={() => setBrowser("start")} aria-label="Browser: shopping, jobs, hotels, pets and more" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#15987f] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Globe className="size-4" aria-hidden /> <span className="hidden sm:inline">Browser</span>
       </button></HudSlot>
-      <HudSlot area="br-nav" order={2}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setJobsOpen(true); }} aria-label="Jobs" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#e4572e] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+      <HudSlot area="br-nav" order={2}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setBrowser("worknet"); }} aria-label="Jobs" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#e4572e] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Briefcase className="size-4" aria-hidden /> <span className="hidden sm:inline">{roleShift ? roleShift.role.title : "Jobs"}</span>
       </button></HudSlot>
       <HudSlot area="br-nav" order={3}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} aria-label="Games" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
@@ -1481,7 +1486,7 @@ export function WorldApp({
       </button></HudSlot>
       <WantedStars stars={life.stars} />
       {street.warning && !rescue && <HudSlot area="tc" order={40}><div role="alert" className="max-w-sm rounded-2xl bg-[#7b342b] px-4 py-3 text-sm font-bold text-white">{street.warning}</div></HudSlot>}
-      {rescue && !liveRoad && <AmbulanceRescue avatar={me.avatar} onArrive={arriveFromRescue}/>}
+
       {liveRescue && <HudSlot area="bc" order={0}><p role="status" className="rounded-full bg-[#c8322d] px-5 py-2.5 text-sm font-black text-white shadow-lg">{liveRescue}</p></HudSlot>}
       {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
         <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
@@ -1509,6 +1514,23 @@ export function WorldApp({
         else void goTo(f.mapId, f.label, { x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
       }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
+      {browser && <WebBrowser start={browser} wallet={wallet}
+        renderCars={(back) => <Dealership clout={wallet} owned={garage} driving={driving} onClose={back} onDrive={(c) => { setBrowser(null); driveCar(c); }}
+          onBought={(c, left) => { setWallet(left); setGarage((g) => g.includes(c) ? g : [...g, c]); setBrowser(null); driveCar(c); router.refresh(); }} />}
+        renderHouses={(back) => <HomeMarket claimed={home.claimed} owned={home.owned} current={home.current} clout={wallet} onClose={back}
+          onPurchased={(id, balance) => { setHomeChoice(id); setNewlyOwnedHomes(homes => [...new Set([...homes, id])]); if (balance !== null) setWallet(balance); recordLife(`You made the ${homeById(id)?.name ?? "house"} in ${homeById(id)?.area ?? "London"} your home.`); router.refresh(); }}
+          onEnterHome={() => { setBrowser(null); setMobileExplore(true); goTo("home", "Your house"); }} />} mapId={mapId} activeRole={roleShift?.role.id ?? null} hotelBooking={hotelBooking}
+        onClose={() => setBrowser(null)} onWallet={(n) => setWallet((w) => Math.max(0, w + n))} onHotelBooking={setHotelBooking}
+        onGoToRoom={(b) => { setBrowser(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }}
+        onStartJob={(role, level) => { setBrowser(null); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
+        onTravelJob={(role) => { setBrowser(null); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}
+        onOpen={(app) => {
+          setBrowser(null);
+          if (app === "bank") setBankOpen(true); else if (app === "games") setGames(true); else if (app === "map") setMapOpen(true);
+          else if (app === "fashion") router.push("/games/locker");
+          else if (mapId === "home") { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }
+          else { say("Opening HomeStyle at your house: arrange and buy furniture there.", true); void goTo("home", "Your house"); }
+        }} />}
       {jobsOpen && <JobsPanel mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
@@ -1585,9 +1607,9 @@ export function WorldApp({
         ]} />}
       <HudSlot area="br-nav" order={1}><button type="button" onClick={()=>{setPhoneApp("home");setPhone(true);}} aria-label="Open your game phone" className="jelly grid size-11 place-items-center rounded-2xl bg-[#13203a] text-white shadow-lg"><Smartphone className="size-5"/></button></HudSlot>
       {phone && <GamePhone onUKRoads={() => { setPhone(false); setUKRoadsOpen(true); }} mapId={mapId} initialApp={phoneApp} meId={me.id} username={me.username} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}}
-        onHouses={() => { setPhone(false); if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setHousing(true); }}
+        onHouses={() => { setPhone(false); if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setBrowser("homefinder"); }}
         onStudio={channel=>{setPhone(false);setStudioFloating(false);setCreatorChannel(channel);}} onParty={()=>{setPhone(false);const place=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("party-"));if(place){setWaypoint({id:place.id,name:"Community social",kind:"view",x:place.rect.x+place.rect.w/2,y:place.rect.y+place.rect.h/2});say("Follow the marker to the community social.",true);}else setMapOpen(true);}}
-        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setDealer(true); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);if(outdoors&&!jailed&&life.stars<POLICE_STARS){setCoachTrip(true);return;}const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setBrowser("autohub"); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);if(outdoors&&!jailed&&life.stars<POLICE_STARS){setCoachTrip(true);return;}const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);

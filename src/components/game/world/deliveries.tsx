@@ -13,7 +13,7 @@ import { cosmeticById } from "@/game/core/cosmetics";
 import { furnitureById } from "@/game/core/homes";
 
 export const deliveryLabel = (d: Pick<Delivery, "kind" | "item">) =>
-  d.kind === "car" ? `${carById(d.item)?.name ?? "Your new car"} (keys and paperwork)`
+  d.kind === "shopping" ? `MegaMart order: ${d.item}` : d.kind === "car" ? `${carById(d.item)?.name ?? "Your new car"} (keys and paperwork)`
     : d.kind === "furniture" ? furnitureById(d.item)?.name ?? "Furniture"
       : cosmeticById(d.item)?.name ?? "Your order";
 
@@ -100,7 +100,7 @@ export function Deliveries({ atHome, busy, onGoHome }: { atHome: boolean; busy: 
         </div>
         <p className="mt-3 text-xs font-black tracking-widest text-[#15987f] uppercase">Delivered</p>
         <p className="mt-1 text-xl font-black">{deliveryLabel(current)}</p>
-        <p className="mt-1 text-sm text-[#5a6272]">{current.kind === "car" ? "Your car is parked in your garage. Open Garage on your phone." : current.kind === "furniture" ? "It's ready to place: open Build & buy." : "It's in your Locker."}</p>
+        <p className="mt-1 text-sm text-[#5a6272]">{current.kind === "shopping" ? "It's all in your kitchen. Use it any time from your Pantry in the browser." : current.kind === "car" ? "Your car is parked in your garage. Open Garage on your phone." : current.kind === "furniture" ? "It's ready to place: open Build & buy." : "It's in your Locker."}</p>
         <p className="mt-4 text-xs text-[#5a6272]">Tap to close</p>
       </div>
     </div>

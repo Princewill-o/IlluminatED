@@ -167,7 +167,7 @@ export function homeUse(item: string): HomeUse {
     plant: ["water", "Water your plant", "relax", 4000], wardrobe: ["admire", "Choose an outfit", "relax", 4000], fishtank: ["admire", "Feed the fish", "relax", 5000], lamp: ["admire", "Enjoy the warm light", "relax", 4000],
     telescope: ["admire", "Look at the stars", "relax", 6000], trophies: ["admire", "Admire your achievements", "relax", 4000], petbed: ["sit", "Relax with your companion", "relax", 5000],
     "clothes-rail": ["admire", "Pick an outfit", "relax", 4000], "tall-bookcase": ["read", "Read a book", "study", 6000], "gaming-chair": ["sit", "Take a seat", "relax", 5000],
-    "pc-desk": ["read", "Study at your PC", "study", 7000], "bench-ottoman": ["sit", "Sit on the bench", "relax", 5000], "long-dresser": ["admire", "Light the candles", "relax", 4000],
+    "pc-desk": ["read", "Use your computer: shop, jobs and more", "study", 7000], "bench-ottoman": ["sit", "Sit on the bench", "relax", 5000], "long-dresser": ["admire", "Light the candles", "relax", 4000],
     bedside: ["admire", "Set your alarm", "relax", 4000], "hanging-plant": ["water", "Water the pothos", "relax", 4000], palm: ["water", "Water the palm", "relax", 4000],
     loveseat: ["sit", "Curl up on the loveseat", "relax", 6000], stool: ["sit", "Perch on the stool", "relax", 4000], "laundry-basket": ["admire", "Sort the laundry", "relax", 4000],
   };
