@@ -47,7 +47,7 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   return (
     <>
       {/* Today's tasks */}
-      <HudSlot area="tl" order={10}><div className={cn(card, "w-[min(248px,100%)] px-2.5 py-1 xl:w-[264px]")}>
+      <HudSlot area="tl" order={10} className="[@media(max-height:500px)_and_(orientation:landscape)]:hidden"><div className={cn(card, "w-[min(248px,100%)] px-2.5 py-1 xl:w-[264px]")}>
         <button type="button" onClick={() => setOpen((o) => !o)} className="pixel-task-title flex min-h-11 w-full items-center gap-2 text-left text-xs font-black sm:text-sm" aria-expanded={open} aria-controls="city-quests">
           Today's tasks
           <span className="pixel-badge px-2 py-0.5 text-[10px]">{todo} to do</span>

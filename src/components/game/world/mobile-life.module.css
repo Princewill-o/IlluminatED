@@ -760,8 +760,10 @@
   }
 }
 @media (max-height: 580px) and (orientation: landscape) {
+  /* Keep the City button reachable when the phone is turned sideways. */
   .topBar {
-    display: none;
+    min-height: 0;
+    padding-block: 6px;
   }
   .identity {
     padding-block: 6px;

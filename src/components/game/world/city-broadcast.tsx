@@ -30,7 +30,7 @@ export function useCityNews() {
 }
 
 export function CityBroadcast({ headlines, updated, offline }: ReturnType<typeof useCityNews>) {
-  return <HudSlot area="br" order={40} narrowArea="tl"><details className="w-[min(320px,100%)] rounded-2xl border border-[#c8b182]/50 bg-[#152e35]/95 text-[#fff3d8] shadow-xl">
+  return <HudSlot area="br" order={40} narrowArea="tl" className="[@media(max-height:500px)_and_(orientation:landscape)]:hidden"><details className="w-[min(320px,100%)] rounded-2xl border border-[#c8b182]/50 bg-[#152e35]/95 text-[#fff3d8] shadow-xl">
     <summary className="cursor-pointer px-4 py-3 text-xs font-black">City broadcast · News & announcements</summary>
     <div className="max-h-[40dvh] space-y-3 overflow-y-auto px-4 pb-4 text-xs">
       <p className="text-white/60">{offline ? "Feed unavailable · retrying automatically" : updated ? `Checked ${new Date(updated).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}` : "Connecting to the newsroom…"}</p>

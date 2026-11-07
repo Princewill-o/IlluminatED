@@ -3290,6 +3290,21 @@ export function World3D({
       setZoom(value=>Math.max(0.75,Math.min(1.65,value*Math.exp(-Math.max(-100,Math.min(100,event.deltaY))*0.0018))));
     };
     renderer.domElement.addEventListener("wheel",onWheel,{passive:false});
+    // Phones and tablets: pinch with two fingers to zoom the scene.
+    let pinch = 0;
+    const touchDistance = (t: TouchList) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    const onTouchStart = (e: TouchEvent) => { if (e.touches.length === 2) pinch = touchDistance(e.touches); };
+    const onTouchMove = (e: TouchEvent) => {
+      if (overview || e.touches.length !== 2 || !pinch) return;
+      e.preventDefault();
+      const d = touchDistance(e.touches);
+      setZoom(value => Math.max(0.75, Math.min(1.65, value * d / pinch)));
+      pinch = d;
+    };
+    const onTouchEnd = (e: TouchEvent) => { if (e.touches.length < 2) pinch = 0; };
+    renderer.domElement.addEventListener("touchstart", onTouchStart, { passive: true });
+    renderer.domElement.addEventListener("touchmove", onTouchMove, { passive: false });
+    renderer.domElement.addEventListener("touchend", onTouchEnd);
 
     let viewportWidth = el.clientWidth, viewportHeight = el.clientHeight;
     const fit = () => {
@@ -4398,7 +4413,7 @@ export function World3D({
       NPC_SPOTS.length = 0;
       ro.disconnect();
       renderer.domElement.removeEventListener("click", onClick);
-      renderer.domElement.removeEventListener("wheel",onWheel);
+      renderer.domElement.removeEventListener("wheel",onWheel); renderer.domElement.removeEventListener("touchstart", onTouchStart); renderer.domElement.removeEventListener("touchmove", onTouchMove); renderer.domElement.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("illuminated:fight", onFight);
       window.removeEventListener("illuminated:dance",dance);
       window.removeEventListener("illuminated:vehicle-crash",onCrash);

@@ -1045,7 +1045,10 @@ export function WorldView({
         {touch ? <div className="flex items-end gap-2"><Joystick driving={Boolean(car)} onMove={(x, y) => {
           stick.current = { x, y };
           if (x || y) target.current = null;
-        }} />{car && <span className="max-w-28 rounded-lg bg-black/65 p-2 text-[10px] leading-relaxed text-white">↑ Accelerate<br />↓ Brake / reverse<br />← → Steer</span>}{gamepadConnected && <span className="max-w-52 rounded-lg bg-black/70 p-2 text-[10px] leading-relaxed text-white"><ControllerLegend driving={Boolean(car)} connected /></span>}</div> : (
+        }} />{car && <button type="button" aria-label="Brake (hold)"
+          onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); keys.current.add(" "); }}
+          onPointerUp={() => keys.current.delete(" ")} onPointerCancel={() => keys.current.delete(" ")} onContextMenu={(e) => e.preventDefault()}
+          className="pointer-events-auto grid size-20 touch-none place-items-center rounded-full border-4 border-[#7a1410] bg-[#e5483d] text-sm font-black text-white shadow-[0_5px_0_#7a1410] select-none active:translate-y-1 active:shadow-none">BRAKE</button>}{gamepadConnected && <span className="max-w-52 rounded-lg bg-black/70 p-2 text-[10px] leading-relaxed text-white"><ControllerLegend driving={Boolean(car)} connected /></span>}</div> : (
           <div className="rounded-xl bg-black/70 px-3 py-2 text-[10px] leading-relaxed text-[#f0eee9] sm:text-xs"><button type="button" aria-expanded={showControls} onClick={()=>setShowControls(v=>!v)} className="min-h-9 font-bold">{showControls?"Hide controls":"Controls"}</button>{showControls&&<p>
             {car ? "W / ↑ accelerate · S / ↓ reverse · A D / ← → steer · Space brake" : "W A S D or ↑ ↓ ← → move · E / Enter interact"}
             <span className="mt-1 block"><ControllerLegend driving={Boolean(car)} connected={gamepadConnected} /></span>
