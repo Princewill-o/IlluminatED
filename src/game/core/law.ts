@@ -98,8 +98,8 @@ export const wantedCharge = (s: LifeState) => typeof s.lastOffence === "string" 
 
 /** Odds of a not-guilty verdict when you plead not guilty. */
 export const acquittalChance = (stars: number) => Math.max(0.1, 0.65 - stars * 0.12);
-/** Sentence length: 45 seconds per star (it's a game, not a life sentence). */
-export const sentenceMs = (stars: number) => Math.max(1, stars) * 45_000;
+/** Sentence length: two minutes per star, long enough to live the prison routine or plan an escape. */
+export const sentenceMs = (stars: number) => Math.max(1, stars) * 120_000;
 
 export const cardsLeft = (homeworkDone: number, s: LifeState) => Math.max(0, homeworkDone - s.cardsUsed);
 

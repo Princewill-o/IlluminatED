@@ -4,6 +4,7 @@ import { type Placed, STARTER_LAYOUT, furnitureById, homeUse, isFloorFurniture }
 import { HOTELS, HOTEL_ROOMS, type HotelId, ROOM_LAYOUTS, ROOM_TYPES, parseRoomMap, roomInfo, roomMapId } from "./hotels";
 import { buildHome, buildLondon } from "./london";
 import { officeDesign } from "./office-design";
+import type { RoomId as PrisonRoomId } from "./prison-life";
 import { buildHighlands } from "./regions";
 import { ROOM_DESIGNS, type RoomStyle } from "./room-designs";
 import { UK_GATEWAYS } from "./uk-world";
@@ -43,7 +44,7 @@ export type PortalTarget =
   | { kind: "home-use"; key: string }
   | { kind: "awards" }
   | {kind:"university"; university:string; topic:"courses"|"events"|"networking"}
-  | { kind: "prison"; action: "study" | "escape" | "talk"; name?: string }
+  | { kind: "prison"; action: "study" | "escape" | "talk" | "craft" | "dig" | "vent" | "cover" | "search" | "library" | "jobs" | "gym" | "work" | "shop" | "fence" | "key" | "gate"; name?: string; desk?: string; loot?: string; job?: string }
   | { kind: "game"; companyId: string }
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
@@ -1136,33 +1137,116 @@ export function policeStationMap(): WorldMap {
   );
 }
 
-/** HMP Thames: a row of cells with bars, a landing and the guards' desk. No way out until you're released. */
+/**
+ * HMP Thames, a working prison: a cell block with a roll-call landing, canteen, library, gym,
+ * showers, laundry and an exercise yard behind a metal detector. Behind the staff door are the
+ * restricted areas (guard office, workshop, infirmary, solitary) and the front gate.
+ * Every escape needs planning: tunnel, vents, yard fence or the front gate in disguise.
+ */
+export const PRISON_ROOMS = {
+  cell: { x: 1, y: 1, w: 4, h: 6 },
+  landing: { x: 1, y: 8, w: 25, h: 2 },
+  canteen: { x: 1, y: 11, w: 11, h: 6 },
+  library: { x: 13, y: 11, w: 13, h: 6 },
+  gym: { x: 1, y: 18, w: 8, h: 5 },
+  showers: { x: 10, y: 18, w: 6, h: 5 },
+  laundry: { x: 17, y: 18, w: 9, h: 5 },
+  yard: { x: 1, y: 24, w: 25, h: 9 },
+  detector: { x: 12, y: 23, w: 2, h: 1 },
+  restricted: { x: 27, y: 1, w: 20, h: 32 },
+} as const;
+/** Which prison area a tile is in, and which routine room that counts as (your job's room is "work"). */
+export function prisonRoomAt(x: number, y: number, job: "laundry" | "kitchen" | "library" | null): { id: string; name: string; room: PrisonRoomId | null } {
+  const inside = (r: { x: number; y: number; w: number; h: number }) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h;
+  const R = PRISON_ROOMS;
+  if (inside(R.detector)) return { id: "detector", name: "the metal detector", room: null };
+  if (inside(R.cell)) return { id: "cell", name: "your cell", room: "cell" };
+  if (y < 7 && x < 26) return { id: "other-cell", name: "someone else's cell", room: null };
+  if (inside(R.landing)) return { id: "landing", name: "the landing", room: "landing" };
+  if (inside(R.canteen)) return { id: "canteen", name: "the canteen", room: job === "kitchen" ? "work" : "canteen" };
+  if (inside(R.library)) return { id: "library", name: "the library", room: job === "library" ? "work" : null };
+  if (inside(R.gym)) return { id: "gym", name: "the gym", room: "gym" };
+  if (inside(R.showers)) return { id: "showers", name: "the showers", room: "showers" };
+  if (inside(R.laundry)) return { id: "laundry", name: "the laundry", room: job === "laundry" ? "work" : null };
+  if (inside(R.yard)) return { id: "yard", name: "the yard", room: "yard" };
+  if (x >= 27 && y >= 13 && y < 17 && x < 37) return { id: "solitary", name: "solitary", room: null };
+  if (x >= 27) return { id: "restricted", name: "a staff area", room: null };
+  return { id: "corridor", name: "a corridor", room: null };
+}
 export function prisonMap(): WorldMap {
   const g = new Grid(48, 34, ".");
   g.border("#");
-  // Open cells: bars have actual door gaps into the communal corridor.
+  // Five cells along the top, each with bars, a bed and a desk. Yours is the first.
   for (let c = 0; c < 5; c++) {
     const x = 1 + c * 5;
     g.fill(x + 4, 1, 1, 6, "#"); g.fill(x, 7, 5, 1, "G");
-    g.set(x + 2, 7, "."); g.set(x + 1, 2, "b");
+    g.set(x + 2, 7, "."); g.set(x + 1, 2, "b"); g.set(x + 3, 5, "d");
   }
-  g.fill(2, 13, 5, 1, "t"); g.fill(11, 13, 5, 1, "t");
-  g.fill(2, 22, 5, 1, "b");
-  g.fill(10,20,10,5,"l");g.fill(12,21,6,1,"d");g.fill(12,22,6,1,"c");
-  g.fill(18,4,6,1,"k");g.fill(18,5,6,1,"c");g.fill(3,28,6,1,"s");
-  g.set(23,20,"p");g.set(2,19,"p");
-  // A connected service maze: alternating wall gaps make a genuine escape route.
-  g.fill(26, 1, 1, 32, "#"); g.set(26, 18, ".");
-  for (const [x, gap] of [[30, 27], [34, 9], [38, 27], [42, 9]]) {
-    g.fill(x, 3, 1, 28, "#"); g.set(x, gap, "."); g.set(x, gap + 1, ".");
-  }
+  // Walls between the areas, with doorways.
+  g.fill(1, 10, 25, 1, "#"); g.fill(5, 10, 2, 1, "."); g.fill(18, 10, 2, 1, ".");
+  g.fill(12, 11, 1, 6, "#"); g.set(12, 13, ".");
+  g.fill(1, 17, 25, 1, "#"); g.fill(4, 17, 2, 1, "."); g.fill(12, 17, 2, 1, "."); g.fill(20, 17, 2, 1, ".");
+  g.fill(9, 18, 1, 5, "#"); g.fill(16, 18, 1, 5, "#");
+  g.fill(1, 23, 25, 1, "#"); g.fill(12, 23, 2, 1, "."); // the metal detector doorway to the yard
+  // Canteen: serving counter and tables.
+  g.fill(8, 11, 4, 1, "k"); g.fill(2, 13, 4, 1, "t"); g.fill(7, 13, 4, 1, "t"); g.fill(2, 15, 4, 1, "t"); g.fill(7, 15, 4, 1, "t");
+  // Library: shelves, reading desks and the job board.
+  g.fill(14, 11, 4, 1, "v"); g.fill(21, 11, 4, 1, "v"); g.fill(15, 14, 3, 1, "d"); g.fill(20, 14, 3, 1, "d"); g.set(24, 15, "p");
+  // Gym benches, laundry machines and counters.
+  g.fill(2, 19, 2, 1, "s"); g.fill(5, 19, 2, 1, "s"); g.fill(2, 21, 2, 1, "s");
+  g.fill(24, 18, 1, 3, "F"); g.fill(17, 18, 2, 1, "F"); g.fill(19, 21, 4, 1, "k");
+  // The yard: a few benches; the perimeter fence runs along the bottom wall.
+  g.fill(3, 27, 3, 1, "s"); g.fill(20, 27, 3, 1, "s"); g.set(10, 29, "p"); g.set(16, 29, "p");
+  // Restricted side: the staff door off the landing leads to a corridor.
+  g.fill(26, 1, 1, 32, "#"); g.set(26, 8, "."); g.set(26, 9, ".");
+  g.fill(27, 7, 10, 1, "#"); g.fill(31, 7, 2, 1, "."); // guard office (top left of the staff side)
+  g.fill(37, 1, 1, 8, "#"); g.fill(38, 7, 9, 1, "#"); g.fill(41, 7, 2, 1, "."); // infirmary
+  g.fill(28, 3, 4, 1, "d"); g.set(34, 3, "v"); g.set(29, 5, "c");
+  g.fill(40, 2, 2, 1, "b"); g.fill(43, 2, 2, 1, "b"); g.set(45, 5, "p");
+  g.fill(27, 12, 10, 1, "#"); g.fill(31, 12, 2, 1, "."); // solitary block
+  for (const x of [29, 33]) { g.fill(x, 13, 1, 4, "#"); }
+  g.fill(38, 12, 9, 1, "#"); g.fill(41, 12, 2, 1, "."); // workshop
+  g.fill(39, 14, 3, 1, "d"); g.fill(43, 14, 3, 1, "k");
+  g.fill(27, 18, 20, 1, "#"); g.fill(37, 18, 2, 1, "."); // gatehouse
+  g.fill(40, 30, 1, 3, "#");
+  const P = (id: string, x: number, y: number, w: number, h: number, label: string, action: Extract<PortalTarget, { kind: "prison" }>["action"], extra: Record<string, string> = {}): Portal =>
+    ({ id, rect: px(x, y, w, h), label, to: { kind: "prison", action, ...extra } as Extract<PortalTarget, { kind: "prison" }> });
   const portals: Portal[] = [
-    { id: "prison-study", rect: px(8, 23, 3, 2), label: "Study desk: earn your release", to: { kind: "prison", action: "study" } },
-    { id: "inmate-sam", rect: px(8, 10, 2, 2), label: "Talk to Sam", to: { kind: "prison", action: "talk", name: "Sam" } },
-    { id: "inmate-riley", rect: px(18, 16, 2, 2), label: "Talk to Riley", to: { kind: "prison", action: "talk", name: "Riley" } },
-    { id: "prison-escape", rect: px(44, 30, 2, 2), label: "Service exit: escape", to: { kind: "prison", action: "escape" } },
+    // Your cell.
+    P("prison-cell-desk", 3, 4, 1, 1, "Your desk: craft and check your things", "craft"),
+    P("prison-dig", 1, 3, 1, 1, "Under your bed: dig", "dig"),
+    P("prison-vent", 3, 1, 1, 1, "Cell vent", "vent"),
+    P("prison-cover", 1, 5, 1, 1, "Cover your escape work with a poster", "cover"),
+    // Other inmates' desks.
+    ...[1, 2, 3, 4].map((c) => P(`desk-inmate-${c}`, 1 + c * 5 + 3, 4, 1, 1, "Search an inmate's desk", "search", { desk: `inmate-${c}`, loot: "inmate" })),
+    // Around the prison.
+    P("prison-study", 15, 15, 3, 1, "Study desk: earn your release", "study"),
+    P("prison-library", 20, 15, 3, 1, "Read a crafting manual (intellect)", "library"),
+    P("desk-library", 14, 12, 2, 1, "Search the library returns trolley", "search", { desk: "library", loot: "library" }),
+    P("prison-jobs", 23, 15, 1, 1, "Job board", "jobs"),
+    P("prison-gym", 2, 20, 5, 1, "Work out (strength and fitness)", "gym"),
+    P("prison-laundry", 19, 20, 4, 1, "Laundry: work your shift", "work", { job: "laundry" }),
+    P("desk-laundry", 23, 21, 2, 1, "Search the laundry baskets", "search", { desk: "laundry", loot: "laundry" }),
+    P("prison-kitchen", 8, 12, 4, 1, "Kitchen: work your shift", "work", { job: "kitchen" }),
+    P("prison-library-job", 21, 12, 4, 1, "Library: work your shift", "work", { job: "library" }),
+    P("inmate-sam", 8, 14, 1, 1, "Talk to Sam", "talk", { name: "Sam" }),
+    P("inmate-riley", 20, 26, 2, 1, "Riley, the yard trader", "shop", { name: "Riley" }),
+    P("prison-fence", 6, 32, 3, 1, "The yard fence", "fence"),
+    // The restricted side.
+    P("desk-office", 28, 4, 4, 1, "Guards' desk: press soap against the staff key", "key"),
+    P("desk-workshop", 39, 15, 3, 1, "Search the workshop bench", "search", { desk: "workshop", loot: "workshop" }),
+    P("prison-escape", 44, 31, 2, 1, "Front gate: staff only", "gate"),
   ];
-  return finish({ id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals, rooms: [{name:"Learning workshop",rect:px(10,20,10,5)},{name:"Meals and conversation",rect:px(17,3,8,5)},{name:"Exercise and quiet time",rect:px(2,25,20,7)}], spawn: centre(3, 4), accent: "#e98a1f", sign: { x: 15, y: 10, text: "Study, socialise and explore" } }, g);
+  return finish({
+    id: "prison", kind: "prison", name: "HMP Thames", structures: [], portals,
+    rooms: [
+      { name: "Your cell", rect: px(1, 1, 4, 6) }, { name: "Cell block landing · roll call", rect: px(1, 8, 25, 2) }, { name: "Canteen", rect: px(1, 11, 11, 6) },
+      { name: "Library", rect: px(13, 11, 13, 6) }, { name: "Gym", rect: px(1, 18, 8, 5) }, { name: "Showers", rect: px(10, 18, 6, 5) }, { name: "Laundry", rect: px(17, 18, 9, 5) },
+      { name: "Exercise yard", rect: px(1, 24, 25, 9) }, { name: "Guard office · restricted", rect: px(27, 1, 10, 6) }, { name: "Infirmary · restricted", rect: px(38, 1, 9, 6) },
+      { name: "Solitary · restricted", rect: px(27, 13, 10, 4) }, { name: "Workshop · restricted", rect: px(38, 13, 9, 4) }, { name: "Gatehouse · restricted", rect: px(27, 19, 20, 14) },
+    ],
+    spawn: centre(2, 4), accent: "#e98a1f", sign: { x: 13, y: 9, text: "HMP Thames · follow the routine" },
+  }, g);
 }
 
 /**

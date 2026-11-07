@@ -260,14 +260,14 @@ export const POLICE_QUESTIONS = [
 ] as const;
 
 export function prisonGuardPositions(seconds: number) {
-  return [28.5, 36.5].map((x, i) => {
-    const t = (seconds * 0.7 + i * 17) % 44;
-    return {
-      x: x * TILE,
-      y: (5.5 + (t < 22 ? t : 44 - t)) * TILE,
-      angle: t < 22 ? 0 : Math.PI,
-    };
-  });
+  // Two guards on the staff side: one along the corridor by the offices, one walking the gatehouse.
+  const corridor = (seconds * 0.7) % 32, yard = (seconds * 0.6 + 9) % 28;
+  const a = corridor < 16 ? 28.5 + corridor * (17 / 16) : 45.5 - (corridor - 16) * (17 / 16);
+  const b = yard < 14 ? 20.5 + yard * (10 / 14) : 30.5 - (yard - 14) * (10 / 14);
+  return [
+    { x: a * TILE, y: 9.5 * TILE, angle: corridor < 16 ? Math.PI / 2 : -Math.PI / 2 },
+    { x: 33.5 * TILE, y: b * TILE, angle: yard < 14 ? 0 : Math.PI },
+  ];
 }
 export function caughtByPrisonGuard(
   map: WorldMap,

@@ -42,6 +42,7 @@ import { NpcVisits } from "./npc-visits";
 import { PanicFloor } from "./panic-floor";
 import { PetPanel, syncPet } from "./pet-panel";
 import { PolicePatrol } from "./police-patrol";
+import { PrisonJobBoard, PrisonRoutineHud, PrisonTrader, PrisonWorkbench, usePrisonLife } from "./prison-life-ui";
 import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
@@ -90,6 +91,7 @@ import { isMotorway } from "@/game/core/living-world";
 import { homeStyle } from "@/game/core/london";
 import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
+import { attend, cellSearch, coolHeat, coverHole, cutFence, detector, dig, doJob, frontGate, has as hasItem, judgePrevious, prisonClock, searchDesk, sendToSolitary, takeKeyImpression, train as trainStat, vent } from "@/game/core/prison-life";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import { type PracticalRole, ROLES } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
@@ -116,6 +118,7 @@ import {
   courtMap,
   hospitalMap,
   prisonMap,
+  prisonRoomAt,
   tutorialMap,
   TUTORIAL_MAP_ID,
   highlandsMap,
@@ -437,6 +440,12 @@ export function WorldApp({
   const [medicalCustody,setMedicalCustody]=useState(false);
   const {passage,begin:beginTransition,pending:transitionPending}=useSceneTransition();
   const pendingStreetCase = useRef<StreetAssessment | null>(null);
+  const { prison, run: runPrison } = usePrisonLife(me.id, life.jailUntil > 0);
+  const prisonRef = useRef(prison); prisonRef.current = prison;
+  const [prisonPanel, setPrisonPanel] = useState<"desk" | "trader" | "jobs" | null>(null);
+  const [prisonHere, setPrisonHere] = useState("your cell");
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => { if (!prison) return; const t = setInterval(() => setNowTick(Date.now()), 1000); return () => clearInterval(t); }, [prison]);
   const say = useCallback((text: string, big = false) => {
     setToast({ text, big });
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -801,6 +810,26 @@ export function WorldApp({
     const t = setInterval(check, 30000);
     return () => clearInterval(t);
   }, [mapId, hotelBooking, leaveHotelRoom, say]);
+  /** Everything you can do around the prison. */
+  const prisonAction = useCallback((action: string, to: { desk?: string; loot?: string; job?: string }) => {
+    const now = Date.now();
+    const show = (o: { message: string; ok: boolean; escape?: string } | null) => { if (o?.message) say(o.message, !o.ok); return o; };
+    let out: ReturnType<typeof runPrison> = null;
+    if (action === "craft") { setPrisonPanel("desk"); return; }
+    if (action === "shop") { setPrisonPanel("trader"); return; }
+    if (action === "jobs") { setPrisonPanel("jobs"); return; }
+    if (action === "search") out = runPrison(s => searchDesk(s, now, to.desk ?? "desk", (to.loot ?? "inmate") as "inmate", Math.random));
+    else if (action === "gym" || action === "library") out = runPrison(s => trainStat(s, now, action));
+    else if (action === "work") out = prisonRef.current?.job === to.job ? runPrison(s => doJob(s, now, Math.random)) : (say(`This is the ${to.job} job. Apply on the job board in the library.`), null);
+    else if (action === "dig") out = runPrison(s => dig(s, now, Math.random));
+    else if (action === "cover") out = runPrison(s => coverHole(s));
+    else if (action === "vent") out = runPrison(s => vent(s, now));
+    else if (action === "fence") out = runPrison(s => cutFence(s, now, Math.random));
+    else if (action === "key") out = runPrison(s => takeKeyImpression(s, now, Math.random));
+    else if (action === "gate" || action === "escape") out = runPrison(s => frontGate(s));
+    show(out);
+    if (out?.escape) { releaseReason.current = "escaped"; updateLife(l => escapeFromPrison(l, Date.now())); }
+  }, [runPrison, say, updateLife]);
   const onPortal = useCallback(
     async(portal: Portal) => {
       if(transitionPending())return;
@@ -847,7 +876,7 @@ export function WorldApp({
       if (to.kind === "prison") {
         if (to.action === "study") setStudy(true);
         else if (to.action === "talk") setInmate(to.name ?? "Sam");
-        else { releaseReason.current = "escaped"; updateLife(l=>escapeFromPrison(l, Date.now())); }
+        else prisonAction(to.action, to);
         return;
       }
       if (to.kind === "game") {
@@ -933,7 +962,7 @@ export function WorldApp({
         setArrive({...spot,speed:keepCar?Math.min(Math.abs(PLAYER_VEHICLE.speed),isMotorway(to.mapId)?660:220):0});setMapId(to.mapId);setTrip(n=>n+1);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking, leaveHotelRoom],
+    [router, offices, mapId, map, me.id, updateLife, say, jailed, prisonAction, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking, leaveHotelRoom],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -1132,15 +1161,50 @@ export function WorldApp({
     if (!jailed || mapId !== "prison" || study || inmate) return;
     const timer = setInterval(() => {
       const now = Date.now();
-      if (now - guardCaughtAt.current > 6000 && caughtByPrisonGuard(map, PLAYER, now/1000)) {
+      if (now - guardCaughtAt.current > 6000 && !(prisonRef.current && hasItem(prisonRef.current, "guard-uniform")) && caughtByPrisonGuard(map, PLAYER, now/1000)) {
         guardCaughtAt.current = now;
         updateLife(l=>({...l,jailUntil:Math.max(l.jailUntil,now)+45000}));
-        say("A guard caught your escape attempt. 45 seconds added; your study progress is kept.", true);
+        runPrison(s => ({ ...s, heat: Math.min(100, s.heat + 30) }));
+        say("A guard caught you in a staff area. 45 seconds added and your heat went up.", true);
         goTo("prison", "Back to your cell");
       }
     }, 250);
     return () => clearInterval(timer);
-  }, [jailed, mapId, map, study, inmate, updateLife, say, goTo]);
+  }, [jailed, mapId, map, study, inmate, updateLife, say, goTo, runPrison]);
+
+  // The prison routine: attendance, missed periods, lockdowns, cell searches, the detector, solitary.
+  useEffect(() => {
+    if (!jailed || mapId !== "prison") return;
+    let lastPeriod = "", inDetector = false, last = Date.now();
+    const timer = setInterval(() => {
+      const now = Date.now(), s = prisonRef.current;
+      if (!s) return;
+      const here = prisonRoomAt(PLAYER.x / TILE, PLAYER.y / TILE, s.job);
+      setPrisonHere(here.name);
+      const { period } = prisonClock(now);
+      // Solitary: you stay in the solitary block until it's over.
+      if (s.solitaryUntil > now) {
+        if (here.id !== "solitary") void goTo("prison", "Solitary confinement", { x: 31.5 * TILE, y: 15 * TILE });
+        return;
+      }
+      runPrison(p => coolHeat(attend(p, now, here.room).state, now - last));
+      last = now;
+      const judged = runPrison(p => { const j = judgePrevious(p, now); return { state: j.state, message: j.missed ? `${j.missed.name} missed` : "", ok: !j.lockdown }; });
+      if (judged && !judged.ok) { say("LOCKDOWN! You missed a roll call. Off to solitary.", true); runPrison(p => sendToSolitary(p, now)); return; }
+      if (judged?.message) say(`You skipped ${judged.message.replace(" missed", "").toLowerCase()}. Heat went up.`);
+      if ((prisonRef.current?.heat ?? 0) >= 100) { say("Your heat hit the maximum. The guards put you in solitary.", true); runPrison(p => sendToSolitary(p, now)); return; }
+      // A cell search can happen when roll call starts and your heat is high.
+      if (period.id !== lastPeriod) {
+        if (lastPeriod && period.strict) { const found = runPrison(p => cellSearch(p, Math.random) ?? p); if (found?.message) say(found.message, true); }
+        lastPeriod = period.id;
+      }
+      // The metal detector on the way to the yard.
+      const nowIn = here.id === "detector";
+      if (nowIn && !inDetector) { const d = runPrison(p => detector(p)); if (d?.message) say(d.message, !d.ok); }
+      inDetector = nowIn;
+    }, 500);
+    return () => clearInterval(timer);
+  }, [jailed, mapId, runPrison, say, goTo]);
 
   // Someone near you on the street (for the Shove button).
   useEffect(() => {
@@ -1652,6 +1716,10 @@ export function WorldApp({
         if (to === "court") { setCustody(null); void goTo("court", "Police escort · Crown Court"); }
         else void goTo("prison", "HMP Thames");
       }} />}
+      {jailed && mapId === "prison" && prison && <PrisonRoutineHud prison={prison} now={nowTick} here={prisonHere} onOpen={() => setPrisonPanel("desk")} />}
+      {jailed && prison && prisonPanel === "desk" && <PrisonWorkbench prison={prison} onClose={() => setPrisonPanel(null)} onRun={(fn) => { const o = runPrison(fn); if (o?.message) say(o.message, !o.ok); }} />}
+      {jailed && prison && prisonPanel === "trader" && <PrisonTrader prison={prison} onClose={() => setPrisonPanel(null)} onRun={(fn) => { const o = runPrison(fn); if (o?.message) say(o.message, !o.ok); }} />}
+      {jailed && prison && prisonPanel === "jobs" && <PrisonJobBoard prison={prison} onClose={() => setPrisonPanel(null)} onRun={(fn) => { const o = runPrison(fn); if (o?.message) say(o.message, !o.ok); }} />}
       {jailed && mapId === "prison" && (
         <PrisonHud
           leftMs={life.jailUntil - Date.now()}
