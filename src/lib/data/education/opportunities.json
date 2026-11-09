@@ -1,30 +1,6 @@
 {
   "items": [
     {
-      "id": "buckingham:660558-1793797200-1793800800@www.buckingham.ac.uk",
-      "title": "Psychology Taster",
-      "provider": "University of Buckingham",
-      "kind": "university-event",
-      "url": "https://www.buckingham.ac.uk/event/psychology-taster-5/",
-      "location": "Online",
-      "date": "2026-11-04",
-      "closes": null,
-      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
-    },
-    {
-      "id": "buckingham:648662-1794049200-1794052800@www.buckingham.ac.uk",
-      "title": "Computing Taster",
-      "provider": "University of Buckingham",
-      "kind": "university-event",
-      "url": "https://www.buckingham.ac.uk/event/computing-taster-4/",
-      "location": "Online",
-      "date": "2026-11-07",
-      "closes": null,
-      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
-    },
-    {
       "id": "buckingham:660912-1794414600-1794418200@www.buckingham.ac.uk",
       "title": "Economics Taster Session: Understanding the Cost of Living Crisis",
       "provider": "University of Buckingham",
@@ -34,7 +10,7 @@
       "date": "2026-11-11",
       "closes": null,
       "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
+      "checkedAt": "2026-11-09T14:01:47.951Z"
     },
     {
       "id": "buckingham:660946-1799485200-1799506800@www.buckingham.ac.uk",
@@ -46,7 +22,7 @@
       "date": "2027-01-09",
       "closes": null,
       "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
+      "checkedAt": "2026-11-09T14:01:47.951Z"
     },
     {
       "id": "buckingham:660672-1802109600-1802113200@www.buckingham.ac.uk",
@@ -58,7 +34,7 @@
       "date": "2027-02-08",
       "closes": null,
       "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
+      "checkedAt": "2026-11-09T14:01:47.951Z"
     }
   ],
   "sources": [
@@ -66,7 +42,7 @@
       "name": "University of Buckingham events",
       "url": "https://www.buckingham.ac.uk/events/",
       "status": "live",
-      "checkedAt": "2026-11-02T13:39:13.913Z"
+      "checkedAt": "2026-11-09T14:01:47.951Z"
     }
   ]
 }
