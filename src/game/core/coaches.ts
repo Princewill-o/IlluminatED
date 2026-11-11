@@ -4,7 +4,7 @@ export const COACH_WIDTH = 1.8;
 export const COACHES = [
   {
     id: "airline",
-    name: "the airline",
+    name: "the skyline",
     body: "#164b8a",
     accent: "#e6bb43",
     ink: "#ffffff",
@@ -14,7 +14,7 @@ export const COACHES = [
   },
   {
     id: "national-express",
-    name: "national express",
+    name: "nation xpress",
     body: "#f3f4f0",
     accent: "#d53c3a",
     ink: "#233b65",
@@ -24,7 +24,7 @@ export const COACHES = [
   },
   {
     id: "flixbus",
-    name: "FLIXBUS",
+    name: "FLEXBUS",
     body: "#83cc24",
     accent: "#ffffff",
     ink: "#ffffff",

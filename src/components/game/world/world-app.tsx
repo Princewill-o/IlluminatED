@@ -15,7 +15,6 @@ import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
 import { CityMap, MiniMap, type Place, nearest, placeForTask } from "./city-map";
-import { CivilianConversation } from "./civilian-conversation";
 import { CoachTrip } from "./coach-trip";
 import { CourtTrial } from "./court-trial";
 import { CrashImpact } from "./crash-impact";
@@ -39,6 +38,7 @@ import { LiftPanel } from "./lift-panel";
 import { LivePolicePickup } from "./live-police-pickup";
 import mobileStyles from "./mobile-life.module.css";
 import { NetworkingEvent } from "./networking-event";
+import { NpcTalk } from "./npc-talk";
 import { NpcVisits } from "./npc-visits";
 import { PanicFloor } from "./panic-floor";
 import { PetPanel, syncPet } from "./pet-panel";
@@ -61,6 +61,7 @@ import { usePhoneLayout } from "./use-phone-layout";
 import { useSceneTransition } from "./use-scene-transition";
 import { useStreetEncounters } from "./use-street-encounters";
 import { type Me, useLobby } from "./use-world";
+import { VehicleJourney } from "./vehicle-journey";
 import { VenturePanel } from "./venture-panel";
 import { type Site, WebBrowser } from "./web-browser";
 import { DEFAULT_RULES, WorldAdmin, WorldMenu } from "./world-menu";
@@ -450,7 +451,7 @@ export function WorldApp({
   const [nearPerson, setNearPerson] = useState(false);
   const [creatorChannel,setCreatorChannel]=useState<"tiktok"|"youtube"|"instagram"|null>(null);
   const [studioFloating,setStudioFloating]=useState(false);
-  const [conversation,setConversation]=useState<{id:string;name:string}|null>(null);
+  const [conversation,setConversation]=useState<{id:string;name:string;heading?:string}|null>(null);
   const [safety, setSafety] = useState(false);
   const [rescue, setRescue] = useState(false);
   const [panic, setPanic] = useState<string | null>(null);
@@ -594,6 +595,16 @@ export function WorldApp({
     // Local debugging only: lets automated walkthroughs read positions.
     if (process.env.NODE_ENV === "development") (window as unknown as { __game?: unknown }).__game = { PLAYER, PLAYER_WORK, AUTOPILOT, interview: (stars = 2, charge = "Shoplifting from a high-street shop") => setInterview({ stars, charge, area: "Fountain Square" }), wipe: (label: string) => { setSceneName(label); setFading(true); window.setTimeout(() => setFading(false), 1500); }, work: (id: string) => setWork(id), network: (venue = "town-hall") => setNetworking(venue) };
   }, []);
+  useEffect(() => {
+    // Local debugging only: start a hop-on bus trip from an automated walkthrough.
+    if (process.env.NODE_ENV === "development") {
+      const w = window as unknown as { __hop?: unknown; __coach?: unknown; __busTrip?: unknown; __talk?: unknown };
+      w.__hop = (x: number, y: number) => hopOn({ id: "dev", name: "Test stop", kind: "landmark", x: x * TILE, y: y * TILE } as Place);
+      w.__coach = () => setCoachTrip(true);
+      w.__busTrip = () => setBusJourney({ t: { kind: "stop", id: BUS_STOPS[3].id, name: BUS_STOPS[3].name } as BusTrip, revised: false, from: BUS_STOPS[0].name });
+      w.__talk = () => setConversation({ id: "city:resident:dev-1", name: "Amara B." });
+    }
+  }, [hopOn]);
   const hopOff = useCallback(() => {
     Object.assign(AUTOPILOT, { route: [], leg: 0, speed: 0, onArrive: null });
     setHop(null);
@@ -666,6 +677,7 @@ export function WorldApp({
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     setArrive(arrival);setMapId(dest);setTrip(n=>n+1);
   }, [offices, me.id, cars, driving, say, life.hearing, streetCustody?.stage, map.kind, beginTransition, transitionPending]);
+  useEffect(() => { if (process.env.NODE_ENV === "development") (window as unknown as { __tp?: unknown }).__tp = (x: number, y: number) => void goTo("city", "Dev", { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }); }, [goTo]);
 
   useEffect(() => {
     if (!roadDestination) return;
@@ -1227,7 +1239,7 @@ export function WorldApp({
   // Someone near you on the street (for the Shove button).
   useEffect(() => {
     if (map.kind === "home") return setNearPerson(false);
-    const t = setInterval(() => setNearPerson(NPC_SPOTS.some((n) => /:resident:-?\d/.test(n.id??"") && Math.hypot(n.x - PLAYER.x, n.y - PLAYER.y) < 52)), 300);
+    const t = setInterval(() => setNearPerson(NPC_SPOTS.some((n) => /:resident:/.test(n.id??"") && Math.hypot(n.x - PLAYER.x, n.y - PLAYER.y) < 52)), 300);
     return () => clearInterval(t);
   }, [map.kind]);
   const fight = useCallback(() => {
@@ -1310,9 +1322,18 @@ export function WorldApp({
   // Preview builds: hop on the train at this station and ride to another one.
   useEffect(()=>{if(process.env.NODE_ENV==="production")return;(window as unknown as {__ride?:(id:string)=>void}).__ride=(id)=>{if(map.kind!=="station")return;Object.assign(RIDE,{active:true,phase:"boarded",at:performance.now(),rel:7.4,dest:""});boardedStation.current=map.id;window.setTimeout(()=>ride({kind:"station",id}),1500);};},[ride,map.kind,map.id]);
   // Riding the bus: to another stop in London, home, or the Careers Campus.
+  // Bus trips are shown: board, ride the see-through bus through the streets, step off.
+  const [busJourney, setBusJourney] = useState<{ t: BusTrip; revised: boolean; from: string } | null>(null);
   const busRide = useCallback(
     (t: BusTrip, revised: boolean) => {
       setBus(null);
+      setBusJourney({ t, revised, from: BUS_STOPS.find((s) => s.id === bus)?.name ?? "Your stop" });
+    },
+    [bus],
+  );
+  const busArrive = useCallback(
+    (t: BusTrip, revised: boolean) => {
+      setBusJourney(null);
       if (revised) {
         doActivity("bus");
         void gainXp("bus");
@@ -1630,8 +1651,8 @@ export function WorldApp({
       <NpcVisits enabled={outdoors&&!panic&&!busy&&!menu&&!driving&&!bike&&!jailed&&!soaring&&life.stars<POLICE_STARS&&!pursuit} map={map} job={job} playerName={me.username} say={say}
         onReward={()=>{void gainXp("study");}}
         onWaypoint={(portal,label)=>setWaypoint({id:portal.id,name:label,kind:"job",x:portal.rect.x+portal.rect.w/2,y:portal.rect.y+portal.rect.h/2})}/>
-      {conversation&&<CivilianConversation person={conversation} onClose={()=>setConversation(null)} onShove={()=>{const person=conversation;setConversation(null);window.dispatchEvent(new CustomEvent("illuminated:fight",{detail:{npcId:person.id}}));}}/>}
-      {nearPerson&&!driving&&!conversation&&<HudSlot area="bc" order={12}><button type="button" className="min-h-11 rounded-full bg-white px-4 text-sm font-bold text-[#13203a] shadow" onClick={()=>{const person=NPC_SPOTS.find(n=>n.id&&n.name&&/:resident:-?\d/.test(n.id)&&Math.hypot(n.x-PLAYER.x,n.y-PLAYER.y)<70);if(person)setConversation({id:person.id!,name:person.name!});}}>Talk to resident</button></HudSlot>}
+      {conversation&&<NpcTalk key={conversation.id} person={conversation} onClose={()=>setConversation(null)}/>}
+      {nearPerson&&!driving&&!conversation&&<HudSlot area="bc" order={12}><button type="button" className="min-h-11 rounded-full bg-white px-4 text-sm font-bold text-[#13203a] shadow" onClick={()=>{const person=NPC_SPOTS.filter(n=>n.id&&n.name&&/:resident:/.test(n.id)).sort((a,b)=>Math.hypot(a.x-PLAYER.x,a.y-PLAYER.y)-Math.hypot(b.x-PLAYER.x,b.y-PLAYER.y))[0];if(person&&Math.hypot(person.x-PLAYER.x,person.y-PLAYER.y)<70)setConversation({id:person.id!,name:person.name!,heading:person.heading});}}>Talk to someone</button></HudSlot>}
       {mapId.startsWith("party-")&&<HudSlot area="bc" order={13}><button type="button" className="min-h-11 rounded-full bg-violet-600 px-4 text-sm font-bold text-white shadow" onClick={()=>window.dispatchEvent(new Event("illuminated:dance"))}>Dance</button></HudSlot>}
       {nearPerson && !driving && (
         <HudSlot area="br-act" order={1}><button type="button" onClick={fight} className="jelly min-h-11 rounded-full bg-[#c8322d] px-4 py-2 text-sm font-black text-white shadow-lg">
@@ -1839,6 +1860,7 @@ export function WorldApp({
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
       {dailyJob&&<DailyShift key={dailyJob.workplace} active={map.id===(dailyJob.workplace==="tescow"?"supermarket":dailyJob.workplace==="pizzazz"?"city":`workplace-${dailyJob.workplace}`)} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:dailyJob.workplace==="pizzazz"?CITY:(workplaceMap(dailyJob.workplace)??CITY)} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
       {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tescow practice store");}else if(next.workplace==="pizzazz"){setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}else{setDailyJob(next);say("Your shift has started. Walk to each work point and do the job.");}}} />}
+      {busJourney && <VehicleJourney kind="bus" route={["24", "38", "73", "159"][busJourney.from.length % 4]} from={busJourney.from} to={busJourney.t.kind === "stop" ? busJourney.t.name : busJourney.t.label} miles={3 + (busJourney.from.length % 4)} seconds={10} onArrive={() => busArrive(busJourney.t, busJourney.revised)} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} onPickOnMap={() => { setBus(null); setBusPick(true); }} />}
       {!mobileLife && <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
         quests={quests}

@@ -895,10 +895,23 @@ export function londonMap(): WorldMap {
   const court = near(44, 28, hosp);
   if (hosp && hosp.kind === "building") portals.push({ id: "hospital", rect: px(hosp.x + Math.floor(hosp.w/2) - 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
   if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
-  const police = policeBuilding();
-  if (police) portals.push({ id: "police-station", rect: px(police.x + Math.floor(police.w / 2) - 1, police.y + police.h, 2, 1), label: "Police station: report, custody and patrols", to: { kind: "map", mapId: "police-station", label: "Police station" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
   if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: eat in, or work here", to: { kind: "map", mapId: "venue-pizzazz", label: "Pizzazz Pizza" } });
+  // Every workplace has its own building and its own door, spread across the city.
+  const sites = workplaceSites(L, portals);
+  if (sites.police) {
+    const b = sites.police;
+    portals.push({ id: "police-station", rect: px(b.x + Math.floor(b.w / 2) - 1, b.y + b.h, 2, 1), label: "Police station: report, custody and patrols", to: { kind: "map", mapId: "police-station", label: "Police station" } });
+    portals.push({ id: "role-door-police", rect: px(b.x + b.w - 1, b.y + b.h, 1, 1), label: "Police station · officers' entrance: work as a police officer", to: { kind: "map", mapId: "role-police", label: "Police station" } });
+  }
+  if (hosp && hosp.kind === "building") {
+    portals.push({ id: "role-door-doctor", rect: px(hosp.x + 1, hosp.y + hosp.h, 1, 1), label: "St Tomas' Hospital · doctors' entrance", to: { kind: "map", mapId: "role-doctor", label: "St Tomas' Hospital" } });
+    portals.push({ id: "role-door-nurse", rect: px(hosp.x + hosp.w - 2, hosp.y + hosp.h, 1, 1), label: "St Tomas' Hospital · nurses' entrance", to: { kind: "map", mapId: "role-nurse", label: "St Tomas' Hospital ward" } });
+  }
+  for (const [role, b] of sites.roles) {
+    const sign = ROLE_SITES.find(([id]) => id === role)![1];
+    portals.push({ id: `role-door-${role}`, rect: px(b.x + Math.floor(b.w / 2), b.y + b.h, 1, 1), label: `${sign}: staff entrance`, to: { kind: "map", mapId: `role-${role}`, label: sign } });
+  }
   for (const venue of L.things) {
     if (venue.kind !== "building" || !["mcdonalds", "kfc", "starbucks"].includes(venue.id)) continue;
     portals.push({ id: venue.id, rect: px(venue.x + Math.floor(venue.w / 2) - 1, venue.y + venue.h, 2, 1), label: `${venue.label}: ${venue.id === "starbucks" ? "coffee break" : "grab a meal"}`, to: { kind: "map", mapId: `venue-${venue.id}`, label: venue.label ?? "Inside" } });
@@ -1079,7 +1092,48 @@ export function courtMap(): WorldMap {
 }
 
 /** The building that houses the police station: a big civic block near the court, not the court itself. */
+/** City roles that get a building of their own (doctors, nurses and police use the hospital and the station). */
+export const ROLE_SITES: [string, string][] = [
+  ["pizza-chef", "Pizzazz Kitchen"], ["waiter", "Pizzazz Dining Room"], ["cashier", "Tescow Superstore"], ["stocker", "Tescow Stockroom"],
+  ["warehouse", "Tescow Distribution Centre"], ["delivery-driver", "Parcel Pals Depot"], ["bus-driver", "London Buses Depot"], ["taxi-driver", "City Cabs Office"],
+  ["mechanic", "Motor Mile Garage"], ["builder", "Bodge & Sons Site Office"], ["gardener", "City Parks Team"], ["fisher", "Thames Fish Market"],
+  ["cleaner", "Sparkle Cleaning Co."], ["barber", "Fresh Fade Salon"], ["security", "Shield Security"], ["teacher", "Study Quarter Academy"],
+  ["firefighter", "London Fire Station"],
+];
+type CityBuilding = Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>;
+let SITES: { police: CityBuilding | null; roles: [string, CityBuilding][] } | null = null;
+
+/**
+ * Pick a free building for the police station and for each role: unused, with a
+ * pavement in front, clear of other doors and stops, and spaced well apart so no
+ * two workplaces share a block. Chosen once and kept (the choice relabels them).
+ */
+function workplaceSites(L: ReturnType<typeof buildLondon>, portals: Portal[]) {
+  if (SITES) return SITES;
+  const near = (x: number, y: number, r: number) => portals.some((p) => Math.abs(p.rect.x / TILE - x) <= r && Math.abs(p.rect.y / TILE - y) <= r);
+  const free = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.label && (t.style === "terrace" || t.style === "brick") && !/^(hotel-|university-|district-|city-|outskirts-|my-house)/.test(t.id) ? [t] : []))
+    .filter((b) => b.x < 112 && b.y < 88 && "-_".includes(L.tiles[b.y + b.h]?.[b.x + Math.floor(b.w / 2)] ?? "#") && !near(b.x + b.w / 2, b.y + b.h, 4.5))
+    .sort((a, b) => Math.hypot(a.x - 60, a.y - 40) - Math.hypot(b.x - 60, b.y - 40) || a.id.localeCompare(b.id));
+  const chosen: CityBuilding[] = [];
+  for (const b of free) {
+    if (chosen.length > ROLE_SITES.length) break;
+    if (chosen.some((c) => Math.hypot(c.x - b.x, c.y - b.y) < 7)) continue;
+    chosen.push(b);
+  }
+  const police = chosen.shift() ?? null;
+  if (police) police.label = "Police station";
+  const roles = ROLE_SITES.slice(0, chosen.length).map(([role, sign], i): [string, CityBuilding] => {
+    const b = chosen[i];
+    b.label = sign;
+    b.style = "shop";
+    return [role, b];
+  });
+  SITES = { police, roles };
+  return SITES;
+}
+
 export function policeBuilding() {
+  if (SITES) return SITES.police;
   const L = buildLondon();
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && t.id !== "city-hospital" && (t.style === "office" || t.style === "stone") ? [t] : []));
   const court = [...bigs].sort((a, b) => Math.hypot(a.x - 44, a.y - 28) - Math.hypot(b.x - 44, b.y - 28))[0];

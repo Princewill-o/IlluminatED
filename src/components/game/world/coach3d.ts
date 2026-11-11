@@ -257,25 +257,21 @@ function brandPanel(id: CoachId, _side: number, front = false) {
       ctx.font = "bold 26px Arial, sans-serif";
       ctx.fillText(brand.destination.toUpperCase(), 512, 159, 850);
       if (id === "national-express") {
+        // Nation Xpress: a red star (our own mark).
         ctx.fillStyle = "#d63e3c";
-        for (let i = 0; i < 3; i++) {
-          ctx.beginPath();
-          ctx.moveTo(30 + i * 22, 26);
-          ctx.lineTo(43 + i * 22, 26);
-          ctx.lineTo(68 + i * 22, 112);
-          ctx.lineTo(55 + i * 22, 112);
-          ctx.fill();
-        }
-      } else if (id === "flixbus") {
-        ctx.fillStyle = "#ffffff";
         ctx.beginPath();
-        ctx.moveTo(23, 52);
-        ctx.lineTo(50, 52);
-        ctx.lineTo(72, 80);
-        ctx.lineTo(50, 109);
-        ctx.lineTo(23, 109);
-        ctx.lineTo(45, 80);
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 ? 18 : 42, a = -Math.PI / 2 + (i * Math.PI) / 5;
+          ctx.lineTo(70 + Math.cos(a) * r, 70 + Math.sin(a) * r);
+        }
         ctx.fill();
+      } else if (id === "flixbus") {
+        // FlexBus: a white ring (our own mark).
+        ctx.strokeStyle = "#ffffff";
+        ctx.lineWidth = 14;
+        ctx.beginPath();
+        ctx.arc(60, 82, 28, 0, Math.PI * 2);
+        ctx.stroke();
       } else {
         ctx.strokeStyle = "#e6bb43";
         ctx.lineWidth = 7;

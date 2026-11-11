@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-import { CAR_PAINT, CREW, CREW_INVITES, JOB_CLIENTS, type JobClient, LAW_STATUS, PET, RESCUES } from "./art";
+import { CAR_PAINT, CREW, CREW_INVITES, JOB_CLIENTS, type JobClient, LAW_STATUS, PET, PLAYER, RESCUES } from "./art";
 import { type VerifiedIdentity, verifyPass } from "./verify-pass";
 
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -75,6 +75,8 @@ export interface RemotePlayer {
   x: number;
   y: number;
   tx: number;
+  /** 1 when they're up on a mezzanine or upper floor. */
+  level?: number;
   ty: number;
   dir: 1 | -1;
   walking: boolean;
@@ -100,6 +102,8 @@ interface Meta {
   x: number;
   y: number;
   d: 1 | -1;
+  /** Floor: 1 when up on a deck. */
+  l?: number;
 }
 
 export function useWorld({
@@ -195,6 +199,7 @@ export function useWorld({
         x: Math.round(pos.current.x),
         y: Math.round(pos.current.y),
         d: pos.current.d,
+        l: PLAYER.level,
         car: pos.current.car,
         heading: pos.current.heading,
         pet: PET.tag,
@@ -273,6 +278,7 @@ export function useWorld({
             car: validCar(m.car) ? m.car : null,
             pet: parsePetTag(m.pet) ? m.pet as string : null,
             heading: Number.isFinite(m.heading) ? m.heading : 0,
+            level: m.l === 1 ? 1 : 0,
           };
           const crew = typeof m.crew === "string" ? /^([0-9a-f-]{36}):([a-z-]{2,30})$/i.exec(m.crew) : null;
           if (crew) CREW_INVITES.set(id, { name: who.username, crew: crew[1], role: crew[2], x: m.x, y: m.y });
@@ -325,6 +331,7 @@ export function useWorld({
         p.ty = payload.y;
         p.dir = payload.d === -1 ? -1 : 1;
         p.walking = Boolean(payload.w);
+        p.level = payload.l === 1 ? 1 : 0;
         p.car =
           validCar(payload.car)
             ? payload.car
@@ -536,6 +543,7 @@ export function useWorld({
             y: Math.round(y),
             d,
             w: walking ? 1 : 0,
+            l: PLAYER.level,
             car,
             heading,
           },

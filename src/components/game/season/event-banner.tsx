@@ -22,12 +22,15 @@ export function EventBanner({ className = "", onOpen }: { className?: string; on
     <Link
       href={event.href}
       onClick={onOpen ? (e) => { e.preventDefault(); onOpen(); } : undefined}
-      className={`flex items-center gap-2 rounded-2xl border-[3px] border-[#1d1a4a] px-3 py-2 text-xs font-black text-white shadow-[3px_3px_0_#1d1a4a] ${className}`}
+      className={`jelly flex items-center gap-2 rounded-2xl border-b-4 border-black/30 py-1.5 pr-3 pl-1.5 text-xs font-black text-white shadow-lg ${className}`}
       style={{ background: `linear-gradient(120deg, ${event.colours[0]}, ${event.colours[0]} 55%, ${event.colours[1]})` }}
     >
-      <Sparkles className="size-4 shrink-0" aria-hidden />
+      {event.id === "hero-week" ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/heroes/photon.webp" alt="" className="h-9 w-auto shrink-0 drop-shadow" />
+      ) : <Sparkles className="size-4 shrink-0" aria-hidden />}
       <span className="min-w-0">
-        <span className="block truncate">Live: {event.name}</span>
+        <span className="block truncate"><span className="mr-1 inline-block size-1.5 animate-pulse rounded-full bg-[#ff5c5c] align-middle" aria-hidden />Live: {event.name}</span>
         <span className="block font-bold text-white/85">Play {event.game} · {timeLeft(endsAt)}</span>
       </span>
     </Link>

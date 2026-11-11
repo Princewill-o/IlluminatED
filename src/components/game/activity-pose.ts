@@ -44,6 +44,28 @@ export function activityPose(
   // Work poses for the people who run the world: offices, wards, kitchens, stations and roads.
   const k = (speed: number, phase = 0) => 0.5 + 0.5 * wave(speed, phase);
   switch (activity) {
+    // Seated passengers and people waiting on benches.
+    case "sit":
+      seatedLegs();
+      set("LeftArm", -0.35, -0.08);
+      set("RightArm", -0.35, 0.08);
+      set("Head", 0.05 + sway);
+      return;
+    case "sit-read":
+      seatedLegs();
+      set("LeftArm", -0.7, -0.15);
+      set("RightArm", -0.7, 0.15);
+      set("LeftForeArm", -0.9);
+      set("RightForeArm", -0.9);
+      set("Head", 0.45);
+      return;
+    case "phone":
+      seatedLegs();
+      set("LeftArm", -0.35, -0.08);
+      set("RightArm", -0.9, 0.2);
+      set("RightForeArm", -1.5 + sway);
+      set("Head", 0.35);
+      return;
     case "laptop":
       seatedLegs();
       set("LeftArm", -0.55, -0.12);
@@ -120,6 +142,7 @@ export function activityPose(
       set("Head", 0.3);
       return;
     case "carry":
+    case "carry-walk":
       set("LeftArm", -1.0, 0.1);
       set("RightArm", -1.0, -0.1);
       set("LeftForeArm", -0.8);

@@ -27,6 +27,7 @@ import { applyGroundStyle } from "./ground-style3d";
 import { homeFurniture } from "./home-furniture";
 import { HudSlot } from "./hud";
 import { illustratedLightShader, updateIllustratedLight } from "./illustrated-light";
+import { impactEffects } from "./impact-fx";
 import { londonEye } from "./london-eye3d";
 import { addMeadow } from "./meadow3d";
 import { makeNameplate } from "./nameplate";
@@ -45,6 +46,7 @@ import { RIDE, TRAIN_CALL } from "./train-state";
 import { addUKGateways, addUKScenery, regionalTrafficClearance } from "./uk-scenery";
 import { universityLandmark } from "./university3d";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
+import { coachInterior, seatRows, seatedPerson, seeThrough } from "./vehicle-xray";
 import { riverGeometry, riverSurface } from "./water-style3d";
 
 import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
@@ -52,6 +54,7 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { paintedCar } from "@/game/core/cars";
 import { characterSpeed, locomotionClip, type LocomotionClip } from "@/game/core/character-locomotion";
 import { residentIdentity } from "@/game/core/city-social";
+import { cityWorkers } from "@/game/core/city-workers";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
@@ -69,12 +72,14 @@ import { logoFor } from "@/game/core/logos";
 import { buildLondon, cityCarParks } from "@/game/core/london";
 import type { WorldNavigation } from "@/game/core/navigation";
 import { weatherAt } from "@/game/core/needs";
+import { crowdName } from "@/game/core/npc-talk";
 import { type PetAction, parsePetTag } from "@/game/core/pets";
 import { type Pursuit, prisonGuardPositions } from "@/game/core/pursuit";
 import { PAINT_MATERIALS } from "@/game/core/realistic-cars";
 import { buildHighlands } from "@/game/core/regions";
 import { rescueFrame } from "@/game/core/rescue";
 import { commuterPhase, residentPaths, residentPose } from "@/game/core/residents";
+import { ROLE_UNIFORMS } from "@/game/core/roles";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
@@ -89,7 +94,7 @@ import { frameMapCamera, followPlayerCamera } from "@/game/core/view-framing";
 import { adaptivePixelRatio, curvedVertexShader, immersiveMotion, lowerTier, physicalSurface, populationBudget, visualProfile, type GraphicsTier } from "@/game/core/visual-quality";
 import { ROLE_TOP, workforceFor } from "@/game/core/workforce";
 import { STATION_PLATFORM_Y } from "@/game/core/world";
-import { TILE, blocked, policeBuilding, type Portal, type WorldMap } from "@/game/core/world";
+import { TILE, blocked, elevationAt, policeBuilding, type Portal, type WorldMap } from "@/game/core/world";
 
 export { NPC_SPOTS } from "./art";
 
@@ -110,6 +115,8 @@ export interface Mover3D {
   x: number;
   y: number;
   walking: boolean;
+  /** 1 when on a mezzanine or upper floor. */
+  level?: number;
   avatar: Avatar;
   car?: string | null;
   heading?: number;
@@ -1738,6 +1745,8 @@ function busModel(route: string) {
     g.userData.vehicleRig = rigVehicle(body, g.scale.y, "x");
     bendAll(body);
     body.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    // See-through: the red shell goes translucent so the decks and people show.
+    seeThrough(body, 0.42, 0.1);
     g.add(body);
   });
   // Model units: 2.8 long (front at +x), 0.66 wide, 1.14 tall.
@@ -1750,6 +1759,21 @@ function busModel(route: string) {
     s.position.set(0.7, 0.995, side * 0.337); s.rotation.y = side > 0 ? 0 : Math.PI; g.add(s);
   }
   g.scale.set(BUS_LENGTH / 2.8, 2.4, BUS_WIDTH / 0.66);
+  // The inside, in tiles (undo the body's stretch): two decks of seats, the stairs, the driver and passengers.
+  const inside = new THREE.Group();
+  inside.scale.set(1 / g.scale.x, 1 / g.scale.y, 1 / g.scale.z);
+  const seed = Array.from(route).reduce((n, c) => n * 31 + c.charCodeAt(0), 7) >>> 0;
+  const floor = (y: number, colour: string) => { const m = new THREE.Mesh(BOX, mat(colour)); m.scale.set(BUS_LENGTH - 0.4, 0.06, BUS_WIDTH - 0.2); m.position.set(0, y, 0); inside.add(m); };
+  floor(0.42, "#5b6270"); floor(1.6, "#5b6270");
+  const stairs = new THREE.Mesh(BOX, mat("#3b4a5c")); stairs.scale.set(0.9, 1.15, 0.5); stairs.position.set(-0.4, 1.0, -0.5); inside.add(stairs);
+  inside.add(seatRows({ x0: -2.3, x1: 1.4, y: 0.42, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed, fill: 0.45, skip: (x, z) => z < 0 && (Math.abs(x + 0.4) < 0.6 || Math.abs(x + 1.55) < 0.1) }));
+  // Your seat (kept free for you when you ride).
+  const mine = new THREE.Mesh(BOX, mat("#2b4fa8")); mine.scale.set(0.42, 0.12, 0.42); mine.position.set(-1.55, 0.84, -0.45); inside.add(mine);
+  inside.add(seatRows({ x0: -2.4, x1: 2.1, y: 1.6, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed: seed + 9, fill: 0.5 }));
+  const driver = seatedPerson(seed + 3, "#1f3fa8"); driver.position.set(2.25, 0.9, 0.42); inside.add(driver);
+  bendAll(inside);
+  g.add(inside);
+  g.userData.busSeat = { x: -1.55 / g.scale.x, y: 0.42, z: -0.45 };
   return g;
 }
 
@@ -2226,6 +2250,22 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
  * a full wall with sliding doors on the platform side, a low window sill on the far side,
  * moquette seats, grab poles and lights. You walk on and ride it to the next station.
  */
+/** See-through glazing for vehicles you can look (and walk) into. */
+const VEHICLE_GLASS = (() => {
+  const m = new THREE.MeshStandardMaterial({ color: "#cfe9f5", transparent: true, opacity: 0.2, roughness: 0.05, metalness: 0.1, depthWrite: false });
+  bend(m);
+  return m;
+})();
+function glassPanel(g: THREE.Group, x0: number, y0: number, z0: number, x1: number, y1: number, z1: number) {
+  const m = new THREE.Mesh(BOX, VEHICLE_GLASS);
+  m.scale.set(Math.max(0.001, x1 - x0), Math.max(0.001, y1 - y0), Math.max(0.001, z1 - z0));
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  m.renderOrder = 2;
+  m.userData.glass = true;
+  g.add(m);
+  return m;
+}
+
 function tubeTrain() {
   const g = new THREE.Group();
   const N = -1.3, S = 1.3; // platform side, far side (z, relative to the track centre)
@@ -2236,23 +2276,32 @@ function tubeTrain() {
     box(g, "#9aa1ad", x0 + 0.05, 0.12, N + 0.15, x0 + 5.95, 0.16, S - 0.15);
     box(g, "#c8b23a", x0 + 2.45, 0.161, N + 0.15, x0 + 3.55, 0.17, N + 0.45);
     // Platform-side wall: white body, blue band, windows, and a doorway with sliding doors.
+    // See-through: a solid skirt and blue band, glass above, white pillars and cant rail.
     for (const [a, b] of [[x0, x0 + 2.45], [x0 + 3.55, x0 + 6]]) {
-      box(g, "#eef0f4", a, 0.12, N, b, 2.4, N + 0.12);
+      box(g, "#eef0f4", a, 0.12, N, b, 0.45, N + 0.12);
       box(g, "#1f3fa8", a, 0.45, N - 0.02, b, 0.85, N + 0.14);
-      box(g, "#2a3346", a + 0.3, 1.3, N - 0.03, b - 0.3, 2.0, N + 0.15);
+      glassPanel(g, a, 0.85, N + 0.02, b, 2.25, N + 0.1);
+      box(g, "#eef0f4", a, 2.25, N, b, 2.4, N + 0.12);
+      for (const px of [a, b - 0.08]) box(g, "#eef0f4", px, 0.85, N, px + 0.08, 2.25, N + 0.12);
     }
     box(g, "#eef0f4", x0 + 2.45, 2.25, N, x0 + 3.55, 2.4, N + 0.12);
     for (const direction of [-1, 1]) {
       const door = new THREE.Group();
       door.position.x = x0 + 3 + direction * 0.27;
       door.userData = { slidingDoor: true, restX: door.position.x, direction };
-      box(door, "#e63b38", -0.27, 0.16, N - 0.04, 0.27, 2.25, N + 0.04);
-      box(door, "#8dc5d8", -0.18, 1.3, N - 0.06, 0.18, 2.0, N + 0.06);
+      box(door, "#e63b38", -0.27, 0.16, N - 0.04, 0.27, 0.85, N + 0.04);
+      glassPanel(door, -0.22, 0.85, N - 0.02, 0.22, 2.2, N + 0.02);
+      for (const [fx0, fx1] of [[-0.27, -0.22], [0.22, 0.27]]) box(door, "#e63b38", fx0, 0.85, N - 0.04, fx1, 2.25, N + 0.04);
       g.add(door);
     }
-    // Far side: a low sill with windows above cut away, so the camera sees in.
+    // Far side: a low sill, then glass all the way up, so the camera sees in.
     box(g, "#eef0f4", x0, 0.12, S - 0.12, x0 + 6, 0.75, S);
     box(g, "#1f3fa8", x0, 0.45, S - 0.14, x0 + 6, 0.7, S + 0.02);
+    glassPanel(g, x0, 0.75, S - 0.1, x0 + 6, 2.25, S - 0.02);
+    box(g, "#eef0f4", x0, 2.25, S - 0.12, x0 + 6, 2.4, S);
+    for (const px of [x0, x0 + 2.95, x0 + 5.92]) box(g, "#eef0f4", px, 0.75, S - 0.12, px + 0.08, 2.25, S);
+    // A glass roof: the shape of a carriage, still see-through from above.
+    glassPanel(g, x0, 2.4, N, x0 + 6, 2.45, S);
     // Carriage ends with gangway.
     for (const ex of [x0, x0 + 5.88]) { box(g, "#dfe3ea", ex, 0.12, N, ex + 0.12, 2.4, N + 0.8); box(g, "#dfe3ea", ex, 0.12, S - 0.8, ex + 0.12, 0.75, S); }
     // Moquette benches along the far side, leaving the door bay clear, and facing seats.
@@ -2865,8 +2914,32 @@ export function World3D({
       walking: boolean;
       locomotion?: LocomotionClip;
       motion?: { x: number; z: number; heading: number; speed: number };
+      shadow?: THREE.Mesh;
+      /** Rides inside a moving group (a train): animated by its own loop. */
+      aboard?: boolean;
       dispose: () => void;
     }
+    // Feet on the actual surface: pavement, road, grass, indoor floor, deck or stairs.
+    const surfaceTop = (x: number, z: number) => {
+      if (indoors) return 0.01;
+      if (ukScene) return 0.12;
+      const ch = map.tiles[Math.floor(z)]?.[Math.floor(x)];
+      return ch === undefined ? 0.12 : (GROUND[ch]?.[1] ?? (highland ? GROUND.g[1] : 0.12));
+    };
+    const groundBodies = () => {
+      const deck = map.deck;
+      for (const b of bodies) {
+        const r = b.root;
+        if (!b.char || !r.visible || r.parent !== scene) continue;
+        const y = r.position.y;
+        let lift: number;
+        if (y < 0.03) lift = surfaceTop(r.position.x, r.position.z);
+        else if (deck && y <= deck.height + 0.05 && deck.tiles[Math.floor(r.position.z)]?.[Math.floor(r.position.x)] !== undefined) lift = 0.01;
+        else lift = 0.12; // seats, vehicles and poses tuned for the old fixed offset
+        b.char.object.position.y = lift;
+        if (b.shadow) b.shadow.position.y = lift + 0.015;
+      }
+    };
     const makeBody = (a: Avatar, logo: string | null = null, ambient = false): Body => {
       const root = new THREE.Group();
       let removed = false;
@@ -2884,6 +2957,7 @@ export function World3D({
       shadow.rotation.x = -Math.PI / 2;
       shadow.position.y = 0.14;
       root.add(shadow);
+      b.shadow = shadow;
       bodies.add(b);
       const loadBody = async () => {
         if (disposed || removed) return;
@@ -2964,7 +3038,12 @@ export function World3D({
     // Your car (when driving): a Kenney model swapped in for your character.
     const carHolder = new THREE.Group();
     scene.add(carHolder);
+    // Collision graphics for anything that hits something.
+    const impacts = impactEffects(scene);
+    const onImpact = (e: Event) => { const d = (e as CustomEvent<{ x: number; y: number; strength?: number; soft?: boolean }>).detail; if (d && Number.isFinite(d.x) && Number.isFinite(d.y)) impacts.spawn(d.x, d.y, d.strength ?? 0.6, !!d.soft); };
+    window.addEventListener("illumed:impact", onImpact);
     let carLoaded: string | null = null;
+    let busSeated = false;
     let rideBike: THREE.Group | null = null;
 
     const others = new Map<string, Body & { x: number; z: number; lookKey: string; label: HTMLDivElement }>();
@@ -2998,7 +3077,8 @@ export function World3D({
         traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2))/(kinds.length/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2)) : (i * 0.173) % 1, distance: 0, speed: ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))||map.id.startsWith("road-")?15+(i%5)*1.5:map.id==="rotherhithe"?5:3.6) : [2.6, 2.8, 2.5][route] });
       });
       for (const coach of london ? COACHES.slice(0, 1) : []) {
-        const obj=coachModel(coach.id);bendAll(obj);scene.add(obj);
+        // See-through coaches: the cabin, the driver and passengers show through the glass.
+        const obj=coachModel(coach.id);obj.add(coachInterior(COACH_LENGTH,COACH_WIDTH,coach.id.length*13));seeThrough(obj,0.45,0.1);bendAll(obj);scene.add(obj);
         traffic.push({obj,route:coach.route,at:coach.at,distance:0,speed:2.4});
       }
     }
@@ -3107,13 +3187,118 @@ export function World3D({
       const body = makeBody(npcLook(90 + i), null, true); scene.add(body.root);
       return { id: pose.id, body };
     }) : [];
-    const cyclists = london ? Array.from({ length: budget.cyclists }, (_, i) => {
-      const body = makeBody(npcLook(i + 30), null, true);
-      const bike = lymeBike(["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
+    // The first riders are at work: Pizzazz delivery riders with a hot box, then parcel couriers.
+    const RIDER_JOBS = [
+      { look: ROLE_UNIFORMS["pizza-chef"], bike: "#d6452a", box: "#d6452a", stripe: "#ffffff" },
+      { look: ROLE_UNIFORMS["delivery-driver"], bike: "#2b5fd9", box: "#b98b55", stripe: "#e0c08c" },
+      { look: ROLE_UNIFORMS["pizza-chef"], bike: "#d6452a", box: "#d6452a", stripe: "#ffffff" },
+      { look: ROLE_UNIFORMS["delivery-driver"], bike: "#2b5fd9", box: "#b98b55", stripe: "#e0c08c" },
+    ];
+    const cyclists = london ? Array.from({ length: Math.max(budget.cyclists, 4) }, (_, i) => {
+      const job = RIDER_JOBS[i];
+      const body = makeBody(job ? { ...npcLook(i + 30), ...(job.look as Partial<Avatar>), hat: "hat-cap" } : npcLook(i + 30), null, true);
+      const bike = lymeBike(job?.bike ?? ["#4cd137", "#2b5fd9", "#a65cdb", "#ed8b3b"][i % 4]);
+      if (job) {
+        // A delivery box on the rear rack.
+        const box = new THREE.Mesh(BOX, mat(job.box)); box.scale.set(0.38, 0.32, 0.4); box.position.set(-0.5, 0.78, 0); box.castShadow = true; bike.add(box);
+        const band = new THREE.Mesh(BOX, mat(job.stripe)); band.scale.set(0.39, 0.06, 0.41); band.position.set(-0.5, 0.8, 0); bike.add(band);
+        const rack = new THREE.Mesh(BOX, mat("#2b2b2e")); rack.scale.set(0.42, 0.03, 0.3); rack.position.set(-0.5, 0.61, 0); bike.add(rack);
+      }
       bendAll(bike);
       scene.add(body.root, bike);
       return { body, bike, route: i % paths.length, at: i * 0.217, distance: 0, moving: false };
     }) : [];
+    // People working outside their workplaces, each with the tool of the job.
+    const crewProp = (pose: string, role: string) => {
+      const g = new THREE.Group();
+      if (pose === "sweep") {
+        const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 6), mat("#8a5a3a")); handle.position.set(0.22, 0.55, 0.32); handle.rotation.x = 0.5; g.add(handle);
+        const head = new THREE.Mesh(BOX, mat(role === "gardener" ? "#2e7d32" : "#f2c14e")); head.scale.set(0.34, 0.08, 0.1); head.position.set(0.22, 0.06, 0.58); g.add(head);
+      } else if (pose === "carry") {
+        const box = new THREE.Mesh(BOX, mat(role === "builder" ? "#c0603a" : role === "firefighter" ? "#c8322d" : "#b98b55")); box.scale.set(0.42, 0.32, 0.32); box.position.set(0, 0.78, 0.34); g.add(box);
+      } else if (pose === "clipboard") {
+        const board = new THREE.Mesh(BOX, mat("#f4efe6")); board.scale.set(0.22, 0.28, 0.03); board.position.set(0.12, 0.92, 0.3); board.rotation.x = -0.5; g.add(board);
+      } else if (pose === "serve") {
+        const stall = new THREE.Mesh(BOX, mat(role === "fisher" ? "#2b5fd9" : "#d6452a")); stall.scale.set(1.2, 0.8, 0.5); stall.position.set(0, 0.4, 0.7); g.add(stall);
+        const top = new THREE.Mesh(BOX, mat("#f4efe6")); top.scale.set(1.25, 0.05, 0.55); top.position.set(0, 0.82, 0.7); g.add(top);
+      }
+      g.traverse((o) => { o.castShadow = true; });
+      bendAll(g);
+      return g;
+    };
+    const cityCrew = london && !ukScene ? cityWorkers(map, budget.residents >= 40 ? 24 : 12).map((spot, i) => {
+      const body = makeBody({ ...npcLook(120 + i), ...(ROLE_UNIFORMS[spot.role] as Partial<Avatar> | undefined) }, null, true);
+      body.root.add(crewProp(spot.pose, spot.role));
+      body.root.position.set(spot.x, 0, spot.z);
+      body.root.rotation.y = spot.facing;
+      scene.add(body.root);
+      return { spot, body, phase: (i * 2.3) % 9, working: "" };
+    }) : [];
+    const updateCrew = (secs: number) => {
+      for (const c of cityCrew) {
+        const { spot, body } = c;
+        let x = spot.x, z = spot.z, heading = spot.facing, walking = false;
+        if (spot.beat) {
+          const walk = Math.hypot(spot.beat.x - spot.x, spot.beat.z - spot.z) / 0.8, work = 4;
+          const cycle = 2 * (walk + work), t = (secs + c.phase) % cycle;
+          const leg = (k: number, from: { x: number; z: number }, to: { x: number; z: number }) => {
+            x = from.x + (to.x - from.x) * k; z = from.z + (to.z - from.z) * k;
+            heading = Math.atan2(to.x - from.x, to.z - from.z); walking = true;
+          };
+          if (t < work) { x = spot.x; z = spot.z; }
+          else if (t < work + walk) leg((t - work) / walk, spot, spot.beat);
+          else if (t < 2 * work + walk) { x = spot.beat.x; z = spot.beat.z; }
+          else leg((t - 2 * work - walk) / walk, spot.beat, spot);
+        }
+        body.root.position.set(x, 0, z);
+        body.root.rotation.y = heading;
+        // Carriers keep the parcel while walking; everyone else downs tools to walk.
+        const want = walking ? (spot.pose === "carry" ? "carry-walk" : "walk") : spot.pose;
+        if (c.working !== want && body.char) {
+          c.working = want;
+          body.walking = walking;
+          body.char.play(want);
+          const charObject = body.char.object;
+          const prop = body.root.children.find((o) => o.type === "Group" && o !== charObject);
+          if (prop) prop.visible = !walking || spot.pose === "carry";
+        }
+      }
+    };
+    // Passengers riding the train: seated on the benches, standing by the poles, and a few
+    // walking up and down the carriages. They ride inside the train, so they move with it.
+    const trainGroup = spinners.find((o) => o.userData.train);
+    const STOPS = ["Westminster", "Bank", "Waterloo", "London Bridge", "Canary Wharf", "Brixton", "Tower Hill", "Oxford Circus", "Study Quarter"];
+    const passengers = trainGroup ? Array.from({ length: budget.residents >= 40 ? 12 : 7 }, (_, i) => {
+      const car = i % 4, x0 = car * 6.2, kind = i % 4 === 3 ? "walk" : i % 4 === 2 ? "stand" : "sit";
+      const bench = i % 8 < 4 ? [x0 + 0.6, x0 + 2.0] : [x0 + 4.0, x0 + 5.4];
+      const x = kind === "sit" ? bench[0] + ((i * 0.37) % 1) * (bench[1] - bench[0]) : x0 + 2.75 + (i % 3) * 0.25;
+      const z = kind === "sit" ? 0.92 : kind === "stand" ? -0.05 : 0.15;
+      const body = makeBody({ ...npcLook(200 + i), held: kind === "sit" && i % 3 === 0 ? "held-phone" : "held-none" }, null, true);
+      body.aboard = true;
+      body.root.position.set(x, 0.04, z);
+      body.root.rotation.y = kind === "sit" ? Math.PI : i % 2 ? Math.PI / 2 : -Math.PI / 2;
+      trainGroup.add(body.root);
+      const pose = kind === "sit" ? (i % 3 === 0 ? "phone" : i % 3 === 1 ? "sit-read" : "sit") : kind === "stand" ? "idle" : "walk";
+      return { body, kind, pose, x0, x, z, phase: i * 1.7, id: `revision-line:resident:p${i}`, name: crowdName(200 + i), heading: STOPS.filter((st) => !map.name.startsWith(st))[(i * 5) % (STOPS.length - 1)], played: "" };
+    }) : [];
+    const updatePassengers = (dt: number, secs: number) => {
+      if (!trainGroup?.visible) return;
+      for (const p of passengers) {
+        const r = p.body.root;
+        if (p.kind === "walk" && !reduce) {
+          // Up and down the aisle of their carriage.
+          const span = 4.6, t = ((secs * 0.55 + p.phase) % (2 * span));
+          const forward = t < span;
+          r.position.x = p.x0 + 0.7 + (forward ? t : 2 * span - t);
+          r.rotation.y = forward ? Math.PI / 2 : -Math.PI / 2;
+        }
+        // Like the train itself, passengers only show inside the station unless you're aboard.
+        const wx = trainGroup.position.x + r.position.x;
+        r.visible = RIDE.active || (wx > 1.6 && wx < map.cols - 1.6);
+        if (p.body.char && p.played !== p.pose) { p.played = p.pose; p.body.char.play(p.pose); }
+        p.body.char?.update(dt, reduce);
+      }
+    };
     if (london) for (let i = 0; i < 2; i++) {
       const obj = new THREE.Group();
       void placeCar(obj, ["sedan", "suv", "taxi"][i]);
@@ -3655,11 +3840,24 @@ export function World3D({
           else {
             const model = new THREE.Group();
             carHolder.add(model);
-            void placeCar(model, want === "cab" ? "taxi" : want);
+            // Your own car is see-through, so you can see yourself at the wheel.
+            void placeCar(model, want === "cab" ? "taxi" : want).then(() => seeThrough(model, 0.5, 0.12)).catch(() => {});
           }
         }
       }
-      me.root.visible = !want;
+      // On a bus you're a passenger: seen through the glass, sitting on the lower deck.
+      busSeated = !!want;
+      me.root.visible = true;
+      if (busSeated) {
+        // Bus: lower-deck seat. Car: the driver's seat (on the right, UK style).
+        const bus = want!.startsWith("bus:");
+        const seat = bus ? (carHolder.children[0]?.userData.busSeat as { x: number; y: number; z: number } | undefined) ?? { x: -1.55 / (BUS_LENGTH / 2.8), y: 0.42, z: -0.45 } : { x: -0.05, y: 0.12, z: 0.22 };
+        const yaw = carHolder.rotation.y, c = Math.cos(yaw), sn = Math.sin(yaw);
+        const sx = bus ? seat.x * (BUS_LENGTH / 2.8) : seat.x;
+        me.root.position.set(carHolder.position.x + sx * c + seat.z * sn, seat.y - 0.12, carHolder.position.z - sx * sn + seat.z * c);
+        me.root.rotation.y = yaw + Math.PI / 2;
+        if (me.char) me.char.play("sit");
+      }
       // Riding a hire bike: the bike appears under you and you sit up on it.
       const riding = !want && bikeRef.current;
       if (riding && !rideBike) {
@@ -3691,7 +3889,7 @@ export function World3D({
       if (onTrain) focus.set(camX, 0, camZ);
       cameraZoom += (zoomRef.current-cameraZoom)*(1-Math.exp(-dt*10));
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
-      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial" && !onTrain, { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : cameraZoom, true, map.kind === "hospital");
+      const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial" && !onTrain, { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : busSeated && carLoaded?.startsWith("bus:") ? cameraZoom * 0.6 : cameraZoom, true, map.kind === "hospital");
       FOCUS.value.set(framing.x, 0, framing.z);
       const view=viewRef.current;
       camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
@@ -3743,7 +3941,7 @@ export function World3D({
         if (Math.hypot(ddx, ddz) > 0.01) b.root.rotation.y = Math.atan2(ddx, ddz);
         b.x += ddx * Math.min(1, dt * 10);
         b.z += ddz * Math.min(1, dt * 10);
-        b.root.position.set(b.x, 0, b.z);
+        b.root.position.set(b.x, map.deck ? elevationAt(map, b.x * TILE, b.z * TILE, o.level ?? 0).z : 0, b.z);
         b.root.visible = !o.car;
         const labelPoint = projectedPoint.set(b.x, 1.5, b.z).project(camera);
         const labelX = (labelPoint.x + 1) * viewportWidth / 2;
@@ -4142,6 +4340,9 @@ export function World3D({
         const customerName=delivery.name.split(" · ")[0];
         NPC_SPOTS.push({id:`city:resident:pizza-${customerName.toLowerCase()}`,name:customerName,x:delivery.x,y:delivery.y});
       }
+      // Train passengers and city workers are people you can talk to (and befriend).
+      if (trainGroup?.visible) for (const p of passengers) if (p.body.root.visible) NPC_SPOTS.push({ id: p.id, name: p.name, heading: p.heading, x: (trainGroup.position.x + p.body.root.position.x) * TILE, y: (trainGroup.position.z + p.body.root.position.z) * TILE });
+      for (const c of cityCrew) NPC_SPOTS.push({ id: `city:resident:crew-${c.spot.id}`, name: crowdName(300 + cityCrew.indexOf(c)), x: c.body.root.position.x * TILE, y: c.body.root.position.z * TILE });
       ventureCharacters.forEach(({person,body})=>{
         NPC_SPOTS.push({id:`${map.id}:resident:${person.id}`,name:person.name,x:(person.x+.5)*TILE,y:(person.y+.5)*TILE});
         body.root.rotation.y=Math.atan2(me.root.position.x-body.root.position.x,me.root.position.z-body.root.position.z);
@@ -4363,7 +4564,7 @@ export function World3D({
         body.char.object.visible=indoors||overview||bodyView.intersects(bodyBounds,{x:mx,z:mz},.5);
       }
       // Animate nearby visible bodies only; distant residents still follow their routes.
-      for (const body of bodies) if (body.char && body.char.object.visible && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
+      for (const body of bodies) if (body.char && !body.aboard && body.char.object.visible && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {
         const { x, z } = body.root.position, heading = body.root.rotation.y;
         const previous = body.motion;
         const distance = previous ? Math.hypot(x - previous.x, z - previous.z) : 0;
@@ -4385,7 +4586,7 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
-      else if (me.char && now > swingUntil && !getHomeAction?.()) {
+      else if (me.char && now > swingUntil && !getHomeAction?.() && !busSeated) {
         me.locomotion=locomotionClip(p.walking,me.motion?.speed??0,me.locomotion);
         me.char.play(me.locomotion);
       }
@@ -4443,6 +4644,10 @@ export function World3D({
       if(sparks.visible){for(let i=0;i<24;i++){const angle=i*2.399,speed=1.2+(i%5)*.5;sparkPositions[i*3]=crashOrigin.x+Math.cos(angle)*crashTime*speed;sparkPositions[i*3+1]=Math.max(.05,crashOrigin.y+crashTime*(1+i%3)-crashTime*crashTime*4);sparkPositions[i*3+2]=crashOrigin.z+Math.sin(angle)*crashTime*speed;}sparksGeometry.attributes.position.needsUpdate=true;sparks.material.opacity=1-crashTime/.75;}
       renderer.info.reset();
       const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
+      impacts.update(reduce ? 0 : dt);
+      updateCrew(reduce ? 0 : secs);
+      updatePassengers(dt, secs);
+      groundBodies();
       presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now,true,!firstPaint):null);
       watchSlow(now);
       if(process.env.NODE_ENV === "development") { monitorUpdate+=renderStarted-workStarted;monitorRender+=performance.now()-renderStarted; }
@@ -4580,6 +4785,7 @@ export function World3D({
       renderer.domElement.removeEventListener("click", onClick);
       renderer.domElement.removeEventListener("wheel",onWheel); renderer.domElement.removeEventListener("touchstart", onTouchStart); renderer.domElement.removeEventListener("touchmove", onTouchMove); renderer.domElement.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("illuminated:fight", onFight);
+      window.removeEventListener("illumed:impact", onImpact); impacts.dispose();
       window.removeEventListener("illuminated:dance",dance);
       window.removeEventListener("illuminated:vehicle-crash",onCrash);
       window.removeEventListener("illuminated:civilian-attack",onCivilianAttack);

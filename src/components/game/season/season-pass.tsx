@@ -17,7 +17,7 @@ import { type Reward, SEASON, TRACK, XP_FOR, canClaim, tierFor, tierProgress } f
 function RewardChip({ r }: { r: Reward }) {
   if (r.kind === "item")
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={`/characters/chibi/${r.id}.webp`} alt="" className="mx-auto h-20 w-auto" />;
+    return <img src={r.id.startsWith("top-hero-") ? `/heroes/${r.id.slice(9)}.webp` : `/characters/chibi/${r.id}.webp`} alt="" className="mx-auto h-20 w-auto" />;
   if (r.kind === "frame") return <span className="mx-auto block size-14 rounded-2xl border-[5px] bg-white/60" style={{ borderColor: r.colour }} aria-hidden />;
   const Icon = r.kind === "boost" ? Zap : r.kind === "emote" ? Sparkles : Crown;
   return <Icon className="mx-auto size-10 text-[#5b56c8] dark:text-[#b3afff]" aria-hidden />;

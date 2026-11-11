@@ -1,14 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Bus, GraduationCap, X } from "lucide-react";
+
+
+import { VehicleJourney } from "./vehicle-journey";
 
 import { COACHES } from "@/game/core/coaches";
 import { UK_PLACES } from "@/game/core/uk-world";
 import { UNIVERSITIES } from "@/game/core/universities";
-import { cn } from "@/lib/utils";
 
+/** Rough road miles from London, for the motorway signs on the way. */
+const FROM_LONDON: Record<string, number> = { manchester: 200, birmingham: 120, leeds: 195, edinburgh: 400, glasgow: 410, bristol: 120, oxford: 60, cambridge: 60, liverpool: 215, newcastle: 280, cardiff: 150, nottingham: 130, sheffield: 170, southampton: 80, brighton: 55, york: 210, bath: 115, durham: 260, exeter: 170, leicester: 100 };
+const milesFor = (from: string, to: string) => {
+  if (from === to) return 4;
+  const key = (id: string) => Object.keys(FROM_LONDON).find((k) => id.includes(k));
+  const a = from === "city" ? 0 : FROM_LONDON[key(from) ?? ""] ?? 120, b = to === "city" ? 0 : FROM_LONDON[key(to) ?? ""] ?? 120;
+  return Math.max(30, Math.abs(a - b) || Math.round((a + b) / 3));
+};
 const cityName = (id: string) => (id === "city" ? "London" : UK_PLACES.find((p) => p.id === id)?.name.split(" · ")[0] ?? id);
 
 /**
@@ -18,23 +28,13 @@ const cityName = (id: string) => (id === "city" ? "London" : UK_PLACES.find((p) 
  */
 export function CoachTrip({ from, onGo, onClose }: { from: string; onGo: (city: string, university: string) => void; onClose: () => void }) {
   const [riding, setRiding] = useState<{ city: string; id: string; name: string } | null>(null);
-  const [progress, setProgress] = useState(0);
-  useEffect(() => {
-    if (!riding) return;
-    const start = performance.now(), length = riding.city === from ? 2200 : 4200;
-    let frame = 0;
-    const tick = (now: number) => {
-      const p = Math.min(1, (now - start) / length);
-      setProgress(p);
-      if (p < 1) frame = requestAnimationFrame(tick);
-      else onGo(riding.city, riding.id);
-    };
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [riding, from, onGo]);
   const cities = [...new Set(UNIVERSITIES.map((u) => u.city))];
   const coach = COACHES[riding ? (riding.id.length % COACHES.length) : 0];
 
+  if (riding) {
+    const miles = milesFor(from, riding.city);
+    return <VehicleJourney kind="coach" coach={coach.id} from={cityName(from)} to={riding.name} miles={miles} seconds={riding.city === from ? 9 : Math.round(14 + Math.min(16, miles / 25))} onArrive={() => onGo(riding.city, riding.id)} />;
+  }
   return (
     <div className="absolute inset-0 z-[100015] grid place-items-center bg-[#07101f]/60 p-4 backdrop-blur-sm" onPointerDown={(e) => e.stopPropagation()}>
       <section role="dialog" aria-modal="true" aria-labelledby="coach-title" className="max-h-[90%] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-white/15 bg-[#13203a]/95 p-6 text-white shadow-[0_30px_80px_rgba(0,0,0,.5)]">
@@ -68,22 +68,7 @@ export function CoachTrip({ from, onGo, onClose }: { from: string; onGo: (city: 
               ))}
             </div>
           </>
-        ) : (
-          <div className="py-4 text-center" role="status" aria-live="polite">
-            <p className="text-xs font-black tracking-[0.2em] text-[#9ec5ff] uppercase">On the coach</p>
-            <h2 className="mt-1 text-2xl font-black">{riding.name}</h2>
-            <div className="relative mx-auto mt-6 h-24 max-w-md overflow-hidden rounded-2xl bg-[#0b1220]">
-              <div className="absolute inset-x-0 bottom-5 h-1 bg-[repeating-linear-gradient(90deg,#f2d9a6_0_18px,transparent_18px_36px)]" style={{ backgroundPositionX: `${-progress * 600}px` }} />
-              <div className="absolute bottom-7 h-11 w-28 rounded-lg shadow-lg" style={{ left: `calc(${progress * 70}% + 4%)`, background: coach.body }}>
-                <span className="absolute inset-x-2 top-1.5 h-4 rounded bg-[#9fc4dc]/80" />
-                <span className="absolute inset-x-0 bottom-2 h-1.5" style={{ background: coach.accent }} />
-                <span className="absolute -bottom-1.5 left-4 size-4 rounded-full bg-[#1b1b1f]" />
-                <span className="absolute right-4 -bottom-1.5 size-4 rounded-full bg-[#1b1b1f]" />
-              </div>
-            </div>
-            <p className={cn("mt-4 text-sm text-white/70")}>{riding.city === from ? "Across town" : `${cityName(from)} → ${cityName(riding.city)}`} · {Math.round(progress * 100)}%</p>
-          </div>
-        )}
+        ) : null}
       </section>
     </div>
   );

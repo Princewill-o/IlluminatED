@@ -418,7 +418,7 @@ export const SCARY: { on: boolean; gone: Set<string> } = { on: false, gone: new 
  */
 export const AUTOPILOT: { route: { x: number; y: number }[]; leg: number; speed: number; onArrive: (() => void) | null } = { route: [], leg: 0, speed: 0, onArrive: null };
 /** Current local pedestrians, shared by both renderers and the game loop. */
-export const NPC_SPOTS: { x: number; y: number; id?: string; name?: string }[] = [];
+export const NPC_SPOTS: { x: number; y: number; id?: string; name?: string; /** Train passengers: where they're going. */ heading?: string }[] = [];
 /** Visual-only delivery props; rewards are verified by the career session server. */
 export const DELIVERY_SCENE = { active: false, carrying: false, target: null as { x: number; y: number; name: string; pickup: boolean } | null };
 

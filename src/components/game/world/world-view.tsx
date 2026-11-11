@@ -333,6 +333,7 @@ export function WorldView({
   carRef.current = car;
   const offenceCallback = useRef(onDrivingOffence);
   offenceCallback.current = onDrivingOffence;
+  const lastImpactFx = useRef(0);
   const roadCooldown = useRef(createRoadCooldown());
   const pos = useRef({ ...start.current, d: 1 as 1 | -1, walking: false, heading: arriveAt?.heading ?? 0, speed: arriveAt?.speed ?? 0 });
   const myChat = useRef<{ text: string; until: number } | null>(null);
@@ -443,7 +444,7 @@ export function WorldView({
       // Local video capture can lift the on-screen player cap (development only).
       const limit = process.env.NODE_ENV === "development" ? (window as unknown as { __crowd?: { limit?: number } }).__crowd?.limit : undefined;
       const list = limit ? [...players.current.values()].filter(rp => !hidden.has(rp.id)).sort((a, b) => Math.hypot(a.x - pos.current.x, a.y - pos.current.y) - Math.hypot(b.x - pos.current.x, b.y - pos.current.y)).slice(0, limit) : nearbyPlayers(players.current.values(), pos.current, hidden);
-      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, avatar: rp.avatar, car: rp.car, pet: rp.pet ?? null, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
+      return list.map((rp) => ({ id: rp.id, x: rp.tx, y: rp.ty, walking: rp.walking, level: rp.level, avatar: rp.avatar, car: rp.car, pet: rp.pet ?? null, heading: rp.heading, badge: rp.badge, username: rp.username, affiliation: rp.affiliation, chat: rp.chat && rp.chat.until > now ? rp.chat.text : null }));
     },
     [players, hidden],
   );
@@ -578,7 +579,9 @@ export function WorldView({
         const last = AUTOPILOT.route[AUTOPILOT.route.length - 1];
         const left = Math.hypot(last.x - p.x, last.y - p.y);
         const cruise = Math.min(200, 60 + left * 0.8);
-        AUTOPILOT.speed = pausedRef.current ? 0 : Math.min(cruise, AUTOPILOT.speed + 120 * dt);
+        // After waiting 1.5 s behind something, edge on slowly rather than stopping again.
+        const creeping = ((AUTOPILOT as { waited?: number }).waited ?? 0) >= 1.5;
+        AUTOPILOT.speed = pausedRef.current ? 0 : creeping ? Math.max(AUTOPILOT.speed, 50) : Math.min(cruise, AUTOPILOT.speed + 120 * dt);
         let travel = AUTOPILOT.speed * dt, x = p.x, y = p.y, heading = p.heading;
         while (travel > 0 && AUTOPILOT.route[AUTOPILOT.leg]) {
           const g = AUTOPILOT.route[AUTOPILOT.leg], gx = g.x - x, gy = g.y - y, d = Math.hypot(gx, gy);
@@ -587,11 +590,15 @@ export function WorldView({
           const own: TrafficVehicle = { id: "player", x: x / TILE, y: y / TILE, heading, length: BUS_LENGTH, width: BUS_WIDTH };
           const vehicles: TrafficVehicle[] = TRAFFIC_BOXES.filter((b): b is NonNullable<typeof b> => Boolean(b)).map((b, i) => ({ id: b.id ?? `solid-${i}`, x: b.x / TILE, y: b.y / TILE, heading: Math.atan2(b.dy ?? 0, b.dx ?? 1), length: Math.max(b.hw, b.hh) * 2 / TILE, width: Math.min(b.hw, b.hh) * 2 / TILE }));
           const desired = Math.min(travel, d, TILE * .15);
-          const allowed = trafficMoveDistance(own, desired / TILE, Date.now(), vehicles, NPC_SPOTS.map(n => ({ x: n.x / TILE, y: n.y / TILE }))) * TILE;
-          if (allowed < .001) { AUTOPILOT.speed = 0; break; }
+          // A bus waits for traffic and people, but never gets stuck: after a short wait it
+          // edges on at walking pace (ambient traffic gives way to it).
+          const clear = trafficMoveDistance(own, desired / TILE, Date.now(), vehicles, NPC_SPOTS.map(n => ({ x: n.x / TILE, y: n.y / TILE }))) * TILE;
+          const blocked = clear < desired - .001;
+          if (!blocked) (AUTOPILOT as { waited?: number }).waited = 0;
+          const allowed = blocked && creeping ? desired : clear;
+          if (blocked && !creeping) { (AUTOPILOT as { waited?: number }).waited = ((AUTOPILOT as { waited?: number }).waited ?? 0) + dt; AUTOPILOT.speed = 0; break; }
           x += gx / d * allowed; y += gy / d * allowed; travel -= allowed;
           if (d - allowed < .01) AUTOPILOT.leg++;
-          if (allowed < desired - .001) { AUTOPILOT.speed = 0; break; }
         }
         if (!AUTOPILOT.route[AUTOPILOT.leg]) {
           const done = AUTOPILOT.onArrive;
@@ -603,6 +610,12 @@ export function WorldView({
       const driven = sceneFrozen.current ? {x:p.x,y:p.y,heading:p.heading,speed:p.speed} : auto ?? (driving ? driveStep(map, p, { throttle: pausedRef.current ? 0 : -dy, steer: pausedRef.current ? 0 : dx, brake: pausedRef.current || k.has(" ") || gamepadBrake.current, maxSpeed: roadCruiseSpeed(map.id, speedRef.current) }, dt,
         obstacles, (impact) => { collision = impact; }) : null);
       if (collision && !pausedRef.current) {
+        // Impact effects at the front of the vehicle (sparks, debris, dust), at most every 0.35 s.
+        if (now - lastImpactFx.current > 350 && collision.speed > 20) {
+          lastImpactFx.current = now;
+          const h = driven?.heading ?? p.heading ?? 0;
+          window.dispatchEvent(new CustomEvent("illumed:impact", { detail: { x: p.x / TILE + Math.cos(h) * 1.1, y: p.y / TILE + Math.sin(h) * 1.1, strength: Math.min(1, collision.speed / 220), soft: collision.kind === "pedestrian" } }));
+        }
         const impact = crashImpact(collision.speed, collision.kind === "pedestrian");
         if (impact.damage) window.dispatchEvent(new CustomEvent("illuminated:vehicle-crash", { detail: { ...impact, speed: collision.speed } }));
       }
