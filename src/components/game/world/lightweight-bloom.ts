@@ -31,6 +31,8 @@ export class LightweightBloomPass extends Pass {
     tDiffuse: { value: null }, threshold: { value: 1.45 }, smoothWidth: { value: .15 },
   }, `uniform sampler2D tDiffuse;uniform float threshold,smoothWidth;varying vec2 vUv;
 void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;float l=dot(c,vec3(.2126,.7152,.0722));
+// A stray NaN/Inf pixel (e.g. a hot lamp highlight) would smear into a black block: drop it.
+if(!(l>=0.0&&l<1e4)){c=vec3(0.0);l=0.0;}c=min(c,vec3(24.0));
 gl_FragColor=vec4(c*smoothstep(threshold,threshold+smoothWidth,l),0.0);}`);
   private readonly horizontal = material("Bloom horizontal", {
     tBloom: { value: this.bright.texture }, stepSize: { value: new THREE.Vector2(1,0) },
@@ -42,8 +44,10 @@ void main(){gl_FragColor=vec4(blur5(tBloom,vUv,stepSize),0.0);}`);
     stepSize: { value: new THREE.Vector2(0,1) }, strength: { value: .18 },
   }, `uniform sampler2D tSource,tBloom;uniform vec2 stepSize;uniform float strength;varying vec2 vUv;
 ${gaussian}
-void main(){vec4 source=texture2D(tSource,vUv);
-gl_FragColor=vec4(source.rgb+blur5(tBloom,vUv,stepSize)*strength,source.a);}`);
+void main(){vec4 source=texture2D(tSource,vUv);vec3 glow=blur5(tBloom,vUv,stepSize)*strength;
+// Never let a stray NaN pixel through to the screen.
+if(!(dot(source.rgb,vec3(1.0))>-1.0))source.rgb=vec3(0.0);if(!(dot(glow,vec3(1.0))>-1.0))glow=vec3(0.0);
+gl_FragColor=vec4(source.rgb+glow,source.a);}`);
   private readonly quad = new FullScreenQuad(this.highPass);
   private disposed = false;
 

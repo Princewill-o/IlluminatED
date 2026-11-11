@@ -65,7 +65,7 @@ async function buildBlockyCharacter(a:Avatar,height:number,workplaceLogo:string|
   const head=bone(object,'Head'),hand=bone(object,'RightHand');
   const extraMaterials=new Set<THREE.Material>();
   if(head){
-    const hat=a.hat==='hat-none'?null:hat3d(a.hat,outfitColours(a).top);if(hat){hat.scale.setScalar(.36);hat.position.set(0,.12,0);hat.name='avatar-headwear';head.add(hat);hat.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){geometries.add(m.geometry);const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(x=>extraMaterials.add(x));}});}
+    const hat=a.hat==='hat-none'?null:hat3d(a.hat,outfitColours(a).top);if(hat){/* Sized for the blocky head: wide enough to sit over it, base just above the brow. */hat.scale.setScalar(.8);hat.position.set(0,.45,0);hat.name='avatar-headwear';head.add(hat);hat.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){geometries.add(m.geometry);const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(x=>extraMaterials.add(x));}});}
     const glasses=eyewear3d(a.face,'#1b1622');if(glasses){glasses.scale.setScalar(.3);glasses.position.set(0,.02,.14);glasses.name='avatar-eyewear';head.add(glasses);glasses.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){geometries.add(m.geometry);const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(x=>extraMaterials.add(x));}});}
   }
   const held=held3d(a.held);if(held&&hand){held.scale.setScalar(.2);held.position.set(0,-.07,.04);held.name='avatar-held-item';hand.add(held);held.traverse(o=>{const m=o as THREE.Mesh;if(m.isMesh){geometries.add(m.geometry);const mats=Array.isArray(m.material)?m.material:[m.material];mats.forEach(x=>extraMaterials.add(x));}});}

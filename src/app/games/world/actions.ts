@@ -295,7 +295,7 @@ export async function consumePantryItem(item: string) {
 }
 
 // ── IllumED World: player worlds ─────────────────────────────────────────────
-export type WorldRules = { police: "off" | "relaxed" | "normal" | "strict"; flight: "off" | "owner" | "everyone"; time: "auto" | "day" | "dusk" | "night"; weather: "auto" | "clear" | "rain" | "snow"; visitors: "everyone" | "friends" };
+export type WorldRules = { police: "off" | "relaxed" | "normal" | "strict"; flight: "off" | "owner" | "everyone"; time: "auto" | "day" | "dusk" | "night"; weather: "auto" | "clear" | "rain" | "snow" | "storm" | "fog"; visitors: "everyone" | "friends" };
 export type PlayerWorld = { owner: string; code: string; name: string; icon: string; settings: WorldRules; owner_name?: string };
 const WORLD_ERRORS: Record<string, string> = {
   plus_only: "Building your own world is part of IlluminatED Plus.",

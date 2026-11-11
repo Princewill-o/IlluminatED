@@ -348,6 +348,8 @@ export type CameraMode = "follow" | "wide" | "overhead" | "behind" | "first";
  */
 export const CAMERA_VIEW = { mode: "follow" as CameraMode, yaw: Math.PI, pitch: -0.08 };
 export const steersByLook = () => CAMERA_VIEW.mode === "behind" || CAMERA_VIEW.mode === "first";
+/** The weather right now where you are (set by the 3D world; read by the HUD and your clothes). */
+export const WEATHER_NOW = { kind: "Sunny", temp: 12, outdoors: true };
 export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 /**
@@ -358,7 +360,7 @@ export const WORLD_RULES = {
   police: "normal" as "off" | "relaxed" | "normal" | "strict",
   flight: "off" as "off" | "owner" | "everyone",
   time: "auto" as "auto" | "day" | "dusk" | "night",
-  weather: "auto" as "auto" | "clear" | "rain" | "snow",
+  weather: "auto" as "auto" | "clear" | "rain" | "snow" | "storm" | "fog",
   owner: false,
   fly: false,
 };

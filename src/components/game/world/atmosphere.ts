@@ -42,10 +42,13 @@ export function createAtmosphere(scene: THREE.Scene, phase: EnvironmentPhase) {
   sky.frustumCulled = false; sky.renderOrder = -10000;
   scene.add(sky);
   const colour = new THREE.Color();
-  const update = (next: EnvironmentPhase, haze: number, dt: number) => {
+  const tinted = new THREE.Color();
+  /** `tint` washes the sky toward a weather colour (white for snow, grey for rain). */
+  const update = (next: EnvironmentPhase, haze: number, dt: number, tint?: { colour: string; amount: number }) => {
     const tone = environmentPalette(next), blend = dt === Infinity ? 1 : 1-Math.exp(-Math.min(.1,dt)*1.5);
-    atmosphere.centre.value.lerp(colour.set(tone.fog), blend);
-    atmosphere.edge.value.lerp(colour.set(tone.fogEdge), blend);
+    if (tint) tinted.set(tint.colour);
+    atmosphere.centre.value.lerp(tint ? colour.set(tone.fog).lerp(tinted, tint.amount) : colour.set(tone.fog), blend);
+    atmosphere.edge.value.lerp(tint ? colour.set(tone.fogEdge).lerp(tinted, tint.amount * .8) : colour.set(tone.fogEdge), blend);
     if (scene.background instanceof THREE.Color) scene.background.copy(atmosphere.centre.value);
     if (scene.fog instanceof THREE.Fog) {
       scene.fog.color.copy(atmosphere.centre.value);

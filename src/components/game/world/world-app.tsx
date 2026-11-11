@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, HeartHandshake, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
-import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WEATHER_NOW, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
@@ -108,6 +108,7 @@ import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } 
 import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
 import { universityById } from "@/game/core/universities";
 import { venueMap } from "@/game/core/venues";
+import { GEAR_MESSAGE, weatherGear, weatherReason } from "@/game/core/weather-gear";
 import {
   CITY, ventureMap,
   universityInteriorMap, supermarketMap,
@@ -374,6 +375,21 @@ export function WorldApp({
   const closeEventGame = useCallback(() => { setEventGame(null); router.refresh(); }, [router]);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
+  // Dress for the weather: a coat (and a beanie in the snow) goes on outdoors when it's wet or cold.
+  const [weatherNow, setWeatherNow] = useState({ kind: WEATHER_NOW.kind, temp: WEATHER_NOW.temp, outdoors: WEATHER_NOW.outdoors, dress: true });
+  useEffect(() => {
+    const read = () => { let dress = true; try { dress = localStorage.getItem("weather-clothes") !== "off"; } catch { /* private mode */ } setWeatherNow({ kind: WEATHER_NOW.kind, temp: WEATHER_NOW.temp, outdoors: WEATHER_NOW.outdoors, dress }); };
+    read();
+    window.addEventListener("illumed:weather", read);
+    return () => window.removeEventListener("illumed:weather", read);
+  }, []);
+  const gear = weatherNow.dress && weatherNow.outdoors ? weatherGear(me.avatar, weatherNow.kind, weatherNow.temp) : null;
+  const gearReason = gear ? weatherReason(weatherNow.kind, weatherNow.temp) : null;
+  const lastGear = useRef<string | null>(null);
+  useEffect(() => {
+    if (gearReason && gearReason !== lastGear.current) say(GEAR_MESSAGE[gearReason]);
+    lastGear.current = gearReason;
+  }, [gearReason]); // eslint-disable-line react-hooks/exhaustive-deps
   // A street disagreement close by that you could help calm down.
   const [dispute, setDispute] = useState<{ index: number; id: string } | null>(null);
   const [disputeOpen, setDisputeOpen] = useState<{ index: number; id: string } | null>(null);
@@ -1480,7 +1496,7 @@ export function WorldApp({
         onChangeServer={() => { if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity before changing servers."); else setServer(null); }}
         onDrivingOffence={drivingOffence}
         ads={events}
-        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : patrol ? { ...me, avatar: { ...me.avatar, top: "top-blocky-police-navy", bottom: "bottom-blocky-police-navy", shoes: "shoes-blocky-police-navy", hat: "hat-cap", held: "held-none" } } : roleShift && ROLE_UNIFORMS[roleShift.role.id] ? {...me,avatar:{...me.avatar,...(ROLE_UNIFORMS[roleShift.role.id] as Partial<typeof me.avatar>)}} : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : me}
+        me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : patrol ? { ...me, avatar: { ...me.avatar, top: "top-blocky-police-navy", bottom: "bottom-blocky-police-navy", shoes: "shoes-blocky-police-navy", hat: "hat-cap", held: "held-none" } } : roleShift && ROLE_UNIFORMS[roleShift.role.id] ? {...me,avatar:{...me.avatar,...(ROLE_UNIFORMS[roleShift.role.id] as Partial<typeof me.avatar>)}} : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : gear ? {...me,avatar:{...me.avatar,...gear}} : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
         car={hop ? `bus:${hop.route}` : driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}

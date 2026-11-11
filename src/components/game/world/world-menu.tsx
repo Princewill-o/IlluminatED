@@ -74,7 +74,7 @@ export function RulesEditor({ rules, onChange }: { rules: WorldRules; onChange: 
       <Segmented label="Police" value={rules.police} onChange={(police) => onChange({ ...rules, police })} options={[["off", "Off"], ["relaxed", "Relaxed"], ["normal", "Normal"], ["strict", "Strict"]]} />
       <Segmented label="Who can fly" value={rules.flight} onChange={(flight) => onChange({ ...rules, flight })} options={[["off", "Nobody"], ["owner", "Just me"], ["everyone", "Everyone"]]} />
       <Segmented label="Time of day" value={rules.time} onChange={(time) => onChange({ ...rules, time })} options={[["auto", "Live"], ["day", "Day"], ["dusk", "Dusk"], ["night", "Night"]]} />
-      <Segmented label="Weather" value={rules.weather} onChange={(weather) => onChange({ ...rules, weather })} options={[["auto", "Live"], ["clear", "Clear"], ["rain", "Rain"], ["snow", "Snow"]]} />
+      <Segmented label="Weather" value={rules.weather} onChange={(weather) => onChange({ ...rules, weather })} options={[["auto", "Live"], ["clear", "Clear"], ["rain", "Rain"], ["storm", "Storm"], ["snow", "Snow"], ["fog", "Fog"]]} />
       <Segmented label="Visitors" value={rules.visitors} onChange={(visitors) => onChange({ ...rules, visitors })} options={[["everyone", "Everyone"], ["friends", "Friends only"]]} />
     </div>
   );

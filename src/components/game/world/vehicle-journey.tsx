@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { Bus, FastForward, MessageCircle } from "lucide-react";
 import * as THREE from "three";
 
+import { WEATHER_NOW } from "./art";
 import { coachModel } from "./coach3d";
 import { NpcTalk } from "./npc-talk";
 import { coachInterior, ownMaterials, seatRows, seatedPerson, seeThrough } from "./vehicle-xray";
+import { createWeatherFx, isSnow, surfaceWeatherShader, weatherLook } from "./weather-fx";
 
 import { COACH_LENGTH, COACH_WIDTH, type CoachId } from "@/game/core/coaches";
 import { crowdName } from "@/game/core/npc-talk";
@@ -47,15 +49,19 @@ export function VehicleJourney({ kind, from, to, miles, seconds, coach = "nation
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     host.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
-    const sky = motorway ? "#a8d4f0" : "#c9dbe8";
+    // Same weather as where you set off: rain, snow, storms or fog on the road too.
+    const kind = WEATHER_NOW.kind, look = weatherLook(kind);
+    const sky = isSnow(kind) ? "#dfe6ee" : look.storm ? "#6f7786" : look.rain ? "#a3adba" : kind === "Fog" ? "#cfd5da" : motorway ? "#a8d4f0" : "#c9dbe8";
     scene.background = new THREE.Color(sky);
-    scene.fog = new THREE.Fog(sky, 30, 85);
+    scene.fog = new THREE.Fog(sky, kind === "Fog" ? 12 : look.rain || look.snow ? 22 : 30, kind === "Fog" ? 45 : look.rain || look.snow ? 65 : 85);
     scene.add(new THREE.HemisphereLight("#ffffff", "#7a9a5a", 1.6));
-    const sun = new THREE.DirectionalLight("#fff3dc", 2.2); sun.position.set(8, 14, 10); scene.add(sun);
+    const sun = new THREE.DirectionalLight("#fff3dc", look.storm ? .9 : look.rain ? 1.3 : 2.2); sun.position.set(8, 14, 10); scene.add(sun);
+    const fx = createWeatherFx(scene, { tier: "balanced", focus: { value: new THREE.Vector3() }, bend: { value: new THREE.Vector2(0, 0) } });
+    const hemiLight = scene.children.find((o) => (o as THREE.HemisphereLight).isHemisphereLight) as THREE.HemisphereLight | undefined;
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
 
     const mats = new Map<string, THREE.MeshStandardMaterial>();
-    const mat = (c: string) => { let m = mats.get(c); if (!m) { m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, flatShading: true }); mats.set(c, m); } return m; };
+    const mat = (c: string) => { let m = mats.get(c); if (!m) { m = new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, flatShading: true }); m.onBeforeCompile = (sh) => surfaceWeatherShader(sh); mats.set(c, m); } return m; };
     const ink = new THREE.MeshBasicMaterial({ color: "#000000", side: THREE.BackSide });
     const geos: THREE.BufferGeometry[] = [];
     // Low-poly pieces with the game's black outline (an inked back-face shell).
@@ -217,6 +223,9 @@ export function VehicleJourney({ kind, from, to, miles, seconds, coach = "nation
       camera.position.set(-2.5 + sway, kind === "coach" ? 4.6 : 4.2, 12.5);
       camera.lookAt(0.6, kind === "coach" ? 1.6 : 1.3, 1.6);
       vehicle.position.y = reduce ? 0 : Math.abs(Math.sin(now / 160)) * 0.02;
+      // Rain and snow stream past at road speed (the vehicle stays put; the world moves).
+      fx.update({ kind, camera, x: 0, z: 2, dt, secs: (now - start) / 1000, night: 0, reduced: reduce, pixelRatio: renderer.getPixelRatio() * host.clientHeight / 720, indoors: false, travel: reduce ? 0 : speed });
+      if (hemiLight) hemiLight.intensity = 1.6 + fx.flash * 2;
       renderer.render(scene, camera);
       if (t >= 1 && !done.current) { done.current = true; finish.current(); return; }
       raf = requestAnimationFrame(tick);
@@ -225,7 +234,7 @@ export function VehicleJourney({ kind, from, to, miles, seconds, coach = "nation
     return () => {
       cancelAnimationFrame(raf); ro.disconnect();
       scene.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh || (o as THREE.Sprite).isSprite) { const mm = m.material; (Array.isArray(mm) ? mm : [mm]).forEach((x) => { (x as THREE.MeshBasicMaterial).map?.dispose(); x.dispose(); }); } });
-      geos.forEach((g) => g.dispose()); signTex.dispose(); renderer.dispose(); renderer.domElement.remove();
+      fx.dispose(); geos.forEach((g) => g.dispose()); signTex.dispose(); renderer.dispose(); renderer.domElement.remove();
     };
   }, [kind, coach, route, from, to, miles, seconds, motorway]);
 

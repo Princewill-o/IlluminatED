@@ -12,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAMERA_VIEW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -49,6 +49,7 @@ import { universityLandmark } from "./university3d";
 import { animateVehicle, disposeVehicle, rigVehicle } from "./vehicle-animation";
 import { coachInterior, seatRows, seatedPerson, seeThrough } from "./vehicle-xray";
 import { riverGeometry, riverSurface } from "./water-style3d";
+import { createWeatherFx, isRain, isSnow, surfaceWeatherShader } from "./weather-fx";
 
 import { hospitalAsset, freeCityAsset, hospitalBeds } from "@/game/core/additional-world-assets";
 import type { WorldAffiliation } from "@/game/core/affiliation";
@@ -130,6 +131,8 @@ export interface Mover3D {
 const FOCUS = { value: new THREE.Vector3() };
 /** Curvature (z, x): strong outdoors, off indoors. */
 const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
+/** ?weather= on the local showcase route, for screenshots of every kind. */
+const PREVIEW_WEATHER: Record<string, string> = { clear: "Sunny", sunny: "Sunny", cloudy: "Cloudy", windy: "Windy", fog: "Fog", drizzle: "Drizzle", rain: "Light rain", "heavy-rain": "Heavy rain", storm: "Thunderstorm", snow: "Snow", "heavy-snow": "Heavy snow" };
 const VIEWS: CameraMode[] = ["follow", "wide", "overhead", "behind", "first"];
 const VIEW_NAMES: Record<CameraMode, string> = { follow: "Follow", wide: "Wide", overhead: "Top-down", behind: "Behind", first: "First person" };
 const VIEW_HINTS: Record<CameraMode, string> = { follow: "The usual angled view", wide: "Further out, see more around you", overhead: "Look straight down on the streets", behind: "Over your shoulder, steer by looking", first: "Through your own eyes" };
@@ -144,7 +147,12 @@ function bend(m: THREE.Material) {
     prepare.call(m, sh, renderer);
     sh.uniforms.uFocus = FOCUS;
     sh.uniforms.uBend = BEND;
-    if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) illustratedLightShader(sh);
+    if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshLambertMaterial) {
+      illustratedLightShader(sh);
+      // Snow settles and rain wets every lit surface (people stay as they are).
+      if (m.userData.weatherProof) sh.defines = { ...(sh.defines ?? {}), WEATHER_PROOF: "" };
+      surfaceWeatherShader(sh);
+    }
     atmosphereShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
     sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
@@ -156,7 +164,7 @@ function bend(m: THREE.Material) {
       diffuseColor.rgb *= 0.94 + 0.12 * fract(sin(dot(floor(normal * 6.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
       #endif`);
   };
-  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v6`;
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v7${m.userData.weatherProof ? ":dry" : ""}`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -2830,23 +2838,8 @@ export function World3D({
     }
     let nextBroadcast = 0;
     let nextWeather = 0;
-    const precipitationGeometry = new THREE.BufferGeometry();
-    const precipitationPositions = new Float32Array(180 * 3);
-    precipitationGeometry.setAttribute("position", new THREE.BufferAttribute(precipitationPositions, 3));
-    const precipitationMaterial = new THREE.PointsMaterial({ color: "#dce9ee", size: 0.055, transparent: true, opacity: 0.65, depthWrite: false });
-    const precipitationSnow = {value:0};
-    precipitationMaterial.onBeforeCompile = shader => {
-      shader.uniforms.uPrecipitationSnow=precipitationSnow;
-      shader.fragmentShader=shader.fragmentShader.replace("#include <common>","#include <common>\nuniform float uPrecipitationSnow;")
-        .replace("#include <color_fragment>",`#include <color_fragment>
-          vec2 rainPoint=(gl_PointCoord-.5)*2.0;
-          rainPoint.x*=mix(4.0,1.0,uPrecipitationSnow);
-          diffuseColor.a*=1.0-smoothstep(.25,1.0,length(rainPoint));`);
-    };
-    bend(precipitationMaterial);
-    const precipitation = new THREE.Points(precipitationGeometry, precipitationMaterial);
-    precipitation.frustumCulled = false; precipitation.visible = false;
-    scene.add(precipitation);
+    const weatherFx = createWeatherFx(scene, { tier: graphics, focus: FOCUS, bend: BEND });
+    if (indoors && WEATHER_NOW.outdoors) { WEATHER_NOW.outdoors = false; window.dispatchEvent(new Event("illumed:weather")); }
     let weatherKind = "Sunny";
     const pixelTrees=london?pixelTreePlans(map):[];
     for(const detail of pixelTrees){
@@ -2984,6 +2977,7 @@ export function World3D({
         if (disposed || removed) return;
         const c = await buildCharacter(a, playerHeight, logo, { outfit: !ambient || budget.outfits });
         if (disposed || removed) { c.dispose(); return; }
+        c.object.traverse(node => { const mm = (node as THREE.Mesh).material; if (mm) (Array.isArray(mm) ? mm : [mm]).forEach(x => { x.userData.weatherProof = true; }); });
         bendAll(c.object);
         if(ambient)c.object.traverse(node=>{if((node as THREE.Mesh).isMesh)node.castShadow=false;});
         c.object.position.y = 0.12;
@@ -3780,6 +3774,8 @@ export function World3D({
     const lastMe = new THREE.Vector3();
     const projectedPoint = new THREE.Vector3();
     const lightingColour = new THREE.Color();
+    const weatherTint = new THREE.Color();
+    let ambientBase = ambient.intensity, hemiBase = hemi.intensity;
     let first = true;
     let lastView: CameraMode = viewRef.current;
     let cameraZoom = zoomRef.current;
@@ -3816,11 +3812,12 @@ export function World3D({
       }
       if (!renderDue(now)) { raf = requestAnimationFrame(frame); return; }
       const workStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
-      const dt = Math.min(0.05, (now - last) / 1000);
-      last = now;
+      // Never step backwards: a frame stamped before the last one would push eased lights negative.
+      const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
+      last = Math.max(last, now);
       const secs = (now - start) / 1000;
       navigationTrail.update(navigationRef.current,secs,reduce);
-      updateIllustratedLight(phase, indoors);
+      { const wl = weatherLighting(weatherKind); updateIllustratedLight(phase, indoors, { gloom: wl.overcast ? Math.min(1, (1 - wl.sun) * 1.6) : 0, snow: weatherFx.snowCover, flash: weatherFx.flash }); }
       river.update(reduce ? 0 : secs, reduce ? 0 : weatherLighting(weatherKind).rain);
       streetscape?.userData.update?.(reduce ? 0 : secs);
       meadow?.userData.animate?.(reduce ? 0 : secs);
@@ -3857,21 +3854,27 @@ export function World3D({
         const night = phase === "night";
         const weather = weatherLighting(weatherKind);
         const tone = skyColours(phase);
-        atmosphere?.update(phase,weather.haze,dt);
+        atmosphere?.update(phase,weather.haze,dt,isSnow(weatherKind)?{colour:phase==="night"?"#3a4566":"#e6ecf3",amount:.55}:weather.overcast&&!weather.haze?{colour:phase==="night"?"#1d2333":"#b9c0ca",amount:(1-weather.sun)*.8}:weatherKind==="Fog"?{colour:phase==="night"?"#2a3044":"#d3d8dc",amount:.6}:undefined);
         atmosphere?.resize(viewportWidth*renderer.getPixelRatio(),viewportHeight*renderer.getPixelRatio());
         presentation.setAtmosphere(phase,weather.overcast);
         if (scene.environment) scene.environmentIntensity += (tone.environment - scene.environmentIntensity) * blend;
-        ambient.intensity += (tone.ambient - ambient.intensity) * blend;
-        hemi.intensity += (tone.hemisphere - hemi.intensity)*blend;
-        hemi.color.lerp(lightingColour.set(tone.sky), blend);
+        // Lightning lifts the fill light for a moment on top of the eased base level.
+        const lightning = weatherFx.flash;
+        ambientBase += (tone.ambient * weather.fill - ambientBase) * blend;
+        hemiBase += (tone.hemisphere * weather.fill - hemiBase) * blend;
+        ambient.intensity = ambientBase + lightning * .9;
+        hemi.intensity = hemiBase + lightning * 1.4;
+        // Grey days and storms wash the colour out of the sky light; snow makes it bright and cool.
+        hemi.color.lerp(lightingColour.set(tone.sky).lerp(weatherTint.set(isSnow(weatherKind) ? "#e4ecf7" : "#a5adba"), isSnow(weatherKind) ? .45 : weather.overcast ? (1 - weather.sun) * .9 : 0), blend);
         hemi.groundColor.lerp(lightingColour.set(tone.ground), blend);
         sun.color.lerp(lightingColour.set(tone.sun), blend);
         const strength = tone.sunPower * (night ? 1 : weather.sun);
         sun.intensity += (strength - sun.intensity) * blend;
-        lampLights.forEach(light => { light.intensity += (tone.glow*12 - light.intensity) * blend; });
+        // Lamps glow brighter on wet or snowy evenings (light bouncing off puddles and snow).
+        lampLights.forEach(light => { light.intensity = Math.max(0, light.intensity + (tone.glow * (weather.rain || isSnow(weatherKind) ? 15 : 12) - light.intensity) * blend); });
         ambience?.update(secs,mx,mz,camera,tone.glow,reduce,dt);
         updateArchitecture(phase,weather.wetness,dt);
-        if(groundSurface) groundSurface.roughness += ((weather.wetness>.5?.38:.86)-groundSurface.roughness)*blend;
+        if(groundSurface) groundSurface.roughness += ((weather.wetness>.5?.3:.86)-groundSurface.roughness)*blend;
         river.material.color.lerp(lightingColour.set(night ? "#63848b" : "#a3c7bf"), blend);
       }
       if (!indoors && now >= nextWeather) {
@@ -3879,24 +3882,18 @@ export function World3D({
         // Scope capture overrides to the offline development route. WorldApp
         // refreshes the global world rules after mounting, so a parent mutation
         // cannot reliably select weather for screenshots.
-        const weatherRule = previewWeather === "clear" || previewWeather === "rain" || previewWeather === "snow" ? previewWeather : WORLD_RULES.weather;
-        weatherKind = weatherRule === "clear" ? "Sunny" : weatherRule === "rain" ? "Light rain" : weatherRule === "snow" ? "Snow" : weatherAt(new Date()).kind;
-        precipitation.visible = !reduce && ["Light rain", "Drizzle", "Snow"].includes(weatherKind);
-        precipitationMaterial.size = weatherKind === "Snow" ? 0.09 : 0.045;
-        precipitationSnow.value = weatherKind === "Snow" ? 1 : 0;
-      }
-      if (precipitation.visible) {
-        const speed = weatherKind === "Snow" ? 1.2 : 8;
-        // Keep every drop well below and in front of the close camera: a drop
-        // next to the lens renders as a huge pale square that washes out the view.
-        const top = Math.max(2.5, Math.min(12, camera.position.y - 3));
-        for (let i = 0; i < 180; i++) {
-          precipitationPositions[i * 3] = mx + ((i * 7.13 + secs * 0.4) % 24) - 12;
-          precipitationPositions[i * 3 + 1] = top - ((secs * speed + i * 0.37) % top);
-          precipitationPositions[i * 3 + 2] = mz + ((i * 3.71) % 18) - 13;
+        const rule = WORLD_RULES.weather;
+        const live = weatherAt(new Date());
+        const RULE_KIND: Record<string, string> = { clear: "Sunny", rain: "Light rain", snow: "Snow", storm: "Thunderstorm", fog: "Fog" };
+        weatherKind = (previewWeather && PREVIEW_WEATHER[previewWeather]) || RULE_KIND[rule] || live.kind;
+        // A chosen weather brings its own temperature (a sunny world isn't freezing because the live forecast is snow).
+        const temp = weatherKind === live.kind ? live.temp : isSnow(weatherKind) ? Math.min(1, live.temp) : isRain(weatherKind) ? Math.min(Math.max(live.temp, 7), 12) : Math.max(live.temp, isSnow(live.kind) ? 9 : live.temp);
+        if (WEATHER_NOW.kind !== weatherKind || WEATHER_NOW.temp !== temp || !WEATHER_NOW.outdoors) {
+          Object.assign(WEATHER_NOW, { kind: weatherKind, temp, outdoors: true });
+          window.dispatchEvent(new Event("illumed:weather"));
         }
-        precipitationGeometry.attributes.position.needsUpdate = true;
       }
+      weatherFx.update({ kind: weatherKind, camera, x: mx, z: mz, dt, secs, night: phase === "night" ? 1 : phase === "dusk" ? .35 : 0, reduced: reduce, pixelRatio: renderer.getPixelRatio() * viewportHeight / 720, indoors });
       if (lampLights.length && now >= nextLampUpdate) {
         nextLampUpdate = now + 500;
         const nearest = [...lamps].sort((a, b) =>
@@ -4947,7 +4944,7 @@ export function World3D({
       sun.shadow.map?.dispose();
       renderer.dispose();
       broadcastTexture.dispose(); broadcastMaterial.dispose();
-      precipitationGeometry.dispose(); precipitationMaterial.dispose();
+      weatherFx.dispose();
       river.dispose();
       disposeGroundStyle();
       disposeArchitecture();

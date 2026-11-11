@@ -80,13 +80,27 @@ export function illustratedLightShader(
     );
 }
 
-const SHADOW = { day: "#9182d6", dusk: "#9253b4", night: "#606da8" };
-const SUN = { day: "#ffd2c2", dusk: "#ffad88", night: "#8d9fe2" };
+// Sunlit and shaded tones per time of day. Night is properly dark so lamps and windows glow.
+const SHADOW = { day: "#8f86d0", dusk: "#7a4fa8", night: "#262f5c" };
+const SUN = { day: "#fff0dc", dusk: "#ffae80", night: "#5b6db4" };
+const lit = new THREE.Color(), shade = new THREE.Color(), grey = new THREE.Color();
+/**
+ * `gloom` (0..1) flattens the light on grey, wet days; `snow` brightens and cools it
+ * (fresh snow bounces light back up into the shadows).
+ */
 export function updateIllustratedLight(
   phase: "day" | "dusk" | "night",
   indoors: boolean,
+  weather: { gloom?: number; snow?: number; flash?: number } = {},
 ) {
+  const gloom = weather.gloom ?? 0, snow = weather.snow ?? 0, flash = weather.flash ?? 0;
   illustratedLight.strength.value = indoors ? 0 : 0.62;
-  illustratedLight.shadow.value.set(SHADOW[phase]);
-  illustratedLight.lit.value.set(SUN[phase]);
+  lit.set(SUN[phase]); shade.set(SHADOW[phase]);
+  // Overcast: sun and shade converge on a soft grey (no hard sunny contrast).
+  grey.copy(lit).lerp(shade, .55).lerp(new THREE.Color(phase === "night" ? "#2a3150" : "#a7adbd"), .5);
+  lit.lerp(grey, gloom * .75); shade.lerp(grey, gloom * .45);
+  if (snow) { lit.lerp(new THREE.Color(phase === "night" ? "#7d8fc8" : "#f2f6ff"), snow * .5); shade.lerp(new THREE.Color(phase === "night" ? "#3b4878" : "#a9b6e0"), snow * .5); }
+  if (flash) { lit.lerp(new THREE.Color("#eef2ff"), flash); shade.lerp(new THREE.Color("#c9d2f5"), flash); }
+  illustratedLight.shadow.value.copy(shade);
+  illustratedLight.lit.value.copy(lit);
 }

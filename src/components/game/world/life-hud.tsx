@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudRain, MapPin, Sun } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudRainWind, CloudSnow, MapPin, Snowflake, Sun, Wind } from "lucide-react";
 
+import { WEATHER_NOW } from "./art";
 import { HudSlot } from "./hud";
 import { useNeeds } from "./use-needs";
 
@@ -33,14 +34,24 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   const { needs, last } = useNeeds();
   const [now, setNow] = useState<Date | null>(null);
   const [open, setOpen] = useState(false);
+  const [weatherTick, setWeatherTick] = useState(0);
+  const [dressed, setDressed] = useState(true);
+  useEffect(() => { try { setDressed(localStorage.getItem("weather-clothes") !== "off"); } catch { /* private mode */ } }, []);
+  useEffect(() => {
+    const on = () => setWeatherTick((n) => n + 1);
+    window.addEventListener("illumed:weather", on);
+    return () => window.removeEventListener("illumed:weather", on);
+  }, []);
   useEffect(() => {
     setNow(new Date());
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
   if (!now || !needs) return null;
-  const w = weatherAt(now);
-  const WIcon = w.kind === "Light rain" ? CloudRain : w.kind === "Drizzle" ? CloudDrizzle : w.kind === "Cloudy" ? Cloud : Sun;
+  // What the world is actually showing (a world owner can pick the weather), else the live forecast.
+  void weatherTick;
+  const w = WEATHER_NOW.kind ? { kind: WEATHER_NOW.kind, temp: WEATHER_NOW.temp } : weatherAt(now);
+  const WIcon = { "Light rain": CloudRain, Drizzle: CloudDrizzle, "Heavy rain": CloudRainWind, Thunderstorm: CloudLightning, Snow: CloudSnow, "Heavy snow": Snowflake, Fog: CloudFog, Windy: Wind, Cloudy: Cloud }[w.kind] ?? Sun;
   const hint = nextHint(needs);
   const todo = quests.filter((q) => !q.done).length;
 
@@ -100,6 +111,10 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
             <p className="mb-2 text-xs font-black">Game forecast</p>
             {weatherForecast(now).map(item => <p key={item.at} className="flex justify-between py-1 text-[11px]"><span>{item.label}</span><span>{item.kind} · {item.temp}°C</span></p>)}
             <p className="mt-2 text-[10px] text-[#5a6272]">Shared simulated weather · changes every 3 minutes</p>
+            <label className="mt-2 flex items-center gap-2 border-t border-[#d4c7ad] pt-2 text-[11px] font-bold">
+              <input type="checkbox" checked={dressed} onChange={(e) => { try { localStorage.setItem("weather-clothes", e.target.checked ? "on" : "off"); } catch { /* private mode */ } setDressed(e.target.checked); window.dispatchEvent(new Event("illumed:weather")); }} className="size-4 accent-[#2b5fd9]" />
+              Dress for the weather (coat in rain, snow and cold)
+            </label>
           </div>
         </details>
         <div className={cn(card, "px-3 py-1.5")}>
