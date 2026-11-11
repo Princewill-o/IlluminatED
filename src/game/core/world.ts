@@ -886,7 +886,7 @@ export function londonMap(): WorldMap {
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
   // Shops are walk-in: go inside to the checkout (venues.ts).
-  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tescow Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tescow Express" } });
   if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
@@ -1619,7 +1619,7 @@ export function universityInteriorMap(id:string): WorldMap|null {
 export function supermarketMap():WorldMap {
  const g=new Grid(30,25,".");g.border("#");
  for(const x of [8,15,22])g.fill(x,6,2,10,"#");
- return finish({id:"supermarket",kind:"office",name:"Tesco · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
+ return finish({id:"supermarket",kind:"office",name:"Tescow · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
 }
 
 

@@ -10,7 +10,7 @@ import { SKILLS, type Task, checkAnswer } from "@/game/core/careers";
 import { cn } from "@/lib/utils";
 
 /** One work task: the material, the question, and what you learn from it. */
-export function TaskCard({ task, index, total, onDone, bare = false }: { task: Task; index: number; total: number; onDone: (correct: boolean, answer: number | string) => void; /** Inside a work interface: no card of its own. */ bare?: boolean }) {
+export function TaskCard({ task, index, total, onDone, bare = false, blind = false }: { task: Task; index: number; total: number; onDone: (correct: boolean, answer: number | string) => void; /** Inside a work interface: no card of its own. */ bare?: boolean; /** Interview exercise: hand the answer in without showing whether it was right. */ blind?: boolean }) {
   const [submitted, setSubmitted] = useState<number | string>("");
   const [picked, setPicked] = useState<number | null>(null);
   const [typed, setTyped] = useState("");
@@ -19,6 +19,7 @@ export function TaskCard({ task, index, total, onDone, bare = false }: { task: T
   const answer = (value: number | string) => {
     if (result !== null) return;
     const ok = checkAnswer(task, value);
+    if (blind) { onDone(ok, value); return; }
     setSubmitted(value);
     setResult(ok);
   };
@@ -33,7 +34,7 @@ export function TaskCard({ task, index, total, onDone, bare = false }: { task: T
       </div>
       <h3 className="mt-2 text-xl font-black">{task.title}</h3>
       <p className="mt-2 leading-7">{task.prompt}</p>
-      <WorkLesson task={task} />
+      {!blind && <WorkLesson task={task} />}
 
       {task.doc?.type === "code" && (
         <pre className="mt-3 overflow-x-auto rounded-2xl bg-[#13203a] p-4 text-[13px] leading-6 text-[#e9e6f2]">

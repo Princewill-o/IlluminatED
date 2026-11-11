@@ -21,7 +21,7 @@ function action({user="member",error=null,balance=7500,failBalance=false}={}) {
     from:table=>{assert.equal(table,"player_stats");return {select:columns=>{assert.equal(columns,"clout");return {eq:(column,id)=>{assert.equal(column,"user_id");assert.equal(id,user);return {maybeSingle:async()=>{if(failBalance)throw Error("offline");return {data:{clout:balance}};}};}};}};}};
   const {buyHome}=load("src/app/games/careers/actions.ts",{
     "next/cache":{revalidatePath:path=>paths.push(path)},
-    "@/game/core/homes":homes,"@/game/core/careers":{},"@/game/core/rng":{},
+    "@/game/core/homes":homes,"@/game/core/careers":{},"@/game/core/interview":{},"@/game/core/rng":{},
     "@/lib/game/career-receipt":{},"@/lib/stripe":{},"@/lib/social/server":{getSupabase:async()=>sb},
   });
   return {buyHome,calls,paths};

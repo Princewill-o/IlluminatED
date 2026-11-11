@@ -384,7 +384,7 @@ test("Careers: every role's shifts and interviews are well-formed and answerable
   assert.equal(C.shiftPay(crew, 0), Math.round(crew.pay * 0.25), "show-up pay");
   assert.ok(C.canPromote(1, 5, 0.7) && !C.canPromote(1, 4, 0.9) && !C.canPromote(3, 99, 1));
   const cv = C.cvLines([{ workplace: "goggle", role: "junior-dev", shifts: 6, correct: 26, total: 30, startedOn: "16 Oct 2026" }], { debugging: { correct: 9, total: 10 } });
-  assert.match(cv.experience[0], /Junior Developer, Google \(simulated work experience/);
+  assert.match(cv.experience[0], /Junior Developer, Goggle \(simulated work experience/);
   assert.match(cv.skills[0], /Debugging and testing \(9\/10/);
 });
 

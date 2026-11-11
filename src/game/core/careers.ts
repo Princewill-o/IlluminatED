@@ -337,7 +337,7 @@ const GEN: Record<string, Gen> = {
     };
   },
   fraud(rng) {
-    const normal = ["Tesco, Brixton £23.40", "Rent: standing order £850.00", "Coffee shop £3.10", "Netflix subscription £10.99", "Petrol £45.00"];
+    const normal = ["Tescow, Brixton £23.40", "Rent: standing order £850.00", "Coffee shop £3.10", "Netflics subscription £10.99", "Petrol £45.00"];
     const odd = pick(rng, ["Electronics, Lagos £1,950.00 at 03:12", "Gift cards ×6 £600.00 online, new device", "Crypto exchange £2,400.00, new payee"]);
     const list = shuffle(rng, [...shuffle(rng, normal).slice(0, 3), odd]);
     return {
@@ -462,7 +462,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "goggle",
-    name: "Google",
+    name: "Goggle",
     companyId: "goggle",
     sector: "Technology",
     accent: "#6bc6ff",
@@ -474,7 +474,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "macrosoft",
-    name: "Microsoft",
+    name: "Macrosoft",
     companyId: "macrosoft",
     sector: "IT",
     accent: "#5fd3a5",
@@ -486,7 +486,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "barklays",
-    name: "Barclays",
+    name: "Barklays",
     companyId: "barklays",
     sector: "Finance",
     accent: "#ffd166",
@@ -510,7 +510,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "tescow",
-    name: "Tesco",
+    name: "Tescow",
     companyId: "tescow",
     sector: "Retail",
     accent: "#ff8fd1",
@@ -534,7 +534,7 @@ export const WORKPLACES: Workplace[] = [
   },
   {
     id: "netflics",
-    name: "Netflix",
+    name: "Netflics",
     companyId: "netflics",
     sector: "Media",
     accent: "#ff7a6b",
@@ -676,6 +676,14 @@ export function buildInterview(role: Role, seed: number): Task[] {
   const job = role.tasks.map((k) => (GEN[k] ?? GEN.inbox)(rng));
   while (job.length < 3) job.push(GEN.inbox(rng));
   return [q1, q2, job[0], job[1], job[2]];
+}
+
+/** Real tasks from the job, for an interview's technical exercise. */
+export function jobTasks(role: Role, rng: Rng, n: number): Task[] {
+  const kinds = shuffle(rng, role.tasks);
+  const out = kinds.slice(0, n).map((k) => (GEN[k] ?? GEN.inbox)(rng));
+  while (out.length < n) out.push(GEN.inbox(rng));
+  return out;
 }
 
 /** Correct answers needed (out of 5) to be offered the job. */

@@ -4,10 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Coins, Lock, X } from "lucide-react";
 
-import { finishRoleJob, loadRoleCareers, startRoleJob } from "@/app/games/world/actions";
+import { acceptRoleOffer, finishRoleInterview, finishRoleJob, loadRoleCareers, startRoleInterview, startRoleJob } from "@/app/games/world/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { TaskCard } from "@/components/careers/task-card";
 import { WorkInterface } from "@/components/careers/work-interface";
+import { HiringFlow } from "@/components/game/world/hiring";
+import { addLocalHire, useRoleHiresState } from "@/components/game/world/role-hires";
+import { roleSpec } from "@/game/core/interview";
 import { createRng } from "@/game/core/rng";
 import { roleStepTask } from "@/game/core/role-tasks";
 import { jobSteps, levelForXp, payFor, roleById, skillScore, tierIndex } from "@/game/core/roles";
@@ -24,8 +27,26 @@ export const GAME_ROLES: { game: string; role: string; title: string; blurb: str
 
 type Phase = "ready" | "skill" | "task" | "doing" | "paying" | "done";
 
-/** One paid job for a role, set inside a game venue. Pay comes from the same server check as world jobs. */
+/** Apply and interview on site before your first job in a role. */
 export function GameRoleJob({ entry, onClose }: { entry: (typeof GAME_ROLES)[number]; onClose: () => void }) {
+  const { hires, ready } = useRoleHiresState();
+  const [justHired, setJustHired] = useState(false);
+  const claim = useRef<string | null>(null);
+  const role = roleById(entry.role)!;
+  const spec = useMemo(() => ({ ...roleSpec(role), title: entry.title, place: entry.title }), [role, entry.title]);
+  if (!ready) return null;
+  if (!justHired && !hires.has(role.id))
+    return (
+      <HiringFlow spec={spec} here playerName="" onClose={onClose} onHired={() => setJustHired(true)}
+        start={async () => { const r = await startRoleInterview(role.id); if (!r.ok) return r; claim.current = r.claim; return { ok: true, seed: r.seed }; }}
+        submit={(seed, answers) => finishRoleInterview(role.id, claim.current, seed, answers)}
+        accept={async () => { const r = await acceptRoleOffer(claim.current); if (r.ok) addLocalHire(role.id); return r; }} />
+    );
+  return <GameRoleJobShift entry={entry} onClose={onClose} />;
+}
+
+/** One paid job for a role, set inside a game venue. Pay comes from the same server check as world jobs. */
+function GameRoleJobShift({ entry, onClose }: { entry: (typeof GAME_ROLES)[number]; onClose: () => void }) {
   const role = roleById(entry.role)!;
   const [level, setLevel] = useState(1);
   const steps = useMemo(() => jobSteps(role, level), [role, level]);

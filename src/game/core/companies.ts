@@ -45,7 +45,7 @@ export type BuildingShape =
 export const COMPANIES: Company[] = [
   {
     id: "goggle",
-    name: "Google",
+    name: "Goggle",
     tagline: "We know what you'll search before you do.",
     sector: "Tech",
     revises: "Computer Science",
@@ -74,7 +74,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "macrosoft",
-    name: "Microsoft",
+    name: "Macrosoft",
     tagline: "Have you tried turning it off and on again?",
     sector: "IT support",
     revises: "IT and Digital Support",
@@ -101,7 +101,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "barklays",
-    name: "Barclays",
+    name: "Barklays",
     tagline: "Make your money skills count.",
     sector: "Banking",
     revises: "Maths and money",
@@ -134,7 +134,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tescow",
-    name: "Tesco",
+    name: "Tescow",
     tagline: "Big ideas, everyday essentials.",
     sector: "Retail",
     revises: "Business and Economics",
@@ -191,7 +191,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tesler",
-    name: "Tesla",
+    name: "Tesler",
     tagline: "Self-driving, self-parking, self-esteem issues.",
     sector: "Engineering",
     revises: "Physics and Engineering",
@@ -207,7 +207,7 @@ export const COMPANIES: Company[] = [
       "Physics: obeyed. Engineers: impressed.",
     ],
     fails: [
-      "The self-driving car drove itself to Greggs for a sausage roll.",
+      "The self-driving car drove itself to Gregz for a sausage roll.",
       "You plugged the car into the toaster.",
       "The prototype is now in orbit. That wasn't the plan.",
       "You confused volts with vibes. Easy mistake.",
@@ -216,7 +216,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "gregz",
-    name: "Greggs",
+    name: "Gregz",
     tagline: "Sausage rolls and chemical bonds since forever.",
     sector: "Food science",
     revises: "Chemistry and Applied Science",
@@ -281,7 +281,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "netflics",
-    name: "Netflix",
+    name: "Netflics",
     tagline: "Are you still revising?",
     sector: "Media",
     revises: "Creative Media and English",
@@ -340,7 +340,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "psyke",
-    name: "Nike",
+    name: "Psyke",
     tagline: "Just do it. Eventually.",
     sector: "Sport",
     revises: "Sport and Physical Education",

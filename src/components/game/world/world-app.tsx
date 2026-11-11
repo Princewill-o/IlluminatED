@@ -27,6 +27,7 @@ import { EventArcade, type EventGame } from "./event-arcade";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { GameFeedback } from "./game-feedback";
 import { GameMenu, saveResume } from "./game-menu";
+import { HiringFlow, type HiringStage } from "./hiring";
 import { HotelDesk } from "./hotel-desk";
 import { HudLayout, HudSlot } from "./hud";
 import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
@@ -43,6 +44,7 @@ import { PanicFloor } from "./panic-floor";
 import { PetPanel, syncPet } from "./pet-panel";
 import { PolicePatrol } from "./police-patrol";
 import { PrisonJobBoard, PrisonRoutineHud, PrisonTrader, PrisonWorkbench, usePrisonLife } from "./prison-life-ui";
+import { addLocalHire, useRoleHiresState } from "./role-hires";
 import { RewardToasts, RoleShift } from "./role-shift";
 import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
@@ -68,7 +70,7 @@ import { useTechEvents } from "../event-ads";
 const MobileLife = dynamic(() => import("./mobile-life").then((module) => module.MobileLife), { ssr: false, loading: () => <div className="absolute inset-0 grid place-items-center bg-[#f3f4f8] text-[#18202d]" role="status">Opening your life…</div> });
 
 import { cityAction } from "@/app/games/city-actions";
-import { earnWorldXp, type HotelBooking, loadHotelBooking, loadPets, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
+import { acceptRoleOffer, earnWorldXp, finishRoleInterview, startRoleInterview, type HotelBooking, loadHotelBooking, loadPets, worldBankStatus, worldRules, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
 import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
@@ -86,6 +88,7 @@ import { gameDateAt } from "@/game/core/game-clock";
 import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
 import { parseRoomMap, roomInfo, roomMapId } from "@/game/core/hotels";
+import { roleSpec } from "@/game/core/interview";
 import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
@@ -318,6 +321,18 @@ export function WorldApp({
   // Your pet comes out with you as soon as the world loads.
   useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
   const [roleShift,setRoleShift]=useState<{role:PracticalRole;level:number}|null>(null);
+  // Hiring: you apply and pass an interview before your first shift in a role.
+  const {hires,ready:hiresReady}=useRoleHiresState();
+  const [hiring,setHiring]=useState<{role:PracticalRole;stage:HiringStage;name:string}|null>(null);
+  const [interviewAt,setInterviewAt]=useState<{role:PracticalRole;name:string}|null>(null);
+  const interviewClaim=useRef<string|null>(null);
+  const startRole=(role:PracticalRole,level:number)=>{
+    if(roleShift?.role.id===role.id)return;
+    if(hiresReady&&!hires.has(role.id)){setHiring({role,stage:"advert",name:""});return;}
+    setDailyJob(null);setRoleShift({role,level});
+  };
+  // Arriving for an interview: reception is waiting.
+  useEffect(()=>{if(interviewAt&&interviewAt.role.place.mapId===mapId){setHiring({role:interviewAt.role,stage:"reception",name:interviewAt.name});setInterviewAt(null);}},[interviewAt,mapId]);
   const [university,setUniversity]=useState<{id:string;topic:"courses"|"events"|"networking"}|null>(null);
   const [bus, setBus] = useState<string | null>(null);
   const [gamesStart, setGamesStart] = useState<string | null>(null);
@@ -1573,7 +1588,7 @@ export function WorldApp({
       {hotelDesk && <HotelDesk hotel={hotelDesk} booking={hotelBooking} wallet={wallet} onClose={() => setHotelDesk(null)}
         onBooking={(b, change) => { setHotelBooking(b); setWallet((w) => Math.max(0, w + change)); }}
         onGoToRoom={(b) => { setHotelDesk(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }} />}
-      <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) { setDailyJob(null); setRoleShift({ role, level: 1 }); } }} />
+      <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) startRole(role, 1); }} />
       {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => {
         setLift(null);
         // Same building: the lift just takes you to the other floor. Otherwise it's another map.
@@ -1589,7 +1604,7 @@ export function WorldApp({
           onEnterHome={() => { setBrowser(null); setMobileExplore(true); goTo("home", "Your house"); }} />} mapId={mapId} activeRole={roleShift?.role.id ?? null} hotelBooking={hotelBooking}
         onClose={() => setBrowser(null)} onWallet={(n) => setWallet((w) => Math.max(0, w + n))} onHotelBooking={setHotelBooking}
         onGoToRoom={(b) => { setBrowser(null); play("door", soundOn()); void goTo(roomMapId(b.hotel, b.room), `Room ${b.room}`); }}
-        onStartJob={(role, level) => { setBrowser(null); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
+        onStartJob={(role, level) => { setBrowser(null); startRole(role, level); }}
         onTravelJob={(role) => { setBrowser(null); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}
         onOpen={(app) => {
           setBrowser(null);
@@ -1599,8 +1614,15 @@ export function WorldApp({
           else { say("Opening HomeStyle at your house: arrange and buy furniture there.", true); void goTo("home", "Your house"); }
         }} />}
       {jobsOpen && <JobsPanel onCompany={(w, name) => { setJobsOpen(false); void goTo(`workplace-${w}`, name); }} mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
-        onStart={(role, level) => { setJobsOpen(false); if (roleShift?.role.id !== role.id) { setDailyJob(null); setRoleShift({ role, level }); } }}
+        onStart={(role, level) => { setJobsOpen(false); startRole(role, level); }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
+      {hiring && <HiringFlow key={hiring.role.id} spec={roleSpec(hiring.role)} stage={hiring.stage} playerName={hiring.name} here={!hiring.role.place.mapId || hiring.role.place.mapId === mapId}
+        start={async () => { const r = await startRoleInterview(hiring.role.id); if (!r.ok) return r; interviewClaim.current = r.claim; return { ok: true, seed: r.seed }; }}
+        submit={(seed, answers) => finishRoleInterview(hiring.role.id, interviewClaim.current, seed, answers)}
+        accept={async () => { const r = await acceptRoleOffer(interviewClaim.current); if (r.ok) addLocalHire(hiring.role.id); return r; }}
+        onTravel={(name) => { const role = hiring.role; setHiring(null); setInterviewAt({ role, name }); say(`Interview booked. Head to ${role.place.label} and sign in at reception.`, true); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}
+        onHired={() => { const role = hiring.role; setHiring(null); setDailyJob(null); setRoleShift({ role, level: 1 }); say(`You're hired! Welcome to your first shift as a ${role.title.toLowerCase()}.`, true); }}
+        onClose={() => setHiring(null)} />}
       {roleShift && <RoleShift key={roleShift.role.id} onTravel={(id, label) => void goTo(id, label)} role={roleShift.role} level={roleShift.level} map={map} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={(n) => setWallet((w) => w + n)} onEnd={() => { setRoleShift(null); setDailyBusy(false); setWaypoint(null); CREW.id = null; CREW.role = null; }}/>}
       {rescueCause && <CrashImpact key={rescueCause.key} kind={rescueCause.kind}/>}
       {patrol && outdoors && <PolicePatrol map={map} onTarget={setWaypoint} onEnd={() => { setPatrol(false); setWaypoint(null); }} say={say}/>}
@@ -1816,7 +1838,7 @@ export function WorldApp({
       }}/>}
       {university&&<UniversityGuide id={university.id} topic={university.topic} onClose={()=>setUniversity(null)}/>}
       {dailyJob&&<DailyShift key={dailyJob.workplace} active={map.id===(dailyJob.workplace==="tescow"?"supermarket":dailyJob.workplace==="pizzazz"?"city":`workplace-${dailyJob.workplace}`)} job={dailyJob} map={dailyJob.workplace==="tescow"?SUPERMARKET:dailyJob.workplace==="pizzazz"?CITY:(workplaceMap(dailyJob.workplace)??CITY)} onTarget={setWaypoint} onBusy={setDailyBusy} onPaid={pay=>setWallet(n=>n+pay)} onClose={()=>{setDailyJob(null);setDailyBusy(false);setWaypoint(null);}}/>}
-      {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tesco practice store");}else if(next.workplace==="pizzazz"){setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}else{setDailyJob(next);say("Your shift has started. Walk to each work point and do the job.");}}} />}
+      {work && mapId === `workplace-${work}` && workplaceById(work) && <WorkplaceDoor station={workStation} workplace={workplaceById(work)!} job={job} avatar={me.avatar} onClose={() => setWork(null)} onPracticalShift={next=>{setWork(null);if(next.workplace==="tescow"){setDailyJob(next);goTo("supermarket","Tescow practice store");}else if(next.workplace==="pizzazz"){setDailyJob(next);goTo("city","Pizza delivery route");say("Delivery route ready. Follow your work markers.");}else{setDailyJob(next);say("Your shift has started. Walk to each work point and do the job.");}}} />}
       {bus && <BusStop here={bus} stops={BUS_STOPS} homework={homework} onGo={busRide} onClose={() => setBus(null)} onPickOnMap={() => { setBus(null); setBusPick(true); }} />}
       {!mobileLife && <LifeHud avatar={me.avatar} name={me.username} clout={wallet}
         quests={quests}

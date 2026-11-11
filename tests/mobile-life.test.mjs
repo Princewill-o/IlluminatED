@@ -133,6 +133,6 @@ test("the life dashboard uses actual occupation and balances, exposes touch navi
   );
   assert.ok(!employed.includes("Studying · Unemployed"));
   assert.match(employed, /Work a shift/);
-  assert.match(employed, /Google/);
+  assert.match(employed, /Goggle/);
   assert.match(employed, /Junior Developer/);
 });

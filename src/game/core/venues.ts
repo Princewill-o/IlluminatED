@@ -35,7 +35,7 @@ export const VENUES: Venue[] = [
     counter: { label: "Order at the counter: a slice and a drink", to: { kind: "act", activity: "eat" } },
     upstairs: { name: "Pizzazz Pizza · Upstairs dining room", label: "Window table: share a pizza", to: { kind: "act", activity: "eat" } },
     staff: { label: "Staff door: work at Pizzazz", to: { kind: "work", workplace: "pizzazz" } } },
-  { id: "tescow", name: "Tesco Express", theme: "shop", accent: "#1f5fa8",
+  { id: "tescow", name: "Tescow Express", theme: "shop", accent: "#1f5fa8",
     counter: { label: "Checkout: drinks and meal deals", to: { kind: "shop", shop: "tescow" } } },
   { id: "bootz", name: "Bootz Pharmacy", theme: "pharmacy", accent: "#1d4e9e",
     counter: { label: "Pharmacy counter: medicine", to: { kind: "shop", shop: "bootz" } } },

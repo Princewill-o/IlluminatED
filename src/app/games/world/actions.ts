@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { bikeById } from "@/game/core/bikes";
 import { carById } from "@/game/core/cars";
 import { MAX_NIGHTS, ROOM_TYPES, isHotel } from "@/game/core/hotels";
+import { type Scorecard, answerCount, buildInterviewPlan, roleSpec, scoreInterview } from "@/game/core/interview";
 import { type Pet, PETS } from "@/game/core/pets";
 import { roleById } from "@/game/core/roles";
 import { DELIVERY, MAX_QTY, type Speed, shopItem } from "@/game/core/shop";
@@ -439,6 +440,9 @@ const ROLE_ERRORS: Record<string, string> = {
   already_claimed: "This job has already been paid.",
   expired: "This job timed out. Start a new one.",
   invalid: "Something went wrong with that job. Start a new one.",
+  not_hired: "You need to be hired first: apply for the role and pass the interview.",
+  already_hired: "You already work in this role.",
+  cooldown: "They've just interviewed you. Read your feedback and reapply in 10 minutes.",
 };
 const roleError = (m?: string) => ROLE_ERRORS[Object.keys(ROLE_ERRORS).find((k) => m?.includes(k)) ?? ""] ?? "Couldn't reach the server. Try again in a moment.";
 
@@ -611,4 +615,59 @@ export async function carePet(id: string, action: string) {
   if (!sb) return { ok: false as const, error: petError() };
   const { data, error } = await sb.rpc("pet_care", { p_pet: id, p_action: action });
   return error ? { ok: false as const, error: petError(error.message) } : { ok: true as const, paid: (data as number) ?? 0 };
+}
+
+
+// ── Hiring for practical roles ───────────────────────────────────────────────
+/** Roles you've been hired for. */
+export async function loadRoleHires(): Promise<string[]> {
+  const sb = await getSupabase();
+  if (!sb) return [];
+  const { data: auth } = await sb.auth.getUser();
+  if (!auth?.user) return [];
+  const { data } = await sb.from("role_hires").select("role").eq("user_id", auth.user.id);
+  return (data ?? []).map((r) => r.role as string);
+}
+
+/** Sign in at reception: the server issues the interview (and starts the clock). */
+export async function startRoleInterview(role: string) {
+  if (!roleById(role)) return { ok: false as const, error: ROLE_ERRORS.unknown_role };
+  const sb = await getSupabase();
+  const { data: auth } = sb ? await sb.auth.getUser() : { data: null };
+  // Guests and previews interview locally; nothing is saved.
+  if (!sb || !auth?.user) return { ok: true as const, claim: null, seed: 1 + Math.floor(Math.random() * 2_000_000_000) };
+  const { data, error } = await sb.rpc("role_interview_start", { p_role: role });
+  if (error && notSetUp(error)) return { ok: true as const, claim: null, seed: 1 + Math.floor(Math.random() * 2_000_000_000) };
+  if (error) return { ok: false as const, error: roleError(error.message) };
+  const d = data as { claim: string; seed: number };
+  return { ok: true as const, claim: d.claim, seed: d.seed };
+}
+
+/** Hand in the interview: the server rebuilds it from the seed and scores every answer itself. */
+export async function finishRoleInterview(role: string, claim: string | null, seed: number, answers: (number | string)[]): Promise<{ ok: true; card: Scorecard } | { ok: false; error: string }> {
+  const r = roleById(role);
+  if (!r || !Number.isInteger(seed) || seed < 1 || !Array.isArray(answers) || answers.length > 60 || answers.some((a) => typeof a === "string" ? a.length > 80 : !Number.isFinite(a)))
+    return { ok: false, error: ROLE_ERRORS.invalid };
+  const plan = buildInterviewPlan(roleSpec(r), seed);
+  if (answers.length !== answerCount(plan)) return { ok: false, error: ROLE_ERRORS.invalid };
+  const card = scoreInterview(plan, answers);
+  if (!claim) return { ok: true, card };
+  if (!/^[0-9a-f-]{36}$/i.test(claim)) return { ok: false, error: ROLE_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false, error: roleError() };
+  const { error } = await sb.rpc("role_interview_finish", { p_claim: claim, p_seed: seed, p_passed: card.passed, p_average: card.average });
+  if (error) return { ok: false, error: error.message.includes("too_fast") ? "That interview was too quick to be real. Take your time with each answer." : roleError(error.message) };
+  return { ok: true, card };
+}
+
+/** Accept the offer: you're hired. */
+export async function acceptRoleOffer(claim: string | null) {
+  if (!claim) return { ok: true as const };
+  if (!/^[0-9a-f-]{36}$/i.test(claim)) return { ok: false as const, error: ROLE_ERRORS.invalid };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: roleError() };
+  const { error } = await sb.rpc("role_offer_accept", { p_claim: claim });
+  if (error) return { ok: false as const, error: roleError(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const };
 }

@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Briefcase, Check, Coins, Lock, MapPin, Play, Wrench, X } from "lucide-react";
+import { Briefcase, Check, Coins, FileText, Lock, MapPin, Play, Wrench, X } from "lucide-react";
+
+import { useRoleHires } from "./role-hires";
 
 import { loadRoleCareers } from "@/app/games/world/actions";
 import { WORKPLACES } from "@/game/core/careers";
@@ -33,6 +35,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCom
   const [sector, setSector] = useState("All");
   const [pick, setPick] = useState<string>(activeRole ?? ROLES[0].id);
   useEffect(() => { void loadRoleCareers().then(setCareers).catch(() => {}); }, []);
+  const hires = useRoleHires();
   const list = useMemo(() => ROLES.filter((r) => sector === "All" || (sector === "Free" ? !r.plus : r.sector === sector)), [sector]);
   const role = ROLES.find((r) => r.id === pick) ?? ROLES[0];
   const mine = careers[role.id] ?? { xp: 0, jobs: 0, earned: 0 };
@@ -147,7 +150,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCom
 
             <div className="mt-6 flex flex-wrap gap-2">
               <button type="button" onClick={() => onStart(role, level)} className="jelly flex min-h-12 items-center gap-2 rounded-full border-b-4 border-black/30 px-5 font-black text-white" style={{ background: role.colour }}>
-                <Play className="size-4" /> {activeRole === role.id ? "Back to shift" : "Start shift"}
+                {hires.has(role.id) ? <><Play className="size-4" /> {activeRole === role.id ? "Back to shift" : "Start shift"}</> : <><FileText className="size-4" /> Apply: read the advert</>}
               </button>
               {!here && role.place.mapId && (
                 <button type="button" onClick={() => onTravel(role)} className="jelly flex min-h-12 items-center gap-2 rounded-full border-b-4 border-black/20 bg-white px-5 font-black">

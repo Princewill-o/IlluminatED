@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { z } from "zod";
 
-import { WORKPLACES, buildInterview, buildShift, checkAnswer, roleOf } from "@/game/core/careers";
+import { WORKPLACES, buildShift, checkAnswer, roleOf, workplaceById } from "@/game/core/careers";
 import { FURNITURE, HOMES, validLayout } from "@/game/core/homes";
+import { type Scorecard, answerCount, buildInterviewPlan, companySpec, scoreInterview } from "@/game/core/interview";
 import { newSeed } from "@/game/core/rng";
 import { issueCareerReceipt, readCareerReceipt } from "@/lib/game/career-receipt";
 import { getSupabase } from "@/lib/social/server";
@@ -67,7 +68,7 @@ export async function startCareerSession(workplace: string, mode: "shift" | "int
 }
 
 export async function completeCareerSession(token: string, answers: (number|string)[]) {
-  const parsed = z.object({token:z.string().max(2048),answers:z.array(z.union([z.number().finite(),z.string().max(80)])).min(3).max(5)}).safeParse({token,answers});
+  const parsed = z.object({token:z.string().max(2048),answers:z.array(z.union([z.number().finite(),z.string().max(80)])).min(3).max(60)}).safeParse({token,answers});
   if (!parsed.success) return {ok:false as const,error:FRIENDLY.invalid};
   const secret = process.env.BILLING_CALLBACK_SECRET?.trim() ?? "";
   const sb = await getSupabase();
@@ -80,7 +81,20 @@ export async function completeCareerSession(token: string, answers: (number|stri
     const {data:job} = await sb.from("career_jobs").select("role,workplace").eq("user_id",auth.user.id).eq("status","active").maybeSingle();
     if (!job || job.role !== role.id || job.workplace !== receipt.workplace) return {ok:false as const,error:"Your role changed. Start a new shift."};
   }
-  const tasks = receipt.mode === "shift" ? buildShift(role,receipt.seed) : buildInterview(role,receipt.seed);
+  if (receipt.mode === "interview") {
+    // A structured panel interview, rebuilt from the seed and scored here (never by the browser).
+    const workplace = workplaceById(receipt.workplace);
+    if (!workplace) return {ok:false as const,error:FRIENDLY.invalid};
+    const plan = buildInterviewPlan(companySpec(workplace, role), receipt.seed);
+    if (answers.length !== answerCount(plan)) return {ok:false as const,error:FRIENDLY.invalid};
+    const card: Scorecard = scoreInterview(plan, answers);
+    const duration = Date.now()-receipt.started;
+    if (duration < 60000) return {ok:false as const,error:"That interview was too quick to be real. Take your time with each answer."};
+    // The hiring rule in the database takes 4 of 5: pass the panel's decision through on that scale.
+    const r = await rpc<{passed:boolean;role:string;pay:number;promoted:boolean}>("career_complete_verified",{p_secret:secret,p_claim:receipt.id,p_mode:"interview",p_workplace:receipt.workplace,p_role:receipt.role,p_seed:receipt.seed,p_correct:card.passed?5:Math.min(3,Math.floor(card.average/2)),p_duration_ms:duration,p_skills:{}},["/games/careers","/games/world","/me"]);
+    return r.ok ? {ok:true as const,data:{...r.data,card}} : r;
+  }
+  const tasks = buildShift(role,receipt.seed);
   if (answers.length !== tasks.length) return {ok:false as const,error:FRIENDLY.invalid};
   const skills: Record<string,[number,number]> = {};
   let correct = 0;

@@ -1221,7 +1221,7 @@ function restaurantShop(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
   const x = t.x + 0.12, z = t.y + 0.12, w = t.w - 0.24, d = t.h - 0.24;
   const accent = coffee ? "#006241" : chicken ? "#b72025" : "#c92627";
   const trim = burgers ? "#ffc72c" : "#fff7e9";
-  const name = coffee ? "STARBUCKS" : chicken ? "KFC" : "McDonald's";
+  const name = coffee ? "HEARTH & BEAN" : chicken ? "CLUCK & CO." : "BIG BUN";
   const h = 4.5;
   box(g, coffee ? "#e7d8bc" : "#e9e2d8", x, 0.12, z, x + w, h, z + d);
   box(g, "#302e30", x - 0.06, h, z - 0.06, x + w + 0.06, h + 0.18, z + d + 0.06);
