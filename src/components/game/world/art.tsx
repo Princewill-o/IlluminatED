@@ -340,6 +340,14 @@ export const TRAFFIC_BOXES: ({ x: number; y: number; hw: number; hh: number; dx:
 export const LEVEL_JUMP = { pending: false, level: 0 as 0 | 1, x: 0, y: 0 };
 /** The floor the next map starts you on (e.g. stepping out of a hotel room onto the gallery). */
 export const ARRIVE_LEVEL = { level: 0 as 0 | 1 };
+/** Camera views: the classic angled views, plus over-the-shoulder and first person. */
+export type CameraMode = "follow" | "wide" | "overhead" | "behind" | "first";
+/**
+ * Shared camera state. In "behind" and "first" you steer by where you look: yaw is the
+ * direction you face (radians, 0 = +z/south, matching body rotation.y); pitch tilts up/down.
+ */
+export const CAMERA_VIEW = { mode: "follow" as CameraMode, yaw: Math.PI, pitch: -0.08 };
+export const steersByLook = () => CAMERA_VIEW.mode === "behind" || CAMERA_VIEW.mode === "first";
 export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 /**

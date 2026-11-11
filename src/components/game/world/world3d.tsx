@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { Camera } from "lucide-react";
 import * as THREE from "three";
 import { GLTFLoader, type GLTF } from "three/examples/jsm/loaders/GLTFLoader.js";
 
@@ -11,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAMERA_VIEW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -129,6 +130,9 @@ export interface Mover3D {
 const FOCUS = { value: new THREE.Vector3() };
 /** Curvature (z, x): strong outdoors, off indoors. */
 const BEND = { value: new THREE.Vector2(0.0055, 0.0012) };
+const VIEWS: CameraMode[] = ["follow", "wide", "overhead", "behind", "first"];
+const VIEW_NAMES: Record<CameraMode, string> = { follow: "Follow", wide: "Wide", overhead: "Top-down", behind: "Behind", first: "First person" };
+const VIEW_HINTS: Record<CameraMode, string> = { follow: "The usual angled view", wide: "Further out, see more around you", overhead: "Look straight down on the streets", behind: "Over your shoulder, steer by looking", first: "Through your own eyes" };
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
@@ -2410,8 +2414,24 @@ export function World3D({
   const newsRef = useRef(news.headlines);
   newsRef.current = news.headlines;
   const [zoom, setZoom] = useState(1);
-  const [view,setView]=useState<"follow"|"wide"|"overhead">("follow");
-  const viewRef=useRef(view);viewRef.current=view;
+  const [view,setView]=useState<CameraMode>(()=>{try{const v=localStorage.getItem("world-camera-view");return (VIEWS as string[]).includes(v??"")?v as CameraMode:"follow";}catch{return "follow";}});
+  const viewRef=useRef(view);viewRef.current=view;CAMERA_VIEW.mode=view;
+  const [viewMenu,setViewMenu]=useState(false);
+  const [viewHint,setViewHint]=useState(false);
+  const [coarse,setCoarse]=useState(false);
+  useEffect(()=>{setCoarse(window.matchMedia?.("(pointer: coarse)").matches??false);},[]);
+  useEffect(()=>{if(view!=="first"&&view!=="behind"){setViewHint(false);return;}setViewHint(true);const t=window.setTimeout(()=>setViewHint(false),6000);return()=>window.clearTimeout(t);},[view]);
+  useEffect(()=>{try{localStorage.setItem("world-camera-view",view);}catch{/* private mode */}},[view]);
+  // V cycles the camera, like F5 in Minecraft.
+  useEffect(()=>{
+    const key=(e:KeyboardEvent)=>{
+      if(e.key.toLowerCase()!=="v"||e.repeat||e.ctrlKey||e.metaKey||e.altKey)return;
+      if(e.target instanceof HTMLElement&&e.target.closest("input, textarea, select, [contenteditable=true]"))return;
+      setView(v=>VIEWS[(VIEWS.indexOf(v)+1)%VIEWS.length]);
+    };
+    window.addEventListener("keydown",key);
+    return()=>window.removeEventListener("keydown",key);
+  },[]);
   const zoomRef = useRef(1);
   zoomRef.current = zoom;
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -3043,6 +3063,30 @@ export function World3D({
     const impacts = impactEffects(scene);
     const onImpact = (e: Event) => { const d = (e as CustomEvent<{ x: number; y: number; strength?: number; soft?: boolean }>).detail; if (d && Number.isFinite(d.x) && Number.isFinite(d.y)) impacts.spawn(d.x, d.y, d.strength ?? 0.6, !!d.soft); };
     window.addEventListener("illumed:impact", onImpact);
+    // Look around in the behind and first-person views: click to grab the mouse (Esc lets go),
+    // or drag with a finger on touch screens.
+    const canvasEl = renderer.domElement;
+    const looking = () => (viewRef.current === "behind" || viewRef.current === "first") && !overview;
+    const turnBy = (mx: number, my: number) => {
+      CAMERA_VIEW.yaw -= mx * 0.0026;
+      CAMERA_VIEW.pitch = Math.max(-1.1, Math.min(0.85, CAMERA_VIEW.pitch - my * 0.0022));
+    };
+    let dragId: number | null = null, dragX = 0, dragY = 0;
+    const onLookDown = (e: PointerEvent) => {
+      if (!looking() || e.target !== canvasEl) return;
+      if (e.pointerType === "mouse") { if (e.button === 0 && document.pointerLockElement !== canvasEl) void Promise.resolve(canvasEl.requestPointerLock?.()).catch(() => {}); return; }
+      dragId = e.pointerId; dragX = e.clientX; dragY = e.clientY;
+    };
+    const onLookMove = (e: PointerEvent) => {
+      if (!looking()) return;
+      if (document.pointerLockElement === canvasEl) { turnBy(e.movementX, e.movementY); return; }
+      if (dragId === e.pointerId) { turnBy((e.clientX - dragX) * 1.6, (e.clientY - dragY) * 1.6); dragX = e.clientX; dragY = e.clientY; }
+    };
+    const onLookUp = (e: PointerEvent) => { if (dragId === e.pointerId) dragId = null; };
+    window.addEventListener("pointerdown", onLookDown);
+    window.addEventListener("pointermove", onLookMove);
+    window.addEventListener("pointerup", onLookUp);
+    window.addEventListener("pointercancel", onLookUp);
     let carLoaded: string | null = null;
     let busSeated = false;
     let rideBike: THREE.Group | null = null;
@@ -3737,6 +3781,7 @@ export function World3D({
     const projectedPoint = new THREE.Vector3();
     const lightingColour = new THREE.Color();
     let first = true;
+    let lastView: CameraMode = viewRef.current;
     let cameraZoom = zoomRef.current;
     let raf = 0;
     let last = performance.now();
@@ -3861,7 +3906,12 @@ export function World3D({
       // Face the way you're going.
       const dx = mx - lastMe.x;
       const dz = mz - lastMe.z;
-      if (Math.hypot(dx, dz) > 0.002) {
+      const lookMode = (viewRef.current === "behind" || viewRef.current === "first") && !overview;
+      if (lookMode && !carRef.current && !busSeated) {
+        // Behind / first person: you face where you're looking.
+        const difference = Math.atan2(Math.sin(CAMERA_VIEW.yaw - me.root.rotation.y), Math.cos(CAMERA_VIEW.yaw - me.root.rotation.y));
+        me.root.rotation.y += difference * (1 - Math.exp(-dt * 20));
+      } else if (Math.hypot(dx, dz) > 0.002) {
         const ang = Math.atan2(dx, dz);
         const difference = Math.atan2(Math.sin(ang - me.root.rotation.y), Math.cos(ang - me.root.rotation.y));
         me.root.rotation.y += difference * (1 - Math.exp(-dt * 18));
@@ -3955,7 +4005,38 @@ export function World3D({
       camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
       camera.lookAt(framing.x, framing.target + meZ, framing.z);
       const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
-      camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
+      const looking=(view==="behind"||view==="first")&&!overview;
+      if(looking&&lastView!==view&&lastView!=="behind"&&lastView!=="first")CAMERA_VIEW.yaw=me.root.rotation.y;
+      lastView=view;
+      if(looking){
+        // In a vehicle the view swings round with it.
+        if(want&&p.heading!==undefined){const target=Math.atan2(Math.cos(p.heading),Math.sin(p.heading));CAMERA_VIEW.yaw+=Math.atan2(Math.sin(target-CAMERA_VIEW.yaw),Math.cos(target-CAMERA_VIEW.yaw))*(1-Math.exp(-dt*5));}
+        const yaw=CAMERA_VIEW.yaw,pitch=CAMERA_VIEW.pitch,fx=Math.sin(yaw),fz=Math.cos(yaw);
+        const base=(rideBike||busSeated?me.root.position.y:0)+meZ;
+        if(view==="first"){
+          // Seated in a vehicle: sit up a little so the seat in front doesn't fill the view.
+          const eye=base+(busSeated?1.3:1.02)+(rideBike?0.35:0),lean=busSeated?0.45:0.12;
+          camera.position.set(mx+fx*lean,eye+motion.rise*0.6,mz+fz*lean);
+          camera.lookAt(mx+fx*Math.cos(pitch)*10,eye+Math.sin(pitch)*10,mz+fz*Math.cos(pitch)*10);
+        }else{
+          // Over the shoulder: a little behind and above, looking past you.
+          const back=(want?(want.startsWith("bus:")?7.5:4.6):indoors?2.3:3.2)/Math.max(0.75,cameraZoom),up=(want?2.4:1.75)-pitch*2.2;
+          camera.position.set(mx-fx*back,base+up,mz-fz*back);
+          camera.lookAt(mx+fx*2,base+1.05+Math.sin(pitch)*3,mz+fz*2);
+        }
+        const fov=view==="first"?72:58,near=view==="first"?0.08:0.2;
+        if(camera.fov!==fov||camera.near!==near){camera.fov=fov;camera.near=near;camera.updateProjectionMatrix();}
+        FOCUS.value.set(mx,0,mz);
+        if(me.char)me.char.object.visible=view!=="first";
+      }else{
+        if(document.pointerLockElement===renderer.domElement)document.exitPointerLock();
+        if(camera.fov!==30&&!overview||camera.near!==0.5){camera.fov=30;camera.near=0.5;camera.updateProjectionMatrix();}
+        if(me.char&&!me.char.object.visible)me.char.object.visible=true;
+        camera.position.y+=motion.rise;camera.rotation.z+=motion.bank;
+      }
+      // The curved-world bend suits the angled views; on the ground it would tip the horizon.
+      const bendX=looking||indoors?0:0.0055,bendY=looking||indoors?0:0.0012;
+      if(BEND.value.x!==bendX||BEND.value.y!==bendY)BEND.value.set(bendX,bendY);
       if (overview) {
         const fit = Math.max(1, 1.25 / camera.aspect);
         camera.fov = 35;
@@ -3977,7 +4058,7 @@ export function World3D({
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
       playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
       playerLabel.style.transform = "translate(-50%, -100%)";
-      playerLabel.style.visibility = overview || getHomeAction?.() ? "hidden" : "visible";
+      playerLabel.style.visibility = overview || getHomeAction?.() || viewRef.current === "first" ? "hidden" : "visible";
       followSun(sun,focus);
 
       // Other players.
@@ -4651,7 +4732,7 @@ export function World3D({
         me.char.play(me.locomotion);
       }
       const homeAction = getHomeAction?.();
-      playerRing.visible = !overview && !homeAction;
+      playerRing.visible = !overview && !homeAction && viewRef.current !== "first" && viewRef.current !== "behind";
       for (const screen of homeScreens) {
         const watching = homeAction?.animation === "watch" || homeAction?.animation === "play";
         (screen.material as THREE.MeshLambertMaterial).color.set(watching ? ["#5d9ca9", "#92b870", "#bb9169", "#997ab7"][Math.floor(now / 1200) % 4] : "#609ca4");
@@ -4848,6 +4929,11 @@ export function World3D({
       window.removeEventListener("illuminated:fight", onFight);
       window.removeEventListener("illumed:impact", onImpact); impacts.dispose();
       window.removeEventListener("illumed:dispute-help", onDisputeHelp);
+      window.removeEventListener("pointerdown", onLookDown);
+      window.removeEventListener("pointermove", onLookMove);
+      window.removeEventListener("pointerup", onLookUp);
+      window.removeEventListener("pointercancel", onLookUp);
+      if (document.pointerLockElement === canvasEl) document.exitPointerLock();
       window.removeEventListener("illuminated:dance",dance);
       window.removeEventListener("illuminated:vehicle-crash",onCrash);
       window.removeEventListener("illuminated:civilian-attack",onCivilianAttack);
@@ -4921,9 +5007,9 @@ export function World3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adKey, map]);
 
-  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<HudSlot area="tr-tools" order={1}><div className="flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera controls"><button type="button" onClick={()=>setView(v=>v==="follow"?"wide":v==="wide"?"overhead":"follow")} aria-label={`Change camera view, current view ${view}`} className="min-h-9 rounded-full px-3 hover:bg-white/15">{view}</button>
+  return <><div ref={host} className="absolute inset-0" aria-label={`${map.name} in 3D`} role="img" />{!overview&&<HudSlot area="tr-tools" order={1}><div className="flex items-center gap-1 rounded-full border border-white/20 bg-[#102434]/95 p-1 text-xs font-bold text-white shadow-lg" aria-label="Camera controls"><div className="relative"><button type="button" onClick={()=>setViewMenu(o=>!o)} aria-expanded={viewMenu} aria-label={`Camera view: ${VIEW_NAMES[view]}. Change view (V)`} className="flex min-h-9 items-center gap-1.5 rounded-full px-3 hover:bg-white/15"><Camera className="size-3.5" aria-hidden/>{VIEW_NAMES[view]}</button>{viewMenu&&<div role="menu" className="absolute top-full right-0 z-10 mt-2 w-56 overflow-hidden rounded-2xl border border-white/15 bg-[#102434] p-1 shadow-2xl">{VIEWS.map(v=><button key={v} type="button" role="menuitemradio" aria-checked={v===view} onClick={()=>{setView(v);setViewMenu(false);}} className={`flex w-full flex-col rounded-xl px-3 py-2 text-left hover:bg-white/10 ${v===view?"bg-white/15":""}`}><span className="font-black">{VIEW_NAMES[v]}</span><span className="text-[11px] font-semibold text-white/60">{VIEW_HINTS[v]}</span></button>)}<p className="px-3 py-1.5 text-[10px] text-white/50">Press V to switch views</p></div>}</div>
     <button type="button" aria-label="Zoom camera out" disabled={zoom<=0.75} onClick={()=>setZoom(v=>Math.max(.75,v-.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">−</button>
     <button type="button" aria-label="Reset camera zoom" onClick={()=>setZoom(1)} className="min-w-12 py-2">{Math.round(zoom*100)}%</button>
     <button type="button" aria-label="Zoom camera in" disabled={zoom>=1.65} onClick={()=>setZoom(v=>Math.min(1.65,v+.15))} className="size-9 rounded-full hover:bg-white/15 disabled:opacity-30">+</button>
-  </div></HudSlot>}{!overview && map.art === "london" && <CityBroadcast {...news} />}</>;
+  </div></HudSlot>}{!overview && map.art === "london" && <CityBroadcast {...news} />}{!overview&&view==="first"&&<div className="pointer-events-none absolute top-1/2 left-1/2 z-[5] -translate-x-1/2 -translate-y-1/2" aria-hidden><div className="relative size-5"><span className="absolute top-1/2 left-0 h-0.5 w-5 -translate-y-1/2 bg-white shadow-[0_0_2px_#000]"/><span className="absolute top-0 left-1/2 h-5 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_2px_#000]"/></div></div>}{!overview&&viewHint&&(view==="first"||view==="behind")&&<div className="pointer-events-none absolute inset-x-0 top-24 z-[5] flex justify-center px-4" role="status"><p className="rounded-full bg-black/70 px-4 py-2 text-center text-xs font-bold text-white">{coarse?"Drag to look around · joystick to move":"Click to look around · Esc frees the mouse · WASD to move · ← → to turn · V to switch view"}</p></div>}</>;
 }

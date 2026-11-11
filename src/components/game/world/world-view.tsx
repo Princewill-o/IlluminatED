@@ -15,7 +15,7 @@ import { LearningTracker } from "./learning-tracker";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, CAMERA_VIEW, steersByLook, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -554,7 +554,15 @@ export function WorldView({
         if (!sceneFrozen.current || PLAYER.knockedUntil > now) pos.current.speed = 0;
       }
       const k = keys.current;
-      let dx = (k.has("d") || k.has("arrowright") ? 1 : 0) - (k.has("a") || k.has("arrowleft") ? 1 : 0);
+      const driving = Boolean(carRef.current);
+      // Behind and first-person views: W/S walk where you're looking, A/D step sideways,
+      // left/right arrows turn. Driving keeps its own steering.
+      const look = steersByLook() && !driving;
+      if (look) {
+        const turn = (k.has("arrowright") ? 1 : 0) - (k.has("arrowleft") ? 1 : 0);
+        if (turn && !pausedRef.current) CAMERA_VIEW.yaw -= turn * 2.4 * dt;
+      }
+      let dx = (k.has("d") || (!look && k.has("arrowright")) ? 1 : 0) - (k.has("a") || (!look && k.has("arrowleft")) ? 1 : 0);
       let dy = (k.has("s") || k.has("arrowdown") ? 1 : 0) - (k.has("w") || k.has("arrowup") ? 1 : 0);
       if (!dx && !dy && (stick.current.x || stick.current.y)) {
         dx = stick.current.x;
@@ -563,8 +571,13 @@ export function WorldView({
         dx = gamepadMove.current.x;
         dy = gamepadMove.current.y;
       }
+      if (look && (dx || dy)) {
+        // Forward is (sin yaw, cos yaw) on the ground; right is (-cos yaw, sin yaw).
+        const fx = Math.sin(CAMERA_VIEW.yaw), fz = Math.cos(CAMERA_VIEW.yaw);
+        const ax = -dy * fx - dx * fz, az = -dy * fz + dx * fx;
+        dx = ax; dy = az;
+      }
       const p = pos.current;
-      const driving = Boolean(carRef.current);
       const before = { x: p.x, y: p.y, heading: p.heading, speed: p.speed };
       let collision: DrivingCollision | undefined;
       const obstacles: VehicleObstacle[] = driving && (map.art === "london" || isUKScene(map.id)) ? [
