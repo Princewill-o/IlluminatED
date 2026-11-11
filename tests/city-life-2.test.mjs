@@ -34,3 +34,28 @@ test("people have stable personalities, every topic has a reply, and the chat ru
   const brief = N.personaPrompt(a);
   for (const rule of [/personal details/, /meeting in real life/, /romance/, /Childline/, /character in the game/]) assert.match(brief, rule);
 });
+
+const D = projectData("src/game/core/street-disputes.ts");
+
+test("street disagreements happen on open pavement, nobody touches anyone, and an officer settles them", () => {
+  const spots = D.disputeSpots(W.CITY);
+  assert.ok(spots.length >= 3, "a few places in the city");
+  for (const s of spots) {
+    for (let i = -6; i <= 6; i++) assert.ok(!W.blocked(W.CITY, (s.x + i) * T, s.z * T), "room to walk in and away");
+    assert.ok(!W.blocked(W.CITY, s.x * T, s.officerZ * T), "officer can stand beside them");
+  }
+  for (const d of D.DISPUTES) {
+    assert.equal(d.fixes.filter((f) => f.good).length, 1, `${d.id} has one fair fix`);
+    for (let t = 0; t < D.T.cycle; t += 0.25) {
+      const f = D.disputeFrame(t, spots[0], d);
+      if (f.phase === "off") continue;
+      assert.ok(Math.abs(f.a.x - f.b.x) >= 1.1, `${d.id} keeps a gap at ${t}s`);
+      if (f.phase === "argue") { assert.equal(f.a.pose, "argue"); assert.ok(f.a.say || f.b.say); }
+      if (f.phase === "mediate") { assert.ok(f.officer.visible); assert.equal(f.officer.pose, "calm"); }
+    }
+    assert.equal(D.disputeFrame(D.T.gone + 1, spots[0], d).phase, "off");
+  }
+  assert.equal(D.APPROACHES.filter((a) => a.good).length, 1);
+  const helped = D.disputeFrame(D.T.mediate + 0.5, spots[0], D.DISPUTES[0], true);
+  assert.match(helped.officer.say, /Thanks/);
+});

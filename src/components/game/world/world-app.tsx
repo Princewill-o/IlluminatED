@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
+import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, HeartHandshake, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
 import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WORLD_RULES } from "./art";
@@ -22,6 +22,7 @@ import { CrewInvites } from "./crew";
 import { BookingIn, HoldingCellHud } from "./custody";
 import { Deliveries } from "./deliveries";
 import { DeveloperTeleport, type TeleportDestination } from "./developer-teleport";
+import { DisputeHelp } from "./dispute-help";
 import { EventArcade, type EventGame } from "./event-arcade";
 import { FLIGHT_SCHOOL_KEY, FLIGHT_STEPS, FlightSchoolDesk, FlightSchoolGuide, FlightSchoolQuiz, PlaneCutscene } from "./flight-school";
 import { GameFeedback } from "./game-feedback";
@@ -373,6 +374,14 @@ export function WorldApp({
   const closeEventGame = useCallback(() => { setEventGame(null); router.refresh(); }, [router]);
   const [bike, setBike] = useState<{ brand: BikeBrand; until: number } | null>(null);
   const [wallet, setWallet] = useState(clout);
+  // A street disagreement close by that you could help calm down.
+  const [dispute, setDispute] = useState<{ index: number; id: string } | null>(null);
+  const [disputeOpen, setDisputeOpen] = useState<{ index: number; id: string } | null>(null);
+  useEffect(() => {
+    const on = (e: Event) => setDispute((e as CustomEvent<{ index: number; id: string } | null>).detail ?? null);
+    window.addEventListener("illumed:dispute", on);
+    return () => window.removeEventListener("illumed:dispute", on);
+  }, []);
   /** A police interview in progress (the police aren't sure it was you). */
   const [interview, setInterview] = useState<{ stars: number; charge: string; area: string } | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
@@ -1600,6 +1609,16 @@ export function WorldApp({
       </section></div>}
       {outdoors && !jailed && <HudSlot area="tr" order={50} className="hidden sm:block"><EventBanner onOpen={() => setEventGame("events")} className="flex max-w-[220px]" /></HudSlot>}
       {life.sick && <HudSlot area="tc" order={30} className="pointer-events-none"><p className="rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p></HudSlot>}
+      {dispute && !disputeOpen && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>setDisputeOpen(dispute)} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#15987f] px-4 py-2 text-sm font-bold text-white shadow-lg"><HeartHandshake className="size-4"/>Help calm it down</button></HudSlot>}
+      {disputeOpen && <DisputeHelp index={disputeOpen.index} id={disputeOpen.id} onClose={()=>setDisputeOpen(null)} onDone={(firstTry)=>{
+        window.dispatchEvent(new CustomEvent("illumed:dispute-help",{detail:{index:disputeOpen.index}}));
+        const reward = firstTry ? 25 : 15;
+        setWallet(w=>w+reward);
+        recordLife(`You calmed down an argument in the street and earned ${reward} Clout.`);
+        say(`You helped them sort it out. +${reward} Clout`, true);
+        setDisputeOpen(null);
+        setDispute(null);
+      }}/>}
       {!!nearby.length && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>{setPhoneApp("nearby");setPhone(true);}} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#42745e] px-4 py-2 text-sm font-bold text-white shadow-lg"><Users className="size-4"/>Say hello · {nearby.length}</button></HudSlot>}
       {ventureOpen && <div className="absolute inset-0 z-[100008] flex items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-6"><div role="dialog" aria-modal="true" aria-label="Venture business" className="my-auto w-full max-w-4xl"><VenturePanel meId={me.id} onClose={()=>setVentureOpen(false)}/></div></div>}
       {creatorChannel&&<CreatorStudio owner={me.id} avatar={me.avatar} channel={creatorChannel} onMinimisedChange={setStudioFloating} onClose={()=>{setStudioFloating(false);setCreatorChannel(null);}}/>}

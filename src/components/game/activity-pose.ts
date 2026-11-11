@@ -148,6 +148,28 @@ export function activityPose(
       set("LeftForeArm", -0.8);
       set("RightForeArm", -0.8);
       return;
+    // A street disagreement: arms thrown out in frustration, head shaking. Nobody touches anyone.
+    case "argue":
+      set("Spine", -0.08 + 0.06 * k(2.2));
+      set("LeftArm", -0.9 - 0.5 * k(3.1), -0.35 - 0.3 * k(3.1));
+      set("RightArm", -0.9 - 0.5 * k(3.1, 1.4), 0.35 + 0.3 * k(3.1, 1.4));
+      set("LeftForeArm", -0.5);
+      set("RightForeArm", -0.5);
+      set("Head", -0.05, wave(2.4) * 0.12);
+      return;
+    // The community officer (or you) settling things: palms down, slow and steady.
+    case "calm":
+      set("LeftArm", -1.1, -0.35);
+      set("RightArm", -1.1, 0.35);
+      set("LeftForeArm", -0.15 + 0.12 * k(1.2));
+      set("RightForeArm", -0.15 + 0.12 * k(1.2));
+      set("Head", 0.12);
+      return;
+    case "shake":
+      set("RightArm", -1.15, 0.05);
+      set("RightForeArm", -0.35 + 0.1 * wave(9));
+      set("Head", 0.08);
+      return;
     case "cuffed":
       set("LeftArm", 0.45, 0.2);
       set("RightArm", 0.45, -0.2);

@@ -82,6 +82,7 @@ import { commuterPhase, residentPaths, residentPose } from "@/game/core/resident
 import { ROLE_UNIFORMS } from "@/game/core/roles";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
+import { T as DISPUTE_T, disputeAt, disputeFrame, disputeSpots } from "@/game/core/street-disputes";
 import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
@@ -3264,6 +3265,65 @@ export function World3D({
         }
       }
     };
+    // Street disagreements: two residents fall out, a community officer calms it down, they
+    // shake hands and go. Everyone sees the same one (it runs off the real clock). You can step in.
+    const disputeSpotList = london && !ukScene ? disputeSpots(map) : [];
+    const disputeCast = disputeSpotList.length ? (["a", "b", "officer"] as const).map((who, i) => {
+      const look = who === "officer"
+        ? { ...npcLook(400), ...(ROLE_UNIFORMS.police as Partial<Avatar> | undefined), hat: "hat-cap" }
+        : npcLook(410 + i * 7);
+      const body = makeBody(look as Avatar, null, true);
+      body.root.visible = false;
+      scene.add(body.root);
+      return { who, body, pose: "", say: "", bubble: null as THREE.Mesh | null };
+    }) : [];
+    let disputeHelped = -1, disputeHelpAt = 0, disputeNear = "";
+    const onDisputeHelp = (e: Event) => {
+      const d = (e as CustomEvent<{ index: number }>).detail;
+      if (d && d.index >= 0) { disputeHelped = d.index; disputeHelpAt = performance.now() / 1000; }
+    };
+    window.addEventListener("illumed:dispute-help", onDisputeHelp);
+    const updateDisputes = () => {
+      if (!disputeCast.length) return;
+      const now = Date.now() / 1000;
+      const on = disputeAt(now, disputeSpotList);
+      let t = on.t;
+      const helped = disputeHelped === on.index;
+      // Calmed down by you: skip straight to the officer arriving to thank you.
+      if (helped) t = Math.max(t, DISPUTE_T.mediate - 1 + (performance.now() / 1000 - disputeHelpAt));
+      const frame = disputeFrame(t, on.spot, on.dispute, helped);
+      for (const c of disputeCast) {
+        const f = frame[c.who];
+        const { body } = c;
+        body.root.visible = f.visible;
+        if (!f.visible) continue;
+        body.root.position.set(f.x, 0, f.z);
+        body.root.rotation.y = f.heading;
+        const want = f.walking ? "walk" : f.pose;
+        if (c.pose !== want && body.char) { c.pose = want; body.walking = f.walking; body.char.play(want); }
+        if (c.say !== f.say) {
+          if (c.bubble) { c.bubble.removeFromParent(); const m = c.bubble.material as THREE.MeshBasicMaterial; m.map?.dispose(); m.dispose(); c.bubble.geometry.dispose(); c.bubble = null; }
+          c.say = f.say;
+          if (f.say) {
+            const label = f.say.length > 52 ? `${f.say.slice(0, 50)}…` : f.say;
+            c.bubble = sign(label, { bg: frame.phase === "argue" ? "#ffe1dc" : c.who === "officer" ? "#e3ecff" : "#dff5e3", fg: "#13203a", w: Math.min(4.6, 0.6 + label.length * 0.085), h: 0.42 });
+            c.bubble.position.set(0, 2.25, 0);
+            // Always readable, even with a shop sign or tree in the way.
+            (c.bubble.material as THREE.MeshBasicMaterial).depthTest = false;
+            c.bubble.renderOrder = 999;
+            body.root.add(c.bubble);
+          }
+        }
+        c.bubble?.lookAt(camera.position);
+      }
+      // Tell the HUD when you're close enough to step in while it's still heated.
+      const close = frame.phase === "argue" && !helped && Math.hypot(me.root.position.x - on.spot.x, me.root.position.z - on.spot.z) < 3.5;
+      const key = close ? `${on.index}` : "";
+      if (key !== disputeNear) {
+        disputeNear = key;
+        window.dispatchEvent(new CustomEvent("illumed:dispute", { detail: close ? { index: on.index, id: on.dispute.id } : null }));
+      }
+    };
     // Passengers riding the train: seated on the benches, standing by the poles, and a few
     // walking up and down the carriages. They ride inside the train, so they move with it.
     const trainGroup = spinners.find((o) => o.userData.train);
@@ -4646,6 +4706,7 @@ export function World3D({
       const renderStarted = process.env.NODE_ENV === "development" ? performance.now() : 0;
       impacts.update(reduce ? 0 : dt);
       updateCrew(reduce ? 0 : secs);
+      updateDisputes();
       updatePassengers(dt, secs);
       groundBodies();
       presentSceneFrame(renderer,presentation,releaseCapture,fit,visual.adaptiveResolution?adaptResolution(now,true,!firstPaint):null);
@@ -4786,6 +4847,7 @@ export function World3D({
       renderer.domElement.removeEventListener("wheel",onWheel); renderer.domElement.removeEventListener("touchstart", onTouchStart); renderer.domElement.removeEventListener("touchmove", onTouchMove); renderer.domElement.removeEventListener("touchend", onTouchEnd);
       window.removeEventListener("illuminated:fight", onFight);
       window.removeEventListener("illumed:impact", onImpact); impacts.dispose();
+      window.removeEventListener("illumed:dispute-help", onDisputeHelp);
       window.removeEventListener("illuminated:dance",dance);
       window.removeEventListener("illuminated:vehicle-crash",onCrash);
       window.removeEventListener("illuminated:civilian-attack",onCivilianAttack);
