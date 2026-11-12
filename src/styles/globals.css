@@ -1293,7 +1293,12 @@ body :where(main h1, main h2) {
 @keyframes world-menu-splash { 0%, 100% { transform: rotate(-14deg) scale(1); } 50% { transform: rotate(-14deg) scale(1.08); } }
 .world-menu-drift { animation: world-menu-drift 40s ease-in-out infinite alternate; }
 .world-menu-splash { animation: world-menu-splash .8s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .world-menu-drift, .world-menu-splash { animation: none; } }
+/* Title-screen slideshow: each picture drifts slowly while it is on screen. */
+@keyframes menu-kenburns-a { from { transform: scale(1.04) translate(-1%, .5%); } to { transform: scale(1.14) translate(1.5%, -1%); } }
+@keyframes menu-kenburns-b { from { transform: scale(1.14) translate(1.5%, 1%); } to { transform: scale(1.04) translate(-1%, -.5%); } }
+.menu-kenburns-a { animation: menu-kenburns-a 9s ease-out both; }
+.menu-kenburns-b { animation: menu-kenburns-b 9s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .world-menu-drift, .world-menu-splash, .menu-kenburns-a, .menu-kenburns-b { animation: none; } }
 
 /* What If: each new year slides in; pop-ups bounce. */
 @keyframes what-if-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

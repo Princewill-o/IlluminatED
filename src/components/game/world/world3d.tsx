@@ -61,7 +61,7 @@ import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
 import { look } from "@/game/core/cosmetics";
-import { crayonBuildingAsset, pixelTreePlans, pixelAsset } from "@/game/core/crayon-vegetation";
+import { crayonBuildingAsset, pixelTreePlans, pixelAsset, natureAsset, NATURE_BEDS } from "@/game/core/crayon-vegetation";
 import { frameBudget } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
@@ -85,7 +85,7 @@ import { ROLE_UNIFORMS } from "@/game/core/roles";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { T as DISPUTE_T, disputeAt, disputeFrame, disputeSpots } from "@/game/core/street-disputes";
-import { suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
+import { DOWNTOWN_LANDMARKS, downtownAsset, downtownBuildingAsset, suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { arriveFrame, departFrame, trainFrame, trainStop } from "@/game/core/train";
@@ -1352,7 +1352,21 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     : t.style === "shop" && !t.label ? (["glass", "local", "supermarket"] as const)[t.x % 3] : null;
   if (street) return streetExterior(g, t, street);
   const selected = suppliedCityBuilding(t);
-  const crayon=selected ? null : crayonBuildingAsset(t);
+  const crayon=selected||DOWNTOWN_LANDMARKS[t.id] ? null : crayonBuildingAsset(t);
+  const downtown=selected||crayon ? null : downtownBuildingAsset(t);
+  if(downtown){
+    try{
+      const block=await kaykitBuilding(g,t,downtown,1,3.2);
+      // Planters either side of the door, from the same kit.
+      const front=new THREE.Box3().setFromObject(block).max.z;
+      for(const side of [-1,1])await place(g,downtownAsset("planter"),t.x+t.w/2+side*(t.w*.34)-.22,front+.02,.44,.44,.13).catch(()=>{});
+      if(t.label){
+        const board=sign(t.label,{bg:t.accent??"#205743",fg:"#fff2b5",w:Math.min(t.w-.3,7),h:.6});
+        board.position.set(t.x+t.w/2,2.3,front+.06);g.add(board);
+      }
+      return;
+    }catch{ /* Fall back to the kit terrace below. */ }
+  }
   if(crayon){
     try{
       await kaykitBuilding(g,t,crayon,1,t.id === "my-house" ? 6 : 4.5);
@@ -2493,6 +2507,8 @@ export function World3D({
     sceneRef.current = scene;
     const debugGraphics = {renderer,scene};
     if(process.env.NODE_ENV === "development") (window as unknown as {__worldGraphics?:unknown}).__worldGraphics=debugGraphics;
+    // Development only: lets capture scripts aim the behind/first-person camera for menu stills.
+    if(process.env.NODE_ENV === "development") (window as unknown as {__cameraView?:unknown}).__cameraView=CAMERA_VIEW;
     const navigationTrail=createNavigationTrail(scene,bend);
     let firstPaint = true;
     const releaseCapture = registerSceneCapture(()=>null);
@@ -2849,8 +2865,9 @@ export function World3D({
     const pixelTrees=london?pixelTreePlans(map):[];
     for(const detail of pixelTrees){
       const imported=new THREE.Group();world.add(imported);
-      jobs.push(placeKitDetail(imported,detail));
-      if(assetSeed(detail.id)%3===0)jobs.push(placeKitDetail(imported,{asset:pixelAsset('flowers'),x:detail.x+.04,z:detail.z+.04,y:.13,w:.26,d:.28,height:.35}));
+      // Leafy kit trees keep their natural proportions: the canopy spreads past the tile, the trunk stays on it.
+      jobs.push(placeKitDetail(imported,detail.asset.includes('/stylized-nature/')?{...detail,x:detail.x-.4,z:detail.z-.4,w:detail.w+.8,d:detail.d+.8}:detail));
+      if(assetSeed(detail.id)%3===0)jobs.push(placeKitDetail(imported,{asset:natureAsset(NATURE_BEDS[assetSeed(detail.id)%NATURE_BEDS.length]),x:detail.x+.02,z:detail.z+.5,y:.13,w:.4,d:.4,height:.42}));
       if(assetSeed(detail.id)%5===0)jobs.push(placeKitDetail(imported,{asset:pixelAsset('grass'),x:detail.x+.6,z:detail.z+.58,y:.13,w:.22,d:.22,height:.3}));
     }
     const streetscape=london?addStreetscape(world,map,phase,new Set(pixelTrees.map(t=>t.id))):null;

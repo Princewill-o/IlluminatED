@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { buildWorld, configureWorld, listPlayerWorlds, worldPlusStatus, type PlayerWorld, type WorldRules } from "@/app/games/world/actions";
+import { MenuBackdrop } from "@/components/game/menu-backdrop";
 import { REGIONS, SERVERS, type RegionId } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
@@ -125,7 +126,7 @@ export function WorldMenu({ region, onRegion, countFor, onJoin, username }: {
   return (
     <div className="absolute inset-0 overflow-hidden bg-[#0b1220] text-white">
       {/* Backdrop: the real city, slowly drifting, dimmed. */}
-      <video className="world-menu-drift absolute inset-0 h-full w-full object-cover opacity-55" src="/landing/menu-gameplay.mp4" poster="/landing/menu-gameplay-poster.jpg" autoPlay muted loop playsInline aria-hidden tabIndex={-1} />
+      <MenuBackdrop dim={0.42} caption />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_30%,rgba(11,18,32,.15),rgba(11,18,32,.85)_70%)]" />
       <div className="relative mx-auto flex h-full max-w-3xl flex-col items-center overflow-y-auto px-4 pt-[6vh] pb-8">
         {/* Logo. */}
