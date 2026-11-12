@@ -1,4 +1,25 @@
-import type * as THREE from "three";
+import * as THREE from "three";
+
+/**
+ * The poses below were measured on the old blocky rig, whose bones all share the model's axes,
+ * so a local turn there is a turn about the character's own left-right (X) or forward (Z) axis.
+ * Other rigs (the creative kit) orient bones differently, so for those we turn each joint about
+ * the character's axes directly, on top of whatever the animation is doing.
+ */
+const LIMB = /Arm|ForeArm|Hand|Shoulder|UpLeg|Leg$|Foot|Toe/;
+export function preparePoseAxes(root: THREE.Object3D) {
+  root.userData.poseModelAxes = true;
+}
+const _rootQ = new THREE.Quaternion(), _parentQ = new THREE.Quaternion(), _turn = new THREE.Quaternion(), _axis = new THREE.Vector3();
+function turnAboutModel(root: THREE.Object3D, joint: THREE.Object3D, axis: THREE.Vector3, angle: number) {
+  root.getWorldQuaternion(_rootQ);
+  _axis.copy(axis).applyQuaternion(_rootQ).normalize();
+  joint.parent!.getWorldQuaternion(_parentQ);
+  // local' = parent⁻¹ · R(world axis) · parent · local
+  _turn.setFromAxisAngle(_axis, angle);
+  joint.quaternion.premultiply(_parentQ.clone().invert().multiply(_turn).multiply(_parentQ));
+}
+const X = new THREE.Vector3(1, 0, 0), Z_FWD = new THREE.Vector3(0, 0, 1), Z_BACK = new THREE.Vector3(0, 0, -1);
 
 const boneCache = new WeakMap<
   THREE.Object3D,
@@ -17,22 +38,28 @@ export function activityPose(
     boneCache.set(root, bones);
   }
   const sway = reduced ? 0 : Math.sin(seconds * 5) * 0.035;
+  const modelAxes = root.userData.poseModelAxes === true;
   const set = (name: string, x: number, z = 0) => {
     if (!bones!.has(name))
       bones!.set(
         name,
         root.getObjectByName(`mixamorig${name}`) ??
           root.getObjectByName(`mixamorig:${name}`) ??
+          root.getObjectByName(name) ??
           null,
       );
     const joint = bones!.get(name);
     // Local turns on top of the clip's pose (the mixer rewrites it every frame). Measured on the
     // blocky rig: -x swings arms, forearms and thighs forward; +x bends knees and leans spine/head
     // forward; z raises an arm sideways (left -z, right +z).
-    if (joint) {
-      if (x) joint.rotateX(x);
-      if (z) joint.rotateZ(z);
+    if (!joint) return;
+    if (modelAxes && joint.parent) {
+      if (x) turnAboutModel(root, joint, X, x);
+      if (z) turnAboutModel(root, joint, LIMB.test(name) ? Z_BACK : Z_FWD, z);
+      return;
     }
+    if (x) joint.rotateX(x);
+    if (z) joint.rotateZ(z);
   };
   const wave = (speed: number, phase = 0) => (reduced ? 0 : Math.sin(seconds * speed + phase));
   const seatedLegs = () => {

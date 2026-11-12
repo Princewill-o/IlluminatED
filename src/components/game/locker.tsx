@@ -33,6 +33,7 @@ import {
   look,
   unlockLabel,
 } from "@/game/core/cosmetics";
+import { characterPreset, kitThumb } from "@/game/core/creative-looks";
 import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => n.toLocaleString("en-GB");
@@ -117,7 +118,9 @@ export function Locker({
 
   const wear = (item: Cosmetic) => {
     const preset=BLENDER_PRESETS.find(p=>p.id===item.id);
-    setAvatar((a) => ({ ...a, ...(preset?{head:preset.id,top:preset.outfit,hat:"hat-none",face:"face-none",cape:"cape-none",held:"held-none",topColor:"topcol-auto",bottomColor:"botcol-auto",shoesColor:"shoecol-auto"}:{}), [item.slot]: item.id, ...(item.slot==='top'?{topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'}:{}) }));
+    // Picking a character sets their skin tone, hair and colours too; each can still be changed after.
+    const character = item.slot === 'head' ? characterPreset(item.id) : {};
+    setAvatar((a) => ({ ...a, ...(preset?{head:preset.id,top:preset.outfit,hat:"hat-none",face:"face-none",cape:"cape-none",held:"held-none",topColor:"topcol-auto",bottomColor:"botcol-auto",shoesColor:"shoecol-auto"}:{}), ...character, [item.slot]: item.id, ...(item.slot==='top'?{topColor:'topcol-auto',bottomColor:'botcol-auto',shoesColor:'shoecol-auto'}:{}) }));
     setMessage(null);
   };
 
@@ -332,7 +335,7 @@ export function Locker({
               return <li key={style.id} className={cn('flex flex-col overflow-hidden rounded-2xl border-2 bg-card', wearing ? 'border-[#f2d9a6]' : 'border-border')}>
                 <div className="relative grid h-44 place-items-center bg-secondary/70">
                   <span className="absolute top-3 left-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{style.collection}</span>
-                  <Image src={`/world3d/blocky-outfits/${outfit.thumbnail}`} alt={`${style.name} clothing`} width={176} height={176} className="h-44 w-44 object-contain" />
+                  <Image src={kitThumb(outfit.id)} alt={`${style.name} clothing`} width={176} height={176} className="h-44 w-44 object-contain" />
                   <span className="absolute right-3 bottom-3 flex gap-1" aria-label="Clothing palette">{[outfit.primary, outfit.accent, outfit.pants].map((colour, index) => <span key={index} className="size-4 rounded-full border border-black/10" style={{background:colour}} />)}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
@@ -396,7 +399,7 @@ export function Locker({
                     ) : outfit && item.slot !== "top" ? (
                       <PieceIcon slot={item.slot} colour={item.color ?? outfit.pants} accent={outfit.accent} label={item.name} />
                     ) : outfit ? (
-                      <Image src={`/world3d/blocky-outfits/${outfit.thumbnail}`} alt={`${item.name}`} width={152} height={152} className="size-[152px] object-contain" />
+                      <Image src={kitThumb(outfit.id)} alt={`${item.name}`} width={152} height={152} className="size-[152px] object-contain" />
                     ) : item.id==='top-tee' ? <CharacterPickerThumb avatar={preview} size={152} label="Original character outfit" /> : ['top','bottom','shoes'].includes(item.slot) ? (
                       <AvatarFigure avatar={preview} still size={152} showPet={false} title={clothingName(item.id,item.name)} />
                     ) : item.slot === "brand" ? (
@@ -475,7 +478,7 @@ export function Locker({
 
 function CharacterPickerThumb({avatar,size,label}:{avatar:Avatar;size:number;label:string}){
   const model=ADVENTURERS.find((entry)=>entry.id===avatar.head);
-  if(model&&'style' in model&&model.style==='blocky')return <div className="grid place-items-center" style={{height:size,width:size}}><Image src={`/world3d/blocky-characters/${model.file}.png`} width={size} height={size} alt={`${label} character preview`} className="h-full w-full object-contain" /></div>;
+  if(model)return <div className="grid place-items-center" style={{height:size,width:size}}><Image src={kitThumb(model.id)} width={size} height={size} alt={`${label} character preview`} className="h-full w-full object-contain" /></div>;
   return <AvatarFigure avatar={avatar} still size={size} showPet={false} title={label} />;
 }
 

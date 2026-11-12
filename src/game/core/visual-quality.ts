@@ -35,29 +35,30 @@ export function populationBudget(tier: GraphicsTier, indoors: boolean) {
 /** Keep the art direction with bounded pixel, shadow and effect budgets. */
 export function visualProfile(dpr = 1, touch = false, tier: GraphicsTier = "high") {
   const base = visualProfileHigh(dpr, touch);
-  if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1), shadowSize: touch ? 512 : 768, ambientOcclusion: false, occlusionSamples: 0 };
+  if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1.25), shadowSize: touch ? 1024 : 1536, ambientOcclusion: !touch, occlusionSamples: touch ? 0 : 4 };
   // Performance keeps the one cheap pass that defines the look: the black low-poly outlines.
   if (tier === "performance") return { ...base, pixelRatio: 1, shadows: false, shadowSize: 256, postProcessing: true, ambientOcclusion: false, occlusionSamples: 0, bloom: false, environment: false, outlines: true };
   return base;
 }
 function visualProfileHigh(dpr: number, touch: boolean) {
   return {
+    // Sharp on high-density screens: up to 2x on desktop, 1.5x on phones and tablets.
     pixelRatio: Math.min(
-      touch ? 1 : 1.25,
+      touch ? 1.5 : 2,
       Math.max(1, Number.isFinite(dpr) ? dpr : 1),
     ),
     shadows: true,
-    shadowSize: touch ? 512 : 1024,
+    shadowSize: touch ? 1024 : 2048,
     postProcessing: true,
     environment: true,
     // FXAA handles edges without multisampling and resolving the HDR framebuffer.
     samples: 0,
     ambientOcclusion: true,
-    occlusionSamples: touch ? 4 : 8,
+    occlusionSamples: touch ? 6 : 12,
     depthOfField: false,
     msaa: false,
     bloom: true,
-    bloomStrength: 0.18,
+    bloomStrength: 0.2,
     exposure: 1.12,
     adaptiveResolution: true,
     /** Black cartoon outlines (one depth pass) for the low-poly look. */
@@ -69,7 +70,7 @@ function visualProfileHigh(dpr: number, touch: boolean) {
  * and suspension do not count as slow rendering; stable frames recover detail. */
 export function adaptivePixelRatio(maximum: number) {
   const ceiling = Math.min(
-    1.5,
+    2,
     Math.max(1, Number.isFinite(maximum) ? maximum : 1),
   );
   let ratio = ceiling,

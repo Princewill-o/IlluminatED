@@ -55,8 +55,8 @@ test("loading and shader warmup cannot permanently reduce a sharp scene", () => 
 test("default and touch profiles avoid redundant MSAA and unbounded high-DPI work while retaining lighting", () => {
   for (const touch of [false, true]) {
     const profile = visual.visualProfile(4, touch);
-    assert.ok(profile.pixelRatio <= 1.25);
-    assert.ok(profile.shadowSize <= 1024);
+    assert.ok(profile.pixelRatio <= 2);
+    assert.ok(profile.shadowSize <= 2048);
     assert.ok(profile.samples <= 2);
     assert.equal(profile.adaptiveResolution, true);
     assert.equal(profile.environment, true);

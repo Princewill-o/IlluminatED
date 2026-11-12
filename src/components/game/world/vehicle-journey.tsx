@@ -93,28 +93,29 @@ export function VehicleJourney({ kind, from, to, miles, seconds, coach = "nation
     if (kind === "coach") {
       const c = coachModel(coach);
       c.add(coachInterior(COACH_LENGTH, COACH_WIDTH, 21, { x: mySeat.x, z: mySeat.z }));
-      seeThrough(c, 0.4, 0.08);
+      seeThrough(c, 0.18);
       vehicle.add(c);
     } else {
       // A London double-decker built here (the city's models bend with the city camera).
       const bus = new THREE.Group();
       const part = (c: string, x: number, y: number, z: number, w: number, h: number, d: number, name = "body") => { const m = new THREE.Mesh(boxG(w, h, d), mat(c)); m.name = name; m.position.set(x, y, z); bus.add(m); return m; };
-      part("#c8102e", 0, 0.75, 0, 5.8, 0.7, 1.8);
-      part("#c8102e", 0, 2.55, 0, 5.8, 0.5, 1.8);
-      part("#d7dbe2", 0, 2.86, 0, 5.7, 0.12, 1.7, "roof");
-      part("#9fd0e8", 0, 1.5, 0, 5.8, 0.8, 1.82, "glass");
-      part("#9fd0e8", 0.1, 2.05, 0, 5.6, 0.5, 1.82, "glass upper");
-      part("#ffd166", 2.91, 2.55, 0, 0.04, 0.25, 1.2, "logo blind");
+      part("#c8102e", 0, 0.7, 0, 5.8, 0.6, 1.8);
+      part("#c8102e", 0, 1.58, 0, 5.8, 0.14, 1.8);
+      part("#c8102e", 0, 2.84, 0, 5.8, 0.22, 1.8);
+      part("#d7dbe2", 0, 3.0, 0, 5.7, 0.1, 1.7, "roof");
+      part("#9fd0e8", 0, 1.3, 0, 5.8, 0.42, 1.82, "glass");
+      part("#9fd0e8", 0.1, 2.22, 0, 5.6, 1.02, 1.82, "glass upper");
+      part("#ffd166", 2.91, 2.84, 0, 0.04, 0.18, 1.2, "logo blind");
       for (const x of [-1.9, 1.9]) for (const z of [-0.9, 0.9]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.25, 12), mat("#1b1622")); w.name = "wheel"; w.rotation.x = Math.PI / 2; w.position.set(x, 0.42, z); bus.add(w); }
-      seeThrough(bus, 0.4, 0.1);
+      seeThrough(bus, 0.2);
       bus.add(seatRows({ x0: -2.3, x1: 1.4, y: 0.42, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed: 5, fill: 0.5 }));
       bus.add(seatRows({ x0: -2.4, x1: 2.1, y: 1.6, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed: 11, fill: 0.5, skip: (x, z) => z > 0 && Math.abs(x - mySeat.x) < 0.1 })); // you get the front seat upstairs
       const floors = [0.42, 1.6].map((y) => { const f = new THREE.Mesh(boxG(5.5, 0.06, 1.6), mat("#5b6270")); f.position.set(0, y, 0); return f; });
       bus.add(...floors);
-      const driver = seatedPerson(3, "#1f3fa8"); driver.position.set(2.25, 0.9, 0.42); bus.add(driver);
+      const driver = seatedPerson(3, "top-blocky-business-navy"); driver.position.set(2.25, 0.9, 0.42); bus.add(driver);
       vehicle.add(bus);
     }
-    const me = seatedPerson(4, "#ffd166"); me.position.set(mySeat.x, mySeat.y, mySeat.z); vehicle.add(me);
+    const me = seatedPerson(4); me.position.set(mySeat.x, mySeat.y, mySeat.z); vehicle.add(me);
     // "You" marker over your seat.
     const tag = (() => {
       const cv = document.createElement("canvas"); cv.width = 128; cv.height = 64;

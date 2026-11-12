@@ -14,24 +14,24 @@ test("graphics retain lighting and materials within a bounded rendering budget",
   for (const dpr of [.5, .75, 1, 2, 4, NaN]) {
     const high = visualProfile(dpr);
     assert.equal(high.shadows, true);
-    assert.equal(high.shadowSize, 1024);
+    assert.equal(high.shadowSize, 2048);
     assert.equal(high.postProcessing, true);
     assert.equal(high.environment, true);
     assert.equal(high.bloom, true);
     assert.equal(high.samples, 0);
     assert.equal(high.ambientOcclusion, true);
-    assert.equal(high.occlusionSamples, 8);
+    assert.equal(high.occlusionSamples, 12);
     assert.equal(high.depthOfField, false);
     assert.equal(high.msaa, false);
     assert.equal(high.adaptiveResolution, true);
-    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 1.25);
+    assert.ok(high.pixelRatio >= 1 && high.pixelRatio <= 2);
   }
 });
 
 test("desktop and touch start sharp without unbounded supersampling",()=>{
  for(const touch of [false,true])for(const dpr of [.5,.75,1,3,NaN])assert.ok(visualProfile(dpr,touch).pixelRatio>=1);
- assert.equal(visualProfile(3,false).pixelRatio,1.25);
- assert.equal(visualProfile(3,true).pixelRatio,1);
+ assert.equal(visualProfile(3,false).pixelRatio,2);
+ assert.equal(visualProfile(3,true).pixelRatio,1.5);
  for(const maximum of [.5,.75,NaN]){
   const adapt=adaptivePixelRatio(maximum);let ratio=adapt(0);
   for(let now=50;now<20000;now+=50)ratio=adapt(now);
@@ -40,7 +40,7 @@ test("desktop and touch start sharp without unbounded supersampling",()=>{
 });
 test("legacy preferences retain the art profile and adaptation ignores invalid or suspended frames",()=>{
  for(const stored of [null,"auto","low","medium","high","ultra","obsolete"])assert.equal(readVisualQuality(stored),"high");
- const adapt=adaptivePixelRatio(2);assert.equal(adapt(0),1.5);assert.equal(adapt(NaN),1.5);assert.equal(adapt(60000,false),1.5);assert.equal(adapt(60016),1.5);
+ const adapt=adaptivePixelRatio(3);assert.equal(adapt(0),2);assert.equal(adapt(NaN),2);assert.equal(adapt(60000,false),2);assert.equal(adapt(60016),2);
 });
 test("optional motion respects accessibility and cannot grow with vehicle speed", () => {
   for (const t of [0, 1, 100])

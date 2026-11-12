@@ -206,7 +206,10 @@ export function HeroRush({ userId, mode }: { userId: string; mode: Mode }) {
     return (
       <div className="space-y-6">
         {header}
-        <p className="font-bold">Choose your hero</p>
+        <div>
+          <p className="font-bold">Choose your hero</p>
+          <p className="text-sm text-muted-foreground">The Lumen League: six heroes, one for each subject. Answer that subject&apos;s questions to charge their power. Every suit is in the Season Pass, so you can wear it around the city too.</p>
+        </div>
         {plus ? (
           <p className="text-sm text-muted-foreground">Plus: unlimited runs.</p>
         ) : outOfRuns ? (
@@ -228,9 +231,10 @@ export function HeroRush({ userId, mode }: { userId: string; mode: Mode }) {
                 style={{ background: `linear-gradient(160deg, ${h.colours.trim}, #ffffff)` }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/heroes/${h.id}.webp`} alt="" className="h-36 w-auto transition group-hover:scale-105" />
+                <img src={`/heroes/${h.id}.webp`} alt="" className="h-44 w-auto drop-shadow-md transition group-hover:scale-105" />
                 <span className="mt-2 text-lg font-black text-[#1d1a4a]">{h.name}</span>
                 <span className="text-xs font-bold text-[#1d1a4a]/70">{h.subject}</span>
+                <span className="mt-1 text-xs italic text-[#1d1a4a]/80">“{h.tagline}”</span>
                 <span className="mt-2 text-xs text-[#1d1a4a]">{h.power}</span>
               </button>
             </li>

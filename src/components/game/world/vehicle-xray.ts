@@ -1,39 +1,41 @@
 import * as THREE from "three";
 
 /**
- * See-through vehicles: the body shell turns translucent and the glass almost
- * clear, so you can see who's inside (you, the driver, other passengers).
- * Wheels, lights and trim stay solid so the vehicle still reads clearly.
+ * Vehicles with windows you can see through: the bodywork stays solid and only
+ * the glass turns clear, so you can see who's inside (you, the driver, other
+ * passengers) the way you would in real life.
  */
-const SOLID = /rubber|hub|tyre|tire|wheel|lamp|light|tail|amber|grille|chrome|plate|black|line|logo|mirror/i;
 const GLASS = /glass|window|windscreen/i;
+const NOT_GLASS = /pillar|frame|trim|seal/i;
 
-export function seeThrough(root: THREE.Object3D, body = 0.38, glass = 0.12) {
+export function seeThrough(root: THREE.Object3D, glass = 0.22) {
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh || mesh.userData.xray === false) return;
+    let clear = false;
     const swap = (m: THREE.Material) => {
       const name = `${m.name} ${mesh.name}`;
-      if (SOLID.test(name) && !GLASS.test(name)) return m;
+      if (!GLASS.test(name) || NOT_GLASS.test(name)) return m;
+      clear = true;
       const next = m.clone();
       // Keep any shader hooks (the curved-world bend) that cloning would drop.
       next.onBeforeCompile = m.onBeforeCompile;
       next.customProgramCacheKey = m.customProgramCacheKey;
       next.transparent = true;
-      next.opacity = GLASS.test(name) ? glass : body;
+      next.opacity = glass;
       next.depthWrite = false;
+      // A faint blue-grey tint and a glossy finish so it still reads as glass.
+      const standard = next as THREE.MeshStandardMaterial;
+      if (standard.color) standard.color.lerp(new THREE.Color("#bfd8ea"), 0.6);
+      if ("roughness" in standard) standard.roughness = 0.08;
       next.userData = { ...m.userData, xray: true };
       return next;
     };
     mesh.material = Array.isArray(mesh.material) ? mesh.material.map(swap) : swap(mesh.material);
-    mesh.renderOrder = 3;
-    mesh.castShadow = false;
+    if (clear) mesh.renderOrder = 3;
   });
 }
 
-const SKINS = ["#f1c9a5", "#e0ac83", "#c68a5c", "#a0673f", "#7a4a2a", "#5a3520"];
-const TOPS = ["#2b5fd9", "#d6452a", "#15987f", "#7a5ce6", "#e0a100", "#3b4a5c", "#e0457b", "#f4efe6"];
-const HAIRS = ["#1d1512", "#4a2f1f", "#d9b06b", "#111111", "#8c5a2b", "#6b3a1e"];
 const mats = new Map<string, THREE.MeshStandardMaterial>();
 const solid = (c: string) => {
   let m = mats.get(c);
@@ -63,22 +65,31 @@ export function ownMaterials(root: THREE.Object3D) {
 }
 
 /** A seated person seen through a vehicle's glass (in tiles; origin on the seat, facing +x). */
-export function seatedPerson(seed: number, top?: string) {
+/**
+ * Someone sitting down (vehicle forward is +x): a resident from the character kit, posed seated
+ * and then frozen, so a busy bus costs no animation work. `uniform` dresses them for work (the
+ * driver); `onReady` lets the city bend them to its curve once they arrive.
+ */
+export function seatedPerson(seed: number, uniform?: string, onReady?: (o: THREE.Object3D) => void) {
   const g = new THREE.Group();
-  const part = (c: string, w: number, h: number, d: number, x: number, y: number, z: number) => {
-    const m = keep(new THREE.Mesh(UNIT, solid(c))); m.scale.set(w, h, d); m.position.set(x, y, z); g.add(m); return m;
-  };
-  part(top ?? TOPS[seed % TOPS.length], 0.26, 0.42, 0.4, 0, 0.21, 0);
-  part("#2a3346", 0.34, 0.12, 0.34, 0.14, 0.06, 0); // lap
-  part(SKINS[(seed * 3) % SKINS.length], 0.3, 0.3, 0.3, 0.02, 0.6, 0);
-  part(HAIRS[(seed * 5) % HAIRS.length], 0.32, 0.09, 0.32, 0.0, 0.78, 0);
-  part("#111111", 0.02, 0.05, 0.05, 0.17, 0.62, -0.07); // eyes
-  part("#111111", 0.02, 0.05, 0.05, 0.17, 0.62, 0.07);
+  g.name = "seated-person";
+  void import("../char3d").then(async ({ buildCharacter, npcLook }) => {
+    const avatar = npcLook(seed);
+    const c = await buildCharacter(uniform ? { ...avatar, top: uniform, hat: "hat-none", held: "held-none" } : avatar, 0.92, null, { outfit: false });
+    c.play("sit");
+    for (let i = 0; i < 4; i++) c.update(1 / 30, true);
+    c.object.rotation.y = Math.PI / 2;
+    // The group sits on the seat cushion; the character's feet go to the floor below it.
+    c.object.position.set(-0.06, -0.46, 0);
+    c.object.traverse((o) => { const mesh = o as THREE.Mesh; if (mesh.isMesh) { mesh.castShadow = false; mesh.userData.xray = false; } });
+    g.add(c.object);
+    onReady?.(c.object);
+  }).catch(() => {});
   return g;
 }
 
 /** A row of simple seats with a few people in them (tiles; vehicle forward is +x). */
-export function seatRows(opts: { x0: number; x1: number; y: number; sides: number[]; seatColour: string; seed: number; fill: number; skip?: (x: number, z: number) => boolean }) {
+export function seatRows(opts: { x0: number; x1: number; y: number; sides: number[]; seatColour: string; seed: number; fill: number; skip?: (x: number, z: number) => boolean; onReady?: (o: THREE.Object3D) => void }) {
   const g = new THREE.Group();
   let k = opts.seed;
   for (let x = opts.x0; x <= opts.x1 + 1e-6; x += 0.75) {
@@ -88,7 +99,7 @@ export function seatRows(opts: { x0: number; x1: number; y: number; sides: numbe
       const back = keep(new THREE.Mesh(UNIT, solid(opts.seatColour))); back.scale.set(0.1, 0.5, 0.42); back.position.set(x - 0.2, opts.y + 0.7, z); g.add(back);
       k = (k * 1103515245 + 12345) >>> 0;
       if ((k >>> 8) % 100 < opts.fill * 100) {
-        const p = seatedPerson(k >>> 4); p.position.set(x, opts.y + 0.48, z); g.add(p);
+        const p = seatedPerson(k >>> 4, undefined, opts.onReady); p.position.set(x, opts.y + 0.48, z); g.add(p);
       }
     }
   }
@@ -101,6 +112,6 @@ export function coachInterior(length: number, width: number, seed: number, keepF
   const floor = keep(new THREE.Mesh(UNIT, solid("#3b4250"))); floor.scale.set(length - 0.5, 0.06, width - 0.2); floor.position.set(0, 1.2, 0); g.add(floor);
   g.add(seatRows({ x0: -length / 2 + 0.6, x1: length / 2 - 1.3, y: 1.2, sides: [-0.5, 0.5], seatColour: "#30406e", seed, fill: 0.55,
     skip: keepFree ? (x, z) => Math.abs(x - keepFree.x) < 0.2 && Math.abs(z - keepFree.z) < 0.1 : undefined }));
-  const driver = seatedPerson(seed + 7, "#233b65"); driver.position.set(length / 2 - 0.6, 1.68, 0.45); g.add(driver);
+  const driver = seatedPerson(seed + 7, "top-blocky-business-navy"); driver.position.set(length / 2 - 0.6, 1.68, 0.45); g.add(driver);
   return g;
 }

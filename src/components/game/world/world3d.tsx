@@ -1758,8 +1758,8 @@ function busModel(route: string) {
     g.userData.vehicleRig = rigVehicle(body, g.scale.y, "x");
     bendAll(body);
     body.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
-    // See-through: the red shell goes translucent so the decks and people show.
-    seeThrough(body, 0.42, 0.1);
+    // Windows: only the glass is clear, so the decks and people show through it.
+    seeThrough(body, 0.2);
     g.add(body);
   });
   // Model units: 2.8 long (front at +x), 0.66 wide, 1.14 tall.
@@ -1779,11 +1779,11 @@ function busModel(route: string) {
   const floor = (y: number, colour: string) => { const m = new THREE.Mesh(BOX, mat(colour)); m.scale.set(BUS_LENGTH - 0.4, 0.06, BUS_WIDTH - 0.2); m.position.set(0, y, 0); inside.add(m); };
   floor(0.42, "#5b6270"); floor(1.6, "#5b6270");
   const stairs = new THREE.Mesh(BOX, mat("#3b4a5c")); stairs.scale.set(0.9, 1.15, 0.5); stairs.position.set(-0.4, 1.0, -0.5); inside.add(stairs);
-  inside.add(seatRows({ x0: -2.3, x1: 1.4, y: 0.42, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed, fill: 0.45, skip: (x, z) => z < 0 && (Math.abs(x + 0.4) < 0.6 || Math.abs(x + 1.55) < 0.1) }));
+  inside.add(seatRows({ x0: -2.3, x1: 1.4, y: 0.42, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed, fill: 0.45, onReady: bendAll, skip: (x, z) => z < 0 && (Math.abs(x + 0.4) < 0.6 || Math.abs(x + 1.55) < 0.1) }));
   // Your seat (kept free for you when you ride).
   const mine = new THREE.Mesh(BOX, mat("#2b4fa8")); mine.scale.set(0.42, 0.12, 0.42); mine.position.set(-1.55, 0.84, -0.45); inside.add(mine);
-  inside.add(seatRows({ x0: -2.4, x1: 2.1, y: 1.6, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed: seed + 9, fill: 0.5 }));
-  const driver = seatedPerson(seed + 3, "#1f3fa8"); driver.position.set(2.25, 0.9, 0.42); inside.add(driver);
+  inside.add(seatRows({ x0: -2.4, x1: 2.1, y: 1.6, sides: [-0.45, 0.45], seatColour: "#2b4fa8", seed: seed + 9, fill: 0.5, onReady: bendAll }));
+  const driver = seatedPerson(seed + 3, "top-blocky-business-navy", bendAll); driver.position.set(2.25, 0.9, 0.42); inside.add(driver);
   bendAll(inside);
   g.add(inside);
   g.userData.busSeat = { x: -1.55 / g.scale.x, y: 0.42, z: -0.45 };
@@ -3117,7 +3117,7 @@ export function World3D({
       });
       for (const coach of london ? COACHES.slice(0, 1) : []) {
         // See-through coaches: the cabin, the driver and passengers show through the glass.
-        const obj=coachModel(coach.id);obj.add(coachInterior(COACH_LENGTH,COACH_WIDTH,coach.id.length*13));seeThrough(obj,0.45,0.1);bendAll(obj);scene.add(obj);
+        const obj=coachModel(coach.id);obj.add(coachInterior(COACH_LENGTH,COACH_WIDTH,coach.id.length*13));seeThrough(obj,0.2);bendAll(obj);scene.add(obj);
         traffic.push({obj,route:coach.route,at:coach.at,distance:0,speed:2.4});
       }
     }
@@ -3948,7 +3948,7 @@ export function World3D({
             const model = new THREE.Group();
             carHolder.add(model);
             // Your own car is see-through, so you can see yourself at the wheel.
-            void placeCar(model, want === "cab" ? "taxi" : want).then(() => seeThrough(model, 0.5, 0.12)).catch(() => {});
+            void placeCar(model, want === "cab" ? "taxi" : want).then(() => seeThrough(model, 0.24)).catch(() => {});
           }
         }
       }

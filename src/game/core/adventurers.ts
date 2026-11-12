@@ -23,4 +23,5 @@ export const BLENDER_PRESETS = PRESET_MANIFEST.presets;
 export const ADVENTURERS = [...SUPPLIED_ADVENTURERS, ...BLENDER_PRESETS];
 /** Legacy or unknown character choices always resolve to the supplied City Hero. */
 export const adventurerFor = (head: string | undefined) => ADVENTURERS.find(m => m.id === (head === "head-blocky-princess-rose" ? "head-blocky-classic-princess" : head)) ?? ADVENTURERS[0];
-export const blockyThumbnail = (head: string | undefined) => `${BLOCKY_BASE}/${adventurerFor(head).file}.png`;
+/** The Locker picture of a character, rendered from the creative kit. */
+export const blockyThumbnail = (head: string | undefined) => `/world3d/creative-characters/thumbs/${adventurerFor(head).id}.webp`;
