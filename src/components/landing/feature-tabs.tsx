@@ -14,11 +14,11 @@ const TABS = [
     media: { kind: "video", src: "/landing/illumed-world-explainer.mp4", poster: "/landing/illumed-world-explainer-poster.jpg", alt: "IllumED World explainer: Fountain Square, venue interiors, networking events, deliveries, worlds, Maths Racing and What If" },
   },
   {
-    id: "agent",
-    label: "Agent · soon",
-    title: "Coming soon: an agent that plans your week.",
-    text: "Ask in plain English. It builds a revision plan around your homework and exam date, tests you on your teacher's topics and asks before anything is shared.",
-    media: { kind: "video", src: "/landing/illumed-film.mp4", poster: "/landing/illumed-film-poster.jpg", alt: "The study agent planning a revision week" },
+    id: "tiggy",
+    label: "Ask Tiggy",
+    title: "Stuck? Ask Tiggy.",
+    text: "An AI study helper for your subjects. Free accounts get 15 messages to try it; Plus gives up to 200 a day with full worked solutions. It never asks for personal details.",
+    media: { kind: "image", src: "/landing/world-study.webp", alt: "The study hall in the game" },
   },
   {
     id: "careers",
@@ -31,7 +31,7 @@ const TABS = [
     id: "schools",
     label: "Schools",
     title: "Homework that students actually open.",
-    text: "Teachers set homework from the question bank and review their own classes' results. Seat pricing and pilot scope are agreed in writing before purchase.",
+    text: "Teachers set homework from the question bank and review their own classes' results. Schools start with a one-term paid pilot and a data and safeguarding pack.",
     media: { kind: "image", src: "/landing/world-study.webp", alt: "The study hall in the game" },
   },
 ] as const;

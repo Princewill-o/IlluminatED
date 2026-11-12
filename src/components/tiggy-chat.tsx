@@ -248,7 +248,7 @@ export function TiggyChat({
           </div>
           {status.plan === "free" && premiumEnabled && (
             <Link
-              href="/premium"
+              href="/pricing"
               className="text-primary mt-3 inline-flex items-center gap-1 text-xs font-semibold"
             >
               <Sparkles className="size-3.5" aria-hidden /> Get more with
@@ -347,7 +347,7 @@ export function TiggyChat({
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
               {status.plan === "free" && premiumEnabled && (
                 <Link
-                  href="/premium"
+                  href="/pricing"
                   className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 font-semibold"
                 >
                   See Premium
@@ -438,7 +438,7 @@ export function TiggyChat({
                   Hints first.{" "}
                   {premiumEnabled && (
                     <Link
-                      href="/premium"
+                      href="/pricing"
                       className="underline underline-offset-4"
                     >
                       Full worked solutions with Premium

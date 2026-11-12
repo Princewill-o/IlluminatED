@@ -206,7 +206,7 @@ export default function TermsPage() {
       <ul>
         <li>
           <strong>What you get.</strong> Premium adds extra Ask Tiggy features,
-          as listed on the <Link href="/premium">Premium page</Link> when you
+          as listed on the <Link href="/pricing">plans page</Link> when you
           subscribe. Features marked "coming soon" aren't part of what you're
           paying for until they launch. Everything that's free on IlluminatED
           stays free.

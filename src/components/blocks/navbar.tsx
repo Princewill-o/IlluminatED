@@ -11,6 +11,25 @@ import { Navbar1 } from "@/components/ui/navbar-1";
 import { NAV } from "@/lib/nav";
 import { useSignedIn } from "@/lib/use-signed-in";
 
+/** Who it's for and what it costs: the same for everyone. */
+const PLANS_GROUP = { label: "Plans", items: [
+  { title: "Plans and pricing", href: "/pricing", description: "Free to revise · Plus from £5.99 a month" },
+  { title: "For parents", href: "/#parents", description: "One clear price, cancel any time" },
+  { title: "For schools & colleges", href: "/schools", description: "Paid one-term pilots and the data pack" },
+  { title: "Safety and your data", href: "/safeguarding", description: "Safeguarding, privacy and AI use" },
+] };
+
+/** Signed out: what you can revise, then what it costs. Three choices, no maze. */
+const PUBLIC_NAV = [
+  { label: "Revise", items: [
+    { title: "GCSE", href: "/gcse", description: "Years 10–11 by subject and exam board" },
+    { title: "A level", href: "/a-level", description: "Years 12–13 subject routes" },
+    { title: "BTEC and T Levels", href: "/btec", description: "Vocational and technical routes" },
+    { title: "Free lesson slides", href: "/curriculum", description: "Years 1–11 · no account needed" },
+  ] },
+  PLANS_GROUP,
+];
+
 /** Site navigation: a floating pill (see components/ui/navbar-1.tsx). Menus only appear once signed in. */
 export const Navbar = () => {
   const pathname = usePathname();
@@ -21,11 +40,7 @@ export const Navbar = () => {
   return (
     <Navbar1
       logo={<span className="inline-flex items-center"><Logo wordmarkClassName="max-[480px]:hidden" /><PlanBadge className="ml-2" /></span>}
-      groups={signedIn ? NAV : [{ label: "Learn", items: [
-        { title: "Primary", href: "/curriculum?stage=primary", description: "Years 1–6 · no account needed" },
-        { title: "Secondary", href: "/curriculum?stage=secondary", description: "Years 7–11 · IllumED Slides and practice" },
-        { title: "Sixth form", href: "/curriculum?stage=sixth-form", description: "A-level, BTEC and T Level routes" },
-      ] }]}
+      groups={signedIn ? NAV.filter((g) => g.label === "Learn" || g.label === "Practise").concat(PLANS_GROUP) : PUBLIC_NAV}
       actions={<ThemeToggle className="rounded-full" />}
       cta={
         signedIn === false ? (

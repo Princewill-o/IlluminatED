@@ -30,7 +30,7 @@ export function Q4CampaignArtwork({ compact = false }: { compact?: boolean }) {
         <p className="mt-3 max-w-md text-sm leading-relaxed text-blue-50 sm:text-base">
           Sign up now and get Premium free for 30 days. Payment details are collected securely, then {PREMIUM_MONTHLY_LABEL} unless you cancel before the trial ends.
         </p>
-        <Link href="/premium?campaign=q4" className="mt-5 inline-flex rounded-full border-2 border-blue-950 bg-white px-5 py-2.5 text-sm font-bold text-blue-950 shadow-[3px_3px_0_#072373] hover:bg-yellow-100">
+        <Link href="/pricing" className="mt-5 inline-flex rounded-full border-2 border-blue-950 bg-white px-5 py-2.5 text-sm font-bold text-blue-950 shadow-[3px_3px_0_#072373] hover:bg-yellow-100">
           See the offer
         </Link>
       </div>

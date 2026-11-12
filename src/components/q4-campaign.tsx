@@ -41,7 +41,7 @@ export function Q4Campaign({ compact = false }: { compact?: boolean }) {
             <p className="mt-4 max-w-lg text-base text-blue-50 sm:text-lg">{current.body}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Link href="/sign-in?mode=sign-up&next=%2Fpremium%3Fcampaign%3Dq4" className="inline-flex items-center gap-2 rounded-full border-2 border-blue-950 bg-white px-6 py-3 font-bold text-blue-950 shadow-[4px_4px_0_#072373] hover:bg-yellow-100">Sign up now <ArrowRight className="size-4" aria-hidden /></Link>
-              <Link href="/premium" className="text-sm font-semibold underline underline-offset-4">Compare Free and Premium</Link>
+              <Link href="/pricing" className="text-sm font-semibold underline underline-offset-4">Compare plans</Link>
             </div>
             <p className="mt-5 text-xl font-bold">Premium free for one month (30 days).</p>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-50">New Premium subscribers only. Offer ends at midnight after 15 October 2026 (UK time). Payment details required. £0 for 30 days, then £5.99/month automatically unless cancelled. Cancel before the trial ends to pay nothing. Checkout availability is shown on the Premium page.</p>

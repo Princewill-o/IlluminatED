@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { ArrowRight, CalendarCheck, ListChecks, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpenCheck, Building2, Coins, GraduationCap, ShieldCheck, Users } from "lucide-react";
 import type { Metadata } from "next";
 
 import { RewardsBanner } from "@/components/game/season/rewards-banner";
@@ -11,12 +11,13 @@ import { PlatformTotals } from "@/components/landing/platform-totals";
 import { SiteStructuredData } from "@/components/seo/structured-data";
 import { BlurFade } from "@/components/ui/magic/blur-fade";
 import { Marquee } from "@/components/ui/magic/marquee";
+import { PLAN_ROADMAP, PLANS } from "@/lib/plans";
 import { platformStats } from "@/lib/server/platform-stats";
 
 export const metadata: Metadata = {
-  title: { absolute: "IlluminatED | Revision, career practice and homework in one learning game" },
+  title: { absolute: "IlluminatED | Revision students actually choose to open" },
   description:
-    "Learning from primary school to sixth form: explore IllumED Slides for Years 1–11, plus GCSE, A-level, BTEC and T Level revision, games and school tools. Browse lessons free without an account.",
+    "GCSE and A-level revision students actually choose to open: quizzes, flashcards and an AI study helper, with a 3D London city as the reward. Free to start; Plus from £5.99 a month; paid pilots for schools.",
   alternates: { canonical: "/" },
 };
 
@@ -25,33 +26,6 @@ const display = "[font-family:var(--font-geist-sans)] font-semibold tracking-[-0
 const soft = "text-[var(--sky-soft)]";
 const card = "rounded-3xl bg-[var(--sky-card)] ring-1 ring-[var(--sky-ring)] backdrop-blur";
 const accent = "text-[var(--sky-accent)]";
-
-/** Landing pricing. Paid prices match the Stripe prices checked at checkout (src/lib/premium-actions.ts). */
-const PLANS: {
-  name: string; tagline: string; price: string; per?: string; note: string;
-  features: string[]; href: string; cta: string; highlight?: boolean; badge?: string;
-}[] = [
-  {
-    name: "Explorer", tagline: "Get started with core revision.", price: "Free", note: "No card needed",
-    features: ["Introductory revision quests", "Basic XP and achievements", "Personal learning progress", "Explore the Career District"],
-    href: "/sign-in?mode=sign-up", cta: "Start free",
-  },
-  {
-    name: "Plus", tagline: "The complete revision experience.", price: "£5.99", per: "/ month", note: "or £59.90 a year",
-    features: ["Full revision library and unlimited quests", "Advanced progress insights", "Character customisation", "Season Pass premium track and event games"],
-    href: "/pricing#plans", cta: "Choose Plus",
-  },
-  {
-    name: "Plus+ Experience", tagline: "Revision plus career simulations.", price: "£12.99", per: "/ month", note: "or £129.90 a year · 7-day free trial",
-    features: ["Everything in Plus", "Virtual company workplaces", "Interactive career simulations", "Completion records for eligible activities"],
-    href: "/pricing#plans", cta: "Start free trial", highlight: true, badge: "Best value",
-  },
-  {
-    name: "Schools & colleges", tagline: "Licences for your learners and staff.", price: "Custom", note: "Priced per school after a call",
-    features: ["Teacher dashboards", "Homework quests and auto-marking", "Class progress reporting", "Student licences and onboarding"],
-    href: "/book?for=school", cta: "Make an enquiry",
-  },
-];
 
 /** A cartoon cloud: thick outline, flat fill. Shown in the day sky. */
 function Cloud({ className }: { className: string }) {
@@ -98,30 +72,31 @@ export default async function Home() {
         <div className="relative container flex flex-col items-center pt-20 text-center sm:pt-24">
           <BlurFade delay={0.05}>
           <p className="rounded-full border-[3px] border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-sm font-black text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">
-            Primary to sixth form · Free lesson library
+            GCSE &amp; A-level revision · Free to start
           </p>
           </BlurFade>
           <BlurFade delay={0.15}>
           <h1 id="hero-title" className={`${display} mt-7 max-w-4xl text-5xl leading-[1.02] text-balance sm:text-7xl`}>
-            Revision that plays like a{" "}
-            <span className="relative inline-block bg-[linear-gradient(90deg,#5b56c8,#ff6fa9,#ffb02e,#5b56c8)] bg-[length:300%_100%] bg-clip-text text-transparent [animation:landing-hue_6s_linear_infinite] dark:bg-[linear-gradient(90deg,#b3afff,#ff9cc6,#ffd36b,#b3afff)]">game</span>
+            Revision you&apos;ll actually{" "}
+            <span className="relative inline-block bg-[linear-gradient(90deg,#5b56c8,#ff6fa9,#ffb02e,#5b56c8)] bg-[length:300%_100%] bg-clip-text text-transparent [animation:landing-hue_6s_linear_infinite] dark:bg-[linear-gradient(90deg,#b3afff,#ff9cc6,#ffd36b,#b3afff)]">open</span>.
+            <span className="mt-3 block text-3xl sm:text-5xl">The city is the reward.</span>
           </h1>
           </BlurFade>
           <BlurFade delay={0.25}>
           <p className={`mt-6 max-w-xl text-lg leading-8 ${soft}`}>
-            Start with primary and secondary lessons, then keep learning through GCSE and sixth form.
-            For learners aged 13+, revision games, simulated workplaces and a study agent help bring subjects to life.
+            Ten-minute quizzes, flashcards and an AI study helper for your subjects. Every right answer earns Clout to spend
+            in a 3D London you explore with friends. The revision is free; Plus adds a study helper whenever you&apos;re stuck.
           </p>
           </BlurFade>
           <BlurFade delay={0.35}>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link prefetch={false} href="/curriculum" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-[#b9f0c9] px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">Browse school lessons</Link>
             <Link prefetch={false} href="/sign-in?mode=sign-up" className="landing-shine relative inline-flex min-h-12 items-center gap-2 overflow-hidden rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               Start free <ArrowRight className="size-4" aria-hidden />
             </Link>
             <Link prefetch={false} href="/schools" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-white px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a] transition hover:-translate-y-0.5">
               For schools
             </Link>
+            <Link prefetch={false} href="#pricing" className="inline-flex min-h-12 items-center rounded-xl border-[3px] border-[#1d1a4a] bg-[#b9f0c9] px-6 font-bold text-[#1d1a4a] shadow-[4px_4px_0_#1d1a4a]">See what&apos;s free</Link>
           </div>
           </BlurFade>
           <p className={`mt-5 text-sm ${soft}`}>
@@ -145,7 +120,7 @@ export default async function Home() {
       {/* Scrolling ribbon of what's inside, then a few real numbers. */}
       <section className="relative mt-16" aria-label="What's inside">
         <Marquee pauseOnHover className="[--duration:35s] [--gap:0.75rem]">
-          {["Primary · Years 1–6", "Secondary · Years 7–11", "Sixth form · Years 12–13", "IllumED Slides", "GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "AI study agent (soon)", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
+          {["Primary · Years 1–6", "Secondary · Years 7–11", "Sixth form · Years 12–13", "IllumED Slides", "GCSE Maths", "Biology", "Chemistry", "Physics", "History", "English", "Computer Science", "Ask Tiggy", "Homework quests", "Careers", "Character Locker", "Games Hall", "Leaderboards", "A-level"].map((t, i) => (
             <span key={t} className="rounded-full border-[3px] border-[#1d1a4a] px-4 py-2 text-sm font-black whitespace-nowrap text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a]" style={{ background: ["#ffd23f", "#b9f0c9", "#c9d7ff", "#ffb3c7", "#e3c9ff"][i % 5] }}>
               {t}
             </span>
@@ -186,102 +161,104 @@ export default async function Home() {
         <FeatureTabs />
       </section>
 
-      {/* The agent, with small product snippets rather than stock art. */}
-      <section className="relative container pb-20" aria-labelledby="agent-title">
+      {/* The loop, in three steps, then who it's for. */}
+      <section className="relative container pb-20" aria-labelledby="loop-title">
         <div className="max-w-2xl">
-          <p className={`text-sm font-bold ${accent}`}>The study agent · <span className="rounded-full bg-[#ffd23f] px-2 py-0.5 text-[#1d1a4a]">Coming soon</span></p>
-          <h2 id="agent-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>An agent that does the revision admin.</h2>
+          <p className={`text-sm font-bold ${accent}`}>What we do</p>
+          <h2 id="loop-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>Revise first. Then play.</h2>
           <p className={`mt-4 text-lg leading-8 ${soft}`}>
-            It works over your own homework, subjects and exam date, and asks before anything goes to your teacher. The same
-            safeguarding as Ask Tiggy applies.
+            Most revision apps get opened once. IlluminatED turns each revision session into progress in a game students already want to play.
           </p>
         </div>
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
+        <ol className="mt-10 grid gap-5 md:grid-cols-3">
+          {[
+            [BookOpenCheck, "1. Revise", "Short quizzes and flashcards on your subjects. Tiggy explains anything you get wrong."],
+            [Coins, "2. Earn", "Right answers, streaks and finished homework earn Clout and Season Pass rewards."],
+            [GraduationCap, "3. Spend it in the city", "New looks, a place of your own and time with friends in a 3D London. The game is the reward, never the shortcut."],
+          ].map(([Icon, title, text]) => {
+            const I = Icon as typeof BookOpenCheck;
+            return (
+              <li key={title as string} className={`${card} p-6`}>
+                <I className={`size-6 ${accent}`} aria-hidden />
+                <h3 className="mt-4 text-lg font-bold">{title as string}</h3>
+                <p className={`mt-2 ${soft}`}>{text as string}</p>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="mt-5 grid gap-5 md:grid-cols-3">
           <article className={`${card} p-6`}>
-            <CalendarCheck className={`size-5 ${accent}`} aria-hidden />
-            <h3 className="mt-4 text-lg font-bold">Plans your week</h3>
-            <p className={`mt-2 ${soft}`}>Homework deadlines first, then short sessions building up to your exam.</p>
-            <div className="mt-5 flex gap-1.5" aria-hidden>
-              {["M", "T", "W", "T", "F"].map((d, i) => (
-                <span key={i} className={`grid size-9 place-items-center rounded-lg border-2 border-[#1d1a4a] text-sm font-black ${i < 3 ? "bg-[#5b56c8] text-white" : "bg-white text-[#1d1a4a]/60"}`}>{d}</span>
-              ))}
-            </div>
+            <GraduationCap className={`size-5 ${accent}`} aria-hidden />
+            <h3 className="mt-3 font-bold">Students</h3>
+            <p className={`mt-2 text-sm leading-6 ${soft}`}>Free to revise. Plus (£5.99 a month) when you want help whenever you&apos;re stuck.</p>
+          </article>
+          <article id="parents" className={`${card} scroll-mt-24 p-6`}>
+            <Users className={`size-5 ${accent}`} aria-hidden />
+            <h3 className="mt-3 font-bold">Parents</h3>
+            <p className={`mt-2 text-sm leading-6 ${soft}`}>One clear price, cancel any time, and under-18s need your permission to subscribe. Tiggy won&apos;t collect personal details.</p>
           </article>
           <article className={`${card} p-6`}>
-            <ListChecks className={`size-5 ${accent}`} aria-hidden />
-            <h3 className="mt-4 text-lg font-bold">Quizzes what was set</h3>
-            <p className={`mt-2 ${soft}`}>Five questions on the topics your teacher assigned, explained as you go.</p>
-            <div className="mt-5 rounded-xl border-2 border-[#1d1a4a] bg-white p-3 text-sm text-[#1d1a4a]" aria-hidden>
-              <p className="font-bold">Which organelle releases energy?</p>
-              <p className="mt-2 rounded-lg bg-[#b9f0c9] px-3 py-1.5 font-semibold">Mitochondria. Correct</p>
-            </div>
-          </article>
-          <article className={`${card} p-6`}>
-            <Sparkles className={`size-5 ${accent}`} aria-hidden />
-            <h3 className="mt-4 text-lg font-bold">Asks before it acts</h3>
-            <p className={`mt-2 ${soft}`}>Nothing is sent or shared without a yes from you.</p>
-            <div className="mt-5 rounded-xl border-2 border-[#1d1a4a] bg-white p-3 text-sm text-[#1d1a4a]" aria-hidden>
-              <p className="font-bold">Add Thursday&apos;s chemistry session to your plan?</p>
-              <div className="mt-2 flex gap-2">
-                <span className="rounded-lg bg-[#1d1a4a] px-3 py-1.5 text-white">Yes, add it</span>
-                <span className="rounded-lg border border-[#1d1a4a]/30 px-3 py-1.5">Not now</span>
-              </div>
-            </div>
+            <Building2 className={`size-5 ${accent}`} aria-hidden />
+            <h3 className="mt-3 font-bold">Schools &amp; colleges</h3>
+            <p className={`mt-2 text-sm leading-6 ${soft}`}>A one-term paid pilot with homework quests, class progress and a data and safeguarding pack. <Link prefetch={false} href="/schools" className="font-semibold underline">For schools</Link></p>
           </article>
         </div>
-        <p className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-dashed border-[#1d1a4a]/60 px-6 font-bold text-[#1d1a4a] dark:border-white/60 dark:text-white">
-          The study agent is coming soon
-        </p>
       </section>
 
       {/* Pricing: learner plans with prices, and school licences by enquiry. */}
       <section id="pricing" className="relative container pb-20 scroll-mt-24" aria-labelledby="pricing-title">
-        <p className={`text-sm font-bold tracking-widest uppercase ${accent}`}>Pricing</p>
-        <h2 id="pricing-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>Start free. Upgrade when you&apos;re ready.</h2>
+        <p className={`text-sm font-bold tracking-widest uppercase ${accent}`}>Plans</p>
+        <h2 id="pricing-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>What you pay for.</h2>
         <p className={`mt-4 max-w-2xl leading-7 ${soft}`}>
-          Core revision is free. Paid plans are monthly or yearly, paid securely with Stripe, and you can cancel any time.
+          Revising is free. You pay for help when you&apos;re stuck, extras in the game, and career practice. Monthly or yearly through Stripe; cancel any time.
         </p>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          {PLANS.map((plan) => (
-            <article
-              key={plan.name}
-              className={`${card} relative flex flex-col p-6 ${plan.highlight ? "ring-2 ring-[#6b55e0] shadow-[0_12px_40px_-12px_rgba(107,85,224,0.55)]" : ""}`}
-            >
-              {plan.badge && (
-                <span className="absolute -top-3 right-5 rounded-full bg-[#6b55e0] px-3 py-1 text-xs font-black text-white shadow-md">{plan.badge}</span>
-              )}
-              <h3 className="text-lg font-bold">{plan.name}</h3>
-              <p className={`mt-1 text-sm ${soft}`}>{plan.tagline}</p>
-              <p className="mt-5">
-                <span className={`${display} text-4xl`}>{plan.price}</span>
-                {plan.per && <span className={`ml-1 text-sm font-semibold ${soft}`}>{plan.per}</span>}
-              </p>
-              <p className={`mt-1 min-h-5 text-xs font-semibold ${soft}`}>{plan.note}</p>
-              <ul className={`mt-5 flex-1 space-y-2 text-sm leading-6 ${soft}`}>
-                {plan.features.map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <span aria-hidden className={`mt-0.5 font-black ${accent}`}>✓</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                prefetch={false}
-                href={plan.href}
-                className={
-                  plan.highlight
-                    ? "mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#6b55e0] px-5 font-bold text-white shadow-[4px_4px_0_#1d1a4a]"
-                    : `mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-bold ring-2 ring-[var(--sky-ring)] ${accent}`
-                }
+          {PLANS.map((plan) => {
+            const highlight = plan.id === "plus";
+            const href = plan.id === "free" ? "/sign-in?mode=sign-up" : plan.id === "schools" ? "/schools#pilot" : "/pricing#plans";
+            const cta = plan.id === "free" ? "Start free" : plan.id === "schools" ? "Plan a pilot" : plan.id === "plus" ? "Choose Plus" : "Start 7-day trial";
+            return (
+              <article
+                key={plan.id}
+                className={`${card} relative flex flex-col p-6 ${highlight ? "ring-2 ring-[#6b55e0] shadow-[0_12px_40px_-12px_rgba(107,85,224,0.55)]" : ""}`}
               >
-                {plan.cta} <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </article>
-          ))}
+                {highlight && (
+                  <span className="absolute -top-3 right-5 rounded-full bg-[#6b55e0] px-3 py-1 text-xs font-black text-white shadow-md">Most popular</span>
+                )}
+                <p className={`text-xs font-bold tracking-widest uppercase ${accent}`}>{plan.forWho}</p>
+                <h3 className="mt-1 text-lg font-bold">{plan.name}</h3>
+                <p className="mt-5">
+                  <span className={`${display} text-4xl`}>{plan.monthly}</span>
+                  {plan.yearly && <span className={`ml-1 text-sm font-semibold ${soft}`}>/ month</span>}
+                </p>
+                <p className={`mt-1 min-h-8 text-xs font-semibold ${soft}`}>{plan.note}</p>
+                <p className="mt-4 text-sm font-bold">{plan.promise}</p>
+                <ul className={`mt-3 flex-1 space-y-2 text-sm leading-6 ${soft}`}>
+                  {plan.includes.map((f) => (
+                    <li key={f} className="flex gap-2">
+                      <span aria-hidden className={`mt-0.5 font-black ${accent}`}>✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  prefetch={false}
+                  href={href}
+                  className={
+                    highlight
+                      ? "mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#6b55e0] px-5 font-bold text-white shadow-[4px_4px_0_#1d1a4a]"
+                      : `mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 font-bold ring-2 ring-[var(--sky-ring)] ${accent}`
+                  }
+                >
+                  {cta} <ArrowRight className="size-4" aria-hidden />
+                </Link>
+              </article>
+            );
+          })}
         </div>
         <p className={`mt-6 text-sm ${soft}`}>
-          Prices in GBP. Under-18s need a parent or guardian&apos;s permission for a paid plan. Investors and partners:{" "}
-          <Link prefetch={false} href="/investors" className="font-semibold underline">read the business overview</Link>.
+          Coming next to paid plans: {PLAN_ROADMAP.join(" and ").toLowerCase()}. Prices in GBP. Under-18s need a parent or guardian&apos;s permission for a paid plan.{" "}
+          <Link prefetch={false} href="/pricing" className="font-semibold underline">Compare plans in full</Link>.
         </p>
       </section>
 
@@ -307,7 +284,7 @@ export default async function Home() {
 
       {/* Closing call to action. */}
       <section className="relative container pb-28 text-center" aria-labelledby="cta-title">
-        <h2 id="cta-title" className={`${display} text-4xl sm:text-6xl`}>What should we revise first?</h2>
+        <h2 id="cta-title" className={`${display} text-4xl sm:text-6xl`}>Ten minutes of revision. Then the city.</h2>
         <p className={`mx-auto mt-4 max-w-lg ${soft}`}>Create your free account and start with the topics you&apos;re studying. Your progress follows you into the game.</p>
         <Link prefetch={false} href="/sign-in?mode=sign-up" className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl border-[3px] border-[#1d1a4a] bg-[#5b56c8] px-6 font-bold text-white shadow-[4px_4px_0_#1d1a4a]">
           Start free <ArrowRight className="size-4" aria-hidden />

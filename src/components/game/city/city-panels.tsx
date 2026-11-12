@@ -473,7 +473,7 @@ export function IllumshipPanel({ state }: { state: CitySnapshot }) {
             allowance; style previews run locally and do not use AI credits.
           </p>
         </div>
-        <Link className={button} href={state.vip ? "/billing" : "/premium"}>
+        <Link className={button} href={state.vip ? "/billing" : "/pricing"}>
           {state.vip ? "Manage membership" : "View Premium pricing"}
         </Link>
       </div>

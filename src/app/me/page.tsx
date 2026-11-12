@@ -134,7 +134,7 @@ export default async function MePage() {
       <Group
         title="Account"
         rows={[
-          { href: "/premium", label: "Premium", icon: Crown },
+          { href: "/pricing", label: "Plans", icon: Crown },
           { href: "/billing", label: "Billing", icon: CreditCard },
           { href: "/account/password", label: "Password", icon: KeyRound },
           { href: "/your-data", label: "Your data", icon: FileLock2 },
