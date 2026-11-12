@@ -15,14 +15,16 @@ export const CREATIVE_KIT = "/world3d/creative-characters/creative-kit.glb";
 export const kitThumb = (id: string) => `/world3d/creative-characters/thumbs/${id}.webp`;
 
 export type KitTop = "T_Shirt_009" | "Outerwear_029" | "Outerwear_036";
-export type KitBottom = "Pants_010" | "Pants_014" | "Shorts_003";
+export type KitBottom = "Pants_010" | "Pants_014" | "Shorts_003" | "Skirt";
 export type KitShoes = "Shoe_Sneakers_009" | "Shoe_Slippers_002" | "Shoe_Slippers_005";
-export type KitHair = "Hairstyle_male_010" | "Hairstyle_male_012";
+export type KitHair = "Hairstyle_male_010" | "Hairstyle_male_012" | "Hair_long" | "Hair_bob";
 export type KitFace = "Male_emotion_usual_001" | "Male_emotion_happy_002" | "Male_emotion_angry_003";
 /** Extra hair shapes built on top of (or instead of) a kit haircut. */
 export type HairExtra = "long" | "bob" | "ponytail" | "buns" | "braids" | "afro" | "spiky" | "mohawk";
 
 export interface KitLook {
+  /** The curvier build: a shape on the same body, so every garment still fits. */
+  female: boolean;
   skin: string;
   face: KitFace;
   hair: KitHair | null;
@@ -61,13 +63,13 @@ const FAMILY: Record<string, [KitTop, KitBottom, KitShoes]> = {
 };
 
 const CLASSIC_TOPS: Record<string, KitTop> = {
-  "top-tee": "T_Shirt_009", "top-hoodie": "Outerwear_036", "top-stripes": "T_Shirt_009", "top-polo": "T_Shirt_009",
+  "top-tee": "T_Shirt_009", "top-dress": "T_Shirt_009", "top-hoodie": "Outerwear_036", "top-stripes": "T_Shirt_009", "top-polo": "T_Shirt_009",
   "top-knit": "Outerwear_036", "top-apron": "T_Shirt_009", "top-denim": "Outerwear_029", "top-jersey": "T_Shirt_009",
   "top-suit": "Outerwear_029", "top-tux": "Outerwear_029", "top-astronaut": "Outerwear_029", "top-cape": "T_Shirt_009",
   "top-labcoat": "Outerwear_029", "top-hivis": "Outerwear_029", "top-tracksuit": "Outerwear_029",
 };
 const CLASSIC_BOTTOMS: Record<string, KitBottom> = {
-  "bottom-jeans": "Pants_010", "bottom-joggers": "Pants_014", "bottom-shorts": "Shorts_003", "bottom-skirt": "Shorts_003",
+  "bottom-jeans": "Pants_010", "bottom-joggers": "Pants_014", "bottom-shorts": "Shorts_003", "bottom-skirt": "Skirt",
   "bottom-cargo": "Pants_010", "bottom-smart": "Pants_014", "bottom-tartan": "Pants_010",
 };
 const CLASSIC_SHOES: Record<string, KitShoes> = {
@@ -77,7 +79,7 @@ const CLASSIC_SHOES: Record<string, KitShoes> = {
 
 const HAIR: Record<string, [KitHair | null, HairExtra | null]> = {
   "hair-short": ["Hairstyle_male_012", null], "hair-curly": ["Hairstyle_male_010", null], "hair-quiff": ["Hairstyle_male_010", null],
-  "hair-long": ["Hairstyle_male_012", "long"], "hair-bob": ["Hairstyle_male_012", "bob"], "hair-ponytail": ["Hairstyle_male_012", "ponytail"],
+  "hair-long": ["Hair_long", null], "hair-bob": ["Hair_bob", null], "hair-ponytail": ["Hairstyle_male_012", "ponytail"],
   "hair-buns": ["Hairstyle_male_012", "buns"], "hair-braids": ["Hairstyle_male_010", "braids"], "hair-afro": [null, "afro"],
   "hair-spiky": ["Hairstyle_male_012", "spiky"], "hair-mohawk": [null, "mohawk"], "hair-buzz": [null, null], "hair-bald": [null, null],
 };
@@ -102,6 +104,7 @@ export function kitLook(a: Avatar): KitLook {
   const face: KitFace = a.brows === "brows-fierce" ? "Male_emotion_angry_003"
     : ["mouth-grin", "mouth-laugh", "mouth-cheeky"].includes(a.mouth) || a.eyes === "eyes-sparkle" ? "Male_emotion_happy_002" : "Male_emotion_usual_001";
   return {
+    female: a.body === "body-2",
     skin: colours.skin,
     face,
     // A helmet covers the hair completely.
@@ -110,7 +113,8 @@ export function kitLook(a: Avatar): KitLook {
     hairColour: colours.hair,
     top: { mesh: top, colour: heroLook?.colours.suit ?? colours.top },
     // A hero suit is one colour head to toe, with trim-coloured gloves and boots in the accent.
-    bottom: { mesh: hero ? "Pants_014" : bottom, colour: heroLook?.colours.suit ?? colours.bottom },
+    // A dress is the tee with a matching skirt.
+    bottom: a.top === "top-dress" ? { mesh: "Skirt", colour: colours.top } : { mesh: hero ? "Pants_014" : bottom, colour: heroLook?.colours.suit ?? colours.bottom },
     shoes: { mesh: hero ? "Shoe_Sneakers_009" : shoes, colour: heroLook?.colours.accent ?? colours.shoes },
     socks: a.shoes === "shoes-sliders" ? "#f3f6fb" : null,
     kitHat,
@@ -124,7 +128,8 @@ export function kitLook(a: Avatar): KitLook {
 
 /** Everyday residents: a stable, varied look for resident number i. */
 const SKINS = ["skin-1", "skin-2", "skin-7", "skin-3", "skin-4", "skin-5", "skin-6", "skin-8"];
-const HAIRS = ["hair-short", "hair-curly", "hair-long", "hair-bob", "hair-ponytail", "hair-buzz", "hair-afro", "hair-braids", "hair-quiff", "hair-buns", "hair-bald"];
+const HAIRS = ["hair-short", "hair-curly", "hair-buzz", "hair-afro", "hair-quiff", "hair-bald", "hair-short"];
+const LONG_HAIRS = ["hair-long", "hair-bob", "hair-ponytail", "hair-braids", "hair-buns", "hair-afro", "hair-curly", "hair-long"];
 const HAIR_COLOURS = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-ginger", "haircol-auburn", "haircol-black", "haircol-brown"];
 const EVERYDAY_FAMILIES = ["casual", "hoodie", "business", "sport", "student", "explorer", "casual", "hoodie"];
 const PALETTES = ["navy", "teal", "emerald", "coral", "amber", "lavender", "sky", "rose", "sand", "slate"];
@@ -134,11 +139,17 @@ export function residentLook(i: number): Partial<Avatar> {
   const family = pick(EVERYDAY_FAMILIES, 1), palette = pick(PALETTES, 2), legs = pick(PALETTES, 3), feet = pick(PALETTES, 5);
   const id = (slot: string, p: string) => `${slot}-blocky-${family}-${p}`;
   const has = (key: string) => Boolean(cosmeticById(key));
+  // About half of residents have the curvier build; some of them wear skirts or dresses.
+  const curvy = n % 2 === 1;
+  const lower = curvy && n % 5 === 1 ? "bottom-skirt" : null;
+  const dress = curvy && n % 7 === 3;
   return {
-    skin: pick(SKINS, 4), hair: pick(HAIRS, 6), hairColor: pick(HAIR_COLOURS, 8),
+    body: curvy ? "body-2" : "body-1",
+    skin: pick(SKINS, 4), hair: curvy ? pick(LONG_HAIRS, 6) : pick(HAIRS, 6), hairColor: pick(HAIR_COLOURS, 8),
     mouth: n % 3 === 0 ? "mouth-grin" : "mouth-smile",
-    top: has(id("top", palette)) ? id("top", palette) : "top-tee",
-    bottom: has(id("bottom", legs)) ? id("bottom", legs) : "bottom-jeans",
+    top: dress ? "top-dress" : has(id("top", palette)) ? id("top", palette) : "top-tee",
+    bottom: lower ?? (has(id("bottom", legs)) ? id("bottom", legs) : "bottom-jeans"),
+    ...(dress ? { topColor: `topcol-${pick(["pink", "teal", "yellow", "purple", "red", "sky"], 11)}` } : {}),
     shoes: has(id("shoes", feet)) ? id("shoes", feet) : "shoes-trainers",
     face: n % 9 === 4 ? "face-round" : "face-none",
     // Trousers in everyday colours rather than all-dark uniform pairs.
@@ -156,14 +167,14 @@ const PRESET_HAIR: Record<string, string> = {
 const FREE_HAIR_COLOURS = ["haircol-black", "haircol-brown", "haircol-blonde", "haircol-ginger", "haircol-auburn"];
 /** The six original characters, re-drawn on the new kit with free pieces only. */
 const CHARACTER_PRESETS: Record<string, Partial<Avatar>> = {
-  hero: { skin: "skin-3", hair: "hair-short", hairColor: "haircol-black", mouth: "mouth-smile" },
+  hero: { body: "body-1", skin: "skin-3", hair: "hair-short", hairColor: "haircol-black", mouth: "mouth-smile" },
   knight: { skin: "skin-2", hair: "hair-short", hairColor: "haircol-brown", topColor: "topcol-grey", bottomColor: "botcol-grey" },
-  wizard: { skin: "skin-1", hair: "hair-long", hairColor: "haircol-auburn", topColor: "topcol-purple", bottomColor: "botcol-navy" },
+  wizard: { body: "body-2", skin: "skin-1", hair: "hair-long", hairColor: "haircol-auburn", topColor: "topcol-purple", bottomColor: "botcol-navy" },
   pirate: { skin: "skin-5", hair: "hair-curly", hairColor: "haircol-black", topColor: "topcol-red", bottomColor: "botcol-black" },
   astronaut: { skin: "skin-7", hair: "hair-buzz", hairColor: "haircol-black", topColor: "topcol-white", bottomColor: "botcol-white" },
   robot: { skin: "skin-4", hair: "hair-bald", hairColor: "haircol-black", topColor: "topcol-grey", bottomColor: "botcol-black" },
   zombie: { skin: "skin-6", hair: "hair-curly", hairColor: "haircol-brown", topColor: "topcol-green", bottomColor: "botcol-brown", brows: "brows-fierce" },
-  princess: { skin: "skin-8", hair: "hair-buns", hairColor: "haircol-black", topColor: "topcol-teal", bottomColor: "botcol-teal", mouth: "mouth-grin" },
+  princess: { body: "body-2", skin: "skin-8", hair: "hair-buns", hairColor: "haircol-black", topColor: "topcol-teal", bottomColor: "botcol-teal", mouth: "mouth-grin" },
 };
 /**
  * What picking a character in the Locker sets: skin tone, hair and colours. Characters are a
@@ -174,7 +185,8 @@ export function characterPreset(head: string): Partial<Avatar> {
   if (preset) {
     const n = Number(head.replace(/\D/g, "")) || 0;
     const tone = ["#fbe0cf", "#f1c09a", "#e3ac7c", "#d09460", "#b07548", "#8a5636", "#64402b", "#42291c"].indexOf(preset.skinTone.toLowerCase());
-    return { skin: SKIN_IDS[Math.max(0, tone)], hair: PRESET_HAIR[preset.hair] ?? "hair-short", hairColor: FREE_HAIR_COLOURS[n % FREE_HAIR_COLOURS.length], top: preset.outfit, mouth: n % 3 ? "mouth-smile" : "mouth-grin" };
+    const hair = PRESET_HAIR[preset.hair] ?? "hair-short";
+    return { body: ["hair-long", "hair-bob", "hair-ponytail", "hair-buns"].includes(hair) ? "body-2" : "body-1", skin: SKIN_IDS[Math.max(0, tone)], hair, hairColor: FREE_HAIR_COLOURS[n % FREE_HAIR_COLOURS.length], top: preset.outfit, mouth: n % 3 ? "mouth-smile" : "mouth-grin" };
   }
   const key = Object.keys(CHARACTER_PRESETS).find((k) => head.includes(k));
   return key ? CHARACTER_PRESETS[key] : {};

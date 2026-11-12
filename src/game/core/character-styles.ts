@@ -1,7 +1,7 @@
 import { adventurerFor } from "./adventurers";
 import type { Avatar } from "./cosmetics";
 
-export type StyleCollection = "London" | "Kent" | "Nottingham" | "Road crew" | "Signature";
+export type StyleCollection = "Everyday" | "School & college" | "Work" | "Weekend" | "Weather & sport";
 type Archetype = "hero" | "knight" | "wizard" | "pirate" | "astronaut" | "robot" | "zombie" | "princess";
 type ClothingSlot = "top" | "bottom" | "shoes" | "topColor" | "bottomColor" | "shoesColor" | "hat" | "face" | "held" | "cape" | "brand";
 
@@ -10,54 +10,57 @@ export interface CharacterStyle {
   name: string;
   collection: StyleCollection;
   description: string;
-  /** A recommendation, never a restriction: every design fits every supplied rig. */
+  /** Kept for older saves; outfit presets suit every character. */
   archetypes: Archetype[];
   wear: Pick<Avatar, ClothingSlot>;
 }
 
-const design = (
+/**
+ * Ready-made outfits for the character kit. Every piece is free, so trying one on and saving it
+ * always works. They change clothes only: your character, build, skin and hair stay yours.
+ */
+const outfit = (
   id: string, name: string, collection: StyleCollection, description: string,
-  archetypes: Archetype[], garment: string, brand = "none", held = "none", face = "none", cape = "none",
+  wear: Partial<Pick<Avatar, ClothingSlot>>,
 ): CharacterStyle => ({
-  id, name, collection, description, archetypes,
+  id, name, collection, description, archetypes: [],
   wear: {
-    top: `top-blocky-${garment}`, bottom: "bottom-jeans", shoes: "shoes-trainers",
+    top: "top-tee", bottom: "bottom-jeans", shoes: "shoes-trainers",
     topColor: "topcol-auto", bottomColor: "botcol-auto", shoesColor: "shoecol-auto",
-    // None retains the model's original authored headwear, including helmets and crowns.
-    hat: "hat-none", face: `face-${face}`, held: `held-${held}`, cape: `cape-${cape}`, brand: `brand-${brand}`,
+    hat: "hat-none", face: "face-none", held: "held-none", cape: "cape-none", brand: "brand-none",
+    ...wear,
   },
 });
 
-/** Original coordinated looks assembled from our real Blender garment collection. */
 export const CHARACTER_STYLES: CharacterStyle[] = [
-  design("city-commuter", "City Commuter", "London", "Midnight blazer, pale shirt and a coffee for the morning commute.", ["hero", "knight"], "business-navy", "thamesline", "coffee"),
-  design("southbank-weekend", "Southbank Weekend", "London", "Coral tee, cream trim and dark trousers echo the Hero's warm colours.", ["hero", "pirate"], "casual-coral", "peckham", "phone"),
-  design("camden-maker", "Camden Maker", "London", "Wisteria hoodie, soft lilac panels and a small Camden label.", ["wizard", "zombie"], "hoodie-lavender", "camden", "phone", "round"),
-  design("thames-rain", "Thames Rain", "London", "Bluebird rain shell and backpack for an overcast riverside walk.", ["astronaut", "robot"], "raincoat-sky", "thamesline"),
-  design("community-pharmacy", "Community Pharmacy", "London", "Mint clinical coat with teal pockets and round glasses.", ["wizard", "princess"], "pharmacy-teal", "none", "none", "round"),
-  design("neighbourhood-kitchen", "Neighbourhood Kitchen", "London", "Coral chef jacket, pale apron and warm fabric details.", ["pirate", "hero"], "chef-coral", "peckham"),
+  outfit("easy-tee", "Easy Tee", "Everyday", "Navy tee, blue jeans and white trainers.", { topColor: "topcol-navy", bottomColor: "botcol-blue", shoesColor: "shoecol-white" }),
+  outfit("summer-dress", "Summer Dress", "Everyday", "A pink summer dress with white trainers.", { top: "top-dress", topColor: "topcol-pink", shoesColor: "shoecol-white" }),
+  outfit("sunny-skirt", "Sunny Skirt", "Everyday", "Yellow tee, navy skirt and navy hi-tops.", { topColor: "topcol-yellow", bottom: "bottom-skirt", bottomColor: "botcol-navy", shoes: "shoes-hightops", shoesColor: "shoecol-navy" }),
+  outfit("cosy-hoodie", "Cosy Hoodie", "Everyday", "Grey hoodie, black joggers and a coffee.", { top: "top-hoodie", topColor: "topcol-grey", bottom: "bottom-joggers", bottomColor: "botcol-black", held: "held-coffee" }),
+  outfit("city-walk", "City Walk", "Everyday", "Sky-blue zip jacket over beige trousers.", { top: "top-blocky-sport-sky", bottom: "bottom-blocky-casual-sand", shoes: "shoes-blocky-casual-sand" }),
 
-  design("orchard-walk", "Orchard Walk", "Kent", "Sandstone trail vest, field pockets and earthy trousers.", ["pirate", "knight"], "explorer-sand", "northwind"),
-  design("canterbury-reader", "Canterbury Reader", "Kent", "Ochre cardigan and satchel, with a coffee beside the cathedral square.", ["wizard", "princess"], "student-amber", "illuminated", "coffee", "round"),
-  design("medway-workshop", "Medway Workshop", "Kent", "Lagoon utility panels and tool pockets suit a mechanical character.", ["robot", "knight"], "workwear-teal", "volt"),
-  design("coastal-blue", "Coastal Blue", "Kent", "Bluebird tee and clean sky trim for a coastal day off.", ["astronaut", "hero"], "casual-sky", "thamesline", "phone"),
-  design("garden-county", "Garden County", "Kent", "Evergreen shell, pale green trim and a fitted hiking backpack.", ["zombie", "pirate"], "raincoat-emerald", "northwind"),
-  design("market-morning", "Market Morning", "Kent", "Sandstone chef layers and a cream apron for a town-market stall.", ["princess", "hero"], "chef-sand", "none", "coffee"),
+  outfit("first-lesson", "First Lesson", "School & college", "Navy jumper, grey trousers, round glasses.", { top: "top-blocky-student-navy", bottom: "bottom-joggers", bottomColor: "botcol-grey", shoes: "shoes-blocky-business-slate", face: "face-round" }),
+  outfit("library-day", "Library Day", "School & college", "Lavender jumper with a navy skirt.", { top: "top-blocky-student-lavender", bottom: "bottom-skirt", bottomColor: "botcol-navy", shoesColor: "shoecol-black", held: "held-phone" }),
+  outfit("lab-partner", "Lab Partner", "School & college", "Teal tee and joggers, ready for practicals.", { topColor: "topcol-teal", bottom: "bottom-joggers", bottomColor: "botcol-navy" }),
+  outfit("open-evening", "Open Evening", "School & college", "Amber jumper, dark jeans and the IlluminatED badge.", { top: "top-blocky-student-amber", bottomColor: "botcol-navy", brand: "brand-illuminated" }),
+  outfit("revision-night", "Revision Night", "School & college", "Purple hoodie, joggers and a late coffee.", { top: "top-hoodie", topColor: "topcol-purple", bottom: "bottom-joggers", bottomColor: "botcol-grey", held: "held-coffee" }),
 
-  design("lace-market", "Lace Market", "Nottingham", "Graphite blazer, silver-grey shirt and a restrained original label.", ["knight", "robot"], "business-slate", "camden", "phone"),
-  design("trent-studio", "Trent Studio", "Nottingham", "Rosewood cardigan, rose lining and a shoulder satchel for studio days.", ["princess", "wizard"], "student-rose", "camden", "phone"),
-  design("forest-colours", "Forest Colours", "Nottingham", "Evergreen hoodie and light green panels pick up the Zombie's palette.", ["zombie", "pirate"], "hoodie-emerald", "northwind"),
-  design("campus-late", "Campus Late", "Nottingham", "Wisteria study knit, lilac satchel and glasses for a late library visit.", ["wizard", "astronaut"], "student-lavender", "illuminated", "coffee", "round"),
-  design("creative-workshop", "Creative Workshop", "Nottingham", "Coral utility jacket, cream panels and a warm independent label.", ["hero", "robot"], "workwear-coral", "peckham", "phone"),
-  design("trent-training", "Trent Training", "Nottingham", "Bluebird athletic stripes and dark training layers for the riverside.", ["astronaut", "knight"], "sport-sky", "volt"),
+  outfit("office-smart", "Office Smart", "Work", "Navy jacket, dark trousers and smart shoes.", { top: "top-blocky-business-navy", bottom: "bottom-blocky-business-navy", shoes: "shoes-blocky-business-navy", held: "held-phone" }),
+  outfit("studio-creative", "Studio Creative", "Work", "Coral work jacket with a Camden label.", { top: "top-blocky-workwear-coral", bottom: "bottom-blocky-workwear-slate", shoes: "shoes-blocky-workwear-slate", brand: "brand-camden" }),
+  outfit("kitchen-shift", "Kitchen Shift", "Work", "White chef top and dark trousers.", { top: "top-blocky-chef-sand", bottom: "bottom-blocky-chef-slate", shoes: "shoes-blocky-chef-slate" }),
+  outfit("pharmacy-counter", "Pharmacy Counter", "Work", "Mint pharmacy top with round glasses.", { top: "top-blocky-pharmacy-teal", bottom: "bottom-blocky-pharmacy-navy", shoes: "shoes-blocky-pharmacy-navy", face: "face-round" }),
+  outfit("site-visit", "Site Visit", "Work", "Amber work jacket, cargo trousers and boots.", { top: "top-blocky-workwear-amber", bottom: "bottom-blocky-workwear-amber", shoes: "shoes-blocky-workwear-amber" }),
 
-  design("orbital-maintenance", "Orbital Maintenance", "Road crew", "Ochre utility panels with a bright Volt patch for the motorway crew.", ["robot", "astronaut"], "workwear-amber", "volt"),
-  design("tunnel-inspector", "Tunnel Inspector", "Road crew", "Graphite rain shell, equipment pockets and pale grey trim.", ["knight", "zombie"], "raincoat-slate", "none", "phone"),
-  design("night-response", "Night Response", "Road crew", "Midnight paramedic layers with the garment's reflective lime panels.", ["hero", "robot"], "paramedic-navy"),
-  design("route-surveyor", "Route Surveyor", "Road crew", "Lagoon field vest, matching pockets and a navigation phone.", ["pirate", "wizard"], "explorer-teal", "northwind", "phone"),
+  outfit("market-saturday", "Market Saturday", "Weekend", "Stripy tee, jeans and a cap.", { top: "top-stripes", bottomColor: "botcol-blue", hat: "hat-cap" }),
+  outfit("park-picnic", "Park Picnic", "Weekend", "A teal dress and yellow trainers.", { top: "top-dress", topColor: "topcol-teal", shoesColor: "shoecol-yellow" }),
+  outfit("gig-night", "Gig Night", "Weekend", "All-black hoodie and jeans with red hi-tops.", { top: "top-hoodie", topColor: "topcol-black", bottomColor: "botcol-black", shoes: "shoes-hightops", shoesColor: "shoecol-red" }),
+  outfit("seaside-day", "Seaside Day", "Weekend", "Sky tee, beige shorts and white trainers.", { topColor: "topcol-sky", bottom: "bottom-shorts", bottomColor: "botcol-beige", shoesColor: "shoecol-white" }),
+  outfit("hero-weekend", "Hero Weekend", "Weekend", "Red tee, navy jeans and a sky cape.", { topColor: "topcol-red", bottomColor: "botcol-navy", cape: "cape-sky" }),
 
-  design("royal-city", "Royal City", "Signature", "Rosewood tailoring and a crimson cape carry the Princess into city life.", ["princess", "knight"], "business-rose", "none", "none", "none", "crimson"),
-  design("orbit-off-duty", "Orbit Off Duty", "Signature", "Lagoon hoodie, Orbit badge and a blue cape complement futuristic faces.", ["astronaut", "robot", "zombie"], "hoodie-teal", "orbit", "none", "none", "sky"),
+  outfit("rainy-commute", "Rainy Commute", "Weather & sport", "Sky rain jacket for a wet London morning.", { top: "top-blocky-raincoat-sky", bottom: "bottom-blocky-raincoat-navy", shoes: "shoes-blocky-raincoat-navy" }),
+  outfit("trail-walk", "Trail Walk", "Weather & sport", "Green outdoor jumper and cargo trousers.", { top: "top-blocky-explorer-emerald", bottom: "bottom-blocky-explorer-sand", shoes: "shoes-blocky-explorer-sand" }),
+  outfit("five-a-side", "Five-a-side", "Weather & sport", "Coral track jacket, navy joggers and trainers.", { top: "top-blocky-sport-coral", bottom: "bottom-joggers", bottomColor: "botcol-navy", shoesColor: "shoecol-white" }),
+  outfit("morning-run", "Morning Run", "Weather & sport", "Teal track top with black shorts.", { top: "top-blocky-sport-teal", bottom: "bottom-shorts", bottomColor: "botcol-black", shoesColor: "shoecol-teal" }),
 ];
 
 export function characterArchetype(head?: string): string {

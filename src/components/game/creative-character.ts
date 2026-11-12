@@ -75,6 +75,9 @@ function dyeGeometry(source: THREE.BufferGeometry, hex: string) {
   const geometry = new THREE.BufferGeometry();
   for (const [name, attribute] of Object.entries(source.attributes)) geometry.setAttribute(name, name === "uv" ? new THREE.BufferAttribute(next, 2) : attribute);
   geometry.setIndex(source.index);
+  // Keep the body-shape morph so dyed clothes still follow the curvier build.
+  geometry.morphAttributes = source.morphAttributes;
+  geometry.morphTargetsRelative = source.morphTargetsRelative;
   geometry.boundingBox = source.boundingBox;
   geometry.boundingSphere = source.boundingSphere;
   dyed.set(key, geometry);
@@ -133,10 +136,10 @@ function hairShapes(extra: HairExtra, material: THREE.Material, r: number) {
   switch (extra) {
     case "long": add(ball(0.95), 0, -0.35, -0.42, 1.05, 1.5, 0.6); break;
     case "bob": add(ball(1.02), 0, -0.05, -0.18, 1.08, 0.95, 0.95); break;
-    case "ponytail": add(ball(0.32), 0, 0.15, -1.05); add(ball(0.3), 0, -0.45, -1.15, 0.85, 1.9, 0.85, 0.2); break;
+    case "ponytail": add(ball(0.34), 0, 0.3, -1.2); add(ball(0.32), 0, -0.4, -1.42, 0.85, 2.1, 0.85, 0.35); break;
     case "buns": add(ball(0.36), -0.55, 0.85, -0.1); add(ball(0.36), 0.55, 0.85, -0.1); break;
     case "braids":
-      for (const x of [-0.55, 0.55]) add(new THREE.CapsuleGeometry(0.13 * r, 1.1 * r, 6, 10), x, -0.85, -0.55);
+      for (const x of [-0.62, 0.62]) add(new THREE.CapsuleGeometry(0.15 * r, 1.3 * r, 6, 10), x, -0.95, -0.75);
       break;
     case "afro":
       add(ball(1.12), 0, 0.55, -0.32, 1.05, 0.85, 1);
@@ -171,20 +174,27 @@ export async function buildCreativeCharacter(
     [look.hair, look.socks ? "Socks_008" : null, look.kitHat, look.kitGlasses, look.gloves ? "Gloves_014" : null, look.moustache].filter((x): x is string => !!x)));
   const dyes: Record<string, string> = {
     [look.top.mesh]: look.top.colour, [look.bottom.mesh]: look.bottom.colour, [look.shoes.mesh]: look.shoes.colour,
-    ...(look.hair ? { [look.hair]: look.hairColour } : {}), ...(look.socks ? { Socks_008: look.socks } : {}),
-    ...(look.gloves ? { Gloves_014: look.gloves } : {}), ...(look.moustache ? { [look.moustache]: look.hairColour } : {}),
+    ...(look.socks ? { Socks_008: look.socks } : {}), ...(look.gloves ? { Gloves_014: look.gloves } : {}),
   };
   const materials = new Set<THREE.Material>(), geometries = new Set<THREE.BufferGeometry>(), skeletons = new Set<THREE.Skeleton>();
   const unused: THREE.Object3D[] = [];
   let body: THREE.SkinnedMesh | null = null;
   let cloth: THREE.MeshStandardMaterial | null = null;
+  // Hair (kit haircuts, moustaches and the drawn styles) shares one flat colour so it all matches.
+  const hairMaterial = new THREE.MeshStandardMaterial({ color: look.hairColour, roughness: 0.68, metalness: 0, shadowSide: THREE.BackSide });
+  materials.add(hairMaterial);
+  const hairPieces = new Set<string>([look.hair, look.moustache].filter((x): x is NonNullable<typeof x> => !!x));
   object.traverse((node) => {
     const mesh = node as THREE.SkinnedMesh;
     if (!mesh.isMesh) return;
     const owner = wanted.has(mesh.name) ? mesh.name : wanted.has(mesh.parent?.name ?? "") ? mesh.parent!.name : null;
     if (!owner) { unused.push(mesh); return; }
-    mesh.castShadow = mesh.receiveShadow = true;
+    mesh.castShadow = true;
+    // The skirt is a thin open cone: receiving its own shadow causes banding.
+    mesh.receiveShadow = owner !== "Skirt";
     mesh.frustumCulled = false;
+    const shape = mesh.morphTargetDictionary?.female;
+    if (shape !== undefined && mesh.morphTargetInfluences) mesh.morphTargetInfluences[shape] = look.female ? 1 : 0;
     if (mesh.isSkinnedMesh) skeletons.add(mesh.skeleton);
     const original = mesh.material as THREE.MeshStandardMaterial;
     if (owner === "Body_010") {
@@ -193,6 +203,7 @@ export async function buildCreativeCharacter(
       mesh.material = skin; materials.add(skin);
       return;
     }
+    if (hairPieces.has(owner)) { mesh.material = hairMaterial; return; }
     if (original.name === "Glass") { const glass = original.clone(); materials.add(glass); mesh.material = glass; return; }
     if (!cloth) { cloth = original.clone(); cloth.roughness = 0.78; cloth.metalness = 0; cloth.shadowSide = THREE.BackSide; materials.add(cloth); }
     mesh.material = cloth;
@@ -254,8 +265,6 @@ export async function buildCreativeCharacter(
     headAnchor.add(g); track(g);
   };
   if (look.hairExtra) {
-    const hairMaterial = new THREE.MeshStandardMaterial({ color: look.hairColour, roughness: 0.7 });
-    materials.add(hairMaterial);
     atHead(hairShapes(look.hairExtra, hairMaterial, head.radius), 0);
   }
   if (accessories) {

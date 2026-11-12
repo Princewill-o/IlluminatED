@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { buildCharacter, npcLook, type Character3D } from "@/components/game/char3d";
 import { ADVENTURERS } from "@/game/core/adventurers";
 import { BLOCKY_OUTFITS } from "@/game/core/blocky-outfits";
+import { CHARACTER_STYLES } from "@/game/core/character-styles";
 import { look, type Avatar } from "@/game/core/cosmetics";
 import { characterPreset } from "@/game/core/creative-looks";
 import { HEROES } from "@/game/core/heroes";
@@ -14,13 +15,13 @@ import { HEROES } from "@/game/core/heroes";
 /** ?set=residents | players, &clip=walk, &bg=white for transparent-style renders. */
 const PLAYERS: Partial<Avatar>[] = [
   {},
-  { skin: "skin-6", hair: "hair-afro", hairColor: "haircol-black", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-hightops", hat: "hat-cap" },
-  { skin: "skin-1", hair: "hair-ponytail", hairColor: "haircol-blonde", top: "top-knit", bottom: "bottom-skirt", shoes: "shoes-trainers", face: "face-round" },
-  { skin: "skin-4", hair: "hair-braids", hairColor: "haircol-brown", top: "top-denim", bottom: "bottom-cargo", shoes: "shoes-boots", held: "held-coffee" },
-  { skin: "skin-8", hair: "hair-buns", hairColor: "haircol-pink", top: "top-hero-photon", cape: "cape-emerald" },
-  { skin: "skin-2", hair: "hair-quiff", hairColor: "haircol-ginger", top: "top-suit", bottom: "bottom-smart", shoes: "shoes-smart", hat: "hat-headphones" },
-  { skin: "skin-5", hair: "hair-long", hairColor: "haircol-auburn", top: "top-hivis", bottom: "bottom-shorts", shoes: "shoes-sliders", face: "face-shades" },
-  { skin: "skin-3", hair: "hair-spiky", hairColor: "haircol-blue", top: "top-blocky-sport-coral", bottom: "bottom-blocky-sport-navy", shoes: "shoes-blocky-sport-sand", hat: "hat-beanie", mouth: "mouth-grin" },
+  { body: "body-2", skin: "skin-6", hair: "hair-long", hairColor: "haircol-black", top: "top-dress", topColor: "topcol-pink" },
+  { body: "body-2", skin: "skin-1", hair: "hair-ponytail", hairColor: "haircol-blonde", top: "top-blocky-student-lavender", bottom: "bottom-skirt", bottomColor: "botcol-navy", face: "face-round" },
+  { body: "body-2", skin: "skin-4", hair: "hair-bob", hairColor: "haircol-brown", top: "top-hoodie", topColor: "topcol-teal", bottom: "bottom-joggers", held: "held-coffee" },
+  { body: "body-2", skin: "skin-8", hair: "hair-braids", hairColor: "haircol-black", top: "top-blocky-business-navy", bottom: "bottom-blocky-business-navy", shoes: "shoes-blocky-business-navy" },
+  { body: "body-2", skin: "skin-2", hair: "hair-buns", hairColor: "haircol-ginger", top: "top-hero-photon" },
+  { body: "body-2", skin: "skin-5", hair: "hair-long", hairColor: "haircol-auburn", top: "top-stripes", bottom: "bottom-shorts", hat: "hat-cap" },
+  { skin: "skin-3", hair: "hair-spiky", hairColor: "haircol-blue", top: "top-blocky-sport-coral", bottom: "bottom-blocky-sport-navy", shoes: "shoes-blocky-sport-sand", mouth: "mouth-grin" },
 ];
 
 export function CharacterLineup() {
@@ -107,6 +108,7 @@ export function ThumbRenderer() {
       /** Every picture the Locker and heroes page need: [file name, avatar, frame, clip]. */
       __jobs: () => [
         ...ADVENTURERS.map((m) => [m.id, { head: m.id, ...characterPreset(m.id) }, "full", "idle"]),
+        ...CHARACTER_STYLES.map((st, i) => [`look-${st.id}`, { ...st.wear, body: i % 2 ? "body-2" : "body-1", hair: i % 2 ? "hair-long" : "hair-short", skin: ["skin-2", "skin-4", "skin-6", "skin-3"][i % 4], hairColor: i % 3 ? "haircol-brown" : "haircol-black" }, "full", "idle"]),
         ...BLOCKY_OUTFITS.map((o) => [o.id, { top: o.id, bottom: o.id.replace(/^top-/, "bottom-"), shoes: o.id.replace(/^top-/, "shoes-") }, "full", "idle"]),
         ...HEROES.map((h, i) => [`hero-${h.id}`, { top: `top-hero-${h.id}`, skin: ["skin-3", "skin-1", "skin-6", "skin-2", "skin-5", "skin-8"][i], hair: ["hair-short", "hair-ponytail", "hair-curly", "hair-bob", "hair-spiky", "hair-buns"][i], hairColor: ["haircol-black", "haircol-ginger", "haircol-black", "haircol-brown", "haircol-blonde", "haircol-auburn"][i], mouth: "mouth-grin" }, "full", "stretch"]),
       ],

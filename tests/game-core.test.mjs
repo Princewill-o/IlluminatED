@@ -229,7 +229,7 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
 test("Every boss is a valid character from the catalogue", () => {
   const { SLOTS, RARITY, SETS } = projectData("src/game/core/cosmetics.ts");
   const slots = new Set(SLOTS.map((s) => s.slot));
-  assert.equal(slots.size, 20);
+  assert.equal(slots.size, 21);
   for (const c of COMPANIES) {
     for (const [slot, id] of Object.entries(c.boss.look)) {
       assert.ok(slots.has(slot), `${c.boss.name}: slot ${slot}`);
@@ -242,7 +242,8 @@ test("Every boss is a valid character from the catalogue", () => {
     if (item.set) assert.ok(SETS[item.set] || COMPANIES.some((c) => c.id === item.set), `${item.id} set ${item.set}`);
   }
   for (const { slot } of SLOTS) {
-    assert.ok(COSMETICS.filter((i) => i.slot === slot).length >= 5, `${slot} has at least 5 options`);
+    // Build is a simple two-way choice; every other slot offers at least five options.
+    assert.ok(COSMETICS.filter((i) => i.slot === slot).length >= (slot === "body" ? 2 : 5), `${slot} has enough options`);
   }
 });
 

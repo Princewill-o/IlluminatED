@@ -146,13 +146,22 @@ export async function saveAvatar(
   const sb = await getSupabase();
   if (!sb) return { ok: false, error: friendly() };
   // "Original" dyes are the default: leave them out so outfits save the same way everywhere.
-  const toSave = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => !String(v).endsWith("-auto")));
+  // The default build ("body-1") is left out the same way, so older saves and newer ones match.
+  const toSave = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => !String(v).endsWith("-auto") && v !== "body-1"));
   let { error } = await sb.rpc("game_set_avatar", { p_avatar: toSave });
   // Until the brands migration is applied the database doesn't know the brand
   // slot: save everything else rather than failing the whole outfit.
   if (error && "brand" in toSave && /invalid_avatar|not_owned/.test(error.message)) {
     const { brand: _brand, ...rest } = toSave;
     void _brand;
+    ({ error } = await sb.rpc("game_set_avatar", { p_avatar: rest }));
+  }
+  // Until the body-shapes migration is applied, the database doesn't know the build or the dress:
+  // save the rest of the outfit rather than failing it.
+  if (error && ("body" in toSave || toSave.top === "top-dress") && /invalid_avatar|not_owned/.test(error.message)) {
+    const { body: _body, ...rest } = toSave;
+    void _body;
+    if (rest.top === "top-dress") rest.top = "top-tee";
     ({ error } = await sb.rpc("game_set_avatar", { p_avatar: rest }));
   }
   if (error) return { ok: false, error: friendly(error.message) };

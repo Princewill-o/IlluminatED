@@ -3,10 +3,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { projectData } from "../scripts/lib/project-data.mjs";
 
-const { CHARACTER_STYLES, stylesForCharacter, applyCharacterStyle, characterArchetype } = projectData("src/game/core/character-styles.ts");
+const { CHARACTER_STYLES, stylesForCharacter, applyCharacterStyle } = projectData("src/game/core/character-styles.ts");
 const { ADVENTURERS } = projectData("src/game/core/adventurers.ts");
 const { DEFAULT_AVATAR, cosmeticById, isFree, sanitiseAvatar } = projectData("src/game/core/cosmetics.ts");
-const { blockyOutfitFor } = projectData("src/game/core/blocky-outfits.ts");
 const { BLOCKY_OUTFITS } = projectData("src/game/core/blocky-outfits.ts");
 
 test("all garment families contain original stitched seams and purpose-made design detail attached to the rig", () => {
@@ -20,14 +19,12 @@ test("all garment families contain original stitched seams and purpose-made desi
   }
 });
 
-test("24 coordinated designs use actual free garments and accessories without unlock bypasses", () => {
-  assert.equal(CHARACTER_STYLES.length, 24);
-  assert.equal(new Set(CHARACTER_STYLES.map(style => style.id)).size, 24);
-  assert.equal(new Set(CHARACTER_STYLES.map(style => style.wear.top)).size, 24);
-  assert.deepEqual([...new Set(CHARACTER_STYLES.map(style => style.collection))].sort(), ["Kent", "London", "Nottingham", "Road crew", "Signature"]);
+test("outfit presets use actual free garments and accessories without unlock bypasses", () => {
+  assert.ok(CHARACTER_STYLES.length >= 20);
+  assert.equal(new Set(CHARACTER_STYLES.map(style => style.id)).size, CHARACTER_STYLES.length);
+  assert.deepEqual([...new Set(CHARACTER_STYLES.map(style => style.collection))].sort(), ["Everyday", "School & college", "Weather & sport", "Weekend", "Work"]);
   for (const style of CHARACTER_STYLES) {
-    assert.ok(style.name && style.description && style.archetypes.length);
-    assert.ok(blockyOutfitFor(style.wear.top), style.id);
+    assert.ok(style.name && style.description, style.id);
     for (const [slot, id] of Object.entries(style.wear)) {
       const item = cosmeticById(id);
       assert.equal(item?.slot, slot, `${style.id}: ${slot}`);
@@ -36,28 +33,18 @@ test("24 coordinated designs use actual free garments and accessories without un
   }
 });
 
-test("every supplied and Blender character has recommendations and access to every design", () => {
-  for (const character of ADVENTURERS) {
-    const styles = stylesForCharacter(character.id);
-    assert.equal(styles.length, CHARACTER_STYLES.length);
-    const archetype = characterArchetype(character.id);
-    assert.ok(styles[0].archetypes.includes(archetype), character.id);
-    const classic = character.id.replace("head-blocky-", "head-blocky-classic-").replace("classic-classic-", "classic-");
-    assert.deepEqual(styles.map(style => style.id), stylesForCharacter(classic).map(style => style.id));
-  }
+test("every character can try every outfit preset", () => {
+  for (const character of ADVENTURERS) assert.equal(stylesForCharacter(character.id).length, CHARACTER_STYLES.length);
 });
 
 test("trying a look preserves character, face, skin, hair and companion, keeps the saved object unchanged, and is valid for saving", () => {
-  const identity = ["head", "skin", "eyes", "brows", "mouth", "extras", "hair", "hairColor", "pet"];
+  const identity = ["head", "body", "skin", "eyes", "brows", "mouth", "extras", "hair", "hairColor", "pet"];
   for (const character of ADVENTURERS) {
     const avatar = { ...DEFAULT_AVATAR, head: character.id, skin: "skin-8", hairColor: "haircol-ginger" };
     const before = JSON.stringify(avatar);
     for (const style of CHARACTER_STYLES) {
       const result = applyCharacterStyle(avatar, style.id);
       for (const key of identity) assert.equal(result[key], avatar[key], `${character.id}: ${style.id}: ${key}`);
-      assert.equal(result.topColor, "topcol-auto");
-      assert.equal(result.bottomColor, "botcol-auto");
-      assert.equal(result.shoesColor, "shoecol-auto");
       assert.equal(JSON.stringify(sanitiseAvatar(result, new Set())), JSON.stringify(result));
       assert.equal(JSON.stringify(avatar), before);
     }

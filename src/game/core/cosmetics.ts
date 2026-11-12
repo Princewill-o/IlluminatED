@@ -11,6 +11,7 @@ import { DYES } from "./looks";
  * See docs/gamification/promotion-panic-design.md §5.
  */
 export type Slot =
+  | "body"
   | "skin"
   | "head"
   | "eyes"
@@ -66,6 +67,8 @@ const L = make("legendary");
 export const COSMETICS: Cosmetic[] = [
   ...ADVENTURERS.map(m => C(m.id, "head", m.name)),
   // ── Body ───────────────────────────────────────────────
+  C("body-1", "body", "Straight build", 0),
+  C("body-2", "body", "Curvy build", 0),
   C("skin-1", "skin", "Tone 1", 0, { color: "#fbe0cf" }),
   C("skin-2", "skin", "Tone 2", 0, { color: "#f1c09a" }),
   C("skin-7", "skin", "Tone 3", 0, { color: "#e3ac7c" }),
@@ -137,6 +140,7 @@ export const COSMETICS: Cosmetic[] = [
   C("top-tee", "top", "IlluminatED tee", 0, { color: "#2d1b69" }),
   C("top-hoodie", "top", "Comfy hoodie", 0, { color: "#3a2d58" }),
   C("top-stripes", "top", "Stripy tee", 0, { color: "#f3f6fb" }),
+  C("top-dress", "top", "Summer dress", 0, { color: "#e86a92" }),
   C("top-polo", "top", "Office polo", 100, { color: "#6bc6ff", set: "office" }),
   C("top-knit", "top", "Cosy knit", 150, { color: "#ff7a6b" }),
   C("top-apron", "top", "Baker's apron", 150, { color: "#f4efe6", set: "bake" }),
@@ -265,6 +269,7 @@ export const isFree = (item: Cosmetic) => item.price === 0 && !item.unlock;
 export type Avatar = Record<Slot, string>;
 
 export const DEFAULT_AVATAR: Avatar = {
+  body: "body-1",
   skin: "skin-3",
   head: "head-blocky-hero",
   eyes: "eyes-round",
@@ -291,8 +296,9 @@ export const SLOT_GROUPS: { group: string; slots: { slot: Slot; label: string }[
   {
     group: "Body",
     slots: [
+      { slot: "head", label: "Character" },
+      { slot: "body", label: "Shape" },
       { slot: "skin", label: "Skin" },
-      { slot: "head", label: "Head" },
     ],
   },
   {

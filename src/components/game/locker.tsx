@@ -18,7 +18,7 @@ import { usePass } from "@/components/game/season/pass-store";
 import { ADVENTURERS, BLENDER_PRESETS, adventurerFor } from "@/game/core/adventurers";
 import { PREVIEW_AVATAR_KEY, PREVIEW_AVATAR_EVENT, normaliseBlockyAvatar } from "@/game/core/blocky-customization";
 import { BLOCKY_OUTFITS, blockyOutfitFor, blockyPieceOutfit, outfitPerks } from "@/game/core/blocky-outfits";
-import { CHARACTER_STYLES, applyCharacterStyle, characterArchetype, stylesForCharacter, type StyleCollection } from "@/game/core/character-styles";
+import { CHARACTER_STYLES, applyCharacterStyle, stylesForCharacter, type StyleCollection } from "@/game/core/character-styles";
 import { BRANDS } from "@/game/core/chibi-looks";
 import { companyById } from "@/game/core/companies";
 import {
@@ -34,6 +34,7 @@ import {
   unlockLabel,
 } from "@/game/core/cosmetics";
 import { characterPreset, kitThumb } from "@/game/core/creative-looks";
+import { outfitColours } from "@/game/core/outfits";
 import { cn } from "@/lib/utils";
 
 const fmt = (n: number) => n.toLocaleString("en-GB");
@@ -46,7 +47,7 @@ const PAIRED: Partial<Record<Slot, Slot>> = { hair: "hairColor", top: "topColor"
 const SLOT_GROUPS: {group:string;slots:{slot:Slot;label:string}[]}[]=[
  {group:'Character presets',slots:[{slot:'head',label:'Preset character'}]},
  {group:'Character',slots:[{slot:'head',label:'Character'}]},
- {group:'Styled looks',slots:[{slot:'top',label:'Styled looks'}]},
+ {group:'Styled looks',slots:[{slot:'top',label:'Outfit presets'}]},
  {group:'Colours',slots:[{slot:'topColor',label:'Outfit'},{slot:'bottomColor',label:'Legwear'},{slot:'shoesColor',label:'Footwear'}]},
  {group:'Wardrobe',slots:[{slot:'top',label:'Outfit sets'},{slot:'cape',label:'Capes'},{slot:'brand',label:'Labels'}]},
  {group:'Accessories',slots:[{slot:'hat',label:'Headwear'},{slot:'face',label:'Eyewear'},{slot:'held',label:'Equipment'}]},
@@ -89,7 +90,6 @@ export function Locker({
   const [presetCollection,setPresetCollection]=useState('all');
   const [styleCollection, setStyleCollection] = useState<StyleCollection | 'all'>('all');
   const styles = stylesForCharacter(avatar.head).filter(style => styleCollection === 'all' || style.collection === styleCollection);
-  const archetype = characterArchetype(avatar.head);
   useEffect(() => {
     if (!localPreview) return;
     try {
@@ -314,32 +314,30 @@ export function Locker({
             </div>
           </div>
           <p className="mt-3 text-sm leading-6 text-muted-foreground">Keep the character&apos;s original face and hair, then choose a custom outfit, colours, cape and equipment.</p>
-          <button type="button" onClick={() => { setGroup('Styled looks'); setSlot('top'); }} className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">See looks for {model.name} →</button>
+          <button type="button" onClick={() => { setGroup('Styled looks'); setSlot('top'); }} className="mt-3 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">See outfit presets →</button>
         </div>}
         {group === 'Styled looks' && <section className="mt-5" aria-label="Character styled looks">
           <div className="rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">IlluminatED Originals</p>
-            <h3 className="mt-1 text-xl font-black">24 looks. Built around your character.</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">Coordinated clothing, original labels and accessories. Looks that complement {model.name} appear first. Try one on, then {localPreview ? 'Apply to local game' : 'Save outfit'} when you&apos;re ready.</p>
-            <p className="mt-2 text-xs text-muted-foreground">Your character, face, hair and companion stay yours. All pieces in these looks are free.</p>
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">Outfit presets</p>
+            <h3 className="mt-1 text-xl font-black">{CHARACTER_STYLES.length} ready-made outfits</h3>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">Whole outfits in one tap: everyday, school, work, weekend and weather. Try one on, then {localPreview ? 'Apply to local game' : 'Save outfit'} when you&apos;re ready, or change any piece after.</p>
+            <p className="mt-2 text-xs text-muted-foreground">Only your clothes change: your character, build, skin, hair and companion stay yours. Every piece is free.</p>
             <div className="mt-4 flex flex-wrap gap-2" aria-label="Look collections">
               {(['all', ...new Set(CHARACTER_STYLES.map(style => style.collection))] as const).map(collection => <button key={collection} type="button" aria-pressed={styleCollection === collection} onClick={() => setStyleCollection(collection)} className={cn('rounded-full border px-3 py-2 text-xs font-bold', styleCollection === collection ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-secondary')}>{collection === 'all' ? 'All looks' : collection}</button>)}
             </div>
           </div>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {styles.map(style => {
-              const outfit = blockyOutfitFor(style.wear.top)!;
-              const matched = style.archetypes.some(item => item === archetype);
+              const dressed = outfitColours({ ...avatar, ...style.wear }); const palette = [dressed.top, dressed.bottom, dressed.shoes];
               const wearing = Object.entries(style.wear).every(([key, value]) => avatar[key as Slot] === value);
               const label = BRANDS[style.wear.brand];
               return <li key={style.id} className={cn('flex flex-col overflow-hidden rounded-2xl border-2 bg-card', wearing ? 'border-[#f2d9a6]' : 'border-border')}>
                 <div className="relative grid h-44 place-items-center bg-secondary/70">
                   <span className="absolute top-3 left-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">{style.collection}</span>
-                  <Image src={kitThumb(outfit.id)} alt={`${style.name} clothing`} width={176} height={176} className="h-44 w-44 object-contain" />
-                  <span className="absolute right-3 bottom-3 flex gap-1" aria-label="Clothing palette">{[outfit.primary, outfit.accent, outfit.pants].map((colour, index) => <span key={index} className="size-4 rounded-full border border-black/10" style={{background:colour}} />)}</span>
+                  <Image src={kitThumb(`look-${style.id}`)} alt={`${style.name} outfit`} width={176} height={176} className="h-44 w-44 object-contain" />
+                  <span className="absolute right-3 bottom-3 flex gap-1" aria-label="Clothing palette">{palette.map((colour, index) => <span key={index} className="size-4 rounded-full border border-black/10" style={{background:colour}} />)}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
-                  {matched && <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-ink-mint">Matched to {model.name}</p>}
                   <h4 className="text-base font-black">{style.name}</h4>
                   <p className="mt-1 text-xs leading-5 text-muted-foreground">{style.description}</p>
                   <p className="mt-2 text-[11px] font-bold text-muted-foreground">{label ? `${label.text} · ` : 'Unbranded · '}{style.wear.cape === 'cape-none' ? 'No cape' : COSMETICS.find(item=>item.id===style.wear.cape)?.name}</p>

@@ -53,3 +53,29 @@ test("residents vary, and every Locker character and outfit has a rendered pictu
     if (slot !== "top" && item) assert.ok(item.price === 0 && !item.unlock, `${m.id} ${slot} ${id}`);
   }
 });
+
+test("the curvier build is a shape on every piece, so all clothes still fit", () => {
+  const shaped = json.meshes.filter((m) => (m.extras?.targetNames ?? []).includes("female")).length;
+  assert.ok(shaped >= json.meshes.length - 2, `${shaped}/${json.meshes.length} pieces have the female shape`);
+  for (const piece of ["Hair_long", "Hair_bob", "Skirt"]) assert.ok(meshes.has(piece), piece);
+  const k = kitLook(look({ body: "body-2", hair: "hair-long", top: "top-dress" }));
+  assert.equal(k.female, true);
+  assert.equal(k.hair, "Hair_long");
+  assert.equal(k.bottom.mesh, "Skirt");
+  assert.equal(k.bottom.colour, k.top.colour);
+  const residents = Array.from({ length: 20 }, (_, i) => look(residentLook(i)));
+  assert.ok(residents.filter((r) => r.body === "body-2").length >= 8);
+});
+
+test("outfit presets only use free pieces and each has a picture", () => {
+  const { CHARACTER_STYLES } = projectData("src/game/core/character-styles.ts");
+  assert.ok(CHARACTER_STYLES.length >= 20);
+  for (const style of CHARACTER_STYLES) {
+    for (const id of Object.values(style.wear)) {
+      const item = COSMETICS.find((c) => c.id === id);
+      assert.ok(item, `${style.id}: ${id}`);
+      assert.ok(item.price === 0 && !item.unlock, `${style.id}: ${id} is not free`);
+    }
+    assert.ok(fs.existsSync(`public/world3d/creative-characters/thumbs/look-${style.id}.webp`), style.id);
+  }
+});
