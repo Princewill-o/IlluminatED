@@ -37,6 +37,7 @@ export function CharacterLineup() {
     el.appendChild(renderer.domElement);
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(params.get("bg") ?? "#cfe6ff");
+    Object.assign(window, { __scene: scene });
     const camera = new THREE.PerspectiveCamera(28, el.clientWidth / el.clientHeight, 0.1, 100);
     const zoom = Number(params.get("zoom") ?? 1);
     camera.position.set(0, 1.0, 9.5 / zoom);

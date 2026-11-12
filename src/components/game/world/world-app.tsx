@@ -1603,14 +1603,14 @@ export function WorldApp({
         <button type="button" onClick={() => setAwardsOpen(true)} className="jelly flex min-h-11 items-center gap-2 rounded-xl bg-[#ffd166] px-4 text-sm font-bold"><Trophy className="size-4" aria-hidden /> Awards</button>
       </div></HudSlot>}
       {!driving && !bike && <HudSlot area="br-act" order={2} className="md:hidden"><button type="button" onClick={() => window.dispatchEvent(new Event("illuminated:jump"))} aria-label="Jump (Space)" className="jelly min-h-11 rounded-full border-2 border-[#1d1a4a] bg-[#ffd23f] px-4 py-1.5 text-xs font-black text-[#1d1a4a] shadow-[3px_3px_0_#1d1a4a] active:translate-y-0.5">Jump</button></HudSlot>}
-      <HudSlot area="br-nav" order={1}><button type="button" onClick={() => setBrowser("start")} aria-label="Browser: shopping, jobs, hotels, pets and more" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#15987f] px-3 py-1.5 text-xs font-black text-white shadow-lg">
-        <Globe className="size-4" aria-hidden /> <span className="hidden sm:inline">Browser</span>
+      <HudSlot area="br-nav" order={1}><button type="button" onClick={() => setBrowser("start")} aria-label="Browser: shopping, jobs, hotels, pets and more" title="Browser" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#15987f] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Globe className="size-4" aria-hidden /> <span className="hidden 2xl:inline">Browser</span>
       </button></HudSlot>
       <HudSlot area="br-nav" order={2}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setBrowser("worknet"); }} aria-label="Jobs" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#e4572e] px-3 py-1.5 text-xs font-black text-white shadow-lg">
         <Briefcase className="size-4" aria-hidden /> <span className="hidden sm:inline">{roleShift ? roleShift.role.title : "Jobs"}</span>
       </button></HudSlot>
-      <HudSlot area="br-nav" order={3}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} aria-label="Games" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
-        <Gamepad2 className="size-4" aria-hidden /> <span className="hidden sm:inline">Games</span>
+      <HudSlot area="br-nav" order={3}><button type="button" onClick={() => { if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setGames(true); }} aria-label="Games" title="Games" className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#7a5ce6] px-3 py-1.5 text-xs font-black text-white shadow-lg">
+        <Gamepad2 className="size-4" aria-hidden /> <span className="hidden 2xl:inline">Games</span>
       </button></HudSlot>
       <WantedStars stars={life.stars} />
       {street.warning && !rescue && <HudSlot area="tc" order={40}><div role="alert" className="max-w-sm rounded-2xl bg-[#7b342b] px-4 py-3 text-sm font-bold text-white">{street.warning}</div></HudSlot>}
@@ -1869,9 +1869,10 @@ export function WorldApp({
         type="button"
         onClick={() => setTutorial(true)}
         aria-label="How to play"
+        title="How to play"
         className="jelly flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full bg-[#f6f2e8] px-3 py-1.5 text-xs font-black text-[#13203a] shadow-lg"
       >
-        <CircleHelp className="size-4 sm:hidden" aria-hidden /><span className="hidden sm:inline">How to play</span>
+        <CircleHelp className="size-4 2xl:hidden" aria-hidden /><span className="hidden 2xl:inline">How to play</span>
       </button></HudSlot>
       {tutorial && <Tutorial onClose={() => {
         try { localStorage.setItem(`${TUTORIAL_KEY}:${me.id}`, "seen"); } catch { /* Show again when storage is unavailable. */ }
@@ -1913,7 +1914,7 @@ export function WorldApp({
       />}
       {!mobileLife && !atHome && <MiniMap map={map} searchArea={pursuit} waypoint={waypoint} navigation={navigation} onOpen={() => setMapOpen(true)} onArrive={() => {}} />}
       {mapOpen && <CityMap map={map} searchArea={pursuit} waypoint={waypoint} onPick={setWaypoint} onClose={() => setMapOpen(false)} />}
-      <HudSlot area="br-nav" order={3}><button type="button" onClick={() => setUKRoadsOpen(true)} aria-label="UK road atlas" className="jelly flex min-h-11 items-center justify-center gap-2 rounded-full bg-[#235c4d] px-4 text-xs font-black text-white shadow-lg"><MapPinned size={17}/><span className="hidden sm:inline">UK roads</span></button></HudSlot>
+      {/* The UK road atlas opens from the phone (UK roads app), keeping the HUD clear. */}
       {ukRoadsOpen && <UKRoadMap map={map} onClose={closeUKRoads} onGuide={guideUKRoad} />}
       {roadDestination && <HudSlot area="tc" order={35}><div className="flex max-w-[min(90vw,28rem)] items-center gap-3 rounded-2xl border border-white/20 bg-[#143f35]/95 px-4 py-2 text-white shadow-lg"><MapPinned className="size-4 shrink-0"/><button type="button" onClick={() => setUKRoadsOpen(true)} className="truncate text-left text-xs font-bold">Route to {ukSceneName(roadDestination)}<span className="block text-[10px] font-medium text-[#c0dac8]">Follow the marker · interact at the next junction</span></button><button type="button" aria-label="Cancel UK route" onClick={() => { setRoadDestination(null); setWaypoint(null); }} className="ml-auto rounded-full p-1"><X size={16}/></button></div></HudSlot>}
       {tube && <TubeMap here={tube} stations={STATIONS} offices={offices} onGo={ride} onClose={() => setTube(null)} />}

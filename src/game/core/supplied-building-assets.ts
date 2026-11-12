@@ -4,9 +4,10 @@ export function suppliedCityBuilding(t: { id: string; companyId?: string; style?
   if (t.companyId === "psyke") return "sports-store";
   if (t.id === "starbucks" || t.id === "district-wharf-cafe") return "coffee-shop";
   if (t.companyId === "macrosoft") return "modern-office";
-  if (t.id === "district-campus-studios") return "orange-building";
-  if (t.id === "district-campus-labs") return "grey-building";
-  if (t.id === "district-campus-library") return "white-building";
+  // Distinctive landmarks along the wharf and in the City use the supplied low-poly models.
+  if (t.id === "district-boathouse") return "orange-building";
+  if (t.id === "district-bank") return "grey-building";
+  if (t.id === "district-wharf-gallery") return "white-building";
   if (t.id === "study-club") return "sports-centre";
   return null;
 }

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import Link from "next/link";
 
-import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudRainWind, CloudSnow, MapPin, Snowflake, Sun, Wind } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudRainWind, CloudSnow, MapPin, Moon, Snowflake, Sun, Wind } from "lucide-react";
 
 import { WEATHER_NOW } from "./art";
 import { HudSlot } from "./hud";
@@ -51,7 +51,11 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
   // What the world is actually showing (a world owner can pick the weather), else the live forecast.
   void weatherTick;
   const w = WEATHER_NOW.kind ? { kind: WEATHER_NOW.kind, temp: WEATHER_NOW.temp } : weatherAt(now);
-  const WIcon = { "Light rain": CloudRain, Drizzle: CloudDrizzle, "Heavy rain": CloudRainWind, Thunderstorm: CloudLightning, Snow: CloudSnow, "Heavy snow": Snowflake, Fog: CloudFog, Windy: Wind, Cloudy: Cloud }[w.kind] ?? Sun;
+  // After dark a clear sky is a moon and "Clear", not a sun and "Sunny".
+  const hour = gameDateAt(now.getTime()).getUTCHours();
+  const dark = hour < 6 || hour >= 20;
+  const WIcon = { "Light rain": CloudRain, Drizzle: CloudDrizzle, "Heavy rain": CloudRainWind, Thunderstorm: CloudLightning, Snow: CloudSnow, "Heavy snow": Snowflake, Fog: CloudFog, Windy: Wind, Cloudy: Cloud }[w.kind] ?? (dark ? Moon : Sun);
+  const kindLabel = dark && w.kind === "Sunny" ? "Clear" : w.kind;
   const hint = nextHint(needs);
   const todo = quests.filter((q) => !q.done).length;
 
@@ -102,10 +106,10 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
       <HudSlot area="tr" order={20} className="hidden xl:block [@media(max-height:719px)]:!hidden"><div className="flex gap-1.5">
         <details className={cn(card, "relative px-2.5 py-1.5")}>
           <summary className="flex cursor-pointer list-none items-center gap-1.5" aria-label="Open game weather forecast">
-          <WIcon className="size-5 text-[#e98a1f]" aria-hidden />
+          <WIcon className={cn("size-5", dark && WIcon === Moon ? "text-[#5b6bd6]" : "text-[#e98a1f]")} aria-hidden />
           <div>
             <p className="text-sm leading-4 font-black">{w.temp}°C</p>
-            <p className="text-[10px] font-bold text-[#5a6272]">{w.kind}</p>
+            <p className="text-[10px] font-bold text-[#5a6272]">{kindLabel}</p>
           </div></summary>
           <div className="absolute top-full right-0 mt-2 w-56 rounded-2xl border border-[#d4c7ad] bg-[#faf6ed] p-3 shadow-xl">
             <p className="mb-2 text-xs font-black">Game forecast</p>
@@ -127,7 +131,8 @@ export function LifeHud({ avatar, name, clout, quests, onLocate }: { avatar: Ava
         </div>
       </div></HudSlot>
 
-      <HudSlot area="tl" order={25}><div className={cn(card,"pixel-energy w-44 px-3 py-2")}>
+      {/* The needs panel already shows energy on larger screens; this card appears there only when it's low. */}
+      <HudSlot area="tl" order={25} className={needs.energy < 35 ? undefined : "lg:hidden [@media(max-height:650px)]:!block"}><div className={cn(card,"pixel-energy w-44 px-3 py-2")}>
         <div className="flex justify-between text-xs font-black"><span>Energy</span><span>{Math.round(needs.energy)} / 100</span></div>
         <div className="pixel-meter mt-1 h-3 overflow-hidden" role="meter" aria-label="Player energy" aria-valuenow={Math.round(needs.energy)} aria-valuemin={0} aria-valuemax={100}><div className="h-full transition-[width]" style={{width:`${needs.energy}%`,backgroundColor:needs.energy<20?"#e7844d":"#8dce49"}}/></div>
         {needs.energy<20&&<p className="mt-1 text-[10px] font-bold">Low energy · rest or get help</p>}

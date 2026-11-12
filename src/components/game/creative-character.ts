@@ -41,7 +41,9 @@ function paletteFor(hex: string) {
   const key = hex.toLowerCase();
   const hit = targets.get(key);
   if (hit) return hit;
-  const c = new THREE.Color(key);
+  // Compare in sRGB, like the palette was sampled. (THREE.Color would convert to linear and pick
+  // cells far too dark.)
+  const c = new THREE.Color(key).getRGB({ r: 0, g: 0, b: 0 }, THREE.SRGBColorSpace);
   const t = [c.r * 255, c.g * 255, c.b * 255];
   let best = { u: 0.5, v: 0.5 }, bestD = Infinity;
   CELLS.forEach((row, j) => row.forEach((p, i) => {
@@ -181,7 +183,9 @@ export async function buildCreativeCharacter(
   let body: THREE.SkinnedMesh | null = null;
   let cloth: THREE.MeshStandardMaterial | null = null;
   // Hair (kit haircuts, moustaches and the drawn styles) shares one flat colour so it all matches.
+  // The kit is modelled smooth: tell the city's low-poly pass not to facet it.
   const hairMaterial = new THREE.MeshStandardMaterial({ color: look.hairColour, roughness: 0.68, metalness: 0, shadowSide: THREE.BackSide });
+  hairMaterial.userData.smooth = true;
   materials.add(hairMaterial);
   const hairPieces = new Set<string>([look.hair, look.moustache].filter((x): x is NonNullable<typeof x> => !!x));
   object.traverse((node) => {
@@ -200,12 +204,13 @@ export async function buildCreativeCharacter(
     if (owner === "Body_010") {
       body = mesh;
       const skin = new THREE.MeshStandardMaterial({ color: look.skin, roughness: 0.62, metalness: 0, shadowSide: THREE.BackSide });
+      skin.userData.smooth = true;
       mesh.material = skin; materials.add(skin);
       return;
     }
     if (hairPieces.has(owner)) { mesh.material = hairMaterial; return; }
     if (original.name === "Glass") { const glass = original.clone(); materials.add(glass); mesh.material = glass; return; }
-    if (!cloth) { cloth = original.clone(); cloth.roughness = 0.78; cloth.metalness = 0; cloth.shadowSide = THREE.BackSide; materials.add(cloth); }
+    if (!cloth) { cloth = original.clone(); cloth.roughness = 0.78; cloth.metalness = 0; cloth.shadowSide = THREE.BackSide; cloth.userData.smooth = true; materials.add(cloth); }
     mesh.material = cloth;
     const dye = dyes[owner];
     if (dye) mesh.geometry = dyeGeometry(mesh.geometry, dye);
@@ -330,9 +335,13 @@ export async function buildCreativeCharacter(
     update: (dt, reduced = false, motion) => {
       if (disposed) return;
       const step = Math.min(0.1, Math.max(0, dt));
-      // Match the stride to how fast the character is actually moving.
-      if (current && motion && (base === "walk" || base === "run")) current.timeScale = THREE.MathUtils.clamp(motion.speed / (base === "run" ? 4.2 : 1.9), 0.6, 1.6);
-      else if (current) current.timeScale = 1;
+      // On foot the game asks for "walk"; pick walk or run from the real ground speed and keep the
+      // stride in step with it, so feet don't slide. (Speeds are in tiles a second.)
+      if (motion && (base === "walk" || base === "run")) {
+        const gait = motion.speed > (base === "run" ? 1.3 : 1.6) ? "run" : "walk";
+        if (gait !== base && motion.speed > 0.05) { base = gait; start(gait, 0.25); }
+        if (current) current.timeScale = THREE.MathUtils.clamp(motion.speed / (gait === "run" ? 2.1 : 0.85), 0.55, 1.5);
+      } else if (current) current.timeScale = 1;
       // Standing still for a while: glance around now and then.
       if (base === "idle" && currentName === "idle" && !reduced) {
         idleFor += step;

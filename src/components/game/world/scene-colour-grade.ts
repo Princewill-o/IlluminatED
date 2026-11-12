@@ -5,9 +5,10 @@ float l=dot(c.rgb,vec3(.2126,.7152,.0722));
 float highlight=smoothstep(.25,1.8,l);
 c.rgb*=mix(vec3(.9,.93,1.1),vec3(1.07,1.01,.91),highlight);
 l=dot(c.rgb,vec3(.2126,.7152,.0722));
-c.rgb=mix(vec3(l),c.rgb,1.12);
+// Richer colour: a little more saturation than the raw render.
+c.rgb=mix(vec3(l),c.rgb,1.22);
 // Preserve black detail while giving the miniature scene more separation.
-c.rgb*=mix(.91,1.025,smoothstep(.04,.8,l));
+c.rgb*=mix(.88,1.04,smoothstep(.04,.8,l));
 vec2 p=uv*(1.0-uv.yx);float edge=clamp(pow(16.0*p.x*p.y,.12),0.0,1.0);
 c.rgb*=mix(.91,1.0,edge);return vec4(max(c.rgb,vec3(0.0)),c.a);}`;
 

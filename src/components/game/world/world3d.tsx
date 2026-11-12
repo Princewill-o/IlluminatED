@@ -136,6 +136,11 @@ const PREVIEW_WEATHER: Record<string, string> = { clear: "Sunny", sunny: "Sunny"
 const VIEWS: CameraMode[] = ["follow", "wide", "overhead", "behind", "first"];
 const VIEW_NAMES: Record<CameraMode, string> = { follow: "Follow", wide: "Wide", overhead: "Top-down", behind: "Behind", first: "First person" };
 const VIEW_HINTS: Record<CameraMode, string> = { follow: "The usual angled view", wide: "Further out, see more around you", overhead: "Look straight down on the streets", behind: "Over your shoulder, steer by looking", first: "Through your own eyes" };
+/** Where a point appears once the world's curve is applied (labels must follow the bent ground). */
+function bentPoint(target: THREE.Vector3, x: number, y: number, z: number) {
+  const dz = z - FOCUS.value.z, dx = x - FOCUS.value.x;
+  return target.set(x, y - dz * dz * BEND.value.x - dx * dx * BEND.value.y, z);
+}
 function bend(m: THREE.Material) {
   if (m.userData.bent) return;
   m.userData.bent = true;
@@ -3007,6 +3012,12 @@ export function World3D({
     el.appendChild(playerLabel);
     scene.add(playerRing);
     scene.add(me.root);
+    // A soft fill light that travels with you, so your own character always reads clearly
+    // against the street (stronger after dark).
+    const headPoint = new THREE.Vector3();
+    const playerGlow = new THREE.PointLight("#fff2de", 0, 3.4, 1.6);
+    playerGlow.position.set(0.25, 1.9, 1.1);
+    me.root.add(playerGlow);
     const pizzaParcel = new THREE.Group();
     box(pizzaParcel, "#f1dcc0", -0.32, 0.8, 0.28, 0.32, 0.92, 0.92);
     box(pizzaParcel, "#cb4c36", -0.33, 0.92, 0.27, 0.33, 0.95, 0.93);
@@ -3852,6 +3863,7 @@ export function World3D({
         phase = pickPhase();
         const blend = 1 - Math.exp(-dt * 1.5);
         const night = phase === "night";
+        playerGlow.intensity += ((night ? 2.6 : phase === "dusk" ? 1.6 : 0.9) - playerGlow.intensity) * blend;
         const weather = weatherLighting(weatherKind);
         const tone = skyColours(phase);
         atmosphere?.update(phase,weather.haze,dt,isSnow(weatherKind)?{colour:phase==="night"?"#3a4566":"#e6ecf3",amount:.55}:weather.overcast&&!weather.haze?{colour:phase==="night"?"#1d2333":"#b9c0ca",amount:(1-weather.sun)*.8}:weatherKind==="Fog"?{colour:phase==="night"?"#2a3044":"#d3d8dc",amount:.6}:undefined);
@@ -3999,7 +4011,8 @@ export function World3D({
       const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial" && !onTrain, { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : busSeated && carLoaded?.startsWith("bus:") ? cameraZoom * 0.6 : cameraZoom, true, map.kind === "hospital");
       FOCUS.value.set(framing.x, 0, framing.z);
       const view=viewRef.current;
-      camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:1) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:1));
+      // Follow sits a little closer than before so your character is easy to pick out.
+      camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:.84) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:.84));
       camera.lookAt(framing.x, framing.target + meZ, framing.z);
       const motion=immersiveMotion(secs,p.walking,p.speed??0,immersiveRef.current&&!overview,reduce);
       const looking=(view==="behind"||view==="first")&&!overview;
@@ -4047,14 +4060,19 @@ export function World3D({
       playerRing.position.set(mx, 0.18 + meZ, mz);
       playerRing.scale.setScalar(want ? 1.7 : 1);
       camera.updateMatrixWorld();
-      const screen = projectedPoint.set(mx, (want ? 2.3 : 1.5) + meZ, mz).project(camera);
+      // Anchor the name tag just above the real head (bone position, bent like the world), so it
+      // sits right in every camera view.
+      const headBone = me.char?.object.getObjectByName("Head");
+      if (headBone) { headBone.getWorldPosition(headPoint); bentPoint(projectedPoint, headPoint.x, headPoint.y + (want ? 0.9 : 0.32), headPoint.z); }
+      else bentPoint(projectedPoint, mx, (want ? 1.5 : 1.3) + meZ, mz);
+      const screen = projectedPoint.project(camera);
       streetscape?.userData.focus((screen.x + 1) / 2, (screen.y + 1) / 2,
         viewportWidth * renderer.getPixelRatio(), viewportHeight * renderer.getPixelRatio());
       const sx = (screen.x + 1) * viewportWidth / 2;
       const sy = (1 - screen.y) * viewportHeight / 2;
       playerLabel.style.left = `${Math.max(42, Math.min(viewportWidth - 42, sx))}px`;
       playerLabel.style.top = `${Math.max(120, Math.min(viewportHeight - 170, sy))}px`;
-      playerLabel.style.transform = "translate(-50%, -100%)";
+      // The nameplate's own classes already centre it above the point (no second translate).
       playerLabel.style.visibility = overview || getHomeAction?.() || viewRef.current === "first" ? "hidden" : "visible";
       followSun(sun,focus);
 
@@ -4081,7 +4099,10 @@ export function World3D({
         b.z += ddz * Math.min(1, dt * 10);
         b.root.position.set(b.x, map.deck ? elevationAt(map, b.x * TILE, b.z * TILE, o.level ?? 0).z : 0, b.z);
         b.root.visible = !o.car;
-        const labelPoint = projectedPoint.set(b.x, 1.5, b.z).project(camera);
+        const otherHead = b.char?.object.getObjectByName("Head");
+        if (otherHead) { otherHead.getWorldPosition(headPoint); bentPoint(projectedPoint, headPoint.x, headPoint.y + 0.32, headPoint.z); }
+        else bentPoint(projectedPoint, b.x, 1.3 + b.root.position.y, b.z);
+        const labelPoint = projectedPoint.project(camera);
         const labelX = (labelPoint.x + 1) * viewportWidth / 2;
         const labelY = (1 - labelPoint.y) * viewportHeight / 2;
         b.label.style.left = `${labelX}px`; b.label.style.top = `${labelY}px`;

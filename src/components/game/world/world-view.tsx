@@ -328,6 +328,7 @@ export function WorldView({
   const sceneReady=useCallback(()=>setGraphicsState("ready"),[]);
   useEffect(()=>setGraphicsState("loading"),[map.id]);
   const speedRef = useRef(speed);
+  const walkInput = useRef({ x: 0, y: 0 });
   speedRef.current = speed;
   const carRef = useRef(car);
   carRef.current = car;
@@ -577,6 +578,16 @@ export function WorldView({
         const ax = -dy * fx - dx * fz, az = -dy * fz + dx * fx;
         dx = ax; dy = az;
       }
+      // On foot, ease into and out of a walk (about a tenth of a second each way) so starts,
+      // stops and changes of direction curve naturally instead of snapping.
+      if (!driving) {
+        const pushing = Math.hypot(dx, dy) > 0.01;
+        const ease = 1 - Math.exp(-dt * (pushing ? 12 : 20));
+        walkInput.current.x += (dx - walkInput.current.x) * ease;
+        walkInput.current.y += (dy - walkInput.current.y) * ease;
+        if (!pushing && Math.hypot(walkInput.current.x, walkInput.current.y) < 0.04) walkInput.current = { x: 0, y: 0 };
+        dx = walkInput.current.x; dy = walkInput.current.y;
+      } else walkInput.current = { x: 0, y: 0 };
       const p = pos.current;
       const before = { x: p.x, y: p.y, heading: p.heading, speed: p.speed };
       let collision: DrivingCollision | undefined;

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
 
 /**
- * Black cartoon outlines for the low-poly look, from the rendered depth.
+ * Coloured cartoon outlines for the low-poly look, from the rendered depth.
  * Silhouettes show as depth jumps, and creases (where two flat faces meet)
  * show as a change in the depth slope. Lines fade with distance so the far
  * horizon stays clean. The GLSL is shared with the contact-shadow pass, which
@@ -29,22 +29,29 @@ vec3 applyOutline(vec3 colour, sampler2D colourTex, sampler2D depthTex, mat4 inv
   float u=outlineViewZ(depthTex,inverseProjection,uv+vec2(0.0,o.y)), d=outlineViewZ(depthTex,inverseProjection,uv-vec2(0.0,o.y));
   float jump=max(max(abs(l-c),abs(r-c)),max(abs(u-c),abs(d-c)))/max(c,0.5);
   float crease=(abs(l+r-2.0*c)+abs(u+d-2.0*c))/max(c,0.5);
-  float edge=max(smoothstep(0.07,0.13,jump),smoothstep(0.03,0.06,crease)*0.7);
-  // Colour boundaries too, so flat ground gets inked: road against pavement, kerbs, grass edges,
-  // road paint and the facets of leaves. Only strong changes, so soft shading stays clean.
+  float silhouette=smoothstep(0.07,0.13,jump);
+  float creaseLine=smoothstep(0.03,0.06,crease);
+  // Colour boundaries too, so flat ground gets lightly inked: road against pavement, kerbs, grass
+  // edges and road paint. Only strong changes, so soft shading and paving stay clean.
   vec3 cl=texture2D(colourTex,uv-vec2(o.x,0.0)).rgb, cr=texture2D(colourTex,uv+vec2(o.x,0.0)).rgb;
   vec3 cu=texture2D(colourTex,uv+vec2(0.0,o.y)).rgb, cd=texture2D(colourTex,uv-vec2(0.0,o.y)).rgb;
   vec3 cc=texture2D(colourTex,uv).rgb;
   float tone=max(max(outlineInkDiff(cl,cc),outlineInkDiff(cr,cc)),max(outlineInkDiff(cu,cc),outlineInkDiff(cd,cc)));
-  edge=max(edge,smoothstep(0.2,0.34,tone)*0.7*(1.0-smoothstep(30.0,70.0,c)));
-  edge*=1.0-smoothstep(45.0,120.0,c);
-  return mix(colour,outlineInk*0.06+colour*0.12,edge*0.9);
+  float toneLine=smoothstep(0.24,0.42,tone)*(1.0-smoothstep(25.0,60.0,c));
+  float fade=1.0-smoothstep(45.0,120.0,c);
+  // Coloured line art: each line is a deep, saturated shade of what it outlines (squaring the
+  // colour keeps its hue and richness), never flat black. Silhouettes are darkest; creases and
+  // ground lines are softer, so the scene reads as illustrated rather than scribbled over.
+  vec3 deep=colour*colour*0.5+outlineInk*0.35;
+  vec3 soft=mix(colour*0.62,deep,0.35);
+  vec3 inked=mix(colour,soft,max(creaseLine*0.6,toneLine*0.38)*fade);
+  return mix(inked,deep,silhouette*0.9*fade);
 }`;
 
 export const outlineUniforms = () => ({
   outlineTexel: { value: new THREE.Vector2(1 / 1280, 1 / 720) },
   outlineThickness: { value: 1.0 },
-  outlineInk: { value: new THREE.Color("#141020") },
+  outlineInk: { value: new THREE.Color("#1d1640") },
 });
 
 /** Size the lines to the drawing buffer (call on resize). */

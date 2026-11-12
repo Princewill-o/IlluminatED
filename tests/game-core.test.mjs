@@ -25,10 +25,9 @@ const MIGRATION = fs.readFileSync(
   "supabase/migrations/20261015130925_games_promotion_panic.sql",
   "utf8",
 );
-const CHARACTERS = [
-  "supabase/migrations/20261015150000_games_characters_v2.sql",
-  "supabase/migrations/20261022170000_store_back_slot.sql",
-].map((f) => fs.readFileSync(f, "utf8")).join("\n");
+// Every migration, oldest first: an item may be added in any of them.
+const CHARACTERS = fs.readdirSync("supabase/migrations").filter((f) => f.endsWith(".sql")).sort()
+  .map((f) => fs.readFileSync(`supabase/migrations/${f}`, "utf8")).join("\n");
 const ALL = {
   bank: QUESTION_BANK,
   terms: FLASHCARDS.filter((f) => f.kind === "Key term"),
@@ -183,7 +182,8 @@ test("Ranks and rewards match the database function", () => {
 test("Locker catalogue matches the migration and the default avatar is free", () => {
   assert.equal(new Set(COSMETICS.map((c) => c.id)).size, COSMETICS.length);
   const DYES_SQL = fs.readFileSync("supabase/migrations/20261016160000_characters_v3_dyes.sql", "utf8");
-  const brandSql = fs.readFileSync("supabase/migrations/20261017121000_cartoon_brand_labels.sql", "utf8");
+  // The latest display-name migration wins (parody names, never real companies).
+  const brandSql = fs.readFileSync("supabase/migrations/20261112170000_parody_item_names.sql", "utf8");
   const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
     if (c.id.startsWith("head-kaykit-")) {
@@ -204,11 +204,12 @@ test("Locker catalogue matches the migration and the default avatar is free", ()
     const q = (v) => (v == null ? "null" : `'${String(v).replace(/'/g, "''")}'`);
     const row = `(${q(c.id)}, ${q(c.slot)}, ${q(c.name)}, ${c.price}, ${q(c.unlock)}, `;
     const tail = `, ${q(c.rarity)}, ${q(c.set)})`;
-    const original = CHARACTERS.split("\n").find((l) => l.includes(`(${q(c.id)}, ${q(c.slot)}, `));
-    const line = brandNames.has(c.id)
-      ? original?.replace(/^(\s*\('[^']+', '[^']+', )'(?:''|[^'])*'/, `$1${q(brandNames.get(c.id))}`)
-      : original;
-    assert.ok(line && line.includes(row) && line.includes(tail), `migration row for ${c.id}`);
+    // Any migration row for the item (later migrations may re-insert it with more columns).
+    const squash = (text) => text.replace(/\s+/g, "");
+    const rows = CHARACTERS.split("\n").filter((l) => squash(l).includes(squash(`(${q(c.id)}, ${q(c.slot)}, `))).map((original) => brandNames.has(c.id)
+      ? original.replace(/^(\s*\('[^']+', '[^']+', )'(?:''|[^'])*'/, `$1${q(brandNames.get(c.id))}`)
+      : original);
+    assert.ok(rows.some((line) => squash(line).includes(squash(row)) && squash(line).includes(squash(tail))), `migration row for ${c.id}`);
   }
   for (const [slot, id] of Object.entries(DEFAULT_AVATAR)) {
     const item = cosmeticById(id);
@@ -316,11 +317,14 @@ test("Characters: every Locker look has its Kenney pieces and sheets, and anchor
       assert.ok(sheet(`kh-${look.head}-skin`), `head for ${c.id}`);
       if (look.hair) assert.ok(sheet(look.hair), `hair sheet for ${c.id}`);
     }
-    if (c.slot === "top") assert.ok(sheet(`kb-${L.TOP_LOOK[c.id]}-top`), `top for ${c.id}`);
-    if (c.slot === "bottom") assert.ok(sheet(`kb-${L.BOTTOM_LOOK[c.id]}-bottom`), `bottom for ${c.id}`);
-    if (c.slot === "shoes") assert.ok(sheet(`kb-${L.SHOES_LOOK[c.id]}-shoes`), `shoes for ${c.id}`);
+    // Kit-only clothes draw with the default 2D piece (outfitVariants falls back to "male-a").
+    if (c.slot === "top") assert.ok(sheet(`kb-${L.TOP_LOOK[c.id] ?? "male-a"}-top`), `top for ${c.id}`);
+    if (c.slot === "bottom") assert.ok(sheet(`kb-${L.BOTTOM_LOOK[c.id] ?? "male-a"}-bottom`), `bottom for ${c.id}`);
+    if (c.slot === "shoes") assert.ok(sheet(`kb-${L.SHOES_LOOK[c.id] ?? "male-a"}-shoes`), `shoes for ${c.id}`);
     if (["hat", "held", "pet"].includes(c.slot) && !c.id.endsWith("-none")) assert.ok(sheet(c.id), `sheet for ${c.id}`);
-    if (c.slot === "head" && c.id !== "head-human") assert.ok(sheet(c.id), `sheet for ${c.id}`);
+    // 2D sprites draw a head sheet only for the original drawn heads; kit characters (blocky,
+    // presets, KayKit) use the hair look and their rendered portrait.
+    if (c.slot === "head" && c.id !== "head-human" && !/^head-(blocky|preset|kaykit)-/.test(c.id)) assert.ok(sheet(c.id), `sheet for ${c.id}`);
   }
   assert.ok(sheet("cape-back"));
 });
