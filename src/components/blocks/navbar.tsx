@@ -19,18 +19,27 @@ const PLANS_GROUP = { label: "Plans", items: [
   { title: "Safety and your data", href: "/safeguarding", description: "Safeguarding, privacy and AI use" },
 ] };
 
-/** Signed out: what you can revise, then what it costs. Three choices, no maze. */
+/**
+ * Signed out: only pages a visitor can open without an account (see PUBLIC_PATHS in middleware).
+ * Subject pages, quizzes and the game need an account, so they sit behind "Sign up free".
+ */
 const PUBLIC_NAV = [
   { label: "Revise", items: [
-    { title: "GCSE", href: "/gcse", description: "Years 10–11 by subject and exam board" },
-    { title: "A level", href: "/a-level", description: "Years 12–13 subject routes" },
-    { title: "BTEC and T Levels", href: "/btec", description: "Vocational and technical routes" },
+    { title: "How it works", href: "/#how-it-works", description: "Revise, earn Clout, spend it in the city" },
+    { title: "Revision games", href: "/revision-games", description: "What the games are and how they help" },
     { title: "Free lesson slides", href: "/curriculum", description: "Years 1–11 · no account needed" },
+    { title: "Questions", href: "/faq", description: "Ages, exam boards, safety and accounts" },
   ] },
   PLANS_GROUP,
+  { label: "About", items: [
+    { title: "About IlluminatED", href: "/about", description: "Who we are and why we built it" },
+    { title: "Employers", href: "/employers", description: "Career simulations and sponsorship" },
+    { title: "Creators", href: "/creators", description: "Post about IlluminatED and earn" },
+    { title: "Contact", href: "/contact", description: "Get in touch" },
+  ] },
 ];
 
-/** Site navigation: a floating pill (see components/ui/navbar-1.tsx). Menus only appear once signed in. */
+/** Website navigation: a floating pill (see components/ui/navbar-1.tsx). Signed-in pages use the app shell instead. */
 export const Navbar = () => {
   const pathname = usePathname();
   const signedIn = useSignedIn();

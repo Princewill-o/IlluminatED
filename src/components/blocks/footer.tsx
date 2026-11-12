@@ -9,7 +9,9 @@ import { useSignedIn } from "@/lib/use-signed-in";
 
 const PUBLIC_LINKS = [
   { href: "/curriculum", title: "IllumED Slides · Primary to sixth form" },
-  { href: "/pricing", title: "Access and pricing" },
+  { href: "/pricing", title: "Plans and pricing" },
+  { href: "/schools", title: "For schools and colleges" },
+  { href: "/revision-games", title: "Revision games" },
   { href: "/investors", title: "Business overview" },
   { href: "/about", title: "About IlluminatED" },
   { href: "/faq", title: "FAQ" },
@@ -27,7 +29,7 @@ export function Footer() {
         <div>
           <Logo />
           <p className="text-muted-foreground mt-4 max-w-xs text-sm leading-relaxed">
-            Learning from primary school to sixth form, with free lesson slides and revision games for ages 13+. </p>
+            Revision students actually choose to open. The city is the reward. Free to start; accounts for ages 13+.</p>
         </div>
         {signedIn ? (
           <nav

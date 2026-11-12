@@ -162,7 +162,7 @@ export default async function Home() {
       </section>
 
       {/* The loop, in three steps, then who it's for. */}
-      <section className="relative container pb-20" aria-labelledby="loop-title">
+      <section id="how-it-works" className="relative container scroll-mt-24 pb-20" aria-labelledby="loop-title">
         <div className="max-w-2xl">
           <p className={`text-sm font-bold ${accent}`}>What we do</p>
           <h2 id="loop-title" className={`${display} mt-3 text-4xl sm:text-5xl`}>Revise first. Then play.</h2>
