@@ -56,7 +56,7 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { paintedCar } from "@/game/core/cars";
 import { characterSpeed, locomotionClip, type LocomotionClip } from "@/game/core/character-locomotion";
 import { residentIdentity } from "@/game/core/city-social";
-import { cityWorkers } from "@/game/core/city-workers";
+import { cityWorkers, type CityWorker } from "@/game/core/city-workers";
 import { COACHES, COACH_LENGTH, COACH_WIDTH } from "@/game/core/coaches";
 import { COMPANIES, type Company } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
@@ -85,6 +85,7 @@ import { ROLE_UNIFORMS } from "@/game/core/roles";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { T as DISPUTE_T, disputeAt, disputeFrame, disputeSpots } from "@/game/core/street-disputes";
+import { SCAFFOLD_LEVELS, streetWorks } from "@/game/core/street-works";
 import { DOWNTOWN_LANDMARKS, LOWPOLY_LANDMARKS, downtownAsset, downtownBuildingAsset, lowpolyCityBuilding, suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
@@ -521,6 +522,14 @@ function repaint(car: THREE.Object3D, hex: string) {
   });
 }
 
+/** London traffic, in order: three per round (one on each road loop). Buses lead each loop. */
+const LONDON_TRAFFIC = [
+  "bus", "bus", "bus",
+  "taxi", "box-van@#f4f4f0", "sedan",
+  "pickup@#f2a31b", "taxi", "box-van@#2b6fe0",
+  "hatchback", "box-van@#c8322d", "suv",
+  "taxi", "ev-hatch", "box-van@#2fa865",
+];
 const GROUND: Record<string, [string, number]> = {
   g: ["#8fd16f", 0.05],
   f: ["#88cc69", 0.05],
@@ -3158,7 +3167,8 @@ export function World3D({
     const traffic: { obj: THREE.Group; route: number; at: number; distance: number; speed: number; velocity?: number; commuter?: { body: Body; offset: number } }[] = [];
     if (L) {
       const regionalCount=ukTrafficCount(map.id);
-      const kinds = london ? ["bus", "taxi", "sedan", "bus", "van", "delivery"] : Array.from({length:regionalCount},(_,i)=>["sedan","suv","taxi","sports","hatchback"][i%5]);
+      // London: buses on every loop, black cabs, and plenty of working vans and pickups.
+      const kinds = london ? LONDON_TRAFFIC.slice(0, budget.residents >= 40 ? LONDON_TRAFFIC.length : 9) : Array.from({length:regionalCount},(_,i)=>["sedan","suv","taxi","sports","hatchback"][i%5]);
       kinds.forEach((k, i) => {
         const route = i % (ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:L.routes.length*2) : 3);
         const g = new THREE.Group();
@@ -3166,9 +3176,12 @@ export function World3D({
           const b = busModel(BUS_ROUTE_CODES[route]);
           g.add(b);
           g.userData.label = BUS_ROUTE_CODES[route];
-        } else void placeCar(g, k);
+        } else void placeCar(g, k).then(() => {
+          // A driver behind the wheel (UK: on the right), visible through the glass.
+          if (london && !g.userData.vehicleRemoved) { const driver = seatedPerson(i * 37 + 11, k.startsWith("box-van") || k.startsWith("pickup") ? "top-hivis" : undefined, bendAll); driver.position.set(0.15, 0.62, 0.36); g.add(driver); }
+        }).catch(() => {});
         scene.add(g);
-        traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2))/(kinds.length/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2)) : (i * 0.173) % 1, distance: 0, speed: ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))||map.id.startsWith("road-")?15+(i%5)*1.5:map.id==="rotherhithe"?5:3.6) : [2.6, 2.8, 2.5][route] });
+        traffic.push({ obj: g, route, at: ukScene ? Math.floor(i/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2))/(kinds.length/((map.id==="m25"||map.id.startsWith("road-"))?L.routes.length:2)) : (Math.floor(i / 3) / Math.ceil(kinds.length / 3) + route * 0.11) % 1, distance: 0, speed: ukScene ? ((map.id==="m25"||map.id.startsWith("road-"))||map.id.startsWith("road-")?15+(i%5)*1.5:map.id==="rotherhithe"?5:3.6) : [2.6, 2.8, 2.5][route] });
       });
       for (const coach of london ? COACHES.slice(0, 1) : []) {
         // See-through coaches: the cabin, the driver and passengers show through the glass.
@@ -3320,7 +3333,7 @@ export function World3D({
       bendAll(g);
       return g;
     };
-    const cityCrew = london && !ukScene ? cityWorkers(map, budget.residents >= 40 ? 24 : 12).map((spot, i) => {
+    const cityCrew: { spot: CityWorker & { y?: number }; body: Body; phase: number; working: string }[] = london && !ukScene ? cityWorkers(map, budget.residents >= 40 ? 24 : 12).map((spot, i) => {
       const body = makeBody({ ...npcLook(120 + i), ...(ROLE_UNIFORMS[spot.role] as Partial<Avatar> | undefined) }, null, true);
       body.root.add(crewProp(spot.pose, spot.role));
       body.root.position.set(spot.x, 0, spot.z);
@@ -3328,6 +3341,53 @@ export function World3D({
       scene.add(body.root);
       return { spot, body, phase: (i * 2.3) % 9, working: "" };
     }) : [];
+    // Street works: building sites with scaffolding and builders up on the boards, and delivery
+    // vans at the kerb with drivers carrying parcels to the door (core/street-works).
+    const works = london && !ukScene ? streetWorks(map, buildLondon().things, budget.residents >= 40 ? { sites: 4, deliveries: 5 } : { sites: 2, deliveries: 3 }) : [];
+    const worksProps = new THREE.Group();
+    for (const work of works) {
+      if (work.kind === "scaffold") {
+        const top = SCAFFOLD_LEVELS[SCAFFOLD_LEVELS.length - 1] + 1;
+        const zIn = work.front + 0.04, zOut = work.front + 0.58;
+        for (let x = work.x0; x <= work.x1 + 0.01; x += Math.max(0.8, (work.x1 - work.x0) / Math.ceil((work.x1 - work.x0) / 1.1))) {
+          for (const z of [zIn, zOut]) cyl(worksProps, "#9aa3ad", x, z, 0, top, 0.035, 6);
+        }
+        for (const level of SCAFFOLD_LEVELS) {
+          // Boards, a guard rail and a toe board on the outside of each lift.
+          box(worksProps, "#c99a5b", work.x0 - 0.05, level - 0.05, zIn - 0.02, work.x1 + 0.05, level, zOut + 0.02);
+          box(worksProps, "#d8dde2", work.x0, level + 0.88, zOut - 0.02, work.x1, level + 0.92, zOut + 0.02);
+          box(worksProps, "#f2c14e", work.x0, level, zOut - 0.03, work.x1, level + 0.12, zOut);
+        }
+        // Debris netting on the top lift, and the builder's board.
+        const net = box(worksProps, "#2f9e5b", work.x0, SCAFFOLD_LEVELS[2] + 0.12, zOut + 0.01, work.x1, top - 0.05, zOut + 0.02);
+        net.material = (net.material as THREE.MeshStandardMaterial).clone();
+        Object.assign(net.material, { transparent: true, opacity: 0.55 });
+        const board = sign("Bodge & Sons Builders", { bg: "#f2c14e", fg: "#1d1640", w: Math.min(2.4, work.x1 - work.x0), h: 0.36 });
+        board.position.set((work.x0 + work.x1) / 2, SCAFFOLD_LEVELS[0] + 0.5, zOut + 0.04); worksProps.add(board);
+        // Cones round the back of the pickup.
+        if (work.vehicle) for (const dx of [-2.3, 2.3]) { cyl(worksProps, "#ff6a13", work.vehicle.x + dx, work.vehicle.z, 0, 0.5, 0.02, 8, 0.15); cyl(worksProps, "#ffffff", work.vehicle.x + dx, work.vehicle.z, 0.24, 0.32, 0.11, 8, 0.12); }
+      }
+      if (work.vehicle) {
+        const v = work.vehicle, g = new THREE.Group();
+        g.position.set(v.x, 0, v.z); g.rotation.y = v.heading;
+        void placeCar(g, v.kind).then(() => {
+          // Someone in the driving seat of the delivery vans (UK: on the right).
+          if (work.kind === "delivery") { const driver = seatedPerson(assetSeed(work.id), "top-hivis", bendAll); driver.position.set(0.15, 0.62, 0.36); g.add(driver); }
+        }).catch(() => {});
+        worksProps.add(g);
+      }
+    }
+    bendAll(worksProps);
+    world.add(worksProps);
+    const streetCrew = works.flatMap((work) => work.workers).map((w, i) => {
+      const body = makeBody({ ...npcLook(500 + i), ...(ROLE_UNIFORMS[w.role] as Partial<Avatar> | undefined) }, null, true);
+      body.root.add(crewProp(w.pose, w.role));
+      body.root.position.set(w.x, w.y, w.z);
+      body.root.rotation.y = w.facing;
+      scene.add(body.root);
+      return { spot: { ...w, pose: w.pose as CityWorker["pose"] }, body, phase: (i * 3.1) % 11, working: "" };
+    });
+    cityCrew.push(...streetCrew);
     const updateCrew = (secs: number) => {
       for (const c of cityCrew) {
         const { spot, body } = c;
@@ -3344,7 +3404,7 @@ export function World3D({
           else if (t < 2 * work + walk) { x = spot.beat.x; z = spot.beat.z; }
           else leg((t - 2 * work - walk) / walk, spot.beat, spot);
         }
-        body.root.position.set(x, 0, z);
+        body.root.position.set(x, spot.y ?? 0, z);
         body.root.rotation.y = heading;
         // Carriers keep the parcel while walking; everyone else downs tools to walk.
         const want = walking ? (spot.pose === "carry" ? "carry-walk" : "walk") : spot.pose;

@@ -29,7 +29,7 @@ export const lowerTier = (tier: GraphicsTier): GraphicsTier | null => (tier === 
 /** How many ambient residents, cyclists and lit lamps each tier can afford. */
 export function populationBudget(tier: GraphicsTier, indoors: boolean) {
   if (indoors) return { residents: tier === "performance" ? 6 : tier === "balanced" ? 9 : 12, workers: tier === "performance" ? 4 : 8, cyclists: 0, lights: 2, outfits: tier === "high" };
-  return { residents: tier === "performance" ? 20 : tier === "balanced" ? 40 : 64, workers: 8, cyclists: tier === "performance" ? 2 : tier === "balanced" ? 4 : 8, lights: tier === "high" ? 2 : 1, outfits: tier !== "performance" };
+  return { residents: tier === "performance" ? 28 : tier === "balanced" ? 56 : 88, workers: 8, cyclists: tier === "performance" ? 2 : tier === "balanced" ? 4 : 8, lights: tier === "high" ? 2 : 1, outfits: tier !== "performance" };
 }
 
 /** Keep the art direction with bounded pixel, shadow and effect budgets. */
