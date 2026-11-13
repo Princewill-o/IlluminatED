@@ -38,7 +38,7 @@ import { presentSceneFrame } from "./present-frame";
 import { registerSceneCapture } from "./scene-continuity";
 import { createLighting, createRenderer, followSun, skyColours } from "./scene-setup";
 import { curvedView, sceneryCulling } from "./scenery-culling";
-import { softSunShadows } from "./soft-sun-shadows";
+import { setShadowTaps, shadowTaps, softSunShadowsChunk } from "./soft-sun-shadows";
 import { attachWorldBatch, mergeSolidScenery, mergeStaticScenery, registerSolidSceneryMaterial, solidScenerySignature, staticScenerySignature } from "./static-scenery-batches";
 import { createStaticShadowBatch, staticShadowEligible } from "./static-shadow-batches";
 import { addStreetscape } from "./streetscape3d";
@@ -62,7 +62,7 @@ import { COMPANIES, type Company } from "@/game/core/companies";
 import type { Avatar } from "@/game/core/cosmetics";
 import { look } from "@/game/core/cosmetics";
 import { crayonBuildingAsset, pixelTreePlans, pixelAsset, natureAsset, NATURE_BEDS } from "@/game/core/crayon-vegetation";
-import { frameBudget } from "@/game/core/frame-budget";
+import { displayFrames } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
 import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, kaykitTool, platformTile } from "@/game/core/kaykit-world-assets";
 import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
@@ -161,7 +161,7 @@ function bend(m: THREE.Material) {
     }
     atmosphereShader(sh);
     sh.vertexShader = curvedVertexShader(sh.vertexShader);
-    sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadows);
+    sh.fragmentShader = sh.fragmentShader.replace("#include <shadowmap_pars_fragment>", softSunShadowsChunk());
     // Low-poly facets: each flat face takes a slightly different tone, like hand-cut paper.
     sh.fragmentShader = sh.fragmentShader.replace("#include <normal_fragment_begin>", `#include <normal_fragment_begin>
       #ifdef FLAT_SHADED
@@ -170,7 +170,7 @@ function bend(m: THREE.Material) {
       diffuseColor.rgb *= 0.94 + 0.12 * fract(sin(dot(floor(normal * 6.0 + 0.5), vec3(12.9898, 78.233, 37.719))) * 43758.5453);
       #endif`);
   };
-  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v7${m.userData.weatherProof ? ":dry" : ""}`;
+  m.customProgramCacheKey = () => `${programKey}:rolling-world-atmosphere-v7:s${shadowTaps()}${m.userData.weatherProof ? ":dry" : ""}`;
   m.needsUpdate = true;
 }
 const CURVED_DEPTH = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
@@ -2525,6 +2525,7 @@ export function World3D({
     // Keep high-DPI Windows screens from multiplying the GPU workload by four.
     const budget = populationBudget(graphics, indoors);
     const visual = visualProfile(window.devicePixelRatio||1,mobile,graphics);
+    setShadowTaps(visual.shadowTaps);
     const culling=!indoors&&!ukScene?sceneryCulling():null;
     const cullingRoots:THREE.Object3D[]=[];
     const batchedMaterials = new Set<THREE.Material>();
@@ -3902,19 +3903,25 @@ export function World3D({
     let reduce = motionPreference.matches;
     const motionChanged = () => {reduce=motionPreference.matches;};
     motionPreference.addEventListener("change",motionChanged);
-    const renderDue = frameBudget(60);
+    const renderDue = displayFrames;
+    let shadowSweep = 0;
     const adaptResolution = adaptivePixelRatio(visual.pixelRatio);
     // Auto graphics: if frames stay slow even at the lowest resolution, ask the
     // host to step down one tier (once per scene).
-    let slowWindowAt = 0, slowFrames = 0, slowWindows = 0, slowReported = false;
+    let slowWarmAt = 0, slowWindowAt = 0, slowFrames = 0, slowWindows = 0, slowReported = false;
     const watchSlow = (now: number) => {
       if (slowReported || firstPaint || !slowCallback.current) return;
+      // Give the city a few seconds to finish streaming in and compiling before judging speed.
+      slowWarmAt ||= now;
+      if (now - slowWarmAt < 6000) return;
       if (!slowWindowAt) { slowWindowAt = now; slowFrames = 0; return; }
       slowFrames++;
-      if (now - slowWindowAt < 3000) return;
+      if (now - slowWindowAt < 2000) return;
       const fps = slowFrames * 1000 / (now - slowWindowAt);
       slowWindowAt = now; slowFrames = 0;
-      slowWindows = fps < 30 && renderer.getPixelRatio() <= .8 ? slowWindows + 1 : 0;
+      // Under 40 fps for two windows in a row (about four seconds): lighter effects help far more
+      // than a blurrier picture, so step down a tier rather than waiting for the lowest resolution.
+      slowWindows = fps < 40 ? slowWindows + 1 : 0;
       if (slowWindows >= 2) { slowReported = true; const next = lowerTier(graphics); if (next) slowCallback.current(next); }
     };
     const frame = (now: number) => {
@@ -4825,6 +4832,16 @@ export function World3D({
         bodyBounds.min.set(position.x-1.5,position.y-.5,position.z-1.5);
         bodyBounds.max.set(position.x+1.5,position.y+3,position.z+1.5);
         body.char.object.visible=indoors||overview||bodyView.intersects(bodyBounds,{x:mx,z:mz},.5);
+      }
+      // Only people near you cast shadows: the shadow pass redraws every caster, and a crowd of
+      // distant residents is the biggest part of that cost on integrated graphics.
+      // (Rechecked about once a second, which also catches characters that finished loading.)
+      if (visual.shadows && ++shadowSweep % 60 === 0) {
+        const reach = (graphics === "high" ? 30 : 18) ** 2;
+        for (const body of bodies) {
+          const near = body === me || body.root.position.distanceToSquared(me.root.position) < reach;
+          body.root.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.castShadow = near; });
+        }
       }
       // Animate nearby visible bodies only; distant residents still follow their routes.
       for (const body of bodies) if (body.char && !body.aboard && body.char.object.visible && body.root.visible && (body === me || body.root.position.distanceToSquared(me.root.position) < 28 * 28)) {

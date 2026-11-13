@@ -34,7 +34,7 @@ import { doActivity } from "@/components/game/world/use-needs";
 import type { WorldAffiliation } from "@/game/core/affiliation";
 import { driveStep, nearestDrivingSpot, nudgePedestrianFromTraffic, vehicleFits, type DrivingCollision, type VehicleObstacle } from "@/game/core/driving";
 import { edgeLoop } from "@/game/core/edge-loop";
-import { frameBudget } from "@/game/core/frame-budget";
+import { displayFrames } from "@/game/core/frame-budget";
 import type { HomeAction } from "@/game/core/homes";
 import { roadCruiseSpeed, crashImpact } from "@/game/core/living-world";
 import type { WorldNavigation } from "@/game/core/navigation";
@@ -301,7 +301,8 @@ export function WorldView({
     try { setGraphicsSetting(readGraphicsSetting(localStorage.getItem(GRAPHICS_KEY))); } catch { /* Optional. */ }
     let tier: GraphicsTier = "balanced";
     try {
-      const saved = sessionStorage.getItem("world-graphics-auto");
+      // A device that had to step down before starts on that tier straight away.
+      const saved = sessionStorage.getItem("world-graphics-auto") ?? localStorage.getItem("world-graphics-auto");
       if (saved === "high" || saved === "balanced" || saved === "performance") tier = saved;
       else {
         let gpu = "";
@@ -317,7 +318,7 @@ export function WorldView({
   const onSlowGraphics = useCallback((next: GraphicsTier) => {
     if (graphicsSetting !== "auto") return;
     setAutoTier(next);
-    try { sessionStorage.setItem("world-graphics-auto", next); } catch { /* Optional. */ }
+    try { sessionStorage.setItem("world-graphics-auto", next); localStorage.setItem("world-graphics-auto", next); } catch { /* Optional. */ }
     setGraphicsNote(`Switched to ${next === "balanced" ? "Balanced" : "Performance"} graphics for smoother play. Change it in Settings.`);
     window.setTimeout(() => setGraphicsNote(""), 6000);
   }, [graphicsSetting]);
@@ -530,7 +531,7 @@ export function WorldView({
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
-    const simulationDue = frameBudget(60);
+    const simulationDue = displayFrames;
     const fx = createFx(map);
     const cam = { x: NaN, y: NaN };
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

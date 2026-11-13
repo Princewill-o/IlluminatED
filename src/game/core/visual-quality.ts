@@ -17,12 +17,18 @@ export const GRAPHICS_KEY = "world-graphics";
 export function readGraphicsSetting(value: string | null): GraphicsSetting {
   return value === "high" || value === "balanced" || value === "performance" ? value : "auto";
 }
-const LOW_GPU = /swiftshader|llvmpipe|softpipe|mali|adreno \(tm\) [1-5]\d\d|powervr|intel\(r\) (hd|uhd) graphics( [1-6]\d\d)?\b|intel hd|gma|vivante|videocore/i;
-/** Pick a starting tier from what the device tells us. Unknown hardware starts balanced. */
+const LOW_GPU = /swiftshader|llvmpipe|softpipe|basic render driver|microsoft basic|mali|adreno \(tm\) [1-5]\d\d|powervr|intel\(r\) (hd|uhd) graphics( [1-6]\d\d)?\b|intel hd|gma|vivante|videocore|radeon r[2-5]\b|geforce (gt )?[1-7]\d0m?\b/i;
+/** Integrated or entry-level chips that manage the look without the heaviest passes. */
+const MID_GPU = /intel|iris|radeon\(tm\) graphics|radeon graphics|radeon vega|vega \d|radeon \(tm\) r|geforce mx|mx ?\d{3}|quadro|adreno|apple gpu/i;
+const HIGH_GPU = /nvidia|geforce|radeon|rtx|gtx|apple m\d|arc/i;
+/** Pick a starting tier from what the device tells us. Unknown hardware starts balanced.
+ * Windows laptops mostly report integrated Intel or AMD chips through ANGLE/Direct3D; those start
+ * on Balanced or Performance so they open smooth, and only dedicated GPUs and newer Apple chips
+ * start on High. */
 export function detectGraphicsTier({ touch = false, cores = 4, memory = 4, gpu = "" }: { touch?: boolean; cores?: number; memory?: number; gpu?: string }): GraphicsTier {
   if (LOW_GPU.test(gpu) || cores <= 2 || memory <= 2) return "performance";
-  if (touch || cores <= 4 || memory <= 4 || /intel/i.test(gpu)) return "balanced";
-  return /nvidia|geforce|radeon|rtx|gtx|apple m\d|arc/i.test(gpu) ? "high" : "balanced";
+  if (touch || cores <= 4 || memory <= 4 || MID_GPU.test(gpu)) return "balanced";
+  return HIGH_GPU.test(gpu) ? "high" : "balanced";
 }
 /** One step down when frames stay slow even at the lowest render resolution. */
 export const lowerTier = (tier: GraphicsTier): GraphicsTier | null => (tier === "high" ? "balanced" : tier === "balanced" ? "performance" : null);
@@ -35,7 +41,9 @@ export function populationBudget(tier: GraphicsTier, indoors: boolean) {
 /** Keep the art direction with bounded pixel, shadow and effect budgets. */
 export function visualProfile(dpr = 1, touch = false, tier: GraphicsTier = "high") {
   const base = visualProfileHigh(dpr, touch);
-  if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1.25), shadowSize: touch ? 1024 : 1536, ambientOcclusion: !touch, occlusionSamples: touch ? 0 : 4 };
+  // Balanced: no screen-space occlusion (the costliest pass on integrated chips), smaller
+  // shadow maps with fewer soft-shadow taps, and a lower resolution ceiling.
+  if (tier === "balanced") return { ...base, pixelRatio: Math.min(base.pixelRatio, 1.25), shadowSize: 1024, shadowTaps: 8, ambientOcclusion: false, occlusionSamples: 0, bloomStrength: 0.16 };
   // Performance keeps the one cheap pass that defines the look: the black low-poly outlines.
   if (tier === "performance") return { ...base, pixelRatio: 1, shadows: false, shadowSize: 256, postProcessing: true, ambientOcclusion: false, occlusionSamples: 0, bloom: false, environment: false, outlines: true };
   return base;
@@ -49,6 +57,8 @@ function visualProfileHigh(dpr: number, touch: boolean) {
     ),
     shadows: true,
     shadowSize: touch ? 1024 : 2048,
+    /** Soft-shadow filter taps per pixel (the blocker search uses half). */
+    shadowTaps: touch ? 8 : 16,
     postProcessing: true,
     environment: true,
     // FXAA handles edges without multisampling and resolving the HDR framebuffer.
