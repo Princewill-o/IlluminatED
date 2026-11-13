@@ -15,7 +15,7 @@ import { LearningTracker } from "./learning-tracker";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, CAMERA_VIEW, steersByLook, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, CAMERA_VIEW, steersByLook, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, SHOVE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -664,6 +664,13 @@ export function WorldView({
       // The lift: you come out on the other floor, at its doors.
       if (LEVEL_JUMP.pending) { LEVEL_JUMP.pending = false; PLAYER.level = LEVEL_JUMP.level; p.x = LEVEL_JUMP.x; p.y = LEVEL_JUMP.y; }
       let next = driven ?? (flying ? glide() : step(levelMap(map, PLAYER.level), p, dx, dy, dt, speedRef.current));
+      // Shoved: slide back over about a third of a second, stopping at walls.
+      if (!driven && (SHOVE.x || SHOVE.y)) {
+        const k = 1 - Math.exp(-dt * 9), mx = SHOVE.x * k, my = SHOVE.y * k, ground = levelMap(map, PLAYER.level);
+        if (!blocked(ground, next.x + mx, next.y + my)) next = { ...next, x: next.x + mx, y: next.y + my };
+        SHOVE.x -= mx; SHOVE.y -= my;
+        if (Math.hypot(SHOVE.x, SHOVE.y) < 0.5) { SHOVE.x = 0; SHOVE.y = 0; }
+      }
       if (map.kind === "station" && RIDE.active) {
         // On the train: you move about inside the carriage while it carries you along.
         const frame = RIDE.phase === "departing" ? departFrame((now - RIDE.at) / 1000) : RIDE.phase === "arriving" || RIDE.phase === "docked" ? arriveFrame((now - RIDE.at) / 1000) : { offset: 0, doorOpen: 1 };

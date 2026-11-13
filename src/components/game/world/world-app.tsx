@@ -29,6 +29,7 @@ import { GameFeedback } from "./game-feedback";
 import { GameMenu, saveResume } from "./game-menu";
 import { HiringFlow, type HiringStage } from "./hiring";
 import { HotelDesk } from "./hotel-desk";
+import { HowToPlay } from "./how-to-play";
 import { HudLayout, HudSlot } from "./hud";
 import { BlameOfferPrompt, InterviewRoom } from "./interview-room";
 import { JobsPanel } from "./jobs-panel";
@@ -47,7 +48,7 @@ import { PolicePatrol } from "./police-patrol";
 import { PrisonJobBoard, PrisonRoutineHud, PrisonTrader, PrisonWorkbench, usePrisonLife } from "./prison-life-ui";
 import { addLocalHire, useRoleHiresState } from "./role-hires";
 import { RewardToasts, RoleShift } from "./role-shift";
-import { SceneWipe, TUTORIAL_KEY, Tutorial } from "./scene";
+import { SceneWipe, TUTORIAL_KEY } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
 import { SceneMusic } from "./scene-music";
 import { RIDE, TRAIN_CALL } from "./train-state";
@@ -477,7 +478,6 @@ export function WorldApp({
   const [creatorChannel,setCreatorChannel]=useState<"tiktok"|"youtube"|"instagram"|null>(null);
   const [studioFloating,setStudioFloating]=useState(false);
   const [conversation,setConversation]=useState<{id:string;name:string;heading?:string}|null>(null);
-  const [safety, setSafety] = useState(false);
   const [rescue, setRescue] = useState(false);
   const [panic, setPanic] = useState<string | null>(null);
   const [medicalCustody,setMedicalCustody]=useState(false);
@@ -732,8 +732,8 @@ export function WorldApp({
     }
     say(assessment.message,true);
   },[updateLife,say,jailed]);
-  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !custody && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !liveTransfer && !mapOpen && !safety && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
-    setBike(null);setDriving(null);setRescue(true);setPhone(false);setSafety(false);
+  const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !custody && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !liveTransfer && !mapOpen && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
+    setBike(null);setDriving(null);setRescue(true);setPhone(false);
   });
   useEffect(()=>{if(process.env.NODE_ENV!=="production")(window as unknown as {__panic?:(id:string)=>void}).__panic=(id)=>setPanic(id);},[]);
   // Outdoors, the rescue plays live on the road beside you (and everyone in the room sees it).
@@ -1269,8 +1269,24 @@ export function WorldApp({
   }, [map.kind]);
   const fight = useCallback(() => {
     if (rescue) return;
-    if (!street.defend()) setSafety(true);
+    // The shove just happens; how the other person reacts (and what follows) plays out in the city.
+    if (!street.defend()) window.dispatchEvent(new Event("illuminated:fight"));
   }, [rescue,street]);
+  useEffect(() => {
+    const reacted = (event: Event) => {
+      const { name, reaction } = (event as CustomEvent<{ name: string; reaction: string }>).detail ?? {};
+      const first = String(name ?? "They").split(" ")[0];
+      const line = reaction === "shoves-back" ? `${first} shoves you back! Walk away, or shove again (F) and make it worse.`
+        : reaction === "walks-off" ? `${first}: "Oi! Watch it!" They walk off, annoyed.`
+        : reaction === "calls-police" ? `${first} is calling the police. Expect a visit.`
+        : `${first} backs off.`;
+      say(line, true);
+    };
+    const shoved = () => play("door", soundOn());
+    window.addEventListener("illumed:shove-reaction", reacted);
+    window.addEventListener("illumed:shoved", shoved);
+    return () => { window.removeEventListener("illumed:shove-reaction", reacted); window.removeEventListener("illumed:shoved", shoved); };
+  }, [say]);
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === "f" && nearPerson && !phone && !study && !inmate && !arrest && pursuit?.stage !== "challenge" && !document.querySelector('[role="dialog"]') && !(e.target instanceof HTMLElement && e.target.closest("input, textarea, button, [role=dialog]"))) fight();
@@ -1394,7 +1410,7 @@ export function WorldApp({
   const officeStaff = officeSlug ? (staff[officeSlug] ?? []) : [];
 
   // Pause menu: Esc (or the Menu button) to continue playing or leave the game.
-  const busy = Boolean((passage&&!passage.ready) || (custody && custody.stage !== "cell") || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || safety || dailyBusy || Boolean(flightModal) || flying || busPick || coachTrip || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || Boolean(liveTransfer) || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
+  const busy = Boolean((passage&&!passage.ready) || (custody && custody.stage !== "cell") || (creatorChannel&&!studioFloating) || conversation || missionScene || mobileWork || ukRoadsOpen || rescue || ventureOpen || housing || eventGame || networking || interview || dailyBusy || Boolean(flightModal) || flying || busPick || coachTrip || Boolean(university) || Boolean(bus || tube || games || tutorial || mapOpen || desk || work || dock || dealer || journey || fading || phone || study || learning || awardsOpen || inmate || shop || homeAction || bankOpen || (life.hearing && !life.hearing.streetCase)) || (streetCustody && streetCustody.stage !== "responding") || arrest || policeTransport || Boolean(liveTransfer) || (!streetCustody && pursuit?.stage === "challenge") || pursuit?.stage === "tased");
   const busyRef = useRef(busy);
   busyRef.current = busy || mobileLife;
   const resumable = !inTutorial && !jailed && !flying && map.kind !== "prison" && map.kind !== "court";
@@ -1616,13 +1632,7 @@ export function WorldApp({
       {street.warning && !rescue && <HudSlot area="tc" order={40}><div role="alert" className="max-w-sm rounded-2xl bg-[#7b342b] px-4 py-3 text-sm font-bold text-white">{street.warning}</div></HudSlot>}
 
       {liveRescue && <HudSlot area="bc" order={0}><p role="status" className="rounded-full bg-[#c8322d] px-5 py-2.5 text-sm font-black text-white shadow-lg">{liveRescue}</p></HudSlot>}
-      {safety && <div className="absolute inset-0 z-[100010] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-modal="true" aria-label="Choose kindness" className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]">
-        <h2 className="text-2xl font-black">Pause. Choose kindness.</h2>
-        <p className="mt-3">Hitting or pushing can hurt someone and make them feel unsafe. In real life, step back, use calm words and ask a trusted adult for help. Everyone deserves to feel safe.</p>
-        <p className="mt-3 text-sm">In this fictional game, choosing to shove brings the police. There is no reward for hurting others.</p>
-        <button type="button" className="jelly mt-5 w-full rounded-full bg-[#2b5fd9] px-4 py-3 font-bold text-white" onClick={()=>{setSafety(false);say("Good choice. Give people space and keep the city friendly.",true);}}>Walk away</button>
-        <button type="button" className="mt-3 w-full rounded-full border border-[#13203a]/20 px-4 py-2 text-sm" onClick={()=>{setSafety(false);window.dispatchEvent(new Event("illuminated:fight"));}}>Continue with consequences</button>
-      </section></div>}
+
       {outdoors && !jailed && <HudSlot area="tr" order={50} className="hidden sm:block"><EventBanner onOpen={() => setEventGame("events")} className="flex max-w-[220px]" /></HudSlot>}
       {life.sick && <HudSlot area="tc" order={30} className="pointer-events-none"><p className="rounded-full bg-[#c8322d] px-3 py-1 text-xs font-black text-white">Unwell: get medicine or see a doctor</p></HudSlot>}
       {dispute && !disputeOpen && !jailed && !driving && <HudSlot area="br-act" order={0}><button type="button" onClick={()=>setDisputeOpen(dispute)} className="jelly flex min-h-11 items-center gap-2 rounded-full bg-[#15987f] px-4 py-2 text-sm font-bold text-white shadow-lg"><HeartHandshake className="size-4"/>Help calm it down</button></HudSlot>}
@@ -1874,7 +1884,7 @@ export function WorldApp({
       >
         <CircleHelp className="size-4 2xl:hidden" aria-hidden /><span className="hidden 2xl:inline">How to play</span>
       </button></HudSlot>
-      {tutorial && <Tutorial onClose={() => {
+      {tutorial && <HowToPlay onClose={() => {
         try { localStorage.setItem(`${TUTORIAL_KEY}:${me.id}`, "seen"); } catch { /* Show again when storage is unavailable. */ }
         setTutorial(false);
       }} />}

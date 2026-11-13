@@ -12,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -3566,30 +3566,73 @@ export function World3D({
     let crashedAt=-Infinity;const crashOrigin=new THREE.Vector3();
     const onCrash=(event:Event)=>{if(((event as CustomEvent).detail?.speed??0)<70)return;crashedAt=performance.now();crashOrigin.set(PLAYER.x/TILE,.45,PLAYER.y/TILE);};
     window.addEventListener("illuminated:vehicle-crash",onCrash);
-    // ── Scuffles: you swing, the nearest person goes down ──
+    // ── Shoves: a push and a stumble, nobody goes down. The person shoved reacts in their own way:
+    // shoves you back, tells you off and walks away, or calls the police. Consequences still follow
+    // through the street-encounter case (core/civilian-conflict). ──
     let swingUntil = 0;
+    const stumbles: { body: Body; start: number; length: number; lean: number; dx: number; dz: number; done: number }[] = [];
+    const stumble = (body: Body, lean: number, length: number, dx = 0, dz = 0) => {
+      for (let i = stumbles.length - 1; i >= 0; i--) if (stumbles[i].body === body) stumbles.splice(i, 1);
+      stumbles.push({ body, start: performance.now(), length, lean, dx, dz, done: 0 });
+    };
+    const updateStumbles = (now: number) => {
+      for (let i = stumbles.length - 1; i >= 0; i--) {
+        const s = stumbles[i], t = Math.min(1, (now - s.start) / s.length), lean = s.body.char?.object;
+        if (lean) lean.rotation.x = t >= 1 ? 0 : s.lean * Math.sin(Math.PI * t);
+        // NPCs slide back with the push; the player is moved by the world view (SHOVE).
+        if (s.dx || s.dz) {
+          const eased = 1 - (1 - Math.min(1, t * 1.6)) ** 3, step = eased - s.done;
+          const pos = s.body.root.position, x = pos.x + s.dx * step, z = pos.z + s.dz * step;
+          if (!blocked(map, x * TILE, z * TILE, 6)) pos.set(x, pos.y, z);
+          s.done = eased;
+        }
+        if (t >= 1) stumbles.splice(i, 1);
+      }
+    };
+    /** Someone shoves the player: they lean in, you stagger back about a tile. */
+    const shovePlayer = (from: THREE.Vector3, by: Body) => {
+      const now = performance.now(), dx = me.root.position.x - from.x, dz = me.root.position.z - from.z, d = Math.hypot(dx, dz) || 1;
+      by.root.rotation.y = Math.atan2(dx, dz);
+      stumble(by, 0.32, 380);
+      stumble(me, -0.42, 760);
+      SHOVE.x += (dx / d) * 0.95 * TILE; SHOVE.y += (dz / d) * 0.95 * TILE;
+      PLAYER.knockedUntil = now + 650;
+      window.dispatchEvent(new CustomEvent("illumed:shoved"));
+    };
+    let shoveCount = 0;
     const onFight = (event: Event) => {
       const now = performance.now();
       if (now < swingUntil || PLAYER.knockedUntil > now || PLAYER_VEHICLE.active) return;
       swingUntil = now + 700;
-      me.char?.play("attack-melee-right");
       const p = getMe();
+      const wanted = (event as CustomEvent).detail?.npcId, defensive = Boolean((event as CustomEvent).detail?.defensive);
       let best: (typeof npcs)[number] | null = null;
       let bd = 2.2;
       for (const n of npcs) {
-        if (!n.body.root.visible || ((event as CustomEvent).detail?.npcId && n.identity.id !== (event as CustomEvent).detail.npcId)) continue;
+        if (!n.body.root.visible || (wanted && n.identity.id !== wanted)) continue;
         const d = Math.hypot(n.body.root.position.x - p.x / TILE, n.body.root.position.z - p.y / TILE);
         if (d < bd) [best, bd] = [n, d];
       }
-      if (best) {
-        window.dispatchEvent(new CustomEvent("illuminated:street-hit",{detail:{npcId:best.identity.id,npcName:best.identity.name,defensive:(event as CustomEvent).detail?.defensive}}));
-        best.knockedUntil = now + 2600;
-        best.body.char?.play("die");
-      }
+      // A push with nobody in reach is just a lunge.
+      stumble(me, 0.3, 360);
+      if (!best) return;
+      const pos = best.body.root.position, dx = pos.x - me.root.position.x, dz = pos.z - me.root.position.z, d = Math.hypot(dx, dz) || 1;
+      me.root.rotation.y = Math.atan2(dx, dz);
+      best.body.root.rotation.y = Math.atan2(-dx, -dz);
+      stumble(best.body, -0.45, 800, (dx / d) * 0.9, (dz / d) * 0.9);
+      best.body.char?.play("land");
+      best.knockedUntil = now + 900;
+      window.dispatchEvent(new CustomEvent("illuminated:street-hit",{detail:{npcId:best.identity.id,npcName:best.identity.name,defensive}}));
+      // How they react. Shoving back reuses the residents' squaring-up behaviour below.
+      const roll = (assetSeed(best.identity.id) + shoveCount++ * 37) % 100;
+      const reaction = defensive ? "backs-off" : roll < 45 ? "shoves-back" : roll < 78 ? "walks-off" : "calls-police";
+      if (reaction === "shoves-back") { best.defendUntil = now + 7000; best.strikeAt = now + 1200; }
+      else best.defendUntil = 0;
+      window.dispatchEvent(new CustomEvent("illumed:shove-reaction", { detail: { name: best.identity.name ?? "Someone", reaction } }));
     };
     const onCivilianAttack = (event:Event) => {
       const id=(event as CustomEvent).detail?.npcId,n=npcs.find(n=>n.identity.id===id);
-      if(n){n.body.char?.play("punch");n.greetUntil=performance.now()+650;n.greetingPoint.copy(n.body.root.position);n.greeting=true;}
+      if(n&&!PLAYER_VEHICLE.active&&n.body.root.position.distanceTo(me.root.position)<2.2)shovePlayer(n.body.root.position,n.body);
     };
     window.addEventListener("illuminated:civilian-attack",onCivilianAttack);
     window.addEventListener("illuminated:fight", onFight);
@@ -4278,7 +4321,7 @@ export function World3D({
         }
 
       const pursuit = getPolice?.();
-      const tased = pursuit?.stage === "tased" || PLAYER.knockedUntil > now;
+      const tased = pursuit?.stage === "tased";
       if (tased && !wasTased) me.char?.play("die");
       if (!tased && wasTased) me.char?.play("idle");
       wasTased = Boolean(tased);
@@ -4661,10 +4704,10 @@ export function World3D({
           } else {
             setWalking(n.body, false);
             if (distance <= 1.4 && now >= n.strikeAt && PLAYER.knockedUntil <= now) {
-              n.body.char?.play("attack-melee-right");
-              PLAYER.knockedUntil = now + 1400;
-              n.defendUntil = now + 600;
-              n.strikeAt = now + 2200;
+              // Shoving back: one push, then they square up for a moment before letting it go.
+              shovePlayer(pos, n.body);
+              n.defendUntil = Math.min(n.defendUntil, now + 2600);
+              n.strikeAt = now + 2600;
             }
           }
           return;
@@ -4833,6 +4876,7 @@ export function World3D({
         bodyBounds.max.set(position.x+1.5,position.y+3,position.z+1.5);
         body.char.object.visible=indoors||overview||bodyView.intersects(bodyBounds,{x:mx,z:mz},.5);
       }
+      updateStumbles(performance.now());
       // Only people near you cast shadows: the shadow pass redraws every caster, and a crowd of
       // distant residents is the biggest part of that cost on integrated graphics.
       // (Rechecked about once a second, which also catches characters that finished loading.)

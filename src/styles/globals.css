@@ -1333,3 +1333,37 @@ body :where(main h1, main h2) {
   [data-slot="button"]:not(:disabled):hover { translate: 0 -1px; }
   [data-slot="card"]:has(a[href], button):hover { box-shadow: 0 8px 24px rgb(19 32 58 / 10%); }
 }
+
+/* How to play: chapter motion graphics (src/components/game/world/how-to-play.tsx). */
+@keyframes htp-sweep { 0% { transform: translateX(-120%) skewX(-12deg); } 45% { transform: translateX(10%) skewX(-12deg); } 100% { transform: translateX(260%) skewX(-12deg); } }
+@keyframes htp-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes htp-pop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 70% { transform: translate(-50%, -50%) scale(1.08); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+@keyframes htp-pop-flat { 0% { opacity: 0; transform: scale(.4); } 70% { transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes htp-slide { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes htp-tick { 0%, 60% { opacity: 0; transform: scale(0) rotate(-40deg); } 80% { opacity: 1; transform: scale(1.25); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes htp-orbit { to { transform: rotate(360deg); } }
+@keyframes htp-press { 0%, 12%, 100% { transform: translateY(0); filter: none; } 4% { transform: translateY(3px); filter: brightness(.85); } }
+@keyframes htp-walk { 0% { left: 45%; top: 55%; } 12.5% { left: 45%; top: 20%; } 25% { left: 45%; top: 20%; } 37.5% { left: 75%; top: 20%; } 50% { left: 75%; top: 20%; } 62.5% { left: 75%; top: 55%; } 75% { left: 75%; top: 55%; } 87.5% { left: 45%; top: 55%; } 100% { left: 45%; top: 55%; } }
+@keyframes htp-coin { 0% { opacity: 0; transform: translateY(30px) scale(.6); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-70px) scale(1); } }
+@keyframes htp-need { 0% { width: 85%; } 50% { width: 30%; } 70% { width: 30%; } 100% { width: 85%; } }
+@keyframes htp-float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-8px) rotate(2deg); } }
+@keyframes htp-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(242, 217, 166, .7); } 50% { box-shadow: 0 0 0 12px rgba(242, 217, 166, 0); } }
+.htp-root { animation: htp-rise .35s ease-out both; }
+.htp-sweep { animation: htp-sweep .7s cubic-bezier(.7, 0, .3, 1) both; opacity: .9; }
+.htp-rise { animation: htp-rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+.htp-art { animation: htp-rise .5s .05s cubic-bezier(.2, .8, .2, 1) both; }
+.htp-pop { animation: htp-pop .55s cubic-bezier(.3, 1.4, .5, 1) both; }
+.htp-art .grid .htp-pop, .htp-art .flex .htp-pop, .htp-phone .htp-pop { animation-name: htp-pop-flat; }
+.htp-slide { animation: htp-slide .45s cubic-bezier(.2, .8, .2, 1) both; }
+.htp-tick { animation: htp-tick 1.1s ease-out both; }
+.htp-orbit { animation: htp-orbit 6s linear infinite; }
+.htp-press { display: inline-block; animation: htp-press 2.5s ease-in-out infinite; }
+.htp-walker { animation: htp-walk 2.5s ease-in-out infinite; transform: translate(-50%, -50%); }
+.htp-coin { bottom: 30%; animation: htp-coin 1.8s ease-out infinite; }
+.htp-need { animation: htp-need 4s ease-in-out infinite; }
+.htp-phone { animation: htp-float 3.5s ease-in-out infinite; }
+.htp-glow { animation: htp-glow 1.6s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .htp-root, .htp-sweep, .htp-rise, .htp-art, .htp-pop, .htp-slide, .htp-tick, .htp-orbit, .htp-press, .htp-walker, .htp-coin, .htp-need, .htp-phone, .htp-glow { animation: none !important; }
+  .htp-sweep, .htp-coin { display: none; }
+}

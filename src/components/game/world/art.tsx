@@ -350,6 +350,8 @@ export const CAMERA_VIEW = { mode: "follow" as CameraMode, yaw: Math.PI, pitch: 
 export const steersByLook = () => CAMERA_VIEW.mode === "behind" || CAMERA_VIEW.mode === "first";
 /** The weather right now where you are (set by the 3D world; read by the HUD and your clothes). */
 export const WEATHER_NOW = { kind: "Sunny", temp: 12, outdoors: true };
+/** A push the player is still being moved by (pixels), eased in by the world view. */
+export const SHOVE = { x: 0, y: 0 };
 export const PLAYER = { x: -9999, y: -9999, knockedUntil: 0, /** Height above the ground floor (tiles). */ z: 0, /** 1 when up on a deck. */ level: 0 };
 /** Real players currently in your server (kept fresh by the world view). */
 /**
