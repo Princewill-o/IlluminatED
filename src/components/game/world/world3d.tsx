@@ -25,7 +25,7 @@ import { createEmergencyVehicle } from "./emergency-vehicle3d";
 import { weatherLighting } from "./environment-palette";
 import { ukPhase } from "./fx";
 import { applyGroundStyle } from "./ground-style3d";
-import { homeFurniture } from "./home-furniture";
+import { homeFurniture, kitFurnitureAsset, kitFurnitureFor } from "./home-furniture";
 import { HudSlot } from "./hud";
 import { illustratedLightShader, updateIllustratedLight } from "./illustrated-light";
 import { impactEffects } from "./impact-fx";
@@ -64,7 +64,7 @@ import { look } from "@/game/core/cosmetics";
 import { crayonBuildingAsset, pixelTreePlans, pixelAsset, natureAsset, NATURE_BEDS } from "@/game/core/crayon-vegetation";
 import { frameBudget } from "@/game/core/frame-budget";
 import { furnitureById, type HomeAction } from "@/game/core/homes";
-import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, platformTile } from "@/game/core/kaykit-world-assets";
+import { assetSeed, cityBuildingAsset, highlandBuildingAsset, interiorAsset, interiorPropLayout, interiorFloor, kaykitAsset, kaykitTool, platformTile } from "@/game/core/kaykit-world-assets";
 import { counterKitAsset, roomKitDetails, mountainKitPlan, roofKitDetail, type KitDetail } from "@/game/core/kit-dressing";
 import { highlandNatureDetail, studyKitDetails } from "@/game/core/kit-learning-landscape";
 import { PRISON_LOOK } from "@/game/core/law";
@@ -85,7 +85,7 @@ import { ROLE_UNIFORMS } from "@/game/core/roles";
 import { DEFAULT_ROOM, type RoomStyle, type WallPattern } from "@/game/core/room-designs";
 import { STREET_CUSTODY } from "@/game/core/street-custody";
 import { T as DISPUTE_T, disputeAt, disputeFrame, disputeSpots } from "@/game/core/street-disputes";
-import { DOWNTOWN_LANDMARKS, downtownAsset, downtownBuildingAsset, suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
+import { DOWNTOWN_LANDMARKS, LOWPOLY_LANDMARKS, downtownAsset, downtownBuildingAsset, lowpolyCityBuilding, suppliedCityBuilding, voxelOfficeAsset, voxelOfficePalette } from "@/game/core/supplied-building-assets";
 import { trafficAdvance } from "@/game/core/traffic-flow";
 import { crossingPedestrianPoses, signalAt, trafficMoveDistance, type TrafficVehicle } from "@/game/core/traffic-rules";
 import { arriveFrame, departFrame, trainFrame, trainStop } from "@/game/core/train";
@@ -404,7 +404,8 @@ const CACHE = new Map<string, Promise<GLTF>>();
 const load = (url: string) => {
   let p = CACHE.get(url);
   if (!p) {
-    p = loader.loadAsync(url);
+    // Some slimmed kits ship without normals (the city shades flat); give them some so lighting still works.
+    p = loader.loadAsync(url).then((gltf) => { gltf.scene.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh && !m.geometry.attributes.normal) m.geometry.computeVertexNormals(); }); return gltf; });
     CACHE.set(url, p);
   }
   return p;
@@ -1352,7 +1353,20 @@ async function building(g: THREE.Group, t: Extract<ReturnType<typeof buildLondon
     : t.style === "shop" && !t.label ? (["glass", "local", "supermarket"] as const)[t.x % 3] : null;
   if (street) return streetExterior(g, t, street);
   const selected = suppliedCityBuilding(t);
-  const crayon=selected||DOWNTOWN_LANDMARKS[t.id] ? null : crayonBuildingAsset(t);
+  const crayon=selected||DOWNTOWN_LANDMARKS[t.id]||LOWPOLY_LANDMARKS[t.id] ? null : crayonBuildingAsset(t);
+  const lowpoly=selected ? null : lowpolyCityBuilding(t, crayon!==null);
+  if(lowpoly){
+    try{
+      const block=await kaykitBuilding(g,t,lowpoly,1,3);
+      if(t.label){
+        // The kit's own sign says what it is ("BANK", "HOTEL"); this board carries the place's name.
+        const front=new THREE.Box3().setFromObject(block).max.z;
+        const board=sign(t.label,{bg:t.accent??"#205743",fg:"#fff2b5",w:Math.min(t.w-.3,6),h:.5});
+        board.position.set(t.x+t.w/2,1.72,front+.08);g.add(board);
+      }
+      return;
+    }catch{ /* Fall back to the other kits below. */ }
+  }
   const downtown=selected||crayon ? null : downtownBuildingAsset(t);
   if(downtown){
     try{
@@ -1811,6 +1825,7 @@ function busModel(route: string) {
 
 // ── Indoors: rooms built from the tile map (walls, floors, furniture), cut away at the front ──
 const TILE_MODEL: Record<string, string> = { d: "desk", c: "chairDesk", t: "table", o: "table", s: "loungeSofa", v: "kitchenFridgeLarge", k: "kitchenCabinet", F: "kitchenFridge", A: "desk", r: "kitchenBar", b: "bookcaseOpen", p: "plantSmall2", L: "lampSquareFloor" };
+const KIT_TILE: Record<string, string[]> = { s: ["couch_pillows", "couch"], b: ["shelf_A_big"], p: ["cactus_medium_A", "cactus_medium_B", "cactus_small_A"], L: ["lamp_standing"], t: ["table_medium", "table_small"], o: ["table_small"] };
 const FLOOR: Record<string, string> = { ".": "#ead9bb", m: "#dfe7f2", l: "#8e7ae0", ",": "#f2f1ee", e: "#b9ad96", X: "#ead9bb", "-": "#e9e1d0", _: "#ecd8a4" };
 
 /** Compact office props share box geometry and are instanced with the scenery. */
@@ -2043,7 +2058,12 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
           for(const edge of [x+.12,x+w-.25])box(g,'#3c544b',edge,.04,y+.12,edge+.13,.82,y+.86);
           for(let i=0;i<w;i+=2){
             box(g,'#3d5b52',x+i+.2,.945,y+.18,x+Math.min(w,i+1.6),.96,y+.8);
-            jobs.push(place(g,kaykitAsset('resources','Parts_Pile_Small'),x+i+.25,y+.22,Math.min(1.1,w-i-.35),.5,.97));
+            // Benches alternate between a parts pile and laid-out tools (KayKit RPG Tools Bits).
+            if((i/2)%2===0)jobs.push(place(g,kaykitAsset('resources','Parts_Pile_Small'),x+i+.25,y+.22,Math.min(1.1,w-i-.35),.5,.97));
+            else{
+              const tools=[['wrench_A','hammer'],['saw','handdrill'],['screwdriver_A_long_color','blueprint']][(x+i+y)%3];
+              tools.forEach((tool,k)=>jobs.push(place(g,kaykitTool(tool),x+i+.25+k*.6,y+.3,.5,.4,.97).catch(()=>g)));
+            }
           }
           x+=w;continue;
         }
@@ -2157,7 +2177,11 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
           const model = TILE_MODEL[ch];
           // Long runs (desk rows, counters) get one model per two tiles.
           const step = w > 2 ? 2 : w;
-          for (let i = 0; i < w; i += step) jobs.push(place(g, `/world3d/furniture/${model}.glb`, x + i + 0.05, y + 0.05, Math.min(step, w - i) - 0.1, 0.9));
+          for (let i = 0; i < w; i += step) {
+            // Sofas, shelves, lamps, plants and tables use KayKit Furniture Bits; a few vary by position.
+            const kit = KIT_TILE[ch]?.[(x + i + y) % KIT_TILE[ch].length];
+            jobs.push(place(g, kit ? kitFurnitureAsset(kit) : `/world3d/furniture/${model}.glb`, x + i + 0.05, y + 0.05, Math.min(step, w - i) - 0.1, 0.9));
+          }
         }
         x += w;
       }
@@ -2231,7 +2255,10 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       bendAll(furniture);
       g.add(furniture);
       const model = f.design ?? f.id;
-      if (["sofa", "bed", "desk", "table"].includes(model)) {
+      const kit = kitFurnitureFor(p.item);
+      if (kit) {
+        jobs.push(place(g, kit, p.x + .05, p.y + .05, f.w - .1, f.h - .1).then(() => { g.remove(furniture); }).catch(() => {}));
+      } else if (["sofa", "bed", "desk", "table"].includes(model)) {
         jobs.push(place(g, `/world3d/realism/${model}.glb`, p.x + .05, p.y + .05, f.w - .1, f.h - .1).then(() => { g.remove(furniture); }).catch(() => {}));
       }
     }

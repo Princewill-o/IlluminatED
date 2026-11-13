@@ -157,3 +157,27 @@ export function homeFurniture(p: Placed, style = 0) {
   }
   return g;
 }
+
+/**
+ * KayKit Furniture Bits (CC0) models for home furniture. A piece listed here is shown as the
+ * model, fitted to its footprint; anything else keeps the shapes above.
+ */
+const KIT_FURNITURE: Record<string, string> = {
+  bed: "bed_double_A", "linen-bed": "bed_double_B",
+  sofa: "couch_pillows", "velvet-sofa": "couch_pillows", loveseat: "couch",
+  armchair: "armchair_pillows", "designer-chair": "armchair", "gaming-chair": "chair_C",
+  table: "table_low", "marble-table": "table_medium_long",
+  lamp: "lamp_standing", pendant: "lamp_standing",
+  plant: "cactus_medium_A", monstera: "cactus_medium_B",
+  rug: "rug_oval_A", "woven-rug": "rug_rectangle_stripes_A",
+  wardrobe: "cabinet_medium", "long-dresser": "cabinet_medium_decorated", bedside: "cabinet_small_decorated",
+  shelf: "shelf_A_big", "tall-bookcase": "shelf_A_big",
+  stool: "chair_stool_wood", "leaning-art": "pictureframe_standing_A",
+};
+export const kitFurnitureAsset = (name: string) => `/world3d/kaykit/furniture/${name}.gltf`;
+export function kitFurnitureFor(item: string): string | null {
+  const f = furnitureById(item);
+  if (!f) return null;
+  const name = KIT_FURNITURE[f.id] ?? (f.design ? KIT_FURNITURE[f.design] : undefined);
+  return name ? kitFurnitureAsset(name) : null;
+}

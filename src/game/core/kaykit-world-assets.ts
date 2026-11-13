@@ -1,6 +1,8 @@
 /** Art selection only. Collision maps, portals and business rules remain in world.ts. */
 const ROOT='/world3d/kaykit';
 export const kaykitAsset=(pack:'city'|'medieval'|'platformer'|'restaurant'|'resources',file:string)=>`${ROOT}/${pack}/${file}.gltf`;
+/** KayKit RPG Tools Bits (CC0): workshop props for benches and sites. */
+export const kaykitTool=(name:string)=>`${ROOT}/tools/${name}.gltf`;
 export function assetSeed(id:string){return Array.from(id).reduce((n,c)=>(Math.imul(n,31)+c.charCodeAt(0))>>>0,0);}
 export function cityBuildingAsset(id:string){return kaykitAsset('city',`building_${'ABCDEFGH'[assetSeed(id)%8]}_withoutBase`);}
 export function highlandBuildingAsset(id:string,label=''){const color=['blue','green','red','yellow'][assetSeed(id)%4];const shape=/cafe|lodge/i.test(label)?'tavern':assetSeed(id)%2?'home_A':'home_B';return kaykitAsset('medieval',`buildings/${color}/building_${shape}_${color}`);}
