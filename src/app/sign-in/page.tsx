@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { SignInForm } from "@/components/account/sign-in-form";
+import { ProductMark } from "@/components/products/product-brand";
 import { safeNext } from "@/lib/account/paths";
 import { PRODUCTS, isLearningDestination } from "@/lib/learning/products";
 import { socialConfigured } from "@/lib/social/config";
@@ -23,6 +24,6 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
       {!socialConfigured && <p className="mt-5 text-sm">Accounts are not connected in this preview.</p>}
       <div className="mt-7"><SignInForm next={next} disabled={!socialConfigured} initialMode={sp.mode === "sign-up" ? "sign-up" : "sign-in"} /></div>
     </div>
-    <aside className="rounded-3xl border bg-muted/30 p-7"><h2 className="text-xl font-semibold">Your progress travels with you.</h2><ul className="mt-6 space-y-5">{PRODUCTS.map(p => <li key={p.id} className="flex gap-3"><span style={{ background: p.colour }} className="grid size-10 shrink-0 place-items-center rounded-xl font-bold text-white">{p.symbol}</span><span><Link href={p.path} className="font-semibold">{p.name}</Link><span className="mt-1 block text-sm leading-6 text-muted-foreground">{p.label}</span></span></li>)}</ul><p className="mt-7 border-t pt-5 text-sm leading-7 text-muted-foreground">Teachers manage classes and assignments through the <Link href="/school" className="font-semibold underline">school dashboard</Link>. Read our <Link href="/privacy" className="underline">privacy policy</Link> and <Link href="/terms" className="underline">terms</Link>.</p></aside>
+    <aside className="rounded-3xl border-2 border-[#1d1a4a] bg-card p-7 shadow-[5px_5px_0_#1d1a4a] dark:border-white/75 dark:shadow-[5px_5px_0_rgba(179,175,255,0.4)]"><h2 className="text-xl font-semibold">Your progress travels with you.</h2><ul className="mt-6 space-y-5">{PRODUCTS.map(p => <li key={p.id} className="flex gap-3"><ProductMark product={p.id} className="size-11" /><span><Link href={p.path} className="font-semibold">{p.name}</Link><span className="mt-1 block text-sm leading-6 text-muted-foreground">{p.label}</span></span></li>)}</ul><p className="mt-7 border-t pt-5 text-sm leading-7 text-muted-foreground">Teachers manage classes and assignments through the <Link href="/school" className="font-semibold underline">school dashboard</Link>. Read our <Link href="/privacy" className="underline">privacy policy</Link> and <Link href="/terms" className="underline">terms</Link>.</p></aside>
   </div>;
 }

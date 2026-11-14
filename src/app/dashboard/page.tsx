@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { ArrowRight, ClipboardCheck, FolderOpen } from "lucide-react";
 import type { Metadata } from "next";
 
+import { ProductMark } from "@/components/products/product-brand";
 import { findSubjectPack } from "@/lib/learning/packs";
 import { PRODUCTS } from "@/lib/learning/products";
 import { getSupabase, getViewer } from "@/lib/social/server";
@@ -22,7 +23,7 @@ export default async function LearningDashboard() {
     <p className="text-sm font-semibold text-muted-foreground">YOUR LEARNING</p>
     <h1 className="mt-3 text-4xl font-semibold tracking-tight">{viewer.profile?.username ? `Welcome back, ${viewer.profile.username}.` : "What will you work on today?"}</h1>
     <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">Choose a product to continue. Your saved results and drafts stay with your account as you switch.</p>
-    <div className="mt-8 grid gap-4 sm:grid-cols-2">{PRODUCTS.map(p => <Link key={p.id} href={p.path} className="flex items-center gap-4 rounded-2xl border border-border bg-card p-6 hover:bg-muted/50"><span style={{ background: p.colour }} className="grid size-12 shrink-0 place-items-center rounded-xl text-xl font-bold text-white">{p.symbol}</span><span className="flex-1"><span className="block text-xl font-semibold">{p.name}</span><span className="mt-1 block text-sm text-muted-foreground">{p.label}</span></span><ArrowRight className="size-4 shrink-0" aria-hidden /></Link>)}</div>
+    <div className="mt-8 grid gap-5 sm:grid-cols-2">{PRODUCTS.map(p => <Link key={p.id} href={p.path} className="flex items-center gap-4 rounded-2xl border-2 border-[#1d1a4a] bg-card p-6 shadow-[4px_4px_0_#1d1a4a] hover:bg-muted/50 dark:border-white/75 dark:shadow-[4px_4px_0_rgba(179,175,255,0.4)]"><ProductMark product={p.id} className="size-14" /><span className="min-w-0 flex-1"><span className="block text-xl font-semibold">{p.name}</span><span className="mt-1 block text-sm text-muted-foreground">{p.label}</span></span><ArrowRight className="size-4 shrink-0" aria-hidden /></Link>)}</div>
     <section className="mt-10" aria-labelledby="recent-work-title"><h2 id="recent-work-title" className="text-2xl font-semibold">Recent subject work</h2>{recent.error ? <p className="mt-3 text-sm text-muted-foreground">Your saved results could not load. Open a subject to retry.</p> : attempts.length ? <ul className="mt-4 divide-y rounded-2xl border px-5">{attempts.map(a => {
       const pack = findSubjectPack(a.product,a.topic_slug);
       if (!pack) return null;

@@ -2,3 +2,12 @@
 .page[data-product="maths"]{--subject-accent:#087f72;--subject-ink:#087f72;--subject-light:#69d4c2}
 .page[data-product="science"]{--subject-accent:#2864c4;--subject-ink:#2864c4;--subject-light:#93bcff}
 .page[data-product="english"]{--subject-accent:#b34461;--subject-ink:#b34461;--subject-light:#ffa1bf}
+/* Keep practice readable while bringing back the original outlined-card style. */
+.card,.section{border:2px solid #1d1a4a;background:color-mix(in srgb,var(--background) 93%,var(--subject-accent) 7%);box-shadow:4px 4px 0 #1d1a4a}
+.card{transition:transform .18s ease,box-shadow .18s ease}
+.card:hover{transform:translateY(-3px);box-shadow:5px 7px 0 #1d1a4a}
+.hero h1{font-family:var(--font-geist-sans),var(--font-dm-sans),sans-serif}
+.button{border-color:#1d1a4a;box-shadow:3px 3px 0 #1d1a4a}
+:global(.dark) .card,:global(.dark) .section{border-color:rgba(255,255,255,.75);box-shadow:4px 4px 0 rgba(179,175,255,.4)}
+:global(.dark) .card:hover{box-shadow:5px 7px 0 rgba(179,175,255,.4)}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}

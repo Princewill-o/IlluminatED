@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#1d1a4a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title">
+  <title id="title">IllumEnglish — open book with a golden quill</title>
+  <rect x="4" y="4" width="56" height="56" rx="17" fill="#d46583"/>
+  <path d="M12 25c7-3 13-2 20 2 7-4 13-5 20-2v24c-7-3-13-2-20 2-7-4-13-5-20-2z" fill="#fff8e8"/>
+  <path d="M32 28v22m-14-17 8 2m-8 5 8 2m12-2 7-2" fill="none" stroke-width="2"/>
+  <path d="M31 39c-1-10 5-22 17-26 0 12-5 21-14 24z" fill="#ffdc77"/>
+  <path d="m30 43 13-23m-5 9 6 1" fill="none" stroke-width="2"/>
+</svg>

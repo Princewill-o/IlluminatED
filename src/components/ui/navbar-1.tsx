@@ -15,6 +15,7 @@ export interface Navbar1Link {
   title: string;
   href: string;
   description?: string;
+  icon?: React.ReactNode;
 }
 export interface Navbar1Group {
   label: string;
@@ -32,6 +33,8 @@ export function Navbar1({
   actions,
   cta,
   mobileCta,
+  logoHref = "/",
+  logoLabel = "IlluminatED home",
 }: {
   /** Home link content, usually the logo. */
   logo: React.ReactNode;
@@ -40,6 +43,8 @@ export function Navbar1({
   actions?: React.ReactNode;
   cta?: React.ReactNode;
   mobileCta?: React.ReactNode;
+  logoHref?: string;
+  logoLabel?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -138,9 +143,9 @@ export function Navbar1({
             className="flex shrink-0 items-center"
           >
             <Link prefetch={false}
-              href="/"
-              aria-label="IlluminatED home"
-              className="flex items-center rounded-full"
+              href={logoHref}
+              aria-label={logoLabel}
+              className="flex min-h-11 items-center rounded-full"
             >
               {logo}
             </Link>
@@ -166,7 +171,7 @@ export function Navbar1({
                     aria-controls={panelId}
                     onClick={() => setOpenGroup(open ? null : group.label)}
                     className={cn(
-                      "hover:bg-muted flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
+                      "hover:bg-muted flex min-h-11 items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition-colors",
                       (active || open) && "text-primary",
                       open && "bg-muted",
                     )}
@@ -189,18 +194,21 @@ export function Navbar1({
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -6, scale: 0.98 }}
                           transition={{ duration: 0.16 }}
-                          className="bg-popover rounded-2xl border p-2 shadow-xl"
+                          className="bg-popover text-popover-foreground max-h-[calc(100dvh-7rem)] overflow-y-auto rounded-2xl border p-2 shadow-xl"
                         >
                           <ul className="grid grid-cols-2 gap-1">
                             {group.items.map((item) => (
                               <li key={item.href}>
                                 <Link prefetch={false}
                                   href={item.href}
+                                  onClick={() => setOpenGroup(null)}
                                   aria-current={
                                     isActive(item.href) ? "page" : undefined
                                   }
-                                  className="hover:bg-muted aria-[current=page]:bg-muted block rounded-xl px-3 py-2.5"
+                                  className="hover:bg-muted aria-[current=page]:bg-muted flex items-start gap-3 rounded-xl px-3 py-2.5"
                                 >
+                                  {item.icon && <span className="mt-0.5 shrink-0" aria-hidden>{item.icon}</span>}
+                                  <span className="min-w-0">
                                   <span className="block text-sm font-semibold">
                                     {item.title}
                                   </span>
@@ -209,6 +217,7 @@ export function Navbar1({
                                       {item.description}
                                     </span>
                                   )}
+                                  </span>
                                 </Link>
                               </li>
                             ))}
@@ -238,7 +247,7 @@ export function Navbar1({
             <motion.button
               type="button"
               className={cn(
-                "hover:bg-muted flex size-9 items-center justify-center rounded-full xl:hidden",
+                "hover:bg-muted flex size-11 items-center justify-center rounded-full xl:hidden",
                 !groups.length && "hidden",
               )}
               onClick={toggleMenu}
@@ -271,7 +280,7 @@ export function Navbar1({
           >
             <motion.button
               type="button"
-              className="hover:bg-muted absolute top-5 right-5 flex size-10 items-center justify-center rounded-full"
+              className="hover:bg-muted absolute top-5 right-5 flex size-11 items-center justify-center rounded-full"
               onClick={toggleMenu}
               whileTap={{ scale: 0.9 }}
               initial={{ opacity: 0 }}
@@ -293,7 +302,7 @@ export function Navbar1({
                   <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
                     {group.label}
                   </p>
-                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  <ul className={cn("grid gap-x-4 gap-y-1",group.items.some(item=>Boolean(item.icon)) ? "grid-cols-1 min-[420px]:grid-cols-2" : "grid-cols-2")}>
                     {group.items.map((item) => (
                       <li key={item.href}>
                         <Link prefetch={false}
@@ -302,9 +311,10 @@ export function Navbar1({
                           aria-current={
                             isActive(item.href) ? "page" : undefined
                           }
-                          className="aria-[current=page]:text-primary block py-1.5 text-base font-medium"
+                          className="aria-[current=page]:text-primary flex min-h-11 items-center gap-2 py-1.5 text-base font-medium"
                         >
-                          {item.title}
+                          {item.icon && <span className="shrink-0" aria-hidden>{item.icon}</span>}
+                          <span>{item.title}</span>
                         </Link>
                       </li>
                     ))}
