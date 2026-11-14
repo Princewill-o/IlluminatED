@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { AGE_BANDS, STAGES, type StudySubject, YEAR_GROUPS } from "./details";
@@ -9,6 +10,7 @@ import { safeNext } from "./paths";
 import { COURSES } from "@/lib/data/courses";
 import { TOPICS } from "@/lib/data/topics";
 import { CAREER_ROUTES } from "@/lib/education/state";
+import { isLearningDestination } from "@/lib/learning/products";
 import { getSchoolAccess } from "@/lib/school/access";
 import { siteOrigin as canonicalOrigin } from "@/lib/site";
 import { getSupabase, getViewer } from "@/lib/social/server";
@@ -25,6 +27,10 @@ const NOT_CONNECTED =
 
 /** The site's own address, for links in emails. */
 async function siteOrigin(): Promise<string> {
+  if (process.env.NODE_ENV === "development") {
+    const host = (await headers()).get("host") ?? "";
+    if (/^(localhost|127\.0\.0\.1):\d+$/.test(host)) return `http://${host}`;
+  }
   return canonicalOrigin();
 }
 
@@ -67,7 +73,7 @@ async function afterSignIn(userId: string, next: string): Promise<never> {
   const { data: school } = await sb.rpc("school_access");
   const access = Array.isArray(school) ? school[0] : school;
   if (access && !access.active) redirect("/school-access");
-  if (access?.role === "teacher" && !next.startsWith("/games/")) redirect("/teacher");
+  if (access?.role === "teacher" && next === "/dashboard") redirect("/school");
   const [{ data: profile }, { data: details }] = await Promise.all([
     sb.from("profiles").select("id").eq("id", userId).maybeSingle(),
     sb
@@ -76,6 +82,9 @@ async function afterSignIn(userId: string, next: string): Promise<never> {
       .eq("user_id", userId)
       .maybeSingle(),
   ]);
+  // Keep account consent and age setup; the city tutorial is optional for these products.
+  if (access?.role === "teacher" && isLearningDestination(next)) redirect(profile ? next : "/teacher");
+  if (isLearningDestination(next) && profile && details) redirect(next);
   redirect(
     profile && details
       ? details.tutorial_completed_at
@@ -395,6 +404,7 @@ export async function saveDetails(
   if (fd.get("mode") === "edit")
     return { ok: true, message: "Your details are saved." };
   const dest = safeNext(fd.get("next"));
+  if (isLearningDestination(dest)) redirect(dest);
   redirect(`/getting-started?next=${encodeURIComponent(dest)}`);
 }
 

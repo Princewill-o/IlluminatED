@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { localPreviewPath } from "@/lib/game/local-preview";
+import { isLearningDestination, productForPath, productRewrite, sharedCookieOptions } from "@/lib/learning/products";
 import { isNativeIOS, nativeMembershipPath, NATIVE_MEMBERSHIP_PATH } from "@/lib/native-ios";
 import {
   SUPABASE_KEY,
@@ -54,6 +55,8 @@ const METADATA_IMAGE =
 const GAME_CHALLENGE = /^\/games\/challenge\/[A-Za-z0-9]{6}\/?$/;
 
 const isPublic = (path: string) =>
+  path.startsWith("/learning-resources/") ||
+  (Boolean(productForPath(path)) && !path.startsWith("/world/my-work")) ||
   path === "/curriculum" || path.startsWith("/curriculum/") ||
   PUBLIC_PATHS.some((p) => path === p || path === `${p}/`) ||
   METADATA_IMAGE.test(path) ||
@@ -65,7 +68,15 @@ const isPublic = (path: string) =>
  * and sends signed-in people from the landing page to their dashboard.
  */
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
+  const host = request.headers.get("host") ?? request.nextUrl.host;
+  const rewrite = productRewrite(host, request.nextUrl.pathname);
+  const path = rewrite ?? request.nextUrl.pathname;
+  const nextResponse = () => {
+    if (!rewrite) return NextResponse.next({ request });
+    const url = request.nextUrl.clone();
+    url.pathname = rewrite;
+    return NextResponse.rewrite(url, { request });
+  };
   // The iOS build consumes existing memberships; it does not sell them.
   // RSC/client navigation requests carry the native user agent too.
   if (isNativeIOS(request.headers.get("user-agent")) && nativeMembershipPath(path)) {
@@ -78,24 +89,25 @@ export async function middleware(request: NextRequest) {
   // Public pages don't need a verified session. Referral links and the landing
   // page should render immediately instead of waiting for a Supabase round trip.
   // Signed-in visitors can still open their dashboard from the account button.
-  if (isPublic(path)) return NextResponse.next();
-  let response = NextResponse.next({ request });
-  if (!socialConfigured) return response;
   const hasSessionCookie = request.cookies
     .getAll()
     .some((c) => c.name.startsWith("sb-"));
+  if (isPublic(path) && !hasSessionCookie) return nextResponse();
+  let response = nextResponse();
+  if (!socialConfigured) return response;
 
   let signedIn = false;
   let supabase: ReturnType<typeof createServerClient> | null = null;
   if (hasSessionCookie) {
     supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+      cookieOptions: sharedCookieOptions(host),
       cookies: {
         getAll() {
           return request.cookies.getAll();
         },
         setAll(toSet, headers) {
           toSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = nextResponse();
           toSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options),
           );
@@ -122,7 +134,7 @@ export async function middleware(request: NextRequest) {
     path === "/personalising" || path === "/account/password" ||
     // Employers verify their work email before they have learner details.
     path === "/employers/join" || path === "/teacher" || path === "/school-access" || path.startsWith("/homework/class/");
-  if (signedIn && supabase && !isPublic(path) && !setupPath) {
+  if (signedIn && supabase && !isPublic(path) && !setupPath && !isLearningDestination(path)) {
     const { data: details, error } = await supabase
       .from("learner_details")
       .select("tutorial_completed_at")

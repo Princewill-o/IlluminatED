@@ -13,6 +13,7 @@ import { AvatarFigure } from "@/components/game/avatar";
 import { SeasonXpToast } from "@/components/game/season/event-banner";
 import { usePhoneLayout } from "@/components/game/world/use-phone-layout";
 import { PlanBadge } from "@/components/plan-badge";
+import { ProductSwitcher } from "@/components/products/product-switcher";
 import { type Avatar, DEFAULT_AVATAR, sanitiseAvatar } from "@/game/core/cosmetics";
 import { levelForXp } from "@/game/core/progression";
 import { APP_TABS, activeTab, screenTitle } from "@/lib/app-shell";
@@ -131,6 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <PlanBadge short compact className="2xl:hidden" />
             <PlanBadge className="hidden 2xl:inline-flex" />
           </div>
+          <div className="mb-3"><ProductSwitcher compact /></div>
           <ul className="flex flex-1 flex-col gap-1">
             {APP_TABS.map((tab) => {
               const on = current === tab.id;

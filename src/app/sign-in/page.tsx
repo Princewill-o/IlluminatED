@@ -4,120 +4,25 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { SignInForm } from "@/components/account/sign-in-form";
-import { Q4CampaignArtwork } from "@/components/q4-campaign-artwork";
-import { Tiggy } from "@/components/tiggy";
 import { safeNext } from "@/lib/account/paths";
-import { getAccount } from "@/lib/account/server";
+import { PRODUCTS, isLearningDestination } from "@/lib/learning/products";
 import { socialConfigured } from "@/lib/social/config";
+import { getViewer } from "@/lib/social/server";
 
-export const metadata: Metadata = {robots:{index:false,follow:false},
-  title: "Sign in",
-  description:
-    "Sign in to IlluminatED to save quiz progress, get a personal dashboard, request a tutor and post on IlluminatEDSocial.",
-};
-
+export const metadata: Metadata = { title: "One account for all four products", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ next?: string; error?: string; mode?: string }>;
-}) {
+export default async function SignInPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string; mode?: string }> }) {
   const sp = await searchParams;
   const next = safeNext(sp.next);
-  const account = await getAccount();
-  if (account)
-    redirect(
-      account.profile && account.details
-        ? next
-        : `/onboarding?next=${encodeURIComponent(next)}`,
-    );
-
-  return (
-    <div className="container py-12 lg:py-20">
-      <Q4CampaignArtwork />
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-20">
-      <div>
-        <h1 className="text-4xl tracking-tight">
-          Sign in or create your free account
-        </h1>
-        <p className="text-muted-foreground mt-3 leading-relaxed">
-          New here? Create a free account in a minute. You need to be 13 or over.
-        </p>
-        <p className="mt-3 text-sm text-muted-foreground">Core study is free. <Link href="/pricing" className="underline">See plans and pricing</Link>. Schools can <Link href="/book?for=school" className="font-semibold underline">book a demo</Link>.</p>
-        {sp.error && (
-          <p role="alert" className="text-destructive mt-6 text-sm">
-            That sign-in link didn't work. It may have expired, already been
-            used, or been opened in a different browser. Request a new one
-            below.
-          </p>
-        )}
-        {!socialConfigured && (
-          <p className="border-primary mt-6 border-l-2 pl-4 text-sm">
-            Accounts are switched off in this preview.
-          </p>
-        )}
-        <div className="mt-8">
-          <SignInForm
-            next={next}
-            disabled={!socialConfigured}
-            initialMode={sp.mode === "sign-up" ? "sign-up" : "sign-in"}
-          />
-        </div>
-      </div>
+  const viewer = await getViewer();
+  if (viewer) redirect(viewer.profile || !isLearningDestination(next) ? next : `/onboarding?next=${encodeURIComponent(next)}`);
+  return <div className="mx-auto grid max-w-5xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-2">
+    <div><p className="text-sm font-semibold text-muted-foreground">ILLUMINATED LEARNING</p><h1 className="mt-4 text-4xl font-semibold tracking-tight">One account.<br />Four ways to learn.</h1><p className="mt-5 leading-7 text-muted-foreground">Sign in to save practice, resume workplace projects and join your school class. Use the same account in every product.</p><p className="mt-3 text-sm text-muted-foreground">New here? Create a free account. Accounts are for ages 13 and over.</p>
+      {sp.error && <p role="alert" className="mt-5 text-sm text-destructive">That sign-in link could not be used. Request a new link and open it in this browser.</p>}
+      {!socialConfigured && <p className="mt-5 text-sm">Accounts are not connected in this preview.</p>}
+      <div className="mt-7"><SignInForm next={next} disabled={!socialConfigured} initialMode={sp.mode === "sign-up" ? "sign-up" : "sign-in"} /></div>
     </div>
-      <div className="lg:border-l lg:pl-20">
-        <Tiggy
-          action="wave"
-          say="I'll show you around once you're in."
-          sayClassName="left-[70%] top-[6%]"
-          className="mb-8 hidden w-32 sm:block"
-        />
-        <h2 className="text-lg font-semibold">What an account adds</h2>
-        <dl className="mt-5 divide-y border-y text-sm">
-          {[
-            [
-              "Your dashboard",
-              "Quiz scores by topic and what to revise next, based on your subjects.",
-            ],
-            [
-              "Progress on every device",
-              "Your quiz history is saved to your account, not just this browser.",
-            ],
-            [
-              "Tutor requests",
-              "Ask for help with homework, coursework guidance or exam prep.",
-            ],
-            [
-              "IlluminatEDSocial",
-              "Post and reply on the student forum with the same account.",
-            ],
-          ].map(([t, d]) => (
-            <div key={t} className="grid gap-1 py-4 sm:grid-cols-[11rem_1fr]">
-              <dt className="font-medium">{t}</dt>
-              <dd className="text-muted-foreground leading-relaxed">{d}</dd>
-            </div>
-          ))}
-        </dl>
-        <p className="text-muted-foreground mt-5 text-sm leading-relaxed">
-          A free account unlocks the revision pages, quizzes, flashcards and
-          your dashboard. You need to be 13 or over. Read how we handle{" "}
-          <Link
-            href="/privacy"
-            className="text-primary underline underline-offset-4"
-          >
-            your data
-          </Link>{" "}
-          and our{" "}
-          <Link
-            href="/terms"
-            className="text-primary underline underline-offset-4"
-          >
-            terms
-          </Link>
-          .
-        </p>
-      </div>
-    </div>
-  );
+    <aside className="rounded-3xl border bg-muted/30 p-7"><h2 className="text-xl font-semibold">Your progress travels with you.</h2><ul className="mt-6 space-y-5">{PRODUCTS.map(p => <li key={p.id} className="flex gap-3"><span style={{ background: p.colour }} className="grid size-10 shrink-0 place-items-center rounded-xl font-bold text-white">{p.symbol}</span><span><Link href={p.path} className="font-semibold">{p.name}</Link><span className="mt-1 block text-sm leading-6 text-muted-foreground">{p.label}</span></span></li>)}</ul><p className="mt-7 border-t pt-5 text-sm leading-7 text-muted-foreground">Teachers manage classes and assignments through the <Link href="/school" className="font-semibold underline">school dashboard</Link>. Read our <Link href="/privacy" className="underline">privacy policy</Link> and <Link href="/terms" className="underline">terms</Link>.</p></aside>
+  </div>;
 }

@@ -62,6 +62,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: "Europe/London" });
   const quests = [
+    { id: "tech-repair-trainee", title: "IllumWorld: Tech Repair Trainee project", tag: "Work experience", href: "/world/tech-repair-trainee" },
     { id: "study-room", title: chosenStudyQuest ? `Your quest: ${chosenStudyQuest.title}` : "Choose a study quest from your subjects", tag: "Study", href: "/games/study" },
     ...homework
       .filter((h) => !h.mine || new Date(h.dueAt) > new Date())

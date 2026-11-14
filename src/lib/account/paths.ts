@@ -1,5 +1,5 @@
 /** Only allow same-site paths as redirect targets. */
-export function safeNext(value: unknown, fallback = "/games"): string {
+export function safeNext(value: unknown, fallback = "/dashboard"): string {
   const s = typeof value === "string" ? value : "";
   // URL parsers strip control characters and normalise backslashes, which can
   // turn an apparently local path into an external redirect.

@@ -3,7 +3,9 @@
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 
+import { LearningFooter, LearningHeader } from "@/components/products/learning-chrome";
 import { isAppPath } from "@/lib/app-shell";
+import { isLearningDestination, type ProductId } from "@/lib/learning/products";
 
 const AppShell = dynamic(() => import("./app-shell").then((module) => module.AppShell));
 
@@ -16,12 +18,19 @@ export function SiteChrome({
   navbar,
   footer,
   children,
+  initialProduct,
 }: {
   navbar: React.ReactNode;
   footer: React.ReactNode;
   children: React.ReactNode;
+  initialProduct?: ProductId;
 }) {
   const path = usePathname();
+  if (path === "/" || isLearningDestination(path) || path.startsWith("/learning-resources/")) return <>
+    <LearningHeader initialProduct={initialProduct} />
+    <main key={path} id="main" tabIndex={-1} className="min-h-[65vh] outline-none">{children}</main>
+    <LearningFooter />
+  </>;
   if (isAppPath(path)) return <AppShell>{children}</AppShell>;
   return (
     <>

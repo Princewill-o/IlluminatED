@@ -13,6 +13,7 @@
     "sync:education": "node scripts/sync-education.mjs",
     "sync:opportunities": "node scripts/sync-opportunities.mjs",
     "test:education": "node --test tests/education.test.mjs",
+    "test:learning": "node --test tests/learning-products.test.mjs tests/learning-subjects.test.mjs tests/illumworld-repair.test.mjs tests/auth-redirects.test.mjs",
     "test:study": "node --test tests/study-room.test.mjs tests/learning-awards.test.mjs && node scripts/build-study-bank.mjs --check",
     "test:study:db": "node tests/run-study-database.mjs",
     "test:world:load": "node scripts/benchmark-world.mjs",

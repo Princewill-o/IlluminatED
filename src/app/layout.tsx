@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 
-// eslint-disable-next-line import/no-unresolved -- resolved through the package "exports" map
+ 
 import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 
@@ -47,18 +47,18 @@ const dmSans = localFont({
 });
 
 const description =
-  "Learning from primary school to sixth form: free lesson slides for Years 1–11, plus GCSE, A-Level, BTEC and T Level revision, educational games and school tools.";
+  "IlluminatED Learning brings together IllumWorld virtual work experience, IllumMaths, IllumScience and IllumEnglish, with one account and one school dashboard.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "IlluminatED | Primary to Sixth Form Learning",
-    template: "%s | IlluminatED",
+    default: "IlluminatED Learning",
+    template: "%s | IlluminatED Learning",
   },
   description,
-  applicationName: "IlluminatED",
+  applicationName: "IlluminatED Learning",
   verification: process.env.GOOGLE_SITE_VERIFICATION ? {google:process.env.GOOGLE_SITE_VERIFICATION} : undefined,
-  twitter:{card:"summary_large_image",title:"IlluminatED | GCSE & A-Level Revision Games",description},
+  twitter:{card:"summary_large_image",title:"IlluminatED Learning",description},
   appleWebApp: {
     capable: true,
     title: "IlluminatED",
@@ -74,9 +74,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/favicon/apple-touch-icon.png", sizes: "180x180" }],
   },
   openGraph: {
-    title: "IlluminatED | GCSE & A-Level Revision Games",
+    title: "IlluminatED Learning",
     description,
-    siteName: "IlluminatED",
+    siteName: "IlluminatED Learning",
     locale: "en_GB",
     type: "website",
     // The image comes from src/app/opengraph-image.png (and twitter-image.png).

@@ -606,6 +606,12 @@ export function ventureMap(): WorldMap {
           to: { kind: "map", mapId: "city", label: "London" },
         },
         {
+          id: "repair-project",
+          rect: px(16, 21, 2, 1),
+          label: "IllumWorld · start Tech Repair Trainee",
+          to: { kind: "link", href: "/world/tech-repair-trainee" },
+        },
+        {
           id: "business",
           rect: px(14, 9, 3, 1),
           label: "Open your business ledger",

@@ -1,16 +1,19 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import { createServerClient } from "@supabase/ssr";
 
 import { SUPABASE_KEY, SUPABASE_URL, socialConfigured } from "./config";
+
+import { sharedCookieOptions } from "@/lib/learning/products";
 
 /** A Supabase client bound to the visitor's session cookies. Returns null when Social isn't configured. */
 export async function getSupabase() {
   if (!socialConfigured) return null;
   const store = await cookies();
   return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+    cookieOptions: sharedCookieOptions((await headers()).get("host") ?? ""),
     cookies: {
       getAll() {
         return store.getAll();

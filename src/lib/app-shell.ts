@@ -78,6 +78,7 @@ export const APP_TABS: AppTab[] = [
     icon: BookOpen,
     match: [
       "/learn",
+      "/progress",
       "/courses",
       "/study",
       "/quizzes",
@@ -98,7 +99,7 @@ export const APP_TABS: AppTab[] = [
       "/companies",
     ],
   },
-  { id: "play", label: "IllumED World", href: "/games", icon: Gamepad2, match: ["/games"] },
+  { id: "play", label: "IllumWorld", href: "/world", icon: Gamepad2, match: ["/games"] },
   { id: "homework", label: "Homework", href: "/homework", icon: ClipboardList, match: ["/homework"] },
   {
     id: "me",

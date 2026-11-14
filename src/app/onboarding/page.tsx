@@ -10,6 +10,7 @@ import { Tiggy } from "@/components/tiggy";
 import { safeNext } from "@/lib/account/paths";
 import { getAccount } from "@/lib/account/server";
 import { slimCourses, slimTopics } from "@/lib/account/slim";
+import { isLearningDestination } from "@/lib/learning/products";
 import { getSupabase } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Set up your account" };
@@ -27,7 +28,7 @@ export default async function OnboardingPage({
   if (account.school && !account.school.active) redirect("/school-access");
   if (account.school?.role === "teacher" && !next.startsWith("/games")) redirect("/teacher");
   if (account.profile && account.details)
-    redirect(account.tutorialCompleted ? next : `/getting-started?next=${encodeURIComponent(next)}`);
+    redirect(account.tutorialCompleted || isLearningDestination(next) ? next : `/getting-started?next=${encodeURIComponent(next)}`);
 
   // Closed only if sign-ups are switched back to invite-only (private.launch_settings).
   const sb = await getSupabase();
