@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 
- 
+// eslint-disable-next-line import/no-unresolved -- resolved through the package "exports" map
 import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 
