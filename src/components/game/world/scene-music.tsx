@@ -12,7 +12,7 @@ const KEY = "illuminated-music";
 const LABELS: Record<MusicScene, string> = { city: "City grooves", nature: "Highland air", home: "Home comforts", study: "Quiet focus", station: "Platform pulse", journey: "Window seat", arcade: "Playtime", quiet: "A moment of calm", university: "Next chapter", work: "Finding your rhythm", shop: "Afternoon browse" };
 
 /** `station` is the in-car radio: a track id, "off" for silence, or null to follow the scene. */
-export function SceneMusic({ scene, station = null }: { scene: MusicScene; station?: string | null }) {
+export function SceneMusic({ scene, station = null, label }: { label?: string; scene: MusicScene; station?: string | null }) {
   const engine = useRef<ReturnType<typeof createMusic> | null>(null);
   const sceneRef = useRef(scene);
   sceneRef.current = scene;
@@ -75,7 +75,7 @@ export function SceneMusic({ scene, station = null }: { scene: MusicScene; stati
         {enabled && volume > 0 ? <Music2 className="size-4" /> : <VolumeX className="size-4" />} Music
       </button>
       {open && <section id="scene-music-settings" aria-label="Music settings" className="absolute top-13 right-0 w-60 rounded-2xl border border-[#c8b182]/40 bg-[#183b35] p-4 shadow-xl">
-        <p className="text-sm font-bold">{LABELS[scene]}</p>
+        <p className="text-sm font-bold">{label ?? LABELS[scene]}</p>
         <p className="mt-1 text-xs text-white/70">Instrumental recordings · CC0</p>
         <button type="button" aria-pressed={enabled} onClick={() => update(!enabled, volume)} className="mt-3 min-h-11 w-full rounded-xl bg-[#fff3d8] px-3 text-xs font-bold text-[#183b35]">{enabled ? "Mute music" : "Play music"}</button>
         <label className="mt-3 block text-xs">Music volume · {Math.round(volume * 100)}%

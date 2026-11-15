@@ -35,7 +35,7 @@ import { JobsPanel } from "./jobs-panel";
 import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
-import { play, soundOn , startLiftMusic } from "../sound";
+import { play, soundOn } from "../sound";
 import { LiftPanel } from "./lift-panel";
 import { LivePolicePickup } from "./live-police-pickup";
 import mobileStyles from "./mobile-life.module.css";
@@ -348,11 +348,6 @@ export function WorldApp({
   useEffect(()=>{void loadHotelBooking().then(setHotelBooking).catch(()=>{});},[]);
   const [liftJourney,setLiftJourney] = useState<{mapId:string;label:string;current:boolean;level?:0|1;x?:number;y?:number}[]|null>(null);
   const [liftLanding,setLiftLanding] = useState<{mapId:string;level?:0|1;x?:number;y?:number}|null>(null);
-  const liftMusic = useRef<(() => void)|null>(null);
-  useEffect(() => {
-    if (!mapId.startsWith("lift-cabin")) {liftMusic.current?.();liftMusic.current=null;}
-  },[mapId]);
-  useEffect(() => () => liftMusic.current?.(),[]);
   useEffect(() => {
     if(liftLanding && mapId===liftLanding.mapId) {
       if(liftLanding.level !== undefined) Object.assign(LEVEL_JUMP,{pending:true,level:liftLanding.level,x:(liftLanding.x??13)*TILE,y:(liftLanding.y??3.6)*TILE});
@@ -1000,9 +995,7 @@ export function WorldApp({
       } else if (to.kind === "role-contracts") setContract(to.role ?? "all");
       else if (to.kind === "lift") {
         setLiftJourney(to.floors);
-        liftMusic.current?.();
-        liftMusic.current=startLiftMusic();
-        void goTo(`lift-cabin-${mapId}`,"Lift lobby").then(entered => { if (!entered) {liftMusic.current?.();liftMusic.current=null;} });
+        void goTo(`lift-cabin-${mapId}`,"Lift lobby");
       }
       else if (to.kind === "lift-controls" && liftJourney) setLift(liftJourney);
       else if (to.kind === "lift-exit" && !lift) {
@@ -1544,7 +1537,8 @@ export function WorldApp({
     <HudLayout hidden={mobileLife}>
       <GameFeedback playerId={me.id} avatar={me.avatar} floating={mobileLife} onSceneChange={setMissionScene}/>
       {driving && !bus && <CarRadio station={radio} onChange={setRadio} />}
-      <SceneMusic station={driving && !bus ? radio : null} scene={
+      <SceneMusic label={mapId.startsWith("lift-cabin") ? "Lift lobby" : undefined} station={driving && !bus ? radio : null} scene={
+        mapId.startsWith("lift-cabin") ? "quiet" :
         journey || bus ? "journey"
           : games || eventGame === "racing" || eventGame === "championship" ? "arcade"
             : study || learning || map.id === "study-lobby" ? "study"

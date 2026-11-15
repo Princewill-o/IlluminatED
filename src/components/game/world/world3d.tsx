@@ -4194,7 +4194,7 @@ export function World3D({
       // The prison is a large walkable block: keep the camera on the player there, as outdoors.
       const framing = frameMapCamera(focus.x, focus.z, map.cols, map.rows, camera.aspect, indoors && map.kind !== "prison" && map.id !== "tutorial" && !onTrain, { x: camX, z: camZ }, map.kind === "hospital" ? cameraZoom * 0.62 : busSeated && carLoaded?.startsWith("bus:") ? cameraZoom * 0.6 : cameraZoom, true, map.kind === "hospital");
       FOCUS.value.set(framing.x, 0, framing.z);
-      const view=viewRef.current;
+      const view=map.id.startsWith("lift-cabin") && (viewRef.current==="follow" || viewRef.current==="wide") ? "overhead" : viewRef.current;
       // Follow sits a little closer than before so your character is easy to pick out.
       camera.position.set(framing.x, framing.height*(view==="overhead"?1.7:view==="wide"?1.2:.84) + meZ, framing.z + framing.distance*(view==="overhead"?.25:view==="wide"?1.3:.84));
       camera.lookAt(framing.x, framing.target + meZ, framing.z);

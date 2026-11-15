@@ -49,7 +49,7 @@ export function LiftPanel({ floors, onClose, onArrive }: { floors: Floor[]; onCl
    {target===null&&<button className="grid size-11 place-items-center rounded-lg bg-white" onClick={onClose} aria-label="Close lift controls"><X/></button>}
   </div>
   <p role="status" className="my-3 font-bold">{phase}</p>
-  <div className="grid gap-2">{floors.map((floor,index)=><button key={floor.mapId+":"+index} disabled={target!==null||floor.current} onClick={()=>{play("click",soundOn());setTarget(index);}} className="min-h-12 rounded-xl border border-slate-400 bg-white p-3 text-left font-bold disabled:opacity-50">{index===0?"G":index} · {floor.label}</button>)}</div>
+  <div className="grid gap-2">{floors.map((floor,index)=><button key={floor.mapId+":"+index} disabled={target!==null||floor.current} onClick={event=>{event.currentTarget.blur();play("click",soundOn());setTarget(index);}} className="min-h-12 rounded-xl border border-slate-400 bg-white p-3 text-left font-bold disabled:opacity-50">{index===0?"G":index} · {floor.label}</button>)}</div>
   <p className="mt-4 text-sm">You can move around inside the cabin during the ride.</p>
  </aside>;
 }
