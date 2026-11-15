@@ -38,11 +38,11 @@ export function PoliceChallenge({
       >
         <Siren className="size-9 text-[#2b5fd9]" />
         <h2 className="mt-3 text-2xl font-black">
-          One chance to talk your way out
+          A warning from the police
         </h2>
         <p className="mt-2 text-sm text-[#5a6272]">
-          The officers caught up. Answer correctly for a warning; a wrong answer
-          sends you to a court hearing. This is a fictional game rule.
+          The officers caught up. A correct answer clears your wanted stars. An
+          incorrect answer leaves one star, which fades if you stay out of trouble.
         </p>
         {question.subject && <p className="mt-5 inline-block rounded-full bg-[#2b5fd9]/10 px-3 py-1 text-xs font-black text-[#2b5fd9]">{question.subject}{question.topic ? ` · ${question.topic}` : ""}</p>}
         <p className="mt-3 text-xl font-black">{question.prompt}</p>

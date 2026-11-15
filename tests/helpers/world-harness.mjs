@@ -35,6 +35,7 @@ export function worldHarness({
     channels = [],
     claims = [],
     released = [],
+    windowEvents = [],
     timers = new Map();
   let now = 1800000000000,
     serial = 0,
@@ -119,9 +120,13 @@ export function worldHarness({
     crypto,
     queueMicrotask,
     navigator: navigation,
+    CustomEvent: class {
+      constructor(type, { detail } = {}) { this.type = type; this.detail = detail; }
+    },
     setTimeout: (fn, ms) => setTimer(fn, ms),
     clearTimeout: (key) => timers.delete(key),
     window: {
+      dispatchEvent(event) { windowEvents.push(event); },
       setInterval: (fn, ms) => setTimer(fn, ms, true),
       clearInterval: (key) => timers.delete(key),
       addEventListener(name, fn) {
@@ -180,6 +185,7 @@ export function worldHarness({
         return projectData("src/game/core/careers.ts");
       if (name.includes("cars")) return projectData("src/game/core/cars.ts");
       if (name.includes("core/pets")) return projectData("src/game/core/pets.ts");
+      if (name.includes("core/law")) return projectData("src/game/core/law.ts");
       if (name === "./art") return { RESCUES: new Map(), LAW_STATUS: new Map(), CAR_PAINT: { colours: {}, version: 0 }, PET: { tag: null, action: null, actionAt: 0 }, CREW: { id: null, role: null }, CREW_INVITES: new Map(), JOB_CLIENTS: new Map(), PLAYER: { x: 0, y: 0, z: 0, level: 0, knockedUntil: 0 } };
       if (name.includes("realtime"))
         return {
@@ -209,6 +215,7 @@ export function worldHarness({
     channels,
     claims,
     released,
+    windowEvents,
     setOnline(value) {
       navigation.onLine = value;
       listeners.get(value ? "online" : "offline")?.();
@@ -222,6 +229,7 @@ export function worldHarness({
     },
     sync: () => channels.at(-1)?.emit("presence", "sync"),
     receive: (payload) => channels.at(-1)?.emit("broadcast", "m", { payload }),
+    broadcast: (event, payload) => channels.at(-1)?.emit("broadcast", event, { payload }),
     setNow: (value) => {
       now = 1800000000000 + value;
     },

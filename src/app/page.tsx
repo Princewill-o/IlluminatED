@@ -69,7 +69,10 @@ export default function Home() {
         <div className="flex items-center justify-between gap-4"><ProductMark product={p.id} className="size-20" /><span className="max-w-40 rounded-full bg-white/65 px-3 py-2 text-center text-xs font-bold text-[#1d1a4a] dark:bg-white/10 dark:text-white">{p.id === "world" ? "City-life game · In-game roles" : "Years 7–11 · Subject support"}</span></div>
         <p className={`mt-5 text-sm font-bold ${soft}`}>{p.label}</p><h3 className={`${display} mt-1 text-3xl sm:text-4xl`}>{p.name}</h3><p className={`mt-4 max-w-lg leading-7 ${soft}`}>{p.description}</p>
         <ul className="mt-6 flex flex-1 flex-wrap content-start gap-2" aria-label={`Inside ${p.name}`}>{inside[p.id]?.map(item => <li key={item} className="rounded-full border border-current/15 px-3 py-1.5 text-xs font-semibold">{item}</li>)}</ul>
-        <Link href={p.path} className={`${button} mt-8 self-start bg-white text-[#1d1a4a] dark:bg-[#e8e4ff]`}>Open {p.name} <ArrowRight className="size-4" aria-hidden /></Link>
+        <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Link href={p.path} className={`${button} bg-white text-[#1d1a4a] dark:bg-[#e8e4ff]`}>Open {p.name} <ArrowRight className="size-4" aria-hidden /></Link>
+          {p.id === "world" && <Link href="/world/contracts" className="inline-flex min-h-12 items-center gap-2 font-bold underline underline-offset-4">Explore workplace simulations <ArrowRight className="size-4" aria-hidden /></Link>}
+        </div>
       </article>)}</div>
     </section>
 

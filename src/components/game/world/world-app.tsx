@@ -56,7 +56,7 @@ import { RIDE, TRAIN_CALL } from "./train-state";
 import { BikeDock, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
 import { TunnelFlash } from "./tunnel-flash";
-import { useLife } from "./use-life";
+import { readLife, useLife } from "./use-life";
 import { useLifeJournal } from "./use-life-journal";
 import { useNavigation } from "./use-navigation";
 import { useNeeds, doActivity, setNeedsOutfit, damageEnergy } from "./use-needs";
@@ -93,19 +93,19 @@ import { announceGameMoment } from "@/game/core/game-moments";
 import { type Placed, type HomeAction, furnitureById, homeById, homeUse } from "@/game/core/homes";
 import { parseRoomMap, roomInfo, roomMapId } from "@/game/core/hotels";
 import { roleSpec } from "@/game/core/interview";
-import { PRISON_LOOK, SHOP, POLICE_STARS, policeUnsure, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
+import { MAX_STARS, PRISON_LOOK, SHOP, POLICE_STARS, canArrestPlayer, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
 import { homeStyle } from "@/game/core/london";
-import { areaAt } from "@/game/core/map-guide";
 import { partyMap } from "@/game/core/party";
 import { attend, cellSearch, coolHeat, coverHole, cutFence, detector, dig, doJob, frontGate, has as hasItem, judgePrevious, prisonClock, searchDesk, sendToSolitary, takeKeyImpression, train as trainStat, vent } from "@/game/core/prison-life";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
 import { type PracticalRole, ROLES, ROLE_UNIFORMS } from "@/game/core/roles";
 import type { RoomStyle } from "@/game/core/room-designs";
-import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
+import { beginStreetCustody, advanceStreetCustody, finishStreetTransport, canHearStreetCase, recordStreetIncident, STREET_CUSTODY, type StreetCustody } from "@/game/core/street-custody";
 import type { RoadViolation } from "@/game/core/traffic-rules";
 import { ARRIVE_DOCK_S, RIDE_SWAP_S, arriveFrame, canBoardTrain, trainStop } from "@/game/core/train";
+import { TRAINING_WORKPLACES } from "@/game/core/training-workplaces";
 import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } from "@/game/core/uk-navigation";
 import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
 import { universityById } from "@/game/core/universities";
@@ -146,6 +146,7 @@ import {
 } from "@/game/core/world";
 import { retainNearbySnapshot } from "@/game/core/world-ui-snapshots";
 import type { HomeState } from "@/lib/game/careers-server";
+import { roleContract } from "@/lib/illum-world/role-contracts";
 import { cn } from "@/lib/utils";
 
 const CreatorStudio = dynamic(()=>import("./creator-studio").then(module=>module.CreatorStudio),{ssr:false});
@@ -316,6 +317,25 @@ export function WorldApp({
   // Practical roles: the Jobs panel and the shift you're on.
   const [jobsOpen,setJobsOpen]=useState(false);
   const [contract, setContract] = useState(initialContract ?? null);
+  const [trainingRole, setTrainingRole] = useState<string | null>(null);
+  const activeTrainingRole = useRef<string | null>(null);
+  const trainingKey = `illumed-active-training-role-v1:${me.id}`;
+  useEffect(() => {
+    let savedRole = null;
+    try { savedRole = roleContract(localStorage.getItem(trainingKey) ?? "")?.id ?? null; } catch { /* Browser storage can be disabled. */ }
+    activeTrainingRole.current = savedRole;
+    setTrainingRole(savedRole);
+  }, [trainingKey]);
+  const setTraining = useCallback((roleId: string, active: boolean) => {
+    if (!active && activeTrainingRole.current !== roleId) return;
+    const next = active ? roleContract(roleId)?.id ?? null : null;
+    activeTrainingRole.current = next;
+    setTrainingRole(next);
+    try {
+      if (next) localStorage.setItem(trainingKey, next);
+      else localStorage.removeItem(trainingKey);
+    } catch { /* Training still works for this visit. */ }
+  }, [trainingKey]);
   const [petsOpen,setPetsOpen]=useState(false);
   const [browser,setBrowser]=useState<Site|null>(null);
   const [tunnelBlink,setTunnelBlink]=useState(0);
@@ -470,7 +490,7 @@ export function WorldApp({
   const [arrest, setArrest] = useState(false);
   const [streetCustody, setStreetCustody] = useState<StreetCustody | null>(null);
   const [policeTransport, setPoliceTransport] = useState(false);
-  const transportStars = useRef(4);
+  const transportCharge = useRef<string | null>(null);
   /** Police custody: booked in at the station, then a holding cell, then the van to court. */
   const [custody, setCustody] = useState<{ stage: "van" | "booking" | "cell" | "transport"; until: number; solicitor: boolean } | null>(null);
   const [trialSolicitor, setTrialSolicitor] = useState(false);
@@ -486,7 +506,6 @@ export function WorldApp({
   const [panic, setPanic] = useState<string | null>(null);
   const [medicalCustody,setMedicalCustody]=useState(false);
   const {passage,begin:beginTransition,pending:transitionPending}=useSceneTransition();
-  const pendingStreetCase = useRef<StreetAssessment | null>(null);
   const { prison, run: runPrison } = usePrisonLife(me.id, life.jailUntil > 0);
   const prisonRef = useRef(prison); prisonRef.current = prison;
   const [prisonPanel, setPrisonPanel] = useState<"desk" | "trader" | "jobs" | null>(null);
@@ -551,7 +570,7 @@ export function WorldApp({
   }, [playerWorld, worldInfo]);
   const isOwner = Boolean(playerWorld && worldOwner === me.id);
   const canFly = rules.flight === "everyone" || (rules.flight === "owner" && isOwner);
-  const policeStars = rules.police === "strict" ? 2 : rules.police === "relaxed" ? 5 : POLICE_STARS;
+  const policeStars = rules.police === "strict" ? 2 : rules.police === "relaxed" ? MAX_STARS : POLICE_STARS;
   useEffect(() => {
     Object.assign(WORLD_RULES, { police: rules.police, flight: rules.flight, time: rules.time, weather: rules.weather, owner: isOwner, fly: soaring && canFly && outdoors });
     if (soaring && !canFly) setSoaring(false);
@@ -570,17 +589,16 @@ export function WorldApp({
       crossing: "Failing to give way at a pedestrian crossing",
     };
     drivingOffenceAt.current = now;
-    updateLife(l => addStar(l, now, charges[offence.reason]));
-    say(`${offence.message} +1 wanted star. ${warningFor({ ...life, stars: Math.min(5, life.stars + 1) })}`, true);
-  }, [driving, jailed, arrest, life, pursuit?.stage, updateLife, say, rules.police]);
+    const updated = updateLife(l => addStar(l, now, charges[offence.reason]));
+    say(`${offence.message} +1 wanted star. ${warningFor(updated, policeStars)}`, true);
+  }, [driving, jailed, arrest, life.hearing, pursuit?.stage, updateLife, say, rules.police, policeStars]);
   /** Commit an offence from the rulebook and tell the player where it leaves them. */
   const offend = useCallback((offence: Offence, lead = "") => {
     if (jailed) return;
     if (WORLD_RULES.police === "off") { if (lead) say(`${lead} The police are switched off in this world.`); return; }
-    updateLife(l => commit(l, Date.now(), offence));
-    const next = Math.min(5, life.stars + (offence === "shoplifting" || offence === "trespass" ? 2 : offence === "car-theft" ? 3 : 1));
-    say(`${lead ? lead + " " : ""}${warningFor({ ...life, stars: next })}`, true);
-  }, [jailed, life, updateLife, say]);
+    const updated = updateLife(l => commit(l, Date.now(), offence));
+    say(`${lead ? lead + " " : ""}${warningFor(updated, policeStars)}`, true);
+  }, [jailed, policeStars, updateLife, say]);
   const driveCar = (car: string | null) => {
     if (!outdoors) { say("Head outside to take a car from your garage."); return; }
     if (car) {
@@ -730,12 +748,14 @@ export function WorldApp({
 
   const streetCase = useCallback((assessment:StreetAssessment) => {
     if (jailed) { if(assessment.kind === "aggression") { updateLife(l=>({...l,jailUntil:l.jailUntil+15000})); say("A guard witnessed the scuffle. Fifteen seconds added. Use the study desk or walk away.", true); } return; }
-    if (assessment.caseFile) {
-      pendingStreetCase.current=assessment;
-      updateLife(l=>({...l,hearing:{stars:assessment.caseFile!.stars,charge:assessment.caseFile!.charge,streetCase:assessment.caseFile!}}));
+    if (!assessment.caseFile || rules.police === "off") { say(assessment.message, true); return; }
+    const updated = updateLife(l => recordStreetIncident(l, assessment, Date.now()));
+    if (assessment.offence || updated.hearing?.streetCase?.id === assessment.caseFile.id) {
+      say(`${assessment.message} ${warningFor(updated, policeStars)}`, true);
+    } else {
+      say(assessment.message, true);
     }
-    say(assessment.message,true);
-  },[updateLife,say,jailed]);
+  },[updateLife,say,jailed,rules.police,policeStars]);
   const street = useStreetEncounters(map.kind !== "home" && (!creatorChannel||studioFloating) && !conversation && !missionScene && !dailyBusy && !mobileWork && !ukRoadsOpen && mapId !== "m25" && mapId !== "rotherhithe" && !panic && !custody && !menu && !housing && !eventGame && !networking && !interview && !flightModal && !flying && !rescue && !driving && !tutorial && !phone && !fading && !life.hearing && !arrest && !journey && !policeTransport && !liveTransfer && !mapOpen && !work && !study && !learning && !games && !dealer && !bankOpen && !ventureOpen, streetCase, () => {
     setBike(null);setDriving(null);setRescue(true);setPhone(false);
   });
@@ -746,7 +766,7 @@ export function WorldApp({
   // A crash in the last few seconds means the rescue starts with the impact and the wreck stays on the road.
   const lastCrash=useRef<{at:number;car:string|null;x?:number;y?:number;heading?:number|null}>({at:0,car:null});
   const drivingNow=useRef(driving);drivingNow.current=driving;
-  useEffect(()=>{if(process.env.NODE_ENV!=="production"){const w=window as unknown as {__rescue?:(car?:string)=>void;__arrest?:()=>void};w.__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};w.__arrest=()=>{transportStars.current=4;setDriving(null);setPoliceTransport(true);};}},[]);
+  useEffect(()=>{if(process.env.NODE_ENV!=="production"){const w=window as unknown as {__rescue?:(car?:string)=>void;__arrest?:()=>void};w.__rescue=(car)=>{if(car)lastCrash.current={at:Date.now(),car};setBike(null);setDriving(null);setRescue(true);};w.__arrest=()=>{const current=readLife(me.id);if(!canArrestPlayer(current.stars))return;transportCharge.current=wantedCharge(current);setDriving(null);setPoliceTransport(true);};}},[me.id]);
   const [rescueCause,setRescueCause]=useState<{kind:"crash"|"collapse";key:number}|null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const liveRoad=useMemo(()=>rescue&&outdoors?rescuePlan(map,PLAYER.x,PLAYER.y,(a,b)=>roadRoute(map,a,b)):null,[rescue]);
@@ -812,6 +832,7 @@ export function WorldApp({
       ...UK_SCENES.map(id => { const scene = ukWorldMap(id)!; return { id: `uk-${id}`, label: ukSceneName(id), mapId: id, x: scene.spawn.x / TILE, y: scene.spawn.y / TILE }; }),
       ...offices.map(office => ({ id: `office-${office.slug}`, label: `${office.name} · Office`, mapId: `office-${office.slug}`, x: 10, y: 10 })),
       ...WORKPLACES.map(workplace => ({ id: `workplace-${workplace.id}`, label: `${workplace.name} · Workplace`, mapId: `workplace-${workplace.id}`, x: 10, y: 10 })),
+      ...TRAINING_WORKPLACES.map(workplace => ({ id: `workplace-${workplace.id}`, label: `${workplace.name} · Training office`, mapId: `workplace-${workplace.id}`, x: 10, y: 10 })),
       ...CITY.portals.filter(portal => portal.to.kind === "map" && portal.to.mapId.startsWith("station-")).map(portal => portal.to.kind === "map" ? ({ id: portal.to.mapId, label: `${portal.label} · Station`, mapId: portal.to.mapId, x: 14, y: 3 }) : null).filter((place): place is TeleportDestination => place !== null),
     ];
     return places;
@@ -961,7 +982,7 @@ export function WorldApp({
         else if (to.href === "/games/championship") setEventGame("championship");
         else if (to.href === "/games/what-if") setEventGame("what-if");
         else router.push(to.href);
-      } else if (to.kind === "role-contracts") setContract("all");
+      } else if (to.kind === "role-contracts") setContract(to.role ?? "all");
       else if (to.kind === "lift") setLift(to.floors);
       else if (to.kind === "hotel-desk") setHotelDesk(to.hotel);
       else if (to.kind === "hotel-leave") leaveHotelRoom(to.hotel, to.room);
@@ -1064,25 +1085,28 @@ export function WorldApp({
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     const w = window as unknown as { __law?: unknown };
-    w.__law = { patrol: () => setPatrol(true), custody: (charge = "Shoplifting from a high-street shop") => { updateLife((l) => ({ ...l, hearing: { stars: 3, charge } })); takeIntoCustody(); }, trial: (charge = "Shoplifting from a high-street shop") => { updateLife((l) => ({ ...l, hearing: { stars: 3, charge } })); goTo("court", "Crown Court"); } };
-  }, [updateLife, takeIntoCustody, goTo]);
+    w.__law = { patrol: () => setPatrol(true), custody: (charge = "Shoplifting from a high-street shop") => { if (!canArrestPlayer(readLife(me.id).stars)) return; updateLife((l) => ({ ...clearWanted(l), hearing: { stars: MAX_STARS, charge } })); takeIntoCustody(); }, trial: (charge = "Shoplifting from a high-street shop") => { updateLife((l) => ({ ...l, hearing: { stars: 3, charge } })); goTo("court", "Crown Court"); } };
+  }, [me.id, updateLife, takeIntoCustody, goTo]);
   // Another player on patrol has arrested you.
   useEffect(() => {
     const on = (e: Event) => {
       const by = (e as CustomEvent<{ by: string }>).detail.by;
-      if (life.stars < POLICE_STARS || jailed || custody || arrest || life.hearing) return;
+      if (rules.police === "off" || jailed || custody || arrest || policeTransport || rescue || arrestTimer.current) return;
+      const current = readLife(me.id);
+      if (!canArrestPlayer(current.stars) || current.hearing) return;
       say(`Officer @${by} has arrested you.`, true);
       pursuitRef.current = null; setPursuit(null);
       setArrest(true);
       arrestTimer.current = setTimeout(() => {
+        arrestTimer.current = null;
         setArrest(false);
-        updateLife((l) => ({ ...clearWanted(l), hearing: { stars: l.stars, charge: wantedCharge(l) } }));
+        updateLife((l) => ({ ...clearWanted(l), hearing: { stars: current.stars, charge: wantedCharge(current) } }));
         takeIntoCustody();
       }, 1700);
     };
     window.addEventListener("illumed:arrested", on);
     return () => window.removeEventListener("illumed:arrested", on);
-  }, [life, jailed, custody, arrest, say, updateLife, takeIntoCustody]);
+  }, [me.id, rules.police, jailed, custody, arrest, policeTransport, rescue, say, updateLife, takeIntoCustody]);
   // Handcuffed while arrested, in the van and being booked in.
   useEffect(() => {
     const cuffed = arrest || policeTransport || custody?.stage === "van" || custody?.stage === "booking" || custody?.stage === "transport" || streetCustody?.stage === "arresting" || streetCustody?.stage === "transport";
@@ -1125,9 +1149,9 @@ export function WorldApp({
   useEffect(() => {
     const file = life.hearing?.streetCase;
     if (!file || canHearStreetCase(file,life.hearing?.custody)) { setStreetCustody(null); return; }
-    if (rescue || jailed) return;
-    setStreetCustody(current => current?.caseId === file.id ? current : beginStreetCustody(file,Date.now()));
-  }, [life.hearing,outdoors,rescue,jailed]);
+    if (rescue || jailed || rules.police === "off" || !canArrestPlayer(life.stars)) return;
+    setStreetCustody(current => current?.caseId === file.id ? current : beginStreetCustody(file, Date.now(), life.stars));
+  }, [life.hearing, life.stars, rescue, jailed, rules.police]);
   useEffect(() => {
     STREET_CUSTODY.npcId = streetCustody?.npcId ?? null;
     STREET_CUSTODY.stage = streetCustody?.stage ?? null;
@@ -1137,30 +1161,34 @@ export function WorldApp({
   useEffect(() => {
     if (!streetCustody || rescue || jailed) return;
     if (streetCustody.stage === "arresting") {
-      const timer = setTimeout(() => setStreetCustody(current => current ? advanceStreetCustody(current,Date.now(),true) : current),Math.max(0,3000-(Date.now()-(streetCustody.arrestedAt??Date.now()))));
+      const timer = setTimeout(() => setStreetCustody(current => current ? advanceStreetCustody(current, Date.now(), true, life.stars) : current), Math.max(0,3000-(Date.now()-(streetCustody.arrestedAt??Date.now()))));
       return () => clearTimeout(timer);
     }
-    if (streetCustody.stage !== "responding") return;
+    if (streetCustody.stage !== "responding" || rules.police === "off" || !canArrestPlayer(life.stars)) return;
     const timer = setInterval(() => {
       let current = pursuitRef.current ?? startPursuit(map,PLAYER);
       if (current.escaped) current=startPursuit(map,PLAYER);
+      if (current.stage === "challenge" || current.stage === "tased") current = { ...current, stage: "chasing" };
       const traffic=TRAFFIC_BOXES.filter((box):box is NonNullable<typeof box>=>Boolean(box));
-      const next=tickPursuit(current,map,PLAYER,Date.now(),.2,traffic,false);
+      const next=tickPursuit(current,map,PLAYER,Date.now(),.2,traffic,false,life.stars);
       const contact=next.stage === "tased" || next.officers.some(officer=>Math.hypot(officer.x-PLAYER.x,officer.y-PLAYER.y)<TILE*.8);
       const displayed=contact?{...next,stage:"challenge" as const}:next;
       pursuitRef.current=displayed;setPursuit(displayed);
-      if(contact)setStreetCustody(state=>state?advanceStreetCustody(state,Date.now(),true):state);
+      if (contact) {
+        const stars = readLife(me.id).stars;
+        setStreetCustody(state => state ? advanceStreetCustody(state, Date.now(), true, stars) : state);
+      }
     },200);
     return () => clearInterval(timer);
-  }, [streetCustody,rescue,outdoors,jailed,map]);
+  }, [streetCustody, rescue, jailed, map, life.stars, me.id, rules.police]);
 
   // Re-route responders from the new entrance when a suspect changes scene.
   useEffect(()=>{pursuitRef.current=null;setPursuit(null);},[mapId]);
 
-  // Police catch the player with a brief taser stop before the challenge or escort.
+  // Lower-level pursuits end in a warning. At five stars, officer contact starts custody.
   useEffect(() => {
     if (life.hearing?.streetCase) return;
-    if (life.stars < policeStars || jailed || life.hearing) {
+    if (rules.police === "off" || life.stars < policeStars || jailed || life.hearing) {
       pursuitRef.current = null; setPursuit(null); return;
     }
     if (arrest || policeTransport || rescue || liveTransfer) return;
@@ -1168,31 +1196,32 @@ export function WorldApp({
       const current = pursuitRef.current ?? startPursuit(map, PLAYER);
       const traffic = TRAFFIC_BOXES.filter((box): box is NonNullable<typeof box> => Boolean(box));
       if (PLAYER_VEHICLE.active) { const horizontal = Math.abs(Math.cos(PLAYER_VEHICLE.heading)) >= Math.abs(Math.sin(PLAYER_VEHICLE.heading)); traffic.push({ id: "player", x: PLAYER_VEHICLE.x, y: PLAYER_VEHICLE.y, hw: TILE * (horizontal ? PLAYER_VEHICLE.length : PLAYER_VEHICLE.width) / 2, hh: TILE * (horizontal ? PLAYER_VEHICLE.width : PLAYER_VEHICLE.length) / 2, dx: 0, dy: 0 }); }
-      const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2, traffic, PLAYER_VEHICLE.active);
+      const next = tickPursuit(current, map, PLAYER, Date.now(), 0.2, traffic, PLAYER_VEHICLE.active, life.stars);
       if (next.escaped) {
         pursuitRef.current = null; setPursuit(null);
         updateLife(clearWanted);
         say("You left the search area and lost the police. Wanted stars cleared.", true);
       } else {
         pursuitRef.current = next; setPursuit(next);
-        if (next.stage === "tased") {
+        if (next.stage === "tased" && !arrestTimer.current) {
+          const wanted = readLife(me.id);
+          if (!canArrestPlayer(wanted.stars) || wanted.hearing) {
+            pursuitRef.current = null; setPursuit(null);
+            return;
+          }
+          transportCharge.current = wantedCharge(wanted);
           setArrest(true);
           arrestTimer.current = setTimeout(() => {
+            arrestTimer.current = null;
             setArrest(false);
-            if (life.stars >= 4) {
-              transportStars.current = life.stars;
-              pursuitRef.current = null; setPursuit(null);
-              setPoliceTransport(true);
-            } else {
-              const challenged = { ...next, stage: "challenge" as const };
-              pursuitRef.current = challenged; setPursuit(challenged);
-            }
+            pursuitRef.current = null; setPursuit(null);
+            setPoliceTransport(true);
           }, 1700);
         }
       }
     }, 200);
     return () => clearInterval(timer);
-  }, [life.stars, life.hearing, jailed, outdoors, mapId, map, arrest, policeTransport, rescue, updateLife, say, policeStars, liveTransfer]);
+  }, [life.stars, life.hearing, jailed, mapId, map, arrest, policeTransport, rescue, updateLife, say, policeStars, liveTransfer, me.id, rules.police]);
 
   useEffect(() => {
     if (jailed && (life.prisonWork >= 3 || Date.now() >= life.jailUntil)) {
@@ -1475,7 +1504,8 @@ export function WorldApp({
         onExplore={() => setMobileExplore(true)}
         onStudy={() => mobileAction(() => setLearning(true))}
         onWork={id => mobileAction(() => setMobileWork(id))}
-        onContracts={() => mobileAction(() => setContract("all"))}
+        onContracts={() => mobileAction(() => setContract(trainingRole ?? "all"))}
+        trainingRoleTitle={trainingRole ? roleContract(trainingRole)?.title : undefined}
         onHouses={() => mobileAction(() => { setMobileExplore(true); setBrowser("homefinder"); })}
         onHome={() => mobileAction(() => { setMobileExplore(true); goTo("home", "Your house"); })}
         onAwards={() => setAwardsOpen(true)}
@@ -1504,6 +1534,8 @@ export function WorldApp({
       {!mobileLife && needs !== null && needs.energy > 0 && !(building && mapId === "home") && <WorldView
         offlinePreview={developerTeleport}
         key={`${mapId}:${server}:${trip}`}
+        trainingRole={trainingRole ?? roleShift?.role.id ?? null}
+        trainingPanelOpen={Boolean(contract && !tutorial)}
         onNearby={refreshNearby}
         paused={busy || menu || rescue || ventureOpen}
         transitioning={Boolean(passage&&!passage.ready)}
@@ -1523,6 +1555,19 @@ export function WorldApp({
         car={hop ? `bus:${hop.route}` : driving && outdoors ? driving : null}
         bike={!driving && bike && outdoors ? bike.brand.colour : null}
       />}
+      {trainingRole && !contract && !tutorial && (
+        <HudSlot area="tl" order={14}>
+          <div className="flex max-w-full items-center rounded-2xl bg-[#1d1a4a] text-xs font-bold text-white shadow-lg">
+            <button type="button" className="flex min-h-11 items-center gap-1.5 px-3 py-2 text-left" onClick={() => setContract(trainingRole)}>
+              <Briefcase className="size-4 shrink-0 text-[#ffd76a]" aria-hidden />
+              <span>Training as {roleContract(trainingRole)?.title}</span>
+            </button>
+            <button type="button" aria-label="Stop showing my training role" className="grid size-11 shrink-0 place-items-center" onClick={() => setTraining(trainingRole, false)}>
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
+        </HudSlot>
+      )}
       {developerTeleport && <DeveloperTeleport destinations={teleportDestinations} onTeleport={destination => {
         const targetMap = loadMap(destination.mapId, offices, me.id);
         if (!targetMap) return;
@@ -1685,7 +1730,7 @@ export function WorldApp({
           else if (mapId === "home") { setArrive({ x: PLAYER.x, y: PLAYER.y }); setBuilding(true); }
           else { say("Opening HomeStyle at your house: arrange and buy furniture there.", true); void goTo("home", "Your house"); }
         }} />}
-      {contract && !tutorial && <RoleContractPanel initialRole={contract} playerId={me.id} username={me.username} onClose={() => setContract(null)} />}
+      {contract && !tutorial && <RoleContractPanel initialRole={contract} playerId={me.id} username={me.username} onClose={() => setContract(null)} onTrainingRole={setTraining} />}
       {jobsOpen && <JobsPanel onContracts={() => { setJobsOpen(false); setContract("all"); }} onCompany={(w, name) => { setJobsOpen(false); void goTo(`workplace-${w}`, name); }} mapId={mapId} activeRole={roleShift?.role.id ?? null} onClose={() => setJobsOpen(false)}
         onStart={(role, level) => { setJobsOpen(false); startRole(role, level); }}
         onTravel={(role) => { setJobsOpen(false); if (role.place.mapId) void goTo(role.place.mapId, role.place.label); }}/>}
@@ -1714,27 +1759,17 @@ export function WorldApp({
       {!streetCustody && pursuit && pursuit.stage !== "challenge" && pursuit.stage !== "tased" && <HudSlot area="tc" order={15} className="pointer-events-none"><div role="status" className="rounded-2xl bg-[#13203a]/95 px-4 py-2 text-center text-sm font-bold text-white">{pursuit.stage === "arriving" ? "Police car responding" : "Officers are searching"}<p className="text-xs text-white/80">Leave the red search circle for 6 seconds to clear your stars.{pursuit.outsideSince !== null ? ` ${Math.max(0,6-Math.floor((Date.now()-pursuit.outsideSince)/1000))}s left` : ""}</p></div></HudSlot>}
       {!streetCustody && pursuit?.stage === "challenge" && <PoliceChallenge onResult={correct=>{
         pursuitRef.current = null; setPursuit(null);
-        if(correct) { updateLife(clearWanted); say("Correct. The officers let you go with a warning.",true); }
-        else {
-          setArrest(true);
-          const stars = life.stars, charge = wantedCharge(life);
-          arrestTimer.current=setTimeout(()=>{
-            setArrest(false);
-            // Not sure it was you: an interview first. Otherwise straight to court.
-            if (policeUnsure(stars, charge)) {
-              updateLife(clearWanted);
-              setInterview({ stars, charge, area: areaAt(Math.floor(PLAYER.x / TILE), Math.floor(PLAYER.y / TILE)) ?? "the city" });
-            } else {
-              updateLife(l=>({...clearWanted(l),hearing:{stars:l.stars,charge:wantedCharge(l)}}));
-              takeIntoCustody();
-            }
-          },2600);
-        }
-      }}/ >}
+        const updated = updateLife(l => {
+          if (canArrestPlayer(l.stars)) return l;
+          const cleared = clearWanted(l);
+          return correct ? cleared : addStar(cleared, Date.now(), wantedCharge(l));
+        });
+        if (!canArrestPlayer(updated.stars)) say(correct ? "Correct. The officers cleared your wanted stars." : "The officers warned you. Your remaining star will fade if you stay out of trouble.", true);
+      }}/>}
       {streetCustody && streetCustody.stage !== "transport" && !rescue && <HudSlot area="tc" order={5}><section role="status" aria-live="polite" className="pixel-panel max-w-md p-4 text-center"><p className="font-black">{streetCustody.stage === "responding" ? "Police responding to the incident" : streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName} are under arrest` : "You are under arrest"}</p><p className="mt-2 text-xs">{streetCustody.stage === "responding" ? "Officers are approaching to stop the people involved. The hearing has not started." : "Officers are completing the arrest before escorting the detained participants to court. Arrest does not decide the case."}</p></section></HudSlot>}
       {streetCustody?.stage === "transport" && !rescue && <LivePolicePickup map={map} destination="court" people={streetCustody.participants.includes("civilian") ? `You and ${streetCustody.npcName}` : "You"} onArrive={() => {
         const proof=finishStreetTransport(streetCustody,Date.now());if(!proof)return;
-        updateLife(current=>current.hearing?.streetCase?.id===proof.caseId?{...current,hearing:{...current.hearing,custody:proof}}:current);
+        updateLife(current=>current.hearing?.streetCase?.id===proof.caseId?{...clearWanted(current),hearing:{...current.hearing,custody:proof}}:current);
         pursuitRef.current=null;setPursuit(null);setStreetCustody(null);
         goTo("court","Police escort · Crown Court");
       }}/>}
@@ -1780,7 +1815,7 @@ export function WorldApp({
       }}/ >}
       {study && <PrisonStudy progress={life.prisonWork} onCorrect={()=>updateLife(l=>({...l,prisonWork:Math.min(3,l.prisonWork+1)}))} onClose={()=>setStudy(false)}/>}
       {inmate && <div className="absolute inset-0 z-[100008] grid place-items-center bg-black/60 p-4"><section role="dialog" aria-label={inmate} className="w-full max-w-md rounded-3xl bg-[#f7f1e6] p-6 text-[#13203a]"><h2 className="text-2xl font-black">{inmate}</h2><p className="mt-3 leading-relaxed">{inmate.startsWith("Call:")?"Thanks for calling. Visit our headquarters in the city to start your revision shift. Look for our company sign and walk to the glowing door.":inmate==="Sam"?"The cell doors are open. The study desk is in the south-west corner. Three correct revision answers count towards your release, or use a completed homework card.":"The service corridor starts through the eastern wall. The gaps alternate north and south. Watch the patrolling guards; getting caught adds time."}</p><p className="mt-3 text-xs text-[#5a6272]">Scripted character dialogue — no live chat.</p><button type="button" onClick={()=>setInmate(null)} className="jelly mt-5 rounded-full bg-[#2b5fd9] px-5 py-2 font-black text-white">End conversation</button></section></div>}
-      {mapId === "court" && life.hearing?.streetCase && canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && <StreetHearingDialog key={life.hearing.streetCase.id} caseFile={life.hearing.streetCase} balance={wallet} onResolved={result=>{setWallet(result.balance);if(result.finePaid>0){try{localStorage.setItem(fineKey,JSON.stringify(recordCourtFine(JSON.parse(localStorage.getItem(fineKey)??"null"),result.caseId,result.finePaid)));}catch{/* The current session still keeps the paid balance. */}}pendingStreetCase.current=null;updateLife(l=>({...l,hearing:null,jailUntil:result.jailUntil,prisonWork:0}));if(result.outcome!=="jailed")goTo("city","London",courtSteps);}}/>}
+      {mapId === "court" && life.hearing?.streetCase && canHearStreetCase(life.hearing.streetCase,life.hearing.custody) && <StreetHearingDialog key={life.hearing.streetCase.id} caseFile={life.hearing.streetCase} balance={wallet} onResolved={result=>{setWallet(result.balance);if(result.finePaid>0){try{localStorage.setItem(fineKey,JSON.stringify(recordCourtFine(JSON.parse(localStorage.getItem(fineKey)??"null"),result.caseId,result.finePaid)));}catch{/* The current session still keeps the paid balance. */}}updateLife(l=>({...l,hearing:null,jailUntil:result.jailUntil,prisonWork:0}));if(result.outcome!=="jailed")goTo("city","London",courtSteps);}}/>}
       {mapId === "court" && life.hearing && !life.hearing.streetCase && (
         <CourtTrial
           key={`${life.hearing.charge}:${life.hearing.stars}`}
@@ -1855,9 +1890,11 @@ export function WorldApp({
       )}
       {journey && <TrainCutscene onStudy={()=>setLearning(true)} to={journey.to} line={journey.line??"Revision"} avatar={me.avatar} onArrive={journey.go} />}
       {policeTransport && <LivePolicePickup map={map} destination="police-station" onArrive={() => {
-        const stars = transportStars.current;
-        updateLife(life => ({ ...clearWanted(life), hearing: { stars, charge: wantedCharge(life) }, prisonWork: 0 }));
+        const charge = transportCharge.current;
+        transportCharge.current = null;
         setPoliceTransport(false); setArrest(false);
+        if (!charge) return;
+        updateLife(life => ({ ...clearWanted(life), hearing: { stars: MAX_STARS, charge }, prisonWork: 0 }));
         setCustody({ stage: "booking", until: 0, solicitor: false });
         goTo("police-station", "Police custody", { x: (POLICE_CELLS[0].x + 1.5) * TILE, y: (POLICE_CELLS[0].y + 2.5) * TILE });
       }} />}

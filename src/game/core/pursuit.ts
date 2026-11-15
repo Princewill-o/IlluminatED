@@ -1,3 +1,4 @@
+import { canArrestPlayer } from "./law";
 import { TILE, blocked, safeSpot, step, type WorldMap } from "./world";
 export interface Point {
   x: number;
@@ -135,6 +136,7 @@ export function tickPursuit(
   /** Every other vehicle: the police car can't drive through any of them. */
   traffic: readonly VehicleBox[] = [],
   driving = false,
+  wantedStars = 0,
 ): Pursuit {
   if (state.stage === "tased" || state.stage === "challenge" || state.escaped) return state;
   const outside =
@@ -210,7 +212,7 @@ export function tickPursuit(
     ...state,
     officers,
     outsideSince,
-    stage: caught ? "tased" : "chasing",
+    stage: !caught ? "chasing" : canArrestPlayer(wantedStars) ? "tased" : "challenge",
   };
 }
 export const POLICE_QUESTIONS = [

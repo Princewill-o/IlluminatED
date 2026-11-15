@@ -128,6 +128,7 @@ export function MobileLife({
   onStudy,
   onWork,
   onContracts,
+  trainingRoleTitle,
   onHouses,
   onHome,
   onAwards,
@@ -153,6 +154,7 @@ export function MobileLife({
   onStudy: () => void;
   onWork: (workplace: string) => void;
   onContracts?: () => void;
+  trainingRoleTitle?: string;
   onHouses: () => void;
   onHome: () => void;
   onAwards: () => void;
@@ -238,6 +240,11 @@ export function MobileLife({
         <div className={styles.identityText}>
           <h1>@{me.username}</h1>
           <p>{occupation}</p>
+          {trainingRoleTitle && (
+            <button type="button" className="min-h-11 text-left text-xs font-bold text-[#5141b5] underline" onClick={onContracts}>
+              Training as {trainingRoleTitle}
+            </button>
+          )}
         </div>
         <button
           type="button"

@@ -227,10 +227,14 @@ export function WorldView({
   homeAction = null,
   offlinePreview = false,
   navigation = null,
+  trainingRole = null,
+  trainingPanelOpen = false,
 }: {
   navigation?: WorldNavigation | null;
   homeAction?: HomeAction | null;
   offlinePreview?: boolean;
+  trainingRole?: string | null;
+  trainingPanelOpen?: boolean;
   paused?: boolean;
   transitioning?: boolean;
   police?: Pursuit | null;
@@ -376,7 +380,7 @@ export function WorldView({
   const { reportLaw, reportArrest } = world;
   useEffect(() => {
     const law = (e: Event) => { const d = (e as CustomEvent<{ stars: number; police: boolean }>).detail; reportLaw(d.stars, d.police); };
-    const arrest = (e: Event) => reportArrest((e as CustomEvent<{ target: string }>).detail.target);
+    const arrest = (e: Event) => { if (!reportArrest((e as CustomEvent<{ target: string }>).detail.target)) e.preventDefault(); };
     window.addEventListener("illumed:law", law);
     window.addEventListener("illumed:arrest-player", arrest);
     return () => { window.removeEventListener("illumed:law", law); window.removeEventListener("illumed:arrest-player", arrest); };
@@ -1000,7 +1004,7 @@ export function WorldView({
           adapter, but never painted over the live 3D scene. */}
       <canvas ref={fxCanvas} className="pointer-events-none absolute inset-0 hidden" aria-hidden />
       {!offlinePreview && serverId!=="solo" && <RoomChat meId={me.id} key={`${serverId}:${map.id}`} messages={world.messages} connected={world.status==="live"} onSend={world.sendChat} hidden={hidden} room={map.name} selfId={me.id}/>}
-      {!offlinePreview && serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby}/>}
+      {!offlinePreview && serverId!=="solo" && <VoiceChat meId={me.id} nearby={nearby} hidden={hidden} trainingRole={trainingRole} trainingPanelOpen={trainingPanelOpen}/>}
 
       {/* HUD */}
       {map.kind === "station" && <TrainTimes />}

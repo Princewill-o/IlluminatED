@@ -23,9 +23,10 @@ export default function ContractsPage() {
           Choose an in-game contract
         </h1>
         <p className="mt-5 text-lg">
-          Try a Microsoft workplace simulation inside IllumWorld. Each contract
-          is a self-paced mini-course across three shifts, with a brief, worked
-          example and knowledge check in each shift.
+          Try a workplace simulation at Microsoft, JPMorgan Chase, Amazon Web
+          Services and more inside IllumWorld. Each contract has three
+          self-paced shifts, with a brief, worked example and knowledge check
+          in each shift.
         </p>
       </header>
       <div className="grid gap-5 md:grid-cols-3">
@@ -34,7 +35,10 @@ export default function ContractsPage() {
             key={course.id}
             className="flex flex-col rounded-3xl border-2 border-[#1d1a4a] bg-white p-6 shadow-[4px_4px_0_#1d1a4a] dark:border-violet-300 dark:bg-[#201b49]"
           >
-            <p className="flex items-center gap-2 text-sm font-bold">
+            <p className="font-black text-[#5141b5] dark:text-violet-200">
+              {course.workplace}
+            </p>
+            <p className="mt-2 flex items-center gap-2 text-sm font-bold">
               <Clock3 className="size-4" aria-hidden /> Three shifts ·{" "}
               {contractMinutes(course)} min suggested
             </p>

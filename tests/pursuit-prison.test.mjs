@@ -29,11 +29,25 @@ test("A real responding car follows road tiles and officers can catch a stationa
       ),
     );
   for (let t = 0; t < 90000 && s.stage !== "tased" && s.stage !== "challenge"; t += 200) {
-    s = P.tickPursuit(s, map, player, t, 0.2);
+    s = P.tickPursuit(s, map, player, t, 0.2, [], false, 5);
     for (const o of s.officers) assert.equal(W.blocked(map, o.x, o.y), false);
   }
-  // Caught: officers taser the player; the game then opens the knowledge challenge.
+  // At five stars contact starts the arrest on the street.
   assert.equal(s.stage, "tased");
+});
+test("officer contact can only start a player's arrest at five wanted stars", () => {
+  const map = W.londonMap();
+  const player = map.spawn;
+  const nearby = { ...P.startPursuit(map, player), stage: "chasing", car: player, officers: [player] };
+  for (const driving of [false, true]) {
+    for (const stars of [0, 1, 2, 3, 4]) {
+      assert.equal(P.tickPursuit(nearby, map, player, 1000, .2, [], driving, stars).stage, "challenge");
+    }
+    assert.equal(P.tickPursuit(nearby, map, player, 1000, .2, [], driving, 5).stage, "tased");
+  }
+  for (const invalid of [-1, 4.9, 6, NaN, Infinity, "5", undefined])
+    assert.equal(L.canArrestPlayer(invalid), false);
+  assert.equal(L.canArrestPlayer(5), true);
 });
 test("Leaving the search field clears stars only after six uninterrupted seconds", () => {
   const map = W.londonMap(),

@@ -11,9 +11,10 @@ import type { WorldAffiliation } from "@/game/core/affiliation";
 import { uniformFor } from "@/game/core/careers";
 import { validCar } from "@/game/core/cars";
 import type { Avatar } from "@/game/core/cosmetics";
+import { canArrestPlayer, MAX_STARS } from "@/game/core/law";
 import { parsePetTag } from "@/game/core/pets";
 import { CHAT_INTERVAL, roomChatText, type RoomMessage } from "@/game/core/room-chat";
-import { SERVER_CAPACITY, chatText } from "@/game/core/world";
+import { SERVER_CAPACITY, TILE, chatText } from "@/game/core/world";
 import {
   MOVE_INTERVAL_MS,
   PRESENCE_INTERVAL_MS,
@@ -123,6 +124,7 @@ export function useWorld({
   const [messages, setMessages] = useState<RoomMessage[]>([]);
   const lastChat = useRef(0);
   const sendingChat = useRef(false);
+  const localLaw = useRef({ stars: 0, police: false });
   const players = useRef(new Map<string, RemotePlayer>());
   const channelRef = useRef<RealtimeChannel | null>(null);
   const pos = useRef({
@@ -354,15 +356,15 @@ export function useWorld({
       // Wanted stars and police patrols, so officers can find wanted players (and everyone sees the tags).
       channel.on("broadcast", { event: "law" }, ({ payload }) => {
         if (cancelled() || !payload || typeof payload.i !== "string" || !map.has(payload.i)) return;
-        const stars = Number.isInteger(payload.s) ? Math.max(0, Math.min(5, payload.s)) : 0;
+        const stars = Number.isInteger(payload.s) && payload.s >= 0 && payload.s <= MAX_STARS ? payload.s : 0;
         LAW_STATUS.set(payload.i, { stars, police: payload.p === 1, at: Date.now() });
       });
-      // An officer arrests you: only honoured if you really are wanted and they're right beside you.
+      // The target needs five stars and the arresting officer must be nearby.
       channel.on("broadcast", { event: "arrest" }, ({ payload }) => {
-        if (cancelled() || !payload || typeof payload.i !== "string" || payload.t !== me.id) return;
+        if (cancelled() || !payload || typeof payload.i !== "string" || payload.t !== me.id || !canArrestPlayer(localLaw.current.stars)) return;
         const officer = map.get(payload.i), status = LAW_STATUS.get(payload.i);
         if (!officer || !status?.police) return;
-        if (Math.hypot(officer.tx - pos.current.x, officer.ty - pos.current.y) > 32 * 3) return;
+        if (Math.hypot(officer.tx - pos.current.x, officer.ty - pos.current.y) > TILE * 3) return;
         window.dispatchEvent(new CustomEvent("illumed:arrested", { detail: { by: officer.username } }));
       });
       const heardChat = new Map<string, number>();
@@ -603,15 +605,20 @@ export function useWorld({
 
   /** Share your wanted stars / patrol status with the room. */
   const reportLaw = useCallback((stars: number, police: boolean) => {
+    localLaw.current = { stars, police };
     const ch = channelRef.current;
     if (!ch || ch.state !== "joined") return;
     void ch.send({ type: "broadcast", event: "law", payload: { i: me.id, s: stars, p: police ? 1 : 0 } });
   }, [me.id]);
-  /** As a patrol officer, arrest a wanted player beside you. */
+  /** As a patrol officer, request an arrest of a five-star player beside you. */
   const reportArrest = useCallback((target: string) => {
     const ch = channelRef.current;
-    if (!ch || ch.state !== "joined") return;
+    if (!ch || ch.state !== "joined" || !localLaw.current.police) return false;
+    const player = players.current.get(target);
+    if (!player || !canArrestPlayer(LAW_STATUS.get(target)?.stars ?? 0)) return false;
+    if (Math.hypot(player.tx - pos.current.x, player.ty - pos.current.y) >= TILE * 1.6) return false;
     void ch.send({ type: "broadcast", event: "arrest", payload: { i: me.id, t: target } });
+    return true;
   }, [me.id]);
   /** Tell the room you're being taken away by ambulance, so they see it too. */
   const reportRescue = useCallback((r: { stopX: number; stopY: number; axisX: number; axisY: number; elapsed: number; inPath?: number[]; outPath?: number[]; wreck?: string | null; vehicle?: "ambulance" | "police" }) => {

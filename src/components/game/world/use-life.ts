@@ -21,6 +21,6 @@ export function useLife(userId:string,resetWantedToken?:string){
   window.addEventListener(EVENT,on);
   return()=>{clearInterval(timer);window.removeEventListener(EVENT,on);};
  },[userId,resetWantedToken]);
- const update=useCallback((f:(state:LifeState)=>LifeState)=>{const next=f(readLife(userId));writeLife(userId,next);setLife(previous=>retainLifeSnapshot(previous,next));},[userId]);
+ const update=useCallback((f:(state:LifeState)=>LifeState)=>{const next=f(readLife(userId));writeLife(userId,next);setLife(previous=>retainLifeSnapshot(previous,next));return next;},[userId]);
  return {life,update};
 }

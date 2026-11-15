@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { TrainingContext } from "@/components/game/world/training-context";
 import {
   contractMinutes,
   ROLE_CONTRACTS,
   roleContract,
+  roleContractHref,
 } from "@/lib/illum-world/role-contracts";
 
 export function generateStaticParams() {
@@ -38,7 +40,7 @@ export default async function ContractOverview({
         {contractMinutes(course)} minutes total. Work at your own pace.
       </p>
       <Link
-        href={`/games/world?map=workplace-${course.workplaceId}&contract=${course.id}`}
+        href={roleContractHref(course)}
         className="mt-6 inline-flex min-h-12 items-center rounded-xl bg-[#5141b5] px-5 font-bold text-white"
       >
         Open contract in IllumWorld →
@@ -55,11 +57,11 @@ export default async function ContractOverview({
           </li>
         ))}
       </ol>
-      <h2 className="text-xl font-bold">Further study on Coursera</h2>
+      <TrainingContext key={course.id} roleId={course.id} />
+      <h2 className="text-xl font-bold">Further study and role references</h2>
       <p className="mt-2">
-        These Microsoft catalogue listings informed the skill choices.
-        IllumWorld provides its own scenarios, course checks and completion
-        certificate.
+        These public references informed the skills covered. IlluminatED
+        authors the scenarios and issues the in-game certificate.
       </p>
       <ul className="mt-3 space-y-2">
         {course.sources.map((item) => (
@@ -70,7 +72,7 @@ export default async function ContractOverview({
               target="_blank"
               rel="noreferrer"
             >
-              {item.title} ↗
+              {item.title} · {item.provider} ↗
             </a>
           </li>
         ))}

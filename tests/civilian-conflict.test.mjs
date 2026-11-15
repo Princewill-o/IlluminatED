@@ -4,6 +4,7 @@ import { projectData } from '../scripts/lib/project-data.mjs';
 const conflict=projectData('src/game/core/civilian-conflict.ts');
 const law=projectData('src/game/core/law.ts');
 const storage=projectData('src/game/core/life-storage.ts');
+const {recordStreetIncident}=projectData('src/game/core/street-custody.ts');
 function defence() {
   let encounter=conflict.beginStreetEncounter({npcId:'city:resident:7',npcName:'Alex',at:1000,seed:42,witnesses:2});
   encounter=conflict.recordStreetHit(encounter,{attacker:'civilian',damage:9,at:3000});
@@ -61,10 +62,12 @@ test('retaliation after a threat stops remains evidence even if the civilian lat
   assert.equal(evidence.hitsAfterThreatEnded,1);assert.equal(evidence.proportionate,false);
   assert.equal(conflict.assessStreetEncounter(encounter,()=>.99).kind,'contested');
 });
-test('case adjudication is seeded and the pending evidence survives account life storage',()=>{
-  const caseFile=conflict.assessStreetEncounter(defence(),()=>0).caseFile;
+test('case adjudication is seeded and evidence from a pending five-star case survives account life storage',()=>{
+  const assessment=conflict.assessStreetEncounter(defence(),()=>0);
+  const caseFile=assessment.caseFile;
   assert.deepEqual(conflict.adjudicateStreetCase(caseFile,'contest'),conflict.adjudicateStreetCase(caseFile,'contest'));
-  const state={...law.freshLife(),hearing:{stars:caseFile.stars,charge:caseFile.charge,streetCase:caseFile}};
+  const state=recordStreetIncident({...law.freshLife(),stars:law.MAX_STARS,heatAt:3000},assessment,4000);
+  assert.equal(state.hearing?.stars,law.MAX_STARS);
   const data=new Map([[storage.lifeStorageKey('student'),JSON.stringify(state)]]);
   const restored=storage.readAccountLife({getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v)},'student',11000);
   assert.equal(restored.hearing.streetCase.id,caseFile.id);assert.deepEqual(JSON.parse(JSON.stringify(restored.hearing.streetCase.evidence)),JSON.parse(JSON.stringify(caseFile.evidence)));

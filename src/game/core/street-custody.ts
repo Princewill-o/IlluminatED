@@ -1,4 +1,5 @@
-import type { StreetCourtCase } from "./civilian-conflict";
+import type { StreetAssessment, StreetCourtCase } from "./civilian-conflict";
+import { canArrestPlayer, commit, type LifeState } from "./law";
 
 export interface StreetCustody {
   caseId: string;
@@ -16,18 +17,31 @@ export interface StreetArrestProof {
   arrestedAt: number;
   deliveredAt: number;
 }
+
+/** A reported scuffle raises the wanted level before custody is considered. */
+export function recordStreetIncident(state: LifeState, assessment: StreetAssessment, now: number): LifeState {
+  const file = assessment.caseFile;
+  if (!file?.evidence.playerHits || state.hearing || state.jailUntil > now) return state;
+  const next = assessment.offence ? commit(state, now, assessment.offence) : state;
+  if (!canArrestPlayer(next.stars)) return next;
+  return { ...next, hearing: { stars: next.stars, charge: file.charge, streetCase: file } };
+}
+
 export function beginStreetCustody(
   caseFile: StreetCourtCase,
   now: number,
-): StreetCustody {
+  wantedStars: number,
+): StreetCustody | null {
+  const participants: StreetCustody["participants"] = [
+    ...(caseFile.evidence.playerHits > 0 && canArrestPlayer(wantedStars) ? ["player" as const] : []),
+    ...(caseFile.evidence.civilianHits > 0 ? ["civilian" as const] : []),
+  ];
+  if (participants.length === 0) return null;
   return {
     caseId: caseFile.id,
     npcId: caseFile.npcId,
     npcName: caseFile.npcName,
-    participants: [
-      ...(caseFile.evidence.playerHits > 0 ? ["player" as const] : []),
-      ...(caseFile.evidence.civilianHits > 0 ? ["civilian" as const] : []),
-    ],
+    participants,
     stage: "responding",
     dispatchedAt: now,
     arrestedAt: null,
@@ -38,10 +52,12 @@ export function advanceStreetCustody(
   state: StreetCustody,
   now: number,
   officersNear: boolean,
+  wantedStars: number,
 ): StreetCustody {
   if (!Number.isFinite(now)) return state;
   if (
     state.stage === "responding" &&
+    (!state.participants.includes("player") || canArrestPlayer(wantedStars)) &&
     officersNear &&
     now - state.dispatchedAt >= 2000
   )
@@ -83,6 +99,7 @@ export function canHearStreetCase(
     Number.isFinite(proof.arrestedAt) &&
     Number.isFinite(proof.deliveredAt) &&
     proof.deliveredAt - proof.arrestedAt >= 6000 &&
+    Array.isArray(proof.participants) &&
     proof.participants.includes("player") &&
     (caseFile.evidence.civilianHits === 0 ||
       proof.participants.includes("civilian"))

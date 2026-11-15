@@ -1,3 +1,5 @@
+import { trainingWorkplace } from "./training-workplaces";
+
 /** Cartoon brand-inspired badges and original local business symbols. Unofficial simulations. */
 export interface LogoShape {
   d: string;
@@ -162,7 +164,21 @@ export const LOGOS: Record<string, Logo> = {
   },
 };
 
-export const logoFor = (companyId: string): Logo | null => LOGOS[companyId] ?? null;
+export function logoFor(companyId: string): Logo | null {
+  if (LOGOS[companyId]) return LOGOS[companyId];
+  const training = trainingWorkplace(companyId);
+  if (!training) return null;
+  return {
+    bg: training.accent,
+    shapes: [
+      { d: rect(12, 24, 40, 30, 4), fill: W },
+      { d: rect(22, 13, 20, 12, 4), fill: W },
+      { d: rect(26, 17, 12, 7, 2), fill: training.accent },
+      { d: rect(12, 34, 40, 4), fill: training.accent },
+      { d: rect(28, 33, 8, 8, 2), fill: W },
+    ],
+  };
+}
 
 // Hand-drawn, playful brand-inspired badges for unofficial learning simulations.
 // Paths are shared by uniforms, building signs and the phone, keeping them consistent.

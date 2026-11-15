@@ -180,7 +180,7 @@ test("officers can enter offices, homes, universities and social venues through 
     assert.equal(state.car.x, entrance.x);
     assert.equal(state.car.y, entrance.y);
     for (let ms = 0; ms < 60000 && state.stage !== "tased"; ms += 200) {
-      state = tickPursuit(state, map, player, ms, 0.2);
+      state = tickPursuit(state, map, player, ms, 0.2, [], false, 5);
       for (const officer of state.officers)
         assert.equal(blocked(map, officer.x, officer.y), false, map.id);
     }

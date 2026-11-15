@@ -4,14 +4,18 @@ import test from 'node:test';
 import { projectData } from '../scripts/lib/project-data.mjs';
 const logos=projectData('src/game/core/logos.ts');
 const C=projectData('src/lib/illum-world/role-contracts.ts');
-test('three original in-game roles have short contracts whose duration equals the lesson shifts',()=>{
- assert.equal(C.ROLE_CONTRACTS.length,3);
+test('short in-game roles have distinct ids, buildings, badges and three learning shifts',()=>{
+ assert.equal(C.ROLE_CONTRACTS.length,13);
+ assert.equal(new Set(C.ROLE_CONTRACTS.map(c=>c.id)).size,13);
+ const microsoft=C.ROLE_CONTRACTS.filter(c=>c.workplaceId==='macrosoft');
+ assert.equal(microsoft.length,3);
+ assert.ok(microsoft.every(c=>c.workplace==='Microsoft'&&c.sources.every(s=>s.url.startsWith('https://www.coursera.org/')&&s.provider==='Microsoft')));
  for(const c of C.ROLE_CONTRACTS){
-  assert.equal(c.workplace,'Microsoft');
   assert.ok(logos.logoFor(c.workplaceId), `Missing game logo for ${c.workplace}`);
   assert.equal(c.shifts.length,3);assert.ok(C.contractMinutes(c)>=20&&C.contractMinutes(c)<=30);
   assert.equal(new Set(c.shifts.map(s=>s.id)).size,3);
-  assert.ok(c.sources.every(s=>s.url.startsWith('https://www.coursera.org/')&&s.provider==='Microsoft'));
+  assert.ok(c.sources.every(s=>s.url.startsWith('https://')&&s.provider));
+  assert.equal(C.roleContractHref(c),`/games/world?map=workplace-${c.workplaceId}&contract=${c.id}`);
   for(const s of c.shifts){assert.ok(s.steps.length>=3);assert.equal(s.questions.length,3);for(const q of s.questions){assert.ok(q.options[q.answer]);assert.ok(q.explanation.length>30);}}
  }
  assert.equal(C.contractMinutes(C.roleContract('data-analyst')),24);

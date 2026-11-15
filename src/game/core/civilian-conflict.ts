@@ -139,7 +139,7 @@ export function assessStreetEncounter(encounter: StreetEncounter, rng: Rng = cre
   };
   return aggression
     ? { kind: "aggression", offence: "scuffle", caseFile, message: "You landed the first hit. A street-scuffle report has been filed." }
-    : { kind: "contested", caseFile, message: "The civilian disputes what happened. You can present the recorded attack in court; defending yourself has not earned wanted stars." };
+    : { kind: "contested", caseFile, message: "The civilian disputes what happened. You acted in defence." };
 }
 
 /** Seeded outcomes survive rerenders/reloads; tests can supply a controlled RNG. */

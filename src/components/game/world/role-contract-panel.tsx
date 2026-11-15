@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 
 import { Award, Briefcase, Check, X } from "lucide-react";
 
+import { TrainingContext } from "./training-context";
+import { TRAINING_MIC_SLOT } from "./voice-chat";
+
 import {
   ROLE_CONTRACTS,
   contractMinutes,
@@ -17,6 +20,7 @@ type Props = {
   playerId: string;
   username: string;
   onClose: () => void;
+  onTrainingRole?: (roleId: string, active: boolean) => void;
 };
 const button =
   "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#5141b5] px-4 py-2 font-bold text-white hover:bg-[#433396] disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#332477]";
@@ -26,10 +30,14 @@ export function RoleContractPanel({
   playerId,
   username,
   onClose,
+  onTrainingRole,
 }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [role, setRole] = useState(initialRole);
+  const [search, setSearch] = useState("");
   const course = roleContract(role);
+  const catalogue = ROLE_CONTRACTS.filter(item =>
+    `${item.workplace} ${item.title}`.toLowerCase().includes(search.trim().toLowerCase()));
   useEffect(() => {
     const node = dialog.current;
     if (node && !node.open) node.showModal();
@@ -52,14 +60,17 @@ export function RoleContractPanel({
           <Briefcase className="size-5 text-[#ffd76a]" aria-hidden /> In-game
           role contracts
         </p>
-        <button
-          type="button"
-          aria-label="Close role contracts"
-          onClick={onClose}
-          className="grid size-11 place-items-center rounded-xl bg-white/10 hover:bg-white/20"
-        >
-          <X aria-hidden />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <div id={TRAINING_MIC_SLOT} className="relative" />
+          <button
+            type="button"
+            aria-label="Close role contracts"
+            onClick={onClose}
+            className="grid size-11 place-items-center rounded-xl bg-white/10 hover:bg-white/20"
+          >
+            <X aria-hidden />
+          </button>
+        </div>
       </div>
       <div className="p-5 sm:p-8">
         {course ? (
@@ -69,24 +80,36 @@ export function RoleContractPanel({
             playerId={playerId}
             username={username}
             onBack={() => setRole("all")}
+            onTrainingRole={onTrainingRole}
           />
         ) : (
           <>
             <h2 className="text-3xl font-black">
-              Microsoft simulation training desk
+              Find a workplace simulation
             </h2>
             <p className="mt-2">
               Pick a role in the workplace simulation. Each in-game contract
               takes three short, self-paced shifts.
             </p>
+            <label className="mt-5 block text-sm font-bold">
+              Search by employer or role
+              <input
+                type="search"
+                value={search}
+                onChange={event => setSearch(event.target.value)}
+                className="mt-1 min-h-11 w-full rounded-lg border-2 border-[#1d1a4a] bg-white px-3"
+              />
+            </label>
+            {catalogue.length === 0 && <p role="status" className="mt-4">No matching roles.</p>}
             <ul className="mt-5 grid gap-3">
-              {ROLE_CONTRACTS.map((item) => (
+              {catalogue.map((item) => (
                 <li key={item.id}>
                   <button
                     type="button"
                     onClick={() => setRole(item.id)}
                     className="w-full rounded-2xl border-2 border-[#1d1a4a] bg-white p-4 text-left hover:bg-[#ebe6ff]"
                   >
+                    <span className="block text-sm font-bold text-[#5141b5]">{item.workplace}</span>
                     <strong className="text-xl">{item.title}</strong>
                     <span className="ml-2 text-sm font-bold">
                       {contractMinutes(item)} min
@@ -108,11 +131,13 @@ function ContractCourse({
   playerId,
   username,
   onBack,
+  onTrainingRole,
 }: {
   courseId: string;
   playerId: string;
   username: string;
   onBack: () => void;
+  onTrainingRole?: Props["onTrainingRole"];
 }) {
   const course = roleContract(courseId)!;
   const key = `illumed-role-contract-v1:${playerId}:${courseId}`;
@@ -138,6 +163,9 @@ function ContractCourse({
   const status = markContract(course, answers);
   const shift = course.shifts[index];
   const result = status.shifts[index];
+  useEffect(() => {
+    onTrainingRole?.(courseId, !status.complete);
+  }, [courseId, onTrainingRole, status.complete]);
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(answers));
@@ -198,6 +226,7 @@ function ContractCourse({
         Read the brief and example, then pass the checks. Take each shift at
         your own pace.
       </p>
+      <TrainingContext key={courseId} roleId={courseId} />
       <nav aria-label="Course shifts" className="my-5 flex flex-wrap gap-2">
         {course.shifts.map((item, i) => {
           const unlocked = status.shifts.slice(0, i).every((s) => s.complete);

@@ -37,8 +37,9 @@ export const freshLife = (): LifeState => ({ stars: 0, heatAt: 0, lastOffence: n
 
 export const STAR_FADE_MS = 60_000;
 export const MAX_STARS = 5;
-/** Police only respond from this many stars. Below it, witnesses report you and stars fade if you behave. */
+/** Default threshold for warnings and searches. Custody requires the maximum. */
 export const POLICE_STARS = 3;
+export const canArrestPlayer = (stars: number) => stars === MAX_STARS;
 
 /** Stars fade one every minute you keep out of trouble, until the police are involved. */
 export function cooled(s: LifeState, now: number): LifeState {
@@ -84,10 +85,12 @@ export function commit(s: LifeState, now: number, offence: Offence): LifeState {
 }
 
 /** What the player sees after an offence below the police threshold. */
-export function warningFor(s: LifeState) {
-  if (s.stars >= POLICE_STARS) return "The police are responding.";
-  const left = POLICE_STARS - s.stars;
-  return `Witnesses reported you. ${left} more star${left === 1 ? "" : "s"} and the police respond. Stay out of trouble for a minute and a star fades.`;
+export function warningFor(s: LifeState, responseStars = POLICE_STARS) {
+  if (canArrestPlayer(s.stars)) return "Five wanted stars. The police can now arrest you.";
+  if (s.stars >= responseStars) return "The police are responding. Arrests start at five wanted stars.";
+  const left = responseStars - s.stars;
+  const cooldown = s.stars < POLICE_STARS ? " Stay out of trouble for a minute and a star fades." : "";
+  return `Witnesses reported you. ${left} more star${left === 1 ? "" : "s"} and the police respond.${cooldown}`;
 }
 
 export const clearWanted = (s: LifeState): LifeState => ({ ...s, stars: 0, heatAt: 0, lastOffence: null });

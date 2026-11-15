@@ -1,3 +1,5 @@
+import { ADDITIONAL_ROLE_CONTRACTS } from "./additional-role-content";
+
 import { companyById } from "@/game/core/companies";
 
 export type ContractQuestion = {
@@ -40,7 +42,7 @@ const microsoftWorkplace = {
   workplace: companyById("macrosoft")?.name ?? "Microsoft",
 };
 
-/** Original, short in-game learning. Public provider outlines inform the skill mapping, not copied course lessons. */
+/** Short, original in-game learning mapped to public occupational and course references. */
 export const ROLE_CONTRACTS: RoleContract[] = [
   {
     id: "data-analyst",
@@ -565,9 +567,12 @@ export const ROLE_CONTRACTS: RoleContract[] = [
       },
     ],
   },
+  ...ADDITIONAL_ROLE_CONTRACTS,
 ];
 export const roleContract = (id: string) =>
   ROLE_CONTRACTS.find((c) => c.id === id) ?? null;
+export const roleContractHref = (course: RoleContract) =>
+  `/games/world?map=workplace-${course.workplaceId}&contract=${course.id}`;
 export const contractMinutes = (course: RoleContract) =>
   course.shifts.reduce((sum, s) => sum + s.minutes, 0);
 export type ContractAnswers = Record<string, number[]>;

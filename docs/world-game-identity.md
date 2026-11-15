@@ -2,9 +2,13 @@
 
 The umbrella, IllumWorld homepage, school pilot and shared product navigation now lead with the playable city-life game. The main action opens `/games/world?map=city`. Roles and completion requirements are discovered through `/world/contracts`; certificate information links to its `#certificates` section.
 
-Each role has three shifts and takes 24 to 27 minutes at the learner's own pace. Players can open the contracts from Jobs, the game phone or the Venture Yard. The Microsoft scenarios use original exercises and link to relevant Coursera courses for further study. IlluminatED issues the certificate for completing the simulation.
+The catalogue has 13 original role simulations across 11 employers. Each role has three shifts and takes 24 to 27 minutes at the learner's own pace. Players can open contracts from Jobs, the game phone, the Venture Yard or the employer's training office. Microsoft also has a training desk. The role pages link to the public references used to map skills and examples.
 
-The certificate route grades the three shift checks on the server. The PDF shows the Microsoft game badge and company name followed by × and the IlluminatED wordmark. Progress is saved on the player's device. The certificate records completion in the game, including the player name entered for that activity.
+The certificate route grades the three shift checks on the server. The PDF shows the employer's in-game badge and name followed by × and the IlluminatED wordmark. Progress is saved on the player's device. IlluminatED issues the certificate for completing the simulation.
+
+The career references drawer fetches optional data from the [ESCO occupation API](https://esco.ec.europa.eu/en/use-esco/use-esco-services-api/esco-web-service-api) and [Greenhouse Job Board API](https://docs.greenhouse.io/job-board.html). ESCO provides related skills and Greenhouse provides real job examples from verified boards. The drawer uses a read-only endpoint keyed by the course id. The simulation and certificate work independently of those providers.
+
+The game displays the active training role locally and in existing private friend voice connections. Players opt in with the mic button. Earlier police contact can issue a warning. Player arrests begin at five wanted stars.
 
 Company names in the world use the real names where there is a clear match. Save IDs and workspace URLs remain stable. The forward wardrobe migration updates item names while keeping their IDs and unlock requirements.
 

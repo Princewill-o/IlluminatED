@@ -8,12 +8,13 @@ import type { Place } from "./city-map";
 import { earnWorldXp } from "@/app/games/world/actions";
 import { notifyPlayerChanged } from "@/components/app/app-shell";
 import { trackDaily } from "@/components/game/engagement";
+import { canArrestPlayer } from "@/game/core/law";
 import { TILE, type WorldMap, blocked } from "@/game/core/world";
 import { cn } from "@/lib/utils";
 
 /**
  * Special Constable patrol: respond to incidents, chase the suspect on foot, then make a proper
- * arrest: the right grounds and the right caution. Wanted players nearby can be arrested too.
+ * arrest: the right grounds and the right caution. Nearby players need five wanted stars.
  * Fictional and simplified; the caution is the real wording used in England and Wales.
  */
 const INCIDENTS = [
@@ -80,7 +81,7 @@ export function PolicePatrol({ map, onTarget, onEnd, say }: { map: WorldMap; onT
       onTarget(s && !s.gone && stage !== "finished" ? { id: `patrol-${s.id}`, name: `${incident.title} · ${s.name}`, kind: "job", x: s.x, y: s.y } : null);
       // Wanted players in the room, close enough to arrest.
       const near = ONLINE.map((p) => ({ ...p, stars: LAW_STATUS.get(p.id)?.stars ?? 0 }))
-        .filter((p) => p.stars >= 3 && p.x !== undefined && p.y !== undefined && Math.hypot(p.x - PLAYER.x, p.y - PLAYER.y) < TILE * 1.6)[0];
+        .find((p) => canArrestPlayer(p.stars) && p.x !== undefined && p.y !== undefined && Math.hypot(p.x - PLAYER.x, p.y - PLAYER.y) < TILE * 1.6);
       setWantedNear(near ? { id: near.id, username: near.username, stars: near.stars } : null);
     }, 150);
     return () => clearInterval(t);
@@ -105,9 +106,10 @@ export function PolicePatrol({ map, onTarget, onEnd, say }: { map: WorldMap; onT
     }, 4200);
   };
   const arrestPlayer = () => {
-    if (!wantedNear) return;
-    window.dispatchEvent(new CustomEvent("illumed:arrest-player", { detail: { target: wantedNear.id } }));
-    say(`You arrested @${wantedNear.username}. They're being taken to custody.`, true);
+    if (!wantedNear || !canArrestPlayer(LAW_STATUS.get(wantedNear.id)?.stars ?? 0)) return;
+    const sent = window.dispatchEvent(new CustomEvent("illumed:arrest-player", { detail: { target: wantedNear.id }, cancelable: true }));
+    if (!sent) return;
+    say(`Arrest requested for @${wantedNear.username}.`, true);
     void earnWorldXp("study").catch(() => {});
   };
   useEffect(() => {

@@ -7,6 +7,8 @@ import { officeDesign } from "./office-design";
 import type { RoomId as PrisonRoomId } from "./prison-life";
 import { buildHighlands } from "./regions";
 import { ROOM_DESIGNS, type RoomStyle } from "./room-designs";
+import { downtownBuildingAsset } from "./supplied-building-assets";
+import { TRAINING_WORKPLACES, trainingWorkplace } from "./training-workplaces";
 import { UK_GATEWAYS } from "./uk-world";
 import { universityById } from "./universities";
 import { ROOM_CAPACITY } from "./world-network";
@@ -49,7 +51,7 @@ export type PortalTarget =
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
   | { kind: "link"; href: string }
-  | { kind: "role-contracts" }
+  | { kind: "role-contracts"; role?: string }
   | { kind: "tube"; station: string }
   | { kind: "work"; workplace: string }
   | { kind: "workstation"; workplace: string; station: "reception" | "terminal" }
@@ -299,7 +301,8 @@ export function hotelRoomMap(hotel: HotelId, room: string): WorldMap | null {
 }
 
 export function workplaceMap(id: string): WorldMap | null {
-  const w = WORKPLACES.find((workplace) => workplace.id === id);
+  const training = trainingWorkplace(id);
+  const w = WORKPLACES.find((workplace) => workplace.id === id) ?? training;
   if (!w) return null;
   const design = officeDesign(id, w.sector),
     g = new Grid(
@@ -481,14 +484,24 @@ export function workplaceMap(id: string): WorldMap | null {
         {
           id: "recruitment",
           rect: px(3, g.rows - 5, 4, 1),
-          label: "Reception · apply for a role",
-          to: { kind: "workstation", workplace: id, station: "reception" },
+          label: training ? "Reception · open training contract" : "Reception · apply for a role",
+          to: training
+            ? { kind: "role-contracts", role: training.role }
+            : { kind: "workstation", workplace: id, station: "reception" },
         },
+        ...(id === "macrosoft" ? [{
+          id: "training-desk",
+          rect: px(mid + 2, g.rows - 5, 2, 1),
+          label: "Explore in-game role contracts",
+          to: { kind: "role-contracts" as const },
+        }] : []),
         ...stations.map((p, i): Portal => ({
           id: `terminal-${i}`,
           rect: px(p.x, p.y, 3, 1),
           label: p.label,
-          to: { kind: "workstation", workplace: id, station: "terminal" },
+          to: training
+            ? { kind: "role-contracts", role: training.role }
+            : { kind: "workstation", workplace: id, station: "terminal" },
         })),
       ],
     },
@@ -944,6 +957,7 @@ export function londonMap(): WorldMap {
     const b = freeFronts[i * 2 + 1] ?? freeFronts[i];
     if (b) portals.push({ id, rect: px(b.x + 1, b.y + b.h, 2, 1), label, to: { kind: "link", href } });
   });
+  addTrainingDoors(L, portals);
   const rows = L.tiles.map((r) => r.split(""));
   // Doors are always walkable (bus stops are walked up to, not into).
   for (const p of portals.filter((q) => q.to.kind !== "bus"))
@@ -1108,6 +1122,34 @@ export const ROLE_SITES: [string, string][] = [
   ["firefighter", "London Fire Station"],
 ];
 type CityBuilding = Extract<ReturnType<typeof buildLondon>["things"][number], { kind: "building" }>;
+
+function addTrainingDoors(london: ReturnType<typeof buildLondon>, portals: Portal[]) {
+  const candidates = london.things.filter((thing): thing is CityBuilding =>
+    thing.kind === "building" && !thing.companyId &&
+    !thing.label && ["brick", "terrace", "glass", "office"].includes(thing.style) &&
+    !downtownBuildingAsset(thing) &&
+    !/^(hotel-|university-|district-|city-|outskirts-|my-house)/.test(thing.id));
+  for (const workplace of TRAINING_WORKPLACES) {
+    const building = london.things.find((thing): thing is CityBuilding =>
+      thing.kind === "building" && thing.label === workplace.name) ?? candidates.find(thing => {
+      if (thing.label) return false;
+      const x = thing.x + Math.floor(thing.w / 2);
+      const y = thing.y + thing.h;
+      return "-_".includes(london.tiles[y]?.[x] ?? "#") &&
+        portals.every(portal => Math.abs(portal.rect.x / TILE - x) > 3 ||
+          Math.abs(portal.rect.y / TILE - y) > 3);
+    });
+    if (!building) continue;
+    building.label = workplace.name;
+    building.accent = workplace.accent;
+    portals.push({
+      id: `training-door-${workplace.id}`,
+      rect: px(building.x + Math.floor(building.w / 2), building.y + building.h, 1, 1),
+      label: `${workplace.name} · training office`,
+      to: { kind: "map", mapId: `workplace-${workplace.id}`, label: workplace.name },
+    });
+  }
+}
 let SITES: { police: CityBuilding | null; roles: [string, CityBuilding][] } | null = null;
 
 /**

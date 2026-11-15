@@ -2793,6 +2793,10 @@ export function World3D({
     } else {
       const L = buildLondon();
       const policeId = policeBuilding()?.id;
+      const trainingSigns = new Map(map.portals.flatMap(portal =>
+        portal.id.startsWith("training-door-") && portal.to.kind === "map"
+          ? [[portal.to.label, portal.id.slice("training-door-".length)] as const]
+          : []));
       for (const t of L.things) {
         const g = new THREE.Group();
         world.add(g);
@@ -2811,6 +2815,12 @@ export function World3D({
             ps.position.set(t.x + t.w / 2, 2.3, t.y + t.h + 0.06); g.add(ps);
             const lamp = box(g, "#2b6fe0", t.x + t.w / 2 - 0.2, 2.75, t.y + t.h + 0.02, t.x + t.w / 2 + 0.2, 3.05, t.y + t.h + 0.25);
             lamp.material = (lamp.material as THREE.MeshStandardMaterial).clone(); (lamp.material as THREE.MeshStandardMaterial).emissive?.set("#2b6fe0");
+          }
+          const training = t.label && trainingSigns.get(t.label);
+          if (t.label && training) {
+            const label = sign(t.label, { bg: t.accent ?? "#283661", fg: "#fff", w: Math.min(t.w - 0.3, 7), h: 0.55, logo: training });
+            label.position.set(t.x + t.w / 2, 2.15, t.y + t.h + 0.09);
+            g.add(label);
           }
           if (!t.companyId && !t.id.startsWith("hotel-") && t.style !== "terrace" && t.w >= 5 && (t.x + t.y) % 3 === 0) {
             artFrontage(g, t.x, t.y + t.h + 0.1, t.w, Math.floor((t.x + t.y) / 3) % 3);

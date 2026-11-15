@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { worldHarness, flush } from "./helpers/world-harness.mjs";
+import { worldHarness, flush, playerId } from "./helpers/world-harness.mjs";
 import { projectData } from "../scripts/lib/project-data.mjs";
 
 const { joinGameChannel } = projectData("src/lib/realtime.ts");
@@ -45,5 +45,35 @@ test("world movement broadcasts tiny high-frame-rate steps and vehicle changes",
   world.stopped();
   assert.equal(sent.at(-1).payload.w, 0);
   assert.equal(sent.at(-1).payload.car, "sedan");
+  h.dispose();
+});
+
+test("patrol officers can only request an arrest of a nearby five-star player", async () => {
+  const h = worldHarness();
+  await flush();
+  h.sync();
+  await h.advance(40);
+  h.world.reportLaw(0, true);
+  h.broadcast("law", { i: playerId(1), s: 4, p: 0 });
+  assert.equal(h.world.reportArrest(playerId(1)), false);
+  assert.equal(h.sent.filter(message => message.event === "arrest").length, 0);
+  h.broadcast("law", { i: playerId(1), s: 5, p: 0 });
+  assert.equal(h.world.reportArrest(playerId(1)), true);
+  assert.equal(h.sent.filter(message => message.event === "arrest").length, 1);
+  h.dispose();
+});
+
+test("an incoming arrest broadcast can only reach a local five-star player", async () => {
+  const h = worldHarness();
+  await flush();
+  h.sync();
+  await h.advance(40);
+  h.broadcast("law", { i: playerId(1), s: 0, p: 1 });
+  h.world.reportLaw(4, false);
+  h.broadcast("arrest", { i: playerId(1), t: playerId(0) });
+  assert.equal(h.windowEvents.length, 0);
+  h.world.reportLaw(5, false);
+  h.broadcast("arrest", { i: playerId(1), t: playerId(0) });
+  assert.equal(h.windowEvents.filter(event => event.type === "illumed:arrested").length, 1);
   h.dispose();
 });

@@ -14,7 +14,7 @@ import { loadCareer, loadHome } from "@/lib/game/careers-server";
 import { loadPlayer } from "@/lib/game/server";
 import { loadStudy } from "@/lib/game/study-server";
 import { worldPass } from "@/lib/game/world-pass";
-import { roleContract } from "@/lib/illum-world/role-contracts";
+import { roleContract, roleContractHref } from "@/lib/illum-world/role-contracts";
 import { loadMyHomework } from "@/lib/school/server";
 import { getSupabase } from "@/lib/social/server";
 
@@ -23,8 +23,9 @@ const OWNER_DEVELOPER_ID = "f418310b-07f5-4865-aa4c-38cf126a3ef1";
 
 export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string; x?: string; y?: string; activity?: string; contract?: string }> }) {
   const { map, server, build, x, y, activity, contract } = await searchParams;
-  const initialContract = typeof contract === "string" ? roleContract(contract)?.id : undefined;
-  const next = initialContract ? `/games/world?map=workplace-macrosoft&contract=${initialContract}` : "/games/world";
+  const selectedContract = typeof contract === "string" ? roleContract(contract) : null;
+  const initialContract = selectedContract?.id;
+  const next = selectedContract ? roleContractHref(selectedContract) : "/games/world";
   const account = await requireAccount(next);
   const organisations = listOrgs();
   const staffRequest = organisations.then(orgs => staffFor(orgs.map(org => org.id)));
@@ -85,7 +86,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       me={{ id: account.id, username: account.profile.username, avatar: uniformFor(job, player.avatar), org, badge, pass, publicKey, affiliation }}
       offices={orgs.map(({ slug, name, sector, accent }) => ({ slug, name, sector, accent }))}
       staff={bySlug}
-      initialMap={map ?? "city"}
+      initialMap={selectedContract ? `workplace-${selectedContract.workplaceId}` : map ?? "city"}
       initialBuild={build === "1"}
       initialContract={initialContract}
       initialActivity={activity === "racing" || activity === "championship" || activity === "what-if" || activity === "events" || activity === "study" ? activity : undefined}
