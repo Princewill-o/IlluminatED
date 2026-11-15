@@ -724,3 +724,6 @@ function LondonLife({ map }: { map: WorldMap }) {
     </>
   );
 }
+
+/** Desk activity is scoped to the open workplace contract panel. */
+export const OFFICE_WORK = { active: false };

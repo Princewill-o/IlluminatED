@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Award, Briefcase, Check, X } from "lucide-react";
 
+import { OFFICE_WORK } from "./art";
 import { TrainingContext } from "./training-context";
 import { TRAINING_MIC_SLOT } from "./voice-chat";
 
@@ -35,13 +36,17 @@ export function RoleContractPanel({
   const dialog = useRef<HTMLDialogElement>(null);
   const [role, setRole] = useState(initialRole);
   const [search, setSearch] = useState("");
+  const [sector, setSector] = useState("");
+  const [page, setPage] = useState(0);
   const course = roleContract(role);
   const catalogue = ROLE_CONTRACTS.filter(item =>
-    `${item.workplace} ${item.title}`.toLowerCase().includes(search.trim().toLowerCase()));
+    (!sector || item.workplace === sector) && `${item.workplace} ${item.title}`.toLowerCase().includes(search.trim().toLowerCase()));
   useEffect(() => {
+    OFFICE_WORK.active = true;
     const node = dialog.current;
     if (node && !node.open) node.showModal();
     return () => {
+      OFFICE_WORK.active = false;
       if (node?.open) node.close();
     };
   }, []);
@@ -96,13 +101,20 @@ export function RoleContractPanel({
               <input
                 type="search"
                 value={search}
-                onChange={event => setSearch(event.target.value)}
+                onChange={event => { setSearch(event.target.value); setPage(0); }}
                 className="mt-1 min-h-11 w-full rounded-lg border-2 border-[#1d1a4a] bg-white px-3"
               />
             </label>
+            <label className="mt-3 block font-bold">Workplace or sector
+              <select value={sector} onChange={event => {setSector(event.target.value);setPage(0);}} className="ml-3 min-h-11 max-w-full rounded-lg border bg-white p-2">
+                <option value="">All sectors</option>
+                {[...new Set(ROLE_CONTRACTS.map(item => item.workplace))].map(name => <option key={name}>{name}</option>)}
+              </select>
+            </label>
+            <p className="mt-3">{catalogue.length} introductory scenarios</p>
             {catalogue.length === 0 && <p role="status" className="mt-4">No matching roles.</p>}
             <ul className="mt-5 grid gap-3">
-              {catalogue.map((item) => (
+              {catalogue.slice(page * 18, page * 18 + 18).map((item) => (
                 <li key={item.id}>
                   <button
                     type="button"
@@ -119,6 +131,10 @@ export function RoleContractPanel({
                 </li>
               ))}
             </ul>
+            <nav aria-label="Role pages" className="mt-4 flex gap-4">
+              <button className={button} disabled={page === 0} onClick={() => setPage(p => p - 1)}>Previous</button>
+              <button className={button} disabled={(page + 1) * 18 >= catalogue.length} onClick={() => setPage(p => p + 1)}>Next</button>
+            </nav>
           </>
         )}
       </div>
@@ -226,7 +242,7 @@ function ContractCourse({
         Read the brief and example, then pass the checks. Take each shift at
         your own pace.
       </p>
-      <TrainingContext key={courseId} roleId={courseId} />
+      {!courseId.startsWith("career-") && <TrainingContext key={courseId} roleId={courseId} />}
       <nav aria-label="Course shifts" className="my-5 flex flex-wrap gap-2">
         {course.shifts.map((item, i) => {
           const unlocked = status.shifts.slice(0, i).every((s) => s.complete);

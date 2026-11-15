@@ -1,4 +1,5 @@
 import { ADDITIONAL_ROLE_CONTRACTS } from "./additional-role-content";
+import { SECTOR_CONTRACTS } from "./sector-contracts";
 
 import { companyById } from "@/game/core/companies";
 
@@ -568,6 +569,7 @@ export const ROLE_CONTRACTS: RoleContract[] = [
     ],
   },
   ...ADDITIONAL_ROLE_CONTRACTS,
+  ...SECTOR_CONTRACTS,
 ];
 export const roleContract = (id: string) =>
   ROLE_CONTRACTS.find((c) => c.id === id) ?? null;

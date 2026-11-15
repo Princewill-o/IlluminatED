@@ -1,3 +1,4 @@
+import profiles from "@/lib/illum-world/sector-profiles.json";
 /** Independent role simulations with walk-in offices in IllumWorld. */
 export const TRAINING_WORKPLACES = [
   { id: "jpmorgan-chase", name: "JPMorgan Chase", sector: "Finance", accent: "#234c79", role: "quantitative-researcher" },
@@ -12,4 +13,9 @@ export const TRAINING_WORKPLACES = [
   { id: "tata", name: "Tata Group", sector: "Technology consulting", accent: "#2f719c", role: "tata-data-analyst" },
 ] as const;
 
-export const trainingWorkplace = (id: string) => TRAINING_WORKPLACES.find(workplace => workplace.id === id);
+export const trainingWorkplace = (id: string) => {
+  const existing = TRAINING_WORKPLACES.find(workplace => workplace.id === id);
+  if (existing) return existing;
+  const sector = profiles.find(item => id === `training-${item.id}`);
+  return sector ? { id, name: `${sector.name} training studio`, sector: sector.name, accent: "#5141b5", role: "all" } : undefined;
+};

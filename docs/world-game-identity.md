@@ -2,7 +2,7 @@
 
 The umbrella, IllumWorld homepage, school pilot and shared product navigation now lead with the playable city-life game. The main action opens `/games/world?map=city`. Roles and completion requirements are discovered through `/world/contracts`; certificate information links to its `#certificates` section.
 
-The catalogue has 13 original role simulations across 11 employers. Each role has three shifts and takes 24 to 27 minutes at the learner's own pace. Players can open contracts from Jobs, the game phone, the Venture Yard or the employer's training office. Microsoft also has a training desk. The role pages link to the public references used to map skills and examples.
+The catalogue has 13 employer simulations plus 336 introductory role scenarios across 28 sector studios. The sector scenarios use a common three-shift evidence-review format, with role briefs and sector-specific records and escalation rules. They are introductory career exploration. Each role has three shifts and takes 24 to 27 minutes at the learner's own pace. Players can open contracts from Jobs, the game phone, the Venture Yard or the employer's training office. Microsoft also has a training desk. The role pages link to the public references used to map skills and examples.
 
 The certificate route grades the three shift checks on the server. The PDF shows the employer's in-game badge and name followed by × and the IlluminatED wordmark. Progress is saved on the player's device. IlluminatED issues the certificate for completing the simulation.
 
@@ -19,3 +19,5 @@ The Maths, Science and English pages offer a year selector, short original pract
 Screenshots from the playable game are served from `/landing/world-current-square.jpg` and `/landing/world-current-workplace.jpg`.
 
 Run the focused checks with `node --test tests/world-game-identity.test.mjs tests/role-contracts.test.mjs tests/secondary-subjects.test.mjs tests/learning-products.test.mjs`.
+
+Sector studios are reached from their contract links and share the existing procedural office builder. The catalogue and in-game picker support search and pagination. Generic desk chairs sit directly behind the desk, the visible computer identifies the training station, and the contract panel seats the player using the existing typing pose while it is open in an office.

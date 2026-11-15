@@ -12,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { OFFICE_WORK, BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -2117,6 +2117,9 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
             const span = Math.min(3, w-i), palette = voxelOfficePalette(map.id,map.design?.theme);
             jobs.push(kaykitInteriorProp(g,palette.desk,x+i,y,span,.96,true));
             jobs.push(kaykitInteriorProp(g,palette.computer,x+i+span*.4,y+.08,Math.min(.9,span*.52),.65,false,0,.98,.65));
+            const display = sign("TRAINING DESK", { bg: "#142a43", fg: "#a4f5de", w: Math.min(.78, span * .6), h: .36 });
+            display.position.set(x + i + span / 2, 1.37, y + .73);
+            g.add(display);
             if(map.design?.theme==="creative") {
               box(g,"#e7b485",x+i+.1,1,y+.1,x+i+.55,1.04,y+.5);
               for(let j=0;j<3;j++)box(g,["#c97770","#6b9a9a","#dfb864"][j],x+i+.17+j*.1,1.04,y+.18,x+i+.23+j*.1,1.08,y+.4);
@@ -2139,7 +2142,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
           box(g, "#faf8ee", x + 0.23, 1.3, y + 0.27, x + 0.77, 1.34, y + 0.7);
         } else if (deskOffice && ch === "c") {
           for (let i = 0; i < w; i++) {
-            jobs.push(kaykitInteriorProp(g, voxelOfficePalette(map.id,map.design?.theme).chair, x + i + .06, y + .06, .88, .94, false, 0, .02, .88));
+            jobs.push(kaykitInteriorProp(g, voxelOfficePalette(map.id,map.design?.theme).chair, x + i + .06, y + .06, .88, .94, false, Math.PI, .02, .88));
           }
         } else if (deskOffice && ch === "s") {
           box(g, "#40685f", x + 0.04, 0.3, y + 0.12, x + w - 0.04, 0.72, y + 0.86);
@@ -3253,7 +3256,7 @@ export function World3D({
       for (let y = 1; y < map.rows - 1 && officeWorkers.length < budget.workers; y++) for (let x = 1; x < map.cols - 1 && officeWorkers.length < budget.workers; x++) {
         if (map.tiles[y]?.[x] !== "c" || !"dkt".includes(map.tiles[y - 1]?.[x] ?? "")) continue;
         const body = makeBody({...npcLook(130 + officeWorkers.length), top:"top-suit", held:"held-none"}, null, true);
-        body.root.position.set(x + .5, 0, y + .5); body.root.rotation.y = Math.PI;
+        body.root.position.set(x + .5, 0.1, y + .5); body.root.rotation.y = Math.PI;
         scene.add(body.root); officeWorkers.push(body);
       }
     }
@@ -4672,7 +4675,14 @@ export function World3D({
       });
       cuffs.visible = PLAYER_WORK.activity === "cuffed";
       if (PLAYER_WORK.activity) { me.walking = false; me.char?.play(PLAYER_WORK.activity); meWorking = true; } else if (meWorking) { meWorking = false; me.char?.play("idle"); }
-      officeWorkers.forEach(body => { body.char?.play((body.root.userData.work as string | undefined) ?? "typing"); });
+      const deskWorker = OFFICE_WORK.active && map.kind === "office"
+        ? officeWorkers.reduce<Body | null>((best, body) => !best || body.root.position.distanceToSquared(me.root.position) < best.root.position.distanceToSquared(me.root.position) ? body : best, null)
+        : null;
+      officeWorkers.forEach(body => {
+        body.root.visible = body !== deskWorker;
+        body.char?.play("typing");
+      });
+
       for (const w of workers) {
         const far = !indoors && Math.hypot(w.spot.x - mx, w.spot.z - mz) > 34;
         w.body.root.visible = !far; w.props.visible = !far;
@@ -4959,6 +4969,11 @@ export function World3D({
             if (arm) arm.rotation.x = -0.7 + Math.sin(time * 4) * 0.3;
           }
         }
+      }
+      if (deskWorker) {
+        me.root.position.lerp(deskWorker.root.position, 1 - Math.exp(-dt * 8));
+        me.root.rotation.y = Math.PI;
+        me.char?.play("typing");
       }
       for (const c of cyclists) seatRider(c.body, c.bike, c.body.root.rotation.y, c.moving, secs * 8 + c.at * 10);
       updateUKScenery(mx,mz,overview);

@@ -426,10 +426,10 @@ export function workplaceMap(id: string): WorldMap | null {
             : "d",
       );
       g.set(x + 1, y - 1, design.theme === "logistics" ? "b" : "v");
-      g.set(x + 1, y + 2, "c");
+      g.set(x + 1, y + 1, "c");
       stations.push({
         x,
-        y: y + 1,
+        y: y + 2,
         label: `${design.room} · station ${i + 1}`,
       });
     });

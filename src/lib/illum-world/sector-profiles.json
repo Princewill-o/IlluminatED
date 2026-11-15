@@ -1,0 +1,562 @@
+[
+  {
+    "id": "healthcare",
+    "name": "Healthcare",
+    "artifact": "referral records",
+    "action": "refer a missing patient identifier to the supervising clinician",
+    "titles": [
+      "Nurse",
+      "Doctor",
+      "Physiotherapist",
+      "Occupational Therapist",
+      "Radiographer",
+      "Pharmacist",
+      "Midwife",
+      "Dietitian",
+      "Paramedic",
+      "Clinical Administrator",
+      "Speech Therapist",
+      "Healthcare Assistant"
+    ]
+  },
+  {
+    "id": "social-care",
+    "name": "Social Care",
+    "artifact": "care visit schedules",
+    "action": "report an unconfirmed care visit to the coordinator",
+    "titles": [
+      "Social Worker",
+      "Care Coordinator",
+      "Support Worker",
+      "Youth Worker",
+      "Family Worker",
+      "Community Worker",
+      "Advocacy Officer",
+      "Residential Care Worker",
+      "Disability Adviser",
+      "Volunteer Coordinator",
+      "Wellbeing Adviser",
+      "Reablement Assistant"
+    ]
+  },
+  {
+    "id": "life-sciences",
+    "name": "Life Sciences",
+    "artifact": "laboratory sample logs",
+    "action": "quarantine a sample with an unmatched label for supervisor review",
+    "titles": [
+      "Biologist",
+      "Chemist",
+      "Microbiologist",
+      "Lab Technician",
+      "Biomedical Scientist",
+      "Research Assistant",
+      "Clinical Trial Coordinator",
+      "Biotechnology Technician",
+      "Genetics Assistant",
+      "Quality Analyst",
+      "Ecologist",
+      "Animal Technician"
+    ]
+  },
+  {
+    "id": "environment",
+    "name": "Environment",
+    "artifact": "water sample records",
+    "action": "flag a result with missing collection units",
+    "titles": [
+      "Environmental Consultant",
+      "Conservation Officer",
+      "Water Analyst",
+      "Recycling Coordinator",
+      "Climate Analyst",
+      "Sustainability Officer",
+      "Ranger",
+      "Air Quality Technician",
+      "Environmental Educator",
+      "Flood Analyst",
+      "Waste Officer",
+      "Biodiversity Officer"
+    ]
+  },
+  {
+    "id": "agriculture",
+    "name": "Agriculture",
+    "artifact": "harvest inventory",
+    "action": "separate a delivery whose batch identifier is missing",
+    "titles": [
+      "Farm Manager",
+      "Agronomist",
+      "Horticulturist",
+      "Greenhouse Technician",
+      "Forestry Worker",
+      "Arborist",
+      "Fisheries Officer",
+      "Agricultural Engineer",
+      "Seed Analyst",
+      "Farm Data Analyst",
+      "Animal Welfare Officer",
+      "Land Manager"
+    ]
+  },
+  {
+    "id": "food",
+    "name": "Food",
+    "artifact": "allergen information sheets",
+    "action": "refer an ingredient discrepancy to the trained food safety lead",
+    "titles": [
+      "Chef",
+      "Baker",
+      "Food Scientist",
+      "Food Safety Officer",
+      "Kitchen Assistant",
+      "Pastry Chef",
+      "Catering Manager",
+      "Food Buyer",
+      "Nutrition Assistant",
+      "Production Planner",
+      "Menu Designer",
+      "Food Quality Technician"
+    ]
+  },
+  {
+    "id": "construction",
+    "name": "Construction",
+    "artifact": "site inspection records",
+    "action": "stop an unverified work permit and notify the site supervisor",
+    "titles": [
+      "Architect",
+      "Quantity Surveyor",
+      "Site Manager",
+      "Building Surveyor",
+      "Planner",
+      "Bricklayer",
+      "Carpenter",
+      "Plumber",
+      "Electrician",
+      "Joiner",
+      "Roofing Technician",
+      "Building Inspector"
+    ]
+  },
+  {
+    "id": "engineering",
+    "name": "Engineering",
+    "artifact": "component inspection results",
+    "action": "hold a part whose measured dimension exceeds tolerance",
+    "titles": [
+      "Mechanical Engineer",
+      "Civil Engineer",
+      "Electrical Engineer",
+      "Structural Engineer",
+      "Design Engineer",
+      "Robotics Engineer",
+      "Materials Engineer",
+      "Acoustic Engineer",
+      "Geotechnical Engineer",
+      "Automation Engineer",
+      "Maintenance Engineer",
+      "Control Engineer"
+    ]
+  },
+  {
+    "id": "manufacturing",
+    "name": "Manufacturing",
+    "artifact": "production batch records",
+    "action": "hold an untraceable batch for quality review",
+    "titles": [
+      "Production Engineer",
+      "Process Technician",
+      "Quality Inspector",
+      "CNC Operator",
+      "Toolmaker",
+      "Welder",
+      "Assembly Technician",
+      "Packaging Engineer",
+      "Lean Coordinator",
+      "Factory Planner",
+      "Textile Technician",
+      "Industrial Designer"
+    ]
+  },
+  {
+    "id": "energy",
+    "name": "Energy",
+    "artifact": "maintenance work orders",
+    "action": "refer an incomplete isolation record to an authorised supervisor",
+    "titles": [
+      "Energy Analyst",
+      "Solar Technician",
+      "Wind Technician",
+      "Grid Planner",
+      "Energy Auditor",
+      "Renewables Engineer",
+      "Utility Coordinator",
+      "Metering Analyst",
+      "Heat Network Planner",
+      "Power Systems Engineer",
+      "Carbon Analyst",
+      "Energy Project Officer"
+    ]
+  },
+  {
+    "id": "road-transport",
+    "name": "Road Transport",
+    "artifact": "vehicle inspection sheets",
+    "action": "keep a vehicle with an unresolved safety defect out of service",
+    "titles": [
+      "Bus Driver",
+      "Coach Driver",
+      "Traffic Planner",
+      "Transport Analyst",
+      "Road Engineer",
+      "Fleet Manager",
+      "Driving Instructor",
+      "Vehicle Technician",
+      "Recovery Coordinator",
+      "Highways Officer",
+      "Route Planner",
+      "Transport Dispatcher"
+    ]
+  },
+  {
+    "id": "logistics",
+    "name": "Logistics",
+    "artifact": "warehouse dispatch notes",
+    "action": "isolate a parcel with conflicting destination labels",
+    "titles": [
+      "Warehouse Planner",
+      "Supply Chain Analyst",
+      "Inventory Controller",
+      "Procurement Officer",
+      "Customs Assistant",
+      "Freight Coordinator",
+      "Delivery Planner",
+      "Distribution Manager",
+      "Stock Auditor",
+      "Dispatch Clerk",
+      "Returns Coordinator",
+      "Logistics Engineer"
+    ]
+  },
+  {
+    "id": "rail",
+    "name": "Rail",
+    "artifact": "platform handover records",
+    "action": "escalate an unconfirmed platform assignment to control",
+    "titles": [
+      "Train Driver",
+      "Conductor",
+      "Station Assistant",
+      "Rail Engineer",
+      "Signalling Technician",
+      "Timetable Planner",
+      "Rail Controller",
+      "Track Inspector",
+      "Ticketing Officer",
+      "Passenger Adviser",
+      "Depot Planner",
+      "Rail Project Manager"
+    ]
+  },
+  {
+    "id": "maritime",
+    "name": "Maritime",
+    "artifact": "cargo manifest records",
+    "action": "ask the port supervisor to resolve a mismatched container identifier",
+    "titles": [
+      "Deck Officer",
+      "Marine Engineer",
+      "Port Coordinator",
+      "Ship Planner",
+      "Marine Surveyor",
+      "Harbour Assistant",
+      "Freight Broker",
+      "Navigation Officer",
+      "Boatbuilder",
+      "Coastal Ranger",
+      "Marine Biologist",
+      "Maritime Safety Officer"
+    ]
+  },
+  {
+    "id": "aviation",
+    "name": "Aviation",
+    "artifact": "ground handling checklists",
+    "action": "hold a loading instruction until the trained dispatcher confirms it",
+    "titles": [
+      "Pilot",
+      "Air Traffic Controller",
+      "Cabin Crew",
+      "Aircraft Technician",
+      "Flight Dispatcher",
+      "Airport Planner",
+      "Baggage Coordinator",
+      "Aviation Analyst",
+      "Ground Agent",
+      "Aerospace Engineer",
+      "Airport Security Officer",
+      "Flight Operations Assistant"
+    ]
+  },
+  {
+    "id": "software",
+    "name": "Software",
+    "artifact": "software issue reports",
+    "action": "reproduce an error before proposing a code change",
+    "titles": [
+      "Frontend Developer",
+      "Backend Developer",
+      "Mobile Developer",
+      "Game Developer",
+      "Test Engineer",
+      "DevOps Engineer",
+      "Site Reliability Engineer",
+      "Accessibility Engineer",
+      "Software Architect",
+      "Release Engineer",
+      "Technical Writer",
+      "Developer Advocate"
+    ]
+  },
+  {
+    "id": "it-telecoms",
+    "name": "IT Telecoms",
+    "artifact": "service desk tickets",
+    "action": "verify the requester before changing account access",
+    "titles": [
+      "IT Support Technician",
+      "Network Engineer",
+      "Cloud Administrator",
+      "Database Administrator",
+      "Systems Analyst",
+      "Telecoms Engineer",
+      "IT Asset Manager",
+      "Service Desk Analyst",
+      "Infrastructure Engineer",
+      "IT Trainer",
+      "Solutions Consultant",
+      "Service Manager"
+    ]
+  },
+  {
+    "id": "data-cyber",
+    "name": "Data Cyber",
+    "artifact": "data access audit records",
+    "action": "escalate an unexplained access event using the approved process",
+    "titles": [
+      "Data Engineer",
+      "Data Scientist",
+      "Machine Learning Engineer",
+      "Security Analyst",
+      "Security Architect",
+      "Privacy Analyst",
+      "Digital Forensics Analyst",
+      "Threat Analyst",
+      "Analytics Engineer",
+      "BI Developer",
+      "Data Steward",
+      "AI Evaluator"
+    ]
+  },
+  {
+    "id": "finance",
+    "name": "Finance",
+    "artifact": "transaction reconciliation records",
+    "action": "investigate a repeated reference before adjusting the ledger",
+    "titles": [
+      "Accountant",
+      "Auditor",
+      "Actuary",
+      "Investment Analyst",
+      "Credit Analyst",
+      "Insurance Adviser",
+      "Payroll Officer",
+      "Tax Assistant",
+      "Financial Planner",
+      "Treasury Analyst",
+      "Mortgage Adviser",
+      "Pensions Analyst"
+    ]
+  },
+  {
+    "id": "legal",
+    "name": "Legal",
+    "artifact": "client case registers",
+    "action": "report an unresolved conflict check before accepting the case",
+    "titles": [
+      "Solicitor",
+      "Barrister",
+      "Paralegal",
+      "Legal Secretary",
+      "Compliance Officer",
+      "Contract Analyst",
+      "Court Clerk",
+      "Mediator",
+      "Legal Researcher",
+      "Conveyancing Assistant",
+      "Patent Assistant",
+      "Policy Lawyer"
+    ]
+  },
+  {
+    "id": "public-services",
+    "name": "Public Services",
+    "artifact": "public service application records",
+    "action": "request missing evidence using the published application criteria",
+    "titles": [
+      "Policy Officer",
+      "Civil Servant",
+      "Council Officer",
+      "Planning Officer",
+      "Housing Officer",
+      "Public Finance Analyst",
+      "Democratic Services Officer",
+      "Community Liaison",
+      "Public Procurement Officer",
+      "Programme Evaluator",
+      "Statistics Officer",
+      "Caseworker"
+    ]
+  },
+  {
+    "id": "emergency",
+    "name": "Emergency",
+    "artifact": "control room incident logs",
+    "action": "ask control to verify an incomplete incident location",
+    "titles": [
+      "Police Officer",
+      "Firefighter",
+      "Emergency Call Handler",
+      "Rescue Coordinator",
+      "Civil Protection Officer",
+      "Emergency Planner",
+      "Fire Safety Officer",
+      "Ambulance Dispatcher",
+      "Search Coordinator",
+      "Coastguard Officer",
+      "Incident Analyst",
+      "Community Safety Officer"
+    ]
+  },
+  {
+    "id": "education",
+    "name": "Education",
+    "artifact": "lesson support records",
+    "action": "refer an individual learning concern to the designated teacher",
+    "titles": [
+      "Teacher",
+      "Teaching Assistant",
+      "Librarian",
+      "Education Officer",
+      "Learning Designer",
+      "Careers Adviser",
+      "School Administrator",
+      "Exam Officer",
+      "Learning Mentor",
+      "Student Support Officer",
+      "Training Coordinator",
+      "Museum Educator"
+    ]
+  },
+  {
+    "id": "media",
+    "name": "Media",
+    "artifact": "editorial source notes",
+    "action": "verify an unconfirmed claim with the editor before publication",
+    "titles": [
+      "Journalist",
+      "Editor",
+      "Copywriter",
+      "Content Producer",
+      "Video Editor",
+      "Sound Editor",
+      "Radio Producer",
+      "Fact Checker",
+      "Public Relations Officer",
+      "Social Media Manager",
+      "SEO Specialist",
+      "Documentary Researcher"
+    ]
+  },
+  {
+    "id": "creative-arts",
+    "name": "Creative Arts",
+    "artifact": "creative production briefs",
+    "action": "confirm a missing permission before publishing an asset",
+    "titles": [
+      "Graphic Designer",
+      "Animator",
+      "Illustrator",
+      "Photographer",
+      "Set Designer",
+      "Costume Designer",
+      "Lighting Designer",
+      "Music Producer",
+      "Curator",
+      "Art Director",
+      "UX Designer",
+      "Exhibition Designer"
+    ]
+  },
+  {
+    "id": "retail",
+    "name": "Retail",
+    "artifact": "customer order records",
+    "action": "resolve a product code mismatch before dispatch",
+    "titles": [
+      "Retail Manager",
+      "Buyer",
+      "Merchandiser",
+      "Customer Adviser",
+      "Ecommerce Coordinator",
+      "Visual Merchandiser",
+      "Store Planner",
+      "Sales Analyst",
+      "Category Assistant",
+      "Customer Success Adviser",
+      "Returns Adviser",
+      "Retail Operations Analyst"
+    ]
+  },
+  {
+    "id": "hospitality",
+    "name": "Hospitality",
+    "artifact": "guest reservation records",
+    "action": "verify a room requirement before confirming the booking",
+    "titles": [
+      "Hotel Receptionist",
+      "Events Coordinator",
+      "Restaurant Manager",
+      "Travel Adviser",
+      "Tour Guide",
+      "Housekeeping Coordinator",
+      "Conference Planner",
+      "Venue Manager",
+      "Guest Relations Officer",
+      "Tourism Officer",
+      "Reservations Agent",
+      "Hospitality Revenue Analyst"
+    ]
+  },
+  {
+    "id": "sport",
+    "name": "Sport",
+    "artifact": "session planning records",
+    "action": "refer an accessibility concern to the qualified session leader",
+    "titles": [
+      "Sports Coach",
+      "Fitness Instructor",
+      "Sports Analyst",
+      "Leisure Manager",
+      "Community Sports Officer",
+      "Performance Analyst",
+      "Event Steward",
+      "Sports Development Officer",
+      "Facilities Coordinator",
+      "Outdoor Instructor",
+      "Sports Journalist",
+      "Equipment Coordinator"
+    ]
+  }
+]

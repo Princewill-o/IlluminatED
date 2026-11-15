@@ -5,8 +5,8 @@ import { projectData } from '../scripts/lib/project-data.mjs';
 const logos=projectData('src/game/core/logos.ts');
 const C=projectData('src/lib/illum-world/role-contracts.ts');
 test('short in-game roles have distinct ids, buildings, badges and three learning shifts',()=>{
- assert.equal(C.ROLE_CONTRACTS.length,13);
- assert.equal(new Set(C.ROLE_CONTRACTS.map(c=>c.id)).size,13);
+ assert.equal(C.ROLE_CONTRACTS.length,349);
+ assert.equal(new Set(C.ROLE_CONTRACTS.map(c=>c.id)).size,349);
  const microsoft=C.ROLE_CONTRACTS.filter(c=>c.workplaceId==='macrosoft');
  assert.equal(microsoft.length,3);
  assert.ok(microsoft.every(c=>c.workplace==='Microsoft'&&c.sources.every(s=>s.url.startsWith('https://www.coursera.org/')&&s.provider==='Microsoft')));
