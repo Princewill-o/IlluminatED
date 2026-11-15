@@ -2,6 +2,9 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 
+import { publishedOakLibrary, publishedOakLesson, publishedOakPractice } from "./published-oak";
+
+
 import type { LessonRecall } from "@/lib/education/lesson-adaptation";
 import type { OakFilters, OakLesson, OakLessonSummary } from "@/lib/education/school-stages";
 import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/social/config";
@@ -13,7 +16,7 @@ function client() {
 }
 export async function oakLibrary(filters: OakFilters) {
   const sb = client();
-  if (!sb) return { lessons: [] as OakLessonSummary[], total: 0, available: false };
+  if (!sb) return publishedOakLibrary(filters);
   let query = sb.from("oak_lessons").select("slug,title,unit_slug,unit_title,subject,subject_title,key_stage,phase,years,restricted,source_url", { count: "exact" });
   if (filters.stage === "sixth-form") return { lessons: [] as OakLessonSummary[], total: 0, available: true };
   if (filters.stage === "primary" || filters.stage === "secondary") query = query.eq("phase", filters.stage);
@@ -31,7 +34,7 @@ export async function oakLesson(slug: string): Promise<OakLesson | null> {
   if (!/^[a-z0-9-]{1,250}$/.test(slug)) return null;
   try {
     const sb = client();
-    if (!sb) return null;
+    if (!sb) return publishedOakLesson(slug);
     const { data, error } = await sb.from("oak_lessons").select("*").eq("slug",slug).maybeSingle();
     return error ? null : data as OakLesson | null;
   } catch { return null; }
@@ -45,7 +48,9 @@ export async function oakSummary(): Promise<{ subject: string; title: string; le
 export async function lessonPractice(slug: string): Promise<LessonRecall[]> {
   if(!/^[a-z0-9-]{1,250}$/.test(slug))return [];
   try {
-    const { data,error }=await client()?.from("illumed_lesson_questions").select("id,kind,question,answer,explanation").eq("lesson_slug",slug).order("kind").order("id")??{};
+    const sb = client();
+    if (!sb) return publishedOakPractice(slug);
+    const { data,error }=await sb.from("illumed_lesson_questions").select("id,kind,question,answer,explanation").eq("lesson_slug",slug).order("kind").order("id");
     return error?[]:data??[];
   } catch {return [];}
 }

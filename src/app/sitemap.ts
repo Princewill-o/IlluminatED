@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { ROLE_CONTRACTS } from "@/lib/illum-world/role-contracts";
 import { PUBLIC_WEB_URL as SITE } from "@/lib/site";
 
 /** Only the pages anyone can open. Everything else needs an account. */
@@ -7,7 +8,8 @@ const PUBLIC_PAGES = [
   "/",
   "/world",
   "/world/pilot",
-  "/world/tech-repair-trainee",
+  "/world/contracts",
+  ...ROLE_CONTRACTS.map(({ id }) => `/world/contracts/${id}`),
   "/maths",
   "/maths/percentages",
   "/maths/ratio-proportion",

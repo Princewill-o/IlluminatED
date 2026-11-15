@@ -14,15 +14,18 @@ import { loadCareer, loadHome } from "@/lib/game/careers-server";
 import { loadPlayer } from "@/lib/game/server";
 import { loadStudy } from "@/lib/game/study-server";
 import { worldPass } from "@/lib/game/world-pass";
+import { roleContract } from "@/lib/illum-world/role-contracts";
 import { loadMyHomework } from "@/lib/school/server";
 import { getSupabase } from "@/lib/social/server";
 
 export const metadata: Metadata = { title: "Worlds" };
 const OWNER_DEVELOPER_ID = "f418310b-07f5-4865-aa4c-38cf126a3ef1";
 
-export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string; x?: string; y?: string; activity?: string }> }) {
-  const { map, server, build, x, y, activity } = await searchParams;
-  const account = await requireAccount("/games/world");
+export default async function WorldPage({ searchParams }: { searchParams: Promise<{ map?: string; server?: string; build?: string; x?: string; y?: string; activity?: string; contract?: string }> }) {
+  const { map, server, build, x, y, activity, contract } = await searchParams;
+  const initialContract = typeof contract === "string" ? roleContract(contract)?.id : undefined;
+  const next = initialContract ? `/games/world?map=workplace-macrosoft&contract=${initialContract}` : "/games/world";
+  const account = await requireAccount(next);
   const organisations = listOrgs();
   const staffRequest = organisations.then(orgs => staffFor(orgs.map(org => org.id)));
   const carsRequest = (async () => {
@@ -62,7 +65,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
 
   const day = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { weekday: "short", timeZone: "Europe/London" });
   const quests = [
-    { id: "tech-repair-trainee", title: "IllumWorld: Tech Repair Trainee project", tag: "Work experience", href: "/world/tech-repair-trainee" },
+    { id: "role-contracts", title: "Choose a short in-game role contract", tag: "Training", href: "/games/world?map=workplace-macrosoft&contract=data-analyst" },
     { id: "study-room", title: chosenStudyQuest ? `Your quest: ${chosenStudyQuest.title}` : "Choose a study quest from your subjects", tag: "Study", href: "/games/study" },
     ...homework
       .filter((h) => !h.mine || new Date(h.dueAt) > new Date())
@@ -84,6 +87,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       staff={bySlug}
       initialMap={map ?? "city"}
       initialBuild={build === "1"}
+      initialContract={initialContract}
       initialActivity={activity === "racing" || activity === "championship" || activity === "what-if" || activity === "events" || activity === "study" ? activity : undefined}
       initialServer={server || null}
       initialArrival={Number.isFinite(Number(x)) && Number.isFinite(Number(y)) && x !== undefined && y !== undefined ? { x: Number(x), y: Number(y) } : undefined}

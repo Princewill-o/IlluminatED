@@ -20,8 +20,9 @@ const SECTORS = ["All", "Free", ...Array.from(new Set(ROLES.map((r) => r.sector)
  * level and its own six-tier career ladder. Start a shift where you are, or travel to
  * the workplace first.
  */
-export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCompany, embedded = false }: {
+export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCompany, onContracts, embedded = false }: {
   /** Company careers: go to the company's office to apply at reception and work shifts. */
+  onContracts?: () => void;
   onCompany?: (workplace: string, name: string) => void;
   /** Shown as a page inside the in-game browser rather than a pop-up. */
   embedded?: boolean;
@@ -77,6 +78,7 @@ export function JobsPanel({ mapId, activeRole, onStart, onTravel, onClose, onCom
                 );
               })}
             </ul>
+            {onContracts && <button type="button" onClick={onContracts} className="mt-4 flex min-h-11 w-full items-center gap-2 rounded-xl bg-[#eee4ff] p-3 text-left text-sm font-black"><FileText className="size-4" aria-hidden /> Role contracts · mini-courses</button>}
             <p className="mt-4 mb-1 px-1 text-[11px] font-black tracking-widest text-black/50 uppercase">Company careers</p>
             <ul className="grid gap-1.5">
               {WORKPLACES.map((w) => (

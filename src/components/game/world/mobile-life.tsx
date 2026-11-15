@@ -127,6 +127,7 @@ export function MobileLife({
   onExplore,
   onStudy,
   onWork,
+  onContracts,
   onHouses,
   onHome,
   onAwards,
@@ -151,6 +152,7 @@ export function MobileLife({
   onExplore: () => void;
   onStudy: () => void;
   onWork: (workplace: string) => void;
+  onContracts?: () => void;
   onHouses: () => void;
   onHome: () => void;
   onAwards: () => void;
@@ -422,6 +424,7 @@ export function MobileLife({
 
           {tab === "work" && (
             <>
+              {onContracts && <Row title="In-game role contracts" detail="Three short shifts and a completion certificate" icon={<Award size={20} />} onClick={onContracts} />}
               {job && (
                 <>
                   <div className={styles.profile}>

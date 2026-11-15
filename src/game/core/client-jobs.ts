@@ -29,7 +29,7 @@ const who = (rng: Rng) => pick(rng, NAMES);
 
 export const CLIENT_JOBS: Record<string, ClientJobDef> = {
   "pizza-chef": {
-    mode: "counter", building: "Pizzazz Pizza kitchen", clientKind: "customer", thanks: ["Smells amazing, thank you!", "Hmm, that's not quite what I ordered…"],
+    mode: "counter", building: "Pizza kitchen", clientKind: "customer", thanks: ["Smells amazing, thank you!", "Hmm, that's not quite what I ordered…"],
     stations: [st("dough", "Dough station", "cook", "k"), st("sauce", "Tomato sauce", "cook", "k"), st("cheese", "Cheese", "cook", "F"), st("pepperoni", "Pepperoni", "cook", "F"), st("mushrooms", "Mushrooms", "cook", "F"), st("peppers", "Peppers", "cook", "F"), st("oven", "Pizza oven", "cook", "O"), st("box", "Boxing counter", "serve", "k")],
     order: (rng, tier) => {
       const toppings = some(rng, ["pepperoni", "mushrooms", "peppers"], tier >= 1 ? 2 : rng() < 0.5 ? 1 : 0);
@@ -39,7 +39,7 @@ export const CLIENT_JOBS: Record<string, ClientJobDef> = {
   },
   "delivery-driver": {
     mode: "delivery", building: "Delivery depot", clientKind: "recipient", thanks: ["Brilliant, I've been waiting for this!", "Is this really mine? The box is a bit battered…"],
-    stations: [st("scanner", "Scanner desk", "keyboard", "d"), st("parcels", "Parcel shelves", "carry", "v"), st("pizza-hatch", "Pizzazz collection hatch", "carry", "k"), st("trolley", "Heavy-item trolley", "carry", "k")],
+    stations: [st("scanner", "Scanner desk", "keyboard", "d"), st("parcels", "Parcel shelves", "carry", "v"), st("pizza-hatch", "Pizza collection hatch", "carry", "k"), st("trolley", "Heavy-item trolley", "carry", "k")],
     order: (rng, tier) => {
       const pizza = rng() < 0.4;
       const heavy = !pizza && tier >= 2 && rng() < 0.5;
@@ -62,12 +62,12 @@ export const CLIENT_JOBS: Record<string, ClientJobDef> = {
     order: (rng) => { const fault = pick(rng, [["The tyre's gone flat", ["ramp", "tyres"]], ["The brakes squeal", ["diagnostics", "ramp", "brakes"]], ["It's due a service", ["ramp", "oil"]], ["It won't start", ["diagnostics", "battery"]]] as const); return { client: who(rng), line: `${fault[0]}. Can you fix it?`, needs: [...fault[1], "keys"], ordered: false }; },
   },
   doctor: {
-    mode: "counter", building: "St Tomas' Hospital clinic", clientKind: "patient", thanks: ["I feel much better already, thank you doctor.", "Are you sure that's right?"],
+    mode: "counter", building: "St Thomas' Hospital clinic", clientKind: "patient", thanks: ["I feel much better already, thank you doctor.", "Are you sure that's right?"],
     stations: [st("obs", "Observations machine", "treat", "d"), st("exam", "Examination bed", "treat", "b"), st("bloods", "Blood test kit", "treat", "k"), st("xray", "X-ray room", "treat", "d"), st("prescription", "Prescription printer", "keyboard", "d"), st("sling", "Splints and slings", "treat", "v")],
     order: (rng) => { const c = pick(rng, [["I've had a cough for a week", ["obs", "exam", "prescription"]], ["I fell and hurt my wrist", ["exam", "xray", "sling"]], ["I've been really tired lately", ["obs", "bloods"]]] as const); return { client: who(rng), line: c[0], needs: [...c[1]], ordered: false }; },
   },
   nurse: {
-    mode: "counter", building: "St Tomas' Hospital ward", clientKind: "patient", thanks: ["Thank you, nurse.", "Could you check that again?"],
+    mode: "counter", building: "St Thomas' Hospital ward", clientKind: "patient", thanks: ["Thank you, nurse.", "Could you check that again?"],
     stations: [st("obs", "Obs machine", "treat", "d"), st("meds", "Medicine trolley", "treat", "k"), st("dressing", "Dressings", "treat", "v"), st("water", "Water jug", "serve", "k"), st("chart", "Patient chart", "clipboard", "d")],
     order: (rng) => { const c = pick(rng, [["Bed 3 needs their medicine round", ["chart", "meds"]], ["Bed 5's dressing needs changing", ["dressing", "chart"]], ["Bed 2 needs obs and a drink", ["obs", "water", "chart"]]] as const); return { client: who(rng), line: c[0], needs: [...c[1]], ordered: false }; },
   },
@@ -122,7 +122,7 @@ export const CLIENT_JOBS: Record<string, ClientJobDef> = {
     order: (rng) => { const items = some(rng, [["shelf-a", "headphones"], ["shelf-b", "a kettle"], ["shelf-c", "books"]] as const, 1 + Math.floor(rng() * 2)); return { client: who(rng), line: `Order: ${items.map((i) => i[1]).join(" and ")}`, needs: [...items.map((i) => i[0]), "pack", "dispatch"], ordered: false }; },
   },
   waiter: {
-    mode: "counter", building: "Pizzazz dining room", clientKind: "diner", thanks: ["Lovely, thank you!", "This isn't what we ordered…"],
+    mode: "counter", building: "Pizza restaurant dining room", clientKind: "diner", thanks: ["Lovely, thank you!", "This isn't what we ordered…"],
     stations: [st("menus", "Menus", "serve", "v"), st("drinks", "Drinks fridge", "serve", "F"), st("pass", "Kitchen pass", "serve", "k"), st("dessert", "Dessert counter", "serve", "k"), st("till", "Till", "keyboard", "r")],
     order: (rng) => { const want = some(rng, [["drinks", "two lemonades"], ["pass", "a margherita"], ["dessert", "an ice cream"]] as const, 2); return { client: who(rng), line: `We'd like ${want.map((w) => w[1]).join(" and ")}, please.`, needs: [...want.map((w) => w[0]), "till"], ordered: false }; },
   },

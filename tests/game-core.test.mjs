@@ -47,6 +47,23 @@ const validQuestion = (q, label) => {
   );
 };
 
+test("Game companies use display names with their existing saved IDs", () => {
+  const expectedNames = {
+    goggle: "Google",
+    macrosoft: "Microsoft",
+    barklays: "Barclays",
+    tescow: "Tesco",
+    "st-plasters": "St Thomas' Hospital",
+    tesler: "Tesla",
+    gregz: "Greggs",
+    netflics: "Netflix",
+    psyke: "Nike",
+  };
+  for (const [id, name] of Object.entries(expectedNames)) {
+    assert.equal(COMPANIES.find((company) => company.id === id)?.name, name, id);
+  }
+});
+
 test("Every generator makes valid questions across many seeds", () => {
   for (const kind of GENERATOR_KINDS) {
     const rng = createRng(42);
@@ -182,8 +199,8 @@ test("Ranks and rewards match the database function", () => {
 test("Locker catalogue matches the migration and the default avatar is free", () => {
   assert.equal(new Set(COSMETICS.map((c) => c.id)).size, COSMETICS.length);
   const DYES_SQL = fs.readFileSync("supabase/migrations/20261016160000_characters_v3_dyes.sql", "utf8");
-  // The latest display-name migration wins (parody names, never real companies).
-  const brandSql = fs.readFileSync("supabase/migrations/20261112170000_parody_item_names.sql", "utf8");
+  // The latest display-name migration wins.
+  const brandSql = fs.readFileSync("supabase/migrations/20261115023004_cosmetic_display_names.sql", "utf8");
   const brandNames = new Map([...brandSql.matchAll(/\('([^']+)', '([^']+)'\)/g)].map((m) => [m[1], m[2]]));
   for (const c of COSMETICS) {
     if (c.id.startsWith("head-kaykit-")) {
@@ -334,7 +351,7 @@ test("London: every HQ and station has a door, Tube exits are walkable, homes wo
   const L = W.CITY;
   assert.equal(L.name, "London");
   assert.equal(L.portals.filter((p) => p.id.startsWith("hq-")).length, 13, "13 company HQs");
-  // Pizzazz's staff door is inside the restaurant.
+  // The pizza restaurant's staff door is inside the restaurant.
   const { venueMap } = projectData("src/game/core/venues.ts");
   const inside = L.portals.filter((p) => p.to.kind === "map" && p.to.mapId?.startsWith("venue-")).flatMap((p) => venueMap(p.to.mapId)?.portals ?? []);
   const work = [...L.portals, ...inside].filter((p) => p.to.kind === "work").map((p) => p.to.workplace).sort();
@@ -389,7 +406,7 @@ test("Careers: every role's shifts and interviews are well-formed and answerable
   assert.equal(C.shiftPay(crew, 0), Math.round(crew.pay * 0.25), "show-up pay");
   assert.ok(C.canPromote(1, 5, 0.7) && !C.canPromote(1, 4, 0.9) && !C.canPromote(3, 99, 1));
   const cv = C.cvLines([{ workplace: "goggle", role: "junior-dev", shifts: 6, correct: 26, total: 30, startedOn: "16 Oct 2026" }], { debugging: { correct: 9, total: 10 } });
-  assert.match(cv.experience[0], /Junior Developer, Goggle \(simulated work experience/);
+  assert.match(cv.experience[0], /Junior Developer, Google \(simulated work experience/);
   assert.match(cv.skills[0], /Debugging and testing \(9\/10/);
 });
 

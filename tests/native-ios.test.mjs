@@ -66,6 +66,7 @@ test("middleware blocks iOS checkout before any auth request, including client n
     },
     "@/lib/native-ios": native,
     "@/lib/game/local-preview": projectData("src/lib/game/local-preview.ts"),
+    "@/lib/learning/products": projectData("src/lib/learning/products.ts"),
     "@/lib/social/config": { socialConfigured: true },
   }).middleware;
   const makeRequest = (path, agent) => ({

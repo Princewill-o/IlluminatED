@@ -45,12 +45,14 @@ export function DevShowcase({
   view,
   map,
   workplace,
+  contract,
   as,
   at,
 }: {
   view: string;
   map: string;
   workplace?: string;
+  contract?: string;
   /** Start position in tiles, for screenshots. */
   at?: { x: number; y: number };
   /** Voice test: which of the two test friends this tab is. */
@@ -162,6 +164,7 @@ export function DevShowcase({
             offices={[]}
             staff={{}}
             developerTeleport
+            initialContract={typeof contract === "string" ? contract : undefined}
             initialMap={map}
             initialServer={new URLSearchParams(window.location.search).has("menu") ? null : "lse-1"}
             initialArrival={at ? { x: at.x * 32 + 16, y: at.y * 32 + 16 } : undefined}

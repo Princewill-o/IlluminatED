@@ -79,7 +79,7 @@ export function nextHint(n: Needs) {
     energy: "Low on energy: head home and have a nap.",
     focus: "Focus is low: revise on the bus or at your desk.",
     mood: "Mood's dipping: play a quick arcade game.",
-    hunger: "Hungry: grab something from the fridge or Pizzazz Pizza.",
+    hunger: "Hungry: grab something from the fridge or at the pizza restaurant.",
     social: "Feeling lonely: say hi to someone nearby.",
     hygiene: "Freshen up: take a shower at home.",
   }[low.id];

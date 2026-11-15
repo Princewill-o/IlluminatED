@@ -24,7 +24,7 @@ export interface Persona {
   heading?: string;
 }
 
-const JOBS = ["nurse at St Tomas'", "bus driver", "barista", "Year 12 student", "software developer at Goggle", "chef at Pizzazz", "builder", "teacher", "paramedic", "shop assistant at Tescow", "gardener in the parks", "electrician", "university student", "security guard", "hairdresser", "accountant"];
+const JOBS = ["nurse at St Thomas' Hospital", "bus driver", "barista", "Year 12 student", "software developer at Google", "chef at the pizza restaurant", "builder", "teacher", "paramedic", "shop assistant at Tesco", "gardener in the parks", "electrician", "university student", "security guard", "hairdresser", "accountant"];
 const HOBBIES = ["football", "drawing", "baking", "gaming", "running", "photography", "chess", "dancing", "reading", "coding", "guitar", "swimming", "skateboarding", "gardening", "basketball", "film-making"];
 const FOODS = ["jollof rice", "fish and chips", "a proper curry", "pizza", "ramen", "a Sunday roast", "tacos", "pasta", "falafel wraps", "dumplings", "pie and mash", "sushi"];
 const MUSIC = ["grime", "Afrobeats", "pop", "drum and bass", "indie", "R&B", "jazz", "classical", "rock", "hip-hop", "house", "K-pop"];
@@ -85,7 +85,7 @@ export function topicReply(p: Persona, topic: string, turn = 0): string {
     case "study": return `Little and often, that's my tip. Twenty minutes a day beats an all-nighter. The Study Quarter's good for a quiet spot.`;
     case "weekend": return `Probably some ${p.hobby} and seeing family. Maybe the market by the river if the weather holds. You?`;
     case "pets": return `I've got ${p.pet}. Honestly the best thing about getting home. Have you got any pets?`;
-    case "city": return turn % 2 ? `If you're new, the Tube's fastest across town, and the river walk is lovely at sunset.` : `Pizzazz does a decent slice, and the Games Hall by Battersea is fun with friends.`;
+    case "city": return turn % 2 ? `If you're new, the Tube's fastest across town, and the river walk is lovely at sunset.` : `The pizza restaurant does a decent slice, and the Games Hall by Battersea is fun with friends.`;
     case "joke": return JOKES[(hash(p.id) + turn) % JOKES.length];
     default: return `Ha, I hadn't thought about that. Tell me more?`;
   }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 
+import { SecondaryLibrary } from "./secondary-library";
 import { SubjectDiagram } from "./subject-diagram";
 import { SubjectPractice } from "./subject-practice";
 import { SubjectProgress } from "./subject-progress";
@@ -19,7 +20,9 @@ const descriptions: Record<SubjectProduct,string> = {
 export function SubjectHome({ product }: { product: SubjectProduct }) {
   const packs = SUBJECT_PACKS.filter((pack) => pack.product === product);
   return <div className={styles.page} data-product={product}>
-    <header className={styles.hero}><ProductBrand product={product} className="mb-5 text-xl [&_svg]:size-16" /><p className={styles.eyebrow}>Your next discovery starts here</p><h1>{product === "maths" ? "Make every step add up." : product === "science" ? "Ask. Observe. Explain." : "Find the words. Make your point."}</h1><p>{descriptions[product]}</p><p className={styles.muted}>Three complete starter mini-packs for KS3 and GCSE foundations. Original IllumED material; these focused packs do not cover a whole exam specification or guarantee a grade.</p></header>
+    <header className={styles.hero}><ProductBrand product={product} className="mb-5 text-xl [&_svg]:size-16" /><p className={styles.eyebrow}>Your next discovery starts here</p><h1>{product === "maths" ? "Make every step add up." : product === "science" ? "Ask. Observe. Explain." : "Find the words. Make your point."}</h1><p>{descriptions[product]}</p><p className={styles.muted}>Years 7–11 · KS3 and GCSE study support. Choose a year for a warm-up and lessons.</p></header>
+    <SecondaryLibrary product={product} />
+    <h2 className="my-5 text-2xl font-black">More IllumED practice</h2>
     <div className={styles.grid}>{packs.map((pack) => <article className={styles.card} key={pack.slug}><span className={styles.badge}>{pack.level} · {pack.minutes} min</span><h2>{pack.title}</h2><p>{pack.summary}</p><span className={styles.muted}>{pack.questions.length} marked questions · worked example{pack.writing ? " · writing workshop" : " · visual explanation"}</span><Link className={styles.button} href={`/${product}/${pack.slug}`}>Open topic →</Link></article>)}</div>
     <SubjectProgress product={product} />
     <section className={styles.section}><h2>Learn in a way that stays useful</h2><ol className={styles.steps}><li>Read the explanation and work through the example before revealing each answer.</li><li>Try a four-question practice set. Use every explanation to understand the answer.</li><li>Retry a different set. {product === "english" ? "Draft, compare with the model and revise against the rubric." : product === "maths" ? "Try a solo Maths Race when you are ready; accuracy comes before speed." : "Explain your reasoning and consider the limits of the evidence."}</li><li>Sign in to save results and drafts, or practise freely as a guest. Class assignments use your verified class account.</li></ol></section>

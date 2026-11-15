@@ -189,10 +189,10 @@ export const trackInfo = (t: Track) => TRACKS[t];
 
 /** Who you'd actually work for in each city role. */
 const ROLE_EMPLOYER: Record<string, string> = {
-  "pizza-chef": "Pizzazz Pizza", waiter: "Pizzazz Pizza", cashier: "Tescow Express", stocker: "Tescow Express", warehouse: "Tescow Distribution Centre",
-  doctor: "St Tomas' Hospital", nurse: "St Tomas' Hospital", police: "London Police Service", firefighter: "London Fire Service",
+  "pizza-chef": "Pizza Restaurant", waiter: "Pizza Restaurant", cashier: "Tesco Express", stocker: "Tesco Express", warehouse: "Tesco Distribution Centre",
+  doctor: "St Thomas' Hospital", nurse: "St Thomas' Hospital", police: "London Police Service", firefighter: "London Fire Service",
   "delivery-driver": "Parcel Pals", "bus-driver": "London Buses", "taxi-driver": "City Cabs", mechanic: "Motor Mile Garage",
-  builder: "Bodge & Sons Builders", gardener: "City Parks Team", fisher: "Thames Fish Market", cleaner: "Sparkle Cleaning Co.",
+  builder: "Construction Site", gardener: "City Parks Team", fisher: "Thames Fish Market", cleaner: "Sparkle Cleaning Co.",
   barber: "Fresh Fade Salon", security: "Shield Security", teacher: "Study Quarter Academy",
 };
 

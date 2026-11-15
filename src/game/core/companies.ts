@@ -45,8 +45,8 @@ export type BuildingShape =
 export const COMPANIES: Company[] = [
   {
     id: "goggle",
-    name: "Goggle",
-    tagline: "We know what you'll search before you do.",
+    name: "Google",
+    tagline: "Put your coding and data skills to work.",
     sector: "Tech",
     revises: "Computer Science",
     boss: { name: "Gigi Byte", title: "Chief Vibes Officer", look: { skin: "skin-2", hair: "hair-bob", hairColor: "haircol-purple", face: "face-vr", top: "top-hoodie", bottom: "bottom-joggers", shoes: "shoes-hightops", mouth: "mouth-grin", held: "held-phone" } },
@@ -74,7 +74,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "macrosoft",
-    name: "Macrosoft",
+    name: "Microsoft",
     tagline: "Have you tried turning it off and on again?",
     sector: "IT support",
     revises: "IT and Digital Support",
@@ -101,7 +101,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "barklays",
-    name: "Barklays",
+    name: "Barclays",
     tagline: "Make your money skills count.",
     sector: "Banking",
     revises: "Maths and money",
@@ -134,7 +134,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tescow",
-    name: "Tescow",
+    name: "Tesco",
     tagline: "Big ideas, everyday essentials.",
     sector: "Retail",
     revises: "Business and Economics",
@@ -159,8 +159,8 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "st-plasters",
-    name: "St Plaster's Hospital",
-    tagline: "Now with 40% fewer 'oops'.",
+    name: "St Thomas' Hospital",
+    tagline: "Practise patient care and biology.",
     sector: "Health",
     revises: "Biology and Health",
     boss: { name: "Dr Ow", title: "Head of Ouchology", look: { skin: "skin-5", hair: "hair-short", hairColor: "haircol-silver", top: "top-labcoat", bottom: "bottom-smart", shoes: "shoes-smart", extras: "extras-plaster", eyes: "eyes-focused", brows: "brows-raised", mouth: "mouth-smirk" } },
@@ -191,8 +191,8 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tesler",
-    name: "Tesler",
-    tagline: "Self-driving, self-parking, self-esteem issues.",
+    name: "Tesla",
+    tagline: "Test your physics and engineering skills.",
     sector: "Engineering",
     revises: "Physics and Engineering",
     boss: { name: "Volt Ramirez", title: "Chief Zoom Officer", look: { skin: "skin-4", hair: "hair-mohawk", hairColor: "haircol-green", hat: "hat-hardhat", top: "top-hivis", bottom: "bottom-cargo", shoes: "shoes-boots", mouth: "mouth-laugh", eyes: "eyes-sparkle" } },
@@ -202,12 +202,12 @@ export const COMPANIES: Company[] = [
     building: "factory",
     wins: [
       "Volt Ramirez revs approvingly. Indoors.",
-      "Your car drove itself to the right answer.",
+      "Your test car made it to the right answer.",
       "Circuit complete. The lights came on. So did your career.",
       "Physics: obeyed. Engineers: impressed.",
     ],
     fails: [
-      "The self-driving car drove itself to Gregz for a sausage roll.",
+      "Your test car ended up at Greggs for a sausage roll.",
       "You plugged the car into the toaster.",
       "The prototype is now in orbit. That wasn't the plan.",
       "You confused volts with vibes. Easy mistake.",
@@ -216,7 +216,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "gregz",
-    name: "Gregz",
+    name: "Greggs",
     tagline: "Sausage rolls and chemical bonds since forever.",
     sector: "Food science",
     revises: "Chemistry and Applied Science",
@@ -246,7 +246,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "lawz",
-    name: "Lawz & Order LLP",
+    name: "Law Practice",
     tagline: "Objection! (to Mondays).",
     sector: "Law",
     revises: "Law, English, History and Psychology",
@@ -281,7 +281,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "netflics",
-    name: "Netflics",
+    name: "Netflix",
     tagline: "Are you still revising?",
     sector: "Media",
     revises: "Creative Media and English",
@@ -310,7 +310,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "bodge",
-    name: "Bodge & Sons Builders",
+    name: "Construction Site",
     tagline: "Measure twice, cut once, panic thrice.",
     sector: "Construction",
     revises: "Construction and Maths",
@@ -340,8 +340,8 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "psyke",
-    name: "Psyke",
-    tagline: "Just do it. Eventually.",
+    name: "Nike",
+    tagline: "Make every training session count.",
     sector: "Sport",
     revises: "Sport and Physical Education",
     boss: {
@@ -367,7 +367,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "tiny-humans",
-    name: "Tiny Humans Nursery",
+    name: "Early Years Nursery",
     tagline: "Small people. Big feelings. Glitter everywhere.",
     sector: "Education",
     revises: "Early Years and Education",
@@ -396,7 +396,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "atlas",
-    name: "Atlas & Co. Travel",
+    name: "Travel Agency",
     tagline: "We've never lost a tourist on purpose.",
     sector: "Travel",
     revises: "Geography and History",

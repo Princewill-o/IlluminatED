@@ -69,6 +69,7 @@ export function GamePhone({
   onLocker,
   onStudy,
   onAwards,
+  onContracts,
   onGarage = onMap,
   onUniversities = onMap,
   onUKRoads = onMap,
@@ -88,6 +89,7 @@ export function GamePhone({
   onLocker: () => void;
   onStudy: () => void;
   onAwards: () => void;
+  onContracts?: () => void;
   onGarage?: () => void;
   onUniversities?: () => void;
   onUKRoads?: () => void;
@@ -126,6 +128,7 @@ export function GamePhone({
     { name: "Houses", icon: "home", action: onHouses },
     { name: "Locker", icon: "locker", action: onLocker },
     { name: "Study", icon: "study", action: onStudy },
+    ...(onContracts ? [{ name: "Contracts", icon: "study" as const, action: onContracts }] : []),
     { name: "Awards", icon: "awards", action: onAwards },
     { name: "Events", icon: "weekly", action: onEvents ?? onAwards },
     { name: "Wallet", icon: "wallet", href: "/games/wealth" },

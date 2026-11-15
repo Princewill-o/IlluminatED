@@ -1340,7 +1340,7 @@ function hospitalExterior(g: THREE.Group,t: Extract<ReturnType<typeof buildLondo
   box(g,glass,cx-1.15,.15,front-.025,cx+1.15,2.55,front+.06);
   box(g,"#dcecea",cx-.04,.16,front+.061,cx+.04,2.5,front+.09);
   box(g,teal,cx-2.4,2.65,front-.15,cx+2.4,2.9,front+.55);
-  const title=sign("ST TOMAS' HOSPITAL",{bg:teal,fg:"#ffffff",w:6.4,h:.65});title.position.set(cx,3.35,front+.08);g.add(title);
+  const title=sign("ST THOMAS' HOSPITAL",{bg:teal,fg:"#ffffff",w:6.4,h:.65});title.position.set(cx,3.35,front+.08);g.add(title);
   const sub=sign("RECEPTION  ·  CARE & RECOVERY",{bg:stone,fg:teal,w:5.5,h:.32});sub.position.set(cx,2.33,front+.12);g.add(sub);
   // A teal medical plus, distinct from protected Red Cross branding.
   box(g,teal,cx-.3,top+.25,z+d*.5,cx+.3,top+2.05,z+d*.5+.28);
@@ -2208,7 +2208,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
     for(let x=1;x<Wd-2;x+=4)jobs.push(kaykitInteriorProp(g,hospitalAsset('wall_window'),x,0,3.8,2.8,false,0,0,.96));
     for(let x=10;x<16;x++)for(let y=8;y<11;y++)jobs.push(kaykitInteriorProp(g,hospitalAsset('floor_1'),x,y,1,.025,false,0,.022,1));
     for(let x=1;x<Wd-1;x++)box(g,'#397f79',x,.05,.97,x+1,.85,1.025);
-    const board=sign('ST TOMAS  ·  CARE & RECOVERY',{bg:'#276b67',fg:'#e9f4e9',w:8,h:.6});board.position.set(Wd/2,2.1,1.04);g.add(board);
+    const board=sign('ST THOMAS  ·  CARE & RECOVERY',{bg:'#276b67',fg:'#e9f4e9',w:8,h:.6});board.position.set(Wd/2,2.1,1.04);g.add(board);
   }
   if(map.id==='study-lobby'){
     for(let x=1;x<Wd-1;x++){
@@ -2243,7 +2243,7 @@ function interior(world: THREE.Group, map: WorldMap, jobs: Promise<unknown>[], s
       box(g,trim,x,.05,y,x+.06,.92,y+1);
       box(g,'#c8a66c',x,.92,y,x+.07,.97,y+1);
     }
-    const board=sign(map.id==='workplace-pizzazz'?'PIZZAZZ  ·  KITCHEN & DELIVERY':'VENTURE YARD  ·  BUILD SOMETHING',{bg:trim,fg:'#f5e7c9',w:8,h:.7});
+    const board=sign(map.id==='workplace-pizzazz'?'PIZZA KITCHEN  ·  DELIVERY':'VENTURE YARD  ·  BUILD SOMETHING',{bg:trim,fg:'#f5e7c9',w:8,h:.7});
     board.position.set(Wd/2,2.15,1.06);g.add(board);
     // Flat inlay marks the main route from the front door to the service area.
     for(let y=H-4;y>H-8;y--)box(g,'#6b816c',Wd/2-.32,.026,y,Wd/2+.32,.032,y+.72);
@@ -2921,7 +2921,7 @@ export function World3D({
     // Shop fronts with names over the door.
     if (!highland && map.art === "london")
       for (const p of map.portals) {
-        const name = p.id === "pizzazz" ? "Pizzazz Pizza" : p.id === "dealer" ? "Motor Mile Cars" : p.id === "venture-yard" ? "Venture Yard" : null;
+        const name = p.id === "pizzazz" ? "Pizza Restaurant" : p.id === "dealer" ? "Motor Mile Cars" : p.id === "venture-yard" ? "Venture Yard" : null;
         if (!name) continue;
         const sg = sign(name, { bg: p.id === "pizzazz" ? "#c8322d" : "#13203a", fg: "#ffffff", w: 3, h: 0.5 });
         sg.position.set((p.rect.x + p.rect.w / 2) / TILE, 1.9, p.rect.y / TILE - 0.02);
@@ -3075,7 +3075,7 @@ export function World3D({
     const pizzaParcel = new THREE.Group();
     box(pizzaParcel, "#f1dcc0", -0.32, 0.8, 0.28, 0.32, 0.92, 0.92);
     box(pizzaParcel, "#cb4c36", -0.33, 0.92, 0.27, 0.33, 0.95, 0.93);
-    const pizzaStamp = sign("PIZZAZZ", {bg:"#cb4c36",fg:"#fff8e7",w:0.48,h:0.14});
+    const pizzaStamp = sign("PIZZA", {bg:"#cb4c36",fg:"#fff8e7",w:0.48,h:0.14});
     pizzaStamp.position.set(0, 0.85, 0.94); pizzaParcel.add(pizzaStamp);
     me.root.add(pizzaParcel); pizzaParcel.visible = false;
     const deliveryCustomer = makeBody(npcLook(33), null, true);
@@ -3295,7 +3295,7 @@ export function World3D({
       const body = makeBody(npcLook(90 + i), null, true); scene.add(body.root);
       return { id: pose.id, body };
     }) : [];
-    // The first riders are at work: Pizzazz delivery riders with a hot box, then parcel couriers.
+    // The first riders are at work: pizza delivery riders with a hot box, then parcel couriers.
     const RIDER_JOBS = [
       { look: ROLE_UNIFORMS["pizza-chef"], bike: "#d6452a", box: "#d6452a", stripe: "#ffffff" },
       { look: ROLE_UNIFORMS["delivery-driver"], bike: "#2b5fd9", box: "#b98b55", stripe: "#e0c08c" },
@@ -3363,7 +3363,7 @@ export function World3D({
         const net = box(worksProps, "#2f9e5b", work.x0, SCAFFOLD_LEVELS[2] + 0.12, zOut + 0.01, work.x1, top - 0.05, zOut + 0.02);
         net.material = (net.material as THREE.MeshStandardMaterial).clone();
         Object.assign(net.material, { transparent: true, opacity: 0.55 });
-        const board = sign("Bodge & Sons Builders", { bg: "#f2c14e", fg: "#1d1640", w: Math.min(2.4, work.x1 - work.x0), h: 0.36 });
+        const board = sign("Construction Site", { bg: "#f2c14e", fg: "#1d1640", w: Math.min(2.4, work.x1 - work.x0), h: 0.36 });
         board.position.set((work.x0 + work.x1) / 2, SCAFFOLD_LEVELS[0] + 0.5, zOut + 0.04); worksProps.add(board);
         // Cones round the back of the pickup.
         if (work.vehicle) for (const dx of [-2.3, 2.3]) { cyl(worksProps, "#ff6a13", work.vehicle.x + dx, work.vehicle.z, 0, 0.5, 0.02, 8, 0.15); cyl(worksProps, "#ffffff", work.vehicle.x + dx, work.vehicle.z, 0.24, 0.32, 0.11, 8, 0.12); }

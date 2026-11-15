@@ -58,7 +58,7 @@ export const NPC_TOPICS = [
   {
     label: "Talk about work",
     reply:
-      "I’m exploring different jobs. Pizzazz has delivery shifts, or you can visit a company reception and apply for a role.",
+      "I’m exploring different jobs. The pizza restaurant has delivery shifts, or you can visit a company reception and apply for a role.",
   },
   {
     label: "Business advice",

@@ -80,7 +80,7 @@ const s = (label: string, action: RoleAction): RoleStep => ({ label, action });
 export const ROLES: PracticalRole[] = [
   {
     id: "pizza-chef", title: "Pizza Chef", sector: "Food", colour: "#e4572e", done: "Pizza order completed",
-    place: { label: "Pizzazz Pizza kitchen", mapId: "role-pizza-chef" }, pay: [25, 40],
+    place: { label: "Pizza kitchen", mapId: "role-pizza-chef" }, pay: [25, 40],
     summary: "Make each pizza exactly to the ticket: dough, sauce, cheese, toppings, oven, box.",
     equipment: ["Dough scraper", "Sauce ladle", "Pizza peel", "Oven gloves"],
     steps: [s("Read the order ticket", "clipboard"), s("Knead and flatten the dough", "cook"), s("Ladle on the sauce", "cook"), s("Sprinkle cheese and toppings", "cook"), s("Slide it into the oven and bake", "cook"), s("Box it at the collection counter", "serve")],
@@ -125,7 +125,7 @@ export const ROLES: PracticalRole[] = [
   },
   {
     id: "doctor", plus: true, title: "Doctor", sector: "Health", colour: "#1d7ed8", done: "Patient treated",
-    place: { label: "St Tomas' Hospital", mapId: "role-doctor" }, pay: [40, 90],
+    place: { label: "St Thomas' Hospital", mapId: "role-doctor" }, pay: [40, 90],
     summary: "Hear the symptoms, check vitals, examine, decide the treatment, give it and write it up.",
     equipment: ["Stethoscope", "Thermometer", "Bandages", "Patient notes"],
     steps: [s("Greet the patient and hear their symptoms", "clipboard"), s("Check pulse and temperature", "treat"), s("Listen with the stethoscope", "treat"), s("Give the treatment", "treat"), s("Write up the patient record", "keyboard")],
@@ -134,7 +134,7 @@ export const ROLES: PracticalRole[] = [
   },
   {
     id: "nurse", plus: true, title: "Nurse", sector: "Health", colour: "#4cc9f0", done: "Patient care task completed",
-    place: { label: "St Tomas' Hospital ward", mapId: "role-nurse" }, pay: [20, 50],
+    place: { label: "St Thomas' Hospital ward", mapId: "role-nurse" }, pay: [20, 50],
     summary: "Prepare beds, take observations, change dressings and wheel patients where they need to go.",
     equipment: ["Wheelchair", "Obs monitor", "Dressings"],
     steps: [s("Prepare the bed", "carry"), s("Escort the patient to the bay", "serve"), s("Take their observations", "treat"), s("Change the dressing", "treat"), s("Update the chart", "clipboard")],
@@ -233,7 +233,7 @@ export const ROLES: PracticalRole[] = [
   },
   {
     id: "waiter", title: "Restaurant Waiter", sector: "Food", colour: "#bc6c25", done: "Table served",
-    place: { label: "Pizzazz Pizza dining room", mapId: "role-waiter" }, pay: [15, 40],
+    place: { label: "Pizza restaurant dining room", mapId: "role-waiter" }, pay: [15, 40],
     summary: "Seat the guests, take the order, carry the food, clear the table and take payment.",
     equipment: ["Menus", "Order pad", "Tray"],
     steps: [s("Welcome and seat the table", "serve"), s("Take the order", "clipboard"), s("Carry the meals over", "carry"), s("Clear the plates", "carry"), s("Take payment", "keyboard")],

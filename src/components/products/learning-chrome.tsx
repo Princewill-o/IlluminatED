@@ -31,7 +31,7 @@ const LEARN: Navbar1Group = { label: "Learn", items: [
 ] };
 const SCHOOLS: Navbar1Group = { label: "Schools", items: [
   { title: "School dashboard", href: "/school", description: "Join a class, assign work and see feedback" },
-  { title: "Pilot lesson", href: "/world/pilot", description: "A complete Tech Repair Trainee lesson" },
+  { title: "Pilot lesson", href: "/world/pilot", description: "Plan a guided session inside the game" },
   { title: "For schools & colleges", href: "/schools", description: "School access, pilots and support" },
   { title: "My Work", href: "/world/my-work", description: "Projects, teacher feedback and certificates" },
 ] };
@@ -45,22 +45,24 @@ const HELP: Navbar1Group = { label: "Help", items: [
 ] };
 const TOPIC_LINKS: Record<Exclude<ProductId,"world">, Navbar1Group["items"]> = {
   maths: [
+    {title:"Years 7–11 maths",href:"/maths",description:"Choose your year group and find topic support"},
     {title:"Percentages",href:"/maths/percentages",description:"Percentages, multipliers and change"},
     {title:"Ratio & proportion",href:"/maths/ratio-proportion",description:"Share quantities and scale recipes"},
     {title:"Profit & financial maths",href:"/maths/profit-financial-maths",description:"Revenue, costs and everyday budgets"},
     {title:"Solo Maths Race",href:"/maths/percentages#practice",description:"Race your best, with accuracy first"},
   ],
   science: [
+    {title:"Years 7–11 science",href:"/science",description:"Biology, chemistry, physics and working scientifically"},
     {title:"Cells & microscopy",href:"/science/cells-microscopy",description:"Cell structures and magnification"},
     {title:"Particles & materials",href:"/science/particles-materials",description:"States of matter and fair comparisons"},
     {title:"Electricity & circuits",href:"/science/electricity-circuits",description:"Current, resistance and circuit rules"},
     {title:"Inspection evidence",href:"/science/inspection-evidence",description:"Observations, uncertainty and conclusions"},
   ],
   english: [
+    {title:"Language & Literature",href:"/english",description:"Years 7–11 reading, literature and writing support"},
     {title:"Reading & evidence",href:"/english/reading-evidence",description:"Build an interpretation from the text"},
     {title:"Language analysis",href:"/english/language-analysis",description:"Explain the writer's choices"},
     {title:"Writing for an audience",href:"/english/writing-audience",description:"Draft, compare and revise"},
-    {title:"Condition reports",href:"/english/condition-report",description:"Write a clear, useful workplace report"},
   ],
 };
 
@@ -80,10 +82,10 @@ export function LearningHeader({ initialProduct }: { initialProduct?: ProductId 
   const groups: Navbar1Group[] = [
     {label:"Products",items:PRODUCTS.map(p=>({title:p.name,href:p.path,description:p.label,icon:<ProductMark product={p.id} className="size-8" />}))},
     ...(product ? [{label:product.name,items:product.id === "world" ? [
-      {title:"Explore IllumWorld",href:"/world",description:"Virtual work experience in a playable city"},
-      {title:"Tech Repair Trainee",href:"/world/tech-repair-trainee",description:"Inspect, calculate and explain your decision"},
-      {title:"My Work",href:"/world/my-work",description:"Your projects and teacher feedback"},
-      {title:"Explore the city",href:"/games/world",description:"Return to the wider game world"},
+      {title:"Play IllumWorld",href:"/games/world?map=city",description:"Enter the game and explore the city"},
+      {title:"Role contracts",href:"/world/contracts",description:"Three short in-game shifts to try a new role"},
+      {title:"Completion certificates",href:"/world/contracts#certificates",description:"Keep a record of the role course you complete"},
+      {title:"Saved class projects",href:"/world/my-work",description:"Your existing projects and teacher feedback"},
     ] : TOPIC_LINKS[product.id]}] : []),
     LEARN,SCHOOLS,HELP,
   ];
@@ -114,6 +116,6 @@ export function LearningFooter() {
         {FOOTER_GROUPS.map(group=><div key={group.label}><h2 className="text-sm font-semibold">{group.label}</h2><ul className="mt-4 space-y-2">{group.items.map(item=><li key={item.href}><Link prefetch={false} href={item.href} className="inline-flex min-h-8 items-center text-sm leading-6 text-muted-foreground hover:text-foreground hover:underline underline-offset-4">{item.title}</Link></li>)}</ul></div>)}
       </nav>
     </div>
-    <div className="border-t border-border"><div className="mx-auto max-w-7xl px-5 py-7 sm:px-6"><nav aria-label="Legal"><ul className="flex flex-wrap gap-x-6 gap-y-2">{LEGAL_LINKS.map(item=><li key={item.href}><Link prefetch={false} href={item.href} className="inline-flex min-h-8 items-center text-xs font-medium text-muted-foreground hover:text-foreground">{item.title}</Link></li>)}</ul></nav><p className="mt-5 max-w-4xl text-xs leading-6 text-muted-foreground">© {new Date().getFullYear()} IlluminatED Learning. Independent learning resources. Exam-board alignment is stated only where verified. Project certificates record teacher-approved work; they are not regulated qualifications.</p></div></div>
+    <div className="border-t border-border"><div className="mx-auto max-w-7xl px-5 py-7 sm:px-6"><nav aria-label="Legal"><ul className="flex flex-wrap gap-x-6 gap-y-2">{LEGAL_LINKS.map(item=><li key={item.href}><Link prefetch={false} href={item.href} className="inline-flex min-h-8 items-center text-xs font-medium text-muted-foreground hover:text-foreground">{item.title}</Link></li>)}</ul></nav><p className="mt-5 max-w-4xl text-xs leading-6 text-muted-foreground">© {new Date().getFullYear()} IlluminatED Learning. Independent learning resources. Exam-board alignment is stated only where verified. In-game completion certificates record learning activity; class-project certificates record teacher-approved work. Neither is a regulated qualification.</p></div></div>
   </footer>;
 }

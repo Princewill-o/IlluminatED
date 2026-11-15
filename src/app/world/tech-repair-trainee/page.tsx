@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import type { Metadata } from "next";
 
@@ -23,6 +24,8 @@ export default async function RepairMissionPage({
   const state = await loadRepairProject(assignment);
   const choices =
     !raw && state.userId ? await loadMyRepairAssignments(state.userId) : null;
+  if (!raw && !state.project && !state.error && !choices?.error && !choices?.assignments.length) redirect("/world/contracts");
+  if (!raw && !state.signedIn && !state.project) redirect("/world/contracts");
   return (
     <>
       {choices && (

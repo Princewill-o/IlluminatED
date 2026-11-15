@@ -1,6 +1,5 @@
 export type LearningProduct = "world" | "maths" | "science" | "english";
 export const ASSIGNABLE_RESOURCES: { product: LearningProduct; slug: string; title: string; time: string }[] = [
-  { product: "world", slug: "tech-repair-trainee", title: "Tech Repair Trainee", time: "35–40 minutes · Year 10" },
   { product: "maths", slug: "percentages", title: "Percentages", time: "GCSE maths" },
   { product: "maths", slug: "ratio-proportion", title: "Ratio and proportion", time: "GCSE maths" },
   { product: "maths", slug: "profit-financial-maths", title: "Profit and financial maths", time: "GCSE maths" },
@@ -13,6 +12,8 @@ export const ASSIGNABLE_RESOURCES: { product: LearningProduct; slug: string; tit
 ];
 export const PRODUCT_NAMES: Record<LearningProduct, string> = { world: "IllumWorld", maths: "IllumMaths", science: "IllumScience", english: "IllumEnglish" };
 export function assignmentUrl(product: LearningProduct, slug: string, id: string) {
+  // Keep assignment links working for projects assigned before retirement.
+  if (product === "world" && slug === "tech-repair-trainee") return `/world/tech-repair-trainee?assignment=${encodeURIComponent(id)}`;
   const known = ASSIGNABLE_RESOURCES.some((r) => r.product === product && r.slug === slug);
   return known ? `/${product}/${slug}?assignment=${encodeURIComponent(id)}` : "/school";
 }

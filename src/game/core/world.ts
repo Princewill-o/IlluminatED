@@ -49,6 +49,7 @@ export type PortalTarget =
   | { kind: "map"; mapId: string; label: string }
   | { kind: "desk" }
   | { kind: "link"; href: string }
+  | { kind: "role-contracts" }
   | { kind: "tube"; station: string }
   | { kind: "work"; workplace: string }
   | { kind: "workstation"; workplace: string; station: "reception" | "terminal" }
@@ -606,10 +607,10 @@ export function ventureMap(): WorldMap {
           to: { kind: "map", mapId: "city", label: "London" },
         },
         {
-          id: "repair-project",
+          id: "role-contracts",
           rect: px(16, 21, 2, 1),
-          label: "IllumWorld · start Tech Repair Trainee",
-          to: { kind: "link", href: "/world/tech-repair-trainee" },
+          label: "Open in-game role contracts",
+          to: { kind: "role-contracts" },
         },
         {
           id: "business",
@@ -878,7 +879,7 @@ export function londonMap(): WorldMap {
   }
   const partyBuilding=L.things.find(th=>th.kind === "building" && th.id === "district-wharf-cafe");
   if(partyBuilding&&partyBuilding.kind==="building")portals.unshift({id:"party-city",rect:px(partyBuilding.x+1,partyBuilding.y+partyBuilding.h,2,1),label:"Community social · music and challenges",to:{kind:"map",mapId:"party-city",label:"London community social"}});
-  // Pizzazz Pizza: the first shop on the West End parade.
+  // Pizza Restaurant: the first shop on the West End parade.
   const pizza = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x)[0];
   // Lyme e-bikes parked on pavements all over London (tap one to ride).
   for (let y = 1; y < L.tiles.length - 1; y++)
@@ -892,17 +893,17 @@ export function londonMap(): WorldMap {
   const shops = L.things.flatMap((t) => (t.kind === "building" && t.style === "shop" ? [t] : [])).sort((a, b) => a.y - b.y || a.x - b.x);
   const dealer = shops[1];
   // Shops are walk-in: go inside to the checkout (venues.ts).
-  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tescow Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tescow Express" } });
-  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Bootz Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Bootz Pharmacy" } });
+  if (shops[2]) portals.push({ id: "tescow", rect: px(shops[2].x + 1, shops[2].y + shops[2].h, 2, 1), label: "Tesco Express: drinks and meal deals", to: { kind: "map", mapId: "venue-tescow", label: "Tesco Express" } });
+  if (shops[3]) portals.push({ id: "bootz", rect: px(shops[3].x + 1, shops[3].y + shops[3].h, 2, 1), label: "Boots Pharmacy: medicine", to: { kind: "map", mapId: "venue-bootz", label: "Boots Pharmacy" } });
   // The hospital and the Crown Court: the nearest big buildings to Waterloo and St Paul's.
   const bigs = L.things.flatMap((t) => (t.kind === "building" && !t.companyId && !t.id.startsWith("hotel-") && !t.id.startsWith("university-site-") && !t.id.startsWith("district-") && (t.style === "office" || t.style === "stone") ? [t] : []));
   const near = (x: number, y: number, not?: { id: string }) => bigs.filter((b) => b !== not).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
   const hosp = L.things.find((t) => t.kind === "building" && t.id === "city-hospital");
   const court = near(44, 28, hosp);
-  if (hosp && hosp.kind === "building") portals.push({ id: "hospital", rect: px(hosp.x + Math.floor(hosp.w/2) - 1, hosp.y + hosp.h, 2, 1), label: "St Tomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Tomas' Hospital" } });
+  if (hosp && hosp.kind === "building") portals.push({ id: "hospital", rect: px(hosp.x + Math.floor(hosp.w/2) - 1, hosp.y + hosp.h, 2, 1), label: "St Thomas' Hospital", to: { kind: "map", mapId: "hospital", label: "St Thomas' Hospital" } });
   if (court) portals.push({ id: "court", rect: px(court.x + 1, court.y + court.h, 2, 1), label: "Crown Court", to: { kind: "map", mapId: "court", label: "Crown Court" } });
   if (dealer) portals.push({ id: "dealer", rect: px(dealer.x + 1, dealer.y + dealer.h, 2, 1), label: "Motor Mile: car dealership", to: { kind: "dealer" } });
-  if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizzazz Pizza: eat in, or work here", to: { kind: "map", mapId: "venue-pizzazz", label: "Pizzazz Pizza" } });
+  if (pizza) portals.push({ id: "pizzazz", rect: px(pizza.x + 1, pizza.y + pizza.h, 2, 1), label: "Pizza Restaurant: eat in, or work here", to: { kind: "map", mapId: "venue-pizzazz", label: "Pizza Restaurant" } });
   // Every workplace has its own building and its own door, spread across the city.
   const sites = workplaceSites(L, portals);
   if (sites.police) {
@@ -911,8 +912,8 @@ export function londonMap(): WorldMap {
     portals.push({ id: "role-door-police", rect: px(b.x + b.w - 1, b.y + b.h, 1, 1), label: "Police station · officers' entrance: work as a police officer", to: { kind: "map", mapId: "role-police", label: "Police station" } });
   }
   if (hosp && hosp.kind === "building") {
-    portals.push({ id: "role-door-doctor", rect: px(hosp.x + 1, hosp.y + hosp.h, 1, 1), label: "St Tomas' Hospital · doctors' entrance", to: { kind: "map", mapId: "role-doctor", label: "St Tomas' Hospital" } });
-    portals.push({ id: "role-door-nurse", rect: px(hosp.x + hosp.w - 2, hosp.y + hosp.h, 1, 1), label: "St Tomas' Hospital · nurses' entrance", to: { kind: "map", mapId: "role-nurse", label: "St Tomas' Hospital ward" } });
+    portals.push({ id: "role-door-doctor", rect: px(hosp.x + 1, hosp.y + hosp.h, 1, 1), label: "St Thomas' Hospital · doctors' entrance", to: { kind: "map", mapId: "role-doctor", label: "St Thomas' Hospital" } });
+    portals.push({ id: "role-door-nurse", rect: px(hosp.x + hosp.w - 2, hosp.y + hosp.h, 1, 1), label: "St Thomas' Hospital · nurses' entrance", to: { kind: "map", mapId: "role-nurse", label: "St Thomas' Hospital ward" } });
   }
   for (const [role, b] of sites.roles) {
     const sign = ROLE_SITES.find(([id]) => id === role)![1];
@@ -1038,7 +1039,7 @@ export function stationMap(stationId: string): WorldMap | null {
   );
 }
 
-/** St Tomas' Hospital: reception, a doctor's desk and a ward of beds. */
+/** St Thomas' Hospital: reception, a doctor's desk and a ward of beds. */
 export function hospitalMap(): WorldMap {
   const g = new Grid(26, 16, ".");
   g.border("#");
@@ -1053,7 +1054,7 @@ export function hospitalMap(): WorldMap {
     {
       id: "hospital",
       kind: "hospital",
-      name: "St Tomas' Hospital",
+      name: "St Thomas' Hospital",
       structures: [],
       portals: [
         { id: "doctor", rect: px(12, 12, 2, 1), label: "See a doctor (free, takes a moment)", to: { kind: "doctor" } },
@@ -1062,7 +1063,7 @@ export function hospitalMap(): WorldMap {
       rooms: [{ name: "West ward · recovery bays", rect: px(1, 3, 10, 4) }, { name: "East ward · observation bays", rect: px(16, 3, 9, 4) }, { name: "Reception and waiting lounge", rect: px(9, 9, 15, 5) }],
       spawn: centre(13, 13),
       accent: "#15987f",
-      sign: { x: 13, y: 8, text: "St Tomas' Hospital" },
+      sign: { x: 13, y: 8, text: "St Thomas' Hospital" },
     },
     g,
   );
@@ -1100,9 +1101,9 @@ export function courtMap(): WorldMap {
 /** The building that houses the police station: a big civic block near the court, not the court itself. */
 /** City roles that get a building of their own (doctors, nurses and police use the hospital and the station). */
 export const ROLE_SITES: [string, string][] = [
-  ["pizza-chef", "Pizzazz Kitchen"], ["waiter", "Pizzazz Dining Room"], ["cashier", "Tescow Superstore"], ["stocker", "Tescow Stockroom"],
-  ["warehouse", "Tescow Distribution Centre"], ["delivery-driver", "Parcel Pals Depot"], ["bus-driver", "London Buses Depot"], ["taxi-driver", "City Cabs Office"],
-  ["mechanic", "Motor Mile Garage"], ["builder", "Bodge & Sons Site Office"], ["gardener", "City Parks Team"], ["fisher", "Thames Fish Market"],
+  ["pizza-chef", "Pizza Kitchen"], ["waiter", "Pizza Restaurant Dining Room"], ["cashier", "Tesco Superstore"], ["stocker", "Tesco Stockroom"],
+  ["warehouse", "Tesco Distribution Centre"], ["delivery-driver", "Parcel Pals Depot"], ["bus-driver", "London Buses Depot"], ["taxi-driver", "City Cabs Office"],
+  ["mechanic", "Motor Mile Garage"], ["builder", "Construction Site Office"], ["gardener", "City Parks Team"], ["fisher", "Thames Fish Market"],
   ["cleaner", "Sparkle Cleaning Co."], ["barber", "Fresh Fade Salon"], ["security", "Shield Security"], ["teacher", "Study Quarter Academy"],
   ["firefighter", "London Fire Station"],
 ];
@@ -1679,7 +1680,7 @@ export function universityInteriorMap(id:string): WorldMap|null {
 export function supermarketMap():WorldMap {
  const g=new Grid(30,25,".");g.border("#");
  for(const x of [8,15,22])g.fill(x,6,2,10,"#");
- return finish({id:"supermarket",kind:"office",name:"Tescow · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
+ return finish({id:"supermarket",kind:"office",name:"Tesco · practice store",structures:[],portals:[{id:"exit",rect:px(14,23,2,1),label:"Back to London",to:{kind:"map",mapId:"city",label:"London"}}],rooms:[],spawn:centre(14,21),accent:"#2b5fd9",sign:{x:15,y:2,text:"Stock shelves · serve customers · learn"}},g);
 }
 
 

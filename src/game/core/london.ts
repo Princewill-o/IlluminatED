@@ -7,7 +7,7 @@ import { universitiesInCity } from "./universities";
 
 /**
  * London: the main IlluminatED world. A stylised map of central London with the
- * Thames, its bridges, the landmarks, the City (where the 13 parody companies
+ * Thames, its bridges, the landmarks, the City (where the company simulations
  * have their HQs), terraced homes in Brixton and Underground stations that work
  * as teleports.
  *
@@ -449,7 +449,7 @@ export function buildLondon(): Built {
   // A dedicated hospital plot replaces the old nearest-building guess. Its
   // address, entrance and model now refer to the same real ten-tile frontage.
   if (!building(56, 25, 10, 8, 8, "stone", {
-    id: "city-hospital", label: "St Tomas' Hospital", accent: "#287a78", colour: "#edf3ed", roof: "#5f8182",
+    id: "city-hospital", label: "St Thomas' Hospital", accent: "#287a78", colour: "#edf3ed", roof: "#5f8182",
   })) throw new Error("No room for the city hospital");
   things.push({
     kind: "landmark",

@@ -66,7 +66,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: circle(31, 33, 2), fill: INK },
     ],
   },
-  // St Plaster's: a plaster.
+  // St Thomas' Hospital: a plaster.
   "st-plasters": {
     bg: "#ff7a6b",
     shapes: [
@@ -92,7 +92,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: rect(29, 20, 6, 20, 3), fill: "#ffd9a3" },
     ],
   },
-  // Lawz & Order: balanced scales.
+  // Law practice: balanced scales.
   lawz: {
     bg: "#8fb4ff",
     shapes: [
@@ -115,7 +115,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: "M36 24h5l-2 30h-5Z", fill: INK },
     ],
   },
-  // Bodge & Sons: a hard hat.
+  // Construction site: a hard hat.
   bodge: {
     bg: "#ffd166",
     shapes: [
@@ -135,7 +135,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: rect(31, 35, 9, 3, 1), fill: INK },
     ],
   },
-  // Tiny Humans Nursery: a stack of letter blocks.
+  // Early years nursery: a stack of letter blocks.
   "tiny-humans": {
     bg: "#ff8fd1",
     shapes: [
@@ -148,7 +148,7 @@ export const LOGOS: Record<string, Logo> = {
       { d: rect(18, 39, 6, 8, 1), fill: INK },
     ],
   },
-  // Atlas & Co.: a compass rose.
+  // Travel agency: a compass rose.
   atlas: {
     bg: "#6bc6ff",
     shapes: [

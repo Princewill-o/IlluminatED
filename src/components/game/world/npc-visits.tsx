@@ -116,7 +116,7 @@ export function NpcVisits({ enabled, map, job, playerName, onReward, onWaypoint,
     (window as unknown as { __demoVisit?: (k: VisitorKind) => Promise<void> }).__demoVisit = async (k) => {
       const focus: LearningFocus = { topicId: "gcse-maths-linear-equations", topicTitle: "Linear equations", courseId: "gcse-maths", subject: "Maths", reason: "45% right so far", answered: 0, correct: 0 };
       const questions = await topicQuiz(focus.topicId, 3).catch(() => []);
-      const next: Visit = k === "coworker" ? { kind: "coworker", name: "Sam", workplace: "pizzazz", place: "Pizzazz", hour: 13, door: map.portals.find((p) => p.id === "pizzazz") ?? null } : { kind: k, name: pick(NAMES[k]), focus, questions };
+      const next: Visit = k === "coworker" ? { kind: "coworker", name: "Sam", workplace: "pizzazz", place: "the pizza restaurant", hour: 13, door: map.portals.find((p) => p.id === "pizzazz") ?? null } : { kind: k, name: pick(NAMES[k]), focus, questions };
       const start = safeSpot(map, PLAYER.x + TILE * 6, PLAYER.y + TILE * 2);
       Object.assign(VISITOR, { active: true, id: VISITOR.id + 1, kind: k, startX: start.x, startY: start.y, arrived: false, leaving: false });
       setTalking(false); setVisit(next);

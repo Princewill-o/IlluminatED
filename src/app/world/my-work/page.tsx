@@ -88,17 +88,17 @@ export default async function MyWorkPage() {
           {!projects.length && (
             <div className="mt-8 rounded-2xl border p-7">
               <h2 className="text-xl font-bold">
-                Your first project starts in the repair shop.
+                Explore an in-game role contract in IllumWorld.
               </h2>
               <p className="text-muted-foreground mt-3">
                 Open a teacher assignment from Your Class, or try independent
                 practice.
               </p>
               <Link
-                href="/world/tech-repair-trainee"
+                href="/world/contracts"
                 className="mt-4 inline-flex min-h-11 items-center font-bold underline"
               >
-                Start Tech Repair Trainee
+                Explore role contracts
               </Link>
             </div>
           )}
