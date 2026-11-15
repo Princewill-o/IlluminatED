@@ -727,3 +727,6 @@ function LondonLife({ map }: { map: WorldMap }) {
 
 /** Desk activity is scoped to the open workplace contract panel. */
 export const OFFICE_WORK = { active: false };
+
+/** The shared lift cabin's visual state. */
+export const LIFT_CABIN = { doors: 1, travelling: false, direction: 0, floor: 0 };

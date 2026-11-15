@@ -1,3 +1,4 @@
+import { companyContext } from "./company-context";
 import type { ContractQuestion, RoleContract } from "./role-contracts";
 import profiles from "./sector-profiles.json";
 
@@ -11,6 +12,7 @@ function check(prompt: string, correct: string, wrong: string[], explanation: st
 /** Introductory career scenarios share an evidence-review format within each sector. */
 export const SECTOR_CONTRACTS: RoleContract[] = profiles.flatMap((sector, sectorIndex) =>
   sector.titles.map((title, roleIndex) => {
+    const company = companyContext(sector.id);
     const count = 12 + roleIndex * 3;
     const complete = count - 2;
     const cost = 40 + sectorIndex * 5 + roleIndex;
@@ -20,9 +22,9 @@ export const SECTOR_CONTRACTS: RoleContract[] = profiles.flatMap((sector, sector
       check(prompt, answer, wrong, reason, roleIndex + n);
     return {
       id: `career-${sector.id}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-      title, workplace: `${sector.name} training studio`, workplaceId: `training-${sector.id}`,
-      summary: brief, skills: ["Evidence review", "Checking totals", "Prioritising exceptions", "Clear handover"],
-      sources: [{ title: "Explore occupational skills", provider: "European Commission ESCO", url: "https://esco.ec.europa.eu/en/classification/occupation_main", checked: "2026-11-15" }],
+      title, workplace: company?.name ?? `${sector.name} training studio`, workplaceId: `training-${sector.id}`,
+      summary: `${brief} Independently authored industry practice using ${company?.name ?? sector.name} as the company context.`, skills: ["Evidence review", "Checking totals", "Prioritising exceptions", "Clear handover"],
+      sources: [...(company ? [{ title: `${company.name} careers`, provider: company.name, url: company.url, checked: "2026-11-15" }] : []), { title: "Explore occupational skills", provider: "European Commission ESCO", url: "https://esco.ec.europa.eu/en/classification/occupation_main", checked: "2026-11-15" }],
       shifts: [
         { id: "review", title: "Shift 1 · Review the evidence", minutes: 8, brief,
           steps: [`Read the ${title.toLowerCase()}'s brief and identify the requested outcome.`, `Inspect the supplied ${sector.artifact}; preserve the original.`, "Mark missing and repeated identifiers for review before changing any records."],

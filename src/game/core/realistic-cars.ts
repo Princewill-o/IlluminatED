@@ -24,6 +24,13 @@ export function realisticCarScale(size: { x: number; z: number }, kind = "sedan"
   return Math.min(length / size.x, width / size.z);
 }
 
+/** Seat cushion in the fitted car's local coordinates, facing +X with UK driver on +Z. */
+export function driverSeatAnchor(size: { x: number; y: number; z: number }) {
+  if (![size.x, size.y, size.z].every(value => Number.isFinite(value) && value > 0))
+    throw new Error("Vehicle dimensions must be positive and finite.");
+  return { x: size.x * 0.06, y: size.y * 0.42, z: size.z * 0.23 };
+}
+
 /** Paint: the body material in each model that takes the owner's chosen colour. */
 export const PAINT_MATERIALS = new Set(["paint", "Blue", "LightBlue", "White.001", "Orange", "White", "Yellow.001"]);
 /** The paint shop palette (hex, name). */

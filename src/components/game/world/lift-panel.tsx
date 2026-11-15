@@ -1,51 +1,55 @@
 "use client";
-
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ArrowDown, ArrowUp, X } from "lucide-react";
 
 import { play, soundOn } from "../sound";
+import { LIFT_CABIN } from "./art";
 
 type Floor = { mapId: string; label: string; current: boolean; level?: 0 | 1; x?: number; y?: number };
 
-/** Inside the lift: press a floor, the doors close, the display counts, ding, and out you step. */
-export function LiftPanel({ floors, onClose, onArrive }: { floors: Floor[]; onClose: () => void; onArrive: (f: Floor) => void }) {
-  const here = floors.findIndex((f) => f.current);
-  const [target, setTarget] = useState<number | null>(null);
-  const [shown, setShown] = useState(here);
-  const [doors, setDoors] = useState(1);
-  useEffect(() => {
-    if (target === null) return;
-    setDoors(0);
-    const steps = Math.abs(target - here);
-    const timers: number[] = [];
-    for (let i = 1; i <= steps; i++) timers.push(window.setTimeout(() => setShown(here + Math.sign(target - here) * i), 700 + i * 800));
-    timers.push(window.setTimeout(() => { play("door", soundOn()); setDoors(1); }, 900 + steps * 800));
-    timers.push(window.setTimeout(() => onArrive(floors[target]), 1500 + steps * 800));
-    return () => timers.forEach(clearTimeout);
-  }, [target, here, floors, onArrive]);
-  const going = target === null ? 0 : Math.sign(target - here);
-  return (
-    <div className="fixed inset-0 z-[100010] grid place-items-center bg-black/60 p-4" role="dialog" aria-label="Lift">
-      <section className="relative w-full max-w-sm overflow-hidden rounded-3xl border-b-8 border-black/40 bg-[linear-gradient(#c9ced6,#9aa3ad)] p-5 shadow-2xl">
-        <div className="mx-auto mb-4 flex w-32 items-center justify-center gap-2 rounded-lg bg-[#141020] py-2 font-mono text-2xl font-black text-[#ff9f43] shadow-inner">
-          {going > 0 ? <ArrowUp className="size-5" /> : going < 0 ? <ArrowDown className="size-5" /> : null}{shown === 0 ? "G" : shown}
-        </div>
-        {/* The doors. */}
-        <div className="relative mx-auto mb-4 h-40 w-48 overflow-hidden rounded-lg bg-[#ffe9b0] shadow-inner">
-          <div className="absolute inset-y-0 left-0 w-1/2 border-r border-black/20 bg-[linear-gradient(90deg,#aeb5be,#d4d9df)] transition-transform duration-700" style={{ transform: `translateX(${doors ? -92 : 0}%)` }} />
-          <div className="absolute inset-y-0 right-0 w-1/2 border-l border-black/20 bg-[linear-gradient(270deg,#aeb5be,#d4d9df)] transition-transform duration-700" style={{ transform: `translateX(${doors ? 92 : 0}%)` }} />
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {floors.map((f, i) => (
-            <button key={f.mapId} type="button" disabled={target !== null || f.current} onClick={() => { play("click", soundOn()); setTarget(i); }}
-              className={`grid aspect-square place-items-center rounded-full border-4 text-lg font-black shadow ${target === i ? "border-[#ff9f43] bg-[#fff4e0] text-[#c85a00] shadow-[0_0_14px_#ff9f43]" : "border-[#6b7280] bg-[#eef1f4] text-[#13203a]"} disabled:opacity-60`}>
-              <span>{i === 0 ? "G" : i}<span className="block text-[9px] font-bold">{f.label}</span></span>
-            </button>
-          ))}
-        </div>
-        {target === null && <button type="button" onClick={onClose} aria-label="Step out" className="absolute top-3 right-3 grid size-9 place-items-center rounded-full bg-white/70"><X className="size-4" /></button>}
-      </section>
-    </div>
-  );
+export function LiftPanel({ floors, onClose, onArrive }: { floors: Floor[]; onClose: () => void; onArrive: (floor: Floor) => void }) {
+ const here = Math.max(0,floors.findIndex(floor => floor.current));
+ const [target,setTarget]=useState<number|null>(null);
+ const [shown,setShown]=useState(here);
+ const [phase,setPhase]=useState("Choose a floor");
+ const arrive=useRef(onArrive);
+ arrive.current=onArrive;
+ const floorList=useRef(floors);
+ floorList.current=floors;
+ useEffect(()=>{
+  LIFT_CABIN.floor=here;
+  if(target===null){LIFT_CABIN.doors=1;LIFT_CABIN.travelling=false;return;}
+  const steps=Math.abs(target-here),direction=Math.sign(target-here);
+  const started=performance.now();
+  const travel=2800+steps*1300;
+  const finish=900+travel;
+  setPhase("Doors closing");
+  LIFT_CABIN.direction=direction;
+  let delivered=false;
+  const timer=window.setInterval(()=>{
+   const elapsed=performance.now()-started;
+   LIFT_CABIN.doors=elapsed<900?Math.max(0,1-elapsed/900):elapsed<finish?0:Math.min(1,(elapsed-finish)/900);
+   LIFT_CABIN.travelling=elapsed>=900&&elapsed<finish;
+   if(elapsed>=900&&elapsed<finish){
+    setPhase(direction>0?"Going up":"Going down");
+    const floor=here+direction*Math.min(steps,Math.floor((elapsed-900)/travel*(steps+1)));
+    setShown(floor);LIFT_CABIN.floor=floor;
+   }
+   if(elapsed>=finish){setPhase("Doors opening");setShown(target);LIFT_CABIN.floor=target;}
+   if(elapsed>=finish+1200&&!delivered){
+    delivered=true;window.clearInterval(timer);play("door",soundOn());arrive.current(floorList.current[target]);
+   }
+  },40);
+  return()=>{window.clearInterval(timer);LIFT_CABIN.doors=1;LIFT_CABIN.travelling=false;};
+ },[target,here]);
+ return <aside className="fixed top-20 right-4 z-[100010] w-[min(20rem,90vw)] rounded-2xl border-2 border-slate-400 bg-slate-200 p-5 text-slate-950 shadow-xl" aria-label="Lift controls">
+  <div className="flex items-center justify-between">
+   <p className="flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2 font-mono text-2xl text-amber-400">{target!==null&&(target>here?<ArrowUp/>:<ArrowDown/>)}{shown===0?"G":shown}</p>
+   {target===null&&<button className="grid size-11 place-items-center rounded-lg bg-white" onClick={onClose} aria-label="Close lift controls"><X/></button>}
+  </div>
+  <p role="status" className="my-3 font-bold">{phase}</p>
+  <div className="grid gap-2">{floors.map((floor,index)=><button key={floor.mapId+":"+index} disabled={target!==null||floor.current} onClick={()=>{play("click",soundOn());setTarget(index);}} className="min-h-12 rounded-xl border border-slate-400 bg-white p-3 text-left font-bold disabled:opacity-50">{index===0?"G":index} · {floor.label}</button>)}</div>
+  <p className="mt-4 text-sm">You can move around inside the cabin during the ride.</p>
+ </aside>;
 }

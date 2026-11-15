@@ -36,6 +36,7 @@ export default async function MyWorkPage() {
             <h3 className="font-bold">{course.title} · {course.workplace}</h3>
             <p>Completed {new Date(record.completed_at).toLocaleDateString("en-GB")}</p>
             <a className="inline-flex min-h-11 items-center font-bold underline" href={`/api/world/contracts/${course.id}/certificate?earned=1`}>Download course certificate</a>
+            <a className="ml-5 inline-flex min-h-11 items-center font-bold underline" href={`/api/world/contracts/${course.id}/certificate?earned=1&work=1`}>Download submitted work</a>
           </li>;
         })}</ul> : <p className="mt-3">Your completed course certificates will appear here.</p>}
       </section>}

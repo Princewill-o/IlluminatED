@@ -37,6 +37,8 @@ export interface Rect {
 }
 
 export type PortalTarget =
+  | { kind: "lift-controls" }
+  | { kind: "lift-exit" }
   | { kind: "hotel-desk"; hotel: string }
   | { kind: "hotel-room"; hotel: string; room: string; type: string }
   | { kind: "lift"; floors: { mapId: string; label: string; current: boolean; level?: 0 | 1; x?: number; y?: number }[] }
@@ -1761,4 +1763,25 @@ export function elevationAt(map: WorldMap, x: number, y: number, level: number) 
     return { z: t * deck.height, level: t > 0.5 ? 1 : 0 };
   }
   return { z: level === 1 ? deck.height : 0, level: level === 1 ? 1 : 0 };
+}
+
+/** Enter from the lobby, walk into the cabin, then use the control panel. */
+export function liftCabinMap(id = "lift-cabin"): WorldMap {
+  const g = new Grid(9, 9, ".");
+  g.border("#");
+  g.fill(1, 1, 1, 5, "#");
+  g.fill(7, 1, 1, 5, "#");
+  g.fill(1, 5, 2, 1, "#");
+  g.fill(6, 5, 2, 1, "#");
+  return finish({
+    id, kind: "office", name: "Lift lobby and cabin",
+    structures: [], accent: "#767c8a",
+    spawn: centre(4, 7),
+    rooms: [{name: "Lift cabin",rect:px(2,1,5,4)}],
+    sign: {x:4,y:1,text:"Lift · walk inside and use the control panel"},
+    portals: [
+      {id:"lift-controls",rect:px(5,2,1,1),label:"Choose your floor",to:{kind:"lift-controls"}},
+      {id:"lift-exit",rect:px(3,7,3,1),label:"Step out to the lobby",to:{kind:"lift-exit"}},
+    ],
+  },g);
 }

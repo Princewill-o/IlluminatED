@@ -25,6 +25,19 @@ try{
  assert.throws(()=>as(a,`select public.complete_world_course('${c.id}','{}')`));
  assert.throws(()=>as(a,"select * from public.world_course_keys"));
  assert.throws(()=>as(a,"delete from public.world_course_completions"));
+
+ sql(fs.readFileSync("supabase/migrations/20261115130000_world_course_practical_work.sql","utf8"));
+ const workbook=projectData("src/lib/illum-world/course-work.ts").courseWork(c);
+ const work={decisions:Object.fromEntries(workbook.rows.map(row=>[row.id,row.expected])),total:String(workbook.total),owner:"Team supervisor",handover:"R2 requires the missing information to be provided before processing. R3 needs supervisor review of the conflicting evidence before the next shift."};
+ const literal=JSON.stringify(work).replaceAll("'","''");
+ const practicalSubmit=`select (public.complete_world_course('${c.id}','${answers}'::jsonb,'${literal}'::jsonb)).id`;
+ assert.equal(as(a,practicalSubmit),first);
+ assert.equal(as(a,practicalSubmit),first);
+ assert.equal(as(a,"select work->>'owner' from public.world_course_completions"),"Team supervisor");
+ assert.throws(()=>as(b,`select public.complete_world_course('${c.id}','${answers}'::jsonb,'{}')`));
+ assert.throws(()=>as(b,`select public.complete_world_course('${c.id}','${answers}'::jsonb,'${JSON.stringify({...work,total:"0"})}'::jsonb)`));
+ assert.equal(as(b,"select count(*) from public.world_course_completions"),"0");
+ console.log("PASS practical work: required decisions, workload, handover, ownership and legacy record stability");
  console.log("PASS account isolation, grading, stable certificate identity, protected keys and immutable records");
 }finally{
  if(started)run("pg_ctl",["-D",dir+"/data","-m","immediate","-w","stop"]);

@@ -15,7 +15,7 @@ import { LearningTracker } from "./learning-tracker";
 import { drawMap } from "./tiles";
 import { WorldFigure, poseWorldFigure } from "../character";
 import { AffiliationBadge } from "./affiliation-badge";
-import { ARRIVE_LEVEL, AUTOPILOT, ArtScenery, CAMERA_VIEW, steersByLook, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, SHOVE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
+import { LIFT_CABIN, ARRIVE_LEVEL, AUTOPILOT, ArtScenery, CAMERA_VIEW, steersByLook, LEVEL_JUMP, NPC_SPOTS, ONLINE, PLAYER, PLAYER_VEHICLE, SHOVE, TRAFFIC_BOXES, WORLD_RULES, fadeArtProps } from "./art";
 import { HomeFloorPlan } from "./home-floor-plan";
 import { RoomChat } from "./room-chat";
 import { TrainTimes } from "./train-times";
@@ -668,6 +668,7 @@ export function WorldView({
       // The lift: you come out on the other floor, at its doors.
       if (LEVEL_JUMP.pending) { LEVEL_JUMP.pending = false; PLAYER.level = LEVEL_JUMP.level; p.x = LEVEL_JUMP.x; p.y = LEVEL_JUMP.y; }
       let next = driven ?? (flying ? glide() : step(levelMap(map, PLAYER.level), p, dx, dy, dt, speedRef.current));
+      if(map.id.startsWith("lift-cabin") && LIFT_CABIN.doors<.85) next={x:Math.max(2.4*TILE,Math.min(6.6*TILE,next.x)),y:Math.max(1.4*TILE,Math.min(4.6*TILE,next.y))};
       // Shoved: slide back over about a third of a second, stopping at walls.
       if (!driven && (SHOVE.x || SHOVE.y)) {
         const k = 1 - Math.exp(-dt * 9), mx = SHOVE.x * k, my = SHOVE.y * k, ground = levelMap(map, PLAYER.level);

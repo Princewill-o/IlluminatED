@@ -23,3 +23,12 @@ Run the focused checks with `node --test tests/world-game-identity.test.mjs test
 Sector studios are reached from their contract links and share the existing procedural office builder. The catalogue and in-game picker support search and pagination. Generic desk chairs sit directly behind the desk, the visible computer identifies the training station, and the contract panel seats the player using the existing typing pose while it is open in an office.
 
 Account course certificates require migration `20261115120000_world_course_completions.sql`. The database validates all answers against the course key, derives the learner name from the signed-in profile and records the first completion once per account and role. My Work lists the records and downloads recreate the PDF with the original ID and date. Run `node tests/course-completions-database.mjs` for local PostgreSQL ownership, grading and replay checks. Accreditation and employer approval must be supported by a real agreement before they are displayed on a course.
+
+
+Every course includes a practical work queue with four records, a calculated accepted workload and an exception handover. The sector scenarios share this workflow. The browser and database check the decisions, calculation, owner and required handover references. The submitted work is stored with completion and can be downloaded from My Work. These checks do not evaluate the quality of the learner's prose.
+
+Company context comes from public employer career sites, with independent authorship stated in the scenario summary. The role catalogue includes public institutions such as the NHS and Transport for London alongside companies.
+
+The course completion and practical-work migrations were applied to the hosted IlluminatED project on 15 November 2026. Hosted checks confirmed 349 answer keys, 349 practical-work totals, restricted answer-key access and completion ownership policies.
+
+Lifts now open a walkable cabin associated with the current building. Use the controls inside to select a floor. The doors close before travel, the display advances and the cabin returns the player to the selected building floor. Quiet original lounge music follows the game's sound setting and stops on exit. Car driver placement uses a seat cushion derived from fitted vehicle bounds and aligns the character's hips after its sitting animation updates.

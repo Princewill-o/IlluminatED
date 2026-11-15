@@ -99,3 +99,25 @@ export function play(cue: Cue, enabled: boolean) {
     // Audio isn't available (e.g. autoplay blocked). Silence is fine.
   }
 }
+
+/** Original quiet lounge motif for the lift, using the game's audio setting. */
+export function startLiftMusic() {
+  if (!soundOn() || typeof window === "undefined") return () => {};
+  let stopped = false;
+  try {
+    ctx ??= new AudioContext();
+    if (ctx.state === "suspended") void ctx.resume();
+    let bar = 0;
+    const phrase = () => {
+      if (stopped || !soundOn()) return;
+      const root = [261.63, 220, 233.08, 196][bar++ % 4];
+      [1, 1.25, 1.5, 1.875].forEach((ratio, i) => tone(root * ratio, i * .24, .65, "sine", .012));
+      tone(root / 2, 0, 1.5, "triangle", .012);
+    };
+    phrase();
+    const timer = window.setInterval(phrase, 2400);
+    return () => { stopped = true; window.clearInterval(timer); };
+  } catch {
+    return () => {};
+  }
+}

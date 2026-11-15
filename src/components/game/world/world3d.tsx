@@ -12,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { OFFICE_WORK, BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { LIFT_CABIN, OFFICE_WORK, BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -3131,6 +3131,20 @@ export function World3D({
     // Your car (when driving): a Kenney model swapped in for your character.
     const carHolder = new THREE.Group();
     scene.add(carHolder);
+    const cabinVisual = new THREE.Group();
+    const cabinDoors: THREE.Mesh[] = [];
+    const shaftLights: THREE.Mesh[] = [];
+    if (map.id.startsWith("lift-cabin")) {
+      scene.add(cabinVisual);
+      box(cabinVisual,"#323844",2,.01,1,7,.12,5);
+      box(cabinVisual,"#b6a181",2,.12,1,7,.18,5);
+      box(cabinVisual,"#c5ccd1",1.8,.1,1,2,2.6,5);
+      box(cabinVisual,"#c5ccd1",7,.1,1,7.2,2.6,5);
+      box(cabinVisual,"#878f9a",2,.1,.9,7,2.6,1.1);
+      for (const x of [3,4.5]) cabinDoors.push(box(cabinVisual,"#aab5c0",x,.1,4.95,x+1.5,2.5,5.08));
+      for (let i=0;i<6;i++) shaftLights.push(box(cabinVisual,"#ffe3a0",7.21,i*.6,2,7.25,i*.6+.1,4));
+    }
+
     // Collision graphics for anything that hits something.
     const impacts = impactEffects(scene);
     const onImpact = (e: Event) => { const d = (e as CustomEvent<{ x: number; y: number; strength?: number; soft?: boolean }>).detail; if (d && Number.isFinite(d.x) && Number.isFinite(d.y)) impacts.spawn(d.x, d.y, d.strength ?? 0.6, !!d.soft); };
@@ -4133,13 +4147,16 @@ export function World3D({
       }
       // On a bus you're a passenger: seen through the glass, sitting on the lower deck.
       busSeated = !!want;
+      let vehicleSeatY: number | null = null;
       me.root.visible = true;
       if (busSeated) {
         // Bus: lower-deck seat. Car: the driver's seat (on the right, UK style).
         const bus = want!.startsWith("bus:");
-        const seat = bus ? (carHolder.children[0]?.userData.busSeat as { x: number; y: number; z: number } | undefined) ?? { x: -1.55 / (BUS_LENGTH / 2.8), y: 0.42, z: -0.45 } : { x: -0.05, y: 0.12, z: 0.22 };
+        const seat = bus ? (carHolder.children[0]?.userData.busSeat as { x: number; y: number; z: number } | undefined) ?? { x: -1.55 / (BUS_LENGTH / 2.8), y: 0.42, z: -0.45 } :
+          (carHolder.children[0]?.userData.driverSeat as { x: number; y: number; z: number } | undefined) ?? { x: 0.2, y: 0.55, z: 0.38 };
         const yaw = carHolder.rotation.y, c = Math.cos(yaw), sn = Math.sin(yaw);
         const sx = bus ? seat.x * (BUS_LENGTH / 2.8) : seat.x;
+        if (!bus) vehicleSeatY = carHolder.position.y + seat.y;
         me.root.position.set(carHolder.position.x + sx * c + seat.z * sn, seat.y - 0.12, carHolder.position.z - sx * sn + seat.z * c);
         me.root.rotation.y = yaw + Math.PI / 2;
         if (me.char) me.char.play("sit");
@@ -4869,6 +4886,13 @@ export function World3D({
         } else if (typeof s.userData.update === "function") s.userData.update(reduce ? 0 : secs);
         else s.rotation.z += dt * 0.05;
       }
+      if (cabinDoors.length) {
+        cabinDoors[0].position.x = 3.75 - LIFT_CABIN.doors * 1.45;
+        cabinDoors[1].position.x = 5.25 + LIFT_CABIN.doors * 1.45;
+        shaftLights.forEach((light,index) => {
+          light.position.y = LIFT_CABIN.travelling ? ((index*.6-secs*LIFT_CABIN.direction*1.6)%3.6+3.6)%3.6-index*.6 : 0;
+        });
+      }
       // Doors near you are built and animated; far ones are put away.
       for (const spot of doorSpots) {
         const d = Math.hypot(spot.x - mx, spot.z - mz), id = spot.portal.id;
@@ -4916,6 +4940,15 @@ export function World3D({
         const turn = previous && Number.isFinite(distance) && distance < 2 && dt > 0 ? Math.atan2(Math.sin(heading - previous.heading), Math.cos(heading - previous.heading)) / dt : 0;
         body.motion = { x, z, heading, speed };
         body.char.update(dt, reduce, { speed, turn });
+      }
+      if (vehicleSeatY !== null && me.char) {
+        const hips = me.char.object.getObjectByName("Hips")
+          ?? me.char.object.getObjectByName("mixamorigHips")
+          ?? me.char.object.getObjectByName("torso");
+        if (hips) {
+          me.root.updateMatrixWorld(true);
+          me.root.position.y += vehicleSeatY - hips.getWorldPosition(new THREE.Vector3()).y;
+        }
       }
       const seatRider = (body: Body, cycle: THREE.Group, heading: number, moving: boolean, phase: number) => {
         if (!body.char) return;

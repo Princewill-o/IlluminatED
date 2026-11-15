@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 
 import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, HeartHandshake, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
-import { play, soundOn } from "../sound";
 import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WEATHER_NOW, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
@@ -36,6 +35,7 @@ import { JobsPanel } from "./jobs-panel";
 import { PoliceChallenge, PrisonStudy, StreetHearingDialog } from "./law-dialogs";
 import { ArrestOverlay, PrisonHud, ShopDialog, WantedStars } from "./life";
 import { LevelBadge, LifeHud, type Quest } from "./life-hud";
+import { play, soundOn , startLiftMusic } from "../sound";
 import { LiftPanel } from "./lift-panel";
 import { LivePolicePickup } from "./live-police-pickup";
 import mobileStyles from "./mobile-life.module.css";
@@ -112,7 +112,7 @@ import { universityById } from "@/game/core/universities";
 import { venueMap } from "@/game/core/venues";
 import { GEAR_MESSAGE, weatherGear, weatherReason } from "@/game/core/weather-gear";
 import {
-  CITY, ventureMap,
+  CITY, ventureMap, liftCabinMap,
   universityInteriorMap, supermarketMap,
   STATION_PLATFORM_Y,
   TILE,
@@ -172,6 +172,7 @@ const BUS_STOPS = busStops();
 
 let HOME: { style: number; layout: Placed[]; room?: RoomStyle } | null = null;
 function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
+  if(id === "lift-cabin" || id.startsWith("lift-cabin-")) return liftCabinMap(id);
   if(id.startsWith("party-"))return partyMap(id.slice(6));
   const regional = ukWorldMap(id);
   if (regional) return regional;
@@ -345,6 +346,19 @@ export function WorldApp({
   const [hotelBooking,setHotelBooking]=useState<HotelBooking|null>(null);
   const [hotelDesk,setHotelDesk]=useState<string|null>(null);
   useEffect(()=>{void loadHotelBooking().then(setHotelBooking).catch(()=>{});},[]);
+  const [liftJourney,setLiftJourney] = useState<{mapId:string;label:string;current:boolean;level?:0|1;x?:number;y?:number}[]|null>(null);
+  const [liftLanding,setLiftLanding] = useState<{mapId:string;level?:0|1;x?:number;y?:number}|null>(null);
+  const liftMusic = useRef<(() => void)|null>(null);
+  useEffect(() => {
+    if (!mapId.startsWith("lift-cabin")) {liftMusic.current?.();liftMusic.current=null;}
+  },[mapId]);
+  useEffect(() => () => liftMusic.current?.(),[]);
+  useEffect(() => {
+    if(liftLanding && mapId===liftLanding.mapId) {
+      if(liftLanding.level !== undefined) Object.assign(LEVEL_JUMP,{pending:true,level:liftLanding.level,x:(liftLanding.x??13)*TILE,y:(liftLanding.y??3.6)*TILE});
+      setLiftLanding(null);
+    }
+  },[liftLanding,mapId]);
   const [lift,setLift]=useState<{mapId:string;label:string;current:boolean;level?:0|1;x?:number;y?:number}[]|null>(null);
   // Your pet comes out with you as soon as the world loads.
   useEffect(()=>{void loadPets().then(syncPet).catch(()=>{});if(process.env.NODE_ENV!=="production")(window as unknown as {__pet?:(tag:string|null)=>void}).__pet=(tag)=>{PET.tag=tag;};},[]);
@@ -723,6 +737,7 @@ export function WorldApp({
     setSceneName(label);setFading(false);
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     setArrive(arrival);setMapId(dest);setTrip(n=>n+1);
+    return true;
   }, [offices, me.id, cars, driving, say, life.hearing, streetCustody?.stage, map.kind, beginTransition, transitionPending]);
   useEffect(() => { if (process.env.NODE_ENV === "development") (window as unknown as { __tp?: unknown }).__tp = (x: number, y: number) => void goTo("city", "Dev", { x: x * TILE + TILE / 2, y: y * TILE + TILE / 2 }); }, [goTo]);
 
@@ -983,7 +998,18 @@ export function WorldApp({
         else if (to.href === "/games/what-if") setEventGame("what-if");
         else router.push(to.href);
       } else if (to.kind === "role-contracts") setContract(to.role ?? "all");
-      else if (to.kind === "lift") setLift(to.floors);
+      else if (to.kind === "lift") {
+        setLiftJourney(to.floors);
+        liftMusic.current?.();
+        liftMusic.current=startLiftMusic();
+        void goTo(`lift-cabin-${mapId}`,"Lift lobby").then(entered => { if (!entered) {liftMusic.current?.();liftMusic.current=null;} });
+      }
+      else if (to.kind === "lift-controls" && liftJourney) setLift(liftJourney);
+      else if (to.kind === "lift-exit" && !lift) {
+        const floor=liftJourney?.find(item=>item.current);
+        if(floor){setLiftLanding(floor);void goTo(floor.mapId,floor.label,{x:(floor.x??13)*TILE,y:(floor.y??3.6)*TILE});}
+        else void goTo("city","London");
+      }
       else if (to.kind === "hotel-desk") setHotelDesk(to.hotel);
       else if (to.kind === "hotel-leave") leaveHotelRoom(to.hotel, to.room);
       else if (to.kind === "hotel-room") {
@@ -1043,7 +1069,7 @@ export function WorldApp({
         setArrive({...spot,speed:keepCar?Math.min(Math.abs(PLAYER_VEHICLE.speed),isMotorway(to.mapId)?660:220):0});setMapId(to.mapId);setTrip(n=>n+1);
       }
     },
-    [router, offices, mapId, map, me.id, updateLife, say, jailed, prisonAction, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking, leaveHotelRoom],
+    [lift, liftJourney, router, offices, mapId, map, me.id, updateLife, say, jailed, prisonAction, gainXp, goTo, server, flight, driving, developerTeleport, life.hearing, life.stars, medicalCustody, beginTransition, transitionPending, hotelBooking, leaveHotelRoom],
   );
 
   // Flight School: opening the phone completes the phone step.
@@ -1708,9 +1734,9 @@ export function WorldApp({
       <CrewInvites busy={dailyBusy || !!lift} onJoin={(id) => { const role = ROLES.find((r) => r.id === id); if (role) startRole(role, 1); }} />
       {lift && <LiftPanel floors={lift} onClose={() => setLift(null)} onArrive={(f) => {
         setLift(null);
-        // Same building: the lift just takes you to the other floor. Otherwise it's another map.
-        if (f.mapId === mapId && f.level !== undefined) Object.assign(LEVEL_JUMP, { pending: true, level: f.level, x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
-        else void goTo(f.mapId, f.label, { x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
+        setLiftJourney(null);
+        setLiftLanding(f);
+        void goTo(f.mapId, f.label, { x: (f.x ?? 13) * TILE, y: (f.y ?? 3.6) * TILE });
       }} />}
       {petsOpen && <PetPanel onClose={() => setPetsOpen(false)} onClout={(n) => setWallet((w) => w + n)} />}
       {browser && <WebBrowser start={browser} wallet={wallet} onCompany={(w, name) => { setBrowser(null); void goTo(`workplace-${w}`, name); }}

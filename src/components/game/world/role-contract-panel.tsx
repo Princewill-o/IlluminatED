@@ -4,10 +4,14 @@ import { useEffect, useRef, useState } from "react";
 
 import { Award, Briefcase, Check, X } from "lucide-react";
 
+
+
 import { OFFICE_WORK } from "./art";
+import { CourseWorkEditor } from "./course-work";
 import { TrainingContext } from "./training-context";
 import { TRAINING_MIC_SLOT } from "./voice-chat";
 
+import { assessCourseWork, type CourseWork } from "@/lib/illum-world/course-work";
 import {
   ROLE_CONTRACTS,
   contractMinutes,
@@ -173,6 +177,15 @@ function ContractCourse({
     );
     return first < 0 ? course.shifts.length - 1 : first;
   });
+  const [work, setWork] = useState<CourseWork>(() => {
+    try {
+      const saved=JSON.parse(localStorage.getItem(key + ":work") ?? "null");
+      if(saved && typeof saved.decisions === "object" && saved.decisions && typeof saved.total === "string" && typeof saved.owner === "string" && typeof saved.handover === "string") return saved;
+    } catch { /* A new work draft is available if storage is unavailable. */ }
+    return {decisions:{},total:"",owner:"",handover:""};
+  });
+  useEffect(() => { try { localStorage.setItem(key + ":work", JSON.stringify(work)); } catch { /* The current draft remains available in this tab. */ } }, [key, work]);
+  const practical = assessCourseWork(course,work);
   const [checked, setChecked] = useState(false);
   const [download, setDownload] = useState<"idle" | "pending" | "done">("idle");
   const [error, setError] = useState("");
@@ -180,8 +193,8 @@ function ContractCourse({
   const shift = course.shifts[index];
   const result = status.shifts[index];
   useEffect(() => {
-    onTrainingRole?.(courseId, !status.complete);
-  }, [courseId, onTrainingRole, status.complete]);
+    onTrainingRole?.(courseId, !(status.complete && practical.complete));
+  }, [courseId, onTrainingRole, status.complete, practical.complete]);
   useEffect(() => {
     try {
       localStorage.setItem(key, JSON.stringify(answers));
@@ -202,7 +215,7 @@ function ContractCourse({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ learner: username, answers }),
+          body: JSON.stringify({ learner: username, answers, work }),
         },
       );
       if (
@@ -349,18 +362,19 @@ function ContractCourse({
           </p>
         )}
       </form>
+      <CourseWorkEditor course={course} value={work} onChange={setWork} />
       {status.complete && (
         <section className="mt-6 rounded-2xl bg-[#fff0b4] p-5">
           <h3 className="flex items-center gap-2 text-xl font-black">
             <Award aria-hidden /> Contract complete
           </h3>
           <p className="my-3">
-            All nine checks passed. Download your IlluminatED in-game course
+            All nine knowledge checks passed. Complete the practical work to download your IlluminatED in-game course
             certificate.
           </p>
           <button
             type="button"
-            disabled={download === "pending"}
+            disabled={download === "pending" || !practical.complete}
             className={button}
             onClick={getCertificate}
           >

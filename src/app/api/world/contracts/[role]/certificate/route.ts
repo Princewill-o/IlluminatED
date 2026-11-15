@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 
+import { assessCourseWork } from "@/lib/illum-world/course-work";
 import { makeRoleCertificate } from "@/lib/illum-world/role-certificate";
 import { markContract, roleContract } from "@/lib/illum-world/role-contracts";
 import { getSupabase } from "@/lib/social/server";
@@ -56,11 +57,14 @@ export async function POST(
         },
         { status: 422 },
       );
+    const practical = assessCourseWork(course, submission.work);
+    if (!practical.complete) return NextResponse.json({ error: "Finish the practical work before downloading.", practical }, { status: 422 });
     const sb = await getSupabase();
     const user = sb ? (await sb.auth.getUser()).data.user : null;
     if (!sb || !user) return NextResponse.json({ error: "Sign in to save course completion and download your certificate." }, { status: 401 });
     const { data: record, error: saveError } = await sb.rpc("complete_world_course", {
       p_role: course.id,
+      p_work: submission.work,
       p_answers: Object.fromEntries(course.shifts.map(shift => [shift.id, submission.answers && typeof submission.answers === "object" ? (submission.answers as Record<string, unknown>)[shift.id] : null])),
     });
     if (saveError || !record) return NextResponse.json({ error: "Account completion saving is unavailable. Your answers remain on this device." }, { status: 503 });
@@ -115,6 +119,9 @@ export async function GET(
     const { data: record, error } = await sb.from("world_course_completions").select("*").eq("user_id", user.id).eq("role_id", course.id).maybeSingle();
     if (error) return NextResponse.json({ error: "Course records are temporarily unavailable." }, { status: 503 });
     if (!record) return NextResponse.json({ error: "Course completion not found." }, { status: 404 });
+    if (new URL(request.url).searchParams.get("work") === "1") {
+      return NextResponse.json({ course: course.title, company: course.workplace, learner: record.learner, completed: record.completed_at, work: record.work ?? null }, { headers: { "Cache-Control": "private, no-store", "Content-Disposition": `attachment; filename="IllumWorld-${course.id}-work.json"` } });
+    }
     const logo = await readFile(join(process.cwd(), "public/brand/wordmark-navy-pdf.png"));
     const bytes = await makeRoleCertificate(course, record.answers, record.learner, logo, { id: `IW-${record.id}`, date: record.completed_at });
     return new Response(Buffer.from(bytes), { headers: { ...headers, "Content-Disposition": `attachment; filename="IllumWorld-${course.id}-completion.pdf"` } });

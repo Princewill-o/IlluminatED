@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-import { realisticCarAsset, realisticCarModel, realisticCarScale } from "@/game/core/realistic-cars";
+import { driverSeatAnchor, realisticCarAsset, realisticCarModel, realisticCarScale } from "@/game/core/realistic-cars";
 
 /** One placement path for traffic, the player's garage car and remote players' cars. */
 export async function placeRealisticCar(
@@ -23,6 +23,7 @@ export async function placeRealisticCar(
   fitted.position.set(-centre.x, -bounds.min.y, -centre.z);
   fitted.userData.importedAsset = asset;
   fitted.userData.realisticCar = realisticCarModel(kind);
+  group.userData.driverSeat = driverSeatAnchor(bounds.getSize(new THREE.Vector3()));
   style(fitted);
   group.add(fitted);
   return fitted;
