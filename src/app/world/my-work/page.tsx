@@ -3,8 +3,10 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 import { MISSION_TITLE, projectStatusLabel } from "@/lib/illum-world/repair";
+import { roleContract } from "@/lib/illum-world/role-contracts";
 import { loadMyRepairProjects } from "@/lib/illum-world/server";
-import { getViewer } from "@/lib/social/server";
+import { getSupabase , getViewer } from "@/lib/social/server";
+
 
 export const metadata: Metadata = {
   title: "My Work | IllumWorld",
@@ -13,6 +15,8 @@ export const metadata: Metadata = {
 export default async function MyWorkPage() {
   const viewer = await getViewer();
   const projects = viewer ? await loadMyRepairProjects() : [];
+  const sb = viewer ? await getSupabase() : null;
+  const completions = sb && viewer ? await sb.from("world_course_completions").select("id,role_id,completed_at").eq("user_id", viewer.id).order("completed_at", { ascending: false }) : null;
   return (
     <div className="mx-auto max-w-5xl px-5 py-12">
       <Link href="/world" className="text-sm font-bold underline">
@@ -23,6 +27,18 @@ export default async function MyWorkPage() {
         Your workplace drafts, finished projects, teacher feedback and earned
         certificates. Subject practice results stay in each subject product.
       </p>
+      {viewer && <section className="mt-8" aria-labelledby="course-records">
+        <h2 id="course-records" className="text-2xl font-bold">Completed courses</h2>
+        {completions?.error ? <p className="mt-3">Account course records are temporarily unavailable.</p> :
+        completions?.data?.length ? <ul className="mt-4 space-y-4">{completions.data.map(record => {
+          const course = roleContract(record.role_id);
+          return course && <li key={record.id} className="rounded-xl border p-4">
+            <h3 className="font-bold">{course.title} · {course.workplace}</h3>
+            <p>Completed {new Date(record.completed_at).toLocaleDateString("en-GB")}</p>
+            <a className="inline-flex min-h-11 items-center font-bold underline" href={`/api/world/contracts/${course.id}/certificate?earned=1`}>Download course certificate</a>
+          </li>;
+        })}</ul> : <p className="mt-3">Your completed course certificates will appear here.</p>}
+      </section>}
       {!viewer ? (
         <Link
           href="/sign-in?next=/world/my-work"

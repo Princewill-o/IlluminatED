@@ -219,7 +219,7 @@ function ContractCourse({
       setDownload("done");
     } catch {
       setError(
-        "The certificate could not be downloaded. Your answers are still saved on this device.",
+        "Sign in to save completion to your account. If saving is unavailable, your answers remain on this device.",
       );
       setDownload("idle");
     }
@@ -379,7 +379,7 @@ function ContractCourse({
         </section>
       )}
       <p className="mt-5 text-sm">
-        Progress stays on this device. The certificate marks completion of a
+        Answers stay on this device. Downloading while signed in saves completion to My Work. The certificate marks completion of a
         fictional game activity.
       </p>
     </div>
