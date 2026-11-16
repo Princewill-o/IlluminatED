@@ -700,6 +700,7 @@ export function SubjectQuests({
                 key={supplement.slug}
                 slug={supplement.slug}
                 title={supplement.title}
+                subject={course}
                 slides={supplement.slides}
                 questions={supplement.questions}
               />
