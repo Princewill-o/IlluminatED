@@ -1,18 +1,6 @@
 {
   "items": [
     {
-      "id": "buckingham:660912-1794414600-1794418200@www.buckingham.ac.uk",
-      "title": "Economics Taster Session: Understanding the Cost of Living Crisis",
-      "provider": "University of Buckingham",
-      "kind": "university-event",
-      "url": "https://www.buckingham.ac.uk/event/economics-taster-session-understanding-the-cost-of-living-crisis/",
-      "location": "Online",
-      "date": "2026-11-11",
-      "closes": null,
-      "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-09T14:01:47.951Z"
-    },
-    {
       "id": "buckingham:660946-1799485200-1799506800@www.buckingham.ac.uk",
       "title": "Buckingham Open Day",
       "provider": "University of Buckingham",
@@ -22,7 +10,7 @@
       "date": "2027-01-09",
       "closes": null,
       "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-09T14:01:47.951Z"
+      "checkedAt": "2026-11-16T13:48:17.319Z"
     },
     {
       "id": "buckingham:660672-1802109600-1802113200@www.buckingham.ac.uk",
@@ -34,7 +22,7 @@
       "date": "2027-02-08",
       "closes": null,
       "summary": "Meet the university and explore study or training options. Check the organiser's page for eligibility, booking and any cost.",
-      "checkedAt": "2026-11-09T14:01:47.951Z"
+      "checkedAt": "2026-11-16T13:48:17.319Z"
     }
   ],
   "sources": [
@@ -42,7 +30,7 @@
       "name": "University of Buckingham events",
       "url": "https://www.buckingham.ac.uk/events/",
       "status": "live",
-      "checkedAt": "2026-11-09T14:01:47.951Z"
+      "checkedAt": "2026-11-16T13:48:17.319Z"
     }
   ]
 }
