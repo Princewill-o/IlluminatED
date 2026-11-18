@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { bikeById } from "@/game/core/bikes";
+import { bikeById, bikeFrame } from "@/game/core/bikes";
 import { carById } from "@/game/core/cars";
 import { MAX_NIGHTS, ROOM_TYPES, isHotel } from "@/game/core/hotels";
 import { type Scorecard, answerCount, buildInterviewPlan, roleSpec, scoreInterview } from "@/game/core/interview";
@@ -31,6 +31,18 @@ export async function hireBike(brand: string) {
   const { data, error } = await sb.rpc("bike_hire", { p_brand: brand });
   if (error && notSetUp(error)) return { ok: true as const, clout: null, free: true };
   if (error) return { ok: false as const, error: friendly(error.message) };
+  revalidatePath("/games/world");
+  return { ok: true as const, clout: data as number, free: false };
+}
+
+/** Buys a bike frame (or repaints the one you own, free) and keeps it in your garage. Returns the Clout left. */
+export async function buyBike(frame: string, colour: string) {
+  if (!bikeFrame(frame) || !/^#[0-9a-fA-F]{6}$/.test(colour)) return { ok: false as const, error: "That bike isn't in the shop." };
+  const sb = await getSupabase();
+  if (!sb) return { ok: false as const, error: "Couldn't reach the server. Try again in a moment." };
+  const { data, error } = await sb.rpc("bike_buy", { p_frame: frame, p_colour: colour });
+  if (error && notSetUp(error)) return { ok: true as const, clout: null, free: true };
+  if (error) return { ok: false as const, error: error.message.includes("not_enough_clout") ? "Not enough Clout yet. Work shifts and revise to save up." : error.message.includes("not_allowed") ? "Log in with your IlluminatED account to buy a bike." : friendly(error.message) };
   revalidatePath("/games/world");
   return { ok: true as const, clout: data as number, free: false };
 }

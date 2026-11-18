@@ -400,6 +400,10 @@ export function setCarPaint(car: string, hex: string | null) {
   CAR_PAINT.version++;
   window.dispatchEvent(new CustomEvent("illumed:car-paint"));
 }
+/** What's parked in your garage, for the 3D world to draw: car ids and your own bike ("frame:#colour"). */
+export const GARAGE: { cars: string[]; bike: string | null } = { cars: [], bike: null };
+/** The street bench you're sitting on (tile coordinates of the seat), if any. Set by the HUD, drawn by the 3D world. */
+export const BENCH_SEAT: { seat: { x: number; z: number; yaw: number } | null } = { seat: null };
 export const PLAYER_WORK: { activity: string | null } = { activity: null };
 export const PLAYER_VEHICLE = { active: false, x: 0, y: 0, heading: 0, speed: 0, length: CAR_LENGTH, width: CAR_WIDTH };
 /** The training-ground guide (world px): steered by the tutorial, drawn by the 3D world. */

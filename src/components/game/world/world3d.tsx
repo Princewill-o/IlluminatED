@@ -12,7 +12,7 @@ import { type Character3D, buildCharacter, npcLook } from "../char3d";
 import type { TechEvent } from "../event-ads";
 import { ambientLife } from "./ambient-life";
 import { finishArchitecture } from "./architecture-finish3d";
-import { LIFT_CABIN, OFFICE_WORK, BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
+import { BENCH_SEAT, GARAGE, LIFT_CABIN, OFFICE_WORK, BUS_ROUTE_CODES, CAMERA_VIEW, WEATHER_NOW, type CameraMode, CAR_PAINT, JOB_CLIENTS, JOB_STATIONS, PET, DELIVERY_SCENE, COURIER, NPC_SPOTS, PLAYER, SHOVE, POLICE_CAR, COURT, LAW_STATUS, PANIC, PATROL, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, VISITOR, WORLD_RULES, cityRoadPaint, citySignalPosts, type VisitorKind } from "./art";
 import { atmosphereShader, createAtmosphere } from "./atmosphere";
 import { buildingVisibility } from "./building-visibility";
 import { addCarParks3D } from "./car-parks3d";
@@ -1789,6 +1789,92 @@ export function lymeBike(green = "#4cd137") {
   return g;
 }
 
+/** The garage at home: concrete floor, painted bays with the cars you own, your bike on its stand,
+ * a tool wall and the up-and-over door. */
+function garageScene(world: THREE.Group, map: WorldMap) {
+  const W = map.cols, H = map.rows;
+  box(world, "#8c8f96", 1, 0, 2, W - 1, 0.02, H - 1);
+  box(world, "#b9b2c7", 0.9, 0, 1.9, W - 0.9, 2.9, 2);
+  // Purple bay lines and numbers.
+  const bays = [3.5, 7.5];
+  for (const x of [1.6, 5.5, 9.5]) box(world, "#7a3cf0", x - 0.05, 0.021, 2.6, x + 0.05, 0.025, 8.6);
+  // Tool wall: pegboard, shelves and a workbench.
+  box(world, "#c99c5b", 10.5, 0.9, 2.05, 14.6, 2.3, 2.12);
+  for (let i = 0; i < 6; i++) box(world, ["#d4241f", "#2b5fd9", "#f2b705", "#13203a"][i % 4], 10.8 + i * 0.6, 1.4 + (i % 2) * 0.35, 2.12, 11 + i * 0.6, 1.75 + (i % 2) * 0.35, 2.16);
+  box(world, "#6e4b2a", 10.5, 0.75, 2.1, 14.6, 0.85, 2.9);
+  for (const x of [10.6, 14.4]) box(world, "#4a3826", x, 0, 2.2, x + 0.1, 0.75, 2.8);
+  box(world, "#5d6070", 11, 0.85, 2.3, 11.6, 1.15, 2.7);
+  // The up-and-over door (closed) and the light strip above the bays.
+  box(world, "#f3f6fb", 9, 0, H - 1.02, 14, 2.4, H - 0.98);
+  for (let y = 0.3; y < 2.4; y += 0.4) box(world, "#d7dbe3", 9, y, H - 1.04, 14, y + 0.04, H - 1.02);
+  box(world, "#fff6d8", 2, 2.8, 4.5, 13, 2.84, 4.7);
+  const label = sign("Your garage", { bg: "#13203a", fg: "#ffffff", w: 3, h: 0.5, badge: true });
+  label.position.set(W / 2, 2.4, 2.06);
+  world.add(label);
+  // The cars you own, nose to the door. Up to two bays; the rest wait on AutoHub.
+  const paint = (c: string) => (CAR_PAINT.colours[c] ? `${c}@${CAR_PAINT.colours[c]}` : c);
+  GARAGE.cars.slice(0, 2).forEach((car, i) => {
+    const holder = new THREE.Group();
+    holder.position.set(bays[i], 0.02, 5.6);
+    holder.rotation.y = -Math.PI / 2;
+    world.add(holder);
+    void placeCar(holder, car === "cab" ? "taxi" : paint(car)).catch(() => {});
+  });
+  if (!GARAGE.cars.length) {
+    const empty = sign("Bay free: buy a car on AutoHub", { bg: "#f3f6fb", fg: "#13203a", w: 3.4, h: 0.4 });
+    empty.rotation.x = -Math.PI / 2; empty.position.set(bays[0], 0.04, 5.6); world.add(empty);
+  }
+  // Your bike on a stand by the house door.
+  if (GARAGE.bike) {
+    const b = rideableBike(GARAGE.bike);
+    bendAll(b);
+    b.position.set(12.4, 0, 6.4);
+    b.rotation.y = -Math.PI / 2;
+    world.add(b);
+    box(world, "#5d6070", 11.9, 0, 6.3, 12.9, 0.12, 6.5);
+  }
+}
+
+/** Your own bike from the garage. `look` is "frame:#colour" (see core/bikes bikeLook); anything else is a hire bike colour. Faces +x. */
+export function rideableBike(look?: string) {
+  const [frame, colour] = look?.includes(":") ? look.split(":") : [null, look];
+  if (!frame || !colour) return lymeBike(colour ?? undefined);
+  const g = new THREE.Group();
+  const bmx = frame === "bmx", road = frame === "road", ebike = frame === "ebike";
+  const r = bmx ? 0.17 : road ? 0.23 : 0.21, axle = r + 0.04, base = bmx ? 0.34 : 0.4;
+  const wheel = (x: number) => {
+    const w = new THREE.Mesh(new THREE.TorusGeometry(r, road ? 0.025 : bmx ? 0.05 : 0.04, 8, 24), mat("#1b1622"));
+    w.position.set(x, axle, 0); w.userData.bikeWheel = true; w.castShadow = true; g.add(w);
+    for (let k = 0; k < 3; k++) { const spoke = new THREE.Mesh(new THREE.BoxGeometry(r * 1.9, 0.012, 0.012), mat("#c9ced8")); spoke.position.set(x, axle, 0); spoke.rotation.z = (k * Math.PI) / 3; spoke.userData.bikeWheel = true; g.add(spoke); }
+  };
+  wheel(-base); wheel(base);
+  const tube = (x0: number, y0: number, x1: number, y1: number, c: string, rad = 0.032) => {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, Math.hypot(x1 - x0, y1 - y0), 10), mat(c));
+    m.position.set((x0 + x1) / 2, (y0 + y1) / 2, 0); m.rotation.z = Math.atan2(y1 - y0, x1 - x0) - Math.PI / 2; m.castShadow = true; g.add(m);
+  };
+  const crank = { x: -0.04, y: axle + 0.02 }, seat = { x: -0.17, y: bmx ? 0.62 : 0.72 }, head = { x: base - 0.08, y: bmx ? 0.6 : 0.7 };
+  // Diamond frame in your paint: down tube, top tube, seat tube, stays and fork.
+  tube(crank.x, crank.y, head.x, head.y - 0.08, colour, ebike ? 0.055 : 0.034);
+  tube(seat.x + 0.02, seat.y - 0.06, head.x, head.y - (road ? 0.02 : 0.06), colour);
+  tube(crank.x, crank.y, seat.x, seat.y, colour);
+  tube(crank.x, crank.y, -base, axle, colour, 0.025);
+  tube(seat.x + 0.01, seat.y - 0.08, -base, axle, colour, 0.022);
+  tube(head.x, head.y, base, axle, colour, 0.03);
+  // Saddle, chainring, bars.
+  box(g, "#1b1622", seat.x - 0.13, seat.y, -0.06, seat.x + 0.09, seat.y + 0.05, 0.06);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.015, 6, 18), mat("#8d93a0")); ring.position.set(crank.x, crank.y, 0.05); g.add(ring);
+  tube(head.x, head.y, head.x - 0.02, head.y + 0.12, "#2a2733", 0.025);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, bmx ? 0.56 : 0.46, 8), mat("#1b1622"));
+  bar.rotation.x = Math.PI / 2; bar.position.set(head.x - 0.02, head.y + 0.13, 0); g.add(bar);
+  if (road) for (const z of [-0.2, 0.2]) { const drop = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.02, 6, 10, Math.PI), mat("#1b1622")); drop.position.set(head.x + 0.04, head.y + 0.07, z); drop.rotation.z = -Math.PI / 2; g.add(drop); }
+  if (frame === "city") {
+    box(g, colour, base + 0.05, 0.55, -0.14, base + 0.3, 0.74, 0.14);
+    for (const x of [-base, base]) { const guard = new THREE.Mesh(new THREE.TorusGeometry(r + 0.05, 0.02, 4, 12, Math.PI * 0.8), mat(colour)); guard.position.set(x, axle, 0); guard.rotation.z = Math.PI * 0.1; g.add(guard); }
+  }
+  if (ebike) box(g, "#2a2733", (crank.x + head.x) / 2 - 0.12, (crank.y + head.y) / 2 - 0.12, -0.07, (crank.x + head.x) / 2 + 0.12, (crank.y + head.y) / 2 + 0.02, 0.07);
+  return g;
+}
+
 /** London double-decker, modelled in Blender (art/blender/bus.py); route blinds drawn here. */
 let BUS_KIT: Promise<THREE.Object3D> | null = null;
 function busModel(route: string) {
@@ -2653,7 +2739,8 @@ export function World3D({
     };
     if (indoors) {
       interior(world, map, jobs, station);
-      if (map.kind === "home") {
+      if (map.id === "garage") garageScene(world, map);
+      else if (map.kind === "home") {
         buildRoomShell(world, map.room ?? DEFAULT_ROOM);
         for (const x of [3, 16]) {
           box(world, "#29444a", x, 1.2, 2.03, x + 2, 2.65, 2.1);
@@ -4159,12 +4246,14 @@ export function World3D({
         if (!bus) vehicleSeatY = carHolder.position.y + seat.y;
         me.root.position.set(carHolder.position.x + sx * c + seat.z * sn, seat.y - 0.12, carHolder.position.z - sx * sn + seat.z * c);
         me.root.rotation.y = yaw + Math.PI / 2;
-        if (me.char) me.char.play("sit");
+        if (me.char) me.char.play(bus ? "sit" : "drive");
       }
       // Riding a hire bike: the bike appears under you and you sit up on it.
       const riding = !want && bikeRef.current;
+      if (rideBike && rideBike.userData.look !== bikeRef.current) { scene.remove(rideBike); rideBike = null; }
       if (riding && !rideBike) {
-        rideBike = lymeBike(bikeRef.current ?? undefined);
+        rideBike = rideableBike(bikeRef.current ?? undefined);
+        rideBike.userData.look = bikeRef.current;
         bendAll(rideBike);
         scene.add(rideBike);
       }
@@ -4176,6 +4265,16 @@ export function World3D({
         rideBike.position.set(mx, 0.004, mz);
         rideBike.rotation.y = me.root.rotation.y - Math.PI / 2;
         me.root.position.y = 0.42;
+      }
+
+      // Sitting on a street bench: settle onto the seat; walking off stands you up.
+      if (BENCH_SEAT.seat && (busSeated || rideBike || p.walking)) {
+        BENCH_SEAT.seat = null;
+        window.dispatchEvent(new Event("illumed:bench-up"));
+      }
+      if (BENCH_SEAT.seat) {
+        me.root.position.set(BENCH_SEAT.seat.x, 0.3, BENCH_SEAT.seat.z);
+        me.root.rotation.y = BENCH_SEAT.seat.yaw;
       }
 
       // Keep outdoor gameplay centred on the player, including at map edges.
@@ -4963,6 +5062,7 @@ export function World3D({
         cycle.traverse(o => { if (o.userData.bikeWheel) o.rotation.z = moving ? -phase : o.rotation.z; });
       };
       if (rideBike && riding) seatRider(me, rideBike, me.root.rotation.y, p.walking, secs * 8);
+      else if (BENCH_SEAT.seat) me.char?.play("sit");
       else if (me.char && now > swingUntil && !getHomeAction?.() && !busSeated) {
         me.locomotion=locomotionClip(p.walking,me.motion?.speed??0,me.locomotion);
         me.char.play(me.locomotion);
@@ -4981,7 +5081,7 @@ export function World3D({
         const sleeping = a.animation === "sleep";
         const washing = a.animation === "shower" || a.animation === "wash";
         const seat = a.seat;
-        me.char?.play(seated ? "drive" : "idle");
+        me.char?.play(a.animation === "eat" ? "eat" : a.animation === "read" ? "sit-read" : seated ? "sit" : "idle");
         me.root.position.set(a.x + a.w / 2, sleeping ? 1.0 : seated ? 0.3 : 0, a.y + (sleeping ? a.h * 0.45 : washing ? a.h * 0.55 : a.h + 0.25));
         if (a.animation === "sit" || seat) {
           const s = seat ?? a;

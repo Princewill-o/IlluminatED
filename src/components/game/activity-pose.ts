@@ -78,6 +78,32 @@ export function activityPose(
       set("RightArm", -0.35, 0.08);
       set("Head", 0.05 + sway);
       return;
+    // At the wheel: seated, both hands forward on the steering wheel, eyes on the road.
+    case "drive":
+      seatedLegs();
+      set("Spine", -0.05);
+      set("LeftArm", -1.05, -0.12);
+      set("RightArm", -1.05, 0.12);
+      set("LeftForeArm", -0.55 + sway * 0.6);
+      set("RightForeArm", -0.55 - sway * 0.6);
+      set("Head", -0.02);
+      return;
+    // On a bike: leaning forward to the handlebars, legs turning the pedals (or resting when coasting).
+    case "cycle":
+    case "cycle-coast": {
+      const turn = activity === "cycle" && !reduced ? seconds * 9 : 0;
+      set("Spine", 0.35);
+      set("Head", -0.25);
+      set("LeftArm", -1.15, -0.1);
+      set("RightArm", -1.15, 0.1);
+      set("LeftForeArm", -0.3);
+      set("RightForeArm", -0.3);
+      set("LeftUpLeg", -1.15 + Math.sin(turn) * 0.4);
+      set("RightUpLeg", -1.15 - Math.sin(turn) * 0.4);
+      set("LeftLeg", 1.25 - Math.cos(turn) * 0.45);
+      set("RightLeg", 1.25 + Math.cos(turn) * 0.45);
+      return;
+    }
     case "sit-read":
       seatedLegs();
       set("LeftArm", -0.7, -0.15);

@@ -159,7 +159,7 @@ const ALIASES: Record<string, string> = {
   static: "idle", sprint: "run", die: "fall", death: "fall", "pick-up": "relaxed", "emote-yes": "relaxed", "emote-no": "look",
   celebrate: "relaxed", cheer: "relaxed", attack: "relaxed", punch: "relaxed", "attack-melee-right": "relaxed", "attack-melee-left": "relaxed",
   "attack-kick-right": "relaxed", "interact-right": "relaxed", "interact-left": "relaxed", sit: "idle", drive: "idle", "wheelchair-sit": "idle",
-  crouch: "crouch", cycle: "walk", "cycle-coast": "idle", "holding-right": "idle", "holding-left": "idle", "holding-both": "idle",
+  crouch: "crouch", cycle: "idle", "cycle-coast": "idle", "holding-right": "idle", "holding-left": "idle", "holding-both": "idle",
   "holding-right-shoot": "relaxed", "holding-left-shoot": "relaxed", "holding-both-shoot": "relaxed", "carry-walk": "walk", climb: "climb",
   "walk-back": "walk-back", jump: "jump", fall: "fall", land: "land", look: "look",
 };

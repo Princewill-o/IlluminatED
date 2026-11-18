@@ -7,8 +7,8 @@ import { Bike, X } from "lucide-react";
 import { CAR_PAINT, loadCarPaint, setCarPaint } from "./art";
 import { TubeBadge } from "./tube-map";
 
-import { buyCar, hireBike } from "@/app/games/world/actions";
-import { BIKES, type BikeBrand } from "@/game/core/bikes";
+import { buyBike, buyCar, hireBike } from "@/app/games/world/actions";
+import { BIKE_FRAMES, BIKE_PAINTS, BIKES, type BikeBrand, type BikeFrame, type OwnBike } from "@/game/core/bikes";
 import { BLENDER_CARS, CARS } from "@/game/core/cars";
 import { CAR_PAINTS, realisticCarPreview } from "@/game/core/realistic-cars";
 import { STATION_PLATFORM_Y, TILE, type WorldMap } from "@/game/core/world";
@@ -79,6 +79,81 @@ export function BikeDock({ clout, riding, onRide, onDock, onClose }: { clout: nu
             ))}
           </ul>
         )}
+        {error && <p className="mt-3 text-sm font-bold text-[#c8322d]">{error}</p>}
+      </div>
+    </div>
+  );
+}
+
+/** A flat side view of a bike frame in your paint, for the workshop. */
+function BikeSketch({ frame, colour }: { frame: BikeFrame; colour: string }) {
+  const bmx = frame === "bmx", road = frame === "road";
+  const r = bmx ? 17 : road ? 23 : 21, y = 70 - r;
+  return (
+    <svg viewBox="0 0 160 80" className="h-24 w-full" aria-hidden>
+      {[34, 126].map((x) => <circle key={x} cx={x} cy={y} r={r} fill="none" stroke="#1b1622" strokeWidth={bmx ? 6 : road ? 3 : 4} />)}
+      <path d={`M34 ${y} L72 ${y} L62 ${bmx ? 28 : 22} Z M72 ${y} L116 ${bmx ? 30 : 24} L62 ${bmx ? 28 : 22} M116 ${bmx ? 30 : 24} L126 ${y}`} fill="none" stroke={colour} strokeWidth={frame === "ebike" ? 7 : 5} strokeLinejoin="round" />
+      <rect x={50} y={bmx ? 22 : 16} width={22} height={5} rx={2} fill="#1b1622" />
+      <path d={`M116 ${bmx ? 30 : 24} l2 -10 h8`} fill="none" stroke="#1b1622" strokeWidth={4} strokeLinecap="round" />
+      {frame === "city" && <rect x={130} y={24} width={20} height={14} rx={2} fill={colour} />}
+      {frame === "ebike" && <rect x={82} y={34} width={18} height={10} rx={2} fill="#2a2733" transform="rotate(-20 91 39)" />}
+    </svg>
+  );
+}
+
+/** The bike workshop in your garage: pick a frame and a paint job, buy it once, repaint it for free. */
+export function BikeWorkshop({ clout, own, onSaved, onRide, onClose }: { clout: number; own: OwnBike | null; onSaved: (bike: OwnBike, clout: number) => void; onRide: (() => void) | null; onClose: () => void }) {
+  const [frame, setFrame] = useState<BikeFrame>(own?.frame ?? "city");
+  const [colour, setColour] = useState(own?.colour ?? BIKE_PAINTS[0]);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const chosen = BIKE_FRAMES.find((f) => f.id === frame)!;
+  const cost = own?.frame === frame ? 0 : chosen.price;
+  const unchanged = own?.frame === frame && own.colour === colour;
+  return (
+    <div className="absolute inset-0 z-[100004] grid place-items-end bg-black/60 md:place-items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-label="Bike workshop" onClick={(e) => e.stopPropagation()} className="max-h-[calc(100%-16px)] w-full max-w-md overflow-y-auto overscroll-contain rounded-t-3xl bg-[#f7f1e6] p-4 text-[#13203a] sm:p-5 md:rounded-3xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs font-black tracking-[0.25em] text-[#7a3cf0] uppercase">Garage · Bike workshop</p>
+            <h2 className="mt-1 text-2xl font-black">{own ? "Your bike" : "Build your own bike"}</h2>
+            <p className="text-sm text-[#13203a]/70">Buy a frame once and keep it. Repainting is free. You have {clout} Clout.</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="jelly grid size-11 shrink-0 place-items-center rounded-full bg-white"><X className="size-4" /></button>
+        </div>
+        <div className="mt-3 rounded-2xl bg-white p-2"><BikeSketch frame={frame} colour={colour} /></div>
+        <p className="mt-3 text-xs font-black tracking-widest uppercase">Frame</p>
+        <ul className="mt-1 grid grid-cols-2 gap-2">
+          {BIKE_FRAMES.map((f) => (
+            <li key={f.id}>
+              <button type="button" onClick={() => setFrame(f.id)} aria-pressed={frame === f.id} className={cn("w-full rounded-2xl border-2 bg-white p-2 text-left", frame === f.id ? "border-[#7a3cf0]" : "border-white")}>
+                <span className="block text-sm font-black">{f.name}</span>
+                <span className="block text-[11px] leading-4 text-[#13203a]/70">{f.blurb}</span>
+                <span className="mt-1 block text-xs font-bold">{own?.frame === f.id ? "Owned" : `${f.price} Clout`} · {f.speed}x speed</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-xs font-black tracking-widest uppercase">Paint</p>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {BIKE_PAINTS.map((c) => (
+            <button key={c} type="button" aria-label={`Paint ${c}`} aria-pressed={colour === c} onClick={() => setColour(c)} className={cn("size-9 rounded-full border-4", colour === c ? "border-[#13203a]" : "border-white")} style={{ background: c }} />
+          ))}
+        </div>
+        <button
+          type="button"
+          disabled={pending || unchanged || clout < cost}
+          onClick={() => start(async () => {
+            setError(null);
+            const r = await buyBike(frame, colour);
+            if (r.ok) onSaved({ frame, colour }, r.clout ?? clout - cost);
+            else setError(r.error);
+          })}
+          className="jelly mt-4 w-full rounded-full bg-[#7a3cf0] py-3 font-black text-white disabled:opacity-50"
+        >
+          {unchanged ? "This is your bike" : cost ? `Buy the ${chosen.name} · ${cost} Clout` : "Repaint · free"}
+        </button>
+        {onRide && own && <button type="button" onClick={onRide} className="jelly mt-2 w-full rounded-full bg-[#13203a] py-3 font-black text-white">Ride your bike out</button>}
         {error && <p className="mt-3 text-sm font-bold text-[#c8322d]">{error}</p>}
       </div>
     </div>

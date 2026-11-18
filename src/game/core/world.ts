@@ -1500,10 +1500,11 @@ export function studyLobbyMap(): WorldMap {
 }
 
 /** Your home: a private room (single player). style picks the colourway. */
-export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT, room?: RoomStyle): WorldMap {
+export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT, room?: RoomStyle, garage = homeHasGarage(style)): WorldMap {
   const h = buildHome();
   // The room shell, then your furniture wherever you put it.
   const t = h.tiles.map((r) => r.split("").map((c) => (c === "X" ? "." : c)));
+  if (garage) { t[h.rows - 1][2] = "e"; t[h.rows - 1][3] = "e"; }
   const links: Portal[] = [];
   for (const p of layout) {
     const f = furnitureById(p.item);
@@ -1524,11 +1525,46 @@ export function homeMap(style: number, layout: Placed[] = STARTER_LAYOUT, room?:
     height: h.rows * TILE,
     tiles: t.map((r) => r.join("")),
     structures: [],
-    portals: [{ id: "front-door", rect: px(9, 13, 2, 1), label: "Back out to London", to: { kind: "map", mapId: "city", label: "London" } }, ...links],
+    portals: [
+      { id: "front-door", rect: px(9, 13, 2, 1), label: "Back out to London", to: { kind: "map", mapId: "city", label: "London" } },
+      ...(garage ? [{ id: "garage-door", rect: px(2, 13, 2, 1), label: "Garage: your cars and bike", to: { kind: "map" as const, mapId: "garage", label: "Your garage" } }] : []),
+      ...links,
+    ],
     layout,
     rooms: [],
     spawn: { x: 10 * TILE, y: 11.5 * TILE },
     accent: "#2b5fd9",
+  };
+}
+
+/** Houses (not the starter studio) come with a garage. Style numbers are from HOMES in core/homes. */
+export const homeHasGarage = (style: number) => style >= 1;
+export const GARAGE_COLS = 16;
+export const GARAGE_ROWS = 12;
+/** Your garage: parking bays for the cars you own, a stand for your bike, a door back into the house
+ * and the up-and-over door out to the street. */
+export function garageMap(): WorldMap {
+  const W = GARAGE_COLS, H = GARAGE_ROWS;
+  const t = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x): string => (y < 2 || x === 0 || x === W - 1 || y === H - 1 ? "#" : ".")));
+  t[H - 1][2] = "e"; t[H - 1][3] = "e";
+  for (let x = 9; x < 14; x++) t[H - 1][x] = "e";
+  return {
+    id: "garage",
+    kind: "home",
+    name: "Your garage",
+    cols: W,
+    rows: H,
+    width: W * TILE,
+    height: H * TILE,
+    tiles: t.map((r) => r.join("")),
+    structures: [],
+    portals: [
+      { id: "garage-house", rect: px(2, H - 1, 2, 1), label: "Back into the house", to: { kind: "map", mapId: "home", label: "Your house" } },
+      { id: "garage-out", rect: px(9, H - 1, 5, 1), label: "Up-and-over door: out to London", to: { kind: "map", mapId: "city", label: "London" } },
+    ],
+    rooms: [],
+    spawn: { x: 3 * TILE, y: (H - 2.5) * TILE },
+    accent: "#7a3cf0",
   };
 }
 

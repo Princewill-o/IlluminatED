@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 
 import { BookOpen, Briefcase, CarFront, Globe, CircleHelp, Crown, DoorOpen, Feather, Footprints, Gamepad2, HeartHandshake, MapPinned, Menu, Smartphone, TrainFront, Trophy, Users, X } from "lucide-react";
 
-import { ARRIVE_LEVEL, AUTOPILOT, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WEATHER_NOW, WORLD_RULES } from "./art";
+import { ARRIVE_LEVEL, AUTOPILOT, BENCH_SEAT, GARAGE, CREW, LEVEL_JUMP, NPC_SPOTS, PET, loadCarPaint, PLAYER, PLAYER_VEHICLE, PLAYER_WORK, RESCUES, TRAFFIC_BOXES, TUTOR, WEATHER_NOW, WORLD_RULES } from "./art";
 import { BankDialog, type BankLoan } from "./bank";
 import type { BusTrip } from "./bus-stop";
 import { CarRadio, type RadioStation, savedStation } from "./car-radio";
@@ -53,7 +53,7 @@ import { SceneWipe, TUTORIAL_KEY } from "./scene";
 import continuityStyles from "./scene-continuity.module.css";
 import { SceneMusic } from "./scene-music";
 import { RIDE, TRAIN_CALL } from "./train-state";
-import { BikeDock, Dealership } from "./transport";
+import { BikeDock, BikeWorkshop, Dealership } from "./transport";
 import type { TubeTrip } from "./tube-map";
 import { TunnelFlash } from "./tunnel-flash";
 import { readLife, useLife } from "./use-life";
@@ -79,7 +79,7 @@ import type { ActiveJob } from "@/components/careers/work";
 import { WorkplaceDoor } from "@/components/careers/work";
 import { EventBanner } from "@/components/game/season/event-banner";
 import type { LearningAward } from "@/game/core/awards";
-import type { BikeBrand } from "@/game/core/bikes";
+import { bikeLook, ownBikeBrand, type BikeBrand, type OwnBike } from "@/game/core/bikes";
 import { WORKPLACES, roleOf, workplaceById } from "@/game/core/careers";
 import { carById } from "@/game/core/cars";
 import type { NearbyPerson } from "@/game/core/city-social";
@@ -96,7 +96,7 @@ import { roleSpec } from "@/game/core/interview";
 import { MAX_STARS, PRISON_LOOK, SHOP, POLICE_STARS, canArrestPlayer, releaseFromPrison, escapeFromPrison, addStar, cardsLeft, clearWanted, commit, warningFor, wantedCharge, sentenceMs, type Offence } from "@/game/core/law";
 import { LIVE_RESCUE_MS, rescuePlan } from "@/game/core/live-rescue";
 import { isMotorway } from "@/game/core/living-world";
-import { homeStyle } from "@/game/core/london";
+import { buildLondon, homeStyle } from "@/game/core/london";
 import { partyMap } from "@/game/core/party";
 import { attend, cellSearch, coolHeat, coverHole, cutFence, detector, dig, doJob, frontGate, has as hasItem, judgePrevious, prisonClock, searchDesk, sendToSolitary, takeKeyImpression, train as trainStat, vent } from "@/game/core/prison-life";
 import { type Pursuit, startPursuit, tickPursuit, caughtByPrisonGuard } from "@/game/core/pursuit";
@@ -107,7 +107,7 @@ import type { RoadViolation } from "@/game/core/traffic-rules";
 import { ARRIVE_DOCK_S, RIDE_SWAP_S, arriveFrame, canBoardTrain, trainStop } from "@/game/core/train";
 import { TRAINING_WORKPLACES } from "@/game/core/training-workplaces";
 import { nextUKPortal, roadTransitionArrival, ukSceneName, motorwayCarArrival } from "@/game/core/uk-navigation";
-import { isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
+import { buildUKScene, isUKScene, UK_SCENES, ukWorldMap } from "@/game/core/uk-world";
 import { universityById } from "@/game/core/universities";
 import { venueMap } from "@/game/core/venues";
 import { GEAR_MESSAGE, weatherGear, weatherReason } from "@/game/core/weather-gear";
@@ -133,6 +133,8 @@ import {
   highlandsMap,
   busStops,
   homeMap,
+  garageMap,
+  homeHasGarage,
   tubeStations,
   guessRegion,
   isRegion,
@@ -185,6 +187,7 @@ function loadMap(id: string, offices: OfficeOrg[], meId = ""): WorldMap | null {
   if (id === "universities") return CITY;
   if (id === "supermarket") return supermarketMap();
   if (id.startsWith("university-")) return universityInteriorMap(id.slice(11));
+  if (id === "garage") return garageMap();
   if (id === "home") return HOME ? homeMap(HOME.style, HOME.layout, HOME.room) : homeMap(homeStyle(meId));
   if (id === "study-lobby") return studyLobbyMap();
   if (id === "games-island") return gamesIslandMap();
@@ -231,6 +234,7 @@ export function WorldApp({
   quests,
   homework = [],
   cars = [],
+  ownBike = null,
   xp = 0,
   homeworkDone = 0,
   studyCourses = [],
@@ -250,6 +254,8 @@ export function WorldApp({
   wantedResetToken?: string;
   /** Cars you own (dealership). */
   cars?: string[];
+  /** Your own bike, kept in the garage at home. */
+  ownBike?: OwnBike | null;
   /** Total XP, for the level badge. */
   xp?: number;
   /** Question keys from homework you haven't handed in: the bus revises those topics. */
@@ -457,6 +463,13 @@ export function WorldApp({
   }, [homeAction, mapId]);
   const events = useTechEvents();
   const [garage, setGarage] = useState<string[]>(cars);
+  const [myBike, setMyBike] = useState<OwnBike | null>(ownBike);
+  const [workshop, setWorkshop] = useState(false);
+  // What the garage at home shows: the cars you own and your bike.
+  GARAGE.cars = garage;
+  GARAGE.bike = myBike ? `${myBike.frame}:${myBike.colour}` : null;
+  /** A car or your bike to take out when you leave through the garage door. */
+  const leaveWith = useRef<{ car: string } | { bike: true } | null>(null);
   const [radio, setRadio] = useState<RadioStation>("track-3");
   useEffect(() => { setRadio(savedStation()); loadCarPaint(); }, []);
   const [driving, setDriving] = useState<string | null>(() => isMotorway(initialMap) ? cars.find(id => carById(id)) ?? null : null);
@@ -539,7 +552,8 @@ export function WorldApp({
   useEffect(() => setXpNow(xp), [xp]);
   // Hired bikes go back to the dock by themselves when the time runs out.
   useEffect(() => {
-    if (!bike) return;
+    // Your own bike has no hire timer.
+    if (!bike || !Number.isFinite(bike.until)) return;
     const t = setTimeout(() => setBike(null), Math.max(0, bike.until - Date.now()));
     return () => clearTimeout(t);
   }, [bike]);
@@ -548,6 +562,36 @@ export function WorldApp({
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
   }, []);
   const map = useMemo(() => mapId === "home" ? homeMap(home.style, home.layout, home.room) : loadMap(mapId, offices, me.id) ?? CITY, [mapId, offices, me.id, home.style, home.layout, home.room]);
+  // Street benches you can sit on: the nearest one within reach of your character.
+  const benches = useMemo(() => {
+    if (!(mapId === "city" || mapId === "highlands" || isUKScene(mapId))) return [];
+    const things = (map.art === "london" ? buildLondon().things : buildUKScene(map.id)?.things ?? []) as { kind: string; x: number; y: number }[];
+    return things.filter((t) => t.kind === "bench").map((t) => ({ x: t.x, y: t.y }));
+  }, [map, mapId]);
+  const [nearBench, setNearBench] = useState<{ x: number; y: number } | null>(null);
+  const [onBench, setOnBench] = useState(false);
+  useEffect(() => {
+    if (!benches.length) { setNearBench(null); return; }
+    const t = window.setInterval(() => {
+      const px = PLAYER.x / TILE, py = PLAYER.y / TILE;
+      let best: { x: number; y: number } | null = null, bestD = 1.9;
+      for (const b of benches) { const d = Math.hypot(b.x + 0.5 - px, b.y + 0.5 - py); if (d < bestD) { bestD = d; best = b; } }
+      setNearBench((cur) => (cur === best || (cur && best && cur.x === best.x && cur.y === best.y) ? cur : best));
+    }, 300);
+    return () => window.clearInterval(t);
+  }, [benches]);
+  useEffect(() => {
+    const up = () => setOnBench(false);
+    window.addEventListener("illumed:bench-up", up);
+    return () => window.removeEventListener("illumed:bench-up", up);
+  }, []);
+  // Leaving the street (a new map, a car or a bike) always stands you up.
+  useEffect(() => { BENCH_SEAT.seat = null; setOnBench(false); }, [mapId]);
+  const sitOnBench = (b: { x: number; y: number }) => {
+    BENCH_SEAT.seat = { x: b.x + 0.5, z: b.y + 0.32, yaw: 0 };
+    setOnBench(true);
+  };
+  const standFromBench = () => { BENCH_SEAT.seat = null; setOnBench(false); };
   // From the main menu: /games/world?goto=maths-racing walks you to that place with a marker.
   const gotoDone = useRef(false);
   useEffect(() => {
@@ -631,7 +675,20 @@ export function WorldApp({
       setArrive(spot);
       setDealer(false);
     }
-  };
+  };  const driveCarRef = useRef(driveCar);
+  driveCarRef.current = driveCar;
+  // Out through the garage door: once you're on the street, take the car or bike you picked.
+  useEffect(() => {
+    const take = leaveWith.current;
+    if (mapId !== "city" || !take) return;
+    leaveWith.current = null;
+    const t = window.setTimeout(() => {
+      if ("car" in take) driveCarRef.current(take.car);
+      else if (myBike) { setBike({ brand: ownBikeBrand(myBike), until: Infinity }); say(`On ${ownBikeBrand(myBike).name}. Ride on the road and keep left.`, true); }
+    }, 900);
+    return () => window.clearTimeout(t);
+  }, [mapId, myBike, say]);
+
   // Hop-on bus: choose anywhere on the map and the bus drives you there.
   const [busPick, setBusPick] = useState(false);
   const [coachTrip, setCoachTrip] = useState(false);
@@ -1058,7 +1115,7 @@ export function WorldApp({
         if (to.mapId !== "city" && !isUKScene(to.mapId)) setBike(null);
         if (next.kind !== "city") setDriving(null);
         // Arrive outside the door that leads back to where you came from.
-        const back = next.portals.find((p) => p.to.kind === "map" && p.to.mapId === mapId);
+        const back = next.portals.find((p) => p.to.kind === "map" && p.to.mapId === (mapId === "garage" && to.mapId === "city" ? "home" : mapId));
         const spot = roadArrival ?? (back
           ? safeSpot(next, back.rect.x + back.rect.w / 2, back.rect.y + (back.rect.y + back.rect.h >= next.height - 4 ? -24 : back.rect.y > next.height / 2 ? -50 : back.rect.h + 50))
           : next.spawn);
@@ -1579,7 +1636,7 @@ export function WorldApp({
         me={jailed || mapId === "prison" ? { ...me, avatar: { ...me.avatar, ...PRISON_LOOK } } : patrol ? { ...me, avatar: { ...me.avatar, top: "top-blocky-police-navy", bottom: "bottom-blocky-police-navy", shoes: "shoes-blocky-police-navy", hat: "hat-cap", held: "held-none" } } : roleShift && ROLE_UNIFORMS[roleShift.role.id] ? {...me,avatar:{...me.avatar,...(ROLE_UNIFORMS[roleShift.role.id] as Partial<typeof me.avatar>)}} : dailyJob ? {...me,avatar:{...me.avatar,...roleOf(dailyJob.workplace,dailyJob.role)?.uniform,...(dailyJob.workplace==="pizzazz"?{top:"top-apron",topColor:"topcol-red",hat:"hat-cap"}:{})}} : gear ? {...me,avatar:{...me.avatar,...gear}} : me}
         speed={(life.sick ? 0.7 : 1) * (driving && outdoors ? (carById(driving)?.speed ?? 1) : bike && outdoors ? bike.brand.speed : 1)}
         car={hop ? `bus:${hop.route}` : driving && outdoors ? driving : null}
-        bike={!driving && bike && outdoors ? bike.brand.colour : null}
+        bike={!driving && bike && outdoors ? bikeLook(bike.brand, myBike) : null}
       />}
       {trainingRole && !contract && !tutorial && (
         <HudSlot area="tl" order={14}>
@@ -1619,6 +1676,26 @@ export function WorldApp({
         <p className="mt-1 text-xs">{Math.round(homeAction.duration / 1000)} seconds · needs improve when you finish</p>
         <button type="button" onClick={() => setHomeAction(null)} className="mt-3 min-h-11 rounded-full bg-[#183b35] px-5 text-xs font-bold text-white">Stop activity</button>
       </div></HudSlot>}
+      {mapId === "garage" && !busy && !workshop && <HudSlot area="bc" order={3}><div className="flex max-w-[92vw] flex-wrap justify-center gap-2">
+        {garage.map((c) => (
+          <button key={c} type="button" onClick={() => { const out = map.portals.find((p) => p.id === "garage-out"); if (!out) return; leaveWith.current = { car: c }; void onPortal(out); }}
+            className="jelly rounded-full bg-[#13203a] px-4 py-3 text-sm font-black text-white shadow-lg">Drive out: {carById(c)?.name ?? c}</button>
+        ))}
+        {myBike && <button type="button" onClick={() => { const out = map.portals.find((p) => p.id === "garage-out"); if (!out) return; leaveWith.current = { bike: true }; void onPortal(out); }}
+          className="jelly rounded-full px-4 py-3 text-sm font-black text-white shadow-lg" style={{ background: myBike.colour === "#f3f6fb" ? "#7a3cf0" : myBike.colour }}>Ride your bike out</button>}
+        <button type="button" onClick={() => setWorkshop(true)} className="jelly rounded-full bg-[#7a3cf0] px-4 py-3 text-sm font-black text-white shadow-lg">{myBike ? "Bike workshop" : "Build your own bike"}</button>
+        {!garage.length && <button type="button" onClick={() => setBrowser("autohub")} className="jelly rounded-full bg-white px-4 py-3 text-sm font-black text-[#13203a] shadow-lg">Buy a car on AutoHub</button>}
+      </div></HudSlot>}
+      {workshop && <BikeWorkshop clout={wallet} own={myBike} onClose={() => setWorkshop(false)}
+        onSaved={(b, left) => { setMyBike(b); setWallet(left); say("Saved. Your bike is on its stand in the garage.", true); router.refresh(); }}
+        onRide={mapId === "garage" ? () => { const out = map.portals.find((p) => p.id === "garage-out"); setWorkshop(false); if (!out) return; leaveWith.current = { bike: true }; void onPortal(out); } : null} />}
+      {outdoors && !driving && !bike && !busy && (onBench || nearBench) && <HudSlot area="bc" order={2}><button
+        type="button"
+        onClick={() => (onBench ? standFromBench() : nearBench && sitOnBench(nearBench))}
+        className="jelly rounded-full bg-[#13203a] px-5 py-3 text-sm font-black text-white shadow-lg"
+      >
+        {onBench ? "Stand up" : "Sit on the bench"}
+      </button></HudSlot>}
       {bike && mapId === "city" && (
         <HudSlot area="bc" order={0}><button
           type="button"
@@ -1832,7 +1909,7 @@ export function WorldApp({
       {phone && <GamePhone onContracts={() => { setPhone(false); setContract("all"); }} onUKRoads={() => { setPhone(false); setUKRoadsOpen(true); }} mapId={mapId} initialApp={phoneApp} meId={me.id} username={me.username} nearby={nearby} onNearbyRequest={async name=>{if(!nearby.some(p=>p.kind==="player"&&p.name===name&&p.distance<=64))return "Walk closer to this player before sending a request.";const r=await cityAction("city_friend_action",{p_username:name,p_action:"request"});return r.error;}} onVenture={()=>{setPhone(false);goTo("venture-hub","Venture Yard");}} onBank={()=>{setPhone(false);setBankOpen(true);}}
         onHouses={() => { setPhone(false); if(jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setBrowser("homefinder"); }}
         onStudio={channel=>{setPhone(false);setStudioFloating(false);setCreatorChannel(channel);}} onParty={()=>{setPhone(false);const place=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("party-"));if(place){setWaypoint({id:place.id,name:"Community social",kind:"view",x:place.rect.x+place.rect.w/2,y:place.rect.y+place.rect.h/2});say("Follow the marker to the community social.",true);}else setMapOpen(true);}}
-        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (outdoors && !jailed) setBrowser("autohub"); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);if(outdoors&&!jailed&&life.stars<POLICE_STARS){setCoachTrip(true);return;}const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
+        onEvents={() => { setPhone(false); setEventGame("events"); }} time={gameDate} clout={wallet} onBus={() => { setPhone(false); if (mapId !== "city" || jailed) say("Buses run on London streets. Head outside first."); else setBusPick(true); }} onGarage={() => { setPhone(false); if (mapId === "home" && homeHasGarage(home.style)) void goTo("garage", "Your garage"); else if (mapId === "garage") setWorkshop(true); else if (outdoors && !jailed) setBrowser("autohub"); else say("Head outside to open your garage."); }} onStudy={() => { setPhone(false); if (jailed || life.stars >= POLICE_STARS) say("Finish your current law activity first."); else setLearning(true); }} onAwards={() => { setPhone(false); setAwardsOpen(true); }} onUniversities={()=>{setPhone(false);if(outdoors&&!jailed&&life.stars<POLICE_STARS){setCoachTrip(true);return;}const gate=map.portals.find(p=>p.to.kind==="map"&&p.to.mapId.startsWith("university-"));if(gate){setWaypoint({id:gate.id,name:"University open day",kind:"university",x:gate.rect.x+gate.rect.w/2,y:gate.rect.y+gate.rect.h/2});say("Follow the marker to the university in this city.",true);}else setMapOpen(true);}} onClose={()=>setPhone(false)} onMap={()=>{setPhone(false);setMapOpen(true);}} onHome={()=>{setPhone(false);if(jailed||life.stars>=POLICE_STARS)say("Finish your current law activity first.");else goTo("home","Your house");}} onLocker={()=>{if(!jailed&&life.stars<POLICE_STARS)router.push("/games/locker");else say("Finish your current law activity first.");}} onCall={id=>{
         setPhone(false);
         if(jailed||life.stars>=POLICE_STARS){say("Finish your current law activity before calling companies.");return;}
         const workplace=id.startsWith("work:") ? workplaceById(id.slice(5)) : WORKPLACES.find(w=>w.companyId===id);

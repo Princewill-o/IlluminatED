@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { OwnBike } from "@/game/core/bikes";
 
 import { loadSubjectQuests } from "@/app/games/study/quest-actions";
 import { WorldApp } from "@/components/game/world/world-app";
@@ -35,7 +36,14 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
     const [result, more] = await Promise.all([sb.from("player_cars").select("car").eq("user_id", account.id), sb.from("player_cars_more").select("car").eq("user_id", account.id)]);
     return [...(result.data ?? []), ...(more.data ?? [])].map((row) => (row as { car: string }).car);
   })();
+  const bikeRequest = (async () => {
+    const sb = await getSupabase();
+    if (!sb) return null;
+    const { data } = await sb.from("player_bikes").select("frame, colour").eq("user_id", account.id).maybeSingle();
+    return (data as OwnBike | null) ?? null;
+  })();
   const [player, orgs, membership, career, home, homework, learning, staff, cars, studyQuests] = await Promise.all([loadPlayer(account.id), organisations, myMembership(account.id), loadCareer(account.id), loadHome(account.id), loadMyHomework(account.id), loadStudy(account.id), staffRequest, carsRequest, loadSubjectQuests()]);
+  const ownBike = await bikeRequest;
   const chosenStudyQuest = studyQuests.ok ? studyQuests.board.quests.find(quest => quest.active) : undefined;
   const preferred = new Set(account.details.subjects.map((subject) => subject.courseId));
   const studyCourses = COURSES.filter((course) => QUESTION_BANK.filter((question) => question.courseId === course.id).length >= 5)
@@ -96,6 +104,7 @@ export default async function WorldPage({ searchParams }: { searchParams: Promis
       clout={player.clout}
       quests={quests}
       cars={cars}
+      ownBike={ownBike}
       homeworkDone={homework.filter((h) => h.mine).length}
       studyCourses={studyCourses}
       awards={awards}
